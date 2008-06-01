@@ -1,0 +1,95 @@
+{
+    IBClasses = (
+        {
+            CLASS = Array; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {rep = id; tableView = id; }; 
+            SUPERCLASS = NSMutableArray; 
+        }, 
+        {
+            ACTIONS = {
+                add = id; 
+                browse = id; 
+                inspect = id; 
+                modify = id; 
+                refresh = id; 
+                remove = id; 
+                sort = id; 
+            }; 
+            CLASS = ArrayInspector; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                browseButton = NSButton; 
+                inspectButton = NSButton; 
+                modifyButton = NSButton; 
+                removeButton = NSButton; 
+                sortButton = NSButton; 
+                tableView = NSTableView; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {CLASS = ArrayTableView; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {
+            ACTIONS = {
+                add = id; 
+                browse = id; 
+                filter = id; 
+                inspect = id; 
+                modify = id; 
+                narrow = id; 
+                refresh = id; 
+                remove = id; 
+                sort = id; 
+            }; 
+            CLASS = FSCollectionInspector; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                browseButton = NSButton; 
+                inspectButton = NSButton; 
+                model = id; 
+                modifyButton = NSButton; 
+                narrowButton = NSButton; 
+                removeButton = NSButton; 
+                searchField = id; 
+                sortButton = NSButton; 
+                tableView = NSTableView; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {
+            CLASS = FSCollectionInspectorTableView; 
+            LANGUAGE = ObjC; 
+            SUPERCLASS = NSTableView; 
+        }, 
+        {
+            ACTIONS = {
+                add = id; 
+                browse = id; 
+                filter = id; 
+                inspect = id; 
+                modify = id; 
+                narrow = id; 
+                refresh = id; 
+                remove = id; 
+                sort = id; 
+            }; 
+            CLASS = FSCollectionInspectorView; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                browseButton = NSButton; 
+                contentView = NSView; 
+                inspectButton = NSButton; 
+                model = id; 
+                modifyButton = NSButton; 
+                narrowButton = NSButton; 
+                removeButton = NSButton; 
+                searchField = id; 
+                sortButton = NSButton; 
+                tableView = NSTableView; 
+            }; 
+            SUPERCLASS = NSView; 
+        }, 
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }
+    ); 
+    IBVersion = 1; 
+}
