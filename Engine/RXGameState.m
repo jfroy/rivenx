@@ -47,7 +47,10 @@
 	// dump the game state
 	[self dump];
 #endif
+	
 	[_variables release];
+	[_currentCard release];
+	
 	[super dealloc];
 }
 
@@ -106,6 +109,15 @@
 - (BOOL)isKeySet:(NSString*)key {
 	key = [key lowercaseString];
 	return ([_variables objectForKey:key]) ? YES : NO;
+}
+
+- (RXSimpleCardDescriptor*)currentCard {
+	return _currentCard;
+}
+
+- (void)setCurrentCard:(RXSimpleCardDescriptor*)descriptor {
+	[_currentCard release];
+	_currentCard = [descriptor retain];
 }
 
 @end

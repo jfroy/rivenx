@@ -8,10 +8,14 @@
 
 #import <Foundation/Foundation.h>
 
+#import "RXCardDescriptor.h"
+
 
 @interface RXGameState : NSObject {
 	NSMutableDictionary* _variables;
 	BOOL _dvdEdition;
+	
+	RXSimpleCardDescriptor* _currentCard;
 }
 
 - (void)dump;
@@ -26,5 +30,8 @@
 - (void)setShort:(int16_t)value forKey:(NSString*)key;
 
 - (BOOL)isKeySet:(NSString*)key;
+
+- (RXSimpleCardDescriptor*)currentCard;
+- (void)setCurrentCard:(RXSimpleCardDescriptor*)descriptor;
 
 @end
