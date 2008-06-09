@@ -168,7 +168,7 @@
 		31F3FF8C080840660013F427 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		31F56DAB0808CF56006F1151 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = /System/Library/Frameworks/QTKit.framework; sourceTree = "<absolute>"; };
 		31F56DB30808CF6D006F1151 /* MHK QT Player.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MHK QT Player.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		31F56DB50808CF6D006F1151 /* MHK QT Player-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = "MHK QT Player-Info.plist"; sourceTree = "<group>"; };
+		31F56DB50808CF6D006F1151 /* MHK QT Player-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "MHK QT Player-Info.plist"; sourceTree = "<group>"; };
 		31F56DB90808CFA4006F1151 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		31F56DD00808D02C006F1151 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/MainMenu.nib; sourceTree = "<group>"; };
 		31F56DE10808D073006F1151 /* MHKQTPlayerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKQTPlayerController.h; sourceTree = "<group>"; };
@@ -176,7 +176,7 @@
 		31F56E540808DC71006F1151 /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		31F56FB4080975A6006F1151 /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = /System/Library/Frameworks/QuickTime.framework; sourceTree = "<absolute>"; };
 		31FC47B60883928A00764A76 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = /System/Library/Frameworks/ApplicationServices.framework; sourceTree = "<absolute>"; };
-		8DC2EF5A0486A6940098B216 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
+		8DC2EF5A0486A6940098B216 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		8DC2EF5B0486A6940098B216 /* MHKKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MHKKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -518,7 +518,7 @@
 				8DC2EF560486A6940098B216 /* Frameworks */,
 				31C8A8130880501E00EB29D0 /* copy_ffmpeg_license */,
 				310DA4A00A2759480027BFBD /* copy_ffmpeg */,
-				314A02E90B6E53AD003E92A1 /* svnversion */,
+				314A02E90B6E53AD003E92A1 /* bzrversion */,
 			);
 			buildRules = (
 				31544CC00DB96069009D659A /* PBXBuildRule */,
@@ -587,19 +587,19 @@
 			shellPath = /bin/sh;
 			shellScript = "COPY_TOOL=\"${DEVELOPER_LIBRARY_DIR}/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nif [ ! -f \"${COPY_TOOL}\" ]; then\n\tCOPY_TOOL=\"/System/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nfi\n\n# libavutil\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib.dSYM\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcodec\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib.dSYM\" \"${BUILT_PRODUCTS_DIR}\"\n";
 		};
-		314A02E90B6E53AD003E92A1 /* svnversion */ = {
+		314A02E90B6E53AD003E92A1 /* bzrversion */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = svnversion;
+			name = bzrversion;
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/usr/bin/env python";
-			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Subversion\n# by Axel Andersson, modified by Daniel Jalkut to use\n# svnversion instead of svn info, so that the current version\n# the highest local revision  number is always used.\n# Python version by Jean-Francois Roy\n        \nimport os, re, sys\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n    print \"Must be run from Xcode\"\n    sys.exit(1)\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current subversion revision number and use it to set the CFBundleVersion value\np = os.popen2(['svnversion', '-n'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"([\\d]+:)?(\\d+[M|S]*).*\").match(REV)\nif not matchObject:\n    print \"No Subversion revision found\"\n    sys.exit(1)\nversion = matchObject.groups()[1]\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"([\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(</string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<1>%s\\g<2>' % version, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
+			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Bazaar\n        \nimport os, re, sys\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current bzr revision number and use it to set the CFBundleVersion value\np = os.popen2(['bzr', 'revno'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"(?P<revision>[\\d]+)\").match(REV)\nif not matchObject:\n    print \"No Bazaar revision found\"\n    sys.exit(1)\nrevision = matchObject.group(\"revision\")\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"([\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(</string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<1>%s\\g<2>' % revision, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
 		};
 		31E68DAF0981AB2D0069858E /* release_compress */ = {
 			isa = PBXShellScriptBuildPhase;

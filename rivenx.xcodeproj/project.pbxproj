@@ -152,21 +152,6 @@
 		31E68B6B09DA342500651BE3 /* CAMutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31E68B6A09DA341B00651BE3 /* CAMutex.cpp */; };
 		31E68B6D09DA342C00651BE3 /* CAGuard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31E68B5909DA333100651BE3 /* CAGuard.cpp */; };
 		31E68B6E09DA342E00651BE3 /* CAMutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31E68B6A09DA341B00651BE3 /* CAMutex.cpp */; };
-		31E78A8D0D9DB9450087BC8F /* libLLVMAnalysis.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A7F0D9DB9450087BC8F /* libLLVMAnalysis.a */; };
-		31E78A8E0D9DB9450087BC8F /* libLLVMCodeGen.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A800D9DB9450087BC8F /* libLLVMCodeGen.a */; };
-		31E78A8F0D9DB9450087BC8F /* libLLVMCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A810D9DB9450087BC8F /* libLLVMCore.a */; };
-		31E78A900D9DB9450087BC8F /* libLLVMipa.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A820D9DB9450087BC8F /* libLLVMipa.a */; };
-		31E78A910D9DB9450087BC8F /* libLLVMScalarOpts.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A830D9DB9450087BC8F /* libLLVMScalarOpts.a */; };
-		31E78A920D9DB9450087BC8F /* libLLVMSelectionDAG.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A840D9DB9450087BC8F /* libLLVMSelectionDAG.a */; };
-		31E78A930D9DB9450087BC8F /* libLLVMSupport.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A850D9DB9450087BC8F /* libLLVMSupport.a */; };
-		31E78A940D9DB9450087BC8F /* libLLVMSystem.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A860D9DB9450087BC8F /* libLLVMSystem.a */; };
-		31E78A950D9DB9450087BC8F /* libLLVMTarget.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A870D9DB9450087BC8F /* libLLVMTarget.a */; };
-		31E78A960D9DB9450087BC8F /* libLLVMTransformUtils.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A880D9DB9450087BC8F /* libLLVMTransformUtils.a */; };
-		31E78A970D9DB9450087BC8F /* LLVMExecutionEngine.o in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A890D9DB9450087BC8F /* LLVMExecutionEngine.o */; };
-		31E78A980D9DB9450087BC8F /* LLVMJIT.o in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A8A0D9DB9450087BC8F /* LLVMJIT.o */; };
-		31E78A990D9DB9450087BC8F /* LLVMPowerPC.o in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A8B0D9DB9450087BC8F /* LLVMPowerPC.o */; };
-		31E78A9A0D9DB9450087BC8F /* LLVMX86.o in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78A8C0D9DB9450087BC8F /* LLVMX86.o */; };
-		31E78AAB0D9DBA630087BC8F /* LLVMInterpreter.o in Frameworks */ = {isa = PBXBuildFile; fileRef = 31E78AAA0D9DBA630087BC8F /* LLVMInterpreter.o */; };
 		31EAC32B08FF38940018D8DA /* rivenx.icns in Resources */ = {isa = PBXBuildFile; fileRef = 31EAC32A08FF38940018D8DA /* rivenx.icns */; };
 		31F0DD4B0D3A7682000FBB5F /* EngineVariables.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31F0DD4A0D3A7682000FBB5F /* EngineVariables.plist */; };
 		31F1BEA60D3B03D000CFE301 /* about.png in Resources */ = {isa = PBXBuildFile; fileRef = 31F1BEA50D3B03D000CFE301 /* about.png */; };
@@ -401,7 +386,7 @@
 		3153ED8409A3ED3E002E1149 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = /System/Library/Frameworks/CoreAudio.framework; sourceTree = "<absolute>"; };
 		315547E008C4C44F00A2AA7A /* RXApplicationDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXApplicationDelegate.h; sourceTree = "<group>"; };
 		315547E108C4C44F00A2AA7A /* RXApplicationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXApplicationDelegate.m; sourceTree = "<group>"; };
-		3155480F08C52A1400A2AA7A /* Extras.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xml; path = Extras.plist; sourceTree = "<group>"; };
+		3155480F08C52A1400A2AA7A /* Extras.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; path = Extras.plist; sourceTree = "<group>"; };
 		3156F25E0B83F07400462C8E /* NSData+RSHexDump.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSData+RSHexDump.h"; path = "Additions/NSData+RSHexDump.h"; sourceTree = "<group>"; };
 		3156F25F0B83F07400462C8E /* NSData+RSHexDump.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSData+RSHexDump.m"; path = "Additions/NSData+RSHexDump.m"; sourceTree = "<group>"; };
 		315885680C8729D800204DDD /* MHKKit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MHKKit.xcodeproj; path = mhk/MHKKit.xcodeproj; sourceTree = SOURCE_ROOT; };
@@ -474,21 +459,6 @@
 		31E68B5909DA333100651BE3 /* CAGuard.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CAGuard.cpp; path = /Developer/Examples/CoreAudio/PublicUtility/CAGuard.cpp; sourceTree = "<absolute>"; };
 		31E68B6909DA341B00651BE3 /* CAMutex.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CAMutex.h; path = /Developer/Examples/CoreAudio/PublicUtility/CAMutex.h; sourceTree = "<absolute>"; };
 		31E68B6A09DA341B00651BE3 /* CAMutex.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CAMutex.cpp; path = /Developer/Examples/CoreAudio/PublicUtility/CAMutex.cpp; sourceTree = "<absolute>"; };
-		31E78A7F0D9DB9450087BC8F /* libLLVMAnalysis.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMAnalysis.a; path = llvm/lib/libLLVMAnalysis.a; sourceTree = "<group>"; };
-		31E78A800D9DB9450087BC8F /* libLLVMCodeGen.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMCodeGen.a; path = llvm/lib/libLLVMCodeGen.a; sourceTree = "<group>"; };
-		31E78A810D9DB9450087BC8F /* libLLVMCore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMCore.a; path = llvm/lib/libLLVMCore.a; sourceTree = "<group>"; };
-		31E78A820D9DB9450087BC8F /* libLLVMipa.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMipa.a; path = llvm/lib/libLLVMipa.a; sourceTree = "<group>"; };
-		31E78A830D9DB9450087BC8F /* libLLVMScalarOpts.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMScalarOpts.a; path = llvm/lib/libLLVMScalarOpts.a; sourceTree = "<group>"; };
-		31E78A840D9DB9450087BC8F /* libLLVMSelectionDAG.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMSelectionDAG.a; path = llvm/lib/libLLVMSelectionDAG.a; sourceTree = "<group>"; };
-		31E78A850D9DB9450087BC8F /* libLLVMSupport.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMSupport.a; path = llvm/lib/libLLVMSupport.a; sourceTree = "<group>"; };
-		31E78A860D9DB9450087BC8F /* libLLVMSystem.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMSystem.a; path = llvm/lib/libLLVMSystem.a; sourceTree = "<group>"; };
-		31E78A870D9DB9450087BC8F /* libLLVMTarget.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMTarget.a; path = llvm/lib/libLLVMTarget.a; sourceTree = "<group>"; };
-		31E78A880D9DB9450087BC8F /* libLLVMTransformUtils.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLLVMTransformUtils.a; path = llvm/lib/libLLVMTransformUtils.a; sourceTree = "<group>"; };
-		31E78A890D9DB9450087BC8F /* LLVMExecutionEngine.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; name = LLVMExecutionEngine.o; path = llvm/lib/LLVMExecutionEngine.o; sourceTree = "<group>"; };
-		31E78A8A0D9DB9450087BC8F /* LLVMJIT.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; name = LLVMJIT.o; path = llvm/lib/LLVMJIT.o; sourceTree = "<group>"; };
-		31E78A8B0D9DB9450087BC8F /* LLVMPowerPC.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; name = LLVMPowerPC.o; path = llvm/lib/LLVMPowerPC.o; sourceTree = "<group>"; };
-		31E78A8C0D9DB9450087BC8F /* LLVMX86.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; name = LLVMX86.o; path = llvm/lib/LLVMX86.o; sourceTree = "<group>"; };
-		31E78AAA0D9DBA630087BC8F /* LLVMInterpreter.o */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.objfile"; name = LLVMInterpreter.o; path = llvm/lib/LLVMInterpreter.o; sourceTree = "<group>"; };
 		31EAC32A08FF38940018D8DA /* rivenx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = rivenx.icns; sourceTree = "<group>"; };
 		31EBF61B09DF043500A165D2 /* CAAtomicStack.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CAAtomicStack.h; path = /Developer/Examples/CoreAudio/PublicUtility/CAAtomicStack.h; sourceTree = "<absolute>"; };
 		31EBF61C09DF043500A165D2 /* CAThreadSafeList.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CAThreadSafeList.h; path = /Developer/Examples/CoreAudio/PublicUtility/CAThreadSafeList.h; sourceTree = "<absolute>"; };
@@ -597,21 +567,6 @@
 				31863BAF09919B04001A4A42 /* FScript.framework in Frameworks */,
 				31E0122E0C90F016000A271E /* MHKKit.framework in Frameworks */,
 				31D6ACA20D40166900629AEB /* Sparkle.framework in Frameworks */,
-				31E78A8D0D9DB9450087BC8F /* libLLVMAnalysis.a in Frameworks */,
-				31E78A8E0D9DB9450087BC8F /* libLLVMCodeGen.a in Frameworks */,
-				31E78A8F0D9DB9450087BC8F /* libLLVMCore.a in Frameworks */,
-				31E78A900D9DB9450087BC8F /* libLLVMipa.a in Frameworks */,
-				31E78A910D9DB9450087BC8F /* libLLVMScalarOpts.a in Frameworks */,
-				31E78A920D9DB9450087BC8F /* libLLVMSelectionDAG.a in Frameworks */,
-				31E78A930D9DB9450087BC8F /* libLLVMSupport.a in Frameworks */,
-				31E78A940D9DB9450087BC8F /* libLLVMSystem.a in Frameworks */,
-				31E78A950D9DB9450087BC8F /* libLLVMTarget.a in Frameworks */,
-				31E78A960D9DB9450087BC8F /* libLLVMTransformUtils.a in Frameworks */,
-				31E78A990D9DB9450087BC8F /* LLVMPowerPC.o in Frameworks */,
-				31E78A9A0D9DB9450087BC8F /* LLVMX86.o in Frameworks */,
-				31E78A970D9DB9450087BC8F /* LLVMExecutionEngine.o in Frameworks */,
-				31E78A980D9DB9450087BC8F /* LLVMJIT.o in Frameworks */,
-				31E78AAB0D9DBA630087BC8F /* LLVMInterpreter.o in Frameworks */,
 				31AE54570DE0ADD6000E71CF /* ExceptionHandling.framework in Frameworks */,
 				3153E7F40DE5ABC900DF63B8 /* Carbon.framework in Frameworks */,
 			);
@@ -677,21 +632,6 @@
 				08FB779EFE84155DC02AAC07 /* Foundation.framework */,
 				31863BAE09919B04001A4A42 /* FScript.framework */,
 				3145383F08C6A5F4004B7FD0 /* IOKit.framework */,
-				31E78A7F0D9DB9450087BC8F /* libLLVMAnalysis.a */,
-				31E78A800D9DB9450087BC8F /* libLLVMCodeGen.a */,
-				31E78A810D9DB9450087BC8F /* libLLVMCore.a */,
-				31E78A820D9DB9450087BC8F /* libLLVMipa.a */,
-				31E78A830D9DB9450087BC8F /* libLLVMScalarOpts.a */,
-				31E78A840D9DB9450087BC8F /* libLLVMSelectionDAG.a */,
-				31E78A850D9DB9450087BC8F /* libLLVMSupport.a */,
-				31E78A860D9DB9450087BC8F /* libLLVMSystem.a */,
-				31E78A870D9DB9450087BC8F /* libLLVMTarget.a */,
-				31E78A880D9DB9450087BC8F /* libLLVMTransformUtils.a */,
-				31E78A890D9DB9450087BC8F /* LLVMExecutionEngine.o */,
-				31E78AAA0D9DBA630087BC8F /* LLVMInterpreter.o */,
-				31E78A8A0D9DB9450087BC8F /* LLVMJIT.o */,
-				31E78A8B0D9DB9450087BC8F /* LLVMPowerPC.o */,
-				31E78A8C0D9DB9450087BC8F /* LLVMX86.o */,
 				3158857A0C8729D800204DDD /* MHKKit.framework */,
 				31DCF72F08CB855C00E351D9 /* OpenGL.framework */,
 				31DCF73008CB855C00E351D9 /* QTKit.framework */,
@@ -1155,7 +1095,7 @@
 				31F3092F08BE43C100417394 /* Resources */,
 				314EF26409E45958002124D5 /* Copy Frameworks */,
 				7A85B43E0CB87563005D9BEF /* copy_mhkkit */,
-				314A02EE0B6E53D5003E92A1 /* svnversion */,
+				314A02EE0B6E53D5003E92A1 /* bzrversion */,
 				31D6ACFC0D40530B00629AEB /* info_plist_process */,
 			);
 			buildRules = (
@@ -1309,19 +1249,19 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		314A02EE0B6E53D5003E92A1 /* svnversion */ = {
+		314A02EE0B6E53D5003E92A1 /* bzrversion */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = svnversion;
+			name = bzrversion;
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/usr/bin/env python";
-			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Subversion\n# by Axel Andersson, modified by Daniel Jalkut to use\n# svnversion instead of svn info, so that the current version\n# the highest local revision  number is always used.\n# Python version by Jean-Francois Roy\n        \nimport os, re, sys\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n\tprint \"Must be run from Xcode\"\n\tsys.exit(1)\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current subversion revision number and use it to set the CFBundleVersion value\np = os.popen2(['svnversion', '-n'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"([\\d]+:)?(\\d+[M|S]*).*\").match(REV)\nif not matchObject:\n\tprint \"No Subversion revision found\"\n\tsys.exit(1)\nversion = matchObject.groups()[1]\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"([\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(</string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<1>%s\\g<2>' % version, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
+			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Bazaar\n        \nimport os, re, sys\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current bzr revision number and use it to set the CFBundleVersion value\np = os.popen2(['bzr', 'revno'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"(?P<revision>[\\d]+)\").match(REV)\nif not matchObject:\n    print \"No Bazaar revision found\"\n    sys.exit(1)\nrevision = matchObject.group(\"revision\")\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"([\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(</string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<1>%s\\g<2>' % revision, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
 		};
 		31C3571A0D92A6A700EDEF81 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
