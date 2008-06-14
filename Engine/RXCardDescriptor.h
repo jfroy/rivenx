@@ -26,6 +26,8 @@
 
 - (NSString *)description;
 
+- (RXSimpleCardDescriptor*)simpleDescriptor;
+
 @end
 
 @interface RXSimpleCardDescriptor : NSObject <NSCoding> {

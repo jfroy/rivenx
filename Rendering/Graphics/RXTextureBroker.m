@@ -3,7 +3,7 @@
 //	rivenx
 //
 //	Created by Jean-Francois Roy on 8/11/07.
-//	Copyright 2007 Apple Inc. All rights reserved.
+//	Copyright 2007 MacStorm All rights reserved.
 //
 
 #import "RXTextureBroker.h"

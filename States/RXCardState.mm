@@ -186,7 +186,7 @@ init_failure:
 - (void)_reportShaderProgramError:(NSError*)error {
 	if ([[error domain] isEqualToString:GLShaderCompileErrorDomain]) {
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"%@ shader failed to compile:\n%@\n%@", [[error userInfo] objectForKey:@"GLShaderType"], [[error userInfo] objectForKey:@"GLCompileLog"], [[error userInfo] objectForKey:@"GLShaderSource"]);
-	} else if ([[error domain] isEqualToString:GLShaderCompileErrorDomain]) {
+	} else if ([[error domain] isEqualToString:GLShaderLinkErrorDomain]) {
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"%@ shader program failed to link:\n%@", [[error userInfo] objectForKey:@"GLLinkLog"]);
 	} else {
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to create shader program: %@", error);
@@ -293,10 +293,8 @@ init_failure:
 		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_RECTANGLE_ARB, _textures[i], 0); glReportError();
 		
 		// completeness check
-#if defined(DEBUG)
 		GLenum fboStatus = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 		if (fboStatus != GL_FRAMEBUFFER_COMPLETE_EXT) RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"FBO not complete, status 0x%04x\n", (unsigned int)fboStatus);
-#endif
 	}
 	
 	// configure the additional texture (the previous frame texture)
@@ -353,7 +351,7 @@ init_failure:
 	
 	glUseProgram(0);
 	
-	// new textures, buffer and program objects
+	// new texture, buffer and program objects
 	glFlush();
 	
 	// done with OpenGL
@@ -390,6 +388,8 @@ init_failure:
 	glDeleteTextures(3, _textures);
 	glDeleteProgram(_waterProgram);
 	glDeleteProgram(_cardProgram);
+	
+	// FIXME: delete transition shader programs
 	
 	// done with OpenGL
 	CGLUnlockContext(cgl_ctx);
@@ -845,9 +845,9 @@ init_failure:
 
 #pragma mark -
 
-- (void)_postCardSwitchNotification {
+- (void)_postCardSwitchNotification:(RXCard*)newCard {
 	// WARNING: MUST RUN ON THE MAIN THREAD
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"RXActiveCardDidChange" object:nil];
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"RXActiveCardDidChange" object:newCard];
 }
 
 - (void)_switchCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)simpleDescriptor {
@@ -914,7 +914,7 @@ init_failure:
 	_currentHotspot = nil;
 	
 	// notify that the front card has changed
-	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification) withObject:nil waitUntilDone:NO];
+	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification) withObject:newCard waitUntilDone:NO];
 }
 
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {

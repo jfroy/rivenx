@@ -80,6 +80,7 @@
 		3145384D08C6A73E004B7FD0 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384B08C6A73E004B7FD0 /* CoreServices.framework */; };
 		315017990CC0533E001BA929 /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		315017FA0CC06872001BA929 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
+		315090200E035945004EE6F3 /* RXSimpleCardDescriptor_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 3150901F0E035945004EE6F3 /* RXSimpleCardDescriptor_test.m */; };
 		3153E7F40DE5ABC900DF63B8 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3153E7F30DE5ABC900DF63B8 /* Carbon.framework */; };
 		3153ED6409A3ED12002E1149 /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
 		3153ED8609A3ED3E002E1149 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3153ED8209A3ED3E002E1149 /* AudioToolbox.framework */; };
@@ -360,7 +361,7 @@
 		312F4DB30DC263F400B3AF0D /* RXWorldView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXWorldView.m; sourceTree = "<group>"; };
 		31327B640DCF509E00280D8F /* RXCardExecutionProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardExecutionProtocol.h; sourceTree = "<group>"; };
 		31333F5009B019E300DB6FC7 /* rxaudio_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = rxaudio_test; sourceTree = BUILT_PRODUCTS_DIR; };
-		31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = rxaudio_test.mm; path = Tests/rxaudio_test.mm; sourceTree = "<group>"; };
+		31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = rxaudio_test.mm; sourceTree = "<group>"; };
 		3133D9A80D5CDC45004DAD5E /* PHSErrorMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PHSErrorMacros.h; path = Base/PHSErrorMacros.h; sourceTree = "<group>"; };
 		3133D9AD0D5CDDC1004DAD5E /* BZFSOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BZFSOperation.h; path = Additions/BZFSOperation.h; sourceTree = "<group>"; };
 		3133D9AE0D5CDDC1004DAD5E /* BZFSOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BZFSOperation.m; path = Additions/BZFSOperation.m; sourceTree = "<group>"; };
@@ -378,6 +379,8 @@
 		315017980CC0533D001BA929 /* RXCardAudioSource.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXCardAudioSource.mm; sourceTree = "<group>"; };
 		315017F80CC06872001BA929 /* RXThreadUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXThreadUtilities.h; path = Base/RXThreadUtilities.h; sourceTree = "<group>"; };
 		315017F90CC06872001BA929 /* RXThreadUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXThreadUtilities.m; path = Base/RXThreadUtilities.m; sourceTree = "<group>"; };
+		3150901E0E035945004EE6F3 /* RXSimpleCardDescriptor_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXSimpleCardDescriptor_test.h; sourceTree = "<group>"; };
+		3150901F0E035945004EE6F3 /* RXSimpleCardDescriptor_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXSimpleCardDescriptor_test.m; sourceTree = "<group>"; };
 		3153E7F30DE5ABC900DF63B8 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.objcpp; path = RXAudioRenderer.mm; sourceTree = "<group>"; };
 		3153ED6309A3ED12002E1149 /* RXAudioRenderer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = RXAudioRenderer.h; sourceTree = "<group>"; };
@@ -432,10 +435,10 @@
 		31BC2E830D6DD0F3008FA476 /* RXVariableEditorWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVariableEditorWindowController.m; sourceTree = "<group>"; };
 		31BC739C09A57D4E001EC1E0 /* RXAudioSourceBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAudioSourceBase.h; sourceTree = "<group>"; };
 		31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RXAudioSourceBase.cpp; sourceTree = "<group>"; };
-		31C356F80D92A38500EDEF81 /* RXSound_test-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "RXSound_test-Info.plist"; sourceTree = "<group>"; };
-		31C3571C0D92A6A700EDEF81 /* RXSound_test.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RXSound_test.octest; sourceTree = BUILT_PRODUCTS_DIR; };
-		31C357280D92A72400EDEF81 /* RXSound_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXSound_test.h; path = Tests/RXSound_test.h; sourceTree = "<group>"; };
-		31C357290D92A72400EDEF81 /* RXSound_test.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RXSound_test.mm; path = Tests/RXSound_test.mm; sourceTree = "<group>"; };
+		31C356F80D92A38500EDEF81 /* UnitTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "UnitTests-Info.plist"; sourceTree = "<group>"; };
+		31C3571C0D92A6A700EDEF81 /* UnitTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnitTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
+		31C357280D92A72400EDEF81 /* RXSound_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXSound_test.h; sourceTree = "<group>"; };
+		31C357290D92A72400EDEF81 /* RXSound_test.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXSound_test.mm; sourceTree = "<group>"; };
 		31C545510D5D50620024B486 /* RXEditionInstaller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXEditionInstaller.h; sourceTree = "<group>"; };
 		31C545520D5D50620024B486 /* RXEditionInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXEditionInstaller.m; sourceTree = "<group>"; };
 		31D21B980DBC078E00E970E1 /* VariableEditor.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = VariableEditor.xib; sourceTree = "<group>"; };
@@ -445,12 +448,12 @@
 		31D6ACA10D40166800629AEB /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
 		31D6AD8D0D4197E600629AEB /* dump_save */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dump_save; sourceTree = BUILT_PRODUCTS_DIR; };
 		31DAA0DF09D888E100F63F20 /* RXCardAudioSource_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RXCardAudioSource_test; sourceTree = BUILT_PRODUCTS_DIR; };
-		31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.objcpp; name = RXCardAudioSource_test.mm; path = Tests/RXCardAudioSource_test.mm; sourceTree = "<group>"; };
+		31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.objcpp; path = RXCardAudioSource_test.mm; sourceTree = "<group>"; };
 		31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */ = {isa = PBXFileReference; lastKnownFileType = file.bplist; path = Cursors.plist; sourceTree = "<group>"; };
 		31DAAF0C0DDE21EF00D06D0C /* cursors */ = {isa = PBXFileReference; lastKnownFileType = folder; path = cursors; sourceTree = "<group>"; };
 		31DAAF210DDE21EF00D06D0C /* sounds */ = {isa = PBXFileReference; lastKnownFileType = folder; path = sounds; sourceTree = "<group>"; };
 		31DC67FF09CB879B00BFF447 /* VirtualRingBuffer_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = VirtualRingBuffer_test; sourceTree = BUILT_PRODUCTS_DIR; };
-		31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = VirtualRingBuffer_test.m; path = Tests/VirtualRingBuffer_test.m; sourceTree = "<group>"; };
+		31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VirtualRingBuffer_test.m; sourceTree = "<group>"; };
 		31DCF72F08CB855C00E351D9 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
 		31DCF73008CB855C00E351D9 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = /System/Library/Frameworks/QTKit.framework; sourceTree = "<absolute>"; };
 		31DCF73108CB855C00E351D9 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = /System/Library/Frameworks/QuartzCore.framework; sourceTree = "<absolute>"; };
@@ -651,7 +654,7 @@
 				31DC67FF09CB879B00BFF447 /* VirtualRingBuffer_test */,
 				31DAA0DF09D888E100F63F20 /* RXCardAudioSource_test */,
 				31D6AD8D0D4197E600629AEB /* dump_save */,
-				31C3571C0D92A6A700EDEF81 /* RXSound_test.octest */,
+				31C3571C0D92A6A700EDEF81 /* UnitTests.octest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -932,12 +935,14 @@
 			children = (
 				31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */,
 				31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */,
-				31C356F80D92A38500EDEF81 /* RXSound_test-Info.plist */,
+				31C356F80D92A38500EDEF81 /* UnitTests-Info.plist */,
 				31C357280D92A72400EDEF81 /* RXSound_test.h */,
 				31C357290D92A72400EDEF81 /* RXSound_test.mm */,
 				31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */,
+				3150901E0E035945004EE6F3 /* RXSimpleCardDescriptor_test.h */,
+				3150901F0E035945004EE6F3 /* RXSimpleCardDescriptor_test.m */,
 			);
-			name = Tests;
+			path = Tests;
 			sourceTree = "<group>";
 		};
 		31DCF68F08CB6CFE00E351D9 /* Rendering */ = {
@@ -1019,12 +1024,12 @@
 			productReference = 31333F5009B019E300DB6FC7 /* rxaudio_test */;
 			productType = "com.apple.product-type.tool";
 		};
-		31C3571B0D92A6A700EDEF81 /* RXSound_test */ = {
+		31C3571B0D92A6A700EDEF81 /* UnitTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 31C357230D92A6C700EDEF81 /* Build configuration list for PBXNativeTarget "RXSound_test" */;
+			buildConfigurationList = 31C357230D92A6C700EDEF81 /* Build configuration list for PBXNativeTarget "UnitTests" */;
 			buildPhases = (
-				31C357170D92A6A700EDEF81 /* Resources */,
 				31C357180D92A6A700EDEF81 /* Sources */,
+				31C357170D92A6A700EDEF81 /* Resources */,
 				31C357190D92A6A700EDEF81 /* Frameworks */,
 				31C3571A0D92A6A700EDEF81 /* ShellScript */,
 			);
@@ -1033,9 +1038,9 @@
 			dependencies = (
 				31C357340D92A78900EDEF81 /* PBXTargetDependency */,
 			);
-			name = RXSound_test;
+			name = UnitTests;
 			productName = RXSound_test;
-			productReference = 31C3571C0D92A6A700EDEF81 /* RXSound_test.octest */;
+			productReference = 31C3571C0D92A6A700EDEF81 /* UnitTests.octest */;
 			productType = "com.apple.product-type.bundle";
 		};
 		31D6AD8C0D4197E600629AEB /* dump_save */ = {
@@ -1155,12 +1160,12 @@
 			projectRoot = "";
 			targets = (
 				31F3093208BE43C100417394 /* Riven X */,
+				31C3571B0D92A6A700EDEF81 /* UnitTests */,
 				8DD76F960486AA7600D96B5E /* plistize_stacks */,
 				31D6AD8C0D4197E600629AEB /* dump_save */,
 				31333F4F09B019E300DB6FC7 /* rxaudio_test */,
 				31DC67FE09CB879B00BFF447 /* VirtualRingBuffer_test */,
 				31DAA0DE09D888E100F63F20 /* RXCardAudioSource_test */,
-				31C3571B0D92A6A700EDEF81 /* RXSound_test */,
 			);
 		};
 /* End PBXProject section */
@@ -1335,6 +1340,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				31C3572A0D92A72400EDEF81 /* RXSound_test.mm in Sources */,
+				315090200E035945004EE6F3 /* RXSimpleCardDescriptor_test.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1577,7 +1583,7 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				INFOPLIST_FILE = "RXSound_test-Info.plist";
+				INFOPLIST_FILE = "Tests/UnitTests-Info.plist";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -1586,7 +1592,7 @@
 					SenTestingKit,
 				);
 				PREBINDING = NO;
-				PRODUCT_NAME = RXSound_test;
+				PRODUCT_NAME = UnitTests;
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = octest;
 			};
@@ -1600,7 +1606,7 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_MODEL_TUNING = G5;
-				INFOPLIST_FILE = "RXSound_test-Info.plist";
+				INFOPLIST_FILE = "Tests/UnitTests-Info.plist";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -1609,7 +1615,7 @@
 					SenTestingKit,
 				);
 				PREBINDING = NO;
-				PRODUCT_NAME = RXSound_test;
+				PRODUCT_NAME = UnitTests;
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = octest;
 			};
@@ -1624,7 +1630,7 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_MODEL_TUNING = G5;
-				INFOPLIST_FILE = "RXSound_test-Info.plist";
+				INFOPLIST_FILE = "Tests/UnitTests-Info.plist";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -1633,10 +1639,9 @@
 					SenTestingKit,
 				);
 				PREBINDING = NO;
-				PRODUCT_NAME = RXSound_test;
+				PRODUCT_NAME = UnitTests;
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = octest;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -2015,7 +2020,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		31C357230D92A6C700EDEF81 /* Build configuration list for PBXNativeTarget "RXSound_test" */ = {
+		31C357230D92A6C700EDEF81 /* Build configuration list for PBXNativeTarget "UnitTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31C3571D0D92A6AD00EDEF81 /* Debug */,

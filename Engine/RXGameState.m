@@ -37,7 +37,11 @@
 	if (!_variables) @throw [NSException exceptionWithName:@"RXInvalidDefaultEngineVariablesException" reason:@"Unable to load the default engine variables." userInfo:[NSDictionary dictionaryWithObject:errorString forKey:@"RXErrorString"]];
 	[errorString release];
 	
+	// a certain part of the game state is random generated; defer that work to another dedicated method
 	[self _initRandomValues];
+	
+	// keep track of the active card
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
 	
 	return self;
 }
@@ -47,6 +51,8 @@
 	// dump the game state
 	[self dump];
 #endif
+
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
 	[_variables release];
 	[_currentCard release];
@@ -118,6 +124,10 @@
 - (void)setCurrentCard:(RXSimpleCardDescriptor*)descriptor {
 	[_currentCard release];
 	_currentCard = [descriptor retain];
+}
+
+- (void)_activeCardDidChange:(NSNotification*)notification {
+	[self setCurrentCard:[
 }
 
 @end
