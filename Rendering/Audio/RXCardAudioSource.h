@@ -10,6 +10,10 @@
 #if !defined(_RXCardAudioSource_)
 #define _RXCardAudioSource_
 
+#if !defined(__cplusplus)
+#error C++ is required to include RXCardAudioSource.h
+#endif
+
 #include <pthread.h>
 #include <MHKKit/MHKAudioDecompression.h>
 

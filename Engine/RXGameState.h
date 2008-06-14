@@ -11,17 +11,12 @@
 #import "RXCardDescriptor.h"
 
 
-@interface RXGameState : NSObject {
+@interface RXGameState : NSObject <NSCoding> {
 	NSMutableDictionary* _variables;
-	BOOL _dvdEdition;
-	
 	RXSimpleCardDescriptor* _currentCard;
 }
 
 - (void)dump;
-
-- (BOOL)dvdEdition;
-- (void)setDVDEdition:(BOOL)f;
 
 - (uint16_t)unsignedShortForKey:(NSString*)key;
 - (int16_t)shortForKey:(NSString*)key;

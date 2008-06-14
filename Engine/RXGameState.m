@@ -46,6 +46,35 @@
 	return self;
 }
 
+- (id)initWithCoder:(NSCoder*)decoder {
+	self = [super init];
+	if (!self) return nil;
+	
+	if (![decoder containsValueForKey:@"currentCard"]) {
+		[self release];
+		return nil;
+	}
+	_currentCard = [[decoder decodeObjectForKey:@"currentCard"] retain];
+
+	if (![decoder containsValueForKey:@"variables"]) {
+		[self release];
+		return nil;
+	}
+	_variables = [[decoder decodeObjectForKey:@"variables"] retain];
+	
+	// keep track of the active card
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
+	
+	return self;
+}
+
+- (void)encodeWithCoder:(NSCoder*)encoder {
+	if (![encoder allowsKeyedCoding]) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"RXGameState only supports keyed archiving." userInfo:nil];
+	
+	[encoder encodeObject:_currentCard forKey:@"currentCard"];
+	[encoder encodeObject:_variables forKey:@"variables"];
+}
+
 - (void)dealloc {
 #if defined(DEBUG)
 	// dump the game state
@@ -62,16 +91,6 @@
 
 - (void)dump {
 	RXOLog(@"dumping\n%@", _variables);
-}
-
-- (BOOL)dvdEdition {
-	return _dvdEdition;
-}
-
-- (void)setDVDEdition:(BOOL)f {
-	[self willChangeValueForKey:@"dvdEdition"];
-	_dvdEdition = f;
-	[self didChangeValueForKey:@"dvdEdition"];
 }
 
 - (uint16_t)unsignedShortForKey:(NSString*)key {
@@ -127,7 +146,7 @@
 }
 
 - (void)_activeCardDidChange:(NSNotification*)notification {
-	[self setCurrentCard:[
+	[self setCurrentCard:[(RXCardDescriptor*)[[notification object] descriptor] simpleDescriptor]];
 }
 
 @end

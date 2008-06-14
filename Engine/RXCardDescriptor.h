@@ -12,6 +12,16 @@
 
 @class RXStack;
 
+@interface RXSimpleCardDescriptor : NSObject <NSCoding> {
+@public
+	NSString* _parentName;
+	uint16_t _ID;
+}
+
+- (id)initWithStackName:(NSString*)name ID:(uint16_t)ID;
+
+@end
+
 @interface RXCardDescriptor : NSObject {
 	RXStack* _parent;
 	uint16_t _ID;
@@ -19,6 +29,8 @@
 	MHKArchive* _archive;
 	NSData* _data;
 	NSString* _name;
+	
+	RXSimpleCardDescriptor* _simpleDescriptor;
 }
 
 + (id)descriptorWithStack:(RXStack *)stack ID:(uint16_t)ID;
@@ -27,15 +39,5 @@
 - (NSString *)description;
 
 - (RXSimpleCardDescriptor*)simpleDescriptor;
-
-@end
-
-@interface RXSimpleCardDescriptor : NSObject <NSCoding> {
-@public
-	NSString* _parentName;
-	uint16_t _ID;
-}
-
-- (id)initWithStackName:(NSString*)name ID:(uint16_t)ID;
 
 @end

@@ -15,6 +15,49 @@ struct _RXCardDescriptorPrimer {
 };
 
 
+@implementation RXSimpleCardDescriptor
+
+- (id)initWithStackName:(NSString*)name ID:(uint16_t)ID {
+	self = [super init];
+	if (!self) return nil;
+	
+	_parentName = [name copy];
+	_ID = ID;
+	
+	return self;
+}
+
+- (id)initWithCoder:(NSCoder*)decoder {
+	if (![decoder containsValueForKey:@"parent"]) {
+		[self release];
+		return nil;
+	}
+	NSString* parent = [decoder decodeObjectForKey:@"parent"];
+
+	if (![decoder containsValueForKey:@"ID"]) {
+		[self release];
+		return nil;
+	}
+	uint16_t ID = (uint16_t)[decoder decodeInt32ForKey:@"ID"];
+	
+	self = [self initWithStackName:parent ID:ID];
+	return self;
+}
+
+- (void)encodeWithCoder:(NSCoder*)encoder {
+	if (![encoder allowsKeyedCoding]) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"RXCardDescriptor only supports keyed archiving." userInfo:nil];
+	
+	[encoder encodeObject:_parentName forKey:@"parent"];
+	[encoder encodeInt32:_ID forKey:@"ID"];
+}
+
+- (void)dealloc {
+	[_parentName release];
+	[super dealloc];
+}
+
+@end
+
 @interface RXStack (RXCardDescriptor)
 - (struct _RXCardDescriptorPrimer)_cardPrimerWithID:(uint16_t)cardResourceID;
 @end
@@ -97,47 +140,10 @@ struct _RXCardDescriptorPrimer {
 	return [NSString stringWithFormat: @"%@ %03hu", [_parent key], _ID];
 }
 
-@end
-
-@implementation RXSimpleCardDescriptor
-
-- (id)initWithStackName:(NSString*)name ID:(uint16_t)ID {
-	self = [super init];
-	if (!self) return nil;
-	
-	_parentName = [name copy];
-	_ID = ID;
-	
-	return self;
-}
-
-- (id)initWithCoder:(NSCoder*)decoder {
-	if (![decoder containsValueForKey:@"parent"]) {
-		[self release];
-		return nil;
-	}
-	NSString* parent = [decoder decodeObjectForKey:@"parent"];
-
-	if (![decoder containsValueForKey:@"ID"]) {
-		[self release];
-		return nil;
-	}
-	uint16_t ID = (uint16_t)[decoder decodeInt32ForKey:@"ID"];
-	
-	self = [self initWithStackName:parent ID:ID];
-	return self;
-}
-
-- (void)encodeWithCoder:(NSCoder*)encoder {
-	if (![encoder allowsKeyedCoding]) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"RXCardDescriptor only supports keyed archiving." userInfo:nil];
-	
-	[encoder encodeObject:_parentName forKey:@"parent"];
-	[encoder encodeInt32:_ID forKey:@"ID"];
-}
-
-- (void)dealloc {
-	[_parentName release];
-	[super dealloc];
+- (RXSimpleCardDescriptor*)simpleDescriptor {
+	if (_simpleDescriptor) return _simpleDescriptor;
+	_simpleDescriptor = [[RXSimpleCardDescriptor alloc] initWithStackName:[_parent key] ID:_ID];
+	return _simpleDescriptor;
 }
 
 @end
