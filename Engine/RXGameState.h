@@ -8,13 +8,17 @@
 
 #import <Foundation/Foundation.h>
 
+#import "RXEdition.h"
 #import "RXCardDescriptor.h"
 
 
 @interface RXGameState : NSObject <NSCoding> {
+	RXEdition* _edition;
 	NSMutableDictionary* _variables;
 	RXSimpleCardDescriptor* _currentCard;
 }
+
+- (id)initWithEdition:(RXEdition*)edition;
 
 - (void)dump;
 

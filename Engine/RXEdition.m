@@ -75,6 +75,12 @@
 	}
 }
 
+- (id)init {
+	[self doesNotRecognizeSelector:_cmd];
+	[self release];
+	return nil;
+}
+
 - (id)initWithDescriptor:(NSDictionary*)descriptor {
 	self = [super init];
 	if (!self) return nil;

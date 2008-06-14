@@ -122,9 +122,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	// bootstrap the edition manager
 	[RXEditionManager sharedEditionManager];
 	
-	// new game state
-	_gameState = [RXGameState new];
-	
 	// load Extras.MHK archive
 	_extraBitmapsArchive = [[MHKArchive alloc] initWithURL:[NSURL URLWithString:@"Extras.MHK" relativeToURL:_worldBase] error:&error];
 	if (!_extraBitmapsArchive) _extraBitmapsArchive = [[MHKArchive alloc] initWithURL:[NSURL URLWithString:@"Extras.MHK"] error:&error];
@@ -199,6 +196,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)_currentEditionChanged:(NSNotification*)notification {
+	// create a new game state for the new current edition
+	_gameState = [[RXGameState alloc] initWithEdition:[[RXEditionManager sharedEditionManager] currentEdition]];
+	
 	// initialize rendering
 	[self initializeRendering];
 	

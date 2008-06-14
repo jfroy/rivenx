@@ -35,6 +35,8 @@
 
 - (void)tearDown;
 
+- (RXEdition*)editionForKey:(NSString*)editionKey;
+
 - (RXEdition*)currentEdition;
 - (BOOL)makeEditionCurrent:(RXEdition*)edition rememberChoice:(BOOL)remember error:(NSError**)error;
 

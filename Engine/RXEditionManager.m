@@ -194,6 +194,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	[super dealloc];
 }
 
+- (RXEdition*)editionForKey:(NSString*)editionKey {
+	return [editions objectForKey:editionKey];
+}
+
 - (RXEdition*)currentEdition {
 	return currentEdition;
 }
