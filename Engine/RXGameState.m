@@ -17,6 +17,18 @@
 	return NO;
 }
 
++ (RXGameState*)gameStateWithURL:(NSURL*)url error:(NSError**)error {
+	// read the data in
+	NSData* archive = [NSData dataWithContentsOfURL:url options:(NSMappedRead | NSUncachedRead) error:error];
+	if (!archive) {
+		[self release];
+		return nil;
+	}
+	
+	// use a keyed unarchiver to unfreeze a new game state object
+	return [NSKeyedUnarchiver unarchiveObjectWithData:archive];
+}
+
 - (void)_initRandomValues {
 	[self setShort:-2 forKey:@"aDomeCombo"];
 	[self setShort:-2 forKey:@"pCorrectOrder"];
@@ -84,7 +96,7 @@
 			}
 			NSString* editionKey = [decoder decodeObjectForKey:@"editionKey"];
 			_edition = [[[RXEditionManager sharedEditionManager] editionForKey:editionKey] retain];
-			if (_edition) {
+			if (!_edition) {
 				[self release];
 				@throw [NSException exceptionWithName:@"RXUnknownEditionKeyException" reason:@"Riven X was unable to find the edition for this save file." userInfo:nil];
 			}
@@ -115,20 +127,16 @@
 
 - (void)encodeWithCoder:(NSCoder*)encoder {
 	if (![encoder allowsKeyedCoding]) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"RXGameState only supports keyed archiving." userInfo:nil];
+	if (!_edition) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Cannot archive RXGameState objects with no associated edition." userInfo:nil];
 	
 	[encoder encodeInt32:0 forKey:@"VERSION"];
 	
-	[encoder encodeObject:[_edition key] forKey:@"editionKey"];
+	[encoder encodeObject:[_edition valueForKey:@"key"] forKey:@"editionKey"];
 	[encoder encodeObject:_currentCard forKey:@"currentCard"];
 	[encoder encodeObject:_variables forKey:@"variables"];
 }
 
 - (void)dealloc {
-#if defined(DEBUG)
-	// dump the game state
-	[self dump];
-#endif
-
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
 	[_edition release];
@@ -140,6 +148,15 @@
 
 - (void)dump {
 	RXOLog(@"dumping\n%@", _variables);
+}
+
+- (BOOL)writeToURL:(NSURL*)url error:(NSError**)error {
+	// serialize ourselves as data
+	NSData* gameStateData = [NSKeyedArchiver archivedDataWithRootObject:self];
+	if (!gameStateData) ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+	
+	// write the data
+	return [gameStateData writeToURL:url options:NSAtomicWrite error:error];
 }
 
 - (uint16_t)unsignedShortForKey:(NSString*)key {
@@ -195,7 +212,14 @@
 }
 
 - (void)_activeCardDidChange:(NSNotification*)notification {
+	// WARNING: MUST RUN ON THE MAIN THREAD
+	if (![NSThread isMainThread]) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_activeCardDidChange: MUST RUN ON MAIN THREAD" userInfo:nil];
+	
+	// update the active card
 	[self setCurrentCard:[(RXCardDescriptor*)[[notification object] descriptor] simpleDescriptor]];
+	
+	// write to the edition's automatic save file
+	
 }
 
 @end

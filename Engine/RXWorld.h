@@ -13,6 +13,7 @@
 
 #import <pthread.h>
 
+#import <Cocoa/Cocoa.h>
 #import <MHKKit/MHKKit.h>
 
 #import "RXWorldProtocol.h"

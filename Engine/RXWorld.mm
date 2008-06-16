@@ -25,6 +25,7 @@ NSObject* g_world = nil;
 
 
 @interface RXWorld (RXWorldPrivate)
+- (void)_secondStageInit;
 - (void)_removableMediaAvailabilityHasChanged:(NSNotification *)mediaNotidication;
 @end
 
@@ -86,7 +87,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		g_world = self;
 		
 		// deferred second stage initialization
-		[self performSelector:@selector(_secondStageInit) withObject:nil afterDelay:0.0];
+//		[self performSelector:@selector(_secondStageInit) withObject:nil afterDelay:0.0];
+		[self _secondStageInit];
 	} @catch (NSException* e) {
 		[self notifyUserOfFatalException:e];
 		[self release];
@@ -100,76 +102,74 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	NSError* error = nil;
 	
 	@try {
-	
-	// new engine variables
-	pthread_mutex_init(&_engineVariablesMutex, NULL);
-	[self _initEngineVariables];
-	
-	// world base is the parent directory of the application bundle
-	_worldBase = [[NSURL alloc] initFileURLWithPath:[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent]];
-	
-	// the world user base is a "Riven X" folder inside the user's Application Support folder
-	NSString* userBase = [[NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
-	if (!BZFSDirectoryExists(userBase)) {
-		BOOL success = BZFSCreateDirectory(userBase, &error);
-		if (!success) @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create its support folder in your Application Support folder." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-	}
-	_worldUserBase = [[NSURL alloc] initFileURLWithPath:userBase];
-	
-	// register for current edition change notifications
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_currentEditionChanged:) name:@"RXCurrentEditionChangedNotification" object:nil];
-	
-	// bootstrap the edition manager
-	[RXEditionManager sharedEditionManager];
-	
-	// load Extras.MHK archive
-	_extraBitmapsArchive = [[MHKArchive alloc] initWithURL:[NSURL URLWithString:@"Extras.MHK" relativeToURL:_worldBase] error:&error];
-	if (!_extraBitmapsArchive) _extraBitmapsArchive = [[MHKArchive alloc] initWithURL:[NSURL URLWithString:@"Extras.MHK"] error:&error];
-	if (!_extraBitmapsArchive) _extraBitmapsArchive = [[MHKArchive alloc] initWithPath:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"MHK"] error:&error];
-	if (!_extraBitmapsArchive) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Extras.MHK." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
-	
-	// load Extras.plist
-	_extrasDescriptor = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"plist"]];
-	if (!_extrasDescriptor) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Extras.plist." userInfo:nil];
-	
-	/*	Notes on Extras.MHK
-		*
-		*  The marble and bottom book / journal icons are described in Extras.plist (Books and Marbles keys)
-		*
-		*  The credits are 302 and 303 for the standalones, then 304 to 320 for the scrolling composite
-	*/
-	
-	// load cursors metadata
-	NSDictionary* cursorMetadata = [NSDictionary dictionaryWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Cursors" ofType:@"plist"]];
-	if (!cursorMetadata) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Cursors.plist." userInfo:nil];
-	
-	// load cursors
-	_cursors = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 20);
-	
-	NSEnumerator* cursorEnum = [cursorMetadata keyEnumerator];
-	NSString* cursorKey;
-	while ((cursorKey = [cursorEnum nextObject])) {
-		NSPoint cursorHotspot = NSPointFromString([cursorMetadata objectForKey:cursorKey]);
-		NSImage* cursorImage = [[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:cursorKey ofType:@"png" inDirectory:@"cursors"]];
-		if (!cursorImage) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:[NSString stringWithFormat:@"Unable to find cursor %@.", cursorKey] userInfo:nil];
+		// new engine variables
+		pthread_mutex_init(&_engineVariablesMutex, NULL);
+		[self _initEngineVariables];
 		
-		NSCursor* cursor = [[NSCursor alloc] initWithImage:cursorImage hotSpot:cursorHotspot];
-		uintptr_t key = [cursorKey intValue];
-		NSMapInsert(_cursors, (const void*)key, (const void*)cursor);
-		[cursor release];
-	}
-	
-	// things used to load and keep track of stacks
-	pthread_rwlock_init(&_stackCreationLock, NULL);
-	pthread_rwlock_init(&_activeStacksLock, NULL);
-	kern_return_t kerr = semaphore_create(mach_task_self(), &_stackInitSemaphore, SYNC_POLICY_FIFO, 0);
-	if (kerr != 0) @throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack init semaphore." userInfo:nil];
-	_activeStacks = [[NSMutableDictionary alloc] init];
-	
-	// the semaphore will be signaled when a thread has setup inter-thread messaging
-	kerr = semaphore_create(mach_task_self(), &_threadInitSemaphore, SYNC_POLICY_FIFO, 0);
-	if (kerr != 0) @throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack thread init semaphore." userInfo:nil];
-	
+		// world base is the parent directory of the application bundle
+		_worldBase = [[NSURL alloc] initFileURLWithPath:[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent]];
+		
+		// the world user base is a "Riven X" folder inside the user's Application Support folder
+		NSString* userBase = [[NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
+		if (!BZFSDirectoryExists(userBase)) {
+			BOOL success = BZFSCreateDirectory(userBase, &error);
+			if (!success) @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create its support folder in your Application Support folder." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		}
+		_worldUserBase = [[NSURL alloc] initFileURLWithPath:userBase];
+		
+		// register for current edition change notifications
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_currentEditionChanged:) name:@"RXCurrentEditionChangedNotification" object:nil];
+		
+		// bootstrap the edition manager
+		[RXEditionManager sharedEditionManager];
+		
+		// load Extras.MHK archive
+		_extraBitmapsArchive = [[MHKArchive alloc] initWithURL:[NSURL URLWithString:@"Extras.MHK" relativeToURL:_worldBase] error:&error];
+		if (!_extraBitmapsArchive) _extraBitmapsArchive = [[MHKArchive alloc] initWithURL:[NSURL URLWithString:@"Extras.MHK"] error:&error];
+		if (!_extraBitmapsArchive) _extraBitmapsArchive = [[MHKArchive alloc] initWithPath:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"MHK"] error:&error];
+		if (!_extraBitmapsArchive) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Extras.MHK." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+		
+		// load Extras.plist
+		_extrasDescriptor = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"plist"]];
+		if (!_extrasDescriptor) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Extras.plist." userInfo:nil];
+		
+		/*	Notes on Extras.MHK
+			*
+			*  The marble and bottom book / journal icons are described in Extras.plist (Books and Marbles keys)
+			*
+			*  The credits are 302 and 303 for the standalones, then 304 to 320 for the scrolling composite
+		*/
+		
+		// load cursors metadata
+		NSDictionary* cursorMetadata = [NSDictionary dictionaryWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Cursors" ofType:@"plist"]];
+		if (!cursorMetadata) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Cursors.plist." userInfo:nil];
+		
+		// load cursors
+		_cursors = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 20);
+		
+		NSEnumerator* cursorEnum = [cursorMetadata keyEnumerator];
+		NSString* cursorKey;
+		while ((cursorKey = [cursorEnum nextObject])) {
+			NSPoint cursorHotspot = NSPointFromString([cursorMetadata objectForKey:cursorKey]);
+			NSImage* cursorImage = [[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:cursorKey ofType:@"png" inDirectory:@"cursors"]];
+			if (!cursorImage) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:[NSString stringWithFormat:@"Unable to find cursor %@.", cursorKey] userInfo:nil];
+			
+			NSCursor* cursor = [[NSCursor alloc] initWithImage:cursorImage hotSpot:cursorHotspot];
+			uintptr_t key = [cursorKey intValue];
+			NSMapInsert(_cursors, (const void*)key, (const void*)cursor);
+			[cursor release];
+		}
+		
+		// things used to load and keep track of stacks
+		pthread_rwlock_init(&_stackCreationLock, NULL);
+		pthread_rwlock_init(&_activeStacksLock, NULL);
+		kern_return_t kerr = semaphore_create(mach_task_self(), &_stackInitSemaphore, SYNC_POLICY_FIFO, 0);
+		if (kerr != 0) @throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack init semaphore." userInfo:nil];
+		_activeStacks = [[NSMutableDictionary alloc] init];
+		
+		// the semaphore will be signaled when a thread has setup inter-thread messaging
+		kerr = semaphore_create(mach_task_self(), &_threadInitSemaphore, SYNC_POLICY_FIFO, 0);
+		if (kerr != 0) @throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack thread init semaphore." userInfo:nil];
 	} @catch (NSException* e) {
 		[self notifyUserOfFatalException:e];
 	}

@@ -11,13 +11,23 @@
 
 __BEGIN_DECLS
 
-BOOL BZFSFileExists(NSString* path);
+extern BOOL BZFSFileExists(NSString* path);
+extern BOOL BZFSFileURLExists(NSURL* url);
 
-BOOL BZFSDirectoryExists(NSString* path);
-BOOL BZFSCreateDirectory(NSString* path, NSError** error);
+extern BOOL BZFSDirectoryExists(NSString* path);
+extern BOOL BZFSCreateDirectory(NSString* path, NSError** error);
 
-NSArray* BZFSContentsOfDirectory(NSString* path, NSError** error);
+extern BOOL BZFSDirectoryURLExists(NSURL* url);
+extern BOOL BZFSCreateDirectoryURL(NSURL* url, NSError** error);
 
-NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error);
+extern NSArray* BZFSContentsOfDirectory(NSString* path, NSError** error);
+extern NSArray* BZFSContentsOfDirectoryURL(NSURL* url, NSError** error);
+
+extern NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error);
+extern NSDictionary* BZFSAttributesOfItemAtURL(NSURL* url, NSError** error);
+
+extern BOOL BZFSRemoveItemAtURL(NSURL* url, NSError** error);
+
+extern NSFileHandle* BZFSCreateTemporaryFileInDirectory(NSURL* directory, NSString* filenameTemplate, NSURL** tempFileURL, NSError** error);
 
 __END_DECLS

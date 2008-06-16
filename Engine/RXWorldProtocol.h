@@ -7,13 +7,15 @@
  *
  */
 
+#import <Foundation/Foundation.h>
+
 #import "RXStack.h"
 #import "RXRendering.h"
 #import "RXStateCompositor.h"
 #import "RXGameState.h"
 
 
-@protocol RXWorldProtocol
+@protocol RXWorldProtocol <NSObject>
 - (NSThread*)stackThread;
 - (NSThread*)scriptThread;
 

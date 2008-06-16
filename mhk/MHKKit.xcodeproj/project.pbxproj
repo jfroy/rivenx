@@ -586,6 +586,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "COPY_TOOL=\"${DEVELOPER_LIBRARY_DIR}/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nif [ ! -f \"${COPY_TOOL}\" ]; then\n\tCOPY_TOOL=\"/System/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nfi\n\n# libavutil\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib.dSYM\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcodec\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib.dSYM\" \"${BUILT_PRODUCTS_DIR}\"\n";
+			showEnvVarsInLog = 0;
 		};
 		314A02E90B6E53AD003E92A1 /* bzrversion */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -600,6 +601,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/usr/bin/env python";
 			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Bazaar\n        \nimport os, re, sys\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current bzr revision number and use it to set the CFBundleVersion value\np = os.popen2(['bzr', 'revno'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"(?P<revision>[\\d]+)\").match(REV)\nif not matchObject:\n    print \"No Bazaar revision found\"\n    sys.exit(1)\nrevision = matchObject.group(\"revision\")\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"([\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(</string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<1>%s\\g<2>' % revision, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
+			showEnvVarsInLog = 0;
 		};
 		31E68DAF0981AB2D0069858E /* release_compress */ = {
 			isa = PBXShellScriptBuildPhase;

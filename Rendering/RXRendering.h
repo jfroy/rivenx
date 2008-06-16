@@ -11,7 +11,7 @@
 
 #import "Graphics/GL/GL.h"
 #import <OpenGL/CGLMacro.h>
-#include "Graphics/GL/GL_debug.h"
+#import "Graphics/GL/GL_debug.h"
 
 #import <QuartzCore/CoreVideo.h>
 

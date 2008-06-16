@@ -107,6 +107,8 @@
 		31863BAF09919B04001A4A42 /* FScript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31863BAE09919B04001A4A42 /* FScript.framework */; };
 		31863BE009919B29001A4A42 /* FScript.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 31863BAE09919B04001A4A42 /* FScript.framework */; };
 		31863C5B0991AA28001A4A42 /* InterThreadMessaging.m in Sources */ = {isa = PBXBuildFile; fileRef = 31863C590991AA28001A4A42 /* InterThreadMessaging.m */; };
+		318CB4640E04917A00BD2C38 /* RXGameState_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 318CB4630E04917A00BD2C38 /* RXGameState_test.m */; };
+		318CB4FD0E05C60C00BD2C38 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		3196B9360D945CC100BC818E /* RXTiming.c in Sources */ = {isa = PBXBuildFile; fileRef = 3196B9350D945CC100BC818E /* RXTiming.c */; };
 		3196BA170D947F8200BC818E /* CADebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3196BA150D947F8200BC818E /* CADebugger.cpp */; };
 		319926E20D96A81000ED1B47 /* RXSystemProfiler.m in Sources */ = {isa = PBXBuildFile; fileRef = 319926E10D96A81000ED1B47 /* RXSystemProfiler.m */; };
@@ -180,6 +182,14 @@
 
 /* Begin PBXBuildRule section */
 		31544C960DB95913009D659A /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.gcc.4_2;
+			fileType = sourcecode.c;
+			isEditable = 1;
+			outputFiles = (
+			);
+		};
+		318CB4CE0E04D3DA00BD2C38 /* PBXBuildRule */ = {
 			isa = PBXBuildRule;
 			compilerSpec = com.apple.compilers.gcc.4_2;
 			fileType = sourcecode.c;
@@ -411,6 +421,8 @@
 		31863C0509919F87001A4A42 /* RXRivenScriptProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRivenScriptProtocol.h; sourceTree = "<group>"; };
 		31863C580991AA28001A4A42 /* InterThreadMessaging.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = InterThreadMessaging.h; path = Additions/InterThreadMessaging.h; sourceTree = "<group>"; };
 		31863C590991AA28001A4A42 /* InterThreadMessaging.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = InterThreadMessaging.m; path = Additions/InterThreadMessaging.m; sourceTree = "<group>"; };
+		318CB4620E04917A00BD2C38 /* RXGameState_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXGameState_test.h; sourceTree = "<group>"; };
+		318CB4630E04917A00BD2C38 /* RXGameState_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXGameState_test.m; sourceTree = "<group>"; };
 		3196B9340D945CC100BC818E /* RXTiming.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXTiming.h; path = Base/RXTiming.h; sourceTree = "<group>"; };
 		3196B9350D945CC100BC818E /* RXTiming.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RXTiming.c; path = Base/RXTiming.c; sourceTree = "<group>"; };
 		3196BA150D947F8200BC818E /* CADebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CADebugger.cpp; path = /Developer/Examples/CoreAudio/PublicUtility/CADebugger.cpp; sourceTree = "<absolute>"; };
@@ -935,12 +947,14 @@
 			children = (
 				31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */,
 				31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */,
-				31C356F80D92A38500EDEF81 /* UnitTests-Info.plist */,
-				31C357280D92A72400EDEF81 /* RXSound_test.h */,
-				31C357290D92A72400EDEF81 /* RXSound_test.mm */,
-				31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */,
+				318CB4620E04917A00BD2C38 /* RXGameState_test.h */,
+				318CB4630E04917A00BD2C38 /* RXGameState_test.m */,
 				3150901E0E035945004EE6F3 /* RXSimpleCardDescriptor_test.h */,
 				3150901F0E035945004EE6F3 /* RXSimpleCardDescriptor_test.m */,
+				31C357280D92A72400EDEF81 /* RXSound_test.h */,
+				31C357290D92A72400EDEF81 /* RXSound_test.mm */,
+				31C356F80D92A38500EDEF81 /* UnitTests-Info.plist */,
+				31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -1031,9 +1045,10 @@
 				31C357180D92A6A700EDEF81 /* Sources */,
 				31C357170D92A6A700EDEF81 /* Resources */,
 				31C357190D92A6A700EDEF81 /* Frameworks */,
-				31C3571A0D92A6A700EDEF81 /* ShellScript */,
+				31C3571A0D92A6A700EDEF81 /* RunUnitTests */,
 			);
 			buildRules = (
+				318CB4CE0E04D3DA00BD2C38 /* PBXBuildRule */,
 			);
 			dependencies = (
 				31C357340D92A78900EDEF81 /* PBXTargetDependency */,
@@ -1267,14 +1282,16 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/usr/bin/env python";
 			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Bazaar\n        \nimport os, re, sys\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current bzr revision number and use it to set the CFBundleVersion value\np = os.popen2(['bzr', 'revno'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"(?P<revision>[\\d]+)\").match(REV)\nif not matchObject:\n    print \"No Bazaar revision found\"\n    sys.exit(1)\nrevision = matchObject.group(\"revision\")\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"([\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(</string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<1>%s\\g<2>' % revision, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
+			showEnvVarsInLog = 0;
 		};
-		31C3571A0D92A6A700EDEF81 /* ShellScript */ = {
+		31C3571A0D92A6A700EDEF81 /* RunUnitTests */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
+			name = RunUnitTests;
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1294,6 +1311,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/usr/bin/env python";
 			shellScript = "#-*- encoding: utf-8 -*-\n\"\"\"Script to insert property list values because the preprocessor is broken\"\"\"\nimport os, re\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n\tprint \"Must be run from Xcode\"\n\tsys.exit(1)\n\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\nAPPCAST = os.environ['APPCAST_URL']\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"([\\t ]+<key>SUFeedURL</key>\\n[\\t ]+<string>).*?(</string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<1>%s\\g<2>' % APPCAST, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
+			showEnvVarsInLog = 0;
 		};
 		7A85B43E0CB87563005D9BEF /* copy_mhkkit */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1308,6 +1326,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# Find the pbxcp tool\nCOPY_TOOL=\"${DEVELOPER_LIBRARY_DIR}/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nif [ ! -f \"${COPY_TOOL}\" ]; then\n\tCOPY_TOOL=\"/System/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nfi\n\n# Find the build product\nMHKKIT_PATH=\"${BUILT_PRODUCTS_DIR}/MHKKit.framework\"\nif [ ! -d \"${MHKKIT_PATH}\" ]; then\n\t# assume default Xcode setup where MHKKit was built in its own build directory\n\tMHKKIT_PATH=\"${SRCROOT}/mhk/build/${CONFIGURATION}/MHKKit.framework\"\nfi\n\n# Copy the build product\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${MHKKIT_PATH}\" \"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}\"\n";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1341,6 +1360,8 @@
 			files = (
 				31C3572A0D92A72400EDEF81 /* RXSound_test.mm in Sources */,
 				315090200E035945004EE6F3 /* RXSimpleCardDescriptor_test.m in Sources */,
+				318CB4640E04917A00BD2C38 /* RXGameState_test.m in Sources */,
+				318CB4FD0E05C60C00BD2C38 /* BZFSUtilities.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -18,9 +18,13 @@
 	RXSimpleCardDescriptor* _currentCard;
 }
 
++ (RXGameState*)gameStateWithURL:(NSURL*)url error:(NSError**)error;
+
 - (id)initWithEdition:(RXEdition*)edition;
 
 - (void)dump;
+
+- (BOOL)writeToURL:(NSURL*)url error:(NSError**)error;
 
 - (uint16_t)unsignedShortForKey:(NSString*)key;
 - (int16_t)shortForKey:(NSString*)key;

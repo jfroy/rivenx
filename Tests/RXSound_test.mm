@@ -54,7 +54,7 @@
 	[s2 release];
 	
 	// test self equality
-	STAssertEqualObjects(s1, s1, @"s1 should be equal to s1");
+	STAssertTrue([s1 isEqual:s1], @"s1 should be equal to s1");
 	
 	// test ID and parent equality
 	s2 = [RXSound new];
@@ -62,7 +62,7 @@
 	s2->ID = 1;
 	s2->parent = a;
 	
-	STAssertEqualObjects(s1, s2, @"s1 should be equal to s2");
+	STAssertTrue([s1 isEqual:s2], @"s1 should be equal to s2");
 	
 	[s2 release];
 	[s1 release];
@@ -79,7 +79,7 @@
 	s1->parent = a;
 	
 	// test self hash equality
-	STAssertEquals([s1 hash], [s1 hash], @"s1's hash should be equal to s1's hash");
+	STAssertTrue([s1 hash] == [s1 hash], @"s1's hash should be equal to s1's hash");
 	
 	// test ID and parent equality
 	s2 = [RXSound new];
@@ -87,7 +87,7 @@
 	s2->ID = 1;
 	s2->parent = a;
 	
-	STAssertEquals([s1 hash], [s2 hash], @"s1's hash should be equal to s2's hash");
+	STAssertTrue([s1 hash] == [s2 hash], @"s1's hash should be equal to s2's hash");
 	
 	[s2 release];
 	[s1 release];

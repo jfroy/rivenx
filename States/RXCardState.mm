@@ -914,7 +914,7 @@ init_failure:
 	_currentHotspot = nil;
 	
 	// notify that the front card has changed
-	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification) withObject:newCard waitUntilDone:NO];
+	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:newCard waitUntilDone:NO];
 }
 
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {
