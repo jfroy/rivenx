@@ -33,29 +33,11 @@
 	<true/>
 	<key>SUFeedURL</key>
 	<string></string>
-	<key>SUPublicDSAKey</key>
-	<string>-----BEGIN PUBLIC KEY-----
-MIIDOjCCAi0GByqGSM44BAEwggIgAoIBAQDQPxSlMnSvRduacaWe3gCJWduG6pI0
-yuKq777+jia3ClkLYJOw35iOtUsNHyNtCy+P/2sUnqW6l4AAbZr0Rf9OgSBRjI/A
-G1ooVN1bwXThVbYBVaaXQ6x34QTOs5d+Yst4MLvcboKsFno8B2uh+Goer+OWnhk5
-zBbRTKjJHcGaKqAgd8blywmnQd3pGwr9TQ2vebqnZVzr2AnfAbK5yxYAdjOiE8hz
-tGfpH/YpRDWAyQrpo9UT4mzh8KCi1RiFdWXkc9Y40pHszft5+Bc1Ic5ZFfdkAuei
-VCitpLB6OT+Huafo3KUBMt0LvNsLtBROXPOQHzQDAs84Iirf4EWiIxRpAhUAlQKi
-XQNDVPu6QbterlfVlBK4FBMCggEAStdOIN73EGXgw6NM5paVjnjwBast73GcxBu4
-+i+oUdF9QDfkUGoukAQKKOSoQz90CPgb6mgYP44aFFy196RM+gq6Cq8Fz5rr4Zo+
-CdpngMQDFv4uWXU30+dsgG14ET2Y/pEXQT6ClkdZOZca1Cs7RegpmIwBjYe0p5Gg
-GNY5SW2Zj7ALMfmCfDmPR3okX+hWM+SHUB3d2QM8FIQUThAWjTLhGIglUg5gNnRK
-Liu8a0trjIVHqZD3pLxYT9GPEaa5u4GRdDBDab2ji8cpTANv2zJ2DyLt8fUNfp81
-xhkP+qmP+WX7JIWn/wGEF6/BxHW/XalqaWhiijemmAirFjl+CQOCAQUAAoIBAAI/
-j3FH4lcqCg072RwiQWEJW+V+vYSySYsVjEatPw7qVLN31tbpUER6SDp52dvJuoQM
-ZwtW4uB5To4GTFwZXcOhBy/K5B60iM3SD3NXKP5Ns/wiPUljvCjlred1owJ7ENnW
-Ca8keCUdR+q4Q+8UKPCqQdyG5noC0NZFyI69rNQS/r8OvKwtKeHBzO+lKw++fRGF
-n1iJq63QfijMDNm3bqvlYMyz7MKgDGyNBPdOGnZkIW37Uf6R6lM9d3JnsX+jFsTL
-9DWxHKBo2LyAyjx8ZOpCgQP6S26phxVSFKjsUVZ+EhjIkjP995gArTYg3MULsOi6
-WJdHtcSp4cEw3VRI8Tg=
------END PUBLIC KEY-----
-    </string>
+	<key>SUPublicDSAKeyFile</key>
+	<string>sparkle.pem</string>
 	<key>SUShowReleaseNotes</key>
+	<true/>
+	<key>SUEnableSystemProfiling</key>
 	<true/>
 </dict>
 </plist>

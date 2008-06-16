@@ -104,6 +104,8 @@
 		316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 316721D90D27FB3200FB2C0E /* integer_pair_hash.c */; };
 		316C37B40987227800AC2C8E /* RXCardState.mm in Sources */ = {isa = PBXBuildFile; fileRef = 316C37B20987227800AC2C8E /* RXCardState.mm */; };
 		317403940CDC1A67006F3523 /* RXGameState.m in Sources */ = {isa = PBXBuildFile; fileRef = 317403930CDC1A67006F3523 /* RXGameState.m */; };
+		3185C43B0E06027800528220 /* sparkle.pem in Resources */ = {isa = PBXBuildFile; fileRef = 3185C43A0E06027800528220 /* sparkle.pem */; };
+		3185C4730E06046D00528220 /* RXVersionComparator.m in Sources */ = {isa = PBXBuildFile; fileRef = 3185C4720E06046D00528220 /* RXVersionComparator.m */; };
 		31863BAF09919B04001A4A42 /* FScript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31863BAE09919B04001A4A42 /* FScript.framework */; };
 		31863BE009919B29001A4A42 /* FScript.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 31863BAE09919B04001A4A42 /* FScript.framework */; };
 		31863C5B0991AA28001A4A42 /* InterThreadMessaging.m in Sources */ = {isa = PBXBuildFile; fileRef = 31863C590991AA28001A4A42 /* InterThreadMessaging.m */; };
@@ -417,6 +419,9 @@
 		317403920CDC1A67006F3523 /* RXGameState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXGameState.h; sourceTree = "<group>"; };
 		317403930CDC1A67006F3523 /* RXGameState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXGameState.m; sourceTree = "<group>"; };
 		317A0E130A889C5D0076E5E9 /* RXAtomic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXAtomic.h; path = Base/RXAtomic.h; sourceTree = "<group>"; };
+		3185C43A0E06027800528220 /* sparkle.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sparkle.pem; sourceTree = "<group>"; };
+		3185C4710E06046D00528220 /* RXVersionComparator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVersionComparator.h; sourceTree = "<group>"; };
+		3185C4720E06046D00528220 /* RXVersionComparator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVersionComparator.m; sourceTree = "<group>"; };
 		31863BAE09919B04001A4A42 /* FScript.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = FScript.framework; sourceTree = "<group>"; };
 		31863C0509919F87001A4A42 /* RXRivenScriptProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRivenScriptProtocol.h; sourceTree = "<group>"; };
 		31863C580991AA28001A4A42 /* InterThreadMessaging.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = InterThreadMessaging.h; path = Additions/InterThreadMessaging.h; sourceTree = "<group>"; };
@@ -832,6 +837,8 @@
 			children = (
 				315547E008C4C44F00A2AA7A /* RXApplicationDelegate.h */,
 				315547E108C4C44F00A2AA7A /* RXApplicationDelegate.m */,
+				3185C4710E06046D00528220 /* RXVersionComparator.h */,
+				3185C4720E06046D00528220 /* RXVersionComparator.m */,
 			);
 			path = Application;
 			sourceTree = "<group>";
@@ -997,6 +1004,7 @@
 				31EAC32A08FF38940018D8DA /* rivenx.icns */,
 				31154B4D0B4990E9002FCEDD /* Shaders */,
 				31DAAF210DDE21EF00D06D0C /* sounds */,
+				3185C43A0E06027800528220 /* sparkle.pem */,
 				31D21B980DBC078E00E970E1 /* VariableEditor.xib */,
 			);
 			name = Resources;
@@ -1263,6 +1271,7 @@
 				31DAAF0B0DDE21BB00D06D0C /* Cursors.plist in Resources */,
 				31DAAF260DDE21EF00D06D0C /* cursors in Resources */,
 				31DAAF270DDE21EF00D06D0C /* sounds in Resources */,
+				3185C43B0E06027800528220 /* sparkle.pem in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1481,6 +1490,7 @@
 				312F4DBF0DC263F600B3AF0D /* RXTransition.m in Sources */,
 				312F4DC20DC263F600B3AF0D /* RXWorldView.m in Sources */,
 				31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */,
+				3185C4730E06046D00528220 /* RXVersionComparator.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
