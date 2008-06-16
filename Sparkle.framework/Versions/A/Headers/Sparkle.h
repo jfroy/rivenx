@@ -25,11 +25,13 @@
 // there are name-space collisions) so we can list all of them to start with:
 
 #import "NSBundle+SUAdditions.h"
+#import "NSFileManager+Aliases.h"
 #import "NSFileManager+Authentication.h"
 #import "NSFileManager+Verification.h"
-#import "NSFileManager+Aliases.h"
 #import "NSString+extras.h"
+#import "NSURL+Parameters.h"
 #import "NSWorkspace_RBAdditions.h"
+#import "NSWorkspace+SystemVersion.h"
 
 #import "NTSynchronousTask.h"
 
@@ -38,15 +40,24 @@
 #import "SUAppcast.h"
 #import "SUAppcastItem.h"
 #import "SUAutomaticUpdateAlert.h"
+#import "SUAutomaticUpdateDriver.h"
+#import "SUBasicUpdateDriver.h"
 #import "SUConstants.h"
+#import "SUInstaller.h"
+#import "SUProbingUpdateDriver.h"
+#import "SUScheduledUpdateDriver.h"
 #import "SUStandardVersionComparator.h"
-#import "SUStatusChecker.h"
 #import "SUStatusController.h"
 #import "SUSystemProfiler.h"
+#import "SUUIBasedUpdateDriver.h"
 #import "SUUnarchiver.h"
 #import "SUUpdateAlert.h"
+#import "SUUpdateDriver.h"
 #import "SUUpdater.h"
+#import "SUUpdatePermissionPrompt.h"
+#import "SUUserInitiatedUpdateDriver.h"
 #import "SUUserDefaults.h"
 #import "SUVersionComparisonProtocol.h"
+#import "SUWindowController.h"
 
 #endif

@@ -9,8 +9,9 @@
 #ifndef SUSTATUSCONTROLLER_H
 #define SUSTATUSCONTROLLER_H
 
+#import "SUWindowController.h"
 
-@interface SUStatusController : NSWindowController {
+@interface SUStatusController : SUWindowController {
 	double progressValue, maxProgressValue;
 	NSString *title, *statusText, *buttonTitle;
 	IBOutlet NSButton *actionButton;
@@ -27,6 +28,7 @@
 // If isDefault is YES, the button's key equivalent will be \r.
 - (void)setButtonTitle:(NSString *)buttonTitle target:target action:(SEL)action isDefault:(BOOL)isDefault;
 - (void)setButtonEnabled:(BOOL)enabled;
+- (void)setButtonHidden:(BOOL)hidden;
 
 - (double)progressValue;
 - (void)setProgressValue:(double)value;
