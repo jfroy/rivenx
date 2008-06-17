@@ -69,6 +69,12 @@
 		[self _initDebugUI];
 		[self _showDebugConsole:self];
 #endif
+	
+//	int openDocumentMenuItemIndex = [fileMenu indexOfItemWithTarget:nil andAction:@selector(openDocument:)];
+//	if (openDocumentMenuItemIndex >= 0 && [[fileMenu itemAtIndex:openDocumentMenuItemIndex+1] hasSubmenu]) {
+//		// We'll presume it's the Open Recent menu item, because this is the heuristic that NSDocumentController uses to add it to the File menu
+//		[fileMenu removeItemAtIndex:openDocumentMenuItemIndex+1];
+//	}
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {
@@ -88,7 +94,15 @@
 	[[NSWorkspace sharedWorkspace] openFile:ackPath];
 }
 
+- (IBAction)openDocument:(id)sender {
+	
+}
+
 - (IBAction)saveGame:(id)sender {
+	
+}
+
+- (IBAction)saveGameAs:(id)sender {
 	
 }
 

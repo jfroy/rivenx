@@ -26,7 +26,9 @@
 - (IBAction)orderFrontAboutWindow:(id)sender;
 - (IBAction)showAcknowledgments:(id)sender;
 
+- (IBAction)openDocument:(id)sender;
 - (IBAction)saveGame:(id)sender;
+- (IBAction)saveGameAs:(id)sender;
 
 - (BOOL)canSave;
 - (void)setCanSave:(BOOL)flag;
