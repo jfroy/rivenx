@@ -17,12 +17,12 @@
 @implementation RXApplicationDelegate
 
 - (void)awakeFromNib {
-	[aboutBox_ center];
+	[_aboutBox center];
 	
 	NSBundle* mainBundle = [NSBundle mainBundle];
 	NSString* versionFormat = NSLocalizedStringFromTable(@"VERSION_FORMAT", @"About", nil);
-	[versionField_ setStringValue:[NSString stringWithFormat:versionFormat, [mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], [mainBundle objectForInfoDictionaryKey:@"CFBundleVersion"]]];
-	[copyrightField_ setStringValue:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSHumanReadableCopyright"]];
+	[_versionField setStringValue:[NSString stringWithFormat:versionFormat, [mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], [mainBundle objectForInfoDictionaryKey:@"CFBundleVersion"]]];
+	[_copyrightField setStringValue:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSHumanReadableCopyright"]];
 }
 
 #if defined(DEBUG)
@@ -44,6 +44,14 @@
 	[debugMenuItem release];
 }
 #endif
+
+- (BOOL)canSave {
+	return _canSave;
+}
+
+- (void)setCanSave:(BOOL)flag {
+	_canSave = flag;
+}
 
 - (BOOL)exceptionHandler:(NSExceptionHandler *)sender shouldLogException:(NSException *)exception mask:(NSUInteger)aMask {
 	rx_print_exception_backtrace(exception);
@@ -72,12 +80,16 @@
 }
 
 - (IBAction)orderFrontAboutWindow:(id)sender {
-	[aboutBox_ makeKeyAndOrderFront:sender];
+	[_aboutBox makeKeyAndOrderFront:sender];
 }
 
 - (IBAction)showAcknowledgments:(id)sender {
 	NSString* ackPath = [[NSBundle mainBundle] pathForResource:@"Riven X Acknowledgments" ofType:@"pdf"];
 	[[NSWorkspace sharedWorkspace] openFile:ackPath];
+}
+
+- (IBAction)saveGame:(id)sender {
+	
 }
 
 @end

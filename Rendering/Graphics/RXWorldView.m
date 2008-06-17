@@ -240,6 +240,11 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	// NSCursor instances are immutable
 	if (cursor == _cursor) return;
 	
+#if defined(DEBUG)
+	if (cursor == [g_world defaultCursor]) RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"setting cursor to default cursor");
+	else RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"setting cursor to %@", cursor);
+#endif
+	
 	[_cursor release];
 	_cursor = [cursor retain];
 	[[self window] invalidateCursorRectsForView:self];

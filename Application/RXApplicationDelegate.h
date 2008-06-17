@@ -16,14 +16,19 @@
 	NSWindowController* _gameVariableEditorWC;
 #endif
 	
-	IBOutlet NSWindow* aboutBox_;
-	IBOutlet NSTextField* versionField_;
-	IBOutlet NSTextField* copyrightField_;
+	IBOutlet NSWindow* _aboutBox;
+	IBOutlet NSTextField* _versionField;
+	IBOutlet NSTextField* _copyrightField;
 	
-	
+	BOOL _canSave;
 }
 
 - (IBAction)orderFrontAboutWindow:(id)sender;
 - (IBAction)showAcknowledgments:(id)sender;
+
+- (IBAction)saveGame:(id)sender;
+
+- (BOOL)canSave;
+- (void)setCanSave:(BOOL)flag;
 
 @end

@@ -752,14 +752,8 @@ init_failure:
 }
 
 - (void)swapRenderState:(RXCard*)sender {	
-	// if we'll queue a transition, disable UI event processing and mark script execution as being blocked now
-	if ([_transitionQueue count] > 0) {
-		// we disable event handling during transitions
-		[self setProcessUIEvents:NO];
-		
-		// we also consider transitions to "block script execution", aka hide the cursor
-		[self setExecutingBlockingAction:YES];
-	}
+	// if we'll queue a transition, mark script execution as being blocked now
+	if ([_transitionQueue count] > 0) [self setExecutingBlockingAction:YES];
 	
 	// if a transition is ongoing, wait until its done
 	mach_timespec_t waitTime = {0, kRXTransitionDuration * 1e9};
@@ -807,9 +801,6 @@ init_failure:
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"swapped render state, front card=%@", _front_render_state->card);
 #endif
 	
-	// when the UI event ignore counter reaches 0, reset the hotspot state
-	[self resetHotspotState];
-	
 	// if the front card has changed, we need to run the new card's "start rendering" program
 	if (_front_render_state->newCard) {
 		// reclaim the back render state's card
@@ -819,8 +810,8 @@ init_failure:
 		// run the new front card's "start rendering" script
 		[_front_render_state->card startRendering];
 		
-		// re-enable UI event processing
-		[self setProcessUIEvents:YES];
+		// the card switch is done; we're no longer blocking script execution
+		[self setExecutingBlockingAction:NO];
 	}
 }
 
@@ -896,8 +887,12 @@ init_failure:
 #endif
 	}
 	
-	// ignore events until the new card is loaded
-	[self setProcessUIEvents:NO];
+	// switching card blocks script execution
+	[self setExecutingBlockingAction:YES];
+	
+	// changing card completely invalidates the hotspot state, so we also nuke the current hotspot
+	[self resetHotspotState];
+	_currentHotspot = nil;
 	
 	// setup the back render state
 	_back_render_state->card = newCard;
@@ -909,9 +904,6 @@ init_failure:
 	
 	// run the prepare for rendering script on the new card
 	[_back_render_state->card prepareForRendering];
-	
-	// FIXME: need to reset the hotspot state (mouse and hotspots)
-	_currentHotspot = nil;
 	
 	// notify that the front card has changed
 	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:newCard waitUntilDone:NO];
@@ -1107,8 +1099,7 @@ init_failure:
 			[_front_render_state->transition release];
 			_front_render_state->transition = nil;
 			
-			// re-enable event processing and mark script execution as being unblocked
-			[self setProcessUIEvents:YES];
+			// mark script execution as being unblocked
 			[self setExecutingBlockingAction:NO];
 			
 			// signal we're no longer running a transition
@@ -1205,16 +1196,23 @@ exit_flush_tasks:
 #pragma mark -
 
 - (void)_updateCursorVisibility {
-	// WARNING: MUST RUN ON THE SCRIPT THREAD
+	// WARNING: MUST RUN ON THE MAIN THREAD
 	if (![NSThread isMainThread]) {
 		[self performSelectorOnMainThread:_cmd withObject:nil waitUntilDone:NO];
 		return;
 	}
 	
+	// if script execution is blocked, we hide the cursor by setting it to the invisible cursor (we don't want to hide the cursor system-wide, just over the game viewport)
 	if (_scriptExecutionBlockedCounter > 0) {
 		_cursorBackup = [g_worldView cursor];
 		[g_worldView setCursor:[g_world cursorForID:9000]];
-	} else [g_worldView setCursor:_cursorBackup];
+	// otherwise if the hotspot state has not been reset, we restore the previous cursor
+	} else if (!_resetHotspotState) {
+#if defined(DEBUG)
+		RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"resetting cursor to previous cursor");
+#endif
+		[g_worldView setCursor:_cursorBackup];
+	}
 }
 
 - (void)setProcessUIEvents:(BOOL)process {
@@ -1252,18 +1250,41 @@ exit_flush_tasks:
 		assert(_scriptExecutionBlockedCounter < INT32_MAX);
 		OSAtomicIncrement32Barrier(&_scriptExecutionBlockedCounter);
 		
-		if (_scriptExecutionBlockedCounter == 1) [self _updateCursorVisibility];
+		if (_scriptExecutionBlockedCounter == 1) {
+			// when the script thread is executing a blocking action, we implicitly ignore UI events
+			[self setProcessUIEvents:NO];
+			
+			// update the cursor visibility (hide it)
+			[self _updateCursorVisibility];
+			
+			// further lockdown the UI (disable saving, etc)
+//			[g_world lockdownUI];
+		}
 	} else {
 		assert(_scriptExecutionBlockedCounter > 0);
 		OSAtomicDecrement32Barrier(&_scriptExecutionBlockedCounter);
 		
-		if (_scriptExecutionBlockedCounter == 0) [self _updateCursorVisibility];
+		if (_scriptExecutionBlockedCounter == 0) {
+			// update the cursor visibility (show the previous cursor if the cursor state has not been reset); do this before enabling UI processing so the cursor visibility update is queued on the main thread before the mouse moved event
+			[self _updateCursorVisibility];
+			
+			// re-enable UI event processing; this will take care of updating the cursor if the hotspot state has been reset
+			[self setProcessUIEvents:YES];
+			
+			// unlock the UI
+//			[g_world unlockUI];
+		}
 	}
 }
 
 - (void)resetHotspotState {
-	// this will be called when UI events are ignored, so when the counter gets back to 0, it will trigger a mouse moved event
+	// this method is called when switching card and when changing the set of active hotspots from a script
+	
+	// setting this to yes will cause a mouse moved even to be synthesized the next time the ignore UI events counter reaches 0
 	_resetHotspotState = YES;
+	
+	// note that we do not set the current hotspot to nil in this method, because if may be called within the scope of a particular card, 
+	// meaning even though we changed the active set of hotspots, the one we're on may still be valid after
 }
 
 - (void)mouseMoved:(NSEvent*)event {
@@ -1280,7 +1301,10 @@ exit_flush_tasks:
 	
 	// if we were over another hotspot, we're no longer over it and we send a mouse exited event followed by a mouse entered event
 	if (_currentHotspot != hotspot || _resetHotspotState) {
+		// mouseExitedHotspot does not accept nil (we can't exit the "nil" hotspot)
 		if (_currentHotspot) [_front_render_state->card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+		
+		// mouseEnteredHotspot accepts nil as the hotspot, to indicate we moved out of a hotspot onto no hotspot
 		[_front_render_state->card performSelector:@selector(mouseEnteredHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
 		
 		_currentHotspot = hotspot;
@@ -1296,34 +1320,12 @@ exit_flush_tasks:
 
 - (void)mouseDown:(NSEvent*)event {
 	if (_ignoreUIEventsCounter > 0) return;
-	
-	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
-	
-	NSEnumerator* hotpotEnum = [[_front_render_state->card activeHotspots] objectEnumerator];
-	RXHotspot* hotspot;
-	while ((hotspot = [hotpotEnum nextObject])) {
-		// either we're in a hotspot now or not
-		if (NSPointInRect(mousePoint, [hotspot frame])) {
-			[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
-			break;
-		}
-	}
+	if (_currentHotspot) [_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 }
 
 - (void)mouseUp:(NSEvent*)event {
 	if (_ignoreUIEventsCounter > 0) return;
-	
-	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
-	
-	NSEnumerator* hotpotEnum = [[_front_render_state->card activeHotspots] objectEnumerator];
-	RXHotspot* hotspot;
-	while ((hotspot = [hotpotEnum nextObject])) {
-		// either we're in a hotspot now or not
-		if (NSPointInRect(mousePoint, [hotspot frame])) {
-			[_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
-			break;
-		}
-	}
+	if (_currentHotspot) [_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 }
 
 @end
