@@ -381,6 +381,12 @@
 		313C7DE508CCFA4600950A70 /* NSFontAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = NSFontAdditions.m; path = Additions/NSFontAdditions.m; sourceTree = "<group>"; };
 		313C7E9F08CCFB4D00950A70 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = /System/Library/Frameworks/ApplicationServices.framework; sourceTree = "<absolute>"; };
 		313C7EFB08CD057500950A70 /* Riven301.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Riven301.ttf; sourceTree = "<group>"; };
+		313E999D0E074DE1007C18E4 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/About.strings; sourceTree = "<group>"; };
+		313E999E0E074DE1007C18E4 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Editions.strings; sourceTree = "<group>"; };
+		313E999F0E074DE1007C18E4 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		313E99D50E074DF4007C18E4 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		313E99D60E074DF4007C18E4 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Editions.strings; sourceTree = "<group>"; };
+		313E99D70E074DF4007C18E4 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/About.strings; sourceTree = "<group>"; };
 		31448ED409D9C238001B8A5F /* CAAudioFile.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CAAudioFile.h; path = "/Developer/Examples/CoreAudio/PublicUtility/AudioFile-new/CAAudioFile.h"; sourceTree = "<absolute>"; };
 		31448ED509D9C238001B8A5F /* CAAudioFile.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CAAudioFile.cpp; path = "/Developer/Examples/CoreAudio/PublicUtility/AudioFile-new/CAAudioFile.cpp"; sourceTree = "<absolute>"; };
 		3145383F08C6A5F4004B7FD0 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
@@ -1532,6 +1538,8 @@
 			isa = PBXVariantGroup;
 			children = (
 				3114FE970D58C8AE0099AF69 /* en */,
+				313E999E0E074DE1007C18E4 /* de */,
+				313E99D60E074DF4007C18E4 /* fr */,
 			);
 			name = Editions.strings;
 			sourceTree = "<group>";
@@ -1540,6 +1548,8 @@
 			isa = PBXVariantGroup;
 			children = (
 				312D9EC80D4D81A3006E384C /* en */,
+				313E999F0E074DE1007C18E4 /* de */,
+				313E99D50E074DF4007C18E4 /* fr */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -1558,6 +1568,8 @@
 			isa = PBXVariantGroup;
 			children = (
 				312D9ECC0D4D81A3006E384C /* en */,
+				313E999D0E074DE1007C18E4 /* de */,
+				313E99D70E074DF4007C18E4 /* fr */,
 			);
 			name = About.strings;
 			sourceTree = "<group>";

@@ -8,6 +8,10 @@
 	<string>Riven X</string>
 	<key>CFBundleIconFile</key>
 	<string>rivenx</string>
+	<key>CFBundleName</key>
+	<string>Riven X</string>
+	<key>CFBundleGetInfoString</key>
+	<string>0.7d1, Copyright © 2005-2008 MacStorm.</string>
 	<key>CFBundleIdentifier</key>
 	<string>org.macstorm.rivenx</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -17,13 +21,15 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.7d</string>
+	<string>0.7d1</string>
 	<key>CFBundleVersion</key>
 	<string></string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2005-2008 MacStorm. All Rights Reserved. Riven is Copyright © 1997 Cyan Worlds, Inc. All rights reserved. Riven, MYST, and Cyan are trademarks of Cyan Worlds, Inc.</string>
 	<key>LSEnvironment</key>
 	<dict>
 		<key>MinimumSystemVersion</key>
