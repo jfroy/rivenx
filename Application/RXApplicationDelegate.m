@@ -45,12 +45,19 @@
 }
 #endif
 
-- (BOOL)canSave {
-	return _canSave;
+- (void)_updateCanSave {
+	[self willChangeValueForKey:@"canSave"];
+	_canSave = (([[g_world gameState] writeURL])) ? YES : NO;
+	[self didChangeValueForKey:@"canSave"];
 }
 
-- (void)setCanSave:(BOOL)flag {
-	_canSave = flag;
+- (BOOL)isSavingEnabled {
+	return _saveFlag;
+}
+
+- (void)setSavingEnabled:(BOOL)flag {
+	_saveFlag = flag;
+	[self _updateCanSave];
 }
 
 - (BOOL)exceptionHandler:(NSExceptionHandler *)sender shouldLogException:(NSException *)exception mask:(NSUInteger)aMask {
@@ -95,15 +102,56 @@
 }
 
 - (IBAction)openDocument:(id)sender {
+	NSOpenPanel* panel = [NSOpenPanel openPanel];
+	[panel setCanChooseFiles:YES];
+	[panel setCanChooseDirectories:NO];
+	[panel setAllowsMultipleSelection:NO];
 	
+	[panel setCanCreateDirectories:YES];
+	[panel setAllowsOtherFileTypes:NO];
+	[panel setCanSelectHiddenExtension:YES];
+	[panel setTreatsFilePackagesAsDirectories:NO];
+	
+	[panel setRequiredFileType:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
+	
+	NSInteger result = [panel runModalForDirectory:nil file:nil types:[NSArray arrayWithObject:@"org.macstorm.rivenx.game"]];
+	if (result == NSCancelButton) return;
+	
+	NSError* error;
+	RXGameState* gameState = [RXGameState gameStateWithURL:[panel URL] error:&error];
+	if (!gameState) {
+		[NSApp presentError:error];
+		return;
+	}
+	
+	if (![[RXWorld sharedWorld] loadGameState:gameState error:&error]) [NSApp presentError:error];
 }
 
 - (IBAction)saveGame:(id)sender {
+	NSError* error;
+	RXGameState* gameState = [g_world gameState];
+	if (![gameState writeToURL:[gameState writeURL] error:&error]) [NSApp presentError:error];
+}
+
+- (void)_saveAsPanelDidEnd:(NSSavePanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
+	if (returnCode == NSCancelButton) return;
 	
+	NSError* error = nil;
+	RXGameState* gameState = [g_world gameState];
+	if (![gameState writeToURL:[panel URL] error:&error]) [NSApp presentError:error];
+	else [self _updateCanSave];
 }
 
 - (IBAction)saveGameAs:(id)sender {
+	NSSavePanel* panel = [NSSavePanel savePanel];
+	[panel setCanCreateDirectories:YES];
+	[panel setAllowsOtherFileTypes:NO];
+	[panel setCanSelectHiddenExtension:YES];
+	[panel setTreatsFilePackagesAsDirectories:NO];
 	
+	[panel setRequiredFileType:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
+	
+	[panel beginSheetForDirectory:nil file:@"untitled" modalForWindow:[g_worldView window] modalDelegate:self didEndSelector:@selector(_saveAsPanelDidEnd:returnCode:contextInfo:) contextInfo:nil];
 }
 
 @end

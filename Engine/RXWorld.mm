@@ -517,6 +517,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return _gameState;
 }
 
+- (BOOL)loadGameState:(RXGameState*)gameState error:(NSError**)error {
+	return NO;
+}
+
 - (void)_dumpEngineVariables {
 	pthread_mutex_lock(&_engineVariablesMutex);
 	RXOLog(@"dumping engine variables\n%@", _engineVariables);

@@ -20,6 +20,7 @@
 	IBOutlet NSTextField* _versionField;
 	IBOutlet NSTextField* _copyrightField;
 	
+	BOOL _saveFlag;
 	BOOL _canSave;
 }
 
@@ -30,7 +31,7 @@
 - (IBAction)saveGame:(id)sender;
 - (IBAction)saveGameAs:(id)sender;
 
-- (BOOL)canSave;
-- (void)setCanSave:(BOOL)flag;
+- (BOOL)isSavingEnabled;
+- (void)setSavingEnabled:(BOOL)flag;
 
 @end

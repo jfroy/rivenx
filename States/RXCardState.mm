@@ -1206,12 +1206,21 @@ exit_flush_tasks:
 	if (_scriptExecutionBlockedCounter > 0) {
 		_cursorBackup = [g_worldView cursor];
 		[g_worldView setCursor:[g_world cursorForID:9000]];
+		
+		// disable saving
+		[[NSApp delegate] setValue:[NSNumber numberWithBool:NO] forKey:@"savingEnabled"];
+		
 	// otherwise if the hotspot state has not been reset, we restore the previous cursor
-	} else if (!_resetHotspotState) {
+	} else {
+		if (!_resetHotspotState) {
 #if defined(DEBUG)
-		RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"resetting cursor to previous cursor");
+			RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"resetting cursor to previous cursor");
 #endif
-		[g_worldView setCursor:_cursorBackup];
+			[g_worldView setCursor:_cursorBackup];
+		}
+		
+		// enable saving
+		[[NSApp delegate] setValue:[NSNumber numberWithBool:YES] forKey:@"savingEnabled"];
 	}
 }
 
@@ -1256,9 +1265,6 @@ exit_flush_tasks:
 			
 			// update the cursor visibility (hide it)
 			[self _updateCursorVisibility];
-			
-			// further lockdown the UI (disable saving, etc)
-//			[g_world lockdownUI];
 		}
 	} else {
 		assert(_scriptExecutionBlockedCounter > 0);
@@ -1270,9 +1276,6 @@ exit_flush_tasks:
 			
 			// re-enable UI event processing; this will take care of updating the cursor if the hotspot state has been reset
 			[self setProcessUIEvents:YES];
-			
-			// unlock the UI
-//			[g_world unlockUI];
 		}
 	}
 }

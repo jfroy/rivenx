@@ -85,6 +85,9 @@
 - (NSURL*)worldUserBase;
 - (MHKArchive*)extraBitmapsArchive;
 
+- (RXGameState*)gameState;
+- (BOOL)loadGameState:(RXGameState*)gameState error:(NSError**)error;
+
 - (void)notifyUserOfFatalException:(NSException*)e;
 
 @end

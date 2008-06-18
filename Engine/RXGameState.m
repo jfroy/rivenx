@@ -26,7 +26,11 @@
 	}
 	
 	// use a keyed unarchiver to unfreeze a new game state object
-	return [NSKeyedUnarchiver unarchiveObjectWithData:archive];
+	RXGameState* gameState =  [NSKeyedUnarchiver unarchiveObjectWithData:archive];
+	
+	// set the write URL on the game state to indicate it has an existing location on the file system
+	if (gameState) gameState->_writeURL = [url retain];
+	return gameState;
 }
 
 - (void)_initRandomValues {
@@ -142,6 +146,7 @@
 	[_edition release];
 	[_variables release];
 	[_currentCard release];
+	[_writeURL release];
 	
 	[super dealloc];
 }
@@ -150,13 +155,25 @@
 	RXOLog(@"dumping\n%@", _variables);
 }
 
+- (NSURL*)writeURL {
+	return _writeURL;
+}
+
 - (BOOL)writeToURL:(NSURL*)url error:(NSError**)error {
 	// serialize ourselves as data
 	NSData* gameStateData = [NSKeyedArchiver archivedDataWithRootObject:self];
 	if (!gameStateData) ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
 	
 	// write the data
-	return [gameStateData writeToURL:url options:NSAtomicWrite error:error];
+	BOOL success = [gameStateData writeToURL:url options:NSAtomicWrite error:error];
+	
+	// if we were successful, keep the URL around
+	if (success) {
+		[_writeURL release];
+		_writeURL = [url retain];
+	}
+	
+	return success;
 }
 
 - (uint16_t)unsignedShortForKey:(NSString*)key {
