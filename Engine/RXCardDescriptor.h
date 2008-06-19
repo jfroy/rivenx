@@ -14,8 +14,8 @@
 
 @interface RXSimpleCardDescriptor : NSObject <NSCoding> {
 @public
-	NSString* _parentName;
-	uint16_t _ID;
+	NSString* parentName;
+	uint16_t cardID;
 }
 
 - (id)initWithStackName:(NSString*)name ID:(uint16_t)ID;

@@ -94,7 +94,10 @@
 
 - (void)_nextJspitCard:(NSNotification*)notification {
 	_trip++;
-	if (_trip > 800) return;
+	if (_trip > 800) {
+		[[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXActiveCardDidChange" object:nil];
+		return;
+	}
 	
 	RXStack* jspit = [g_world activeStackWithKey:@"jspit"];
 	RXCardDescriptor* d = [RXCardDescriptor descriptorWithStack:jspit ID:_trip];

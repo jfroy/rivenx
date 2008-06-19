@@ -78,5 +78,6 @@ struct _rx_transition_program {
 }
 
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;
+- (void)clearActiveCardWaitingUntilDone:(BOOL)wait;
 
 @end

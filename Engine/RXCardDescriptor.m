@@ -21,8 +21,8 @@ struct _RXCardDescriptorPrimer {
 	self = [super init];
 	if (!self) return nil;
 	
-	_parentName = [name copy];
-	_ID = ID;
+	parentName = [name copy];
+	cardID = ID;
 	
 	return self;
 }
@@ -32,27 +32,26 @@ struct _RXCardDescriptorPrimer {
 		[self release];
 		return nil;
 	}
-	NSString* parent = [decoder decodeObjectForKey:@"parent"];
+	parentName = [[decoder decodeObjectForKey:@"parent"] retain];
 
 	if (![decoder containsValueForKey:@"ID"]) {
 		[self release];
 		return nil;
 	}
-	uint16_t ID = (uint16_t)[decoder decodeInt32ForKey:@"ID"];
+	cardID = (uint16_t)[decoder decodeInt32ForKey:@"ID"];
 	
-	self = [self initWithStackName:parent ID:ID];
 	return self;
 }
 
 - (void)encodeWithCoder:(NSCoder*)encoder {
 	if (![encoder allowsKeyedCoding]) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"RXCardDescriptor only supports keyed archiving." userInfo:nil];
 	
-	[encoder encodeObject:_parentName forKey:@"parent"];
-	[encoder encodeInt32:_ID forKey:@"ID"];
+	[encoder encodeObject:parentName forKey:@"parent"];
+	[encoder encodeInt32:cardID forKey:@"ID"];
 }
 
 - (void)dealloc {
-	[_parentName release];
+	[parentName release];
 	[super dealloc];
 }
 

@@ -2150,7 +2150,6 @@ static NSDictionary* _decodeRivenScript(const void* script, uint32_t* scriptLeng
 	[_backRenderStatePtr->movies release];
 	
 	// copy the non-volatile front card render state members to the back card render state
-//	_backRenderStatePtr->pictures = [_frontRenderStatePtr->pictures mutableCopy];
 	_backRenderStatePtr->pictures = [NSMutableArray new];
 	_backRenderStatePtr->movies = [_frontRenderStatePtr->movies mutableCopy];
 }

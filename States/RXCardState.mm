@@ -778,7 +778,7 @@ init_failure:
 		RXCardDescriptor* activeDescriptor = [_front_render_state->card descriptor];
 		RXStack* activeStack = [activeDescriptor valueForKey:@"parent"];
 		NSNumber* activeID = [activeDescriptor valueForKey:@"ID"];
-		if ([[activeStack key] isEqualToString:simpleDescriptor->_parentName] && simpleDescriptor->_ID == [activeID unsignedShortValue]) {
+		if ([[activeStack key] isEqualToString:simpleDescriptor->parentName] && simpleDescriptor->cardID == [activeID unsignedShortValue]) {
 			newCard = [_front_render_state->card retain];
 #if (DEBUG)
 			RXOLog(@"reloading front card: %@", _front_render_state->card);
@@ -789,17 +789,17 @@ init_failure:
 	// if we're switching to a different card, create it
 	if (newCard == nil) {
 		// if we don't have the stack, bail
-		RXStack* newStack = [g_world activeStackWithKey:simpleDescriptor->_parentName];
+		RXStack* newStack = [g_world activeStackWithKey:simpleDescriptor->parentName];
 		if (!newStack) {
 #if defined(DEBUG)
-			RXOLog(@"aborting _switchCardWithSimpleDescriptor because stack %@ could not be loaded", simpleDescriptor->_parentName);
+			RXOLog(@"aborting _switchCardWithSimpleDescriptor because stack %@ could not be loaded", simpleDescriptor->parentName);
 #endif
 			return;
 		}
 		
 		// FIXME: need to be smarter about card loading (cache, locality, etc)
 		// load the new card in
-		RXCardDescriptor* newCardDescriptor = [[RXCardDescriptor alloc] initWithStack:newStack ID:simpleDescriptor->_ID];
+		RXCardDescriptor* newCardDescriptor = [[RXCardDescriptor alloc] initWithStack:newStack ID:simpleDescriptor->cardID];
 		if (!newCardDescriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"COULD NOT FIND CARD IN STACK" userInfo:nil]; 
 		
 		newCard = [[RXCard alloc] initWithCardDescriptor:newCardDescriptor];
@@ -835,6 +835,35 @@ init_failure:
 	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:newCard waitUntilDone:NO];
 }
 
+- (void)_clearActiveCard {
+	// WARNING: MUST RUN ON THE SCRIPT THREAD
+	if ([NSThread currentThread] != [g_world scriptThread]) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_clearActiveCard: MUST RUN ON SCRIPT THREAD" userInfo:nil];
+	
+	// switching card blocks script execution
+	[self setExecutingBlockingAction:YES];
+	
+	// changing card completely invalidates the hotspot state, so we also nuke the current hotspot
+	[self resetHotspotState];
+	_currentHotspot = nil;
+	
+	// setup the back render state
+	_back_render_state->card = nil;
+	_back_render_state->newCard = YES;
+	_back_render_state->transition = nil;
+	
+	// run the stop rendering script on the old card
+	[_front_render_state->card stopRendering];
+	
+	// wipe out the transition queue
+	[_transitionQueue removeAllObjects];
+	
+	// fake a swap render state
+	[self swapRenderState:_front_render_state->card];
+	
+	// notify that the front card has changed
+	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:nil waitUntilDone:NO];
+}
+
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {
 	// WARNING: CAN RUN ON ANY THREAD
 	if (!stackKey) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"stackKey CANNOT BE NIL" userInfo:nil];
@@ -863,6 +892,10 @@ init_failure:
 	RXSimpleCardDescriptor* des = [[RXSimpleCardDescriptor alloc] initWithStackName:stackKey ID:cardID];
 	[self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:des inThread:[g_world scriptThread] waitUntilDone:wait];
 	[des release];
+}
+
+- (void)clearActiveCardWaitingUntilDone:(BOOL)wait {
+	[self performSelector:@selector(_clearActiveCard) withObject:nil inThread:[g_world scriptThread] waitUntilDone:wait];
 }
 
 #pragma mark -

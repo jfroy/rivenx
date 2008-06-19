@@ -71,6 +71,7 @@
 	
 	// game state
 	RXGameState* _gameState;
+	RXGameState* _gameStateToLoad;
 	
 	// engine variables
 	pthread_mutex_t _engineVariablesMutex;

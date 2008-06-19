@@ -47,7 +47,7 @@
 
 - (void)_updateCanSave {
 	[self willChangeValueForKey:@"canSave"];
-	_canSave = (([[g_world gameState] writeURL])) ? YES : NO;
+	_canSave = (([[g_world gameState] URL])) ? YES : NO;
 	[self didChangeValueForKey:@"canSave"];
 }
 
@@ -130,7 +130,7 @@
 - (IBAction)saveGame:(id)sender {
 	NSError* error;
 	RXGameState* gameState = [g_world gameState];
-	if (![gameState writeToURL:[gameState writeURL] error:&error]) [NSApp presentError:error];
+	if (![gameState writeToURL:[gameState URL] error:&error]) [NSApp presentError:error];
 }
 
 - (void)_saveAsPanelDidEnd:(NSSavePanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {

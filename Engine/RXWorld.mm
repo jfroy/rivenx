@@ -21,6 +21,8 @@
 
 #import "RXAudioRenderer.h"
 
+#import "RXCardState.h"
+
 NSObject* g_world = nil;
 
 
@@ -86,8 +88,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		// set the global to ourselves
 		g_world = self;
 		
-		// deferred second stage initialization
-//		[self performSelector:@selector(_secondStageInit) withObject:nil afterDelay:0.0];
+		// second stage initialization
 		[self _secondStageInit];
 	} @catch (NSException* e) {
 		[self notifyUserOfFatalException:e];
@@ -201,6 +202,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	
 	// initialize rendering
 	[self initializeRendering];
+	
+	// register for card changed notifications
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
 	
 	// load the aspit stack
 	[self loadStackWithKey:@"aspit" waitUntilDone:NO];
@@ -494,15 +498,15 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 #pragma mark -
 
-- (RXRenderState *)cyanMovieRenderState {
+- (RXRenderState*)cyanMovieRenderState {
 	return _cyanMovieState;
 }
 
-- (RXRenderState *)cardRenderState {
+- (RXRenderState*)cardRenderState {
 	return _cardState;
 }
 
-- (RXRenderState *)creditsRenderState {
+- (RXRenderState*)creditsRenderState {
 	return _creditsState;
 }
 
@@ -512,8 +516,28 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return _gameState;
 }
 
+- (void)_activeCardDidChange:(NSNotification*)notification {
+	// WARNING: WILL RUN ON THE MAIN THREAD
+	
+	// if the new active card is not nil (e.g. we did not clear the active card), update the game state's active card descriptor
+	if ([notification object]) [_gameState setCurrentCard:[(RXCardDescriptor*)[[notification object] descriptor] simpleDescriptor]];
+	// if we have a new game state to load and we just cleared the active card, do the swap
+	else if (_gameStateToLoad) {	
+		// swap the game state
+		[_gameState release];
+		_gameState = _gameStateToLoad;
+		_gameStateToLoad = nil;
+		
+		// set the active card to that of the new game state
+		RXSimpleCardDescriptor* scd = [_gameState currentCard];
+		[(RXCardState*)_cardState setActiveCardWithStack:scd->parentName ID:scd->cardID waitUntilDone:NO];
+	}
+}
+
 - (BOOL)loadGameState:(RXGameState*)gameState error:(NSError**)error {
-	return NO;
+	_gameStateToLoad = [gameState retain];
+	[(RXCardState*)_cardState clearActiveCardWaitingUntilDone:NO];
+	return YES;
 }
 
 - (void)_dumpEngineVariables {

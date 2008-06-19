@@ -16,7 +16,8 @@
 	RXEdition* _edition;
 	NSMutableDictionary* _variables;
 	RXSimpleCardDescriptor* _currentCard;
-	NSURL* _writeURL;
+	NSURL* _URL;
+	NSRecursiveLock* _accessLock;
 }
 
 + (RXGameState*)gameStateWithURL:(NSURL*)url error:(NSError**)error;
@@ -25,7 +26,7 @@
 
 - (void)dump;
 
-- (NSURL*)writeURL;
+- (NSURL*)URL;
 - (BOOL)writeToURL:(NSURL*)url error:(NSError**)error;
 
 - (uint16_t)unsignedShortForKey:(NSString*)key;
