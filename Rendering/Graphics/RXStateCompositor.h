@@ -37,6 +37,9 @@
 - (void)addState:(RXRenderState*)state opacity:(GLfloat)opacity;
 - (void)setOpacity:(GLfloat)opacity ofState:(RXRenderState*)state;
 
+- (void)fadeInState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector;
+- (void)fadeOutState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector;
+
 // event forwarding
 - (void)mouseDown:(NSEvent*)theEvent;
 - (void)mouseUp:(NSEvent*)theEvent;

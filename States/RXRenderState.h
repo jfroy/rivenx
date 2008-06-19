@@ -10,11 +10,7 @@
 
 
 typedef struct __RXStateDelegateFlags {
-#ifdef __BIG_ENDIAN__
-	unsigned int	stateDidDiffuse:1;
-#else
-	unsigned int	stateDidDiffuse:1;
-#endif
+
 } _RXStateDelegateFlags;
 
 
@@ -29,13 +25,4 @@ typedef struct __RXStateDelegateFlags {
 - (id)delegate;
 - (void)setDelegate:(id)delegate;
 
-- (void)arm;
-- (void)diffuse;
-
-- (BOOL)isArmed;
-
-@end
-
-@interface NSObject (RXStateDelegate)
-- (void)stateDidDiffuse:(RXRenderState *)state;
 @end

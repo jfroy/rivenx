@@ -32,29 +32,7 @@
 }
 
 - (void)setDelegate:(id)delegate {
-	_delegateFlags.stateDidDiffuse = [delegate respondsToSelector:@selector(stateDidDiffuse:)];
 	_delegate = delegate;
-}
-
-- (void)arm {
-#if defined(DEBUG)
-	RXOLog(@"arming");
-#endif
-
-	_armed = YES;
-}
-
-- (void)diffuse {
-	_armed = NO;
-	if(_delegateFlags.stateDidDiffuse) [_delegate stateDidDiffuse:self];
-	
-#if defined(DEBUG)
-	RXOLog(@"did diffuse");
-#endif
-}
-
-- (BOOL)isArmed {
-	return _armed;
 }
 
 - (CGRect)renderRect {
@@ -87,54 +65,10 @@
 }
 
 - (BOOL)resignFirstResponder {
-	return !_armed;
+	return YES;
 }
 
 #if defined(DEBUG)
-
-- (void)mouseDown:(NSEvent *)theEvent {
-	//RXOLog(@"Caught mouseDown");
-}
-
-- (void)rightMouseDown:(NSEvent *)theEvent {
-	//RXOLog(@"Caught rightMouseDown");
-}
-
-- (void)otherMouseDown:(NSEvent *)theEvent {
-	//RXOLog(@"Caught otherMouseDown");
-}
-
-- (void)mouseUp:(NSEvent *)theEvent {
-	//RXOLog(@"Caught mouseUp");
-}
-
-- (void)rightMouseUp:(NSEvent *)theEvent {
-	//RXOLog(@"Caught rightMouseUp");
-}
-
-- (void)otherMouseUp:(NSEvent *)theEvent {
-	//RXOLog(@"Caught otherMouseUp");
-}
-
-- (void)mouseMoved:(NSEvent *)theEvent {
-//	RXOLog(@"mouseMoved");
-}
-
-- (void)mouseDragged:(NSEvent *)theEvent {
-	//RXOLog(@"Caught mouseDragged");
-}
-
-- (void)scrollWheel:(NSEvent *)theEvent {
-	//RXOLog(@"Caught scrollWheel");
-}
-
-- (void)rightMouseDragged:(NSEvent *)theEvent {
-	//RXOLog(@"Caught rightMouseDragged");
-}
-
-- (void)otherMouseDragged:(NSEvent *)theEvent {
-	//RXOLog(@"Caught otherMouseDragged");
-}
 
 - (void)keyDown:(NSEvent *)theEvent {
 	NSString* characters = [theEvent charactersIgnoringModifiers];
@@ -143,14 +77,6 @@
 #if defined(DEBUG)
 	RXOLog(@"caught keyDown: 0x%x", firstCharacter);
 #endif
-}
-
-- (void)keyUp:(NSEvent *)theEvent {
-	//RXOLog(@"Caught keyUp");
-}
-
-- (void)flagsChanged:(NSEvent *)theEvent {
-	//RXOLog(@"Caught flagsChanged");
 }
 
 #endif

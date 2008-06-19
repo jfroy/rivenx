@@ -192,10 +192,6 @@
 	// FIXME: render state compositor only supports 4 states at this time
 	if ([_states count] == 4) return;
 	
-	// arm the new state
-	if ([state isArmed]) [state diffuse];
-	[state arm];
-	
 	// insert the state in the state responder chain
 	if ([_states count]) [state setNextResponder:((RXRenderStateCompositionDescriptor*)[_states lastObject])->state];
 	
@@ -257,6 +253,14 @@
 	
 	// update the texture blend weight
 	[self _updateTextureBlendWeightsUniform];
+}
+
+- (void)fadeInState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector {
+	
+}
+
+- (void)fadeOutState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector {
+	
 }
 
 #pragma mark -

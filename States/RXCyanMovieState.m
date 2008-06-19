@@ -69,8 +69,6 @@ static rx_render_dispatch_t _clear_dispatch;
 }
 
 - (void)arm {
-	[super arm];
-	
 	RXOLog(@"starting movie");
 	[[_cyanMovie movie] gotoBeginning];
 	[[_cyanMovie movie] play];
@@ -84,8 +82,6 @@ static rx_render_dispatch_t _clear_dispatch;
 - (void)diffuse {	 
 	[[_cyanMovie movie] stop];
 	_dispatch = _clear_dispatch;
-	
-	[super diffuse];
 }
 
 - (void)_cyanMovieIsDone:(NSNotification *)notification {

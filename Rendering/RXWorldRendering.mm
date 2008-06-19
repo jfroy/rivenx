@@ -62,9 +62,6 @@
 	[renderWindow setContentView:_worldView];
 	[_worldView release];
 	
-	// initialize the texture broker
-//	_textureBroker = [RXTextureBroker new];
-	
 	// initialize the state compositor
 	_stateCompositor = [[RXStateCompositor alloc] init];
 	

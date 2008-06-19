@@ -227,11 +227,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	// cut window delegate messages
 	if (RXGetWorldView()) [[RXGetWorldView() window] setDelegate:nil];
 	
-	// diffuse all rendering states
-	[_cardState diffuse];
-	[_creditsState diffuse];
-	[_cyanMovieState diffuse];
-	
 	// tear the world view down
 	[RXGetWorldView() tearDown];
 	

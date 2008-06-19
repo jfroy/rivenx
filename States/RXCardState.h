@@ -39,7 +39,6 @@ struct _rx_transition_program {
 	OSSpinLock _renderLock;
 	
 	// event handling
-	NSPoint _previousMousePosition;
 	int32_t _ignoreUIEventsCounter;
 	int32_t _scriptExecutionBlockedCounter;
 	NSCursor* _cursorBackup;

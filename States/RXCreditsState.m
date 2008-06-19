@@ -178,9 +178,7 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	glScissor(kCardViewportBorders[1], kCardViewportBorders[2], _viewportSize.width, _viewportSize.height);
 }
 
-- (void)arm {
-	[super arm];
-	
+- (void)arm {	
 	// prepare OpenGL
 	CGLContextObj cgl_ctx = CGLGetCurrentContext();
 	CGLLockContext(cgl_ctx);
@@ -229,8 +227,6 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	
 	// kill the animation
 	_killAnimation = YES;
-
-	[super diffuse];
 }
 
 - (void)_animationThreadMain:(id)object {

@@ -44,6 +44,7 @@ static const GLuint RX_CARD_STATIC_RENDER_INDEX = 0;
 static const GLuint RX_CARD_DYNAMIC_RENDER_INDEX = 1;
 static const GLuint RX_CARD_PREVIOUS_FRAME_INDEX = 2;
 
+
 static const void* RXCardAudioSourceArrayWeakRetain(CFAllocatorRef allocator, const void* value) {
 	return value;
 }
@@ -94,7 +95,9 @@ static void RXCardAudioSourceTaskApplier(const void* value, void* context) {
 #pragma mark -
 
 @interface RXCardState (RXCardStatePrivate)
-- (void)_updateActiveSources:(NSTimer*)timer;
+- (void)_initializeRendering;
+- (void)_updateActiveSources;
+- (void)_reshapeGL:(NSNotification*)notification;
 @end
 
 @implementation RXCardState
@@ -133,10 +136,7 @@ static void RXCardAudioSourceTaskApplier(const void* value, void* context) {
 	kerr = semaphore_create(mach_task_self(), &_transitionSemaphore, SYNC_POLICY_FIFO, 0);
 	if (kerr != 0) goto init_failure;
 	
-	_cardTexCoords[0] = 0.0f;											_cardTexCoords[1] = 0.0f;
-	_cardTexCoords[2] = 0.0f;											_cardTexCoords[3] = kRXCardViewportSize.height;
-	_cardTexCoords[4] = kRXCardViewportSize.width;						_cardTexCoords[5] = kRXCardViewportSize.height;
-	_cardTexCoords[6] = kRXCardViewportSize.width;						_cardTexCoords[7] = 0.0f;
+	[self _initializeRendering];
 	
 	return self;
 	
@@ -148,40 +148,22 @@ init_failure:
 - (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
-	if (_audioTaskThreadExitSemaphore != 0) semaphore_destroy(mach_task_self(), _audioTaskThreadExitSemaphore);
 	if (_transitionSemaphore != 0) semaphore_destroy(mach_task_self(), _transitionSemaphore);
-	
-	CFRelease(_activeSources);
-	[_activeSounds release];
-	[_activeDataSounds release];
+	if (_audioTaskThreadExitSemaphore != 0) semaphore_destroy(mach_task_self(), _audioTaskThreadExitSemaphore);
 	
 	[_transitionQueue release];
 	
-	free((void *)_back_render_state); _back_render_state = NULL;
-	free((void *)_front_render_state); _front_render_state = NULL;
+	CFRelease(_activeSources);
+	[_activeDataSounds release];
+	[_activeSounds release];
+	
+	if (_back_render_state) free((void *)_back_render_state);
+	if (_front_render_state) free((void *)_front_render_state);
 	
 	[super dealloc];
 }
 
-- (void)_reshapeGL:(NSNotification*)notification {
-	// WARNING: IT IS ASSUMED THE CURRENT CONTEXT HAS BEEN LOCKED BY THE CALLER 
-#if defined(DEBUG)
-	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"%@: reshaping OpenGL", self);
-#endif
-
-	rx_size_t viewport = RXGetGLViewportSize();
-	[self setRenderRect:CGRectMake((CGFloat)0.0, (CGFloat)0.0, (CGFloat)viewport.width, (CGFloat)viewport.height)];
-	
-	// compute the coordinates at which to draw cards to respect the borders and all
-	rx_size_t borderAvailableSpace = {viewport.width - kRXCardViewportSize.width, viewport.height - kRXCardViewportSize.height};
-	assert(borderAvailableSpace.width >= 0);
-	assert(borderAvailableSpace.height >= 0);
-	
-	_cardCompositeVertices[0] = floorf(borderAvailableSpace.width * kRXCardViewportBorderRatios[0]);		_cardCompositeVertices[1] = floorf(borderAvailableSpace.height * kRXCardViewportBorderRatios[1]);
-	_cardCompositeVertices[2] = _cardCompositeVertices[0];													_cardCompositeVertices[3] = _cardCompositeVertices[1] + kRXCardViewportSize.height;
-	_cardCompositeVertices[4] = _cardCompositeVertices[0] + kRXCardViewportSize.width;						_cardCompositeVertices[5] = _cardCompositeVertices[3];
-	_cardCompositeVertices[6] = _cardCompositeVertices[4];													_cardCompositeVertices[7] = _cardCompositeVertices[1];
-}
+#pragma mark -
 
 - (void)_reportShaderProgramError:(NSError*)error {
 	if ([[error domain] isEqualToString:GLShaderCompileErrorDomain]) {
@@ -222,10 +204,8 @@ init_failure:
 	return program;
 }
 
-- (void)arm {
+- (void)_initializeRendering {
 	// WARNING: WILL BE RUNNING ON THE MAIN THREAD
-	[super arm];
-	
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	
@@ -239,8 +219,11 @@ init_failure:
 	// kick start the audio task thread
 	[NSThread detachNewThreadSelector:@selector(_audioTaskThread:) toTarget:self withObject:nil];
 	
-	// pre-set the previous mouse position
-	_previousMousePosition = [(NSView*)g_worldView convertPoint:[[g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
+	// card texture coordinates VA
+	_cardTexCoords[0] = 0.0f;											_cardTexCoords[1] = 0.0f;
+	_cardTexCoords[2] = 0.0f;											_cardTexCoords[3] = kRXCardViewportSize.height;
+	_cardTexCoords[4] = kRXCardViewportSize.width;						_cardTexCoords[5] = kRXCardViewportSize.height;
+	_cardTexCoords[6] = kRXCardViewportSize.width;						_cardTexCoords[7] = 0.0f;
 	
 	// store the card render vertex attributes in a buffer object since they never change
 	glGenBuffers(1, &_cardRenderVBO);
@@ -358,63 +341,6 @@ init_failure:
 	CGLUnlockContext(cgl_ctx);
 }
 
-- (void)diffuse {
-	// WARNING: WILL BE RUNNING ON THE MAIN THREAD
-	
-	// don't bother with OpenGL anymore
-	[[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXOpenGLDidReshapeNotification" object:nil];
-	
-	// render state swap
-	bzero((void*)_back_render_state, sizeof(struct _rx_card_state_render_state));
-	struct _rx_card_state_render_state* old_front = _front_render_state;
-	_front_render_state = _back_render_state;
-	_back_render_state = old_front;
-	
-	// render lock
-	OSSpinLockLock(&_renderLock);
-	
-	// reclaim all remaining cards
-	[_back_render_state->card release];
-	bzero((void*)_back_render_state, sizeof(struct _rx_card_state_render_state));
-	
-	OSSpinLockUnlock(&_renderLock);
-	
-	// reclaim OpenGL resources
-	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
-	CGLLockContext(cgl_ctx);
-	
-	glDeleteBuffers(1, &_cardRenderVBO);
-	glDeleteFramebuffersEXT(2, _fbos);
-	glDeleteTextures(3, _textures);
-	glDeleteProgram(_waterProgram);
-	glDeleteProgram(_cardProgram);
-	
-	// FIXME: delete transition shader programs
-	
-	// done with OpenGL
-	CGLUnlockContext(cgl_ctx);
-	
-	// disable all sounds
-	RXSoundGroup* emptySG = [RXSoundGroup new];
-	[self activateSoundGroup:emptySG];
-	[emptySG release];
-	
-	// disable all data sounds
-	uint64_t past = RXTimingNow() - 1;
-	NSEnumerator* soundEnum = [_activeDataSounds objectEnumerator];
-	RXSound* sound;
-	while ((sound = [soundEnum nextObject])) {
-		sound->detachTimestampValid = YES;
-		sound->rampStartTimestamp = past;
-	}
-	
-	// call to super (which will set our armed state to NO)
-	[super diffuse];
-	
-	// wait for the audio task thread to die
-	semaphore_wait(_audioTaskThreadExitSemaphore);
-}
-
 #pragma mark -
 
 - (CFMutableArrayRef)_createSourceArrayFromSoundSets:(NSArray*)sets callbacks:(CFArrayCallBacks*)callbacks {
@@ -438,7 +364,7 @@ init_failure:
 	return [self _createSourceArrayFromSoundSets:[NSArray arrayWithObject:s] callbacks:callbacks];
 }
 
-- (void)_updateActiveSources:(NSTimer*)timer {
+- (void)_updateActiveSources {
 	// WARNING: WILL BE RUNNING ON THE SCRIPT THREAD
 	NSMutableSet* soundsToRemove = [NSMutableSet new];
 	uint64_t now = RXTimingNow();
@@ -602,7 +528,7 @@ init_failure:
 	assert(renderer->AvailableMixerBusCount() >= (uint32_t)CFArrayGetCount(sourcesToAdd));
 	
 	// update active sources immediately
-	[self _updateActiveSources:nil];
+	[self _updateActiveSources];
 	
 	// _updateActiveSources will have removed faded out sounds; make sure those are no longer in soundsToRemove
 	[soundsToRemove intersectSet:_activeSounds];
@@ -690,7 +616,7 @@ init_failure:
 	sound->detachTimestampValid = YES;
 	
 	// update active sources immediately
-	[self _updateActiveSources:nil];
+	[self _updateActiveSources];
 	
 	// now that any sources bound to be detached has been, go ahead and attach the new source
 	renderer->AttachSource(*(sound->source));
@@ -940,6 +866,26 @@ init_failure:
 }
 
 #pragma mark -
+
+- (void)_reshapeGL:(NSNotification*)notification {
+	// WARNING: IT IS ASSUMED THE CURRENT CONTEXT HAS BEEN LOCKED BY THE CALLER
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"%@: reshaping OpenGL", self);
+#endif
+
+	rx_size_t viewport = RXGetGLViewportSize();
+	[self setRenderRect:CGRectMake((CGFloat)0.0, (CGFloat)0.0, (CGFloat)viewport.width, (CGFloat)viewport.height)];
+	
+	// compute the coordinates at which to draw cards to respect the borders and all
+	rx_size_t borderAvailableSpace = {viewport.width - kRXCardViewportSize.width, viewport.height - kRXCardViewportSize.height};
+	assert(borderAvailableSpace.width >= 0);
+	assert(borderAvailableSpace.height >= 0);
+	
+	_cardCompositeVertices[0] = floorf(borderAvailableSpace.width * kRXCardViewportBorderRatios[0]);		_cardCompositeVertices[1] = floorf(borderAvailableSpace.height * kRXCardViewportBorderRatios[1]);
+	_cardCompositeVertices[2] = _cardCompositeVertices[0];													_cardCompositeVertices[3] = _cardCompositeVertices[1] + kRXCardViewportSize.height;
+	_cardCompositeVertices[4] = _cardCompositeVertices[0] + kRXCardViewportSize.width;						_cardCompositeVertices[5] = _cardCompositeVertices[3];
+	_cardCompositeVertices[6] = _cardCompositeVertices[4];													_cardCompositeVertices[7] = _cardCompositeVertices[1];
+}
 
 - (void)_renderCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
@@ -1313,8 +1259,6 @@ exit_flush_tasks:
 		_currentHotspot = hotspot;
 		_resetHotspotState = NO;
 	}
-	
-	_previousMousePosition = mousePoint;
 }
 
 - (void)mouseDragged:(NSEvent*)event {
