@@ -7,6 +7,12 @@
  *
  */
 
+#if !defined(__OBJC__)
+#error RXWorldProtocol.h requires Objective-C
+#else
+
+#import <sys/cdefs.h>
+
 #import <Foundation/Foundation.h>
 
 #import "RXStack.h"
@@ -18,6 +24,7 @@
 @protocol RXWorldProtocol <NSObject>
 - (NSThread*)stackThread;
 - (NSThread*)scriptThread;
+- (NSThread*)animationThread;
 
 - (NSArray*)activeStacks;
 - (RXStack*)activeStackWithKey:(NSString *)key;
@@ -38,6 +45,8 @@
 @end
 
 
+__BEGIN_DECLS
+
 extern NSObject <RXWorldProtocol>* g_world;
 
 CF_INLINE BOOL RXEngineGetBool(NSString* path) {
@@ -45,3 +54,7 @@ CF_INLINE BOOL RXEngineGetBool(NSString* path) {
 	if (!o) return NO;
 	return [o boolValue];
 }
+
+__END_DECLS
+
+#endif // __OBJC__

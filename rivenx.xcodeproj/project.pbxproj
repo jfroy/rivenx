@@ -121,6 +121,8 @@
 		3199276D0D96AFCE00ED1B47 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		319927730D96B07200ED1B47 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		319C458109C138380031F95F /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
+		31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */; };
+		31A1FA370E0B772100B2437A /* RXAnimation_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FA270E0B761500B2437A /* RXAnimation_test.m */; };
 		31A9EC23094D242600C6A0AB /* RXCyanMovieState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A9EC21094D242600C6A0AB /* RXCyanMovieState.m */; };
 		31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A9F027094D2D0300C6A0AB /* RXRenderState.m */; };
 		31AE54570DE0ADD6000E71CF /* ExceptionHandling.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31AE54560DE0ADD6000E71CF /* ExceptionHandling.framework */; };
@@ -339,11 +341,9 @@
 		312D9ED20D4D81E1006E384C /* de */ = {isa = PBXFileReference; lastKnownFileType = file; name = de; path = de.lproj/Extras.MHK; sourceTree = "<group>"; };
 		312EDC700A2E3B80005D26AF /* RXHotspot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXHotspot.h; sourceTree = "<group>"; };
 		312EDC710A2E3B80005D26AF /* RXHotspot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXHotspot.m; sourceTree = "<group>"; };
-		312F4D8A0DC2639C00B3AF0D /* RXAnimation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAnimation.h; sourceTree = "<group>"; };
 		312F4D8B0DC2639C00B3AF0D /* RXRendering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRendering.h; sourceTree = "<group>"; };
 		312F4D8C0DC2639C00B3AF0D /* RXRendering.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXRendering.m; sourceTree = "<group>"; };
 		312F4D8D0DC2639C00B3AF0D /* RXWorldRendering.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXWorldRendering.mm; sourceTree = "<group>"; };
-		312F4D8E0DC2639C00B3AF0D /* RXAnimation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXAnimation.m; sourceTree = "<group>"; };
 		312F4D950DC263F400B3AF0D /* GL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GL.h; sourceTree = "<group>"; };
 		312F4D960DC263F400B3AF0D /* GL_debug.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = GL_debug.c; sourceTree = "<group>"; };
 		312F4D970DC263F400B3AF0D /* GL_debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GL_debug.h; sourceTree = "<group>"; };
@@ -442,6 +442,10 @@
 		319926E10D96A81000ED1B47 /* RXSystemProfiler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXSystemProfiler.m; path = Base/RXSystemProfiler.m; sourceTree = "<group>"; };
 		319C457F09C1382F0031F95F /* VirtualRingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = VirtualRingBuffer.h; path = Additions/VirtualRingBuffer.h; sourceTree = "<group>"; };
 		319C458009C1382F0031F95F /* VirtualRingBuffer.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = VirtualRingBuffer.m; path = Additions/VirtualRingBuffer.m; sourceTree = "<group>"; };
+		31A1FA1B0E0B4AB800B2437A /* RXAnimation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAnimation.h; sourceTree = "<group>"; };
+		31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXAnimation.m; sourceTree = "<group>"; };
+		31A1FA260E0B761500B2437A /* RXAnimation_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAnimation_test.h; sourceTree = "<group>"; };
+		31A1FA270E0B761500B2437A /* RXAnimation_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXAnimation_test.m; sourceTree = "<group>"; };
 		31A9EC20094D242600C6A0AB /* RXCyanMovieState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXCyanMovieState.h; path = States/RXCyanMovieState.h; sourceTree = "<group>"; };
 		31A9EC21094D242600C6A0AB /* RXCyanMovieState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXCyanMovieState.m; path = States/RXCyanMovieState.m; sourceTree = "<group>"; };
 		31A9EF94094D285400C6A0AB /* RXBase.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXBase.pch; sourceTree = "<group>"; };
@@ -878,6 +882,15 @@
 			name = Edition;
 			sourceTree = "<group>";
 		};
+		31A1FA1A0E0B4AB800B2437A /* Animation */ = {
+			isa = PBXGroup;
+			children = (
+				31A1FA1B0E0B4AB800B2437A /* RXAnimation.h */,
+				31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */,
+			);
+			path = Animation;
+			sourceTree = "<group>";
+		};
 		31A9EC1D094D23F200C6A0AB /* States */ = {
 			isa = PBXGroup;
 			children = (
@@ -958,6 +971,8 @@
 		31C357220D92A6C700EDEF81 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				31A1FA260E0B761500B2437A /* RXAnimation_test.h */,
+				31A1FA270E0B761500B2437A /* RXAnimation_test.m */,
 				31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */,
 				31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */,
 				318CB4620E04917A00BD2C38 /* RXGameState_test.h */,
@@ -977,8 +992,7 @@
 			children = (
 				3153ED6109A3ED12002E1149 /* Audio */,
 				312F4D930DC263F400B3AF0D /* Graphics */,
-				312F4D8A0DC2639C00B3AF0D /* RXAnimation.h */,
-				312F4D8E0DC2639C00B3AF0D /* RXAnimation.m */,
+				31A1FA1A0E0B4AB800B2437A /* Animation */,
 				312F4D8B0DC2639C00B3AF0D /* RXRendering.h */,
 				312F4D8C0DC2639C00B3AF0D /* RXRendering.m */,
 				312F4D8D0DC2639C00B3AF0D /* RXWorldRendering.mm */,
@@ -1377,6 +1391,7 @@
 				315090200E035945004EE6F3 /* RXSimpleCardDescriptor_test.m in Sources */,
 				318CB4640E04917A00BD2C38 /* RXGameState_test.m in Sources */,
 				318CB4FD0E05C60C00BD2C38 /* BZFSUtilities.m in Sources */,
+				31A1FA370E0B772100B2437A /* RXAnimation_test.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1497,6 +1512,7 @@
 				312F4DC20DC263F600B3AF0D /* RXWorldView.m in Sources */,
 				31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */,
 				3185C4730E06046D00528220 /* RXVersionComparator.m in Sources */,
+				31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

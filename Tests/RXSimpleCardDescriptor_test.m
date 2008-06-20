@@ -20,8 +20,8 @@
 	STAssertNotNil(archive, @"keyed archiving should not fail");
 	
 	RXSimpleCardDescriptor* clonedDescriptor = [NSKeyedUnarchiver unarchiveObjectWithData:archive];
-	STAssertEquals(_descriptor->_ID, clonedDescriptor->_ID, @"card ID should match");
-	STAssertEqualObjects(_descriptor->_parentName, clonedDescriptor->_parentName, @"stack name should match");
+	STAssertEquals(_descriptor->cardID, clonedDescriptor->cardID, @"card ID should match");
+	STAssertEqualObjects(_descriptor->parentName, clonedDescriptor->parentName, @"stack name should match");
 }
 
 @end

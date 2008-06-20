@@ -7,12 +7,17 @@
  *
  */
 
-#include <sys/cdefs.h>
+#if !defined(__OBJC__)
+#error RXRendering.h requires Objective-C
+#else
+
+#import <sys/cdefs.h>
 
 #import "Graphics/GL/GL.h"
 #import <OpenGL/CGLMacro.h>
 #import "Graphics/GL/GL_debug.h"
 
+#import <Cocoa/Cocoa.h>
 #import <QuartzCore/CoreVideo.h>
 
 __BEGIN_DECLS
@@ -134,3 +139,5 @@ CF_INLINE rx_post_flush_tasks_dispatch_t RXGetPostFlushTasksImplementation(Class
 }
 
 __END_DECLS
+
+#endif // __OBJC__

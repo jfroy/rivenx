@@ -249,17 +249,25 @@
 
 - (void)setOpacity:(GLfloat)opacity ofState:(RXRenderState *)state {
 	RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
-	if (descriptor) descriptor->opacity = opacity;
+	if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
+	
+	// change the opacity in the render state descriptor
+	descriptor->opacity = opacity;
 	
 	// update the texture blend weight
 	[self _updateTextureBlendWeightsUniform];
 }
 
 - (void)fadeInState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector {
-	
+	RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
+	if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
 }
 
 - (void)fadeOutState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector {
+	RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
+	if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
+	
+//	NSAnimation* fadeOutAnimation = [[NSAnimation alloc] initWithDuration:2.0 animationCurve:NSAnimationEaseOut];
 	
 }
 

@@ -6,6 +6,8 @@
 //	Copyright 2007 Apple, Inc. All rights reserved.
 //
 
+#import <Cocoa/Cocoa.h>
+
 #import <pthread.h>
 
 #import "RXRendering.h"
@@ -28,6 +30,8 @@
 	GLfloat vertex_coords[8];
 	GLfloat tex_coords[8];
 	GLfloat front_color[4];
+	
+	NSAnimation* _currentFadeAnimation;
 	
 @public
 	// THIS IS PUBLIC ONLY FOR RENDER STATES

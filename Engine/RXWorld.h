@@ -13,10 +13,10 @@
 
 #import <pthread.h>
 
+#import "RXWorldProtocol.h"
+
 #import <Cocoa/Cocoa.h>
 #import <MHKKit/MHKKit.h>
-
-#import "RXWorldProtocol.h"
 
 #import "RXGameState.h"
 #import "RXEditionManager.h"

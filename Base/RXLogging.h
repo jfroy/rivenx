@@ -23,6 +23,7 @@ extern const char* kRXLoggingScript;
 extern const char* kRXLoggingGraphics;
 extern const char* kRXLoggingAudio;
 extern const char* kRXLoggingEvents;
+extern const char* kRXLoggingAnimation;
 
 /* levels */
 extern const int kRXLoggingLevelDebug;

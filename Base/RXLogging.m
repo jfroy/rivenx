@@ -21,6 +21,7 @@ const char* kRXLoggingScript = "SCRIPT";
 const char* kRXLoggingGraphics = "GRAPHICS";
 const char* kRXLoggingAudio = "AUDIO";
 const char* kRXLoggingEvents = "EVENTS";
+const char* kRXLoggingAnimation = "ANIMATION";
 
 /* levels */
 const int kRXLoggingLevelDebug = ASL_LEVEL_DEBUG;

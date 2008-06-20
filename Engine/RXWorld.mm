@@ -355,6 +355,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return _scriptThread;
 }
 
+- (NSThread*)animationThread {
+	return _animationThread;
+}
+
 #pragma mark -
 
 - (void)postStackLoadedNotification_:(NSString *)stackKey {
