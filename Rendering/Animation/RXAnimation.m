@@ -36,4 +36,13 @@
 	[super startAnimation];
 }
 
+- (void)stopAnimation {
+	if ([NSThread currentThread] != [g_world animationThread]) {
+		[self performSelector:_cmd inThread:[g_world animationThread] waitUntilDone:NO];
+		return;
+	}
+	
+	[super stopAnimation];
+}
+
 @end

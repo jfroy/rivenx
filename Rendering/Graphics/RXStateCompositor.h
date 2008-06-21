@@ -39,6 +39,8 @@
 }
 
 - (void)addState:(RXRenderState*)state opacity:(GLfloat)opacity;
+
+- (GLfloat)opacityForState:(RXRenderState*)state;
 - (void)setOpacity:(GLfloat)opacity ofState:(RXRenderState*)state;
 
 - (void)fadeInState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector;

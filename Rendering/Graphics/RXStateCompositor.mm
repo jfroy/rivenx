@@ -9,8 +9,11 @@
 #import <OpenGL/CGLMacro.h>
 
 #import "RXAtomic.h"
+
 #import "RXStateCompositor.h"
 #import "RXWorldProtocol.h"
+
+#import "RXRenderStateOpacityAnimation.h"
 
 
 @interface RXRenderStateCompositionDescriptor : NSObject {
@@ -247,6 +250,13 @@
 	[descriptor release];
 }
 
+- (GLfloat)opacityForState:(RXRenderState*)state {
+	RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
+	if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
+	
+	return descriptor->opacity;
+}
+
 - (void)setOpacity:(GLfloat)opacity ofState:(RXRenderState *)state {
 	RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
 	if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
@@ -258,6 +268,10 @@
 	[self _updateTextureBlendWeightsUniform];
 }
 
+- (void)animationDidEnd:(NSAnimation*)animation {
+	[animation release];
+}
+
 - (void)fadeInState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector {
 	RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
 	if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
@@ -267,8 +281,15 @@
 	RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
 	if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
 	
-//	NSAnimation* fadeOutAnimation = [[NSAnimation alloc] initWithDuration:2.0 animationCurve:NSAnimationEaseOut];
+	NSAnimation* fadeOutAnimation = [[RXRenderStateOpacityAnimation alloc] initWithState:state targetOpacity:0.0f duration:duration];
+	if (!_currentFadeAnimation) _currentFadeAnimation = fadeOutAnimation;
+	else {
+		[fadeOutAnimation startWhenAnimation:_currentFadeAnimation reachesProgress:1.0];
+		_currentFadeAnimation = fadeOutAnimation;
+	}
 	
+	[_currentFadeAnimation setDelegate:self];
+	[_currentFadeAnimation startAnimation];
 }
 
 #pragma mark -

@@ -15,18 +15,28 @@
 
 @implementation RXAnimation_test
 
-- (BOOL)animationShouldStart:(NSAnimation *)animation {
+- (BOOL)animationShouldStart:(NSAnimation*)animation {
 	if ([NSThread currentThread] != [[RXWorld sharedWorld] animationThread]) wrongThread = YES;
 	return YES;
 }
 
-- (void)animationDidEnd:(NSAnimation *)animation {
+- (void)animationDidEnd:(NSAnimation*)animation {
 	if ([NSThread currentThread] != [[RXWorld sharedWorld] animationThread]) wrongThread = YES;
 	semaphore_signal_all(animationEndSemaphore);
 }
 
+- (void)animationDidStop:(NSAnimation*)animation {
+	if ([NSThread currentThread] != [[RXWorld sharedWorld] animationThread]) wrongThread = YES;
+	semaphore_signal_all(animationEndSemaphore);
+}
+
+- (float)animation:(NSAnimation*)animation valueForProgress:(NSAnimationProgress)progress {
+	if ([NSThread currentThread] != [[RXWorld sharedWorld] animationThread]) wrongThread = YES;
+	return progress;
+}
+
 - (void)setUp {
-	animation = [[RXAnimation alloc] initWithDuration:2.0 animationCurve:NSAnimationLinear];
+	animation = [[RXAnimation alloc] initWithDuration:3.0 animationCurve:NSAnimationLinear];
 	[animation setDelegate:self];
 	wrongThread = NO;
 	
@@ -40,6 +50,14 @@
 
 - (void)testBasicAnimation {
 	[animation startAnimation];
+	semaphore_wait(animationEndSemaphore);
+	STAssertFalse(wrongThread, @"animation ran some method on a thread other than the animation thread");
+}
+
+- (void)testStopAnimation {
+	[animation startAnimation];
+	sleep(1);
+	[animation stopAnimation];
 	semaphore_wait(animationEndSemaphore);
 	STAssertFalse(wrongThread, @"animation ran some method on a thread other than the animation thread");
 }

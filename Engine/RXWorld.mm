@@ -538,9 +538,14 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	}
 }
 
+- (void)_cardStateWasFadedOut:(RXRenderState*)state {
+	
+}
+
 - (BOOL)loadGameState:(RXGameState*)gameState error:(NSError**)error {
 	_gameStateToLoad = [gameState retain];
-	[(RXCardState*)_cardState clearActiveCardWaitingUntilDone:NO];
+//	[(RXCardState*)_cardState clearActiveCardWaitingUntilDone:NO];
+	[_stateCompositor fadeOutState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedOut:)];
 	return YES;
 }
 
