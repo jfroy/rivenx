@@ -162,8 +162,6 @@
 		31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9A0DBC07A700E970E1 /* MainMenu.xib */; };
 		31D21B9D0DBC07B500E970E1 /* EditionManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9C0DBC07B500E970E1 /* EditionManager.xib */; };
 		31D21B9F0DBC07C300E970E1 /* DebugConsole.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */; };
-		31D6ACA20D40166900629AEB /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31D6ACA10D40166800629AEB /* Sparkle.framework */; };
-		31D6ACA50D40167400629AEB /* Sparkle.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 31D6ACA10D40166800629AEB /* Sparkle.framework */; };
 		31DAA10F09D8892000F63F20 /* RXCardAudioSource_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */; };
 		31DAA12D09D88B2300F63F20 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
 		31DAA12E09D88B2B00F63F20 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384A08C6A73E004B7FD0 /* CoreFoundation.framework */; };
@@ -280,7 +278,6 @@
 			dstSubfolderSpec = 10;
 			files = (
 				31495A4F0E327DA400E49C83 /* MHKKit.framework in Copy Frameworks */,
-				31D6ACA50D40167400629AEB /* Sparkle.framework in Copy Frameworks */,
 				31863BE009919B29001A4A42 /* FScript.framework in Copy Frameworks */,
 			);
 			name = "Copy Frameworks";
@@ -493,7 +490,6 @@
 		31D21B9A0DBC07A700E970E1 /* MainMenu.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainMenu.xib; sourceTree = "<group>"; };
 		31D21B9C0DBC07B500E970E1 /* EditionManager.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = EditionManager.xib; sourceTree = "<group>"; };
 		31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = DebugConsole.xib; sourceTree = "<group>"; };
-		31D6ACA10D40166800629AEB /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
 		31D6AD8D0D4197E600629AEB /* dump_save */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dump_save; sourceTree = BUILT_PRODUCTS_DIR; };
 		31DAA0DF09D888E100F63F20 /* RXCardAudioSource_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RXCardAudioSource_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.objcpp; path = RXCardAudioSource_test.mm; sourceTree = "<group>"; };
@@ -629,7 +625,6 @@
 				31DCF73608CB855C00E351D9 /* QuickTime.framework in Frameworks */,
 				31863BAF09919B04001A4A42 /* FScript.framework in Frameworks */,
 				31E0122E0C90F016000A271E /* MHKKit.framework in Frameworks */,
-				31D6ACA20D40166900629AEB /* Sparkle.framework in Frameworks */,
 				31AE54570DE0ADD6000E71CF /* ExceptionHandling.framework in Frameworks */,
 				3153E7F40DE5ABC900DF63B8 /* Carbon.framework in Frameworks */,
 			);
@@ -700,7 +695,6 @@
 				31DCF73008CB855C00E351D9 /* QTKit.framework */,
 				31DCF73108CB855C00E351D9 /* QuartzCore.framework */,
 				31DCF73208CB855C00E351D9 /* QuickTime.framework */,
-				31D6ACA10D40166800629AEB /* Sparkle.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -2194,6 +2188,10 @@
 			baseConfigurationReference = 31B78EC70C88F25F00227E0F /* RivenX.xcconfig */;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx-devel.xml";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+				);
 			};
 			name = Debug_u;
 		};
@@ -2218,6 +2216,10 @@
 			baseConfigurationReference = 31B78EC70C88F25F00227E0F /* RivenX.xcconfig */;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx-devel.xml";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+				);
 			};
 			name = Debug;
 		};
@@ -2226,6 +2228,10 @@
 			baseConfigurationReference = 31B78EC70C88F25F00227E0F /* RivenX.xcconfig */;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+				);
 			};
 			name = Release;
 		};
