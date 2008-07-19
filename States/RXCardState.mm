@@ -651,7 +651,7 @@ init_failure:
 	precedencePolicy.importance = 63;
 	kr = thread_policy_set(pthread_mach_thread_np(pthread_self()), THREAD_PRECEDENCE_POLICY, (thread_policy_t)&precedencePolicy, THREAD_PRECEDENCE_POLICY_COUNT);
 	
-	while (_armed) {
+	while (1) {
 		OSSpinLockLock(&_audioTaskThreadStatusLock);
 		
 		everything.length = CFArrayGetCount(_activeSources);

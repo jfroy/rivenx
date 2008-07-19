@@ -8,6 +8,7 @@
 
 #import <QuickTime/QuickTime.h>
 
+#import "RXDebug.h"
 #import "RXThreadUtilities.h"
 #import "RXLogging.h"
 #import "InterThreadMessaging.h"

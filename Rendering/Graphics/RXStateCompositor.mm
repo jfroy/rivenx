@@ -51,6 +51,7 @@
 	
 	_states = [[NSMutableArray alloc] initWithCapacity:0x10];
 	_state_map = NSCreateMapTable(NSNonRetainedObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, 0);
+	_animationCompletionInvocations = [NSMutableDictionary new];
 	
 	_renderStates = [_states copy];
 	
@@ -153,6 +154,7 @@
 	[_states release];
 	NSFreeMapTable(_state_map);
 	[_renderStates release];
+	[_animationCompletionInvocations release];
 	
 	[super dealloc];
 }
@@ -269,24 +271,54 @@
 }
 
 - (void)animationDidEnd:(NSAnimation*)animation {
+	[(NSInvocation*)[_animationCompletionInvocations objectForKey:animation] invoke];
+	if (_currentFadeAnimation == animation) _currentFadeAnimation = nil;
+	[animation release];
+}
+
+- (void)animationDidStop:(NSAnimation*)animation {
+	[(NSInvocation*)[_animationCompletionInvocations objectForKey:animation] invoke];
+	if (_currentFadeAnimation == animation) _currentFadeAnimation = nil;
 	[animation release];
 }
 
 - (void)fadeInState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector {
 	RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
 	if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
+	
+	NSAnimation* animation = [[RXRenderStateOpacityAnimation alloc] initWithState:state targetOpacity:1.0f duration:duration];
+	if (!_currentFadeAnimation) _currentFadeAnimation = animation;
+	else {
+		[animation startWhenAnimation:_currentFadeAnimation reachesProgress:1.0];
+		_currentFadeAnimation = animation;
+	}
+	
+	NSMethodSignature* completionSignature = [delegate methodSignatureForSelector:completionSelector];
+	NSInvocation* completionInvocation = [NSInvocation invocationWithMethodSignature:completionSignature];
+	[completionInvocation setTarget:delegate];
+	[completionInvocation setArgument:state atIndex:2];
+	[_animationCompletionInvocations setObject:completionInvocation forKey:animation];
+	
+	[_currentFadeAnimation setDelegate:self];
+	[_currentFadeAnimation startAnimation];
 }
 
 - (void)fadeOutState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector {
 	RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
 	if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
 	
-	NSAnimation* fadeOutAnimation = [[RXRenderStateOpacityAnimation alloc] initWithState:state targetOpacity:0.0f duration:duration];
-	if (!_currentFadeAnimation) _currentFadeAnimation = fadeOutAnimation;
+	NSAnimation* animation = [[RXRenderStateOpacityAnimation alloc] initWithState:state targetOpacity:0.0f duration:duration];
+	if (!_currentFadeAnimation) _currentFadeAnimation = animation;
 	else {
-		[fadeOutAnimation startWhenAnimation:_currentFadeAnimation reachesProgress:1.0];
-		_currentFadeAnimation = fadeOutAnimation;
+		[animation startWhenAnimation:_currentFadeAnimation reachesProgress:1.0];
+		_currentFadeAnimation = animation;
 	}
+	
+	NSMethodSignature* completionSignature = [delegate methodSignatureForSelector:completionSelector];
+	NSInvocation* completionInvocation = [NSInvocation invocationWithMethodSignature:completionSignature];
+	[completionInvocation setTarget:delegate];
+	[completionInvocation setArgument:state atIndex:2];
+	[_animationCompletionInvocations setObject:completionInvocation forKey:animation];
 	
 	[_currentFadeAnimation setDelegate:self];
 	[_currentFadeAnimation startAnimation];
@@ -407,22 +439,37 @@
 #pragma mark -
 
 - (void)mouseDown:(NSEvent *)theEvent {
+	// do not dispatch events if an animation is running
+	if (_currentFadeAnimation) return;
+	
 	[((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseDown:theEvent];
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
+	// do not dispatch events if an animation is running
+	if (_currentFadeAnimation) return;
+	
 	[((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseUp:theEvent];
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent {
+	// do not dispatch events if an animation is running
+	if (_currentFadeAnimation) return;
+	
 	[((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseMoved:theEvent];
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent {
+	// do not dispatch events if an animation is running
+	if (_currentFadeAnimation) return;
+	
 	[((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseDragged:theEvent];
 }
 
 - (void)keyDown:(NSEvent *)theEvent {
+	// do not dispatch events if an animation is running
+	if (_currentFadeAnimation) return;
+
 #if defined(DEBUG)
 	NSString* characters = [theEvent charactersIgnoringModifiers];
 	unichar firstCharacter = [characters characterAtIndex:0];

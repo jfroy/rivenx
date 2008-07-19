@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "RXVersionComparator.h"
+
 
 @interface RXApplicationDelegate : NSObject {
 #if defined(DEBUG)
@@ -19,6 +21,8 @@
 	IBOutlet NSWindow* _aboutBox;
 	IBOutlet NSTextField* _versionField;
 	IBOutlet NSTextField* _copyrightField;
+	
+	IBOutlet RXVersionComparator* versionComparator;
 	
 	BOOL _saveFlag;
 	BOOL _canSave;

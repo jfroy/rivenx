@@ -20,8 +20,6 @@
 	NSURLDownload *download;
 	NSString *downloadPath;
 	
-	SUUnarchiver *unarchiver;
-	
 	NSString *relaunchPath;
 }
 
@@ -49,7 +47,9 @@
 - (void)installUpdate;
 - (void)installerFinishedForHostBundle:(NSBundle *)hb;
 - (void)installerForHostBundle:(NSBundle *)hb failedWithError:(NSError *)error;
+
 - (void)relaunchHostApp;
+- (void)cleanUp;
 
 - (void)abortUpdate;
 - (void)abortUpdateWithError:(NSError *)error;

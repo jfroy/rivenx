@@ -9,6 +9,7 @@
 #import <ExceptionHandling/NSExceptionHandler.h>
 
 #import "RXApplicationDelegate.h"
+
 #import "RXWorld.h"
 #import "RXEditionManagerWindowController.h"
 
@@ -44,6 +45,10 @@
 	[debugMenuItem release];
 }
 #endif
+
+- (id <SUVersionComparison>)versionComparatorForHostBundle:(NSBundle *)hb {
+	return versionComparator;
+}
 
 - (void)_updateCanSave {
 	[self willChangeValueForKey:@"canSave"];

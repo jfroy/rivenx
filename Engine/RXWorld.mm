@@ -524,7 +524,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	// WARNING: WILL RUN ON THE MAIN THREAD
 	
 	// if the new active card is not nil (e.g. we did not clear the active card), update the game state's active card descriptor
-	if ([notification object]) [_gameState setCurrentCard:[(RXCardDescriptor*)[[notification object] descriptor] simpleDescriptor]];
+	if ([notification object])
+		[_gameState setCurrentCard:[(RXCardDescriptor*)[[notification object] descriptor] simpleDescriptor]];
 	// if we have a new game state to load and we just cleared the active card, do the swap
 	else if (_gameStateToLoad) {	
 		// swap the game state
@@ -535,16 +536,22 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		// set the active card to that of the new game state
 		RXSimpleCardDescriptor* scd = [_gameState currentCard];
 		[(RXCardState*)_cardState setActiveCardWithStack:scd->parentName ID:scd->cardID waitUntilDone:NO];
+		
+		// fade the card state back in
+		[_stateCompositor fadeInState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedIn:)];
 	}
 }
 
+- (void)_cardStateWasFadedIn:(RXRenderState*)state {
+
+}
+
 - (void)_cardStateWasFadedOut:(RXRenderState*)state {
-	
+	[(RXCardState*)_cardState clearActiveCardWaitingUntilDone:NO];
 }
 
 - (BOOL)loadGameState:(RXGameState*)gameState error:(NSError**)error {
 	_gameStateToLoad = [gameState retain];
-//	[(RXCardState*)_cardState clearActiveCardWaitingUntilDone:NO];
 	[_stateCompositor fadeOutState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedOut:)];
 	return YES;
 }

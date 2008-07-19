@@ -78,6 +78,32 @@
 		3145384008C6A5F4004B7FD0 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145383F08C6A5F4004B7FD0 /* IOKit.framework */; };
 		3145384C08C6A73E004B7FD0 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384A08C6A73E004B7FD0 /* CoreFoundation.framework */; };
 		3145384D08C6A73E004B7FD0 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384B08C6A73E004B7FD0 /* CoreServices.framework */; };
+		314959AB0E327BA500E49C83 /* MHKADPCMDecompressor.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959950E327BA500E49C83 /* MHKADPCMDecompressor.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		314959AC0E327BA500E49C83 /* MHKArchiveWAVAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959960E327BA500E49C83 /* MHKArchiveWAVAdditions.m */; };
+		314959AD0E327BA500E49C83 /* mohawk_bitmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 314959970E327BA500E49C83 /* mohawk_bitmap.c */; };
+		314959AE0E327BA500E49C83 /* MHKFileHandle.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959980E327BA500E49C83 /* MHKFileHandle.m */; };
+		314959AF0E327BA500E49C83 /* MHKMP2Decompressor.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959990E327BA500E49C83 /* MHKMP2Decompressor.m */; };
+		314959B00E327BA500E49C83 /* MHKArchiveBitmapAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 3149599A0E327BA500E49C83 /* MHKArchiveBitmapAdditions.m */; };
+		314959B10E327BA500E49C83 /* MHKArchive.m in Sources */ = {isa = PBXBuildFile; fileRef = 3149599B0E327BA500E49C83 /* MHKArchive.m */; };
+		314959B20E327BA500E49C83 /* mohawk_core.c in Sources */ = {isa = PBXBuildFile; fileRef = 3149599C0E327BA500E49C83 /* mohawk_core.c */; };
+		314959B30E327BA500E49C83 /* MHKErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 3149599D0E327BA500E49C83 /* MHKErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		314959B40E327BA500E49C83 /* MHKKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 3149599E0E327BA500E49C83 /* MHKKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		314959B60E327BA500E49C83 /* MHKFileHandle.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A00E327BA500E49C83 /* MHKFileHandle.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		314959B70E327BA500E49C83 /* mohawk_bitmap.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A10E327BA500E49C83 /* mohawk_bitmap.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		314959B80E327BA500E49C83 /* MHKErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959A20E327BA500E49C83 /* MHKErrors.m */; };
+		314959B90E327BA500E49C83 /* MHKAudioDecompression.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A30E327BA500E49C83 /* MHKAudioDecompression.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		314959BA0E327BA500E49C83 /* mohawk_wave.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A40E327BA500E49C83 /* mohawk_wave.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		314959BB0E327BA500E49C83 /* MHKMP2Decompressor.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A50E327BA500E49C83 /* MHKMP2Decompressor.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		314959BC0E327BA500E49C83 /* MHKADPCMDecompressor.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959A60E327BA500E49C83 /* MHKADPCMDecompressor.m */; };
+		314959BD0E327BA500E49C83 /* MHKArchive.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A70E327BA500E49C83 /* MHKArchive.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		314959BE0E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959A80E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m */; };
+		314959BF0E327BA500E49C83 /* mohawk_core.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A90E327BA500E49C83 /* mohawk_core.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		31495A4F0E327DA400E49C83 /* MHKKit.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
+		31495A6B0E327E8300E49C83 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 315A129708F1C3E500566B20 /* Accelerate.framework */; };
+		31495A6C0E327E8600E49C83 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
+		31495A6E0E327E9000E49C83 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384B08C6A73E004B7FD0 /* CoreServices.framework */; };
+		31495A730E327EA900E49C83 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3153ED8209A3ED3E002E1149 /* AudioToolbox.framework */; };
+		31495A750E327EB100E49C83 /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31DCF73208CB855C00E351D9 /* QuickTime.framework */; };
 		315017990CC0533E001BA929 /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		315017FA0CC06872001BA929 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		315090200E035945004EE6F3 /* RXSimpleCardDescriptor_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 3150901F0E035945004EE6F3 /* RXSimpleCardDescriptor_test.m */; };
@@ -186,9 +212,17 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
-		31544C960DB95913009D659A /* PBXBuildRule */ = {
+		314959840E327AE400E49C83 /* PBXBuildRule */ = {
 			isa = PBXBuildRule;
-			compilerSpec = com.apple.compilers.gcc.4_2;
+			compilerSpec = com.apple.compilers.llvmgcc42;
+			fileType = sourcecode.cpp;
+			isEditable = 1;
+			outputFiles = (
+			);
+		};
+		314959850E327AE400E49C83 /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.llvmgcc42;
 			fileType = sourcecode.c;
 			isEditable = 1;
 			outputFiles = (
@@ -205,11 +239,11 @@
 /* End PBXBuildRule section */
 
 /* Begin PBXContainerItemProxy section */
-		310109F90D9EC2FE00EB53C7 /* PBXContainerItemProxy */ = {
+		31495A4C0E327D7500E49C83 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 315885680C8729D800204DDD /* MHKKit.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 8DC2EF5B0486A6940098B216;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3149598E0E327B2D00E49C83;
 			remoteInfo = MHKKit;
 		};
 		315885790C8729D800204DDD /* PBXContainerItemProxy */ = {
@@ -219,48 +253,6 @@
 			remoteGlobalIDString = 8DC2EF5B0486A6940098B216;
 			remoteInfo = MHKKit;
 		};
-		3158857B0C8729D800204DDD /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 315885680C8729D800204DDD /* MHKKit.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 31F56DB30808CF6D006F1151;
-			remoteInfo = "MHK QT Player";
-		};
-		3158857D0C8729D800204DDD /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 315885680C8729D800204DDD /* MHKKit.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 31423BBF08660CD800E2309B;
-			remoteInfo = mhk_dump;
-		};
-		3158857F0C8729D800204DDD /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 315885680C8729D800204DDD /* MHKKit.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 3197D59408BD8BAF00865430;
-			remoteInfo = mhk_ls;
-		};
-		315885810C8729D800204DDD /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 315885680C8729D800204DDD /* MHKKit.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 317A33FC09E9D893008E2459;
-			remoteInfo = mhk_mp2_analyse;
-		};
-		315885830C8729E900204DDD /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 315885680C8729D800204DDD /* MHKKit.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8DC2EF4F0486A6940098B216;
-			remoteInfo = MHKKit;
-		};
-		315885850C8729F000204DDD /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 315885680C8729D800204DDD /* MHKKit.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8DC2EF4F0486A6940098B216;
-			remoteInfo = MHKKit;
-		};
 		31C357330D92A78900EDEF81 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
@@ -268,22 +260,26 @@
 			remoteGlobalIDString = 31F3093208BE43C100417394;
 			remoteInfo = "Riven X";
 		};
-		31FF29640D41992B00E3B5FF /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 315885680C8729D800204DDD /* MHKKit.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8DC2EF4F0486A6940098B216;
-			remoteInfo = MHKKit;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		314959DA0E327D2800E49C83 /* copy_ffmpeg_license */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 12;
+			files = (
+			);
+			name = copy_ffmpeg_license;
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		314EF26409E45958002124D5 /* Copy Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 12;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				31495A4F0E327DA400E49C83 /* MHKKit.framework in Copy Frameworks */,
 				31D6ACA50D40167400629AEB /* Sparkle.framework in Copy Frameworks */,
 				31863BE009919B29001A4A42 /* FScript.framework in Copy Frameworks */,
 			);
@@ -393,6 +389,28 @@
 		3145383F08C6A5F4004B7FD0 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
 		3145384A08C6A73E004B7FD0 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		3145384B08C6A73E004B7FD0 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
+		3149598F0E327B2D00E49C83 /* MHKKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MHKKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		314959900E327B2D00E49C83 /* MHKKit-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "MHKKit-Info.plist"; sourceTree = "<group>"; };
+		314959950E327BA500E49C83 /* MHKADPCMDecompressor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKADPCMDecompressor.h; path = mhk/MHKADPCMDecompressor.h; sourceTree = "<group>"; };
+		314959960E327BA500E49C83 /* MHKArchiveWAVAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKArchiveWAVAdditions.m; path = mhk/MHKArchiveWAVAdditions.m; sourceTree = "<group>"; };
+		314959970E327BA500E49C83 /* mohawk_bitmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mohawk_bitmap.c; path = mhk/mohawk_bitmap.c; sourceTree = "<group>"; };
+		314959980E327BA500E49C83 /* MHKFileHandle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKFileHandle.m; path = mhk/MHKFileHandle.m; sourceTree = "<group>"; };
+		314959990E327BA500E49C83 /* MHKMP2Decompressor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKMP2Decompressor.m; path = mhk/MHKMP2Decompressor.m; sourceTree = "<group>"; };
+		3149599A0E327BA500E49C83 /* MHKArchiveBitmapAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKArchiveBitmapAdditions.m; path = mhk/MHKArchiveBitmapAdditions.m; sourceTree = "<group>"; };
+		3149599B0E327BA500E49C83 /* MHKArchive.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKArchive.m; path = mhk/MHKArchive.m; sourceTree = "<group>"; };
+		3149599C0E327BA500E49C83 /* mohawk_core.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mohawk_core.c; path = mhk/mohawk_core.c; sourceTree = "<group>"; };
+		3149599D0E327BA500E49C83 /* MHKErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKErrors.h; path = mhk/MHKErrors.h; sourceTree = "<group>"; };
+		3149599E0E327BA500E49C83 /* MHKKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKKit.h; path = mhk/MHKKit.h; sourceTree = "<group>"; };
+		314959A00E327BA500E49C83 /* MHKFileHandle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKFileHandle.h; path = mhk/MHKFileHandle.h; sourceTree = "<group>"; };
+		314959A10E327BA500E49C83 /* mohawk_bitmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mohawk_bitmap.h; path = mhk/mohawk_bitmap.h; sourceTree = "<group>"; };
+		314959A20E327BA500E49C83 /* MHKErrors.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKErrors.m; path = mhk/MHKErrors.m; sourceTree = "<group>"; };
+		314959A30E327BA500E49C83 /* MHKAudioDecompression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKAudioDecompression.h; path = mhk/MHKAudioDecompression.h; sourceTree = "<group>"; };
+		314959A40E327BA500E49C83 /* mohawk_wave.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mohawk_wave.h; path = mhk/mohawk_wave.h; sourceTree = "<group>"; };
+		314959A50E327BA500E49C83 /* MHKMP2Decompressor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKMP2Decompressor.h; path = mhk/MHKMP2Decompressor.h; sourceTree = "<group>"; };
+		314959A60E327BA500E49C83 /* MHKADPCMDecompressor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKADPCMDecompressor.m; path = mhk/MHKADPCMDecompressor.m; sourceTree = "<group>"; };
+		314959A70E327BA500E49C83 /* MHKArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKArchive.h; path = mhk/MHKArchive.h; sourceTree = "<group>"; };
+		314959A80E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKArchiveQuickTimeAdditions.m; path = mhk/MHKArchiveQuickTimeAdditions.m; sourceTree = "<group>"; };
+		314959A90E327BA500E49C83 /* mohawk_core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mohawk_core.h; path = mhk/mohawk_core.h; sourceTree = "<group>"; };
 		314C36F308EE431D00ACC172 /* RXWorldProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWorldProtocol.h; sourceTree = "<group>"; };
 		315017970CC0533D001BA929 /* RXCardAudioSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardAudioSource.h; sourceTree = "<group>"; };
 		315017980CC0533D001BA929 /* RXCardAudioSource.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXCardAudioSource.mm; sourceTree = "<group>"; };
@@ -411,7 +429,7 @@
 		3155480F08C52A1400A2AA7A /* Extras.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; path = Extras.plist; sourceTree = "<group>"; };
 		3156F25E0B83F07400462C8E /* NSData+RSHexDump.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "NSData+RSHexDump.h"; path = "Additions/NSData+RSHexDump.h"; sourceTree = "<group>"; };
 		3156F25F0B83F07400462C8E /* NSData+RSHexDump.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "NSData+RSHexDump.m"; path = "Additions/NSData+RSHexDump.m"; sourceTree = "<group>"; };
-		315885680C8729D800204DDD /* MHKKit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MHKKit.xcodeproj; path = mhk/MHKKit.xcodeproj; sourceTree = SOURCE_ROOT; };
+		315885680C8729D800204DDD /* MHKKit.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = MHKKit.xcodeproj; path = /Users/bahamut/Documents/Projects/rivenx/mhk/MHKKit.xcodeproj; sourceTree = "<absolute>"; };
 		31588871098D7A120090A6B6 /* RXCardDescriptor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardDescriptor.h; sourceTree = "<group>"; };
 		31588872098D7A120090A6B6 /* RXCardDescriptor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardDescriptor.m; sourceTree = "<group>"; };
 		3158CD15094F7BEB004D5D00 /* RXCreditsState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXCreditsState.h; path = States/RXCreditsState.h; sourceTree = "<group>"; };
@@ -542,6 +560,18 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3149598D0E327B2D00E49C83 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				31495A6B0E327E8300E49C83 /* Accelerate.framework in Frameworks */,
+				31495A6C0E327E8600E49C83 /* Foundation.framework in Frameworks */,
+				31495A6E0E327E9000E49C83 /* CoreServices.framework in Frameworks */,
+				31495A730E327EA900E49C83 /* AudioToolbox.framework in Frameworks */,
+				31495A750E327EB100E49C83 /* QuickTime.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		31C357190D92A6A700EDEF81 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -620,8 +650,8 @@
 		08FB7794FE84155DC02AAC07 /* rivenx */ = {
 			isa = PBXGroup;
 			children = (
-				315885680C8729D800204DDD /* MHKKit.xcodeproj */,
 				31B78EC40C88F25F00227E0F /* Configuration */,
+				314959870E327AF900E49C83 /* MHKKit */,
 				31A9EF94094D285400C6A0AB /* RXBase.pch */,
 				31BC2E610D6DC419008FA476 /* Base */,
 				31BC2E600D6DC3B6008FA476 /* Debug */,
@@ -685,6 +715,7 @@
 				31DAA0DF09D888E100F63F20 /* RXCardAudioSource_test */,
 				31D6AD8D0D4197E600629AEB /* dump_save */,
 				31C3571C0D92A6A700EDEF81 /* UnitTests.octest */,
+				3149598F0E327B2D00E49C83 /* MHKKit.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -786,6 +817,34 @@
 			name = "AppKit Additions";
 			sourceTree = "<group>";
 		};
+		314959870E327AF900E49C83 /* MHKKit */ = {
+			isa = PBXGroup;
+			children = (
+				314959900E327B2D00E49C83 /* MHKKit-Info.plist */,
+				3149599E0E327BA500E49C83 /* MHKKit.h */,
+				314959950E327BA500E49C83 /* MHKADPCMDecompressor.h */,
+				314959A60E327BA500E49C83 /* MHKADPCMDecompressor.m */,
+				314959A70E327BA500E49C83 /* MHKArchive.h */,
+				3149599B0E327BA500E49C83 /* MHKArchive.m */,
+				3149599A0E327BA500E49C83 /* MHKArchiveBitmapAdditions.m */,
+				314959A80E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m */,
+				314959960E327BA500E49C83 /* MHKArchiveWAVAdditions.m */,
+				314959A30E327BA500E49C83 /* MHKAudioDecompression.h */,
+				3149599D0E327BA500E49C83 /* MHKErrors.h */,
+				314959A20E327BA500E49C83 /* MHKErrors.m */,
+				314959A00E327BA500E49C83 /* MHKFileHandle.h */,
+				314959980E327BA500E49C83 /* MHKFileHandle.m */,
+				314959A50E327BA500E49C83 /* MHKMP2Decompressor.h */,
+				314959990E327BA500E49C83 /* MHKMP2Decompressor.m */,
+				314959970E327BA500E49C83 /* mohawk_bitmap.c */,
+				314959A10E327BA500E49C83 /* mohawk_bitmap.h */,
+				3149599C0E327BA500E49C83 /* mohawk_core.c */,
+				314959A90E327BA500E49C83 /* mohawk_core.h */,
+				314959A40E327BA500E49C83 /* mohawk_wave.h */,
+			);
+			name = MHKKit;
+			sourceTree = "<group>";
+		};
 		3153ED6109A3ED12002E1149 /* Audio */ = {
 			isa = PBXGroup;
 			children = (
@@ -854,18 +913,6 @@
 				3185C4720E06046D00528220 /* RXVersionComparator.m */,
 			);
 			path = Application;
-			sourceTree = "<group>";
-		};
-		315885720C8729D800204DDD /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				310109FA0D9EC2FE00EB53C7 /* MHKKit.framework */,
-				3158857C0C8729D800204DDD /* MHK QT Player.app */,
-				3158857E0C8729D800204DDD /* mhk_dump */,
-				315885800C8729D800204DDD /* mhk_ls */,
-				315885820C8729D800204DDD /* mhk_mp2_analyse */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		31796FBC0D5D032500C493D2 /* Edition */ = {
@@ -1053,6 +1100,26 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXHeadersBuildPhase section */
+		3149598A0E327B2D00E49C83 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				314959AB0E327BA500E49C83 /* MHKADPCMDecompressor.h in Headers */,
+				314959B30E327BA500E49C83 /* MHKErrors.h in Headers */,
+				314959B40E327BA500E49C83 /* MHKKit.h in Headers */,
+				314959B60E327BA500E49C83 /* MHKFileHandle.h in Headers */,
+				314959B70E327BA500E49C83 /* mohawk_bitmap.h in Headers */,
+				314959B90E327BA500E49C83 /* MHKAudioDecompression.h in Headers */,
+				314959BA0E327BA500E49C83 /* mohawk_wave.h in Headers */,
+				314959BB0E327BA500E49C83 /* MHKMP2Decompressor.h in Headers */,
+				314959BD0E327BA500E49C83 /* MHKArchive.h in Headers */,
+				314959BF0E327BA500E49C83 /* mohawk_core.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
 /* Begin PBXNativeTarget section */
 		31333F4F09B019E300DB6FC7 /* rxaudio_test */ = {
 			isa = PBXNativeTarget;
@@ -1064,12 +1131,32 @@
 			buildRules = (
 			);
 			dependencies = (
-				315885840C8729E900204DDD /* PBXTargetDependency */,
 			);
 			name = rxaudio_test;
 			productName = rxaudio_test;
 			productReference = 31333F5009B019E300DB6FC7 /* rxaudio_test */;
 			productType = "com.apple.product-type.tool";
+		};
+		3149598E0E327B2D00E49C83 /* MHKKit */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 314959940E327B2E00E49C83 /* Build configuration list for PBXNativeTarget "MHKKit" */;
+			buildPhases = (
+				3149598A0E327B2D00E49C83 /* Headers */,
+				3149598B0E327B2D00E49C83 /* Resources */,
+				3149598C0E327B2D00E49C83 /* Sources */,
+				3149598D0E327B2D00E49C83 /* Frameworks */,
+				314959DA0E327D2800E49C83 /* copy_ffmpeg_license */,
+				314959D90E327D0800E49C83 /* copy_ffmpeg */,
+				314959DC0E327D3100E49C83 /* bzrversion */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MHKKit;
+			productName = MHKKit;
+			productReference = 3149598F0E327B2D00E49C83 /* MHKKit.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 		31C3571B0D92A6A700EDEF81 /* UnitTests */ = {
 			isa = PBXNativeTarget;
@@ -1147,15 +1234,15 @@
 				31F3093108BE43C100417394 /* Frameworks */,
 				31F3092F08BE43C100417394 /* Resources */,
 				314EF26409E45958002124D5 /* Copy Frameworks */,
-				7A85B43E0CB87563005D9BEF /* copy_mhkkit */,
 				314A02EE0B6E53D5003E92A1 /* bzrversion */,
 				31D6ACFC0D40530B00629AEB /* info_plist_process */,
 			);
 			buildRules = (
-				31544C960DB95913009D659A /* PBXBuildRule */,
+				314959840E327AE400E49C83 /* PBXBuildRule */,
+				314959850E327AE400E49C83 /* PBXBuildRule */,
 			);
 			dependencies = (
-				315885860C8729F000204DDD /* PBXTargetDependency */,
+				31495A4D0E327D7500E49C83 /* PBXTargetDependency */,
 			);
 			name = "Riven X";
 			productName = "Riven X";
@@ -1172,7 +1259,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				31FF29650D41992B00E3B5FF /* PBXTargetDependency */,
 			);
 			name = plistize_stacks;
 			productInstallPath = "$(HOME)/bin";
@@ -1199,14 +1285,9 @@
 			);
 			mainGroup = 08FB7794FE84155DC02AAC07 /* rivenx */;
 			projectDirPath = "";
-			projectReferences = (
-				{
-					ProductGroup = 315885720C8729D800204DDD /* Products */;
-					ProjectRef = 315885680C8729D800204DDD /* MHKKit.xcodeproj */;
-				},
-			);
 			projectRoot = "";
 			targets = (
+				3149598E0E327B2D00E49C83 /* MHKKit */,
 				31F3093208BE43C100417394 /* Riven X */,
 				31C3571B0D92A6A700EDEF81 /* UnitTests */,
 				8DD76F960486AA7600D96B5E /* plistize_stacks */,
@@ -1219,13 +1300,6 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		310109FA0D9EC2FE00EB53C7 /* MHKKit.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = MHKKit.framework;
-			remoteRef = 310109F90D9EC2FE00EB53C7 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		3158857A0C8729D800204DDD /* MHKKit.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
@@ -1233,37 +1307,16 @@
 			remoteRef = 315885790C8729D800204DDD /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		3158857C0C8729D800204DDD /* MHK QT Player.app */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.application;
-			path = "MHK QT Player.app";
-			remoteRef = 3158857B0C8729D800204DDD /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		3158857E0C8729D800204DDD /* mhk_dump */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = mhk_dump;
-			remoteRef = 3158857D0C8729D800204DDD /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		315885800C8729D800204DDD /* mhk_ls */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = mhk_ls;
-			remoteRef = 3158857F0C8729D800204DDD /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		315885820C8729D800204DDD /* mhk_mp2_analyse */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = mhk_mp2_analyse;
-			remoteRef = 315885810C8729D800204DDD /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
+		3149598B0E327B2D00E49C83 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		31C357170D92A6A700EDEF81 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1303,6 +1356,35 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		314959D90E327D0800E49C83 /* copy_ffmpeg */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = copy_ffmpeg;
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "COPY_TOOL=\"${DEVELOPER_LIBRARY_DIR}/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nif [ ! -f \"${COPY_TOOL}\" ]; then\n\tCOPY_TOOL=\"/System/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nfi\n\n# libavutil\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib.dSYM\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcodec\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib.dSYM\" \"${BUILT_PRODUCTS_DIR}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		314959DC0E327D3100E49C83 /* bzrversion */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = bzrversion;
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = "/usr/bin/env python";
+			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Bazaar\n        \nimport os, re, sys\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current bzr revision number and use it to set the CFBundleVersion value\np = os.popen2(['bzr', 'revno'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"(?P<revision>[\\d]+)\").match(REV)\nif not matchObject:\n    print \"No Bazaar revision found\"\n    sys.exit(1)\nrevision = matchObject.group(\"revision\")\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"(?P<tag_begin>[\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(?P<tag_end></string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<tag_begin>bzr %s\\g<tag_end>' % revision, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
+		};
 		314A02EE0B6E53D5003E92A1 /* bzrversion */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1347,21 +1429,6 @@
 			shellScript = "#-*- encoding: utf-8 -*-\n\"\"\"Script to insert property list values because the preprocessor is broken\"\"\"\nimport os, re\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n\tprint \"Must be run from Xcode\"\n\tsys.exit(1)\n\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\nAPPCAST = os.environ['APPCAST_URL']\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"([\\t ]+<key>SUFeedURL</key>\\n[\\t ]+<string>).*?(</string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<1>%s\\g<2>' % APPCAST, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
 			showEnvVarsInLog = 0;
 		};
-		7A85B43E0CB87563005D9BEF /* copy_mhkkit */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = copy_mhkkit;
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Find the pbxcp tool\nCOPY_TOOL=\"${DEVELOPER_LIBRARY_DIR}/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nif [ ! -f \"${COPY_TOOL}\" ]; then\n\tCOPY_TOOL=\"/System/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nfi\n\n# Find the build product\nMHKKIT_PATH=\"${BUILT_PRODUCTS_DIR}/MHKKit.framework\"\nif [ ! -d \"${MHKKIT_PATH}\" ]; then\n\t# assume default Xcode setup where MHKKit was built in its own build directory\n\tMHKKIT_PATH=\"${SRCROOT}/mhk/build/${CONFIGURATION}/MHKKit.framework\"\nfi\n\n# Copy the build product\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${MHKKIT_PATH}\" \"${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -1385,6 +1452,23 @@
 				3199275B0D96AE4D00ED1B47 /* RXLogCenter.m in Sources */,
 				3199276D0D96AFCE00ED1B47 /* BZFSUtilities.m in Sources */,
 				319927730D96B07200ED1B47 /* RXThreadUtilities.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3149598C0E327B2D00E49C83 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				314959AC0E327BA500E49C83 /* MHKArchiveWAVAdditions.m in Sources */,
+				314959AD0E327BA500E49C83 /* mohawk_bitmap.c in Sources */,
+				314959AE0E327BA500E49C83 /* MHKFileHandle.m in Sources */,
+				314959AF0E327BA500E49C83 /* MHKMP2Decompressor.m in Sources */,
+				314959B00E327BA500E49C83 /* MHKArchiveBitmapAdditions.m in Sources */,
+				314959B10E327BA500E49C83 /* MHKArchive.m in Sources */,
+				314959B20E327BA500E49C83 /* mohawk_core.c in Sources */,
+				314959B80E327BA500E49C83 /* MHKErrors.m in Sources */,
+				314959BC0E327BA500E49C83 /* MHKADPCMDecompressor.m in Sources */,
+				314959BE0E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1533,25 +1617,15 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		315885840C8729E900204DDD /* PBXTargetDependency */ = {
+		31495A4D0E327D7500E49C83 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = MHKKit;
-			targetProxy = 315885830C8729E900204DDD /* PBXContainerItemProxy */;
-		};
-		315885860C8729F000204DDD /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = MHKKit;
-			targetProxy = 315885850C8729F000204DDD /* PBXContainerItemProxy */;
+			target = 3149598E0E327B2D00E49C83 /* MHKKit */;
+			targetProxy = 31495A4C0E327D7500E49C83 /* PBXContainerItemProxy */;
 		};
 		31C357340D92A78900EDEF81 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 31F3093208BE43C100417394 /* Riven X */;
 			targetProxy = 31C357330D92A78900EDEF81 /* PBXContainerItemProxy */;
-		};
-		31FF29650D41992B00E3B5FF /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = MHKKit;
-			targetProxy = 31FF29640D41992B00E3B5FF /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1634,6 +1708,84 @@
 				PREBINDING = NO;
 				PRODUCT_NAME = rxaudio_test;
 				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		314959910E327B2E00E49C83 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_VERSION = A;
+				GCC_DYNAMIC_NO_PIC = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/ffmpeg\"",
+				);
+				INFOPLIST_FILE = "MHKKit-Info.plist";
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/ffmpeg\"",
+				);
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-lbz2",
+					"-lcrypto",
+				);
+				PRODUCT_NAME = MHKKit;
+			};
+			name = Debug;
+		};
+		314959920E327B2E00E49C83 /* Debug_u */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_VERSION = A;
+				GCC_DYNAMIC_NO_PIC = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/ffmpeg\"",
+				);
+				INFOPLIST_FILE = "MHKKit-Info.plist";
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/ffmpeg\"",
+				);
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-lbz2",
+					"-lcrypto",
+				);
+				PRODUCT_NAME = MHKKit;
+			};
+			name = Debug_u;
+		};
+		314959930E327B2E00E49C83 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				FRAMEWORK_VERSION = A;
+				GCC_DYNAMIC_NO_PIC = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/ffmpeg\"",
+				);
+				INFOPLIST_FILE = "MHKKit-Info.plist";
+				INSTALL_PATH = "@executable_path/../Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/ffmpeg\"",
+				);
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-lbz2",
+					"-lcrypto",
+				);
+				PRODUCT_NAME = MHKKit;
 			};
 			name = Release;
 		};
@@ -1756,12 +1908,14 @@
 			baseConfigurationReference = 31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					CoreAudio_StopOnFailure,
 					"DEBUG=1",
 				);
 				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx10.5;
 				STRIP_INSTALLED_PRODUCT = NO;
 			};
 			name = Debug;
@@ -1773,6 +1927,7 @@
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
+				SDKROOT = macosx10.5;
 				STRIP_INSTALLED_PRODUCT = NO;
 			};
 			name = Release;
@@ -2047,11 +2202,13 @@
 			baseConfigurationReference = 31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					CoreAudio_StopOnFailure,
 					"DEBUG=1",
 				);
+				SDKROOT = macosx10.5;
 				STRIP_INSTALLED_PRODUCT = NO;
 			};
 			name = Debug_u;
@@ -2081,6 +2238,16 @@
 				31333F5609B01A2300DB6FC7 /* Debug */,
 				31EAEB3A0A92530E004CC449 /* Debug_u */,
 				31333F5809B01A2300DB6FC7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		314959940E327B2E00E49C83 /* Build configuration list for PBXNativeTarget "MHKKit" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				314959910E327B2E00E49C83 /* Debug */,
+				314959920E327B2E00E49C83 /* Debug_u */,
+				314959930E327B2E00E49C83 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

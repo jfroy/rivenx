@@ -32,6 +32,7 @@
 	GLfloat front_color[4];
 	
 	NSAnimation* _currentFadeAnimation;
+	NSMutableDictionary* _animationCompletionInvocations;
 	
 @public
 	// THIS IS PUBLIC ONLY FOR RENDER STATES

@@ -11,16 +11,6 @@
 #import "RXVersionComparator.h"
 
 
-@implementation SUStandardVersionComparator (SUStandardVersionComparator_RivenXOverride)
-
-+ (id<SUVersionComparison>)defaultComparator {
-	static id<SUVersionComparison> defaultComparator = nil;
-	if (defaultComparator == nil) defaultComparator = [[RXVersionComparator alloc] init];
-	return defaultComparator;
-}
-
-@end
-
 @implementation RXVersionComparator
 
 /*!
