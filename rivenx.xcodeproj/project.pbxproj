@@ -214,7 +214,7 @@
 /* Begin PBXBuildRule section */
 		314959840E327AE400E49C83 /* PBXBuildRule */ = {
 			isa = PBXBuildRule;
-			compilerSpec = com.apple.compilers.llvmgcc42;
+			compilerSpec = com.apple.compilers.gcc.4_0;
 			fileType = sourcecode.cpp;
 			isEditable = 1;
 			outputFiles = (
@@ -222,7 +222,7 @@
 		};
 		314959850E327AE400E49C83 /* PBXBuildRule */ = {
 			isa = PBXBuildRule;
-			compilerSpec = com.apple.compilers.llvmgcc42;
+			compilerSpec = com.apple.compilers.gcc.4_0;
 			fileType = sourcecode.c;
 			isEditable = 1;
 			outputFiles = (

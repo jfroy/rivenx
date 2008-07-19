@@ -51,7 +51,7 @@
 	
 	_states = [[NSMutableArray alloc] initWithCapacity:0x10];
 	_state_map = NSCreateMapTable(NSNonRetainedObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, 0);
-	_animationCompletionInvocations = [NSMutableDictionary new];
+	_animationCompletionInvocations = NSCreateMapTable(NSNonRetainedObjectMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
 	
 	_renderStates = [_states copy];
 	
@@ -154,7 +154,7 @@
 	[_states release];
 	NSFreeMapTable(_state_map);
 	[_renderStates release];
-	[_animationCompletionInvocations release];
+	NSFreeMapTable(_animationCompletionInvocations);
 	
 	[super dealloc];
 }
@@ -271,13 +271,17 @@
 }
 
 - (void)animationDidEnd:(NSAnimation*)animation {
-	[(NSInvocation*)[_animationCompletionInvocations objectForKey:animation] invoke];
+	[(NSInvocation*)NSMapGet(_animationCompletionInvocations, animation) invoke];
+	NSMapRemove(_animationCompletionInvocations, animation);
+	
 	if (_currentFadeAnimation == animation) _currentFadeAnimation = nil;
 	[animation release];
 }
 
 - (void)animationDidStop:(NSAnimation*)animation {
-	[(NSInvocation*)[_animationCompletionInvocations objectForKey:animation] invoke];
+	[(NSInvocation*)NSMapGet(_animationCompletionInvocations, animation) invoke];
+	NSMapRemove(_animationCompletionInvocations, animation);
+	
 	if (_currentFadeAnimation == animation) _currentFadeAnimation = nil;
 	[animation release];
 }
@@ -296,8 +300,9 @@
 	NSMethodSignature* completionSignature = [delegate methodSignatureForSelector:completionSelector];
 	NSInvocation* completionInvocation = [NSInvocation invocationWithMethodSignature:completionSignature];
 	[completionInvocation setTarget:delegate];
+	[completionInvocation setSelector:completionSelector];
 	[completionInvocation setArgument:state atIndex:2];
-	[_animationCompletionInvocations setObject:completionInvocation forKey:animation];
+	NSMapInsert(_animationCompletionInvocations, _currentFadeAnimation, completionInvocation);
 	
 	[_currentFadeAnimation setDelegate:self];
 	[_currentFadeAnimation startAnimation];
@@ -317,8 +322,9 @@
 	NSMethodSignature* completionSignature = [delegate methodSignatureForSelector:completionSelector];
 	NSInvocation* completionInvocation = [NSInvocation invocationWithMethodSignature:completionSignature];
 	[completionInvocation setTarget:delegate];
+	[completionInvocation setSelector:completionSelector];
 	[completionInvocation setArgument:state atIndex:2];
-	[_animationCompletionInvocations setObject:completionInvocation forKey:animation];
+	NSMapInsert(_animationCompletionInvocations, _currentFadeAnimation, completionInvocation);
 	
 	[_currentFadeAnimation setDelegate:self];
 	[_currentFadeAnimation startAnimation];
