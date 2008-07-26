@@ -211,33 +211,6 @@
 		93FDAD47098A78DE00D94CD0 /* RXDebugWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 93FDAD45098A78DE00D94CD0 /* RXDebugWindowController.mm */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXBuildRule section */
-		314959840E327AE400E49C83 /* PBXBuildRule */ = {
-			isa = PBXBuildRule;
-			compilerSpec = com.apple.compilers.gcc.4_0;
-			fileType = sourcecode.cpp;
-			isEditable = 1;
-			outputFiles = (
-			);
-		};
-		314959850E327AE400E49C83 /* PBXBuildRule */ = {
-			isa = PBXBuildRule;
-			compilerSpec = com.apple.compilers.gcc.4_0;
-			fileType = sourcecode.c;
-			isEditable = 1;
-			outputFiles = (
-			);
-		};
-		318CB4CE0E04D3DA00BD2C38 /* PBXBuildRule */ = {
-			isa = PBXBuildRule;
-			compilerSpec = com.apple.compilers.gcc.4_2;
-			fileType = sourcecode.c;
-			isEditable = 1;
-			outputFiles = (
-			);
-		};
-/* End PBXBuildRule section */
-
 /* Begin PBXContainerItemProxy section */
 		31495A4C0E327D7500E49C83 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -1168,7 +1141,6 @@
 				31C3571A0D92A6A700EDEF81 /* RunUnitTests */,
 			);
 			buildRules = (
-				318CB4CE0E04D3DA00BD2C38 /* PBXBuildRule */,
 			);
 			dependencies = (
 				31C357340D92A78900EDEF81 /* PBXTargetDependency */,
@@ -1238,8 +1210,6 @@
 				31D6ACFC0D40530B00629AEB /* info_plist_process */,
 			);
 			buildRules = (
-				314959840E327AE400E49C83 /* PBXBuildRule */,
-				314959850E327AE400E49C83 /* PBXBuildRule */,
 			);
 			dependencies = (
 				31495A4D0E327D7500E49C83 /* PBXTargetDependency */,
@@ -1914,6 +1884,7 @@
 					CoreAudio_StopOnFailure,
 					"DEBUG=1",
 				);
+				GCC_VERSION = 4.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx10.5;
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -1927,6 +1898,7 @@
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
+				GCC_VERSION = 4.0;
 				SDKROOT = macosx10.5;
 				STRIP_INSTALLED_PRODUCT = NO;
 			};
@@ -2193,7 +2165,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 31B78EC70C88F25F00227E0F /* RivenX.xcconfig */;
 			buildSettings = {
-				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx-devel.xml";
+				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx-devel-bzr.xml";
 			};
 			name = Debug_u;
 		};
@@ -2208,6 +2180,7 @@
 					CoreAudio_StopOnFailure,
 					"DEBUG=1",
 				);
+				GCC_VERSION = 4.0;
 				SDKROOT = macosx10.5;
 				STRIP_INSTALLED_PRODUCT = NO;
 			};
@@ -2217,7 +2190,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 31B78EC70C88F25F00227E0F /* RivenX.xcconfig */;
 			buildSettings = {
-				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx-devel.xml";
+				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx-devel-bzr.xml";
 			};
 			name = Debug;
 		};
