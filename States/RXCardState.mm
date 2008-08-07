@@ -1176,7 +1176,7 @@ exit_flush_tasks:
 
 - (void)_updateCursorVisibility {
 	// WARNING: MUST RUN ON THE MAIN THREAD
-	if (![NSThread isMainThread]) {
+	if (!pthread_main_np()) {
 		[self performSelectorOnMainThread:_cmd withObject:nil waitUntilDone:NO];
 		return;
 	}
