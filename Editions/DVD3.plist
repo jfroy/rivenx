@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Edition</key>
+	<dict>
+		<key>Directories</key>
+		<dict>
+			<key>All</key>
+			<string>ALL</string>
+			<key>Data</key>
+			<string>Data</string>
+			<key>Sound</key>
+			<string>ASSETS1</string>
+		</dict>
+		<key>Discs</key>
+		<array>
+			<string>Exile DVD</string>
+		</array>
+		<key>Install Directives</key>
+		<array>
+			<dict>
+				<key>Directive</key>
+				<string>StackCopy</string>
+				<key>Required</key>
+				<false/>
+			</dict>
+		</array>
+		<key>Key</key>
+		<string>DVD3_EDITION</string>
+	</dict>
+	<key>Stacks</key>
+	<dict>
+		<key>aspit</key>
+		<dict>
+			<key>Data Archives</key>
+			<string>A_DATA.MHK</string>
+			<key>Entry</key>
+			<integer>1</integer>
+			<key>ID</key>
+			<integer>8</integer>
+			<key>Sound Archives</key>
+			<string>A_SOUNDS.MHK</string>
+		</dict>
+		<key>bspit</key>
+		<dict>
+			<key>Data Archives</key>
+			<string>B_DATA.MHK</string>
+			<key>Entry</key>
+			<integer>1</integer>
+			<key>ID</key>
+			<integer>5</integer>
+			<key>Sound Archives</key>
+			<string>B_SOUNDS.MHK</string>
+		</dict>
+		<key>gspit</key>
+		<dict>
+			<key>Data Archives</key>
+			<string>g_Data.MHK</string>
+			<key>Entry</key>
+			<integer>1</integer>
+			<key>ID</key>
+			<integer>6</integer>
+			<key>Sound Archives</key>
+			<string>G_SOUNDS.MHK</string>
+		</dict>
+		<key>jspit</key>
+		<dict>
+			<key>Data Archives</key>
+			<array>
+				<string>j_Data1.MHK</string>
+				<string>j_Data2.MHK</string>
+			</array>
+			<key>Entry</key>
+			<integer>1</integer>
+			<key>ID</key>
+			<integer>7</integer>
+			<key>Sound Archives</key>
+			<string>J_SOUNDS.MHK</string>
+		</dict>
+		<key>ospit</key>
+		<dict>
+			<key>Data Archives</key>
+			<string>o_Data.MHK</string>
+			<key>Entry</key>
+			<integer>1</integer>
+			<key>ID</key>
+			<integer>1</integer>
+			<key>Sound Archives</key>
+			<string>O_SOUNDS.MHK</string>
+		</dict>
+		<key>pspit</key>
+		<dict>
+			<key>Data Archives</key>
+			<string>p_Data.MHK</string>
+			<key>Entry</key>
+			<integer>12</integer>
+			<key>ID</key>
+			<integer>2</integer>
+			<key>Sound Archives</key>
+			<string>P_SOUNDS.MHK</string>
+		</dict>
+		<key>rspit</key>
+		<dict>
+			<key>Data Archives</key>
+			<string>r_Data.MHK</string>
+			<key>Entry</key>
+			<integer>3</integer>
+			<key>ID</key>
+			<integer>3</integer>
+			<key>Sound Archives</key>
+			<string>R_SOUNDS.MHK</string>
+		</dict>
+		<key>tspit</key>
+		<dict>
+			<key>Data Archives</key>
+			<string>t_Data.MHK</string>
+			<key>Entry</key>
+			<integer>1</integer>
+			<key>ID</key>
+			<integer>4</integer>
+			<key>Sound Archives</key>
+			<string>T_SOUNDS.MHK</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
