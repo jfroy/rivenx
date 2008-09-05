@@ -18,7 +18,7 @@
 	NSString* name;
 	NSArray* discs;
 	NSDictionary* directories;
-	
+	NSDictionary* stackSwitchTables;
 	NSArray* installDirectives;
 	
 	NSString* userBase;

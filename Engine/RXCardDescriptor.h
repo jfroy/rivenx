@@ -12,13 +12,17 @@
 
 @class RXStack;
 
-@interface RXSimpleCardDescriptor : NSObject <NSCoding> {
+@interface RXSimpleCardDescriptor : NSObject <NSCoding, NSCopying> {
 @public
 	NSString* parentName;
 	uint16_t cardID;
 }
 
 - (id)initWithStackName:(NSString*)name ID:(uint16_t)ID;
+- (id)initWithString:(NSString*)stringRepresentation;
+
+- (NSString*)parentName;
+- (uint16_t)cardID;
 
 @end
 

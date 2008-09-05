@@ -24,4 +24,29 @@
 	STAssertEqualObjects(_descriptor->parentName, clonedDescriptor->parentName, @"stack name should match");
 }
 
+- (void)testStringInit {
+	RXSimpleCardDescriptor* descriptor2 = [[RXSimpleCardDescriptor alloc] initWithString:@"foo 123"];
+	STAssertEqualObjects(_descriptor, descriptor2, @"descriptors should be equal");
+	[descriptor2 release];
+}
+
+- (void)testEqualityAndHash {
+	RXSimpleCardDescriptor* descriptor2 = [[RXSimpleCardDescriptor alloc] initWithStackName:@"foo" ID:123];
+	STAssertEqualObjects(_descriptor, descriptor2, @"descriptors should be equal");
+	STAssertEquals([_descriptor hash], [descriptor2 hash], @"descriptor hashes should be equal");
+	[descriptor2 release];
+	
+	descriptor2 = [[RXSimpleCardDescriptor alloc] initWithStackName:@"oo" ID:123];
+	STAssertFalse([_descriptor isEqual:descriptor2], @"descriptors should not be equal");
+	[descriptor2 release];
+	
+	descriptor2 = [[RXSimpleCardDescriptor alloc] initWithStackName:@"foo" ID:1];
+	STAssertFalse([_descriptor isEqual:descriptor2], @"descriptors should not be equal");
+	[descriptor2 release];
+	
+	NSObject* foo = [NSObject new];
+	STAssertFalse([_descriptor isEqual:foo], @"descriptor should not be equal to random object");
+	[foo release];
+}
+
 @end

@@ -286,8 +286,6 @@
 		311B7C810BCC4D0500653D2D /* RXDebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXDebug.h; sourceTree = "<group>"; };
 		311B7C820BCC4D0500653D2D /* RXDebug.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = RXDebug.m; sourceTree = "<group>"; tabWidth = 4; usesTabs = 1; };
 		311FD39108C03AF20045BE11 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
-		311FD3A008C03D660045BE11 /* RXSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXSingleton.h; path = Additions/RXSingleton.h; sourceTree = "<group>"; };
-		311FD3A108C03D660045BE11 /* RXSingleton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXSingleton.m; path = Additions/RXSingleton.m; sourceTree = "<group>"; };
 		311FD3DA08C0426C0045BE11 /* cocoa_main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = cocoa_main.m; sourceTree = "<group>"; };
 		31225ABC08C4216D0055628F /* RXStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXStack.h; sourceTree = "<group>"; };
 		31225ABD08C4216D0055628F /* RXStack.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXStack.m; sourceTree = "<group>"; };
@@ -451,8 +449,6 @@
 		31B78EC50C88F25F00227E0F /* Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 		31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = DebugRelease.xcconfig; sourceTree = "<group>"; };
 		31B78EC70C88F25F00227E0F /* RivenX.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = RivenX.xcconfig; sourceTree = "<group>"; };
-		31BAE6360A98D39E0079DD0F /* QTCompressionSession.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = QTCompressionSession.h; path = Additions/QTCompressionSession.h; sourceTree = "<group>"; tabWidth = 4; usesTabs = 0; };
-		31BAE6370A98D39E0079DD0F /* QTCompressionSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = QTCompressionSession.m; path = Additions/QTCompressionSession.m; sourceTree = "<group>"; };
 		31BC2E820D6DD0F3008FA476 /* RXVariableEditorWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVariableEditorWindowController.h; sourceTree = "<group>"; };
 		31BC2E830D6DD0F3008FA476 /* RXVariableEditorWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVariableEditorWindowController.m; sourceTree = "<group>"; };
 		31BC739C09A57D4E001EC1E0 /* RXAudioSourceBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAudioSourceBase.h; sourceTree = "<group>"; };
@@ -712,8 +708,6 @@
 				31863C590991AA28001A4A42 /* InterThreadMessaging.m */,
 				3156F25E0B83F07400462C8E /* NSData+RSHexDump.h */,
 				3156F25F0B83F07400462C8E /* NSData+RSHexDump.m */,
-				311FD3A008C03D660045BE11 /* RXSingleton.h */,
-				311FD3A108C03D660045BE11 /* RXSingleton.m */,
 				319C457F09C1382F0031F95F /* VirtualRingBuffer.h */,
 				319C458009C1382F0031F95F /* VirtualRingBuffer.m */,
 			);
@@ -953,8 +947,6 @@
 				3133D9AE0D5CDDC1004DAD5E /* BZFSOperation.m */,
 				316721D90D27FB3200FB2C0E /* integer_pair_hash.c */,
 				316721D80D27FB3200FB2C0E /* integer_pair_hash.h */,
-				31BAE6360A98D39E0079DD0F /* QTCompressionSession.h */,
-				31BAE6370A98D39E0079DD0F /* QTCompressionSession.m */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -1353,7 +1345,8 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/usr/bin/env python";
-			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Bazaar\n        \nimport os, re, sys\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current bzr revision number and use it to set the CFBundleVersion value\np = os.popen2(['bzr', 'revno'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"(?P<revision>[\\d]+)\").match(REV)\nif not matchObject:\n    print \"No Bazaar revision found\"\n    sys.exit(1)\nrevision = matchObject.group(\"revision\")\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"(?P<tag_begin>[\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(?P<tag_end></string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<tag_begin>bzr %s\\g<tag_end>' % revision, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
+			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Bazaar\n        \nimport os, re, sys\n\nif \"BUILT_PRODUCTS_DIR\" not in os.environ:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# MACOSX_DEPLOYMENT_TARGET plays badly with Python...\nif \"MACOSX_DEPLOYMENT_TARGET\" in os.environ:\n\tdel os.environ[\"MACOSX_DEPLOYMENT_TARGET\"]\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current bzr revision number and use it to set the CFBundleVersion value\np = os.popen2(['bzr', 'revno'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"(?P<revision>[\\d]+)\").match(REV)\nif not matchObject:\n    print \"No Bazaar revision found\"\n    sys.exit(1)\nrevision = matchObject.group(\"revision\")\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"(?P<tag_begin>[\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(?P<tag_end></string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<tag_begin>bzr %s\\g<tag_end>' % revision, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
+			showEnvVarsInLog = 0;
 		};
 		314A02EE0B6E53D5003E92A1 /* bzrversion */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1367,7 +1360,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/usr/bin/env python";
-			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Bazaar\n        \nimport os, re, sys\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current bzr revision number and use it to set the CFBundleVersion value\np = os.popen2(['bzr', 'revno'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"(?P<revision>[\\d]+)\").match(REV)\nif not matchObject:\n    print \"No Bazaar revision found\"\n    sys.exit(1)\nrevision = matchObject.group(\"revision\")\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"(?P<tag_begin>[\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(?P<tag_end></string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<tag_begin>bzr %s\\g<tag_end>' % revision, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
+			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Bazaar\n        \nimport os, re, sys\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# MACOSX_DEPLOYMENT_TARGET plays badly with Python...\nif \"MACOSX_DEPLOYMENT_TARGET\" in os.environ:\n\tdel os.environ[\"MACOSX_DEPLOYMENT_TARGET\"]\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current bzr revision number and use it to set the CFBundleVersion value\np = os.popen2(['bzr', 'revno'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"(?P<revision>[\\d]+)\").match(REV)\nif not matchObject:\n    print \"No Bazaar revision found\"\n    sys.exit(1)\nrevision = matchObject.group(\"revision\")\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"(?P<tag_begin>[\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(?P<tag_end></string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<tag_begin>bzr %s\\g<tag_end>' % revision, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
 			showEnvVarsInLog = 0;
 		};
 		31C3571A0D92A6A700EDEF81 /* RunUnitTests */ = {
@@ -1766,9 +1759,7 @@
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				INFOPLIST_FILE = "Tests/UnitTests-Info.plist";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
@@ -1790,9 +1781,8 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Riven X.app/Contents/MacOS/Riven X";
 				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_MODEL_TUNING = G5;
 				INFOPLIST_FILE = "Tests/UnitTests-Info.plist";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
 				OTHER_LDFLAGS = (
@@ -1814,9 +1804,8 @@
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Riven X.app/Contents/MacOS/Riven X";
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_MODEL_TUNING = G5;
 				INFOPLIST_FILE = "Tests/UnitTests-Info.plist";
 				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
 				OTHER_LDFLAGS = (

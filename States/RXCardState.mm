@@ -15,15 +15,16 @@
 
 #import <MHKKit/MHKAudioDecompression.h>
 
-#import "RXTiming.h"
-#import "RXWorldProtocol.h"
+#import "Base/RXTiming.h"
+#import "Engine/RXWorldProtocol.h"
 
-#import "RXCardState.h"
+#import "States/RXCardState.h"
 
-#import "RXHotspot.h"
-#import "RXCardAudioSource.h"
-#import "RXMovieProxy.h"
+#import "Engine/RXHotspot.h"
+#import "Engine/RXMovieProxy.h"
+#import "Engine/RXEditionManager.h"
 
+#import "Rendering/Audio/RXCardAudioSource.h"
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
 
 typedef void (*RenderCardImp_t)(id, SEL, RXCard*, const CVTimeStamp*, CGLContextObj);
@@ -867,30 +868,20 @@ init_failure:
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {
 	// WARNING: CAN RUN ON ANY THREAD
 	if (!stackKey) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"stackKey CANNOT BE NIL" userInfo:nil];
-	
-	// apply Riven "magic cards" rules here
-	if ([stackKey isEqualToString:@"bspit"] && cardID == 447) {stackKey = @"ospit"; cardID = 1;}
-	else if ([stackKey isEqualToString:@"gspit"] && cardID == 178) {stackKey = @"ospit"; cardID = 1;}
-	else if ([stackKey isEqualToString:@"jspit"]) {
-		if (cardID == 228) {stackKey = @"rspit"; cardID = 3;}
-		else if (cardID == 344) {stackKey = @"ospit"; cardID = 1;}
-	} else if ([stackKey isEqualToString:@"ospit"]) {
-		if (cardID == 58) {stackKey = @"pspit"; cardID = 43;}
-		else if (cardID == 62) {stackKey = @"jspit"; cardID = 341;}
-		else if (cardID == 67) {stackKey = @"gspit"; cardID = 175;}
-		else if (cardID == 72) {stackKey = @"bspit"; cardID = 444;}
-		else if (cardID == 76) {stackKey = @"tspit"; cardID = 387;}
-	} else if ([stackKey isEqualToString:@"pspit"] && cardID == 46) {stackKey = @"ospit"; cardID = 1;}
-	else if ([stackKey isEqualToString:@"rspit"] && cardID == 13) {stackKey = @"jspit"; cardID = 215;}
-	else if ([stackKey isEqualToString:@"tspit"] && cardID == 392) {stackKey = @"ospit"; cardID = 1;}
+	RXSimpleCardDescriptor* des = [[RXSimpleCardDescriptor alloc] initWithStackName:stackKey ID:cardID];
 	
 	// FIXME: we need to be smarter about stack management. For now, we try to load the stack once. And it stays loaded. Forver
 	// make sure the requested stack has been loaded
-	RXStack* stack = [g_world activeStackWithKey:stackKey];
-	if (!stack) [g_world loadStackWithKey:stackKey waitUntilDone:YES];
+	RXStack* stack = [g_world activeStackWithKey:des->parentName];
+	if (!stack) [g_world loadStackWithKey:des->parentName waitUntilDone:YES];
 	
-	RXSimpleCardDescriptor* des = [[RXSimpleCardDescriptor alloc] initWithStackName:stackKey ID:cardID];
 	[self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:des inThread:[g_world scriptThread] waitUntilDone:wait];
+	
+	// if the destination card was one of the special switch cards, queue another card switch in order to get a fade out - fade in effect
+	RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:des];
+	if (switchTableDestination)
+		[self setActiveCardWithStack:switchTableDestination->parentName ID:switchTableDestination->cardID waitUntilDone:wait];
+	
 	[des release];
 }
 

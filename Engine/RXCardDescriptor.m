@@ -9,6 +9,8 @@
 #import "RXCardDescriptor.h"
 #import "RXStack.h"
 
+#import "Additions/integer_pair_hash.h"
+
 struct _RXCardDescriptorPrimer {
 	MHKArchive* archive;
 	NSData* data;
@@ -23,6 +25,17 @@ struct _RXCardDescriptorPrimer {
 	
 	parentName = [name copy];
 	cardID = ID;
+	
+	return self;
+}
+
+- (id)initWithString:(NSString*)stringRepresentation {
+	self = [super init];
+	if (!self) return nil;
+	
+	NSArray* components = [stringRepresentation componentsSeparatedByString:@" "];
+	parentName = [[components objectAtIndex:0] retain];
+	cardID = [[components objectAtIndex:1] intValue];
 	
 	return self;
 }
@@ -50,9 +63,32 @@ struct _RXCardDescriptorPrimer {
 	[encoder encodeInt32:cardID forKey:@"ID"];
 }
 
+- (id)copyWithZone:(NSZone*)zone {
+	RXSimpleCardDescriptor* new = [[RXSimpleCardDescriptor allocWithZone:zone] initWithStackName:parentName ID:cardID];
+	return new;
+}
+
 - (void)dealloc {
 	[parentName release];
 	[super dealloc];
+}
+
+- (NSUInteger)hash {
+	// WARNING: WILL BREAK ON 64-BIT
+	return integer_pair_hash((int)[parentName hash], (int)cardID);
+}
+
+- (BOOL)isEqual:(id)object {
+	if ([self class] != [object class]) return NO;
+	return ([parentName isEqual:((RXSimpleCardDescriptor*)object)->parentName] && cardID == ((RXSimpleCardDescriptor*)object)->cardID) ? YES : NO;
+}
+
+- (NSString*)parentName {
+	return parentName;
+}
+
+- (uint16_t)cardID {
+	return cardID;
 }
 
 @end

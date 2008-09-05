@@ -8,7 +8,7 @@
 
 #import <SenTestingKit/SenTestingKit.h>
 
-#import "RXCardDescriptor.h"
+#import "Engine/RXCardDescriptor.h"
 
 @interface RXSimpleCardDescriptor_test : SenTestCase {
 	RXSimpleCardDescriptor* _descriptor;

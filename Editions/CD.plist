@@ -2,6 +2,33 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>Stack switch table</key>
+	<dict>
+		<key>bspit 447</key>
+		<string>ospit 1</string>
+		<key>gspit 178</key>
+		<string>ospit 1</string>
+		<key>jspit 228</key>
+		<string>rspit 3</string>
+		<key>jspit 344</key>
+		<string>ospit 1</string>
+		<key>ospit 58</key>
+		<string>pspit 43</string>
+		<key>ospit 62</key>
+		<string>jspit 341</string>
+		<key>ospit 67</key>
+		<string>gspit 175</string>
+		<key>ospit 72</key>
+		<string>bspit 444</string>
+		<key>ospit 76</key>
+		<string>tspit 387</string>
+		<key>pspit 46</key>
+		<string>ospit 1</string>
+		<key>rspit 13</key>
+		<string>jspit 215</string>
+		<key>tspit 392</key>
+		<string>ospit 1</string>
+	</dict>
 	<key>Edition</key>
 	<dict>
 		<key>Directories</key>

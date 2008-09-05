@@ -11,8 +11,8 @@
 #import "RXEditionManager.h"
 #import "RXWorld.h"
 
-#import "BZFSUtilities.h"
-#import "GTMObjectSingleton.h"
+#import "Additions/BZFSUtilities.h"
+#import "Additions/GTMObjectSingleton.h"
 
 
 @implementation RXEditionManager

@@ -24,7 +24,7 @@
 	[super dealloc];
 }
 
-- (id)copyWithZone:(NSZone *)zone {
+- (id)copyWithZone:(NSZone*)zone {
 	RXEditionProxy* new = [[RXEditionProxy allocWithZone:zone] initWithEdition:edition];
 	return new;
 }

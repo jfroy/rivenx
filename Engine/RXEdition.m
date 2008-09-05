@@ -17,9 +17,10 @@
 @implementation RXEdition
 
 + (BOOL)_saneDescriptor:(NSDictionary*)descriptor {
-	// a valid edition descriptor must have 2 root keys, Edition and Stacks
+	// a valid edition descriptor must have 3 root keys, "Edition", "Stacks" and "Stack switch table"
 	if ([descriptor objectForKey:@"Edition"] == nil) return NO;
 	if ([descriptor objectForKey:@"Stacks"] == nil) return NO;
+	if ([descriptor objectForKey:@"Stack switch table"] == nil) return NO;
 	
 	// the Edtion sub-directionary must have a Key, a Discs and a Install Directives key
 	id edition = [descriptor objectForKey:@"Edition"];
@@ -102,8 +103,22 @@
 	name = [NSLocalizedStringFromTable(key, @"Editions", nil) retain];
 	discs = [edition objectForKey:@"Discs"];
 	directories = [edition objectForKey:@"Directories"];
-	
 	installDirectives = [edition objectForKey:@"Install Directives"];
+	
+	NSDictionary* textSwitchTable = [_descriptor objectForKey:@"Stack switch table"];
+	NSMutableDictionary* finalSwitchTable = [NSMutableDictionary new];
+	
+	NSEnumerator* keyEnum = [textSwitchTable keyEnumerator];
+	NSString* switchKey;
+	while ((switchKey = [keyEnum nextObject])) {
+		RXSimpleCardDescriptor* fromDescriptor = [[RXSimpleCardDescriptor alloc] initWithString:switchKey];
+		RXSimpleCardDescriptor* toDescriptor = [[RXSimpleCardDescriptor alloc] initWithString:[textSwitchTable objectForKey:switchKey]];
+		[finalSwitchTable setObject:toDescriptor forKey:fromDescriptor];
+		[toDescriptor release];
+		[fromDescriptor release];
+	}
+	
+	stackSwitchTables = finalSwitchTable;
 	
 	// create the support directory for the edition
 	// FIXME: we should offer system-wide editions as well
@@ -155,6 +170,8 @@
 	[userDataBase release];
 	
 	[openArchives release];
+	
+	[stackSwitchTables release];
 	
 	[super dealloc];
 }
