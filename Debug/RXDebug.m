@@ -19,6 +19,7 @@ void rx_print_exception_backtrace(NSException* e) {
 			[scanner scanHexInt:&address];
 			if (address == 0x1)
 				stack = [stack subarrayWithRange:NSMakeRange(0, [stack count] - 1)];
+			[scanner release];
 		}
 		
 		NSTask* ls = [[NSTask alloc] init];

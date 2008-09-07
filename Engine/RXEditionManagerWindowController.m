@@ -33,6 +33,10 @@
 	[_editionsArrayController setContent:[[RXEditionManager sharedEditionManager] valueForKey:@"editionProxies"]];
 }
 
+- (void)dealloc {
+	[super dealloc];
+}
+
 - (void)tableView:(NSTableView *)aTableView willDisplayCell:(id)cell forTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex {
 	id value = [cell objectValue];
 	

@@ -26,6 +26,10 @@
 	[_copyrightField setStringValue:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSHumanReadableCopyright"]];
 }
 
+- (void)dealloc {
+	[super dealloc];
+}
+
 #if defined(DEBUG)
 - (void)_showDebugConsole:(id)sender {
 	[_debugConsoleWC showWindow:sender];
@@ -48,21 +52,6 @@
 
 - (id <SUVersionComparison>)versionComparatorForHostBundle:(NSBundle *)hb {
 	return versionComparator;
-}
-
-- (void)_updateCanSave {
-	[self willChangeValueForKey:@"canSave"];
-	_canSave = (([[g_world gameState] URL])) ? YES : NO;
-	[self didChangeValueForKey:@"canSave"];
-}
-
-- (BOOL)isSavingEnabled {
-	return _saveFlag;
-}
-
-- (void)setSavingEnabled:(BOOL)flag {
-	_saveFlag = flag;
-	[self _updateCanSave];
 }
 
 - (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException*)exception mask:(NSUInteger)aMask {
@@ -104,6 +93,23 @@
 - (IBAction)showAcknowledgments:(id)sender {
 	NSString* ackPath = [[NSBundle mainBundle] pathForResource:@"Riven X Acknowledgments" ofType:@"pdf"];
 	[[NSWorkspace sharedWorkspace] openFile:ackPath];
+}
+
+#pragma mark open and save menu UI
+
+- (void)_updateCanSave {
+	[self willChangeValueForKey:@"canSave"];
+	_canSave = (([[g_world gameState] URL])) ? YES : NO;
+	[self didChangeValueForKey:@"canSave"];
+}
+
+- (BOOL)isSavingEnabled {
+	return _saveFlag;
+}
+
+- (void)setSavingEnabled:(BOOL)flag {
+	_saveFlag = flag;
+	[self _updateCanSave];
 }
 
 - (IBAction)openDocument:(id)sender {

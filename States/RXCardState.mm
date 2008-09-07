@@ -875,12 +875,20 @@ init_failure:
 	RXStack* stack = [g_world activeStackWithKey:des->parentName];
 	if (!stack) [g_world loadStackWithKey:des->parentName waitUntilDone:YES];
 	
+	// check for a card redirect entry; if we find one, queue another dissolve transition
+	RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:des];
+	if (switchTableDestination) {
+		RXTransition* transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0., 0., kRXCardViewportSize.width, kRXCardViewportSize.height)];
+		[self performSelector:@selector(queueTransition:) withObject:transition inThread:[g_world scriptThread] waitUntilDone:NO];
+		[transition release];
+	}
+	
 	[self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:des inThread:[g_world scriptThread] waitUntilDone:wait];
 	
-	// if the destination card was one of the special switch cards, queue another card switch in order to get a fade out - fade in effect
-	RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:des];
-	if (switchTableDestination)
+	// if we have a card redirect entry, queue the final destination card swtich
+	if (switchTableDestination) {		
 		[self setActiveCardWithStack:switchTableDestination->parentName ID:switchTableDestination->cardID waitUntilDone:wait];
+	}
 	
 	[des release];
 }

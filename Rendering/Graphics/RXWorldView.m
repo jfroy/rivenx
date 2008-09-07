@@ -35,10 +35,11 @@ static CVReturn _rx_render_output_callback(CVDisplayLinkRef displayLink,
 {
 	NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
 	
-	if (![(RXWorldView *)displayLinkContext lockFocusIfCanDraw]) return kCVReturnSuccess;
+	if (![(RXWorldView *)displayLinkContext lockFocusIfCanDraw]) goto end_outout_callback;
 	[(RXWorldView *)displayLinkContext _render:inOutputTime];
 	[(RXWorldView *)displayLinkContext unlockFocus];
 	
+end_outout_callback:
 	[p release];
 	return kCVReturnSuccess;
 }

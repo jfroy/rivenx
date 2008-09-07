@@ -289,7 +289,13 @@
 			
 			[copyOp addObserver:self forKeyPath:@"status" options:0 context:NULL];
 			
-			if (![copyOp start:error]) return NO;
+			if (![copyOp start:error]) {
+				[copyOp removeObserver:self forKeyPath:@"status"];
+				[copyOp release];
+				
+				return NO;
+			}
+			
 			while ([copyOp stage] != kFSOperationStageComplete) {
 				if (session && [NSApp runModalSession:session] != NSRunContinuesResponse) [copyOp cancel:error];
 				[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];

@@ -28,7 +28,6 @@
 	uint32_t _cardCount;
 	
 	// card storage
-	NSArray* _cards;
 	uint16_t _entryCardID;
 }
 
