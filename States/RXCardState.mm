@@ -676,6 +676,9 @@ init_failure:
 - (void)queueTransition:(RXTransition*)transition {	
 	// queue the transition
 	[_transitionQueue addObject:transition];
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"queued transition %@, queue depth=%lu", transition, [_transitionQueue count]);
+#endif
 }
 
 - (void)swapRenderState:(RXCard*)sender {	
@@ -875,18 +878,15 @@ init_failure:
 	RXStack* stack = [g_world activeStackWithKey:des->parentName];
 	if (!stack) [g_world loadStackWithKey:des->parentName waitUntilDone:YES];
 	
-	// check for a card redirect entry; if we find one, queue another dissolve transition
-	RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:des];
-	if (switchTableDestination) {
-		RXTransition* transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0., 0., kRXCardViewportSize.width, kRXCardViewportSize.height)];
-		[self performSelector:@selector(queueTransition:) withObject:transition inThread:[g_world scriptThread] waitUntilDone:NO];
-		[transition release];
-	}
-	
 	[self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:des inThread:[g_world scriptThread] waitUntilDone:wait];
 	
-	// if we have a card redirect entry, queue the final destination card swtich
+	// if we have a card redirect entry, queue the final destination card switch
+	RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:des];
 	if (switchTableDestination) {		
+		RXTransition* transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0., 0., kRXCardViewportSize.width, kRXCardViewportSize.height)];
+		[self performSelector:@selector(queueTransition:) withObject:transition inThread:[g_world scriptThread] waitUntilDone:wait];
+		[transition release];
+		
 		[self setActiveCardWithStack:switchTableDestination->parentName ID:switchTableDestination->cardID waitUntilDone:wait];
 	}
 	

@@ -352,7 +352,9 @@ static NSDictionary* _decodeRivenScript(const void* script, uint32_t* scriptLeng
 	// keep the descriptor around
 	_descriptor = [cardDescriptor retain];
 	
+#if defined(DEBUG)
 	RXOLog(@"initializing card");
+#endif
 	kern_return_t kerr;
 	NSError* error;
 	
@@ -490,7 +492,7 @@ static NSDictionary* _decodeRivenScript(const void* script, uint32_t* scriptLeng
 		record->hotspot_id = CFSwapInt16(record->hotspot_id);
 #endif // defined(__LITTLE_ENDIAN__)
 		
-#if defined(DEBUG)
+#if defined(DEBUG) && DEBUG > 1
 		RXOLog(@"blst record %u: index=%hd, enabled=%hd, hotspot_id=%hd", currentListIndex, record->index, record->enabled, record->hotspot_id);
 #endif // defined(DEBUG)
 	}
