@@ -72,6 +72,10 @@ struct _rx_transition_program {
 	GLuint _waterProgram;
 	GLuint _cardProgram;
 	
+	// journals bar
+	GLuint _journalTextures[3];
+	GLuint _journalTextureBuffer;
+	
 	semaphore_t _transitionSemaphore;
 	struct _rx_transition_program _dissolve;
 	struct _rx_transition_program _push[4];
