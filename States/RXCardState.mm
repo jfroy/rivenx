@@ -297,6 +297,10 @@ init_failure:
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, viewportSize.width, viewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
 	}
 	
+	// load the journal textures
+	glGenBuffers(1, &_journalTextureBuffer); glReportError();
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _journalTextureBuffer);
+	
 	// re-enable client storage
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
 	
