@@ -98,7 +98,6 @@ static void RXCardAudioSourceTaskApplier(const void* value, void* context) {
 @interface RXCardState (RXCardStatePrivate)
 - (void)_initializeRendering;
 - (void)_updateActiveSources;
-- (void)_reshapeGL:(NSNotification*)notification;
 @end
 
 @implementation RXCardState
@@ -197,10 +196,14 @@ init_failure:
 	
 	program.margin_uniform = glGetUniformLocation(program.program, "margin"); glReportError();
 	program.t_uniform = glGetUniformLocation(program.program, "t"); glReportError();
+	program.card_size_uniform = glGetUniformLocation(program.program, "cardSize"); glReportError();
 	
 	glUseProgram(program.program); glReportError();
 	glUniform1i(sourceTextureUniform, 1); glReportError();
 	glUniform1i(destinationTextureUniform, 0); glReportError();
+	
+	if (program.card_size_uniform != -1)
+		glUniform2f(program.card_size_uniform, kRXCardViewportSize.width, kRXCardViewportSize.height);
 	
 	return program;
 }
@@ -209,13 +212,6 @@ init_failure:
 	// WARNING: WILL BE RUNNING ON THE MAIN THREAD
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
-	
-	// we need to listen for OpenGL reshape notifications
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_reshapeGL:) name:@"RXOpenGLDidReshapeNotification" object:nil];
-	[self _reshapeGL:nil];
-	
-	rx_size_t viewportSize = RXGetGLViewportSize();
-	[self setRenderRect:CGRectMake((CGFloat)0.0, (CGFloat)0.0, (CGFloat)viewportSize.width, (CGFloat)viewportSize.height)];
 	
 	// kick start the audio task thread
 	[NSThread detachNewThreadSelector:@selector(_audioTaskThread:) toTarget:self withObject:nil];
@@ -246,6 +242,11 @@ init_failure:
 	vertex_attributes[12] = kRXCardViewportSize.width;							vertex_attributes[13] = kRXCardViewportSize.height;
 	vertex_attributes[14] = kRXCardViewportSize.width;							vertex_attributes[15] = 0.0f;
 	
+	_cardCompositeVertices[0] = kRXCardViewportOriginOffset.x;								_cardCompositeVertices[1] = kRXCardViewportOriginOffset.y;
+	_cardCompositeVertices[2] = _cardCompositeVertices[0];									_cardCompositeVertices[3] = _cardCompositeVertices[1] +  kRXCardViewportSize.height;
+	_cardCompositeVertices[4] = _cardCompositeVertices[2] +  kRXCardViewportSize.width;		_cardCompositeVertices[5] = _cardCompositeVertices[3];
+	_cardCompositeVertices[6] = _cardCompositeVertices[4];									_cardCompositeVertices[7] = _cardCompositeVertices[1];
+	
 	// flush the VBO
 	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
@@ -271,7 +272,7 @@ init_failure:
 		glReportError();
 		
 		// allocate memory for the texture
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, viewportSize.width, viewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXRendererViewportSize.width, kRXRendererViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
 		
 		// color0 texture attach
 		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_RECTANGLE_ARB, _textures[i], 0); glReportError();
@@ -294,7 +295,7 @@ init_failure:
 		glReportError();
 		
 		// allocate memory for the texture
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, viewportSize.width, viewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXRendererViewportSize.width, kRXRendererViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
 	}
 	
 	// load the journal textures
@@ -903,26 +904,6 @@ init_failure:
 
 #pragma mark -
 
-- (void)_reshapeGL:(NSNotification*)notification {
-	// WARNING: IT IS ASSUMED THE CURRENT CONTEXT HAS BEEN LOCKED BY THE CALLER
-#if defined(DEBUG)
-	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"%@: reshaping OpenGL", self);
-#endif
-
-	rx_size_t viewport = RXGetGLViewportSize();
-	[self setRenderRect:CGRectMake((CGFloat)0.0, (CGFloat)0.0, (CGFloat)viewport.width, (CGFloat)viewport.height)];
-	
-	// compute the coordinates at which to draw cards to respect the borders and all
-	rx_size_t borderAvailableSpace = {viewport.width - kRXCardViewportSize.width, viewport.height - kRXCardViewportSize.height};
-	assert(borderAvailableSpace.width >= 0);
-	assert(borderAvailableSpace.height >= 0);
-	
-	_cardCompositeVertices[0] = floorf(borderAvailableSpace.width * kRXCardViewportBorderRatios[0]);		_cardCompositeVertices[1] = floorf(borderAvailableSpace.height * kRXCardViewportBorderRatios[1]);
-	_cardCompositeVertices[2] = _cardCompositeVertices[0];													_cardCompositeVertices[3] = _cardCompositeVertices[1] + kRXCardViewportSize.height;
-	_cardCompositeVertices[4] = _cardCompositeVertices[0] + kRXCardViewportSize.width;						_cardCompositeVertices[5] = _cardCompositeVertices[3];
-	_cardCompositeVertices[6] = _cardCompositeVertices[4];													_cardCompositeVertices[7] = _cardCompositeVertices[1];
-}
-
 - (void)_renderCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	NSEnumerator* renderListEnumerator;
@@ -1125,36 +1106,82 @@ init_failure:
 	
 	glDrawArrays(GL_QUADS, 0, 4); glReportError();
 	
-	// render hotspots
-	if (RXEngineGetBool(@"rendering.renderHotspots")) {
-		glUseProgram(0); glReportError();
-		
-		glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
-		glDisable(GL_TEXTURE_RECTANGLE_ARB);
-		
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		
-		glBegin(GL_QUADS);
-		
-		NSEnumerator* hotspots = [[_front_render_state->card activeHotspots] objectEnumerator];
-		RXHotspot* hotspot;
-		while ((hotspot = [hotspots nextObject])) {
-			NSRect frame = [hotspot frame];
-			glVertex2f(frame.origin.x, frame.origin.y);
-			glVertex2f(frame.origin.x + frame.size.width, frame.origin.y);
-			glVertex2f(frame.origin.x + frame.size.width, frame.origin.y + frame.size.height);
-			glVertex2f(frame.origin.x, frame.origin.y + frame.size.height);
-		}
-		
-		glEnd();
-		
-		glDisable(GL_BLEND);
-	}
-	
 exit_render:
 	[p release];
 	OSSpinLockUnlock(&_renderLock);
+}
+
+- (void)_renderInGlobalContext:(CGLContextObj)cgl_ctx {
+	// render hotspots
+	if (RXEngineGetBool(@"rendering.renderHotspots")) {
+		NSArray* activeHotspots = [_front_render_state->card activeHotspots];
+		// 4 lines per hotspot, 6 floats per line (coord[x, y] color[r, g, b, a])
+		GLfloat* hotspot_vertex_attribs = new GLfloat[4 * 6 * [activeHotspots count] * sizeof(GLfloat)];
+		GLint* first_array = new GLint[[activeHotspots count]];
+		GLint* count_array = new GLint[[activeHotspots count]];
+		
+		NSEnumerator* hotspots = [activeHotspots objectEnumerator];
+		RXHotspot* hotspot;
+		
+		GLfloat* attribs = hotspot_vertex_attribs;
+		GLint* first = first_array;
+		GLint* count = count_array;
+		GLint primitive_index = 0;
+		while ((hotspot = [hotspots nextObject])) {
+			first[primitive_index] = primitive_index * 4;
+			count[primitive_index] = 4;
+			
+			NSRect frame = [hotspot frame];
+			
+			attribs[0] = frame.origin.x;
+			attribs[1] = frame.origin.y;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			attribs[0] = frame.origin.x + frame.size.width;
+			attribs[1] = frame.origin.y;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			attribs[0] = frame.origin.x + frame.size.width;
+			attribs[1] = frame.origin.y + frame.size.height;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			attribs[0] = frame.origin.x;
+			attribs[1] = frame.origin.y + frame.size.height;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			primitive_index++;
+		}
+		
+		glVertexPointer(2, GL_FLOAT, 6 * sizeof(GLfloat), hotspot_vertex_attribs); glReportError();
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		glEnableClientState(GL_COLOR_ARRAY);
+		glColorPointer(4, GL_FLOAT, 6 * sizeof(GLfloat), hotspot_vertex_attribs + 2); glReportError();
+		
+		glMultiDrawArrays(GL_LINE_LOOP, first_array, count_array, [activeHotspots count]); glReportError();
+		
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glDisableClientState(GL_COLOR_ARRAY);
+		
+		delete[] count_array;
+		delete[] first_array;
+		delete[] hotspot_vertex_attribs;
+	}	
 }
 
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent {

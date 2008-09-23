@@ -30,6 +30,7 @@ struct _rx_transition_program {
 	GLuint program;
 	GLint t_uniform;
 	GLint margin_uniform;
+	GLint card_size_uniform;
 };
 
 @interface RXCardState : RXRenderState <RXRivenScriptProtocol> {

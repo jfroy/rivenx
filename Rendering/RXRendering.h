@@ -52,8 +52,10 @@ CF_INLINE rx_rect_t RXRectMake(GLint x, GLint y, GLsizei width, GLsizei height) 
 	rx_rect_t rect; rect.origin = RXPointMake(x, y); rect.size = RXSizeMake(width, height); return rect;
 }
 
+extern const rx_size_t kRXRendererViewportSize;
+
 extern const rx_size_t kRXCardViewportSize;
-extern const float kRXCardViewportBorderRatios[2]; // left, bottom
+extern const rx_point_t kRXCardViewportOriginOffset;
 
 extern const double kRXTransitionDuration;
 
@@ -89,6 +91,26 @@ CF_INLINE rx_size_t RXGetGLViewportSize() {
 	return [g_worldView viewportSize];
 }
 
+CF_INLINE rx_rect_t RXEffectiveRendererFrame() {
+	rx_size_t viewportSize = RXGetGLViewportSize();
+	rx_size_t contentSize = kRXRendererViewportSize;
+	
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"] && [[NSUserDefaults standardUserDefaults] boolForKey:@"StretchToFit"]) {
+		float viewportAR = (float)viewportSize.width / (float)viewportSize.height;
+		float contentAR = (float)contentSize.width / (float)contentSize.height;
+		
+		if (viewportAR > 0) {
+			contentSize.height = viewportSize.height;
+			contentSize.width = contentSize.height * contentAR;
+		} else {
+			contentSize.width = viewportSize.width;
+			contentSize.height = viewportSize.width / contentAR;
+		}
+	}
+	
+	return RXRectMake((viewportSize.width / 2) - (contentSize.width / 2), (viewportSize.height / 2) - (contentSize.height / 2), contentSize.width, contentSize.height);
+}
+
 CF_INLINE id <RXWorldViewProtocol> RXGetWorldView() {
 	return g_worldView;
 }
@@ -97,9 +119,6 @@ __END_DECLS
 
 // renderable object protocol
 @protocol RXRenderingProtocol
-- (CGRect)renderRect;
-- (void)setRenderRect:(CGRect)rect;
-
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent;
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent;
 @end

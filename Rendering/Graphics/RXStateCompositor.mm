@@ -166,17 +166,17 @@
 #endif
 	
 	rx_size_t viewportSize = RXGetGLViewportSize();
+	rx_rect_t contentRect = RXEffectiveRendererFrame();
 	
-	// the state textures are all viewport-sized and rendered on top of each other
-	vertex_coords[0] = 0.0f;								vertex_coords[1] = 0.0f;
-	vertex_coords[2] = 0.0f;								vertex_coords[3] = (GLfloat)viewportSize.height;
-	vertex_coords[4] = (GLfloat)viewportSize.width;			vertex_coords[5] = (GLfloat)viewportSize.height;
-	vertex_coords[6] = (GLfloat)viewportSize.width;			vertex_coords[7] = 0.0f;
+	vertex_coords[0] = contentRect.origin.x;											vertex_coords[1] = contentRect.origin.y;
+	vertex_coords[2] = vertex_coords[0];												vertex_coords[3] = vertex_coords[1] + contentRect.size.height;
+	vertex_coords[4] = vertex_coords[2] + contentRect.size.width;						vertex_coords[5] = vertex_coords[3];
+	vertex_coords[6] = vertex_coords[4];												vertex_coords[7] = vertex_coords[1];
 	
-	tex_coords[0] = 0.0f;									tex_coords[1] = 0.0f;
-	tex_coords[2] = 0.0f;									tex_coords[3] = (GLfloat)viewportSize.height;
-	tex_coords[4] = (GLfloat)viewportSize.width;			tex_coords[5] = (GLfloat)viewportSize.height;
-	tex_coords[6] = (GLfloat)viewportSize.width;			tex_coords[7] = 0.0f;
+	tex_coords[0] = 0.0f;																tex_coords[1] = 0.0f;
+	tex_coords[2] = 0.0f;																tex_coords[3] = (GLfloat)kRXRendererViewportSize.height;
+	tex_coords[4] = (GLfloat)kRXRendererViewportSize.width;								tex_coords[5] = (GLfloat)kRXRendererViewportSize.height;
+	tex_coords[6] = (GLfloat)kRXRendererViewportSize.width;								tex_coords[7] = 0.0f;
 }
 
 - (void)_updateTextureBlendWeightsUniform {
@@ -195,10 +195,12 @@
 
 - (void)addState:(RXRenderState*)state opacity:(GLfloat)opacity {
 	// FIXME: render state compositor only supports 4 states at this time
-	if ([_states count] == 4) return;
+	if ([_states count] == 4)
+		return;
 	
 	// insert the state in the state responder chain
-	if ([_states count]) [state setNextResponder:((RXRenderStateCompositionDescriptor*)[_states lastObject])->state];
+	if ([_states count])
+		[state setNextResponder:((RXRenderStateCompositionDescriptor*)[_states lastObject])->state];
 	
 	// make a state composition descriptor
 	RXRenderStateCompositionDescriptor* descriptor = [RXRenderStateCompositionDescriptor new];
@@ -206,8 +208,6 @@
 	descriptor->opacity = opacity;
 	descriptor->render = RXGetRenderImplementation([state class], RXRenderingRenderSelector);
 	descriptor->post_flush = RXGetPostFlushTasksImplementation([state class], RXRenderingPostFlushTasksSelector);
-	
-	rx_size_t viewportSize = RXGetGLViewportSize();
 	
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
@@ -229,7 +229,7 @@
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
 	
 	// allocate memory for the texture
-	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, viewportSize.width, viewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXRendererViewportSize.width, kRXRendererViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
 	glReportError();
 	
 	// re-enable client storage
@@ -361,10 +361,6 @@
 	// bind the state render FBO
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbo);
 	
-	// save GL state
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-	glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
-	
 	NSEnumerator* stateEnum = [renderStates objectEnumerator];
 	RXRenderStateCompositionDescriptor* descriptor;
 	while ((descriptor = [stateEnum nextObject])) {
@@ -388,15 +384,8 @@
 		descriptor->render.imp(descriptor->state, descriptor->render.sel, outputTime, cgl_ctx, self);
 	}
 	
-	// restore GL state
-	glPopAttrib();
-	glPopClientAttrib();
-	
 	// bind the window server FBO
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); glReportError();
-	
-	glPushAttrib(GL_TEXTURE_BIT);
-	glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
 	
 #if defined(DEBUG)
 	glValidateProgram(_compositor_program);
@@ -412,9 +401,8 @@
 	glVertexPointer(2, GL_FLOAT, 0, vertex_coords); glReportError();
 	
 	// setup render state textures
-	uint32_t state_i = 0;
 	uint32_t state_count = [_states count];
-	for (; state_i < state_count; state_i++) {
+	for (uint32_t state_i = 0; state_i < state_count; state_i++) {
 		glActiveTexture(GL_TEXTURE0 + state_i); glReportError();
 		glTexCoordPointer(2, GL_FLOAT, 0, tex_coords); glReportError();
 		GLuint texture = ((RXRenderStateCompositionDescriptor*)[_states objectAtIndex:state_i])->texture;
@@ -424,11 +412,15 @@
 	// render all states at once!
 	glDrawArrays(GL_QUADS, 0, 4); glReportError();
 	
-	glUseProgram(0);
+	// bind program 0 again
+	glUseProgram(0); glReportError();
 	
-	// restore GL state
-	glPopAttrib();
-	glPopClientAttrib();
+	stateEnum = [renderStates objectEnumerator];
+	while ((descriptor = [stateEnum nextObject])) {
+		typedef void (*render_global_t)(id, SEL, CGLContextObj);
+		render_global_t imp = (render_global_t)[descriptor->state methodForSelector:@selector(_renderInGlobalContext:)];
+		imp(descriptor->state, @selector(_renderInGlobalContext:), cgl_ctx);
+	}
 	
 	[renderStates release];
 }

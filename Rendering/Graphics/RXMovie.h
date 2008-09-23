@@ -48,4 +48,7 @@
 
 - (CGSize)currentSize;
 
+- (CGRect)renderRect;
+- (void)setRenderRect:(CGRect)rect;
+
 @end

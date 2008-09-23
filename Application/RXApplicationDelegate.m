@@ -11,19 +11,28 @@
 #import "RXApplicationDelegate.h"
 
 #import "RXWorld.h"
+#import "RXWorldView.h"
 #import "RXEditionManagerWindowController.h"
 
 #import "RXDebugWindowController.h"
 
 @implementation RXApplicationDelegate
 
++ (void)initialize {
+	[super initialize];
+	[[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO], @"FullScreenMode", [NSNumber numberWithBool:NO], @"StretchToFit", nil]];
+}
+
 - (void)awakeFromNib {
 	[_aboutBox center];
+	[_preferences center];
 	
 	NSBundle* mainBundle = [NSBundle mainBundle];
 	NSString* versionFormat = NSLocalizedStringFromTable(@"VERSION_FORMAT", @"About", nil);
 	[_versionField setStringValue:[NSString stringWithFormat:versionFormat, [mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], [mainBundle objectForInfoDictionaryKey:@"CFBundleVersion"]]];
 	[_copyrightField setStringValue:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSHumanReadableCopyright"]];
+	
+	_fullscreen = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"];
 }
 
 - (void)dealloc {
@@ -83,7 +92,7 @@
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
-
+	
 }
 
 - (IBAction)orderFrontAboutWindow:(id)sender {
@@ -93,6 +102,12 @@
 - (IBAction)showAcknowledgments:(id)sender {
 	NSString* ackPath = [[NSBundle mainBundle] pathForResource:@"Riven X Acknowledgments" ofType:@"pdf"];
 	[[NSWorkspace sharedWorkspace] openFile:ackPath];
+}
+
+- (IBAction)showPreferences:(id)sender {
+	[_preferences makeKeyAndOrderFront:sender];
+	if (_fullscreen)
+		[_preferences setLevel:NSTornOffMenuWindowLevel];
 }
 
 #pragma mark open and save menu UI
@@ -110,6 +125,21 @@
 - (void)setSavingEnabled:(BOOL)flag {
 	_saveFlag = flag;
 	[self _updateCanSave];
+}
+
+- (IBAction)toggleFullscreen:(id)sender {
+	// FIXME: implement method in RXRendering or RXWorld (in RXWorldRendering.mm) to do this
+}
+
+- (IBAction)toggleStretchToFit:(id)sender {
+	BOOL stretchToFit = [[NSUserDefaults standardUserDefaults] boolForKey:@"StretchToFit"];
+	[[NSUserDefaults standardUserDefaults] setBool:!stretchToFit forKey:@"StretchToFit"];
+	
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"RXOpenGLDidReshapeNotification" object:self];
+}
+
+- (BOOL)isFullscreen {
+	return _fullscreen;
 }
 
 - (IBAction)openDocument:(id)sender {
