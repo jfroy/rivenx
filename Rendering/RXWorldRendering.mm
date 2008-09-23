@@ -38,19 +38,39 @@
 	_audioRenderer = reinterpret_cast<void *>(audioRenderer);
 	audioRenderer->Initialize();
 	
-	// create our window on the main screen, centered
+	// FIXME: we should store the last screen ID (index? some other?) used and keep using that
+	// create our window on the main screen
 	NSScreen* mainScreen = [NSScreen mainScreen];
 	NSRect screenRect = [mainScreen frame];
-	NSWindow* renderWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0.0f, 0.0f, 640.0f, 480.0f)
-														 styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSNormalWindowLevel
-														   backing:NSBackingStoreBuffered
-															 defer:YES
-															screen:mainScreen];
-	[renderWindow setTitle:@"Riven X"];
-	[renderWindow setReleasedWhenClosed:YES];
+	NSWindow* renderWindow;
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"]) {
+		// create fullscreen, borderless window
+		renderWindow = [[NSWindow alloc] initWithContentRect:screenRect
+												   styleMask:NSBorderlessWindowMask
+													 backing:NSBackingStoreBuffered
+													   defer:NO
+													  screen:mainScreen];
+		[renderWindow setLevel:NSTornOffMenuWindowLevel];
+		if ([renderWindow respondsToSelector:@selector(setCollectionBehavior:)])
+			[renderWindow setCollectionBehavior:NSWindowCollectionBehaviorDefault];
+	} else {
+		// regular window
+		renderWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0.0f, 0.0f, kRXRendererViewportSize.width, kRXRendererViewportSize.height)
+												   styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask
+													 backing:NSBackingStoreBuffered
+													   defer:YES
+													  screen:mainScreen];
+		
+		[renderWindow setLevel:NSNormalWindowLevel];
+		[renderWindow setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - (kRXRendererViewportSize.width / 2), (screenRect.size.height / 2) - (kRXRendererViewportSize.height / 2))];
+	}
+	
 	[renderWindow setAcceptsMouseMovedEvents:YES];
-	[renderWindow setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - 320.0f, (screenRect.size.height / 2) - 240.0f)];
+	[renderWindow setCanHide:YES];
 	[renderWindow setDelegate:[NSApp delegate]];
+	[renderWindow setDisplaysWhenScreenProfileChanges:YES];
+	[renderWindow setReleasedWhenClosed:YES];
+	[renderWindow setTitle:@"Riven X"];
 	
 	// allocate the world view
 	NSRect contentViewRect = [renderWindow contentRectForFrameRect:[renderWindow frame]];
@@ -65,6 +85,10 @@
 	// initialize the state compositor
 	_stateCompositor = [[RXStateCompositor alloc] init];
 	
+	// if we're in fullscreen mode, hide the menu bar now
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"])
+		[NSMenu setMenuBarVisible:NO];
+	
 	// show the window
 	[renderWindow makeKeyAndOrderFront:self];
 	
@@ -73,7 +97,7 @@
 }
 
 - (void)_initializeRenderStates {
-	// prep the cyan state
+	// prep the cyan movie state
 	_cyanMovieState = [[RXCyanMovieState alloc] init];
 	[_cyanMovieState setDelegate:_stateCompositor];
 	
@@ -85,11 +109,10 @@
 	_cardState = [[RXCardState alloc] init];
 	[_cardState setDelegate:_stateCompositor];
 	
-	// Add states to the state compositor
-	//[_stateCompositor addState:_cyanMovieState opacity:1.0f];
+	// add states to the state compositor
 	[_stateCompositor addState:_cardState opacity:1.0f];
 	
-	// When the aspit stack finishes loading, we'll be notified
+	// when the aspit stack finishes loading, we'll be notified
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(setInitialCard_:) name:@"RXStackDidLoadNotification" object:nil];
 }
 

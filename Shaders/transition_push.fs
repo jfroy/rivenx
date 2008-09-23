@@ -11,7 +11,7 @@
 #error RX_DIRECTION must be between 0 and 3
 #endif
 
-const vec2 cardSize = vec2(608.0, 392.0);
+uniform vec2 cardSize;
 
 uniform float margin;
 

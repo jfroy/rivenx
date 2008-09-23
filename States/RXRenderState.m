@@ -15,8 +15,6 @@
 	self = [super init];
 	if (!self) return nil;
 	
-	_renderRect = CGRectNull;
-	
 	return self;
 }
 
@@ -33,14 +31,6 @@
 
 - (void)setDelegate:(id)delegate {
 	_delegate = delegate;
-}
-
-- (CGRect)renderRect {
-	return _renderRect;
-}
-
-- (void)setRenderRect:(CGRect)rect {
-	_renderRect = rect;
 }
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {

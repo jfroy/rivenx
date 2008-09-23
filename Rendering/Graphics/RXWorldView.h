@@ -33,6 +33,8 @@
 	
 	CVDisplayLinkRef _displayLink;
 	
+	float _menuBarHeight;
+	
 	id _renderTarget;
 	rx_render_dispatch_t _renderDispatch;
 	rx_post_flush_tasks_dispatch_t _postFlushTasksDispatch;

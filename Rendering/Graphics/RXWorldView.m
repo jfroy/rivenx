@@ -12,6 +12,7 @@
 #import "RXWorldView.h"
 #import "RXWorldProtocol.h"
 #import "RXThreadUtilities.h"
+#import "RXApplicationDelegate.h"
 
 
 @interface RXWorldView (RXWorldView_Private)
@@ -170,6 +171,9 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	// get the default cursor from the world
 	_cursor = [[g_world defaultCursor] retain];
 	
+	// cache the height of the menu bar, since it will change if / when the menu bar is hidden
+	_menuBarHeight = [[NSApp mainMenu] menuBarHeight];
+	
 	return self;
 }
 
@@ -248,6 +252,8 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	
 	[_cursor release];
 	_cursor = [cursor retain];
+	
+	[_cursor set];
 	[[self window] invalidateCursorRectsForView:self];
 }
 
@@ -272,6 +278,33 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent {
+	NSPoint screenLoc = [self convertPoint:[theEvent locationInWindow] toView:nil];
+	
+	// if we're in fullscreen mode and on the main display, we have to check if we're over the menu bar
+	if ([[NSApp delegate] isFullscreen]) {
+		CGDirectDisplayID ddid = CVDisplayLinkGetCurrentCGDisplay(_displayLink);
+		CGDirectDisplayID mainDisplay = CGMainDisplayID();
+		if (ddid == mainDisplay) {
+			CGRect displayBounds = CGDisplayBounds(ddid);
+			if (screenLoc.y < displayBounds.size.height - _menuBarHeight) {
+				if ([NSMenu menuBarVisible]) {
+					[NSMenu setMenuBarVisible:NO];
+					
+					// restore our cursor
+					[_cursor set];
+				}
+			} else {
+				if (![NSMenu menuBarVisible]) {
+					[NSMenu setMenuBarVisible:YES];
+					
+					// while over the menu bar, use the system's arrow cursor
+					[[NSCursor arrowCursor] set];
+				}
+			}
+		}
+	}
+	
+	// forward the even to the state compositor
 	[[g_world stateCompositor] mouseMoved:theEvent];
 }
 
@@ -315,7 +348,7 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 - (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx {	
 	// set background color to black
 #if defined(DEBUG)
-	glClearColor(0.0f, 0.5f, 1.0f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 #else
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 #endif
@@ -332,14 +365,6 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	
 	// pixel store state
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-	
-	// texturing
-	glActiveTexture(GL_TEXTURE2);
-	glEnable(GL_TEXTURE_RECTANGLE_ARB);
-	glActiveTexture(GL_TEXTURE1);
-	glEnable(GL_TEXTURE_RECTANGLE_ARB);
-	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_RECTANGLE_ARB);
 	
 	// client arrays
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -407,7 +432,7 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	
 	// calculate the pixel-aligned rectangle in which OpenGL will render. convertRect converts to/from window coordinates when the view argument is nil
 	glRect.size = NSIntegralRect([self convertRect:[self bounds] toView:nil]).size;
-	glRect.origin = [self convertRect:NSIntegralRect([self convertRect:[self visibleRect] toView:nil]) fromView:nil].origin;
+	glRect.origin = NSPointFromCGPoint(CGPointMake(([self bounds].size.width - glRect.size.width)/2.0, ([self bounds].size.height - glRect.size.height)/2.0));
 	
 	// compute the viewport origin
 	viewportLeft = glRect.origin.x > 0 ? -glRect.origin.x * uiScale : 0;

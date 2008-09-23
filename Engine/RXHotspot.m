@@ -19,14 +19,14 @@
 }
 
 - (void)_updateGlobalFrame:(NSNotification*)notification {
-	rx_size_t viewport = RXGetGLViewportSize();
-	rx_size_t borderAvailableSpace = {viewport.width - kRXCardViewportSize.width, viewport.height - kRXCardViewportSize.height};
-	assert(borderAvailableSpace.width >= 0);
-	assert(borderAvailableSpace.height >= 0);
+	rx_rect_t contentRect = RXEffectiveRendererFrame();
+	float scale_x = (float)contentRect.size.width / (float)kRXRendererViewportSize.width;
+	float scale_y = (float)contentRect.size.height / (float)kRXRendererViewportSize.height;
 	
-	_globalFrame.origin.x = _cardFrame.origin.x + floorf(borderAvailableSpace.width * kRXCardViewportBorderRatios[0]);
-	_globalFrame.origin.y = _cardFrame.origin.y + floorf(borderAvailableSpace.height * kRXCardViewportBorderRatios[1]);
-	_globalFrame.size = _cardFrame.size;
+	_globalFrame.origin.x = contentRect.origin.x + (_cardFrame.origin.x + kRXCardViewportOriginOffset.x) * scale_x;
+	_globalFrame.origin.y = contentRect.origin.y + (_cardFrame.origin.y + kRXCardViewportOriginOffset.y) * scale_y;
+	_globalFrame.size.width = _cardFrame.size.width * scale_x;
+	_globalFrame.size.height = _cardFrame.size.height * scale_y;
 }
 
 - (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID frame:(NSRect)frame cursorID:(uint16_t)cursorID script:(NSDictionary *)script {
@@ -66,8 +66,10 @@
 }
 
 - (NSComparisonResult)compareByIndex:(RXHotspot*)other {
-	if (other->_index < _index) return NSOrderedAscending;
-	else return NSOrderedDescending;
+	if (other->_index < _index)
+		return NSOrderedAscending;
+	else
+		return NSOrderedDescending;
 }
 
 - (NSRect)frame {

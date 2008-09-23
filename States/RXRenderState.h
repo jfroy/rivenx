@@ -17,7 +17,6 @@ typedef struct __RXStateDelegateFlags {
 @interface RXRenderState : NSResponder <RXRenderingProtocol> {
 	id _delegate;
 	_RXStateDelegateFlags _delegateFlags;
-	CGRect _renderRect;
 }
 
 - (id)delegate;

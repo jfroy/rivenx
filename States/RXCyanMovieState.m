@@ -58,7 +58,6 @@ static rx_render_dispatch_t _clear_dispatch;
 		cyanMovieRect.size.width = glSize.height * aspectRatio;
 		cyanMovieRect.origin.x = (glSize.width / 2.0F) - (cyanMovieRect.size.width / 2.0F);
 	}
-	[self setRenderRect:cyanMovieRect];
 	
 	return self;
 }
@@ -86,12 +85,6 @@ static rx_render_dispatch_t _clear_dispatch;
 
 - (void)_cyanMovieIsDone:(NSNotification *)notification {
 	[self diffuse];
-}
-
-- (void)setRenderRect:(CGRect)rect {
-	[super setRenderRect:rect];
-	[_cyanMovie setRenderRect:rect];
-//	_dispatch = _clear_and_render_dispatch;
 }
 
 - (void)_clearAndRender:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {

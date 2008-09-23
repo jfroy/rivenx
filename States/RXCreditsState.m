@@ -43,10 +43,6 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	// don't need to lock the context since this runs in the main thread
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	
-	// save GL state
-	glPushAttrib(GL_TEXTURE_BIT);
-	glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT | GL_CLIENT_VERTEX_ARRAY_BIT);
-	
 	// create the texture ID array and the textures themselves
 	glGenTextures(kCreditsTextureCount, _creditsTextureObjects);
 	
@@ -111,10 +107,6 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 #if defined(DEBUG)
 	//glValidateProgramARB(_splitTexturingProgram);
 #endif
-
-	// restore GL state
-	glPopAttrib();
-	glPopClientAttrib();
 	
 	// all the textures are the same size, so we need one set of texture coordinates
 	_textureCoordinates[0][0] = 0.0f;
