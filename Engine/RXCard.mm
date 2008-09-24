@@ -565,15 +565,9 @@ static NSDictionary* _decodeRivenScript(const void* script, uint32_t* scriptLeng
 	// for each PLST entry, load and upload the picture, compute needed coords
 	size_t textureStorageOffset = 0;
 	for (currentListIndex = 0; currentListIndex < _pictureCount; currentListIndex++) {
-		NSRect field_display_rect = RXMakeNSRect(plstRecords[currentListIndex].left, 
-												 plstRecords[currentListIndex].top, 
-												 plstRecords[currentListIndex].right, 
-												 plstRecords[currentListIndex].bottom);
-		[_archive loadBitmapWithID:plstRecords[currentListIndex].bitmap_id 
-							buffer:BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset) 
-							format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED 
-							 error:&error];
-		if (error) @throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		NSRect field_display_rect = RXMakeNSRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
+		if (![_archive loadBitmapWithID:plstRecords[currentListIndex].bitmap_id buffer:BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset) format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
+			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 		// bind the corresponding texture object, configure it and upload the picture
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _pictureTextures[currentListIndex]); glReportError();

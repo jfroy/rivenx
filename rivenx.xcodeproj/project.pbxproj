@@ -130,7 +130,7 @@
 		316721AF0D27F63000FB2C0E /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		316721B40D27F6A600FB2C0E /* CAPThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316721B20D27F6A600FB2C0E /* CAPThread.cpp */; };
 		316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 316721D90D27FB3200FB2C0E /* integer_pair_hash.c */; };
-		3169618A0E86D51400BECFE8 /* RXCardExternals.m in Sources */ = {isa = PBXBuildFile; fileRef = 316961890E86D51400BECFE8 /* RXCardExternals.m */; };
+		3169618A0E86D51400BECFE8 /* RXCardExternals.mm in Sources */ = {isa = PBXBuildFile; fileRef = 316961890E86D51400BECFE8 /* RXCardExternals.mm */; };
 		316C37B40987227800AC2C8E /* RXCardState.mm in Sources */ = {isa = PBXBuildFile; fileRef = 316C37B20987227800AC2C8E /* RXCardState.mm */; };
 		316E1F2A0E77806100F28E2A /* mhk_dump.m in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F270E77806100F28E2A /* mhk_dump.m */; };
 		316E1F2B0E77806100F28E2A /* mhk_dump_cmd.c in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F280E77806100F28E2A /* mhk_dump_cmd.c */; };
@@ -426,7 +426,7 @@
 		316721B30D27F6A600FB2C0E /* CAPThread.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CAPThread.h; path = /Developer/Examples/CoreAudio/PublicUtility/CAPThread.h; sourceTree = "<absolute>"; };
 		316721D80D27FB3200FB2C0E /* integer_pair_hash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = integer_pair_hash.h; path = Additions/integer_pair_hash.h; sourceTree = "<group>"; };
 		316721D90D27FB3200FB2C0E /* integer_pair_hash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = integer_pair_hash.c; path = Additions/integer_pair_hash.c; sourceTree = "<group>"; };
-		316961890E86D51400BECFE8 /* RXCardExternals.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardExternals.m; sourceTree = "<group>"; };
+		316961890E86D51400BECFE8 /* RXCardExternals.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXCardExternals.mm; sourceTree = "<group>"; };
 		316C37B10987227800AC2C8E /* RXCardState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXCardState.h; path = States/RXCardState.h; sourceTree = "<group>"; };
 		316C37B20987227800AC2C8E /* RXCardState.mm */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RXCardState.mm; path = States/RXCardState.mm; sourceTree = "<group>"; tabWidth = 4; usesTabs = 1; };
 		316E1EE80E77803100F28E2A /* mhkdump */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mhkdump; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -755,7 +755,7 @@
 			children = (
 				31225AC208C421790055628F /* RXCard.h */,
 				31225AC308C421790055628F /* RXCard.mm */,
-				316961890E86D51400BECFE8 /* RXCardExternals.m */,
+				316961890E86D51400BECFE8 /* RXCardExternals.mm */,
 				31588871098D7A120090A6B6 /* RXCardDescriptor.h */,
 				31588872098D7A120090A6B6 /* RXCardDescriptor.m */,
 				312EDC700A2E3B80005D26AF /* RXHotspot.h */,
@@ -1144,9 +1144,9 @@
 			buildConfigurationList = 314959940E327B2E00E49C83 /* Build configuration list for PBXNativeTarget "MHKKit" */;
 			buildPhases = (
 				3149598A0E327B2D00E49C83 /* Headers */,
-				3149598B0E327B2D00E49C83 /* Resources */,
 				3149598C0E327B2D00E49C83 /* Sources */,
 				3149598D0E327B2D00E49C83 /* Frameworks */,
+				3149598B0E327B2D00E49C83 /* Resources */,
 				314959DA0E327D2800E49C83 /* copy_ffmpeg_license */,
 				314959D90E327D0800E49C83 /* copy_ffmpeg */,
 				314959DC0E327D3100E49C83 /* bzrversion */,
@@ -1630,7 +1630,7 @@
 				3185C4730E06046D00528220 /* RXVersionComparator.m in Sources */,
 				31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */,
 				31A1FB210E0CA95200B2437A /* RXRenderStateOpacityAnimation.m in Sources */,
-				3169618A0E86D51400BECFE8 /* RXCardExternals.m in Sources */,
+				3169618A0E86D51400BECFE8 /* RXCardExternals.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

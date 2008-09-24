@@ -361,7 +361,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 #pragma mark -
 
-- (void)postStackLoadedNotification_:(NSString *)stackKey {
+- (void)postStackLoadedNotification_:(NSString*)stackKey {
 	// WARNING: MUST RUN ON THE MAIN THREAD
 	if (!pthread_main_np()) {
 		[self performSelectorOnMainThread:@selector(postStackLoadedNotification_:) withObject:stackKey waitUntilDone:NO];
@@ -425,7 +425,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	}
 }
 
-- (void)loadStackWithKey:(NSString *)stackKey waitUntilDone:(BOOL)waitFlag {
+- (void)loadStackWithKey:(NSString*)stackKey waitUntilDone:(BOOL)waitFlag {
 	// WARNING: this method can run on any thread
 	// WARNING: this method allows for duplicate instances of the same stack to be loaded, always use activeStackWithKey first to check if the stack is available
 	if (_tornDown) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"loadStackWithKey: RXWorld IS TORN DOWN" userInfo:nil];
@@ -438,7 +438,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	if (waitFlag) semaphore_wait(_stackInitSemaphore);
 }
 
-- (RXStack *)activeStackWithKey:(NSString *)key {
+- (RXStack*)activeStackWithKey:(NSString*)key {
 	if (_tornDown) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
 	
 	pthread_rwlock_rdlock(&_activeStacksLock);
@@ -448,7 +448,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return stack;
 }
 
-- (NSArray *)activeStacks {
+- (NSArray*)activeStacks {
 	if (_tornDown) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
 	
 	pthread_rwlock_rdlock(&_activeStacksLock);
@@ -460,7 +460,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 #pragma mark -
 
-- (NSURL *)worldBase {
+- (NSURL*)worldBase {
 	// this method can run on any thread
 	return _worldBase;
 }
@@ -469,8 +469,12 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return _worldUserBase;
 }
 
-- (MHKArchive *)extraBitmapsArchive {
+- (MHKArchive*)extraBitmapsArchive {
 	return _extraBitmapsArchive;
+}
+
+- (NSDictionary*)extraBitmapsDescriptor {
+	return _extrasDescriptor;
 }
 
 - (NSView <RXWorldViewProtocol> *)worldView {
@@ -488,11 +492,11 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 #pragma mark -
 
-- (void *)audioRenderer {
+- (void*)audioRenderer {
 	return _audioRenderer;
 }
 
-- (RXStateCompositor *)stateCompositor {
+- (RXStateCompositor*)stateCompositor {
 	return _stateCompositor;
 }
 

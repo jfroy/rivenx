@@ -210,6 +210,8 @@ init_failure:
 
 - (void)_initializeRendering {
 	// WARNING: WILL BE RUNNING ON THE MAIN THREAD
+	NSError* error;
+	
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	
@@ -300,14 +302,94 @@ init_failure:
 	
 	// load the journal textures
 	glGenBuffers(1, &_journalTextureBuffer); glReportError();
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _journalTextureBuffer);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _journalTextureBuffer); glReportError();
+	
+	MHKArchive* extraBitmapsArchive = [g_world extraBitmapsArchive];
+	NSDictionary* journalDescriptors = [[g_world extraBitmapsDescriptor] objectForKey:@"Journals"];
+	uint32_t journalTotalTextureSize = 0;
+	
+	NSDictionary* athrusDescriptor = [[g_world extraBitmapsArchive] bitmapDescriptorWithID:[[journalDescriptors objectForKey:@"Athrus"] unsignedShortValue] error:&error];
+	if (!athrusDescriptor)
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get Athrus journal inventory texture descriptor: %@", error);
+	journalTotalTextureSize += ([[athrusDescriptor objectForKey:@"Width"] unsignedIntValue] * [[athrusDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2;
+	
+	NSDictionary* catherineDescriptor = [[g_world extraBitmapsArchive] bitmapDescriptorWithID:[[journalDescriptors objectForKey:@"Catherine"] unsignedShortValue] error:&error];
+	if (!catherineDescriptor)
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get Catherine journal inventory texture descriptor: %@", error);
+	journalTotalTextureSize += ([[catherineDescriptor objectForKey:@"Width"] unsignedIntValue] * [[catherineDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2;
+	
+	NSDictionary* prisonDescriptor = [[g_world extraBitmapsArchive] bitmapDescriptorWithID:[[journalDescriptors objectForKey:@"Prison"] unsignedShortValue] error:&error];
+	if (!prisonDescriptor)
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get Prison journal inventory texture descriptor: %@", error);
+	journalTotalTextureSize += ([[prisonDescriptor objectForKey:@"Width"] unsignedIntValue] * [[prisonDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2;
+	
+	// allocate the texture buffer (aligned to 128 bytes)
+	journalTotalTextureSize = (journalTotalTextureSize & ~0x7f) + 0x80;
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, journalTotalTextureSize, NULL, GL_STATIC_READ); glReportError();
+	
+	// map the buffer in
+	void* journalBuffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
+	
+	// decompress the textures into the buffer
+	if (![extraBitmapsArchive loadBitmapWithID:[[journalDescriptors objectForKey:@"Athrus"] unsignedShortValue] buffer:journalBuffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to load Athrus journal inventory texture: %@", error);
+	journalBuffer = BUFFER_OFFSET(journalBuffer, ([[athrusDescriptor objectForKey:@"Width"] unsignedIntValue] * [[athrusDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2);
+	
+	if (![extraBitmapsArchive loadBitmapWithID:[[journalDescriptors objectForKey:@"Catherine"] unsignedShortValue] buffer:journalBuffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to load Catherine journal inventory texture: %@", error);
+	journalBuffer = BUFFER_OFFSET(journalBuffer, ([[catherineDescriptor objectForKey:@"Width"] unsignedIntValue] * [[catherineDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2);
+	
+	if (![extraBitmapsArchive loadBitmapWithID:[[journalDescriptors objectForKey:@"Prison"] unsignedShortValue] buffer:journalBuffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to load Prison journal inventory texture: %@", error);
+	
+	// create the textures and reset journalBuffer which we'll use as a buffer offset
+	glGenTextures(3, _journalTextures);
+	journalBuffer = 0;
+	
+	// athrus journal
+	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _journalTextures[0]); glReportError();
+	
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glReportError();
+	
+	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[athrusDescriptor objectForKey:@"Width"] unsignedIntValue], [[athrusDescriptor objectForKey:@"Height"] unsignedIntValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, journalBuffer); glReportError();
+	journalBuffer = BUFFER_OFFSET(journalBuffer, ([[athrusDescriptor objectForKey:@"Width"] unsignedIntValue] * [[athrusDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2);
+	
+	// catherine journal
+	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _journalTextures[1]); glReportError();
+	
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glReportError();
+	
+	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[catherineDescriptor objectForKey:@"Width"] unsignedIntValue], [[catherineDescriptor objectForKey:@"Height"] unsignedIntValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, journalBuffer); glReportError();
+	journalBuffer = BUFFER_OFFSET(journalBuffer, ([[catherineDescriptor objectForKey:@"Width"] unsignedIntValue] * [[catherineDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2);
+	
+	// prison journal
+	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _journalTextures[2]); glReportError();
+	
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glReportError();
+	
+	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[prisonDescriptor objectForKey:@"Width"] unsignedIntValue], [[prisonDescriptor objectForKey:@"Height"] unsignedIntValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, journalBuffer); glReportError();
+	
+	// unmap and unbind the buffer
+	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	
 	// re-enable client storage
-	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
 	
 	// shaders
 	NSURL* shaderRoot = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Shaders" ofType:nil]];
-	NSError* error;
 	
 	// water animation shader
 	_waterProgram = [GLShaderProgramManager shaderProgramWithName:@"water" root:shaderRoot extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];

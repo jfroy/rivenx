@@ -52,35 +52,35 @@
 }
 
 // designated initializer
-- (id)initWithURL:(NSURL *)url error:(NSError **)errorPtr;
+- (id)initWithURL:(NSURL*)url error:(NSError**)errorPtr;
 
 // convenience initializers
-- (id)initWithPath:(NSString *)path error:(NSError **)errorPtr;
+- (id)initWithPath:(NSString*)path error:(NSError**)errorPtr;
 
 // accessors
-- (NSURL *)url;
-- (NSArray *)resourceTypes;
+- (NSURL*)url;
+- (NSArray*)resourceTypes;
 
 // MHKArchive is KVO-compliant for all resource types as keys, read-only
 
 // resource accessors
-- (NSDictionary *)resourceDescriptorWithResourceType:(NSString *)type ID:(uint16_t)resourceID;
-- (MHKFileHandle *)openResourceWithResourceType:(NSString *)type ID:(uint16_t)resourceID;
-- (NSData *)dataWithResourceType:(NSString *)type ID:(uint16_t)resourceID;
+- (NSDictionary*)resourceDescriptorWithResourceType:(NSString*)type ID:(uint16_t)resourceID;
+- (MHKFileHandle*)openResourceWithResourceType:(NSString*)type ID:(uint16_t)resourceID;
+- (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)resourceID;
 
 @end
 
 @interface MHKArchive (MHKArchiveQuickTimeAdditions)
-- (Movie)movieWithID:(uint16_t)movieID error:(NSError **)errorPtr;
+- (Movie)movieWithID:(uint16_t)movieID error:(NSError**)errorPtr;
 @end
 
 @interface MHKArchive (MHKArchiveWAVAdditions)
-- (NSDictionary *)soundDescriptorWithID:(uint16_t)soundID error:(NSError **)errorPtr;
-- (MHKFileHandle *)openSoundWithID:(uint16_t)soundID error:(NSError **)errorPtr;
-- (id <MHKAudioDecompression>)decompressorWithSoundID:(uint16_t)soundID error:(NSError **)errorPtr;
+- (NSDictionary*)soundDescriptorWithID:(uint16_t)soundID error:(NSError**)errorPtr;
+- (MHKFileHandle*)openSoundWithID:(uint16_t)soundID error:(NSError**)errorPtr;
+- (id <MHKAudioDecompression>)decompressorWithSoundID:(uint16_t)soundID error:(NSError**)errorPtr;
 @end
 
 @interface MHKArchive (MHKArchiveBitmapAdditions)
-- (NSDictionary *)bitmapDescriptorWithID:(uint16_t)bitmapID error:(NSError **)errorPtr;
-- (void)loadBitmapWithID:(uint16_t)bitmapID buffer:(void *)pixels format:(MHK_BITMAP_FORMAT)format error:(NSError **)errorPtr;
+- (NSDictionary*)bitmapDescriptorWithID:(uint16_t)bitmapID error:(NSError**)errorPtr;
+- (BOOL)loadBitmapWithID:(uint16_t)bitmapID buffer:(void*)pixels format:(MHK_BITMAP_FORMAT)format error:(NSError**)errorPtr;
 @end
