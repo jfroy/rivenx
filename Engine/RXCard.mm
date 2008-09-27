@@ -33,7 +33,7 @@ static const NSString* k_eventSelectors[] = {
 	@"mouseUp",
 	@"mouseDownOrUpOrMoved",
 	@"mouseTrack",
-	@"mouseMoved",
+	@"mouseExited",
 	@"loading",
 	@"leaving",
 	@"UNKNOWN - TYPE 8",
