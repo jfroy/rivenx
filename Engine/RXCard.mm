@@ -548,11 +548,15 @@ static NSDictionary* _decodeRivenScript(const void* script, uint32_t* scriptLeng
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	
-	// buffer object for picture quad vertices and texture coordinates
+	// VAO and VBO for card pictures
 	glGenBuffers(1, &_pictureVertexArrayBuffer); glReportError();
+	glGenVertexArraysAPPLE(1, &_pictureVAO); glReportError();
+	
+	// bind the card picture VAO and VBO
+	glBindVertexArrayAPPLE(_pictureVAO); glReportError();
 	glBindBuffer(GL_ARRAY_BUFFER, _pictureVertexArrayBuffer); glReportError();
 	
-	// (number of pictures + kDynamicPictureSlots) x 2 attributes per picture x 4 vectors per attribute x 2 components per vector x size of a float
+	// 4 vertices per picture [<position.x position.y> <texcoord0.s texcoord0.t>], floats
 	glBufferData(GL_ARRAY_BUFFER, (_pictureCount + kDynamicPictureSlots) * 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
 	
 	// VM map the buffer object and cache some useful pointers
@@ -589,7 +593,6 @@ static NSDictionary* _decodeRivenScript(const void* script, uint32_t* scriptLeng
 		float vertex_bottom_y = field_display_rect.origin.y;
 		float vertex_top_y = field_display_rect.origin.y + field_display_rect.size.height;
 		
-		// specify rectangle vertex and tex coords counter-clockwise from (0, 0)
 		// vertex 1
 		vertex_attributes[0] = vertex_left_x;
 		vertex_attributes[1] = vertex_bottom_y;
@@ -605,27 +608,40 @@ static NSDictionary* _decodeRivenScript(const void* script, uint32_t* scriptLeng
 		vertex_attributes[7] = pictureRecords[currentListIndex].height;
 		
 		// vertex 3
-		vertex_attributes[8] = vertex_right_x;
+		vertex_attributes[8] = vertex_left_x;
 		vertex_attributes[9] = vertex_top_y;
 		
-		vertex_attributes[10] = pictureRecords[currentListIndex].width;
+		vertex_attributes[10] = 0.0f;
 		vertex_attributes[11] = 0.0f;
 		
 		// vertex 4
-		vertex_attributes[12] = vertex_left_x;
+		vertex_attributes[12] = vertex_right_x;
 		vertex_attributes[13] = vertex_top_y;
 		
-		vertex_attributes[14] = 0.0f;
+		vertex_attributes[14] = pictureRecords[currentListIndex].width;
 		vertex_attributes[15] = 0.0f;
 		
 		// move along
 		textureStorageOffset += pictureRecords[currentListIndex].width * pictureRecords[currentListIndex].height * 4;
-		vertex_attributes += 16; // 8 vectors, 2 component per vector
+		vertex_attributes += 16;
 	}
 	
-	// commit the VBO
+	// unmap and flush the VBO
 	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
+	
+	// configure VAs
+	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
+	glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 0)); glReportError();
+	
+	glClientActiveTexture(GL_TEXTURE0);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
+	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+	
+	// bind 0 to ARRAY_BUFFER
 	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
+	
+	// bind 0 to the current VAO
+	glBindVertexArrayAPPLE(0); glReportError();
 	
 	// we don't need the picture records and the PLST data anymore
 	delete[] pictureRecords;

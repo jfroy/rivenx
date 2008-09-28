@@ -24,6 +24,7 @@
 	rx_render_dispatch_t render;
 	rx_post_flush_tasks_dispatch_t post_flush;
 	
+	GLuint fbo;
 	GLuint texture;
 }
 @end
@@ -31,13 +32,20 @@
 @implementation RXRenderStateCompositionDescriptor
 
 - (void)dealloc {
+	// WARNING: ASSUMES THE CONTEXT IS LOCKED
+	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+	
+	glDeleteFramebuffersEXT(1, &fbo);
+	glDeleteTextures(1, &texture);
+	
 	[state release];
+	
 	[super dealloc];
 }
 
-- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent {
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// This method only forwards
-	[state performPostFlushTasks:outputTime parent:parent];
+	[state performPostFlushTasks:outputTime];
 }
 
 @end
@@ -58,14 +66,11 @@
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	
-	// we use one FBO to render the states to textures, which we then composite to the window server framebuffer
-	glGenFramebuffersEXT(1, &_fbo);
-	
 	// render state composition shader
 	NSString* vshader_source = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"state_compositor" ofType:@"vs" inDirectory:@"Shaders"] encoding:NSASCIIStringEncoding error:NULL];
 	NSString* fshader_source = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"state_compositor" ofType:@"fs" inDirectory:@"Shaders"] encoding:NSASCIIStringEncoding error:NULL];
 	
-	_compositor_program = glCreateProgram(); glReportError();
+	_compositing_program = glCreateProgram(); glReportError();
 	
 	GLuint vshader = glCreateShader(GL_VERTEX_SHADER); glReportError();
 	GLuint fshader = glCreateShader(GL_FRAGMENT_SHADER); glReportError();
@@ -96,18 +101,18 @@
 	if (status != GL_TRUE) RXOLog(@"failed to compile shader: state_compositor.fs\n%@", fshader_source);
 #endif
 	
-	glAttachShader(_compositor_program, vshader); glReportError();
-	glAttachShader(_compositor_program, fshader); glReportError();
-	glLinkProgram(_compositor_program); glReportError();
+	glAttachShader(_compositing_program, vshader); glReportError();
+	glAttachShader(_compositing_program, fshader); glReportError();
+	glLinkProgram(_compositing_program); glReportError();
 #if defined(DEBUG)
-	glGetProgramiv(_compositor_program, GL_LINK_STATUS, &status);
+	glGetProgramiv(_compositing_program, GL_LINK_STATUS, &status);
 	if (status != GL_TRUE) RXOLog(@"failed to link program");
 #endif
 	
-	_texture_units_uniform = glGetUniformLocation(_compositor_program, "texture_units"); glReportError();
-	_texture_blend_weights_uniform = glGetUniformLocation(_compositor_program, "texture_blend_weights"); glReportError();
+	_texture_units_uniform = glGetUniformLocation(_compositing_program, "texture_units"); glReportError();
+	_texture_blend_weights_uniform = glGetUniformLocation(_compositing_program, "texture_blend_weights"); glReportError();
 	
-	glUseProgram(_compositor_program); glReportError();
+	glUseProgram(_compositing_program); glReportError();
 	
 	GLint samplers[4] = {0, 1, 2, 3};
 	glUniform1iv(_texture_units_uniform, 4, samplers); glReportError();
@@ -117,6 +122,17 @@
 	
 	glDeleteShader(vshader); glReportError();
 	glDeleteShader(fshader); glReportError();
+	
+	// configure the compositing VAO
+	glGenVertexArraysAPPLE(1, &_compositing_vao); glReportError();
+	glBindVertexArrayAPPLE(_compositing_vao); glReportError();
+	
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
+	glVertexPointer(2, GL_FLOAT, 0, vertex_coords); glReportError();
+	
+	glBindVertexArrayAPPLE(0); glReportError();
 	
 	CGLUnlockContext(cgl_ctx);
 	
@@ -136,15 +152,15 @@
 	RXOLog(@"tearing down");
 #endif
 	
+	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+	CGLLockContext(cgl_ctx);
+	
 	[_states removeAllObjects];
 	NSResetMapTable(_state_map);
 	
-	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
-	CGLLockContext(cgl_ctx);
-	{
-		glDeleteFramebuffersEXT(1, &_fbo);
-		glDeleteProgram(_compositor_program);
-	}
+	glDeleteVertexArraysAPPLE(1, &_compositing_vao);
+	glDeleteProgram(_compositing_program);
+		
 	CGLUnlockContext(cgl_ctx);
 }
 
@@ -212,6 +228,7 @@
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	
+	glGenFramebuffersEXT(1, &(descriptor->fbo));
 	glGenTextures(1, &(descriptor->texture));
 	
 	// bind the texture
@@ -232,8 +249,31 @@
 	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXRendererViewportSize.width, kRXRendererViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
 	glReportError();
 	
+	// color0 texture attach
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, descriptor->fbo); glReportError();
+	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_RECTANGLE_ARB, descriptor->texture, 0); glReportError();
+		
+	// completeness check
+	GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+	if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"render state FBO not complete, status 0x%04x\n", (unsigned int)status);
+		[descriptor release];
+		return;
+	}
+	
 	// re-enable client storage
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+	
+	// configure the tex coord array for the new state
+	glBindVertexArrayAPPLE(_compositing_vao); glReportError();
+	
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+	glClientActiveTexture(GL_TEXTURE0 + [_states count]);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
+	glTexCoordPointer(2, GL_FLOAT, 0, tex_coords); glReportError();
+	
+	glBindVertexArrayAPPLE(0); glReportError();
 	
 	CGLUnlockContext(cgl_ctx);
 	
@@ -348,7 +388,7 @@
 
 - (void)setRenderRect:(CGRect)rect {}
 
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {
+- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	NSArray* renderStates = [_renderStates retain];
 	
@@ -358,63 +398,55 @@
 		return;
 	}
 	
-	// bind the state render FBO
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbo);
-	
 	NSEnumerator* stateEnum = [renderStates objectEnumerator];
 	RXRenderStateCompositionDescriptor* descriptor;
 	while ((descriptor = [stateEnum nextObject])) {
 		// If the state is fully transparent, we can skip rendering altogether
 		if (descriptor->opacity == 0.0f) continue;
 		
-		// color0 texture attach
-		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_RECTANGLE_ARB, descriptor->texture, 0);
-		glReportError();
-		
-		// completeness check
-#if defined(DEBUG)
-		GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-		if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
-			RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"FBO not complete, status 0x%04x\n", (unsigned int)status);
-			continue;
-		}
-#endif
-		
+		// bind the render state's framebuffer and clear its color buffers
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, descriptor->fbo); glReportError();
 		glClear(GL_COLOR_BUFFER_BIT);
-		descriptor->render.imp(descriptor->state, descriptor->render.sel, outputTime, cgl_ctx, self);
+		
+		// render the render state
+		descriptor->render.imp(descriptor->state, descriptor->render.sel, outputTime, cgl_ctx, descriptor->fbo);
 	}
 	
 	// bind the window server FBO
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); glReportError();
 	
-#if defined(DEBUG)
-	glValidateProgram(_compositor_program);
+#if defined(DEBUG_GL)
+	glValidateProgram(_compositing_program); glReportError();
 	GLint valid;
-	glGetProgramiv(_compositor_program, GL_VALIDATE_STATUS, &valid);
-	if (valid != GL_TRUE) RXOLog(@"program not valid: %u", _compositor_program);
+	glGetProgramiv(_compositing_program, GL_VALIDATE_STATUS, &valid);
+	if (valid != GL_TRUE) RXOLog(@"program not valid: %u", _compositing_program);
 #endif
 	
-	// configure what we need
-	glUseProgram(_compositor_program); glReportError();
+	// bind the compositor program and update the render state blend uniform
+	glUseProgram(_compositing_program); glReportError();
 	glUniform4fv(_texture_blend_weights_uniform, 1, _texture_blend_weights); glReportError();
 	
-	glVertexPointer(2, GL_FLOAT, 0, vertex_coords); glReportError();
+	// bind the compositing vao
+	glBindVertexArrayAPPLE(_compositing_vao); glReportError();
 	
-	// setup render state textures
+	// bind render state textures
 	uint32_t state_count = [_states count];
 	for (uint32_t state_i = 0; state_i < state_count; state_i++) {
 		glActiveTexture(GL_TEXTURE0 + state_i); glReportError();
-		glTexCoordPointer(2, GL_FLOAT, 0, tex_coords); glReportError();
 		GLuint texture = ((RXRenderStateCompositionDescriptor*)[_states objectAtIndex:state_i])->texture;
-		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture);
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture); glReportError();
 	}
 	
 	// render all states at once!
 	glDrawArrays(GL_QUADS, 0, 4); glReportError();
 	
-	// bind program 0 again
+	// set the active texture unit to TEXTURE0 (Riven X assumption)
+	glActiveTexture(GL_TEXTURE0); glReportError();
+	
+	// bind program 0 (FF processing)
 	glUseProgram(0); glReportError();
 	
+	// let each render state do "global" rendering, e.g. rendering inside the window server framebuffer
 	stateEnum = [renderStates objectEnumerator];
 	while ((descriptor = [stateEnum nextObject])) {
 		typedef void (*render_global_t)(id, SEL, CGLContextObj);
@@ -425,12 +457,13 @@
 	[renderStates release];
 }
 
-- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent {
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	NSArray* renderStates = [_renderStates retain];
 	NSEnumerator* stateEnum = [renderStates objectEnumerator];
 	RXRenderStateCompositionDescriptor* descriptor;
-	while ((descriptor = [stateEnum nextObject])) descriptor->post_flush.imp(descriptor->state, descriptor->post_flush.sel, outputTime, self);
+	while ((descriptor = [stateEnum nextObject]))
+		descriptor->post_flush.imp(descriptor->state, descriptor->post_flush.sel, outputTime);
 	[renderStates release];
 }
 
@@ -438,29 +471,29 @@
 
 - (void)mouseDown:(NSEvent *)theEvent {
 	// do not dispatch events if an animation is running
-	if (_currentFadeAnimation) return;
-	
+	if (_currentFadeAnimation)
+		return;
 	[((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseDown:theEvent];
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
 	// do not dispatch events if an animation is running
-	if (_currentFadeAnimation) return;
-	
+	if (_currentFadeAnimation)
+		return;
 	[((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseUp:theEvent];
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent {
 	// do not dispatch events if an animation is running
-	if (_currentFadeAnimation) return;
-	
+	if (_currentFadeAnimation)
+		return;
 	[((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseMoved:theEvent];
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent {
 	// do not dispatch events if an animation is running
-	if (_currentFadeAnimation) return;
-	
+	if (_currentFadeAnimation)
+		return;
 	[((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseDragged:theEvent];
 }
 

@@ -75,7 +75,9 @@ struct _rx_card_render_state {
 	
 	// pictures
 	GLuint _pictureCount;
+	GLuint _pictureVertexArrayBuffer;
 	void* _pictureTextureStorage;
+	
 	GLuint _dynamicPictureCount;
 	NSMapTable* _dynamicPictureMap;
 	
@@ -118,7 +120,7 @@ struct _rx_card_render_state {
 	struct _rx_card_render_state* _backRenderStatePtr;
 	
 	// pictures
-	GLuint _pictureVertexArrayBuffer;
+	GLuint _pictureVAO;
 	GLuint* _pictureTextures;
 }
 

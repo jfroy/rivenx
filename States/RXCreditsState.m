@@ -12,6 +12,7 @@
 #import <OpenGL/CGLMacro.h>
 #import <MHKKit/MHKKit.h>
 
+#import "Engine/RXWorldProtocol.h"
 #import "RXCreditsState.h"
 
 static const float kCardViewportBorders[4] = {22.0f, 16.0f, 66.0f, 16.0f};
@@ -30,8 +31,7 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	CVTime displayLinkRP = CVDisplayLinkGetNominalOutputVideoRefreshPeriod([RXGetWorldView() displayLink]);
 	_animationPeriod = displayLinkRP.timeValue / (CFTimeInterval)(displayLinkRP.timeScale);
 	
-	// FIXME: need a new way to get the extra bitmaps archive
-	MHKArchive* archive = nil;
+	MHKArchive* archive = [g_world extraBitmapsArchive];
 	
 	// precompute the total storage we'll need because it will yield a far more efficient texture upload
 	const size_t textureStorageOffsetStep = kCreditsTextureSize.width * kCreditsTextureSize.height * 4;
@@ -149,78 +149,6 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	[super dealloc];
 }
 
-- (void)_reshapeGL:(NSNotification *)notification {
-	// WARNING: IT IS ASSUMED THE CURRENT CONTEXT HAS BEEN LOCKED BY THE CALLER
-	CGLContextObj cgl_ctx = CGLGetCurrentContext();
-	
-#if defined(DEBUG)
-	RXOLog(@"%@: reshaping OpenGL", self);
-#endif
-	
-	// compute the credits viewport from the GL viewport and applicable borders
-	// FIXME: COMPUTATION IS NOT CORRECT
-	_viewportSize = RXGetGLViewportSize();
-	_viewportSize.width -= kCardViewportBorders[1] + kCardViewportBorders[3];
-	_viewportSize.height -= kCardViewportBorders[0] + kCardViewportBorders[2];
-	
-	// compute the origin for credit boxes such that they are horizontally centered and below the viewport
-	_bottomLeft = CGPointMake(floorf(kCardViewportBorders[1] + (_viewportSize.width / 2.0f) - (kCreditsTextureSize.width / 2.0f)), floorf(kCardViewportBorders[2] - kCreditsTextureSize.height));
-	
-	// set the scissor test around the credits box
-	glScissor(kCardViewportBorders[1], kCardViewportBorders[2], _viewportSize.width, _viewportSize.height);
-}
-
-- (void)arm {	
-	// prepare OpenGL
-	CGLContextObj cgl_ctx = CGLGetCurrentContext();
-	CGLLockContext(cgl_ctx);
-	{
-		// we need blending, and glColor at full white
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		
-		// disable any bound VBO
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		
-		// set the vertex and tex coordinate arrays
-		glVertexPointer(2, GL_FLOAT, 0, _textureBoxVertices);
-		glTexCoordPointer(2, GL_FLOAT, 0, _textureCoordinates);
-		
-		[self _reshapeGL:nil];
-		
-		// start using the split texturing program
-		//glUseProgramObjectARB(_splitTexturingProgram);
-	}
-	CGLUnlockContext(cgl_ctx);
-	
-	// we need to listen for OpenGL reshape notifications, so we can correct the OpenGL state
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_reshapeGL:) name:@"RXOpenGLDidReshapeNotification" object:nil];
-	
-	// animation standby
-	_animationState = 0;
-	_kickOffAnimation = YES;
-	_killAnimation = NO;
-	
-	// and start our lovely animation thread
-	[NSThread detachNewThreadSelector:@selector(_animationThreadMain:) toTarget:self withObject:nil];
-}
-
-- (void)diffuse {
-	// turn off blending and scissor test
-	CGLContextObj cgl_ctx = CGLGetCurrentContext();
-	CGLLockContext(cgl_ctx);
-	{
-		// don't bother with OpenGL anymore
-		[[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXOpenGLDidReshapeNotification" object:nil];
-		
-		// stop using the split texturing program
-		//glUseProgramObjectARB(0);
-	}
-	CGLUnlockContext(cgl_ctx);
-	
-	// kill the animation
-	_killAnimation = YES;
-}
-
 - (void)_animationThreadMain:(id)object {
 	// we need the mach timebase information
 	mach_timebase_info_data_t timebase;
@@ -269,15 +197,9 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		uint64_t wake_mach = _lastFireTime + animation_period_mach;
 		if(wake_mach > now_mach) mach_wait_until(wake_mach);
 	}
-	
-	[self performSelectorOnMainThread:@selector(diffuse) withObject:nil waitUntilDone:NO];
 }
 
-- (CGRect)renderRect {
-	return CGRectMake(kCardViewportBorders[1], kCardViewportBorders[2], _viewportSize.width, _viewportSize.height);
-}
-
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {
+- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD	
 	if (_kickOffAnimation) {
 		_kickOffAnimation = NO;
@@ -301,9 +223,6 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		_textureBoxVertices[0][6] = _bottomLeft.x;
 		_textureBoxVertices[0][7] = _textureBoxVertices[0][5];
 	}
-	
-	// enable scissor test
-	glEnable(GL_SCISSOR_TEST);
 	
 	// 302 fade in, over 1 second
 	if (_animationState == 1) {
@@ -422,12 +341,9 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 			glDrawArrays(GL_QUADS, 0, 4);
 		}
 	}
-	
-	// disable scissor test
-	glDisable(GL_SCISSOR_TEST);
 }
 
-- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent {
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 }
 

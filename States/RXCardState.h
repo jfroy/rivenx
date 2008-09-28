@@ -63,15 +63,19 @@ struct _rx_transition_program {
 	NSMutableArray* _transitionQueue;
 	
 	// rendering
+	GLuint _cardRenderVAO;
 	GLuint _cardRenderVBO;
-	GLfloat _cardCompositeVertices[8];
-	GLfloat _cardTexCoords[8];
+	
+	GLuint _cardCompositeVAO;
+	GLuint _cardCompositeVBO;
 	
 	GLuint _fbos[2];
 	GLuint _textures[3];
 	
 	GLuint _waterProgram;
 	GLuint _cardProgram;
+	
+	GLuint _hotspotDebugRenderVAO;
 	
 	// journals bar
 	GLuint _journalTextures[3];

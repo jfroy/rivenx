@@ -87,30 +87,30 @@ static rx_render_dispatch_t _clear_dispatch;
 	[self diffuse];
 }
 
-- (void)_clearAndRender:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {
+- (void)_clearAndRender:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 //	_dispatch = _render_dispatch;
 //	_clear_dispatch.imp(self, _clear_dispatch.sel, outputTime, cgl_ctx);
 //	_render_dispatch.imp(self, _render_dispatch.sel, outputTime, cgl_ctx);
 }
 
-- (void)_render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {
-	_movie_render_dispatch.imp(_cyanMovie, _dispatch.sel, outputTime, cgl_ctx, parent);
+- (void)_render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
+	_movie_render_dispatch.imp(_cyanMovie, _dispatch.sel, outputTime, cgl_ctx, fbo);
 }
 
-- (void)_clear:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {
+- (void)_clear:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 //	glScissor(_renderRect.origin.x, _renderRect.origin.y, _renderRect.size.width, _renderRect.size.height);
 //	glEnable(GL_SCISSOR_TEST);
 //	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {
+- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
-	_dispatch.imp(self, _dispatch.sel, outputTime, cgl_ctx, parent);
+	_dispatch.imp(self, _dispatch.sel, outputTime, cgl_ctx, fbo);
 }
 
-- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent {
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
-	[_cyanMovie performPostFlushTasks:outputTime parent:parent];
+	[_cyanMovie performPostFlushTasks:outputTime];
 }
 
 @end

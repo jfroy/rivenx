@@ -22,21 +22,18 @@
 	
 	NSArray* _renderStates;
 	
-	GLuint _compositor_program;
+	GLuint _compositing_program;
 	GLint _texture_units_uniform;
 	GLint _texture_blend_weights_uniform;
 	GLfloat _texture_blend_weights[4];
 	
+	GLuint _compositing_vao;
 	GLfloat vertex_coords[8];
 	GLfloat tex_coords[8];
 	GLfloat front_color[4];
 	
 	NSAnimation* _currentFadeAnimation;
 	NSMapTable* _animationCompletionInvocations;
-	
-@public
-	// THIS IS PUBLIC ONLY FOR RENDER STATES
-	GLuint _fbo;
 }
 
 - (void)addState:(RXRenderState*)state opacity:(GLfloat)opacity;

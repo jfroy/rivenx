@@ -108,6 +108,21 @@
 		}
 	}
 	
+	// create a VAO and prepare the VA state
+	glGenVertexArraysAPPLE(1, &_vao); glReportError();
+	glBindVertexArrayAPPLE(_vao); glReportError();
+	
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
+	glVertexPointer(2, GL_FLOAT, 0, _coordinates); glReportError();
+	
+	glClientActiveTexture(GL_TEXTURE0);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
+	glTexCoordPointer(2, GL_FLOAT, 0, _coordinates + 8); glReportError();
+	
+	glBindVertexArrayAPPLE(0); glReportError();
+	
 	CGLUnlockContext(cgl_ctx);
 	
 	// render at (0, 0), natural size; this will update certain attributes in the visual context
@@ -185,6 +200,7 @@
 		[_movie release];
 	}
 	
+	if (_vao) glDeleteVertexArraysAPPLE(1, &_vao);
 	if (_visualContext) QTVisualContextRelease(_visualContext);
 	if (_imageBuffer) CFRelease(_imageBuffer);
 	if (_glTexture) glDeleteTextures(1, &_glTexture);
@@ -262,7 +278,7 @@
 	_coordinates[7] = _renderRect.origin.y + _renderRect.size.height;
 }
 
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {
+- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	if (!_movie) return;
 	
@@ -324,15 +340,12 @@
 	
 	// do we have an image to render?
 	if (_imageBuffer && !_invalidImage) {
-		// set vertex arrays; we assume there's no bound VBO
-		glVertexPointer(2, GL_FLOAT, 0, _coordinates); glReportError();
-		glTexCoordPointer(2, GL_FLOAT, 0, _coordinates + 8); glReportError();
-		
+		glBindVertexArrayAPPLE(_vao);
 		glDrawArrays(GL_QUADS, 0, 4); glReportError();
 	}
 }
 
-- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent {
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	QTVisualContextTask(_visualContext);
 }

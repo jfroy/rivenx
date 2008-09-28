@@ -218,40 +218,97 @@ init_failure:
 	// kick start the audio task thread
 	[NSThread detachNewThreadSelector:@selector(_audioTaskThread:) toTarget:self withObject:nil];
 	
-	// card texture coordinates VA
-	_cardTexCoords[0] = 0.0f;											_cardTexCoords[1] = 0.0f;
-	_cardTexCoords[2] = 0.0f;											_cardTexCoords[3] = kRXCardViewportSize.height;
-	_cardTexCoords[4] = kRXCardViewportSize.width;						_cardTexCoords[5] = kRXCardViewportSize.height;
-	_cardTexCoords[6] = kRXCardViewportSize.width;						_cardTexCoords[7] = 0.0f;
+// card composite VAO / VA / VBO
 	
-	// store the card render vertex attributes in a buffer object since they never change
-	glGenBuffers(1, &_cardRenderVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, _cardRenderVBO); glReportError();
+	// gen the buffers
+	glGenVertexArraysAPPLE(1, &_cardCompositeVAO); glReportError();
+	glGenBuffers(1, &_cardCompositeVBO); glReportError();
 	
-	// 2 attributes per vertex x 4 vectors per attribute x 2 components per vector x size of a float
+	// bind them
+	glBindVertexArrayAPPLE(_cardCompositeVAO); glReportError();
+	glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
+	
+	// 4 vertices, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
 	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
 	
-	// VM map the buffer object and cache some useful pointers
-	GLfloat* vertex_attributes = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
+	// map the VBO and write the vertex attributes
+	GLfloat* positions = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
+	GLfloat* tex_coords0 = positions + 2;
 	
-	vertex_attributes[0] = 0.0f;												vertex_attributes[1] = 0.0f;
-	vertex_attributes[2] = vertex_attributes[0];								vertex_attributes[3] = vertex_attributes[1] + kRXCardViewportSize.height;
-	vertex_attributes[4] = vertex_attributes[0] + kRXCardViewportSize.width;	vertex_attributes[5] = vertex_attributes[3];
-	vertex_attributes[6] = vertex_attributes[4];								vertex_attributes[7] = vertex_attributes[1];
+	positions[0] = kRXCardViewportOriginOffset.x; positions[1] = kRXCardViewportOriginOffset.y;
+	tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
+	positions += 2; tex_coords0 += 2;
 	
-	vertex_attributes[8] = 0.0f;												vertex_attributes[9] = 0.0f;
-	vertex_attributes[10] = 0.0f;												vertex_attributes[11] = kRXCardViewportSize.height;
-	vertex_attributes[12] = kRXCardViewportSize.width;							vertex_attributes[13] = kRXCardViewportSize.height;
-	vertex_attributes[14] = kRXCardViewportSize.width;							vertex_attributes[15] = 0.0f;
+	positions[2] = kRXCardViewportOriginOffset.x + kRXCardViewportSize.width; positions[3] = kRXCardViewportOriginOffset.y;
+	tex_coords0[2] = kRXCardViewportSize.width; tex_coords0[3] = 0.0f;
+	positions += 2; tex_coords0 += 2;
 	
-	_cardCompositeVertices[0] = kRXCardViewportOriginOffset.x;								_cardCompositeVertices[1] = kRXCardViewportOriginOffset.y;
-	_cardCompositeVertices[2] = _cardCompositeVertices[0];									_cardCompositeVertices[3] = _cardCompositeVertices[1] +  kRXCardViewportSize.height;
-	_cardCompositeVertices[4] = _cardCompositeVertices[2] +  kRXCardViewportSize.width;		_cardCompositeVertices[5] = _cardCompositeVertices[3];
-	_cardCompositeVertices[6] = _cardCompositeVertices[4];									_cardCompositeVertices[7] = _cardCompositeVertices[1];
+	positions[4] = kRXCardViewportOriginOffset.x; positions[5] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
+	tex_coords0[4] = 0.0f; tex_coords0[5] = kRXCardViewportSize.height;
+	positions += 2; tex_coords0 += 2;
 	
-	// flush the VBO
+	positions[6] = kRXCardViewportOriginOffset.x + kRXCardViewportSize.width; positions[7] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
+	tex_coords0[6] = kRXCardViewportSize.width; tex_coords0[7] = kRXCardViewportSize.height;
+	
+	// unmap and flush the VBO
 	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
+	
+	// configure the VAs
+	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
+	glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 0)); glReportError();
+	
+	glClientActiveTexture(GL_TEXTURE0);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+	
+// card render VAO / VA / VBO
+	
+	// gen the buffers
+	glGenVertexArraysAPPLE(1, &_cardRenderVAO); glReportError();
+	glGenBuffers(1, &_cardRenderVBO); glReportError();
+	
+	// bind them
+	glBindVertexArrayAPPLE(_cardRenderVAO); glReportError();
+	glBindBuffer(GL_ARRAY_BUFFER, _cardRenderVBO); glReportError();
+	
+	// 4 vertices, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
+	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
+	
+	// map the VBO and write the vertex attributes
+	positions = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
+	tex_coords0 = positions + 2;
+	
+	positions[0] = 0.0f; positions[1] = 0.0f;
+	tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
+	positions += 2; tex_coords0 += 2;
+	
+	positions[2] = kRXCardViewportSize.width; positions[3] = 0.0f;
+	tex_coords0[2] = kRXCardViewportSize.width; tex_coords0[3] = 0.0f;
+	positions += 2; tex_coords0 += 2;
+	
+	positions[4] = 0.0f; positions[5] = kRXCardViewportSize.height;
+	tex_coords0[4] = 0.0f; tex_coords0[5] = kRXCardViewportSize.height;
+	positions += 2; tex_coords0 += 2;
+	
+	positions[6] = kRXCardViewportSize.width; positions[7] = kRXCardViewportSize.height;
+	tex_coords0[6] = kRXCardViewportSize.width; tex_coords0[7] = kRXCardViewportSize.height;
+	
+	// unmap and flush the VBO
+	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
+	
+	// configure the VAs
+	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
+	glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 0)); glReportError();
+	
+	glClientActiveTexture(GL_TEXTURE0);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+	
+	// bind 0 to ARRAY_BUFFER
 	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
+	
+	// bind 0 to the current VAO
+	glBindVertexArrayAPPLE(0); glReportError();
 	
 	// we need one FBO to render a card's composite texture and one FBO to apply the water effect; as well as matching textures for the color0 attachement point and one extra texture to store the previous frame
 	glGenFramebuffersEXT(2, _fbos);
@@ -421,6 +478,9 @@ init_failure:
 	_push[RXTransitionBottom] = [self _loadTransitionShaderWithName:@"transition_push" direction:RXTransitionBottom context:cgl_ctx];
 	
 	glUseProgram(0);
+	
+	// create a VAO for hotspot debug rendering
+	glGenVertexArraysAPPLE(1, &_hotspotDebugRenderVAO); glReportError();
 	
 	// new texture, buffer and program objects
 	glFlush();
@@ -1001,17 +1061,15 @@ init_failure:
 		// bind the static render FBO
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		
-		// render pictures
-		glBindBuffer(GL_ARRAY_BUFFER, card->_pictureVertexArrayBuffer); glReportError();
-		glVertexPointer(2, GL_FLOAT, 16, BUFFER_OFFSET(NULL, 0)); glReportError();
-		glTexCoordPointer(2, GL_FLOAT, 16, BUFFER_OFFSET(NULL, 8)); glReportError();
+		// bind the picture VAO
+		glBindVertexArrayAPPLE(card->_pictureVAO); glReportError();
 		
 		renderListEnumerator = [r->pictures objectEnumerator];
 		while ((renderObject = [renderListEnumerator nextObject])) {
 			// bind the picture texture and draw the quad
 			GLint pictureIndex = [(NSNumber*)renderObject intValue];
 			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, card->_pictureTextures[pictureIndex]); glReportError();
-			glDrawArrays(GL_QUADS, pictureIndex * 4, 4); glReportError();
+			glDrawArrays(GL_TRIANGLE_STRIP, pictureIndex * 4, 4); glReportError();
 		}
 		
 		// this is used as a fence to determine if the static content has been refreshed or not, so we set it to NO here
@@ -1022,10 +1080,8 @@ init_failure:
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
 	glClear(GL_COLOR_BUFFER_BIT);
 	
-	// bind the generic vertex and texture coord. buffer and set the vertex arrays
-	glBindBuffer(GL_ARRAY_BUFFER, _cardRenderVBO); glReportError();
-	glVertexPointer(2, GL_FLOAT, 0, BUFFER_OFFSET(NULL, 0)); glReportError();
-	glTexCoordPointer(2, GL_FLOAT, 0, BUFFER_OFFSET(NULL, 8 * sizeof(GLfloat))); glReportError();
+	// bind the card render VAO
+	glBindVertexArrayAPPLE(_cardRenderVAO); glReportError();
 	
 	// water effect	
 	if (r->water_fx.sfxe != 0) {
@@ -1045,7 +1101,7 @@ init_failure:
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		
 		// draw
-		glDrawArrays(GL_QUADS, 0, 4); glReportError();
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
 		
 		// copy the result
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_PREVIOUS_FRAME_INDEX]); glReportError();
@@ -1066,24 +1122,26 @@ init_failure:
 	} else {
 		// simply render the static content
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
-		glDrawArrays(GL_QUADS, 0, 4); glReportError();
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
 	}
 	
 	// disable VBOs since RXMovie expect that to be the case
-	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
+//	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
 	
 	// render movies
 	renderListEnumerator = [r->movies objectEnumerator];
-	while ((renderObject = [renderListEnumerator nextObject])) _movieRenderDispatch.imp(renderObject, _movieRenderDispatch.sel, outputTime, cgl_ctx, self);
+	while ((renderObject = [renderListEnumerator nextObject]))
+		_movieRenderDispatch.imp(renderObject, _movieRenderDispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
 }
 
 - (void)_postFlushCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime {
 	NSEnumerator* e = [card->_frontRenderStatePtr->movies objectEnumerator];
 	RXMovie* movie;
-	while ((movie = [e nextObject])) _movieFlushTasksDispatch.imp(movie, _movieFlushTasksDispatch.sel, outputTime, self);
+	while ((movie = [e nextObject]))
+		_movieFlushTasksDispatch.imp(movie, _movieFlushTasksDispatch.sel, outputTime);
 }
 
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {
+- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	OSSpinLockLock(&_renderLock);
 	
@@ -1091,7 +1149,8 @@ init_failure:
 	NSAutoreleasePool* p = [NSAutoreleasePool new];
 	
 	// do nothing if there is no destination card
-	if (!_front_render_state->card) goto exit_render;
+	if (!_front_render_state->card)
+		goto exit_render;
 	
 	// transition priming
 	if (_front_render_state->transition && ![_front_render_state->transition isPrimed]) {
@@ -1129,7 +1188,7 @@ init_failure:
 	_renderCardImp(self, _renderCardSel, _front_render_state->card, outputTime, cgl_ctx);
 	
 	// final composite (active card + transitions + other special effects)
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ((RXStateCompositor*)parent)->_fbo); glReportError();
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo); glReportError();
 	glClear(GL_COLOR_BUFFER_BIT);
 	
 	if (_front_render_state->transition && [_front_render_state->transition isPrimed]) {
@@ -1168,7 +1227,21 @@ init_failure:
 			// use the transition's program and update its t and margin uniforms
 			glUseProgram(transition->program); glReportError();
 			glUniform1f(transition->t_uniform, t); glReportError();
-			if (transition->margin_uniform != -1) glUniform1f(transition->margin_uniform, _cardCompositeVertices[_front_render_state->transition->direction / 2]); glReportError();
+			if (transition->margin_uniform != -1) {
+				GLfloat margin;
+				switch (_front_render_state->transition->direction) {
+					case RXTransitionLeft:
+					case RXTransitionRight:
+						margin = kRXCardViewportOriginOffset.x;
+						break;
+					case RXTransitionTop:
+					case RXTransitionBottom:
+						margin = kRXCardViewportOriginOffset.y;
+						break;
+				}
+				
+				glUniform1f(transition->margin_uniform, margin); glReportError();
+			}
 			
 			// bind the transition source texture on unit 1
 			glActiveTexture(GL_TEXTURE1); glReportError();
@@ -1182,11 +1255,11 @@ init_failure:
 	glActiveTexture(GL_TEXTURE0); glReportError();
 	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
 	
-	// set vertex arrays (we assume the card render method exited with no bound VBO)
-	glVertexPointer(2, GL_FLOAT, 0, _cardCompositeVertices); glReportError();
-	glTexCoordPointer(2, GL_FLOAT, 0, _cardTexCoords); glReportError();
+	// bind the card composite VAO
+	glBindVertexArrayAPPLE(_cardCompositeVAO); glReportError();
 	
-	glDrawArrays(GL_QUADS, 0, 4); glReportError();
+	// draw
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
 	
 exit_render:
 	[p release];
@@ -1197,6 +1270,7 @@ exit_render:
 	// render hotspots
 	if (RXEngineGetBool(@"rendering.renderHotspots")) {
 		NSArray* activeHotspots = [_front_render_state->card activeHotspots];
+		
 		// 4 lines per hotspot, 6 floats per line (coord[x, y] color[r, g, b, a])
 		GLfloat* hotspot_vertex_attribs = new GLfloat[4 * 6 * [activeHotspots count] * sizeof(GLfloat)];
 		GLint* first_array = new GLint[[activeHotspots count]];
@@ -1250,15 +1324,19 @@ exit_render:
 			primitive_index++;
 		}
 		
+		glBindVertexArrayAPPLE(_hotspotDebugRenderVAO); glReportError();
+		
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		
+		glEnableClientState(GL_VERTEX_ARRAY); glReportError();
 		glVertexPointer(2, GL_FLOAT, 6 * sizeof(GLfloat), hotspot_vertex_attribs); glReportError();
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
+		
+		glEnableClientState(GL_COLOR_ARRAY); glReportError();
 		glColorPointer(4, GL_FLOAT, 6 * sizeof(GLfloat), hotspot_vertex_attribs + 2); glReportError();
 		
 		glMultiDrawArrays(GL_LINE_LOOP, first_array, count_array, [activeHotspots count]); glReportError();
 		
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
+		glBindVertexArrayAPPLE(0); glReportError();
 		
 		delete[] count_array;
 		delete[] first_array;
@@ -1266,7 +1344,7 @@ exit_render:
 	}	
 }
 
-- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent {
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	OSSpinLockLock(&_renderLock);
 	
@@ -1274,7 +1352,8 @@ exit_render:
 	NSAutoreleasePool* p = [NSAutoreleasePool new];
 	
 	// do nothing if there is no destination card
-	if (!_front_render_state->card) goto exit_flush_tasks;
+	if (!_front_render_state->card)
+		goto exit_flush_tasks;
 	
 	// FIXME: transitions not implemented yet, task destination card only
 	_postFlushCardImp(self, _postFlushCardSel, _front_render_state->card, outputTime);

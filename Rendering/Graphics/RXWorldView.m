@@ -366,10 +366,6 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	// pixel store state
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
 	
-	// client arrays
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	
 	// framebuffer masks
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glDepthMask(GL_FALSE);
@@ -556,13 +552,13 @@ major_number.minor_number major_number.minor_number.release_number
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	// render the world
-	_renderDispatch.imp(_renderTarget, _renderDispatch.sel, outputTime, cgl_ctx, self);
+	_renderDispatch.imp(_renderTarget, _renderDispatch.sel, outputTime, cgl_ctx, 0);
 	
 	// glFlush and swap the front and back buffers
 	CGLFlushDrawable(cgl_ctx);
 	
 	// let the world perform post-flush processing
-	_postFlushTasksDispatch.imp(_renderTarget, _postFlushTasksDispatch.sel, outputTime, self);
+	_postFlushTasksDispatch.imp(_renderTarget, _postFlushTasksDispatch.sel, outputTime);
 	
 	CGLUnlockContext(cgl_ctx);
 }
