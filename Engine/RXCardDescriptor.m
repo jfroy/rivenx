@@ -175,6 +175,14 @@ struct _RXCardDescriptorPrimer {
 	return [NSString stringWithFormat: @"%@ %03hu", [_parent key], _ID];
 }
 
+- (RXStack*)parent {
+	return _parent;
+}
+
+- (uint16_t)ID {
+	return _ID;
+}
+
 - (RXSimpleCardDescriptor*)simpleDescriptor {
 	if (_simpleDescriptor) return _simpleDescriptor;
 	_simpleDescriptor = [[RXSimpleCardDescriptor alloc] initWithStackName:[_parent key] ID:_ID];

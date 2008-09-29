@@ -576,18 +576,10 @@ init_failure:
 	RX::AudioRenderer* renderer = (reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer]));
 	
 	// cache the sound group's sound set
-	NSSet* soundGroupSounds = [soundGroup valueForKey:@"sounds"];
+	NSSet* soundGroupSounds = [soundGroup sounds];
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"activating sound group %@ with sounds: %@", soundGroup, soundGroupSounds);
 #endif
-	
-	// fade flags
-	BOOL fadeOut = [[soundGroup valueForKey:@"fadeOutActiveGroupBeforeActivating"] boolValue];
-	BOOL fadeIn = [[soundGroup valueForKey:@"fadeInOnActivation"] boolValue];
-	
-	// loop and gain
-	BOOL loop = [[soundGroup valueForKey:@"loop"] boolValue];
-	float gain = [[soundGroup valueForKey:@"gain"] floatValue];
 	
 	// create an array of new sources
 	CFMutableArrayRef sourcesToAdd = CFArrayCreateMutable(NULL, 0, &g_weakAudioSourceArrayCallbacks);
@@ -616,7 +608,7 @@ init_failure:
 			}
 			
 			// create an audio source with the decompressor
-			sound->source = new RX::CardAudioSource(decompressor, sound->gain * gain, sound->pan, loop);
+			sound->source = new RX::CardAudioSource(decompressor, sound->gain * soundGroup->gain, sound->pan, soundGroup->loop);
 			assert(sound->source);
 			
 			// make sure the sound doesn't have a valid detach timestamp
@@ -639,14 +631,14 @@ init_failure:
 			oldSound->detachTimestampValid = NO;
 			
 			// looping
-			oldSound->source->SetLooping(loop);
+			oldSound->source->SetLooping(soundGroup->loop);
 			
 			// FIXME: pan ramp
 			renderer->SetSourcePan(*(oldSound->source), sound->pan);
 			
 			// gain; always use a ramp to prevent disrupting an ongoing ramp up
-			renderer->RampSourceGain(*(oldSound->source), oldSound->gain * gain, RX_AUDIO_FADE_DURATION);
-			oldSound->source->SetNominalGain(oldSound->gain * gain);
+			renderer->RampSourceGain(*(oldSound->source), oldSound->gain * soundGroup->gain, RX_AUDIO_FADE_DURATION);
+			oldSound->source->SetNominalGain(oldSound->gain * soundGroup->gain);
 		}
 	}
 	
@@ -655,7 +647,7 @@ init_failure:
 	CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceTaskApplier, renderer);
 	
 	// if no fade out is requested, mark every sound not already scheduled for detach as needing detach yesterday
-	if (!fadeOut) {
+	if (!soundGroup->fadeOutActiveGroupBeforeActivating) {
 		soundEnum = [soundsToRemove objectEnumerator];
 		while ((sound = [soundEnum nextObject])) {
 			if (sound->detachTimestampValid == NO) {
@@ -682,7 +674,7 @@ init_failure:
 	[soundsToRemove intersectSet:_activeSounds];
 	
 	// now that any sources bound to be detached has been, go ahead and attach as many of the new sources as possible
-	if (fadeIn) {
+	if (soundGroup->fadeInOnActivation) {
 		// disabling the sources will prevent the fade in from starting before we update the graph
 		CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));
 		CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceDisableApplier, [g_world audioRenderer]);
@@ -701,12 +693,12 @@ init_failure:
 	
 	// ramps are go!
 	// FIXME: scheduling ramps in this manner is not atomic
-	if (fadeIn) {
+	if (soundGroup->fadeInOnActivation) {
 		CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));
 		CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceEnableApplier, [g_world audioRenderer]);
 	}
 	
-	if (fadeOut) {
+	if (soundGroup->fadeOutActiveGroupBeforeActivating) {
 		CFMutableArrayRef sourcesToRemove = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_weakAudioSourceArrayCallbacks];
 		renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_FADE_DURATION);
 		CFRelease(sourcesToRemove);

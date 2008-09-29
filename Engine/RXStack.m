@@ -184,7 +184,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	
 	// rmap data
 	NSDictionary* rmapDescriptor = [[masterDataArchive valueForKey:@"RMAP"] objectAtIndex:0];
-	uint16_t remapID = [[rmapDescriptor valueForKey:@"ID"] unsignedShortValue];
+	uint16_t remapID = [[rmapDescriptor objectForKey:@"ID"] unsignedShortValue];
 	_rmapData = [[masterDataArchive dataWithResourceType:@"RMAP" ID:remapID] retain];
 	
 #if defined(DEBUG)

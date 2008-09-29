@@ -70,19 +70,23 @@
 	[super dealloc];
 }
 
-- (void)addSoundWithStack:(RXStack*)parent ID:(uint16_t)ID gain:(float)gain pan:(float)pan {
+- (NSString *)description {
+	return [NSString stringWithFormat: @"%@ {fadeOutActiveGroupBeforeActivating=%d, fadeInOnActivation=%d, loop=%d, gain=%f, %d sounds}", [super description], fadeOutActiveGroupBeforeActivating, fadeInOnActivation, loop, gain, [_sounds count]];
+}
+
+- (void)addSoundWithStack:(RXStack*)parent ID:(uint16_t)ID gain:(float)g pan:(float)p {
 	RXSound* source = [RXSound new];
 	source->parent = parent;
 	source->ID = ID;
-	source->gain = gain;
-	source->pan = pan;
+	source->gain = g;
+	source->pan = p;
 	
 	[_sounds addObject:source];
 	[source release];
 }
 
-- (NSString *)description {
-	return [NSString stringWithFormat: @"%@ {fadeOutActiveGroupBeforeActivating=%d, fadeInOnActivation=%d, loop=%d, gain=%f, %d sounds}", [super description], _fadeOutActiveGroupBeforeActivating, _fadeInOnActivation, _loop, _gain, [_sounds count]];
+- (NSSet*)sounds {
+	return _sounds;
 }
 
 @end

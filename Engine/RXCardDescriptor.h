@@ -40,7 +40,8 @@
 + (id)descriptorWithStack:(RXStack *)stack ID:(uint16_t)ID;
 - (id)initWithStack:(RXStack *)stack ID:(uint16_t)ID;
 
-- (NSString *)description;
+- (RXStack*)parent;
+- (uint16_t)ID;
 
 - (RXSimpleCardDescriptor*)simpleDescriptor;
 

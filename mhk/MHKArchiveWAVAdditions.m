@@ -203,9 +203,9 @@
 	if (!soundDescriptor) return nil;
 	
 	uint16_t compression_type = [[soundDescriptor objectForKey:@"Compression Type"] unsignedShortValue];
-	UInt32 channels = [[soundDescriptor valueForKey:@"Channel Count"] unsignedLongValue];
-	SInt64 frames = [[soundDescriptor valueForKey:@"Frame Count"] longLongValue];
-	double sr = [[soundDescriptor valueForKey:@"Sampling Rate"] doubleValue];
+	UInt32 channels = [[soundDescriptor objectForKey:@"Channel Count"] unsignedLongValue];
+	SInt64 frames = [[soundDescriptor objectForKey:@"Frame Count"] longLongValue];
+	double sr = [[soundDescriptor objectForKey:@"Sampling Rate"] doubleValue];
 	
 	// open a MHK file handle for the decompressor
 	MHKFileHandle *fh = [self openSoundWithID:soundID error:errorPtr];

@@ -569,15 +569,20 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 #pragma mark -
 
 - (id)valueForUndefinedKey:(NSString *)key {
-	if (!_engineVariables) return nil;
+	if (!_engineVariables)
+		return nil;
+	
 	pthread_mutex_lock(&_engineVariablesMutex);
 	id v = [_engineVariables valueForKeyPath:key];
 	pthread_mutex_unlock(&_engineVariablesMutex);
+	
 	return v;
 }
 
 - (void)setValue:(id)value forUndefinedKey:(NSString *)key {
-	if (!_engineVariables) return;
+	if (!_engineVariables)
+		return;
+	
 	pthread_mutex_lock(&_engineVariablesMutex);
 	[_engineVariables setValue:value forKeyPath:key];
 	pthread_mutex_unlock(&_engineVariablesMutex);
