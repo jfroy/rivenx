@@ -31,7 +31,7 @@ static __inline__ NSRect decodeRivenRect(const void* rivenRectPtr) {
 	return NSMakeRect(tl.x, tl.y, br.x - tl.x, br.y - tl.y);
 }
 
-static size_t _computeRivenScriptLength(const void* script, uint16_t commandCount, bool byte_swap) {
+static size_t rx_compute_riven_script_length(const void* script, uint16_t commandCount, bool byte_swap) {
 	size_t scriptOffset = 0;
 	
 	uint16_t currentCommandIndex = 0;
@@ -61,7 +61,7 @@ static size_t _computeRivenScriptLength(const void* script, uint16_t commandCoun
 				if (byte_swap) caseCommandCount = CFSwapInt16BigToHost(caseCommandCount);
 				scriptOffset += 2;
 				
-				size_t caseCommandListLength = _computeRivenScriptLength(BUFFER_OFFSET(script, scriptOffset), caseCommandCount, byte_swap);
+				size_t caseCommandListLength = rx_compute_riven_script_length(BUFFER_OFFSET(script, scriptOffset), caseCommandCount, byte_swap);
 				scriptOffset += caseCommandListLength;
 			}
 		}
@@ -70,7 +70,7 @@ static size_t _computeRivenScriptLength(const void* script, uint16_t commandCoun
 	return scriptOffset;
 }
 
-static NSDictionary* _decodeRivenScript(const void* script, uint32_t* scriptLength) {
+static NSDictionary* rx_decode_riven_script(const void* script, uint32_t* scriptLength) {
 	// WARNING: THIS METHOD ASSUMES THE INPUT SCRIPT IS IN BIG ENDIAN
 	
 	// a script is composed of several events
@@ -92,7 +92,7 @@ static NSDictionary* _decodeRivenScript(const void* script, uint32_t* scriptLeng
 		scriptOffset += 2;
 		
 		// program length
-		size_t programLength = _computeRivenScriptLength(BUFFER_OFFSET(script, scriptOffset), commandCount, true);
+		size_t programLength = rx_compute_riven_script_length(BUFFER_OFFSET(script, scriptOffset), commandCount, true);
 		
 		// allocate a storage buffer for the program and swap it if needed
 		uint16_t* programStore = (uint16_t*)malloc(programLength);
@@ -270,7 +270,7 @@ int main(int argc, const char * argv[]) {
 			NSNumber* remapIDNumber = [NSNumber numberWithUnsignedShort:rmapID];
 			
 			// card events
-			NSDictionary* cardEvents = _decodeRivenScript(BUFFER_OFFSET([cardData bytes], 4), NULL);
+			NSDictionary* cardEvents = rx_decode_riven_script(BUFFER_OFFSET([cardData bytes], 4), NULL);
 			
 			// card hotspots
 			NSData* hotspotData = [archive dataWithResourceType:@"HSPT" ID:cardResourceID];
@@ -289,7 +289,7 @@ int main(int argc, const char * argv[]) {
 				NSRect hotspotRect = decodeRivenRect(BUFFER_OFFSET(hostspotDataPtr, 4));
 				uint16_t hotspotCursor = CFSwapInt16BigToHost(*(const int16_t*)BUFFER_OFFSET(hostspotDataPtr, 14));
 				uint32_t scriptLength = 0;
-				NSDictionary* hotspotEvents = _decodeRivenScript(BUFFER_OFFSET(hostspotDataPtr, 22), &scriptLength);
+				NSDictionary* hotspotEvents = rx_decode_riven_script(BUFFER_OFFSET(hostspotDataPtr, 22), &scriptLength);
 				
 				NSNumber* hotspotIDNumber = [NSNumber numberWithUnsignedShort:hotspotID];
 				NSString* hotspotName = (nameIndex > -1) ? (hotspotNames) ? [hotspotNames objectAtIndex:nameIndex] : nil : nil;
