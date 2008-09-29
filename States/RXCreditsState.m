@@ -15,17 +15,15 @@
 #import "Engine/RXWorldProtocol.h"
 #import "RXCreditsState.h"
 
-static const float kCardViewportBorders[4] = {22.0f, 16.0f, 66.0f, 16.0f};
-
 static const uint16_t kFirstCreditsTextureID = 302;
 static const GLuint kCreditsTextureCount = 19;
-static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 
 
 @implementation RXCreditsState
 
 - (id)init {
 	self = [super init];
+	if (!self) return nil;
 	
 	// initialize a few things for animations
 	CVTime displayLinkRP = CVDisplayLinkGetNominalOutputVideoRefreshPeriod([RXGetWorldView() displayLink]);
@@ -34,7 +32,7 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	MHKArchive* archive = [g_world extraBitmapsArchive];
 	
 	// precompute the total storage we'll need because it will yield a far more efficient texture upload
-	const size_t textureStorageOffsetStep = kCreditsTextureSize.width * kCreditsTextureSize.height * 4;
+	const size_t textureStorageOffsetStep = kRXCardViewportSize.width * kRXCardViewportSize.height * 4;
 	size_t textureStorageSize = kCreditsTextureCount * textureStorageOffsetStep;
 	
 	// allocate one big chunk of memory for all the textures
@@ -67,8 +65,8 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 
 					 0, 
 					 GL_RGBA, 
-					 kCreditsTextureSize.width, 
-					 kCreditsTextureSize.height, 
+					 kRXCardViewportSize.width, 
+					 kRXCardViewportSize.height, 
 					 0, 
 					 GL_BGRA, 
 					 GL_UNSIGNED_INT_8_8_8_8_REV, 
@@ -110,12 +108,12 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	
 	// all the textures are the same size, so we need one set of texture coordinates
 	_textureCoordinates[0][0] = 0.0f;
-	_textureCoordinates[0][1] = kCreditsTextureSize.height;
+	_textureCoordinates[0][1] = kRXCardViewportSize.height;
 	
-	_textureCoordinates[0][2] = kCreditsTextureSize.width;
-	_textureCoordinates[0][3] = kCreditsTextureSize.height;
+	_textureCoordinates[0][2] = kRXCardViewportSize.width;
+	_textureCoordinates[0][3] = kRXCardViewportSize.height;
 	
-	_textureCoordinates[0][4] = kCreditsTextureSize.width;
+	_textureCoordinates[0][4] = kRXCardViewportSize.width;
 	_textureCoordinates[0][5] = 0.0f;
 	
 	_textureCoordinates[0][6] = 0.0f;
@@ -125,7 +123,7 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	memcpy(_textureCoordinates[2], _textureCoordinates[0], sizeof(GLfloat) * 8);
 	
 	// precompute the total height of the "scroll box" (kCreditsTextureCount - 2 + 2)
-	_scrollBoxHeight = kCreditsTextureSize.height * 19.0f;
+	_scrollBoxHeight = kRXCardViewportSize.height * 19.0f;
 	
 	return self;
 }
@@ -212,13 +210,13 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	if (_animationState < 7) {
 		// centered on screen
 		_textureBoxVertices[0][0] = _bottomLeft.x;
-		_textureBoxVertices[0][1] = kCardViewportBorders[2];
+		_textureBoxVertices[0][1] = kRXCardViewportOriginOffset.x;
 		
-		_textureBoxVertices[0][2] = _bottomLeft.x + kCreditsTextureSize.width;
-		_textureBoxVertices[0][3] = kCardViewportBorders[2];
+		_textureBoxVertices[0][2] = _bottomLeft.x + kRXCardViewportSize.width;
+		_textureBoxVertices[0][3] = kRXCardViewportOriginOffset.y;
 		
 		_textureBoxVertices[0][4] = _textureBoxVertices[0][2];
-		_textureBoxVertices[0][5] = kCardViewportBorders[2] + kCreditsTextureSize.height;
+		_textureBoxVertices[0][5] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
 		
 		_textureBoxVertices[0][6] = _bottomLeft.x;
 		_textureBoxVertices[0][7] = _textureBoxVertices[0][5];
@@ -273,13 +271,13 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		
 		if(_leadTextureIndex == 0) {
 			_textureBoxVertices[0][0] = _bottomLeft.x;
-			_textureBoxVertices[0][1] = kCardViewportBorders[2] - (kCreditsTextureSize.height * (1.0f - _textureIndexProgress));
+			_textureBoxVertices[0][1] = kRXCardViewportOriginOffset.y - (kRXCardViewportSize.height * (1.0f - _textureIndexProgress));
 			
-			_textureBoxVertices[0][2] = _bottomLeft.x + kCreditsTextureSize.width;
+			_textureBoxVertices[0][2] = _bottomLeft.x + kRXCardViewportSize.width;
 			_textureBoxVertices[0][3] = _textureBoxVertices[0][1];
 			
 			_textureBoxVertices[0][4] = _textureBoxVertices[0][2];
-			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kCreditsTextureSize.height;
+			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kRXCardViewportSize.height;
 			
 			_textureBoxVertices[0][6] = _bottomLeft.x;
 			_textureBoxVertices[0][7] = _textureBoxVertices[0][5];
@@ -291,13 +289,13 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		
 		if (_leadTextureIndex > 0 && _leadTextureIndex < 17) {
 			_textureBoxVertices[1][0] = _bottomLeft.x;
-			_textureBoxVertices[1][1] = kCardViewportBorders[2] - (kCreditsTextureSize.height * (1.0f - _textureIndexProgress + _leadTextureIndex));
+			_textureBoxVertices[1][1] = kRXCardViewportOriginOffset.y - (kRXCardViewportSize.height * (1.0f - _textureIndexProgress + _leadTextureIndex));
 			
-			_textureBoxVertices[1][2] = _bottomLeft.x + kCreditsTextureSize.width;
+			_textureBoxVertices[1][2] = _bottomLeft.x + kRXCardViewportSize.width;
 			_textureBoxVertices[1][3] = _textureBoxVertices[1][1];
 			
 			_textureBoxVertices[1][4] = _textureBoxVertices[1][2];
-			_textureBoxVertices[1][5] = _textureBoxVertices[1][1] + kCreditsTextureSize.height;
+			_textureBoxVertices[1][5] = _textureBoxVertices[1][1] + kRXCardViewportSize.height;
 			
 			_textureBoxVertices[1][6] = _bottomLeft.x;
 			_textureBoxVertices[1][7] = _textureBoxVertices[1][5];
@@ -305,11 +303,11 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 			_textureBoxVertices[0][0] = _bottomLeft.x;
 			_textureBoxVertices[0][1] = _textureBoxVertices[1][5];
 			
-			_textureBoxVertices[0][2] = _bottomLeft.x + kCreditsTextureSize.width;
+			_textureBoxVertices[0][2] = _bottomLeft.x + kRXCardViewportSize.width;
 			_textureBoxVertices[0][3] = _textureBoxVertices[0][1];
 			
 			_textureBoxVertices[0][4] = _textureBoxVertices[0][2];
-			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kCreditsTextureSize.height;
+			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kRXCardViewportSize.height;
 			
 			_textureBoxVertices[0][6] = _bottomLeft.x;
 			_textureBoxVertices[0][7] = _textureBoxVertices[0][5];
@@ -325,13 +323,13 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		
 		if (_leadTextureIndex == 17) {
 			_textureBoxVertices[0][0] = _bottomLeft.x;
-			_textureBoxVertices[0][1] = kCardViewportBorders[2] - (kCreditsTextureSize.height * (1.0f - _textureIndexProgress + _leadTextureIndex - 1));
+			_textureBoxVertices[0][1] = kRXCardViewportOriginOffset.y - (kRXCardViewportSize.height * (1.0f - _textureIndexProgress + _leadTextureIndex - 1));
 			
-			_textureBoxVertices[0][2] = _bottomLeft.x + kCreditsTextureSize.width;
+			_textureBoxVertices[0][2] = _bottomLeft.x + kRXCardViewportSize.width;
 			_textureBoxVertices[0][3] = _textureBoxVertices[0][1];
 			
 			_textureBoxVertices[0][4] = _textureBoxVertices[0][2];
-			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kCreditsTextureSize.height;
+			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kRXCardViewportSize.height;
 			
 			_textureBoxVertices[0][6] = _bottomLeft.x;
 			_textureBoxVertices[0][7] = _textureBoxVertices[0][5];

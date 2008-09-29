@@ -1106,17 +1106,16 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 - (void)setRivenScriptHandler:(id <RXRivenScriptProtocol>)handler {
-	if (![handler conformsToProtocol:@protocol(RXRivenScriptProtocol)]) {
+	if (![handler conformsToProtocol:@protocol(RXRivenScriptProtocol)])
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"OBJECT DOES NOT CONFORM TO RXRivenScriptProtocol" userInfo:nil];
-	}
-	
 	_scriptHandler = handler;
 }
 
 #pragma mark -
 
 - (size_t)_executeRivenProgram:(const void *)program count:(uint16_t)opcodeCount {
-	if (!_scriptHandler) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO RIVEN SCRIPT HANDLER" userInfo:nil];
+	if (!_scriptHandler)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO RIVEN SCRIPT HANDLER" userInfo:nil];
 	
 	RXStack* parent = [_descriptor parent];
 	
@@ -1139,11 +1138,13 @@ static NSMutableString* _scriptLogPrefix;
 			shortedProgram = (uint16_t*)BUFFER_OFFSET(program, programOffset);
 			
 			// argc should always be 2 for a conditional branch
-			if (argc != 2) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+			if (argc != 2)
+				@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 			
 			// get the variable from the game state
 			NSString* name = [parent varNameAtIndex:varID];
-			if (!name) name = [NSString stringWithFormat:@"%@%hu", [parent key], varID];
+			if (!name)
+				name = [NSString stringWithFormat:@"%@%hu", [parent key], varID];
 			uint16_t varValue = [[g_world gameState] unsignedShortForKey:name];
 			
 #if defined(DEBUG)
@@ -1158,7 +1159,8 @@ static NSMutableString* _scriptLogPrefix;
 				caseValue = *shortedProgram;
 				
 				// record the address of the default case in case we need to execute it if we don't find a matching case
-				if (caseValue == 0xffff) defaultCaseOffset = programOffset;
+				if (caseValue == 0xffff)
+					defaultCaseOffset = programOffset;
 				
 				// matching case
 				if (caseValue == varValue) {
@@ -1174,14 +1176,17 @@ static NSMutableString* _scriptLogPrefix;
 					[_scriptLogPrefix deleteCharactersInRange:NSMakeRange([_scriptLogPrefix length] - 4, 4)];
 					RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
 #endif
-				} else programOffset += rx_compute_riven_script_length((shortedProgram + 2), *(shortedProgram + 1), false); // skip over the case
+				} else {
+					programOffset += rx_compute_riven_script_length((shortedProgram + 2), *(shortedProgram + 1), false); // skip over the case
+				}
 				
 				// adjust the shorted program
 				programOffset += 4; // account for the case value and case instruction count
 				shortedProgram = (uint16_t*)BUFFER_OFFSET(program, programOffset);
 				
 				// bail out if we executed a matching case
-				if (caseValue == varValue) break;
+				if (caseValue == varValue)
+					break;
 			}
 			
 			// if we didn't match any case, execute the default case
@@ -1726,6 +1731,143 @@ static NSMutableString* _scriptLogPrefix;
 
 #pragma mark -
 
+- (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive rect:(NSRect)rect {
+	// get the resource descriptor for the tBMP resource
+	NSError* error;
+	NSDictionary* pictureDescriptor = [archive bitmapDescriptorWithID:ID error:&error];
+	if (!pictureDescriptor)
+		@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not get a picture resource's picture descriptor." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	
+	// compute the size of the buffer needed to store the texture; we'll be using MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED as the texture format, which is 4 bytes per pixel
+	GLsizeiptr pictureSize = [[pictureDescriptor objectForKey:@"Width"] intValue] * [[pictureDescriptor objectForKey:@"Height"] intValue] * 4;
+	
+	// get the load context
+	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+	CGLLockContext(cgl_ctx);
+	
+	// check if we have a cache for the tBMP ID; create a dynamic picture structure otherwise and map it to the tBMP ID
+	uintptr_t dynamicPictureKey = ID;
+	struct rx_card_dynamic_picture* dynamicPicture = (struct rx_card_dynamic_picture*)NSMapGet(_dynamicPictureMap, (const void*)dynamicPictureKey);
+	if (dynamicPicture == NULL) {
+		dynamicPicture = reinterpret_cast<struct rx_card_dynamic_picture*>(malloc(sizeof(struct rx_card_dynamic_picture*)));
+		
+		// create a buffer object in which to decompress the tBMP resource
+		glGenBuffers(1, &(dynamicPicture->buffer)); glReportError();
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dynamicPicture->buffer); glReportError();
+		
+		// allocate the buffer object and map it
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, pictureSize, NULL, GL_STATIC_DRAW);
+		GLvoid* pictureBuffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
+		
+		// load the picture in the mapped picture buffer
+		if (![archive loadBitmapWithID:ID buffer:pictureBuffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
+			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		
+		// unmap the buffer
+		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
+		
+		// create a texture object and bind it
+		glGenTextures(1, &(dynamicPicture->texture)); glReportError();
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, dynamicPicture->texture); glReportError();
+		
+		// texture parameters
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glReportError();
+		
+		// client storage is not compatible with PBO texture unpack
+		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+		
+		// unpack the texture
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[pictureDescriptor objectForKey:@"Width"] intValue], [[pictureDescriptor objectForKey:@"Height"] intValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(NULL, 0)); glReportError();
+		
+		// reset the unpack buffer state and re-enable client storage
+		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
+		
+		// map the tBMP ID to the dynamic picture
+		NSMapInsert(_dynamicPictureMap, (void*)dynamicPictureKey, dynamicPicture);
+	}
+	
+	// if the front render state says we're done refreshing the static content and the back render state has not been modified, we can reset the dynamic picture count
+	if (_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO)
+		_dynamicPictureCount = 0;
+	
+	// compute common vertex values
+	float vertex_left_x = rect.origin.x;
+	float vertex_right_x = vertex_left_x + rect.size.width;
+	float vertex_bottom_y = rect.origin.y;
+	float vertex_top_y = rect.origin.y + rect.size.height;
+	
+	// lock the render context since rendering will fail while the picture VBO is mapped
+	CGLLockContext([RXGetWorldView() renderContext]);
+	
+	// bind the the picture VBO 
+	glBindBuffer(GL_ARRAY_BUFFER, _pictureVertexArrayBuffer); glReportError();
+	if (GLEE_APPLE_client_storage)
+		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+	
+	// map the picture VBO and move to the correct offset
+	GLfloat* vertex_attributes = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
+	vertex_attributes = vertex_attributes + ((_pictureCount + _dynamicPictureCount) * 16);
+	
+	// 4 vertices per picture [<position.x position.y> <texcoord0.s texcoord0.t>], floats, triangle strip primitives
+	// vertex 1
+	vertex_attributes[0] = vertex_left_x;
+	vertex_attributes[1] = vertex_bottom_y;
+	
+	vertex_attributes[2] = 0.0f;
+	vertex_attributes[3] = [[pictureDescriptor objectForKey:@"Height"] floatValue];
+	
+	// vertex 2
+	vertex_attributes[4] = vertex_right_x;
+	vertex_attributes[5] = vertex_bottom_y;
+	
+	vertex_attributes[6] = [[pictureDescriptor objectForKey:@"Width"] floatValue];
+	vertex_attributes[7] = [[pictureDescriptor objectForKey:@"Height"] floatValue];
+	
+	// vertex 3
+	vertex_attributes[8] = vertex_left_x;
+	vertex_attributes[9] = vertex_top_y;
+	
+	vertex_attributes[10] = 0.0f;
+	vertex_attributes[11] = 0.0f;
+	
+	// vertex 4
+	vertex_attributes[12] = vertex_right_x;
+	vertex_attributes[13] = vertex_top_y;
+	
+	vertex_attributes[14] = [[pictureDescriptor objectForKey:@"Width"] floatValue];
+	vertex_attributes[15] = 0.0f;
+	
+	// unmap the picture VBO and restore the array buffer state
+	if (GLEE_APPLE_flush_buffer_range)
+		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, (_pictureCount + _dynamicPictureCount) * 16, 16);
+	glUnmapBuffer(GL_ARRAY_BUFFER);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+	// flush new objects
+	glFlush();
+	
+	// unlock the CGL contexts
+	CGLUnlockContext([RXGetWorldView() renderContext]);
+	CGLUnlockContext(cgl_ctx);
+	
+	// add the dynamic picture index to the picture render array
+	[_backRenderStatePtr->pictures addObject:[NSNumber numberWithUnsignedInt:_pictureCount + _dynamicPictureCount]];
+	_pictureTextures[_pictureCount + _dynamicPictureCount] = dynamicPicture->texture;
+	
+	// one more dynamic picture
+	_dynamicPictureCount++;
+	
+	// swap the render state
+	[self _swapRenderState];	
+}
+
+#pragma mark -
+
 - (void)_dealloc_movies {
 	// WARNING: this method can only run on the main thread
 	if (!pthread_main_np()) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_dealloc_movies: MAIN THREAD ONLY" userInfo:nil];
@@ -1835,18 +1977,29 @@ static NSMutableString* _scriptLogPrefix;
 - (void)_opcode_noop:(const uint16_t)argc arguments:(const uint16_t *)argv {
 	uint16_t argi = 0;
 	NSString* formatString;
-	if (argv) formatString = [NSString stringWithFormat:@"WARNING: opcode %hu not implemented. arguments: {", *(argv - 2)];
-	else formatString = [NSString stringWithFormat:@"WARNING: unknown opcode called (most likely the _opcode_enableAutomaticSwaps hack) {"];
-	if (argc > 1) for (; argi < argc - 1; argi++) formatString = [formatString stringByAppendingFormat:@"%hu, ", argv[argi]];
+	if (argv)
+		formatString = [NSString stringWithFormat:@"WARNING: opcode %hu not implemented. arguments: {", *(argv - 2)];
+	else
+		formatString = [NSString stringWithFormat:@"WARNING: unknown opcode called (most likely the _opcode_enableAutomaticSwaps hack) {"];
 	
-	if (argc > 0) formatString = [formatString stringByAppendingFormat:@"%hu", argv[argi]];
+	if (argc > 1) {
+		for (; argi < argc - 1; argi++)
+			formatString = [formatString stringByAppendingFormat:@"%hu, ", argv[argi]];
+	}
+	
+	if (argc > 0)
+		formatString = [formatString stringByAppendingFormat:@"%hu", argv[argi]];
 	formatString = [formatString stringByAppendingString:@"}"];
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", _scriptLogPrefix, formatString);
 }
 
+// 1
 - (void)_opcode_drawDynamicPicture:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 9) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
-	if (_dynamicPictureCount >= kDynamicPictureSlots) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"OUT OF DYNAMIC PICTURE SLOTS" userInfo:nil];
+	if (argc < 9)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (_dynamicPictureCount >= kDynamicPictureSlots)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"OUT OF DYNAMIC PICTURE SLOTS" userInfo:nil];
+	
 	NSRect field_display_rect = RXMakeNSRect(argv[1], argv[2], argv[3], argv[4]);
 	
 #if defined(DEBUG)
@@ -1854,130 +2007,7 @@ static NSMutableString* _scriptLogPrefix;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@drawing dynamic picture ID %hu in rect {{%f, %f}, {%f, %f}}", _scriptLogPrefix, argv[0], field_display_rect.origin.x, field_display_rect.origin.y, field_display_rect.size.width, field_display_rect.size.height);
 #endif
 	
-	// get the resource descriptor for the tBMP resource
-	NSError* error;
-	NSDictionary* pictureDescriptor = [_archive bitmapDescriptorWithID:argv[0] error:&error];
-	if (!pictureDescriptor)
-		@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not get a picture resource's picture descriptor." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-	
-	// compute the size of the buffer needed to store the texture; we'll be using MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED as the texture format, which is 4 bytes per pixel
-	GLsizeiptr pictureSize = [[pictureDescriptor objectForKey:@"Width"] intValue] * [[pictureDescriptor objectForKey:@"Height"] intValue] * 4;
-	
-	// get the load context
-	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
-	CGLLockContext(cgl_ctx);
-	
-	// check if we have a cache for the tBMP ID; create a dynamic picture structure otherwise and map it to the tBMP ID
-	uintptr_t dynamicPictureKey = argv[0];
-	struct rx_card_dynamic_picture* dynamicPicture = (struct rx_card_dynamic_picture*)NSMapGet(_dynamicPictureMap, (const void*)dynamicPictureKey);
-	if (dynamicPicture == NULL) {
-		dynamicPicture = reinterpret_cast<struct rx_card_dynamic_picture*>(malloc(sizeof(struct rx_card_dynamic_picture*)));
-		
-		// create a buffer object in which to decompress the tBMP resource
-		glGenBuffers(1, &(dynamicPicture->buffer)); glReportError();
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dynamicPicture->buffer); glReportError();
-		
-		// allocate the buffer object and map it
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, pictureSize, NULL, GL_STATIC_DRAW);
-		GLvoid* pictureBuffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
-		
-		// load the picture in the mapped picture buffer
-		[_archive loadBitmapWithID:argv[0] buffer:pictureBuffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error];
-		if (error) @throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-		
-		// unmap the buffer
-		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
-		
-		// create a texture object and bind it
-		glGenTextures(1, &(dynamicPicture->texture)); glReportError();
-		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, dynamicPicture->texture); glReportError();
-		
-		// texture parameters
-		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glReportError();
-		
-		// client storage is not compatible with PBO texture unpack
-		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-		
-		// unpack the texture
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[pictureDescriptor objectForKey:@"Width"] intValue], [[pictureDescriptor objectForKey:@"Height"] intValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(NULL, 0)); glReportError();
-		
-		// reset the unpack buffer state and re-enable client storage
-		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
-		
-		// map the tBMP ID to the dynamic picture
-		NSMapInsert(_dynamicPictureMap, (void*)dynamicPictureKey, dynamicPicture);
-	}
-	
-	// if the front render state says we're done refreshing the static content and the back render state has not been modified, we can reset the dynamic picture count
-	if (_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO) _dynamicPictureCount = 0;
-	
-	// compute common vertex values
-	float vertex_left_x = field_display_rect.origin.x;
-	float vertex_right_x = vertex_left_x + field_display_rect.size.width;
-	float vertex_bottom_y = field_display_rect.origin.y;
-	float vertex_top_y = field_display_rect.origin.y + field_display_rect.size.height;
-	
-	// bind the the picture VBO 
-	glBindBuffer(GL_ARRAY_BUFFER, _pictureVertexArrayBuffer); glReportError();
-	if (GLEE_APPLE_client_storage) glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
-	
-	// map the picture VBO and move to the correct offset
-	GLfloat* vertex_attributes = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
-	vertex_attributes = vertex_attributes + ((_pictureCount + _dynamicPictureCount) * 16); // 8 vectors, 2 component per vector
-	
-	// specify rectangle vertex and tex coords counter-clockwise from (0, 0)
-	// vertex 1
-	vertex_attributes[0] = vertex_left_x;
-	vertex_attributes[1] = vertex_bottom_y;
-	
-	vertex_attributes[2] = 0.0f;
-	vertex_attributes[3] = [[pictureDescriptor objectForKey:@"Height"] floatValue];
-	
-	// vertex 2
-	vertex_attributes[4] = vertex_right_x;
-	vertex_attributes[5] = vertex_bottom_y;
-	
-	vertex_attributes[6] = [[pictureDescriptor objectForKey:@"Width"] floatValue];
-	vertex_attributes[7] = [[pictureDescriptor objectForKey:@"Height"] floatValue];
-	
-	// vertex 3
-	vertex_attributes[8] = vertex_right_x;
-	vertex_attributes[9] = vertex_top_y;
-	
-	vertex_attributes[10] = [[pictureDescriptor objectForKey:@"Width"] floatValue];
-	vertex_attributes[11] = 0.0f;
-	
-	// vertex 4
-	vertex_attributes[12] = vertex_left_x;
-	vertex_attributes[13] = vertex_top_y;
-	
-	vertex_attributes[14] = 0.0f;
-	vertex_attributes[15] = 0.0f;
-	
-	// unmap the picture VBO and restore the array buffer state
-	if (GLEE_APPLE_flush_buffer_range) glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, (_pictureCount + _dynamicPictureCount) * 16, 16);
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	
-	// flush new objects
-	glFlush();
-	
-	CGLUnlockContext(cgl_ctx);
-	
-	// add the dynamic picture index to the picture render array
-	[_backRenderStatePtr->pictures addObject:[NSNumber numberWithUnsignedInt:_pictureCount + _dynamicPictureCount]];
-	_pictureTextures[_pictureCount + _dynamicPictureCount] = dynamicPicture->texture;
-	
-	// one more dynamic picture
-	_dynamicPictureCount++;
-	
-	// opcode 1 triggers a render state swap
-	[self _swapRenderState];
+	[self _drawPictureWithID:argv[0] archive:_archive rect:field_display_rect];
 }
 
 // 2
@@ -2398,8 +2428,30 @@ DEFINE_COMMAND(xasetupcomplete) {
 
 #pragma mark journals
 
-DEFINE_COMMAND(xaatrusopenbook) {
+- (void)_updateAtrusJournal {
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"aatruspage"];
+	
+	if (page == 0) {
+		// disable hotspots 7 and 9
+		DISPATCH_COMMAND1(10, 7);
+		DISPATCH_COMMAND1(10, 9);
+		
+		// enable hotspot 10
+		DISPATCH_COMMAND1(9, 10);
+	} else {
+		// enable hotspots 7 and 9
+		DISPATCH_COMMAND1(9, 7);
+		DISPATCH_COMMAND1(9, 9);
+		
+		// disable hotspot 10
+		DISPATCH_COMMAND1(10, 10);
+	}
+	
+	[self _drawPictureWithID:3 + page archive:_archive rect:NSMakeRect(0.0f, 0.0f, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+}
 
+DEFINE_COMMAND(xaatrusopenbook) {
+	[self _updateAtrusJournal];
 }
 
 DEFINE_COMMAND(xaatrusbookback) {
@@ -2407,11 +2459,16 @@ DEFINE_COMMAND(xaatrusbookback) {
 }
 
 DEFINE_COMMAND(xaatrusbookprevpage) {
-
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"aatruspage"];
+	assert(page > 0);
+	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"aatruspage"];
+	[self _updateAtrusJournal];
 }
 
 DEFINE_COMMAND(xaatrusbooknextpage) {
-
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"aatruspage"];
+	[[g_world gameState] setUnsignedShort:page + 1 forKey:@"aatruspage"];
+	[self _updateAtrusJournal];
 }
 
 @end

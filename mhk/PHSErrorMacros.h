@@ -50,15 +50,3 @@
 		[self release];																									\
 		return nil;																										\
 	}
-
-#define ReturnWithNoError(errorPtr)																						\
-	{																													\
-		if((errorPtr)) *(errorPtr) = nil;																				\
-		return;																											\
-	}
-
-#define ReturnValueWithNoError(value, errorPtr)																			\
-	{																													\
-		if((errorPtr)) *(errorPtr) = nil;																				\
-		return (value);																									\
-	}

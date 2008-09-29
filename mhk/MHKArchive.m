@@ -473,7 +473,7 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	pthread_mutex_init(&__open_files_mutex, NULL);
 	
 	initialized = YES;
-	ReturnValueWithNoError(self, errorPtr)
+	return self;
 }
 
 - (void)dealloc {

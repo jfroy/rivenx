@@ -18,7 +18,8 @@
 	
 	// get the movie resource descriptor
 	NSDictionary *descriptor = [self resourceDescriptorWithResourceType:@"tMOV" ID:movieID];
-	if (!descriptor) ReturnNULLWithError(MHKErrorDomain, errUnknownID, nil, errorPtr)
+	if (!descriptor)
+		ReturnNULLWithError(MHKErrorDomain, errUnknownID, nil, errorPtr)
 		
 	// store the movie offset in a variable
 	SInt64 qt_offset = [[descriptor objectForKey:@"Offset"] longLongValue];
@@ -46,8 +47,9 @@
 	// make the movie
 	Movie aMovie = NULL;
 	err = NewMovieFromProperties(sizeof(newMovieProperties) / sizeof(newMovieProperties[0]), newMovieProperties, 0, NULL, &aMovie);
-	if (err != noErr) ReturnNULLWithError(NSOSStatusErrorDomain, err, nil, errorPtr)
-	ReturnValueWithNoError(aMovie, errorPtr)
+	if (err != noErr)
+		ReturnNULLWithError(NSOSStatusErrorDomain, err, nil, errorPtr)
+	return aMovie;
 }
 
 @end

@@ -55,19 +55,23 @@
 
 - (UInt32)readDataOfLength:(UInt32)length inBuffer:(void *)buffer error:(NSError **)errorPtr {
 	// is the request valid?
-	if (__position == __length) ReturnValueWithError(0, NSOSStatusErrorDomain, eofErr, nil, errorPtr)
-	if (__length - __position < length) length = __length - __position;
+	if (__position == __length)
+		ReturnValueWithError(0, NSOSStatusErrorDomain, eofErr, nil, errorPtr)
+	if (__length - __position < length)
+		length = __length - __position;
 	
 	// read the data from the file
 	UInt32 bytes_read = 0;
 	OSStatus err = FSReadFork(__forkRef, fsFromStart | forceReadMask, __offset + __position, length, buffer, &bytes_read);
-	if (err && err != eofErr) ReturnValueWithError(0, NSOSStatusErrorDomain, err, nil, errorPtr)
+	if (err && err != eofErr)
+		ReturnValueWithError(0, NSOSStatusErrorDomain, err, nil, errorPtr)
 	
 	// update the position
 	__position += bytes_read;
 	
-	if (err) ReturnValueWithError(bytes_read, NSOSStatusErrorDomain, err, nil, errorPtr)
-	else ReturnValueWithNoError(bytes_read, errorPtr)
+	if (err)
+		ReturnValueWithError(bytes_read, NSOSStatusErrorDomain, err, nil, errorPtr)
+	return bytes_read;
 }
 
 - (void)readDataToEndOfFileInBuffer:(void *)buffer error:(NSError **)errorPtr {
@@ -84,7 +88,9 @@
 }
 
 - (SInt64)seekToFileOffset:(SInt64)offset {
-	if (offset > __length) return -1;
+	if (offset > __length)
+		return -1;
+	
 	// Explicit cast OK here, MHK file sizes are 32 bit
 	__position = (UInt32)offset;
 	return __position;

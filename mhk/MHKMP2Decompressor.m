@@ -60,7 +60,8 @@ const uint32_t *const _mpeg_audio_bitrate_tables[2] = {
 
 static uint32_t _compute_mpeg_audio_frame_length(uint32_t header) {
 	uint8_t bitrate_index = (header >> 12) & 0xf;
-	if (bitrate_index == 0) return 0;
+	if (bitrate_index == 0)
+		return 0;
 	bitrate_index--;
 	
 	uint8_t sampling_rate_index = (header >> 10) & 0x3;
@@ -110,16 +111,20 @@ static inline int _valid_id3_buffer_predicate(const uint8_t *id3_buffer) {
 
 static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	// 11 sync bits
-	if ((header & 0xffe00000) != 0xffe00000) return 0;
+	if ((header & 0xffe00000) != 0xffe00000)
+		return 0;
 	
 	// check that the audio layer is valid
-	if ((header & (3 << 17)) == 0) return 0;
+	if ((header & (3 << 17)) == 0)
+		return 0;
 	
 	// the bitrate index cannot be 0xf
-	if ((header & (0xf << 12)) == 0xf << 12) return 0;
+	if ((header & (0xf << 12)) == 0xf << 12)
+		return 0;
 	
 	// sampling rate cannot be 0x3
-	if ((header & (3 << 10)) == 3 << 10) return 0;
+	if ((header & (3 << 10)) == 3 << 10)
+		return 0;
 	
 	// we check out
 	return 1;
@@ -129,7 +134,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 @implementation MHKMP2Decompressor
 
 + (void)loadFFMPEG {
-#if defined(VERBOSE)
+#if defined(DEBUG) && DEBUG > 2
 	NSLog(@"initializing FFmpeg...");
 #endif
 	
@@ -164,12 +169,14 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		// load libavutil
 		_ffmpeg_state.avutil_handle = dlopen([[resource_path stringByAppendingPathComponent:@"libavutil.dylib"] fileSystemRepresentation], RTLD_LAZY | RTLD_GLOBAL);
 		error_string = dlerror();
-		if(error_string) printf("%s\n", error_string);
+		if (error_string)
+			printf("%s\n", error_string);
 		
 		// load libavcodec
 		_ffmpeg_state.avcodec_handle = dlopen([[resource_path stringByAppendingPathComponent:@"libavcodec.dylib"] fileSystemRepresentation], RTLD_LAZY | RTLD_GLOBAL);
 		error_string = dlerror();
-		if (error_string) fprintf(stderr, "%s\n", error_string);
+		if (error_string)
+			fprintf(stderr, "%s\n", error_string);
 		
 		// load ffmpeg if we were able to link libavcodec
 		if (_ffmpeg_state.avcodec_handle) {
@@ -179,8 +186,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	}
 }
 
-- (void)_build_packet_description_table_and_count_frames:(NSError **)errorPtr {
-	UInt8 *read_buffer = malloc(READ_BUFFER_SIZE);
+- (void)_build_packet_description_table_and_count_frames:(NSError**)errorPtr {
+	UInt8* read_buffer = malloc(READ_BUFFER_SIZE);
 	UInt32 size_left_in_buffer = 0;
 	UInt32 buffer_position = 0;
 	
@@ -207,7 +214,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 				free(read_buffer);
 				return;
 			}
-			if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr) break;
+			if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
+				break;
 			
 			source_position = [__data_source offsetInFile];
 			buffer_position = 0;
@@ -239,7 +247,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 				__packet_count++;
 				
 				// update the maximum packet size
-				if (frame_length > __max_packet_size) __max_packet_size = frame_length;
+				if (frame_length > __max_packet_size)
+					__max_packet_size = frame_length;
 				
 				// if the whole frame isn't in the buffer, fill it up
 				if (size_left_in_buffer < frame_length) {
@@ -250,7 +259,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 						free(read_buffer);
 						return;
 					}
-					if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr) break;
+					if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
+						break;
 			
 					source_position = [__data_source offsetInFile];
 					buffer_position = 0;
@@ -269,11 +279,12 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 			memmove(read_buffer, read_buffer + buffer_position, size_left_in_buffer);
 			
 			size_left_in_buffer += [__data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:errorPtr];
-			if(*errorPtr && [*errorPtr code] != eofErr) {
+			if (*errorPtr && [*errorPtr code] != eofErr) {
 				free(read_buffer);
 				return;
 			}
-			if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr) break;
+			if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
+				break;
 			
 			source_position = [__data_source offsetInFile];
 			buffer_position = 0;
@@ -281,23 +292,25 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	}
 	
 	free(read_buffer);
-	ReturnWithNoError(errorPtr)
 }
 
 - (id)init {
-	[super init];
+	[self doesNotRecognizeSelector:_cmd];
 	[self release];
 	return nil;
 }
 
 - (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle *)fh error:(NSError **)errorPtr {
-	if(![super init]) return nil;
+	self = [super init];
+	if (!self) return nil;
 	
 	// we can't do anything without ffmpeg
-	if (!MHKMP2Decompressor_libav_available) ReturnFromInitWithError(MHKErrorDomain, errFFMPEGNotAvailable, nil, errorPtr)
+	if (!MHKMP2Decompressor_libav_available)
+		ReturnFromInitWithError(MHKErrorDomain, errFFMPEGNotAvailable, nil, errorPtr)
 	
 	// MPEG 2 audio can only store 1 or 2 channels
-	if (channels != 1 && channels != 2) ReturnFromInitWithError(MHKErrorDomain, errInvalidChannelCount, nil, errorPtr)
+	if (channels != 1 && channels != 2)
+		ReturnFromInitWithError(MHKErrorDomain, errInvalidChannelCount, nil, errorPtr)
 	
 	__channel_count = channels;
 	__frame_count = frames;
@@ -325,7 +338,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	
 	// using the input and output absds, setup an AudioConverter
 	OSStatus err = AudioConverterNew(&__decomp_absd, &__output_absd, &__converter);
-	if (err) ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr)
+	if (err)
+		ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr)
 	
 	// allocate the codec context
 	pthread_mutex_lock(&ffmpeg_mutex);
@@ -338,7 +352,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	// open the codec
 	int result = _ffmpeg_state.avcodec_open(__mp2_codec_context, _ffmpeg_state.mp2_codec);
 	pthread_mutex_unlock(&ffmpeg_mutex);
-	if (result < 0) ReturnFromInitWithError(MHKffmpegErrorDomain, result, nil, errorPtr)
+	if (result < 0)
+		ReturnFromInitWithError(MHKffmpegErrorDomain, result, nil, errorPtr)
 	
 	NSError *local_error = nil;
 	
@@ -347,7 +362,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	[__data_source seekToFileOffset:0];
 	UInt32 bytes_read = [__data_source readDataOfLength:10 inBuffer:id3_buffer error:&local_error];
 	if (bytes_read != 10) {
-		if(errorPtr) *errorPtr = local_error;
+		if (errorPtr)
+			*errorPtr = local_error;
 		[self release];
 		return nil;
 	}
@@ -355,9 +371,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	// if we have a valid ID3 chunk, determine its length
 	if (_valid_id3_buffer_predicate(id3_buffer)) {
 		SInt64 id3_length = ((id3_buffer[6] & 0x7f) << 21) | ((id3_buffer[7] & 0x7f) << 14) | ((id3_buffer[8] & 0x7f) << 7) | (id3_buffer[9] & 0x7f);
-		if(id3_buffer[5] & 0x10) {
+		if (id3_buffer[5] & 0x10)
 			id3_length += 10;
-		}
 		
 		__audio_packets_start_offset = 10 + id3_length;
 	} else {
@@ -371,7 +386,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	__max_packet_size = 0;
 	[self _build_packet_description_table_and_count_frames:&local_error];
 	if (local_error) {
-		if(errorPtr) *errorPtr = local_error;
+		if (errorPtr)
+			*errorPtr = local_error;
 		[self release];
 		return nil;
 	}
@@ -388,16 +404,18 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	// allocate the decompression buffer
 	__decompression_buffer_length = MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET * sizeof(SInt16) * __channel_count;
 	__decompression_buffer = malloc(__decompression_buffer_length);
-	if (!__decompression_buffer) ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr)
+	if (!__decompression_buffer)
+		ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr)
 	
 	// allocate the packet buffer
 	__packet_buffer = malloc(__max_packet_size * 50);
-	if (!__packet_buffer) ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr)
+	if (!__packet_buffer)
+		ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr)
 	
 	// initialize the decompressor
 	[self reset];
 	
-	ReturnValueWithNoError(self, errorPtr)
+	return self;
 }
 
 - (void)dealloc {
@@ -448,7 +466,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		
 		// close and re-open the codec context
 		pthread_mutex_lock(&ffmpeg_mutex);
-		if (__mp2_codec_context) _ffmpeg_state.avcodec_close(__mp2_codec_context);
+		if (__mp2_codec_context)
+			_ffmpeg_state.avcodec_close(__mp2_codec_context);
 		__mp2_codec_context = _ffmpeg_state.avcodec_alloc_context();
 		_ffmpeg_state.avcodec_open(__mp2_codec_context, _ffmpeg_state.mp2_codec);
 		pthread_mutex_unlock(&ffmpeg_mutex);
@@ -470,9 +489,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		if (__decompression_buffer_position > 0) {
 			// compute how many bytes we need to convert
 			converted_bytes = ((__decompression_buffer_length - __decompression_buffer_position) / __decomp_absd.mBytesPerFrame) * __output_absd.mBytesPerFrame;
-			if (converted_bytes > bytes_to_decompress) {
+			if (converted_bytes > bytes_to_decompress)
 				converted_bytes = bytes_to_decompress;
-			}
 			
 			// convert the bytes
 			err = AudioConverterConvertBuffer(__converter, 
@@ -488,34 +506,41 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 			
 			// update the decompression buffer state
 			__decompression_buffer_position += (converted_bytes / __output_absd.mBytesPerFrame) * __decomp_absd.mBytesPerFrame;
-			if (__decompression_buffer_position == __decompression_buffer_length) __decompression_buffer_position = 0;
+			if (__decompression_buffer_position == __decompression_buffer_length)
+				__decompression_buffer_position = 0;
 		}
 		
 		// did we already process every available packet?
-		if (__packet_index == __packet_count) goto AbortFill;
+		if (__packet_index == __packet_count)
+			goto AbortFill;
 		
 		// compute how many packets we'll need to process
 		UInt32 packets_to_decompress = (bytes_to_decompress / __output_absd.mBytesPerFrame) / MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET;
-		if ((bytes_to_decompress / __output_absd.mBytesPerFrame) % MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET) packets_to_decompress++;
-		// Explicit cast OK here, can't really have more than 4 billion packets to decompress...
-		if (packets_to_decompress > (UInt32)(__packet_count - __packet_index)) packets_to_decompress = (UInt32)(__packet_count - __packet_index);
+		if ((bytes_to_decompress / __output_absd.mBytesPerFrame) % MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET)
+			packets_to_decompress++;
+		
+		// explicit cast OK here, can't really have more than 4 billion packets to decompress...
+		if (packets_to_decompress > (UInt32)(__packet_count - __packet_index))
+			packets_to_decompress = (UInt32)(__packet_count - __packet_index);
 		
 		while (packets_to_decompress > 0) {
 			// if we ran out of packets in memory, read some more
 			if (__available_packets == 0) {
 				// did we process every available packet?
-				if (__packet_index == __packet_count) goto AbortFill;
+				if (__packet_index == __packet_count)
+					goto AbortFill;
 				
 				// compute the length of an integral number of packets that we can read, up to 50 packets
 				UInt32 bytes_to_read = __max_packet_size * 50;
 				if (bytes_to_read > [__data_source length] - [__data_source offsetInFile]) {
-					// Explicit cast OK here, API limited to 32-bit read sizes
+					// explicit cast OK here, API limited to 32-bit read sizes
 					bytes_to_read = (UInt32)((([__data_source length] - [__data_source offsetInFile]) / __max_packet_size) * __max_packet_size);
 				}
 				
 				// read the packets
 				UInt32 bytes_read = [__data_source readDataOfLength:bytes_to_read inBuffer:__packet_buffer error:nil];
-				if (bytes_read != bytes_to_read) goto AbortFill;
+				if (bytes_read != bytes_to_read)
+					goto AbortFill;
 				
 				// reset the packet buffer state
 				__available_packets = bytes_read / __max_packet_size;
@@ -525,7 +550,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 			// decompress a packet
 			int libavcodec_frame_size = __decompression_buffer_length;
 			_ffmpeg_state.avcodec_decode_audio(__mp2_codec_context, __decompression_buffer, &libavcodec_frame_size, __current_packet, __packet_table[__packet_index].mDataByteSize);
-			if (libavcodec_frame_size == 0) goto AbortFill;
+			if (libavcodec_frame_size == 0)
+				goto AbortFill;
 			
 			// apply the byte skip
 			if (__packet_index == 0) {
@@ -549,21 +575,20 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 											  BUFFER_OFFSET(abl->mBuffers[0].mData, decompressed_bytes));
 			
 			// undo the byte skip
-			if (__packet_index == 0) {
+			if (__packet_index == 0)
 				__decompression_buffer = BUFFER_OFFSET(__decompression_buffer, -__bytes_to_drop);
-			}
 			
 			// handle a possible converter error
-			if (err) goto AbortFill;
+			if (err)
+				goto AbortFill;
 			
 			// update decompression state
 			decompressed_bytes += converted_bytes;
 			bytes_to_decompress -= converted_bytes;
 			
 			// we might need to dynamically tack on an extra packet if we dropped bytes from the first packet
-			if (__packet_index == 0 && __packet_index < __packet_count && packets_to_decompress == 1 && bytes_to_decompress > 0) {
+			if (__packet_index == 0 && __packet_index < __packet_count && packets_to_decompress == 1 && bytes_to_decompress > 0)
 				packets_to_decompress++;
-			}
 			
 			// one less packet to go
 			packets_to_decompress--;
@@ -574,14 +599,15 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		
 		// update the decompression buffer state
 		__decompression_buffer_position += (converted_bytes / __output_absd.mBytesPerFrame) * __decomp_absd.mBytesPerFrame;
-		if (__decompression_buffer_position == __decompression_buffer_length) __decompression_buffer_position = 0;
+		if (__decompression_buffer_position == __decompression_buffer_length)
+			__decompression_buffer_position = 0;
 		
 AbortFill:
-			// recompute frames_to_decompress and zero undecompressed samples
-			bytes_to_decompress = abl->mBuffers[0].mDataByteSize;
-		if (decompressed_bytes < bytes_to_decompress) {
+		// recompute frames_to_decompress and zero undecompressed samples
+		bytes_to_decompress = abl->mBuffers[0].mDataByteSize;
+		
+		if (decompressed_bytes < bytes_to_decompress)
 			bzero(BUFFER_OFFSET(abl->mBuffers[0].mData, decompressed_bytes), bytes_to_decompress - decompressed_bytes);
-		}
 	}
 }
 

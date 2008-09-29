@@ -36,34 +36,45 @@ static const int16_t g_adpcm_step_sizes[89] = {
 MHK_INLINE int32_t _MHK_adpcm_decode_delta(int32_t stepSize, char encodedSample) {
 	int32_t delta = 0;
 	
-	if(encodedSample & 0x4) delta = stepSize;
-	if(encodedSample & 0x2) delta += (stepSize >> 0x1);
-	if(encodedSample & 0x1) delta += (stepSize >> 0x2);
+	if (encodedSample & 0x4)
+		delta = stepSize;
+	
+	if (encodedSample & 0x2)
+		delta += (stepSize >> 0x1);
+	
+	if (encodedSample & 0x1)
+		delta += (stepSize >> 0x2);
+	
 	delta += (stepSize >> 0x3);
-	if(encodedSample & 0x8) delta = -delta;
+	if (encodedSample & 0x8)
+		delta = -delta;
 	
 	return delta;
 }
 
 MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
-	if (sample >= 0) return sample / 32767.0F;
-	else return sample / 32768.0F;
+	if (sample >= 0)
+		return sample / 32767.0F;
+	else
+		return sample / 32768.0F;
 }
 
 
 @implementation MHKADPCMDecompressor
 
 - (id)init {
-	[super init];
+	[self doesNotRecognizeSelector:_cmd];
 	[self release];
 	return nil;
 }
 
-- (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle *)fh error:(NSError **)errorPtr {
-	if(![super init]) return nil;
+- (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle*)fh error:(NSError**)errorPtr {
+	self = [super init];
+	if (!self) return nil;
 	
 	// ADPCM only works for 1 or 2 channels
-	if(channels != 1 && channels != 2) ReturnFromInitWithError(MHKErrorDomain, errInvalidChannelCount, nil, errorPtr)
+	if (channels != 1 && channels != 2)
+		ReturnFromInitWithError(MHKErrorDomain, errInvalidChannelCount, nil, errorPtr)
 		
 	channel_count = channels;
 	data_source = [fh retain];
@@ -84,7 +95,7 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
 	
 	[self reset];
 	
-	ReturnValueWithNoError(self, errorPtr)
+	return self;
 }
 
 - (void)dealloc {
@@ -115,28 +126,31 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
 	[data_source seekToFileOffset:data_source_init_offset];
 }
 
-- (void)fillAudioBufferList:(AudioBufferList *)abl {	
+- (void)fillAudioBufferList:(AudioBufferList*)abl {	
 	// from the provided buffer length, compute how many bytes from the compressed bitsream we'll need
 	uint32_t frames_to_decompress = abl->mBuffers[0].mDataByteSize / output_absd.mBytesPerFrame;
 	
 	// compute the bitstream length (how much data we need to read)
 	uint32_t bitstream_length = frames_to_decompress;
-	if(channel_count == 1) {
+	if (channel_count == 1) {
 		bitstream_length /= 2;
-		if(frames_to_decompress % 2) bitstream_length++;
+		if (frames_to_decompress % 2)
+			bitstream_length++;
 	}
-	if(bitstream_length > READ_BUFFER_SIZE) bitstream_length = READ_BUFFER_SIZE;
+	
+	if (bitstream_length > READ_BUFFER_SIZE)
+		bitstream_length = READ_BUFFER_SIZE;
 	
 	// setup the pointers so we don't have branches in our decompression loop
-	int32_t *estimate_1 = &estimate_left;
-	int32_t *step_index_1 = &step_index_left;
-	int32_t *step_size_1 = &step_size_left;
+	int32_t* estimate_1 = &estimate_left;
+	int32_t* step_index_1 = &step_index_left;
+	int32_t* step_size_1 = &step_size_left;
 	
-	int32_t *estimate_2 = NULL;
-	int32_t *step_index_2 = NULL;
-	int32_t *step_size_2 = NULL;
+	int32_t* estimate_2 = NULL;
+	int32_t* step_index_2 = NULL;
+	int32_t* step_size_2 = NULL;
 	
-	if(channel_count == 2) {
+	if (channel_count == 2) {
 		estimate_2 = &estimate_right;
 		step_index_2 = &step_index_right;
 		step_size_2 = &step_size_right;
@@ -147,28 +161,27 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
 	}
 	
 	// cache the audio buffer as a float pointer
-	register float *output_buffer = (float *)abl->mBuffers[0].mData;
+	float* output_buffer = (float*)abl->mBuffers[0].mData;
 	
 	// cache the input buffer
-	register char *local_adpcm_buffer = adpcm_buffer;
+	int8_t* local_adpcm_buffer = adpcm_buffer;
 	
 	// ask the data source to read the compressed samples, and recompute frames_to_decompress
 	uint32_t read_length = [data_source readDataOfLength:bitstream_length inBuffer:adpcm_buffer error:nil];
 	
 	// we need an external read loop because of the fixed size read buffer
 	uint32_t decompressed_frames = 0;
-	register uint32_t frames_per_cycle = 2 / channel_count;
-	while(read_length > 0 && decompressed_frames < frames_to_decompress) {
+	uint32_t frames_per_cycle = 2 / channel_count;
+	while (read_length > 0 && decompressed_frames < frames_to_decompress) {
 		// compute how many frames we'll decompress this particular cycle
-		register uint32_t frames_to_decompress_this_cycle = (2 / channel_count) * read_length;
+		uint32_t frames_to_decompress_this_cycle = (2 / channel_count) * read_length;
 		
 		// decompression loop
-		register uint32_t frame_index = 0;
-		for(; frame_index < frames_to_decompress_this_cycle; frame_index += frames_per_cycle) {
+		for (uint32_t frame_index = 0; frame_index < frames_to_decompress_this_cycle; frame_index += frames_per_cycle) {
 			// first sample
-			register unsigned char compressed_sample = (*local_adpcm_buffer & 0xF0) >> 4;
-			register int32_t sample = *estimate_1;
-			register int32_t step_index = *step_index_1;
+			uint8_t compressed_sample = (*local_adpcm_buffer & 0xF0) >> 4;
+			int32_t sample = *estimate_1;
+			int32_t step_index = *step_index_1;
 			
 			// decode ADPCM code value to reproduce Dn and accumulates an estimated output sample
 			sample += _MHK_adpcm_decode_delta(*step_size_1, compressed_sample);
@@ -221,15 +234,19 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
 		decompressed_frames += frames_to_decompress_this_cycle;
 		
 		// are we done?
-		if(decompressed_frames == frames_to_decompress) break;
+		if (decompressed_frames == frames_to_decompress)
+			break;
 		
 		// we're not done. compute how much more data we need to read
 		bitstream_length = frames_to_decompress - decompressed_frames;
-		if(channel_count == 1) {
+		if (channel_count == 1) {
 			bitstream_length /= 2;
-			if((frames_to_decompress - decompressed_frames) % 2) bitstream_length++;
+			if ((frames_to_decompress - decompressed_frames) % 2)
+				bitstream_length++;
 		}
-		if(bitstream_length > READ_BUFFER_SIZE) bitstream_length = READ_BUFFER_SIZE;
+		
+		if (bitstream_length > READ_BUFFER_SIZE)
+			bitstream_length = READ_BUFFER_SIZE;
 		
 		// read some more data
 		read_length = [data_source readDataOfLength:bitstream_length inBuffer:adpcm_buffer error:nil];
@@ -239,9 +256,8 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
 	}
 	
 	// zero un-decoded space
-	if(decompressed_frames < frames_to_decompress) {
+	if (decompressed_frames < frames_to_decompress)
 		bzero(output_buffer, (frames_to_decompress - decompressed_frames) * output_absd.mBytesPerFrame);
-	}
 }
 
 @end
