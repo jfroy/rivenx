@@ -25,7 +25,7 @@
 #if defined(DEBUG)
 	RXOLog(@"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
 #endif
-	[(RXCardState *)_cardState setActiveCardWithStack:@"aspit" ID:[[self activeStackWithKey:@"aspit"] entryCardID] waitUntilDone:NO];
+	[(RXCardState*)_cardState setActiveCardWithStack:@"aspit" ID:[[self activeStackWithKey:@"aspit"] entryCardID] waitUntilDone:NO];
 	[_stateCompositor setOpacity:1.0f ofState:_cardState];
 }
 

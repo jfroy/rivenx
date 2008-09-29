@@ -188,7 +188,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 
 - (void)_build_packet_description_table_and_count_frames:(NSError**)errorPtr {
 	UInt8* read_buffer = malloc(READ_BUFFER_SIZE);
-	UInt32 size_left_in_buffer = 0;
+	ssize_t size_left_in_buffer = 0;
 	UInt32 buffer_position = 0;
 	
 	const SInt64 source_length = [__data_source length];
@@ -210,10 +210,11 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		// is the read buffer empty?
 		if (size_left_in_buffer == 0) {
 			size_left_in_buffer = [__data_source readDataOfLength:READ_BUFFER_SIZE inBuffer:read_buffer error:errorPtr];
-			if (*errorPtr && [*errorPtr code] != eofErr) {
+			if (size_left_in_buffer == -1) {
 				free(read_buffer);
 				return;
 			}
+			
 			if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
 				break;
 			
@@ -255,10 +256,11 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 					memmove(read_buffer, read_buffer + buffer_position, size_left_in_buffer);
 			
 					size_left_in_buffer += [__data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:errorPtr];
-					if (*errorPtr && [*errorPtr code] != eofErr) {
+					if (size_left_in_buffer == -1) {
 						free(read_buffer);
 						return;
 					}
+					
 					if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
 						break;
 			
@@ -279,10 +281,11 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 			memmove(read_buffer, read_buffer + buffer_position, size_left_in_buffer);
 			
 			size_left_in_buffer += [__data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:errorPtr];
-			if (*errorPtr && [*errorPtr code] != eofErr) {
+			if (size_left_in_buffer == -1) {
 				free(read_buffer);
 				return;
 			}
+			
 			if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
 				break;
 			
@@ -360,7 +363,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	// read 10 bytes to check for ID3 meta-data
 	UInt8 id3_buffer[10];
 	[__data_source seekToFileOffset:0];
-	UInt32 bytes_read = [__data_source readDataOfLength:10 inBuffer:id3_buffer error:&local_error];
+	ssize_t bytes_read = [__data_source readDataOfLength:10 inBuffer:id3_buffer error:&local_error];
 	if (bytes_read != 10) {
 		if (errorPtr)
 			*errorPtr = local_error;
@@ -538,7 +541,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 				}
 				
 				// read the packets
-				UInt32 bytes_read = [__data_source readDataOfLength:bytes_to_read inBuffer:__packet_buffer error:nil];
+				ssize_t bytes_read = [__data_source readDataOfLength:bytes_to_read inBuffer:__packet_buffer error:nil];
 				if (bytes_read != bytes_to_read)
 					goto AbortFill;
 				

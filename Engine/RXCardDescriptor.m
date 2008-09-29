@@ -115,11 +115,12 @@ struct _RXCardDescriptorPrimer {
 		
 		// read the data from the archive
 		NSError* error;
-		[fh readDataToEndOfFileInBuffer:buffer error:&error];
-		if (error) continue;
+		if ([fh readDataToEndOfFileInBuffer:buffer error:&error] == -1)
+			continue;
 		
 		data = [NSData dataWithBytesNoCopy:buffer length:bufferLength freeWhenDone:YES];
-		if (data) break;
+		if (data)
+			break;
 	}
 	
 	struct _RXCardDescriptorPrimer primer = {archive, data};

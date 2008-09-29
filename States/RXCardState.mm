@@ -912,7 +912,8 @@ init_failure:
 
 - (void)_switchCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)simpleDescriptor {
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
-	if ([NSThread currentThread] != [g_world scriptThread]) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_switchCardWithSimpleDescriptor: MUST RUN ON SCRIPT THREAD" userInfo:nil];
+	if ([NSThread currentThread] != [g_world scriptThread])
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_switchCardWithSimpleDescriptor: MUST RUN ON SCRIPT THREAD" userInfo:nil];
 	
 	RXCard* newCard = nil;
 	
@@ -943,7 +944,8 @@ init_failure:
 		// FIXME: need to be smarter about card loading (cache, locality, etc)
 		// load the new card in
 		RXCardDescriptor* newCardDescriptor = [[RXCardDescriptor alloc] initWithStack:newStack ID:simpleDescriptor->cardID];
-		if (!newCardDescriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"COULD NOT FIND CARD IN STACK" userInfo:nil]; 
+		if (!newCardDescriptor)
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"COULD NOT FIND CARD IN STACK" userInfo:nil]; 
 		
 		newCard = [[RXCard alloc] initWithCardDescriptor:newCardDescriptor];
 		[newCardDescriptor release];
@@ -1009,13 +1011,15 @@ init_failure:
 
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {
 	// WARNING: CAN RUN ON ANY THREAD
-	if (!stackKey) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"stackKey CANNOT BE NIL" userInfo:nil];
+	if (!stackKey)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"stackKey CANNOT BE NIL" userInfo:nil];
 	RXSimpleCardDescriptor* des = [[RXSimpleCardDescriptor alloc] initWithStackName:stackKey ID:cardID];
 	
 	// FIXME: we need to be smarter about stack management. For now, we try to load the stack once. And it stays loaded. Forver
 	// make sure the requested stack has been loaded
 	RXStack* stack = [g_world activeStackWithKey:des->parentName];
-	if (!stack) [g_world loadStackWithKey:des->parentName waitUntilDone:YES];
+	if (!stack)
+		[g_world loadStackWithKey:des->parentName waitUntilDone:YES];
 	
 	[self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:des inThread:[g_world scriptThread] waitUntilDone:wait];
 	

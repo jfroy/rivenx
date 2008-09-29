@@ -411,14 +411,15 @@ static NSMutableString* _scriptLogPrefix;
 	uint16_t resourceID = [_descriptor ID];
 	
 	fh = [_archive openResourceWithResourceType:@"MLST" ID:resourceID];
-	if (!fh) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding MLST resource." userInfo:nil];
+	if (!fh)
+		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding MLST resource." userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	listData = malloc(listDataLength);
 	
 	// read the data from the archive
-	[fh readDataToEndOfFileInBuffer:listData error:&error];
-	if (error) [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding MLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
+		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding MLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	// how many movies do we have?
 	uint16_t movieCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
@@ -604,8 +605,8 @@ static NSMutableString* _scriptLogPrefix;
 	listData = malloc(listDataLength);
 	
 	// read the data from the archive
-	[fh readDataToEndOfFileInBuffer:listData error:&error];
-	if (error) [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding HSPT ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
+		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding HSPT ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	// how many hotspots do we have?
 	uint16_t hotspotCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
@@ -670,8 +671,8 @@ static NSMutableString* _scriptLogPrefix;
 	_blstData = malloc(listDataLength);
 	
 	// read the data from the archive
-	[fh readDataToEndOfFileInBuffer:_blstData error:&error];
-	if (error) [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding BLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	if ([fh readDataToEndOfFileInBuffer:_blstData error:&error] == -1)
+		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding BLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	_hotspotControlRecords = BUFFER_OFFSET(_blstData, sizeof(uint16_t));
 	
@@ -701,8 +702,8 @@ static NSMutableString* _scriptLogPrefix;
 	listData = malloc(listDataLength);
 	
 	// read the data from the archive
-	[fh readDataToEndOfFileInBuffer:listData error:&error];
-	if (error) [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding PLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
+		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding PLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	// how many pictures do we have?
 	_pictureCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
@@ -850,8 +851,8 @@ static NSMutableString* _scriptLogPrefix;
 	listData = malloc(listDataLength);
 	
 	// read the data from the archive
-	[fh readDataToEndOfFileInBuffer:listData error:&error];
-	if (error) [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding FLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
+		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding FLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	_sfxeCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
 	_sfxes = new _rx_card_sfxe[_sfxeCount];
@@ -874,8 +875,8 @@ static NSMutableString* _scriptLogPrefix;
 		void* sfxeData = malloc(sfxeLength);
 		
 		// read the data from the archive
-		[sfxeHandle readDataToEndOfFileInBuffer:sfxeData error:&error];
-		if (error) [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read a required SFXE resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		if ([sfxeHandle readDataToEndOfFileInBuffer:sfxeData error:&error] == -1)
+			@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read a required SFXE resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 		struct rx_fsxe_record* sfxeRecord = reinterpret_cast<struct rx_fsxe_record*>(sfxeData);
 #if defined(__LITTLE_ENDIAN__)
@@ -1044,8 +1045,8 @@ static NSMutableString* _scriptLogPrefix;
 	listData = malloc(listDataLength);
 	
 	// read the data from the archive
-	[fh readDataToEndOfFileInBuffer:listData error:&error];
-	if (error) [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding SLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
+		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding SLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	// how many sound groups do we have?
 	uint16_t soundGroupCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
@@ -2467,8 +2468,10 @@ DEFINE_COMMAND(xaatrusbookprevpage) {
 
 DEFINE_COMMAND(xaatrusbooknextpage) {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"aatruspage"];
-	[[g_world gameState] setUnsignedShort:page + 1 forKey:@"aatruspage"];
-	[self _updateAtrusJournal];
+	if (page < 9) {
+		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"aatruspage"];
+		[self _updateAtrusJournal];
+	}
 }
 
 @end
