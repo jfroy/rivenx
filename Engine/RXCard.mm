@@ -260,7 +260,42 @@ CF_INLINE void rx_dispatch_commandv(RXCard* target, rx_command_dispatch_entry_t*
 	command->imp(target, command->sel, argc, argv);
 }
 
-#define DISPATCH_COMMAND(COMMAND_INDEX, ARGC, ARGV) rx_dispatch_commandv(self, _riven_command_dispatch_table + COMMAND_INDEX, ARGC, ARGV)
+CF_INLINE void rx_dispatch_command0(RXCard* target, rx_command_dispatch_entry_t* command) {
+	rx_dispatch_commandv(target, command, 0, NULL);
+}
+
+CF_INLINE void rx_dispatch_command1(RXCard* target, rx_command_dispatch_entry_t* command, uint16_t a1) {
+	uint16_t args[] = {a1};
+	rx_dispatch_commandv(target, command, 1, args);
+}
+
+CF_INLINE void rx_dispatch_command2(RXCard* target, rx_command_dispatch_entry_t* command, uint16_t a1, uint16_t a2) {
+	uint16_t args[] = {a1, a2};
+	rx_dispatch_commandv(target, command, 2, args);
+}
+
+CF_INLINE void rx_dispatch_command3(RXCard* target, rx_command_dispatch_entry_t* command, uint16_t a1, uint16_t a2, uint16_t a3) {
+	uint16_t args[] = {a1, a2, a3};
+	rx_dispatch_commandv(target, command, 3, args);
+}
+
+CF_INLINE void rx_dispatch_command4(RXCard* target, rx_command_dispatch_entry_t* command, uint16_t a1, uint16_t a2, uint16_t a3, uint16_t a4) {
+	uint16_t args[] = {a1, a2, a3, a4};
+	rx_dispatch_commandv(target, command, 4, args);
+}
+
+CF_INLINE void rx_dispatch_command5(RXCard* target, rx_command_dispatch_entry_t* command, uint16_t a1, uint16_t a2, uint16_t a3, uint16_t a4, uint16_t a5) {
+	uint16_t args[] = {a1, a2, a3, a4, a5};
+	rx_dispatch_commandv(target, command, 5, args);
+}
+
+#define DISPATCH_COMMANDV(COMMAND_INDEX, ARGC, ARGV) rx_dispatch_commandv(self, _riven_command_dispatch_table + COMMAND_INDEX, ARGC, ARGV)
+#define DISPATCH_COMMAND0(COMMAND_INDEX) rx_dispatch_command0(self, _riven_command_dispatch_table + COMMAND_INDEX)
+#define DISPATCH_COMMAND1(COMMAND_INDEX, ARG1) rx_dispatch_command1(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1)
+#define DISPATCH_COMMAND2(COMMAND_INDEX, ARG1, ARG2) rx_dispatch_command2(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2)
+#define DISPATCH_COMMAND3(COMMAND_INDEX, ARG1, ARG2, ARG3) rx_dispatch_command3(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3)
+#define DISPATCH_COMMAND4(COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4) rx_dispatch_command4(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4)
+#define DISPATCH_COMMAND5(COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4, ARG5) rx_dispatch_command5(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4, ARG5)
 
 static rx_command_dispatch_entry_t _riven_command_dispatch_table[47];
 static NSMapTable* _riven_external_command_dispatch_map;
@@ -268,6 +303,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 static NSMutableString* _scriptLogPrefix;
 
 
+#pragma mark -
 @implementation RXCard
 
 // disable automatic KVC
@@ -2344,11 +2380,8 @@ static NSMutableString* _scriptLogPrefix;
 #pragma mark setup
 
 DEFINE_COMMAND(xasetupcomplete) {
-	uint16_t temp_args[2];
-	
 	// schedule a fade transition
-	temp_args[0] = 16;
-	DISPATCH_COMMAND(18, 1, temp_args);
+	DISPATCH_COMMAND1(18, 16);
 	
 	// disable sounds by activating an empty sound group with fade out
 	RXSoundGroup* sgroup = [RXSoundGroup new];
@@ -2360,8 +2393,7 @@ DEFINE_COMMAND(xasetupcomplete) {
 	[sgroup release];
 	
 	// go to card 1
-	temp_args[0] = 1;
-	DISPATCH_COMMAND(2, 1, temp_args);
+	DISPATCH_COMMAND1(2, 1);
 }
 
 #pragma mark journals
