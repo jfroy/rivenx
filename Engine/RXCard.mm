@@ -26,7 +26,7 @@ static const GLuint kDynamicPictureSlots = 10;
 
 static const NSTimeInterval kInsideHotspotPeriodicEventPeriod = 0.1;
 
-static const float kSoundGainDivisor = 255.0f;
+static const float kSoundGainDivisor = 256.0f;
 static const float kMovieGainDivisor = 500.0f;
 
 static const NSString* k_eventSelectors[] = {
@@ -1733,6 +1733,9 @@ static NSMutableString* _scriptLogPrefix;
 #pragma mark -
 
 - (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive rect:(NSRect)rect {
+	if (_dynamicPictureCount >= kDynamicPictureSlots)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"OUT OF DYNAMIC PICTURE SLOTS" userInfo:nil];
+	
 	// get the resource descriptor for the tBMP resource
 	NSError* error;
 	NSDictionary* pictureDescriptor = [archive bitmapDescriptorWithID:ID error:&error];
@@ -1998,9 +2001,6 @@ static NSMutableString* _scriptLogPrefix;
 - (void)_opcode_drawDynamicPicture:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 9)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
-	if (_dynamicPictureCount >= kDynamicPictureSlots)
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"OUT OF DYNAMIC PICTURE SLOTS" userInfo:nil];
-	
 	NSRect field_display_rect = RXMakeNSRect(argv[1], argv[2], argv[3], argv[4]);
 	
 #if defined(DEBUG)
@@ -2041,13 +2041,13 @@ static NSMutableString* _scriptLogPrefix;
 - (void)_opcode_playLocalSound:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 3) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource with id %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource with id %hu, volume %hu", _scriptLogPrefix, argv[0], argv[1]);
 #endif
 	
 	RXDataSound* sound = [RXDataSound new];
 	sound->parent = [_descriptor parent];
 	sound->ID = argv[0];
-	sound->gain = 1.0f;
+	sound->gain = (float)argv[1] / kSoundGainDivisor;
 	sound->pan = 0.5f;
 	
 	[_scriptHandler playDataSound:sound];
@@ -2311,7 +2311,6 @@ static NSMutableString* _scriptLogPrefix;
 	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating plst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
-	// FIXME: check for duplicates
 	[_backRenderStatePtr->pictures addObject:[NSNumber numberWithUnsignedShort:argv[0] - 1]];
 	
 	// opcode 39 triggers a render state swap
@@ -2432,7 +2431,7 @@ DEFINE_COMMAND(xasetupcomplete) {
 - (void)_updateAtrusJournal {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"aatruspage"];
 	
-	if (page == 0) {
+	if (page == 1) {
 		// disable hotspots 7 and 9
 		DISPATCH_COMMAND1(10, 7);
 		DISPATCH_COMMAND1(10, 9);
@@ -2448,7 +2447,7 @@ DEFINE_COMMAND(xasetupcomplete) {
 		DISPATCH_COMMAND1(10, 10);
 	}
 	
-	[self _drawPictureWithID:3 + page archive:_archive rect:NSMakeRect(0.0f, 0.0f, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	DISPATCH_COMMAND1(39, page);
 }
 
 DEFINE_COMMAND(xaatrusopenbook) {
@@ -2461,16 +2460,28 @@ DEFINE_COMMAND(xaatrusbookback) {
 
 DEFINE_COMMAND(xaatrusbookprevpage) {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"aatruspage"];
-	assert(page > 0);
+	assert(page > 1);
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"aatruspage"];
-	[self _updateAtrusJournal];
+	
+	if (page == 2)
+		DISPATCH_COMMAND3(4, 8, 256, 0);
+	else
+		DISPATCH_COMMAND3(4, 3, 256, 0);
+	
+	DISPATCH_COMMAND0(21);
 }
 
 DEFINE_COMMAND(xaatrusbooknextpage) {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"aatruspage"];
-	if (page < 9) {
+	if (page < 10) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"aatruspage"];
-		[self _updateAtrusJournal];
+		
+		if (page == 1)
+			DISPATCH_COMMAND3(4, 8, 256, 0);
+		else
+			DISPATCH_COMMAND3(4, 5, 256, 0);
+		
+		DISPATCH_COMMAND0(21);
 	}
 }
 
@@ -2479,7 +2490,7 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 - (void)_updateCatherineJournal {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"acathpage"];
 	
-	if (page == 0) {
+	if (page == 1) {
 		// disable hotspots 7 and 9
 		DISPATCH_COMMAND1(10, 7);
 		DISPATCH_COMMAND1(10, 9);
@@ -2495,7 +2506,17 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 		DISPATCH_COMMAND1(10, 10);
 	}
 	
-	[self _drawPictureWithID:18 + page archive:_archive rect:NSMakeRect(0.0f, 0.0f, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	// draw the main page picture
+	DISPATCH_COMMAND1(39, page);
+	
+	// draw the note edge
+	if (page > 1) {
+		if (page < 5)
+			DISPATCH_COMMAND1(39, 50);
+		else if (page > 5)
+			DISPATCH_COMMAND1(39, 51);
+	}
+		
 }
 
 DEFINE_COMMAND(xacathopenbook) {
@@ -2508,16 +2529,28 @@ DEFINE_COMMAND(xacathbookback) {
 
 DEFINE_COMMAND(xacathbookprevpage) {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"acathpage"];
-	assert(page > 0);
+	assert(page > 1);
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"acathpage"];
-	[self _updateCatherineJournal];
+	
+	if (page == 2)
+		DISPATCH_COMMAND3(4, 9, 256, 0);
+	else
+		DISPATCH_COMMAND3(4, 4, 256, 0);
+	
+	DISPATCH_COMMAND0(21);
 }
 
 DEFINE_COMMAND(xacathbooknextpage) {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"acathpage"];
-	if (page < 48) {
+	if (page < 49) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"acathpage"];
-		[self _updateCatherineJournal];
+		
+		if (page == 1)
+			DISPATCH_COMMAND3(4, 9, 256, 0);
+		else
+			DISPATCH_COMMAND3(4, 6, 256, 0);
+		
+		DISPATCH_COMMAND0(21);
 	}
 }
 

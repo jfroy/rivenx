@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>acathpage</key>
-	<integer>0</integer>
+	<integer>1</integer>
 	<key>aatruspage</key>
-	<integer>0</integer>
+	<integer>1</integer>
 	<key>newpos</key>
 	<integer>0</integer>
 	<key>aatrusbook</key>
