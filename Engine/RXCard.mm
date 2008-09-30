@@ -2516,7 +2516,6 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 		else if (page > 5)
 			DISPATCH_COMMAND1(39, 51);
 	}
-		
 }
 
 DEFINE_COMMAND(xacathopenbook) {
