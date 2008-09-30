@@ -2427,7 +2427,7 @@ DEFINE_COMMAND(xasetupcomplete) {
 	DISPATCH_COMMAND1(2, 1);
 }
 
-#pragma mark journals
+#pragma mark atrus journal
 
 - (void)_updateAtrusJournal {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"aatruspage"];
@@ -2471,6 +2471,53 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 	if (page < 9) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"aatruspage"];
 		[self _updateAtrusJournal];
+	}
+}
+
+#pragma mark catherine journal
+
+- (void)_updateCatherineJournal {
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"acathpage"];
+	
+	if (page == 0) {
+		// disable hotspots 7 and 9
+		DISPATCH_COMMAND1(10, 7);
+		DISPATCH_COMMAND1(10, 9);
+		
+		// enable hotspot 10
+		DISPATCH_COMMAND1(9, 10);
+	} else {
+		// enable hotspots 7 and 9
+		DISPATCH_COMMAND1(9, 7);
+		DISPATCH_COMMAND1(9, 9);
+		
+		// disable hotspot 10
+		DISPATCH_COMMAND1(10, 10);
+	}
+	
+	[self _drawPictureWithID:18 + page archive:_archive rect:NSMakeRect(0.0f, 0.0f, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+}
+
+DEFINE_COMMAND(xacathopenbook) {
+	[self _updateCatherineJournal];
+}
+
+DEFINE_COMMAND(xacathbookback) {
+
+}
+
+DEFINE_COMMAND(xacathbookprevpage) {
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"acathpage"];
+	assert(page > 0);
+	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"acathpage"];
+	[self _updateCatherineJournal];
+}
+
+DEFINE_COMMAND(xacathbooknextpage) {
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"acathpage"];
+	if (page < 48) {
+		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"acathpage"];
+		[self _updateCatherineJournal];
 	}
 }
 
