@@ -185,7 +185,7 @@ init_failure:
 	NSString* directionSource = [NSString stringWithFormat:@"#define RX_DIRECTION %d\n", direction];
 	NSArray* extraSource = [NSArray arrayWithObjects:@"#version 110\n", directionSource, nil];
 	
-	program.program = [GLShaderProgramManager shaderProgramWithName:name root:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Shaders" ofType:nil]] extraSources:extraSource epilogueIndex:[extraSource count] context:cgl_ctx error:&error];
+	program.program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:name extraSources:extraSource epilogueIndex:[extraSource count] context:cgl_ctx error:&error];
 	if (program.program == 0) {
 		[self _reportShaderProgramError:error];
 		return program;
@@ -445,11 +445,8 @@ init_failure:
 	// re-enable client storage
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
 	
-	// shaders
-	NSURL* shaderRoot = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Shaders" ofType:nil]];
-	
 	// water animation shader
-	_waterProgram = [GLShaderProgramManager shaderProgramWithName:@"water" root:shaderRoot extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
+	_waterProgram = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"water" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
 	if (_waterProgram == 0) [self _reportShaderProgramError:error];
 	
 	GLint cardTextureUniform = glGetUniformLocation(_waterProgram, "card_texture"); glReportError();
@@ -462,7 +459,7 @@ init_failure:
 	glUniform1i(previousFrameUniform, 2); glReportError();
 	
 	// card shader
-	_cardProgram = [GLShaderProgramManager shaderProgramWithName:@"card" root:shaderRoot extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
+	_cardProgram = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"card" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
 	if (_cardProgram == 0) [self _reportShaderProgramError:error];
 	
 	GLint destinationCardTextureUniform = glGetUniformLocation(_cardProgram, "destination_card"); glReportError();
@@ -822,11 +819,13 @@ init_failure:
 
 - (void)swapRenderState:(RXCard*)sender {	
 	// if we'll queue a transition, mark script execution as being blocked now
-	if ([_transitionQueue count] > 0) [self setExecutingBlockingAction:YES];
+	if ([_transitionQueue count] > 0)
+		[self setExecutingBlockingAction:YES];
 	
 	// if a transition is ongoing, wait until its done
 	mach_timespec_t waitTime = {0, kRXTransitionDuration * 1e9};
-	while (_front_render_state->transition != nil) semaphore_timedwait(_transitionSemaphore, waitTime);
+	while (_front_render_state->transition != nil)
+		semaphore_timedwait(_transitionSemaphore, waitTime);
 	
 	// dequeue the top transition
 	if ([_transitionQueue count] > 0) {
@@ -1026,7 +1025,7 @@ init_failure:
 	// if we have a card redirect entry, queue the final destination card switch
 	RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:des];
 	if (switchTableDestination) {		
-		RXTransition* transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0., 0., kRXCardViewportSize.width, kRXCardViewportSize.height)];
+		RXTransition* transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0.f, 0.f, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[self performSelector:@selector(queueTransition:) withObject:transition inThread:[g_world scriptThread] waitUntilDone:wait];
 		[transition release];
 		
@@ -1190,7 +1189,8 @@ init_failure:
 	if (_front_render_state->transition && [_front_render_state->transition isPrimed]) {
 		// compute the parametric transition parameter based on current time, start time and duration
 		float t = RXTimingTimestampDelta(outputTime->hostTime, _front_render_state->transition->startTime) / _front_render_state->transition->duration;
-		if (t > 1.0f) t = 1.0f;
+		if (t > 1.0f)
+			t = 1.0f;
 		
 		if (t >= 1.0f) {
 #if defined(DEBUG)
@@ -1216,7 +1216,10 @@ init_failure:
 					break;
 				
 				case RXTransitionSlide:
-					transition = _push + _front_render_state->transition->direction;
+					if (_front_render_state->transition->pushOld && _front_render_state->transition->pushNew)
+						transition = _push + _front_render_state->transition->direction;
+					else
+						abort();
 					break;
 			}
 			

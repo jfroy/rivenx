@@ -76,36 +76,6 @@ static const GLuint kCreditsTextureCount = 19;
 		textureStorageOffset += textureStorageOffsetStep;
 	}
 	
-	// load up the split texturing shader
-	/*_splitTexturingVertexShader = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
-	_splitTexturingFragmentShader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
-	_splitTexturingProgram = glCreateProgramObjectARB();
-	
-	glAttachObjectARB(_splitTexturingProgram, _splitTexturingVertexShader);
-	glAttachObjectARB(_splitTexturingProgram, _splitTexturingFragmentShader);
-	
-	glDeleteObjectARB(_splitTexturingVertexShader);
-	glDeleteObjectARB(_splitTexturingFragmentShader);
-	
-	NSString* source = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"split_texturing" ofType:@"vs" inDirectory:@"Shaders"] 
-												 encoding:NSASCIIStringEncoding 
-													error:NULL];
-	const GLcharARB* cSource = [source cStringUsingEncoding:NSASCIIStringEncoding];
-	glShaderSourceARB(_splitTexturingVertexShader, 1, &cSource, NULL);
-	glCompileShaderARB(_splitTexturingVertexShader);
-	
-	source = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"split_texturing" ofType:@"fs" inDirectory:@"Shaders"] 
-									   encoding:NSASCIIStringEncoding 
-										  error:NULL];
-	cSource = [source cStringUsingEncoding:NSASCIIStringEncoding];
-	glShaderSourceARB(_splitTexturingFragmentShader, 1, &cSource, NULL);
-	glCompileShaderARB(_splitTexturingFragmentShader);
-	
-	glLinkProgramARB(_splitTexturingProgram);*/
-#if defined(DEBUG)
-	//glValidateProgramARB(_splitTexturingProgram);
-#endif
-	
 	// all the textures are the same size, so we need one set of texture coordinates
 	_textureCoordinates[0][0] = 0.0f;
 	_textureCoordinates[0][1] = kRXCardViewportSize.height;

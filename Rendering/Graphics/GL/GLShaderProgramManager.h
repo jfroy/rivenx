@@ -8,15 +8,19 @@
 
 #import <Foundation/Foundation.h>
 
-#import "GL.h"
+#import "Rendering/RXRendering.h"
 
 extern NSString* const GLShaderCompileErrorDomain;
 extern NSString* const GLShaderLinkErrorDomain;
 
 
 @interface GLShaderProgramManager : NSObject {
+	NSURL* _shaders_root;
+	GLuint _ff_tex0_pos_vs;
 }
 
-+ (GLuint)shaderProgramWithName:(NSString*)name root:(NSURL*)root extraSources:(NSArray*)extraSources epilogueIndex:(NSUInteger)epilogueIndex context:(CGLContextObj)cgl_ctx error:(NSError**)error;
++ (GLShaderProgramManager*)sharedManager;
+
+- (GLuint)standardProgramWithFragmentShaderName:(NSString*)name extraSources:(NSArray*)extraSources epilogueIndex:(NSUInteger)epilogueIndex context:(CGLContextObj)cgl_ctx error:(NSError**)error;
 
 @end
