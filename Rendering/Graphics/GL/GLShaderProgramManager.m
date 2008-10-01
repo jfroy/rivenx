@@ -97,6 +97,7 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
 		@throw [NSException exceptionWithName:@"RXShaderCompileException" reason:@"Riven X was unable to compile the standard texturing vertex shader." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	}
 	
+	CGLUnlockContext(cgl_ctx);
 	return self;
 }
 
