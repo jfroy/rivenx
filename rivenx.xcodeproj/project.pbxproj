@@ -1966,6 +1966,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					CoreAudio_StopOnFailure,
 					"DEBUG=2",
+					"DEBUG_GL=1",
 				);
 				GCC_VERSION = 4.0;
 				ONLY_ACTIVE_ARCH = YES;

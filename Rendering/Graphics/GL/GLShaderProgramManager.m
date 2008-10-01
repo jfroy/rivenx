@@ -127,7 +127,6 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
 	if (name == nil || cgl_ctx == NULL)
 		return 0;
 	
-	GLuint vs;
 	GLuint fs;
 	GLint status;
 	GLuint program;
@@ -232,7 +231,6 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
 	}
 	
 	// we don't need the shader objects anymore
-	glDeleteShader(vs); glReportError();
 	glDeleteShader(fs); glReportError();
 	
 	return program;
