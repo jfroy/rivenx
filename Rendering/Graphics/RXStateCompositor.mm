@@ -13,6 +13,8 @@
 #import "RXStateCompositor.h"
 #import "RXWorldProtocol.h"
 
+#import "Rendering/Graphics/GL/GLShaderProgramManager.h"
+
 #import "RXRenderStateOpacityAnimation.h"
 
 
@@ -57,6 +59,8 @@
 	self = [super init];
 	if (!self) return nil;
 	
+	NSError* error;
+	
 	_states = [[NSMutableArray alloc] initWithCapacity:0x10];
 	_state_map = NSCreateMapTable(NSNonRetainedObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, 0);
 	_animationCompletionInvocations = NSCreateMapTable(NSNonRetainedObjectMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
@@ -66,48 +70,10 @@
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	
-	// render state composition shader
-	NSString* vshader_source = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"state_compositor" ofType:@"vs" inDirectory:@"Shaders"] encoding:NSASCIIStringEncoding error:NULL];
-	NSString* fshader_source = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"state_compositor" ofType:@"fs" inDirectory:@"Shaders"] encoding:NSASCIIStringEncoding error:NULL];
-	
-	_compositing_program = glCreateProgram(); glReportError();
-	
-	GLuint vshader = glCreateShader(GL_VERTEX_SHADER); glReportError();
-	GLuint fshader = glCreateShader(GL_FRAGMENT_SHADER); glReportError();
-	
-	const GLcharARB* shader_source_cstring = [vshader_source cStringUsingEncoding:NSASCIIStringEncoding];
-	if (!shader_source_cstring) {
-		[self release];
-		return nil;
-	}
-	glShaderSource(vshader, 1, &shader_source_cstring, NULL); glReportError();
-	
-	shader_source_cstring = [fshader_source cStringUsingEncoding:NSASCIIStringEncoding];
-	if (!shader_source_cstring) {
-		[self release];
-		return nil;
-	}
-	glShaderSource(fshader, 1, &shader_source_cstring, NULL); glReportError();
-	
-	glCompileShader(vshader); glReportError();
-#if defined(DEBUG)
-	GLint status;
-	glGetShaderiv(vshader, GL_COMPILE_STATUS, &status);
-	if (status != GL_TRUE) RXOLog(@"failed to compile shader: state_compositor.vs\n%@", vshader_source);
-#endif
-	glCompileShader(fshader); glReportError();
-#if defined(DEBUG)
-	glGetShaderiv(fshader, GL_COMPILE_STATUS, &status);
-	if (status != GL_TRUE) RXOLog(@"failed to compile shader: state_compositor.fs\n%@", fshader_source);
-#endif
-	
-	glAttachShader(_compositing_program, vshader); glReportError();
-	glAttachShader(_compositing_program, fshader); glReportError();
-	glLinkProgram(_compositing_program); glReportError();
-#if defined(DEBUG)
-	glGetProgramiv(_compositing_program, GL_LINK_STATUS, &status);
-	if (status != GL_TRUE) RXOLog(@"failed to link program");
-#endif
+	// render state composition shader program
+	_compositing_program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"state_compositor" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
+	if (_compositing_program == 0)
+		@throw [NSException exceptionWithName:@"RXStateCompositorException" reason:@"Riven X was unable to load the render state compositor shader program." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	_texture_units_uniform = glGetUniformLocation(_compositing_program, "texture_units"); glReportError();
 	_texture_blend_weights_uniform = glGetUniformLocation(_compositing_program, "texture_blend_weights"); glReportError();
@@ -119,9 +85,6 @@
 	glUniform4f(_texture_blend_weights_uniform, 0.0f, 0.0f, 0.0f, 0.0f); glReportError();
 	
 	glUseProgram(0);
-	
-	glDeleteShader(vshader); glReportError();
-	glDeleteShader(fshader); glReportError();
 	
 	// configure the compositing VAO
 	glGenVertexArraysAPPLE(1, &_compositing_vao); glReportError();
