@@ -1732,7 +1732,7 @@ static NSMutableString* _scriptLogPrefix;
 
 #pragma mark -
 
-- (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive rect:(NSRect)rect {
+- (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive displayRect:(NSRect)displayRect samplingRect:(NSRect)samplingRect {
 	if (_dynamicPictureCount >= kDynamicPictureSlots)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"OUT OF DYNAMIC PICTURE SLOTS" userInfo:nil];
 	
@@ -1741,6 +1741,10 @@ static NSMutableString* _scriptLogPrefix;
 	NSDictionary* pictureDescriptor = [archive bitmapDescriptorWithID:ID error:&error];
 	if (!pictureDescriptor)
 		@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not get a picture resource's picture descriptor." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	
+	// if the samplingRect is zero, use the picture's full resolution
+	if (samplingRect.origin.x == 0.0f && samplingRect.origin.y == 0.0f && samplingRect.size.width == 0.0f && samplingRect.size.height == 0.0f)
+		samplingRect = NSMakeRect(0.0f, 0.0f, [[pictureDescriptor objectForKey:@"Width"] floatValue], [[pictureDescriptor objectForKey:@"Height"] floatValue]);
 	
 	// compute the size of the buffer needed to store the texture; we'll be using MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED as the texture format, which is 4 bytes per pixel
 	GLsizeiptr pictureSize = [[pictureDescriptor objectForKey:@"Width"] intValue] * [[pictureDescriptor objectForKey:@"Height"] intValue] * 4;
@@ -1800,10 +1804,10 @@ static NSMutableString* _scriptLogPrefix;
 		_dynamicPictureCount = 0;
 	
 	// compute common vertex values
-	float vertex_left_x = rect.origin.x;
-	float vertex_right_x = vertex_left_x + rect.size.width;
-	float vertex_bottom_y = rect.origin.y;
-	float vertex_top_y = rect.origin.y + rect.size.height;
+	float vertex_left_x = displayRect.origin.x;
+	float vertex_right_x = vertex_left_x + displayRect.size.width;
+	float vertex_bottom_y = displayRect.origin.y;
+	float vertex_top_y = displayRect.origin.y + displayRect.size.height;
 	
 	// lock the render context since rendering will fail while the picture VBO is mapped
 	CGLLockContext([RXGetWorldView() renderContext]);
@@ -1822,28 +1826,28 @@ static NSMutableString* _scriptLogPrefix;
 	vertex_attributes[0] = vertex_left_x;
 	vertex_attributes[1] = vertex_bottom_y;
 	
-	vertex_attributes[2] = 0.0f;
-	vertex_attributes[3] = [[pictureDescriptor objectForKey:@"Height"] floatValue];
+	vertex_attributes[2] = samplingRect.origin.x;
+	vertex_attributes[3] = samplingRect.size.height;
 	
 	// vertex 2
 	vertex_attributes[4] = vertex_right_x;
 	vertex_attributes[5] = vertex_bottom_y;
 	
-	vertex_attributes[6] = [[pictureDescriptor objectForKey:@"Width"] floatValue];
-	vertex_attributes[7] = [[pictureDescriptor objectForKey:@"Height"] floatValue];
+	vertex_attributes[6] = samplingRect.size.width;
+	vertex_attributes[7] = samplingRect.size.height;
 	
 	// vertex 3
 	vertex_attributes[8] = vertex_left_x;
 	vertex_attributes[9] = vertex_top_y;
 	
-	vertex_attributes[10] = 0.0f;
+	vertex_attributes[10] = samplingRect.origin.x;
 	vertex_attributes[11] = 0.0f;
 	
 	// vertex 4
 	vertex_attributes[12] = vertex_right_x;
 	vertex_attributes[13] = vertex_top_y;
 	
-	vertex_attributes[14] = [[pictureDescriptor objectForKey:@"Width"] floatValue];
+	vertex_attributes[14] = samplingRect.size.width;
 	vertex_attributes[15] = 0.0f;
 	
 	// unmap the picture VBO and restore the array buffer state
@@ -2004,13 +2008,14 @@ static NSMutableString* _scriptLogPrefix;
 	if (argc < 9)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	NSRect field_display_rect = RXMakeNSRect(argv[1], argv[2], argv[3], argv[4]);
+	NSRect sampling_rect = RXMakeNSRect(argv[5], argv[6], argv[7], argv[8]);
 	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@drawing dynamic picture ID %hu in rect {{%f, %f}, {%f, %f}}", _scriptLogPrefix, argv[0], field_display_rect.origin.x, field_display_rect.origin.y, field_display_rect.size.width, field_display_rect.size.height);
 #endif
 	
-	[self _drawPictureWithID:argv[0] archive:_archive rect:field_display_rect];
+	[self _drawPictureWithID:argv[0] archive:_archive displayRect:field_display_rect samplingRect:sampling_rect];
 }
 
 // 2
@@ -2442,6 +2447,7 @@ DEFINE_COMMAND(xasetupcomplete) {
 
 - (void)_updateAtrusJournal {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"aatruspage"];
+	assert(page > 0);
 	
 	if (page == 1) {
 		// disable hotspots 7 and 9
@@ -2509,6 +2515,7 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 
 - (void)_updateCatherineJournal {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"acathpage"];
+	assert(page > 0);
 	
 	if (page == 1) {
 		// disable hotspots 7 and 9
@@ -2535,6 +2542,29 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 			DISPATCH_COMMAND1(39, 50);
 		else if (page > 5)
 			DISPATCH_COMMAND1(39, 51);
+	}
+	
+	// draw the telescope combination
+	// FIXME: actually generate a combination per game...
+	if (page == 28) {
+		// GO MAGIC NUMBERS!
+		NSPoint combination_display_origin = NSMakePoint(156.0f, 120.0f);
+		NSPoint combination_sampling_origin = NSMakePoint(0.0f, 0.0f);
+		NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 25.0f);
+		
+		[self _drawPictureWithID:13 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		combination_display_origin.x += combination_base_rect.size.width;
+		
+		[self _drawPictureWithID:14 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		combination_display_origin.x += combination_base_rect.size.width;
+		
+		[self _drawPictureWithID:15 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		combination_display_origin.x += combination_base_rect.size.width;
+		
+		[self _drawPictureWithID:16 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		combination_display_origin.x += combination_base_rect.size.width;
+		
+		[self _drawPictureWithID:17 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 	}
 }
 
