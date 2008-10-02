@@ -1874,12 +1874,14 @@ static NSMutableString* _scriptLogPrefix;
 
 - (void)_dealloc_movies {
 	// WARNING: this method can only run on the main thread
-	if (!pthread_main_np()) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_dealloc_movies: MAIN THREAD ONLY" userInfo:nil];
+	if (!pthread_main_np())
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_dealloc_movies: MAIN THREAD ONLY" userInfo:nil];
 	
 	// stop all movies (because we really want them to be stopped by the time the card is tearing down...)
 	[self _stopAllMovies];
 	
-	if (_codeToMovieMap) NSFreeMapTable(_codeToMovieMap);
+	if (_codeToMovieMap)
+		NSFreeMapTable(_codeToMovieMap);
 	[_movies release];
 	
 	[_frontRenderStatePtr->movies release];
@@ -2176,28 +2178,38 @@ static NSMutableString* _scriptLogPrefix;
 
 // 18
 - (void)_opcode_scheduleTransition:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc != 1 && argc != 5) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc != 1 && argc != 5)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	
 	uint16_t code = argv[0];	
+	
 	NSRect rect;
-	if (argc > 1) rect = RXMakeNSRect(argv[1], argv[2], argv[3], argv[4]);
-	else rect = NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height);
+	if (argc > 1)
+		rect = RXMakeNSRect(argv[1], argv[2], argv[3], argv[4]);
+	else
+		rect = NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithCode:code region:rect];
 
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@scheduling transition %@", _scriptLogPrefix, transition);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@scheduling transition %@", _scriptLogPrefix, transition);
 #endif
 	
 	// queue the transition
-	if (transition->type == RXTransitionDissolve && _lastExecutedProgramOpcode == 18 && _queuedAPushTransition) RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because last command queued a push transition");
-	else [_scriptHandler queueTransition:transition];
+	if (transition->type == RXTransitionDissolve && _lastExecutedProgramOpcode == 18 && _queuedAPushTransition)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because last command queued a push transition");
+	else
+		[_scriptHandler queueTransition:transition];
 	
 	// transition is now owned by the transitionq queue
 	[transition release];
 	
 	// leave a note if we queued a push transition
-	if (transition->type == RXTransitionSlide) _queuedAPushTransition = YES;
-	else _queuedAPushTransition = NO;
+	if (transition->type == RXTransitionSlide)
+		_queuedAPushTransition = YES;
+	else
+		_queuedAPushTransition = NO;	
 }
 
 // 19
@@ -2468,6 +2480,10 @@ DEFINE_COMMAND(xaatrusbookprevpage) {
 	else
 		DISPATCH_COMMAND3(4, 3, 256, 0);
 	
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	[_scriptHandler queueTransition:transition];
+	[transition release];
+	
 	DISPATCH_COMMAND0(21);
 }
 
@@ -2480,6 +2496,10 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 			DISPATCH_COMMAND3(4, 8, 256, 0);
 		else
 			DISPATCH_COMMAND3(4, 5, 256, 0);
+		
+		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+		[_scriptHandler queueTransition:transition];
+		[transition release];
 		
 		DISPATCH_COMMAND0(21);
 	}
@@ -2536,6 +2556,10 @@ DEFINE_COMMAND(xacathbookprevpage) {
 	else
 		DISPATCH_COMMAND3(4, 4, 256, 0);
 	
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionBottom region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	[_scriptHandler queueTransition:transition];
+	[transition release];
+	
 	DISPATCH_COMMAND0(21);
 }
 
@@ -2548,6 +2572,10 @@ DEFINE_COMMAND(xacathbooknextpage) {
 			DISPATCH_COMMAND3(4, 9, 256, 0);
 		else
 			DISPATCH_COMMAND3(4, 6, 256, 0);
+		
+		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionTop region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+		[_scriptHandler queueTransition:transition];
+		[transition release];
 		
 		DISPATCH_COMMAND0(21);
 	}

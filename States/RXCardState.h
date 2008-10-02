@@ -60,7 +60,14 @@ struct _rx_transition_program {
 	semaphore_t _audioTaskThreadExitSemaphore;
 	
 	// transitions
+	semaphore_t _transitionSemaphore;
 	NSMutableArray* _transitionQueue;
+	
+	struct _rx_transition_program _dissolve;
+	struct _rx_transition_program _push[4];
+	struct _rx_transition_program _slide_out[4];
+	struct _rx_transition_program _slide_in[4];
+	struct _rx_transition_program _swipe[4];
 	
 	// rendering
 	GLuint _cardRenderVAO;
@@ -80,10 +87,6 @@ struct _rx_transition_program {
 	// journals bar
 	GLuint _journalTextures[3];
 	GLuint _journalTextureBuffer;
-	
-	semaphore_t _transitionSemaphore;
-	struct _rx_transition_program _dissolve;
-	struct _rx_transition_program _push[4];
 }
 
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;
