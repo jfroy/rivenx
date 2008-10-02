@@ -98,6 +98,7 @@ struct _rx_card_render_state {
 	
 	// rendering
 	BOOL _renderStateSwapsEnabled;
+	// FIXME: turn those into pointers, and allocate them on different cache lines (to keep it simple, pad by 128 bytes and align on 128 bytes)
 	struct _rx_card_render_state _renderState1;
 	struct _rx_card_render_state _renderState2;
 	

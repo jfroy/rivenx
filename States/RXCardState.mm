@@ -996,7 +996,8 @@ init_failure:
 
 - (void)_clearActiveCard {
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
-	if ([NSThread currentThread] != [g_world scriptThread]) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_clearActiveCard: MUST RUN ON SCRIPT THREAD" userInfo:nil];
+	if ([NSThread currentThread] != [g_world scriptThread])
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_clearActiveCard: MUST RUN ON SCRIPT THREAD" userInfo:nil];
 	
 	// switching card blocks script execution
 	[self setExecutingBlockingAction:YES];
@@ -1027,6 +1028,7 @@ init_failure:
 	// WARNING: CAN RUN ON ANY THREAD
 	if (!stackKey)
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"stackKey CANNOT BE NIL" userInfo:nil];
+	
 	RXSimpleCardDescriptor* des = [[RXSimpleCardDescriptor alloc] initWithStackName:stackKey ID:cardID];
 	
 	// FIXME: we need to be smarter about stack management. For now, we try to load the stack once. And it stays loaded. Forver
@@ -1067,7 +1069,7 @@ init_failure:
 	glUseProgram(_cardProgram); glReportError();
 	
 	// render the static content of the card only when necessary
-	if (r->refresh_static) {		
+	if (r->refresh_static) {
 		// bind the static render FBO
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		

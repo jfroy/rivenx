@@ -22,7 +22,8 @@
 
 #import "RXMovieProxy.h"
 
-static const GLuint kDynamicPictureSlots = 10;
+// we can afford a reasonably large number here, since the space is only used for vertex data and texture IDs
+static const GLuint kDynamicPictureSlots = 100;
 
 static const NSTimeInterval kInsideHotspotPeriodicEventPeriod = 0.1;
 
@@ -1290,6 +1291,9 @@ static NSMutableString* _scriptLogPrefix;
 	// copy the non-volatile front card render state members to the back card render state
 	_backRenderStatePtr->pictures = [NSMutableArray new];
 	_backRenderStatePtr->movies = [_frontRenderStatePtr->movies mutableCopy];
+	
+	// mark the back render state as non-modified (render thread no longer cares about this render state structure)
+	_backRenderStatePtr->refresh_static = NO;
 }
 
 - (void)_swapMovieRenderState {
@@ -1733,8 +1737,31 @@ static NSMutableString* _scriptLogPrefix;
 #pragma mark -
 
 - (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive displayRect:(NSRect)displayRect samplingRect:(NSRect)samplingRect {
-	if (_dynamicPictureCount >= kDynamicPictureSlots)
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"OUT OF DYNAMIC PICTURE SLOTS" userInfo:nil];
+	// if the front render state says we're done refreshing the static content and the back render state has not been modified, we can reset the dynamic picture count
+	if (_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO)
+		_dynamicPictureCount = 0;
+	
+	// check if we have a dynamic picture slot left
+	if (_dynamicPictureCount >= kDynamicPictureSlots) {
+		// if only the front render state needs refreshing, simply sleep until the render thread has rendered the static content
+		if (_frontRenderStatePtr->refresh_static == YES && _backRenderStatePtr->refresh_static == NO) {
+			while (_frontRenderStatePtr->refresh_static == YES)
+				usleep((useconds_t)(0.00833333f * 1.0e6));
+		} else {
+			// we're out of dynamic picture slots; *force* directly a render state swap now
+			[_scriptHandler swapRenderState:self];
+			
+			// then wait for the renderer to go over the new front render state
+			while (_frontRenderStatePtr->refresh_static == YES)
+				usleep((useconds_t)(0.00833333f * 1.0e6));
+		}
+		
+		// at this point both states should be unmodified
+		assert(_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO);
+		
+		// we can now safely reset the dynamic picture count
+		_dynamicPictureCount = 0;
+	}
 	
 	// get the resource descriptor for the tBMP resource
 	NSError* error;
@@ -1798,10 +1825,6 @@ static NSMutableString* _scriptLogPrefix;
 		// map the tBMP ID to the dynamic picture
 		NSMapInsert(_dynamicPictureMap, (void*)dynamicPictureKey, dynamicPicture);
 	}
-	
-	// if the front render state says we're done refreshing the static content and the back render state has not been modified, we can reset the dynamic picture count
-	if (_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO)
-		_dynamicPictureCount = 0;
 	
 	// compute common vertex values
 	float vertex_left_x = displayRect.origin.x;
@@ -1870,8 +1893,8 @@ static NSMutableString* _scriptLogPrefix;
 	// one more dynamic picture
 	_dynamicPictureCount++;
 	
-	// swap the render state
-	[self _swapRenderState];	
+	// swap the render state; this always marks the back render state as modified
+	[self _swapRenderState];
 }
 
 #pragma mark -
@@ -2230,8 +2253,10 @@ static NSMutableString* _scriptLogPrefix;
 // 20
 - (void)_opcode_disableAutomaticSwaps:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
-	if (argv != NULL) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling render state swaps", _scriptLogPrefix);
-	else RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling render state swaps before prepareForRendering execution", _scriptLogPrefix);
+	if (argv != NULL)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling render state swaps", _scriptLogPrefix);
+	else
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling render state swaps before prepareForRendering execution", _scriptLogPrefix);
 #endif
 	_renderStateSwapsEnabled = NO;
 }
