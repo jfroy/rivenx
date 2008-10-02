@@ -33,15 +33,7 @@ vec2 getSourceSampleCoords() {
 }
 
 vec2 getDestinationSampleCoords() {
-#if RX_DIRECTION == 0
-	return vec2(gl_TexCoord[0].s - ((1.0 - t) * cardSize.x), gl_TexCoord[0].t);
-#elif RX_DIRECTION == 1
-	return vec2(gl_TexCoord[0].s + ((1.0 - t) * cardSize.x), gl_TexCoord[0].t);
-#elif RX_DIRECTION == 2
-	return vec2(gl_TexCoord[0].s, gl_TexCoord[0].t + ((1.0 - t) * cardSize.y));
-#elif RX_DIRECTION == 3
-	return vec2(gl_TexCoord[0].s, gl_TexCoord[0].t - ((1.0 - t) * cardSize.y));
-#endif
+	return gl_TexCoord[0].st;
 }
 
 void main() {
