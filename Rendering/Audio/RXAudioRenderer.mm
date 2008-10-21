@@ -561,7 +561,7 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 					}
 				} else {
 					float t = static_cast<float>(abs(descriptor.event.eventValues.ramp.startBufferOffset)) / descriptor.event.eventValues.ramp.durationInFrames;
-					float v = (t*descriptor.event.eventValues.ramp.endValue) + ((1.0f-t)*descriptor.event.eventValues.ramp.startValue);
+					float v = (t * descriptor.event.eventValues.ramp.endValue) + ((1.0f - t) * descriptor.event.eventValues.ramp.startValue);
 					err = mixer->SetParameter(descriptor.event.parameter, descriptor.event.scope, descriptor.event.element, v);
 					if (err != noErr) {
 						fprintf(stderr, "mixer->SetParameter failed with error %ld\n", err);

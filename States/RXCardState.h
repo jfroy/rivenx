@@ -84,9 +84,9 @@ struct _rx_transition_program {
 	
 	GLuint _hotspotDebugRenderVAO;
 	
-	// journals bar
-	GLuint _journalTextures[3];
-	GLuint _journalTextureBuffer;
+	// inventory textures
+	GLuint _inventoryTextures[3];
+	GLuint _inventoryTextureBuffer;
 }
 
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;

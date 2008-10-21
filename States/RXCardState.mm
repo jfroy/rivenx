@@ -218,7 +218,22 @@ init_failure:
 	// kick start the audio task thread
 	[NSThread detachNewThreadSelector:@selector(_audioTaskThread:) toTarget:self withObject:nil];
 	
-// card composite VAO / VA / VBO
+	// get a reference to the extra bitmaps archive, and get the journal / inventory descriptors
+	MHKArchive* extraBitmapsArchive = [g_world extraBitmapsArchive];
+	NSDictionary* journalDescriptors = [[g_world extraBitmapsDescriptor] objectForKey:@"Journals"];
+	
+	// now get the texture descriptors for the inventory textures
+	// FIXME: we need actual error handling beyond just logging...
+	NSDictionary* athrusDescriptor = [[g_world extraBitmapsArchive] bitmapDescriptorWithID:[[journalDescriptors objectForKey:@"Athrus"] unsignedShortValue] error:&error];
+	if (!athrusDescriptor) RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get Athrus journal inventory texture descriptor: %@", error);
+	
+	NSDictionary* catherineDescriptor = [[g_world extraBitmapsArchive] bitmapDescriptorWithID:[[journalDescriptors objectForKey:@"Catherine"] unsignedShortValue] error:&error];
+	if (!catherineDescriptor) RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get Catherine journal inventory texture descriptor: %@", error);
+	
+	NSDictionary* prisonDescriptor = [[g_world extraBitmapsArchive] bitmapDescriptorWithID:[[journalDescriptors objectForKey:@"Prison"] unsignedShortValue] error:&error];
+	if (!prisonDescriptor) RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get Prison journal inventory texture descriptor: %@", error);
+	
+	// card composite VAO / VA / VBO
 	
 	// gen the buffers
 	glGenVertexArraysAPPLE(1, &_cardCompositeVAO); glReportError();
@@ -228,27 +243,104 @@ init_failure:
 	glBindVertexArrayAPPLE(_cardCompositeVAO); glReportError();
 	glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
 	
-	// 4 vertices, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
-	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
+	// 4 triangle strip primitives, 4 vertices, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
+	glBufferData(GL_ARRAY_BUFFER, 64 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
 	
 	// map the VBO and write the vertex attributes
 	GLfloat* positions = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
 	GLfloat* tex_coords0 = positions + 2;
 	
-	positions[0] = kRXCardViewportOriginOffset.x; positions[1] = kRXCardViewportOriginOffset.y;
-	tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
-	positions += 2; tex_coords0 += 2;
+	// main card composite
+	{
+		positions[0] = kRXCardViewportOriginOffset.x; positions[1] = kRXCardViewportOriginOffset.y;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x + kRXCardViewportSize.width; positions[1] = kRXCardViewportOriginOffset.y;
+		tex_coords0[0] = kRXCardViewportSize.width; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x; positions[1] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = kRXCardViewportSize.height;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x + kRXCardViewportSize.width; positions[1] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
+		tex_coords0[0] = kRXCardViewportSize.width; tex_coords0[1] = kRXCardViewportSize.height;
+		positions += 4; tex_coords0 += 4;
+	}
 	
-	positions[2] = kRXCardViewportOriginOffset.x + kRXCardViewportSize.width; positions[3] = kRXCardViewportOriginOffset.y;
-	tex_coords0[2] = kRXCardViewportSize.width; tex_coords0[3] = 0.0f;
-	positions += 2; tex_coords0 += 2;
+	// let's find the widest inventory texture, use that as our baseline, toss in some generous margin, and compute bounds for the 3 inventory textures
+	uint32_t athrus_width = [[athrusDescriptor objectForKey:@"Width"] unsignedIntValue];
+	uint32_t catherine_width = [[catherineDescriptor objectForKey:@"Width"] unsignedIntValue];
+	uint32_t prison_width = [[prisonDescriptor objectForKey:@"Width"] unsignedIntValue];
+	uint32_t maximum_inventory_width = (athrus_width > catherine_width) ? (athrus_width > prison_width) ? athrus_width : prison_width : catherine_width;
 	
-	positions[4] = kRXCardViewportOriginOffset.x; positions[5] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
-	tex_coords0[4] = 0.0f; tex_coords0[5] = kRXCardViewportSize.height;
-	positions += 2; tex_coords0 += 2;
+	// ah what the heck, we need the height too
+	uint32_t athrus_height = [[athrusDescriptor objectForKey:@"Height"] unsignedIntValue];
+	uint32_t catherine_height = [[catherineDescriptor objectForKey:@"Height"] unsignedIntValue];
+	uint32_t prison_height = [[prisonDescriptor objectForKey:@"Height"] unsignedIntValue];
+	uint32_t maximum_inventory_height = (athrus_height > catherine_height) ? (athrus_height > prison_height) ? athrus_height : prison_height : catherine_height;
 	
-	positions[6] = kRXCardViewportOriginOffset.x + kRXCardViewportSize.width; positions[7] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
-	tex_coords0[6] = kRXCardViewportSize.width; tex_coords0[7] = kRXCardViewportSize.height;
+	// 5 px margin on both sides
+	GLfloat inventory_item_width = maximum_inventory_width + 10.0f;
+	CGPoint inventory_origin = CGPointMake((kRXCardViewportSize.width / 2.0f) - ((inventory_item_width * 3) / 2.0f), (kRXCardViewportOriginOffset.y / 2.0f) - (maximum_inventory_height / 2.0f));
+	
+	// athrus
+	{
+		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x; positions[1] = inventory_origin.y;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y;
+		tex_coords0[0] = inventory_item_width; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x; positions[1] = inventory_origin.y + maximum_inventory_height;
+		tex_coords0[0] = 0.0f; tex_coords0[5] = maximum_inventory_height;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y + maximum_inventory_height;
+		tex_coords0[0] = inventory_item_width; tex_coords0[1] = maximum_inventory_height;
+		positions += 4; tex_coords0 += 4;
+	}
+	
+	// catherine
+	{
+		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x; positions[1] = inventory_origin.y;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y;
+		tex_coords0[0] = inventory_item_width; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x; positions[1] = inventory_origin.y + maximum_inventory_height;
+		tex_coords0[0] = 0.0f; tex_coords0[5] = maximum_inventory_height;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y + maximum_inventory_height;
+		tex_coords0[0] = inventory_item_width; tex_coords0[1] = maximum_inventory_height;
+		positions += 4; tex_coords0 += 4;
+	}
+	
+	// prison
+	{
+		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x; positions[1] = inventory_origin.y;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y;
+		tex_coords0[0] = inventory_item_width; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x; positions[1] = inventory_origin.y + maximum_inventory_height;
+		tex_coords0[0] = 0.0f; tex_coords0[5] = maximum_inventory_height;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y + maximum_inventory_height;
+		tex_coords0[0] = inventory_item_width; tex_coords0[1] = maximum_inventory_height;
+		positions += 4; tex_coords0 += 4;
+	}
 	
 	// unmap and flush the VBO
 	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
@@ -261,7 +353,7 @@ init_failure:
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
 	
-// card render VAO / VA / VBO
+	// card render VAO / VA / VBO
 	
 	// gen the buffers
 	glGenVertexArraysAPPLE(1, &_cardRenderVAO); glReportError();
@@ -304,7 +396,7 @@ init_failure:
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
 	
-	// bind 0 to ARRAY_BUFFER
+	// bind 0 to ARRAY_BUFFER (e.g. back to client memory-backed vertex arrays)
 	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
 	
 	// bind 0 to the current VAO
@@ -357,27 +449,13 @@ init_failure:
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXRendererViewportSize.width, kRXRendererViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
 	}
 	
-	// load the journal textures
-	glGenBuffers(1, &_journalTextureBuffer); glReportError();
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _journalTextureBuffer); glReportError();
+	// load the journal inventory textures in an unpack buffer object
+	glGenBuffers(1, &_inventoryTextureBuffer); glReportError();
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _inventoryTextureBuffer); glReportError();
 	
-	MHKArchive* extraBitmapsArchive = [g_world extraBitmapsArchive];
-	NSDictionary* journalDescriptors = [[g_world extraBitmapsDescriptor] objectForKey:@"Journals"];
 	uint32_t journalTotalTextureSize = 0;
-	
-	NSDictionary* athrusDescriptor = [[g_world extraBitmapsArchive] bitmapDescriptorWithID:[[journalDescriptors objectForKey:@"Athrus"] unsignedShortValue] error:&error];
-	if (!athrusDescriptor)
-		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get Athrus journal inventory texture descriptor: %@", error);
 	journalTotalTextureSize += ([[athrusDescriptor objectForKey:@"Width"] unsignedIntValue] * [[athrusDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2;
-	
-	NSDictionary* catherineDescriptor = [[g_world extraBitmapsArchive] bitmapDescriptorWithID:[[journalDescriptors objectForKey:@"Catherine"] unsignedShortValue] error:&error];
-	if (!catherineDescriptor)
-		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get Catherine journal inventory texture descriptor: %@", error);
 	journalTotalTextureSize += ([[catherineDescriptor objectForKey:@"Width"] unsignedIntValue] * [[catherineDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2;
-	
-	NSDictionary* prisonDescriptor = [[g_world extraBitmapsArchive] bitmapDescriptorWithID:[[journalDescriptors objectForKey:@"Prison"] unsignedShortValue] error:&error];
-	if (!prisonDescriptor)
-		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get Prison journal inventory texture descriptor: %@", error);
 	journalTotalTextureSize += ([[prisonDescriptor objectForKey:@"Width"] unsignedIntValue] * [[prisonDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2;
 	
 	// allocate the texture buffer (aligned to 128 bytes)
@@ -399,51 +477,13 @@ init_failure:
 	if (![extraBitmapsArchive loadBitmapWithID:[[journalDescriptors objectForKey:@"Prison"] unsignedShortValue] buffer:journalBuffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to load Prison journal inventory texture: %@", error);
 	
-	// create the textures and reset journalBuffer which we'll use as a buffer offset
-	glGenTextures(3, _journalTextures);
-	journalBuffer = 0;
-	
-	// athrus journal
-	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _journalTextures[0]); glReportError();
-	
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glReportError();
-	
-	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[athrusDescriptor objectForKey:@"Width"] unsignedIntValue], [[athrusDescriptor objectForKey:@"Height"] unsignedIntValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, journalBuffer); glReportError();
-	journalBuffer = BUFFER_OFFSET(journalBuffer, ([[athrusDescriptor objectForKey:@"Width"] unsignedIntValue] * [[athrusDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2);
-	
-	// catherine journal
-	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _journalTextures[1]); glReportError();
-	
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glReportError();
-	
-	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[catherineDescriptor objectForKey:@"Width"] unsignedIntValue], [[catherineDescriptor objectForKey:@"Height"] unsignedIntValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, journalBuffer); glReportError();
-	journalBuffer = BUFFER_OFFSET(journalBuffer, ([[catherineDescriptor objectForKey:@"Width"] unsignedIntValue] * [[catherineDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2);
-	
-	// prison journal
-	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _journalTextures[2]); glReportError();
-	
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glReportError();
-	
-	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[prisonDescriptor objectForKey:@"Width"] unsignedIntValue], [[prisonDescriptor objectForKey:@"Height"] unsignedIntValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, journalBuffer); glReportError();
-	
-	// unmap and unbind the buffer
+	// unmap the pixel unpack buffer to begin the DMA transfer
 	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	
-	// re-enable client storage
-	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
+	// while we DMA the above, let's load up the vertex attributes for rendering the journal inventory
+	
+	
+	// while we DMA the above, let's go ahead and load up shaders
 	
 	// water animation shader
 	_waterProgram = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"water" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
@@ -489,10 +529,58 @@ init_failure:
 	_swipe[RXTransitionTop] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionTop context:cgl_ctx];
 	_swipe[RXTransitionBottom] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionBottom context:cgl_ctx];
 	
+	// bind program 0 (e.g. back to fixed-function)
 	glUseProgram(0);
 	
 	// create a VAO for hotspot debug rendering
 	glGenVertexArraysAPPLE(1, &_hotspotDebugRenderVAO); glReportError();
+	
+	// alright, we've done all the work we could, let's now make those journal inventory textures
+	
+	// create the textures and reset journalBuffer which we'll use as a buffer offset
+	glGenTextures(3, _inventoryTextures);
+	journalBuffer = 0;
+	
+	// athrus journal
+	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[0]); glReportError();
+	
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glReportError();
+	
+	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[athrusDescriptor objectForKey:@"Width"] unsignedIntValue], [[athrusDescriptor objectForKey:@"Height"] unsignedIntValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, journalBuffer); glReportError();
+	journalBuffer = BUFFER_OFFSET(journalBuffer, ([[athrusDescriptor objectForKey:@"Width"] unsignedIntValue] * [[athrusDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2);
+	
+	// catherine journal
+	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[1]); glReportError();
+	
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glReportError();
+	
+	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[catherineDescriptor objectForKey:@"Width"] unsignedIntValue], [[catherineDescriptor objectForKey:@"Height"] unsignedIntValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, journalBuffer); glReportError();
+	journalBuffer = BUFFER_OFFSET(journalBuffer, ([[catherineDescriptor objectForKey:@"Width"] unsignedIntValue] * [[catherineDescriptor objectForKey:@"Height"] unsignedIntValue]) << 2);
+	
+	// prison journal
+	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[2]); glReportError();
+	
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glReportError();
+	
+	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[prisonDescriptor objectForKey:@"Width"] unsignedIntValue], [[prisonDescriptor objectForKey:@"Height"] unsignedIntValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, journalBuffer); glReportError();
+	
+	// bind 0 to the unpack buffer (e.g. client memory unpacking)
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+	
+	// re-enable client storage
+	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
 	
 	// new texture, buffer and program objects
 	glFlush();
