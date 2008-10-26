@@ -333,12 +333,6 @@
 		312F4D990DC263F400B3AF0D /* GLee.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLee.h; sourceTree = "<group>"; };
 		312F4D9A0DC263F400B3AF0D /* RXMovie.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXMovie.h; sourceTree = "<group>"; };
 		312F4D9B0DC263F400B3AF0D /* RXMovie.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXMovie.m; sourceTree = "<group>"; };
-		312F4D9C0DC263F400B3AF0D /* GLPBOFrameReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLPBOFrameReader.h; sourceTree = "<group>"; };
-		312F4D9D0DC263F400B3AF0D /* GLPBOFrameReader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLPBOFrameReader.m; sourceTree = "<group>"; };
-		312F4D9E0DC263F400B3AF0D /* GLQuad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLQuad.h; sourceTree = "<group>"; };
-		312F4D9F0DC263F400B3AF0D /* GLQuad.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLQuad.m; sourceTree = "<group>"; };
-		312F4DA00DC263F400B3AF0D /* GLShaderObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLShaderObject.h; sourceTree = "<group>"; };
-		312F4DA10DC263F400B3AF0D /* GLShaderObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLShaderObject.m; sourceTree = "<group>"; };
 		312F4DA20DC263F400B3AF0D /* GLShaderProgramManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLShaderProgramManager.h; sourceTree = "<group>"; };
 		312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLShaderProgramManager.m; sourceTree = "<group>"; };
 		312F4DA80DC263F400B3AF0D /* RXStateCompositor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXStateCompositor.h; sourceTree = "<group>"; };
@@ -795,12 +789,6 @@
 				312F4D970DC263F400B3AF0D /* GL_debug.h */,
 				312F4D980DC263F400B3AF0D /* GLee.c */,
 				312F4D990DC263F400B3AF0D /* GLee.h */,
-				312F4D9C0DC263F400B3AF0D /* GLPBOFrameReader.h */,
-				312F4D9D0DC263F400B3AF0D /* GLPBOFrameReader.m */,
-				312F4D9E0DC263F400B3AF0D /* GLQuad.h */,
-				312F4D9F0DC263F400B3AF0D /* GLQuad.m */,
-				312F4DA00DC263F400B3AF0D /* GLShaderObject.h */,
-				312F4DA10DC263F400B3AF0D /* GLShaderObject.m */,
 				312F4DA20DC263F400B3AF0D /* GLShaderProgramManager.h */,
 				312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */,
 			);

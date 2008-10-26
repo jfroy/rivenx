@@ -753,6 +753,10 @@ static NSMutableString* _scriptLogPrefix;
 	glBindVertexArrayAPPLE(_pictureVAO); glReportError();
 	glBindBuffer(GL_ARRAY_BUFFER, _pictureVertexArrayBuffer); glReportError();
 	
+	// enable sub-range flushing if available
+	if (GLEE_APPLE_client_storage)
+		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+	
 	// 4 vertices per picture [<position.x position.y> <texcoord0.s texcoord0.t>], floats
 	glBufferData(GL_ARRAY_BUFFER, (_pictureCount + kDynamicPictureSlots) * 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
 	
@@ -823,7 +827,9 @@ static NSMutableString* _scriptLogPrefix;
 		vertex_attributes += 16;
 	}
 	
-	// unmap and flush the VBO
+	// unmap and flush the picture vertex buffer
+	if (GLEE_APPLE_flush_buffer_range)
+		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, _pictureCount * 16 * sizeof(GLfloat));
 	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 	
 	// configure VAs
@@ -834,7 +840,7 @@ static NSMutableString* _scriptLogPrefix;
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
 	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
 	
-	// bind 0 to ARRAY_BUFFER
+	// bind 0 to ARRAY_BUFFER (e.g. back to client memory-backed vertex arrays)
 	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
 	
 	// bind 0 to the current VAO
@@ -1798,7 +1804,7 @@ static NSMutableString* _scriptLogPrefix;
 		if (![archive loadBitmapWithID:ID buffer:pictureBuffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
 			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
-		// unmap the buffer
+		// unmap the unpack buffer
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
 		
 		// create a texture object and bind it
@@ -1837,8 +1843,6 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// bind the the picture VBO 
 	glBindBuffer(GL_ARRAY_BUFFER, _pictureVertexArrayBuffer); glReportError();
-	if (GLEE_APPLE_client_storage)
-		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
 	
 	// map the picture VBO and move to the correct offset
 	GLfloat* vertex_attributes = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
@@ -1873,10 +1877,12 @@ static NSMutableString* _scriptLogPrefix;
 	vertex_attributes[14] = samplingRect.size.width;
 	vertex_attributes[15] = 0.0f;
 	
-	// unmap the picture VBO and restore the array buffer state
+	// unmap and flush the picture vertex buffer
 	if (GLEE_APPLE_flush_buffer_range)
 		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, (_pictureCount + _dynamicPictureCount) * 16, 16);
 	glUnmapBuffer(GL_ARRAY_BUFFER);
+	
+	// bind 0 to ARRAY_BUFFER (e.g. back to client memory-backed vertex arrays)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
 	// flush new objects

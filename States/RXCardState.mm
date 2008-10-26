@@ -243,6 +243,10 @@ init_failure:
 	glBindVertexArrayAPPLE(_cardCompositeVAO); glReportError();
 	glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
 	
+	// enable sub-range flushing if available
+	if (GLEE_APPLE_client_storage)
+		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+	
 	// 4 triangle strip primitives, 4 vertices, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
 	glBufferData(GL_ARRAY_BUFFER, 64 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
 	
@@ -309,7 +313,9 @@ init_failure:
 		positions += 4; tex_coords0 += 4;
 	}
 	
-	// unmap and flush the VBO
+	// unmap and flush the card composite VBO
+	if (GLEE_APPLE_flush_buffer_range)
+		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 64 * sizeof(GLfloat));
 	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 	
 	// configure the VAs
@@ -329,6 +335,10 @@ init_failure:
 	// bind them
 	glBindVertexArrayAPPLE(_cardRenderVAO); glReportError();
 	glBindBuffer(GL_ARRAY_BUFFER, _cardRenderVBO); glReportError();
+	
+	// enable sub-range flushing if available
+	if (GLEE_APPLE_client_storage)
+		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
 	
 	// 4 vertices, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
 	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
@@ -352,7 +362,9 @@ init_failure:
 	positions[6] = kRXCardViewportSize.width; positions[7] = kRXCardViewportSize.height;
 	tex_coords0[6] = kRXCardViewportSize.width; tex_coords0[7] = kRXCardViewportSize.height;
 	
-	// unmap and flush the VBO
+	// unmap and flush the card render buffer
+	if (GLEE_APPLE_flush_buffer_range)
+		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 16 * sizeof(GLfloat));
 	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 	
 	// configure the VAs
@@ -445,10 +457,7 @@ init_failure:
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to load Prison journal inventory texture: %@", error);
 	
 	// unmap the pixel unpack buffer to begin the DMA transfer
-	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-	
-	// while we DMA the above, let's load up the vertex attributes for rendering the journal inventory
-	
+	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);	
 	
 	// while we DMA the above, let's go ahead and load up shaders
 	
@@ -1191,9 +1200,6 @@ init_failure:
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
 	}
-	
-	// disable VBOs since RXMovie expect that to be the case
-//	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
 	
 	// render movies
 	renderListEnumerator = [r->movies objectEnumerator];
