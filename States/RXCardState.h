@@ -83,6 +83,9 @@ struct _rx_transition_program {
 	GLuint _cardProgram;
 	
 	GLuint _hotspotDebugRenderVAO;
+	GLuint _hotspotDebugRenderVBO;
+	GLint* _hotspotDebugRenderFirstElementArray;
+	GLint* _hotspotDebugRenderElementCountArray;
 	
 	// inventory
 	CGRect _inventoryRegions[3];

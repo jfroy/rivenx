@@ -45,6 +45,8 @@ static const GLuint RX_CARD_STATIC_RENDER_INDEX = 0;
 static const GLuint RX_CARD_DYNAMIC_RENDER_INDEX = 1;
 static const GLuint RX_CARD_PREVIOUS_FRAME_INDEX = 2;
 
+static const GLuint RX_MAX_RENDER_HOTSPOT = 20;
+
 
 static const void* RXCardAudioSourceArrayWeakRetain(CFAllocatorRef allocator, const void* value) {
 	return value;
@@ -375,12 +377,6 @@ init_failure:
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
 	
-	// bind 0 to ARRAY_BUFFER (e.g. back to client memory-backed vertex arrays)
-	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
-	
-	// bind 0 to the current VAO
-	glBindVertexArrayAPPLE(0); glReportError();
-	
 	// we need one FBO to render a card's composite texture and one FBO to apply the water effect; as well as matching textures for the color0 attachement point and one extra texture to store the previous frame
 	glGenFramebuffersEXT(2, _fbos);
 	glGenTextures(3, _textures);
@@ -505,11 +501,31 @@ init_failure:
 	_swipe[RXTransitionTop] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionTop context:cgl_ctx];
 	_swipe[RXTransitionBottom] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionBottom context:cgl_ctx];
 	
-	// bind program 0 (e.g. back to fixed-function)
-	glUseProgram(0);
-	
-	// create a VAO for hotspot debug rendering
+	// create a VAO and VBO for hotspot debug rendering
 	glGenVertexArraysAPPLE(1, &_hotspotDebugRenderVAO); glReportError();
+	glGenBuffers(1, &_hotspotDebugRenderVBO); glReportError();
+	
+	// bind them
+	glBindVertexArrayAPPLE(_hotspotDebugRenderVAO); glReportError();
+	glBindBuffer(GL_ARRAY_BUFFER, _hotspotDebugRenderVBO); glReportError();
+	
+	// enable sub-range flushing if available
+	if (GLEE_APPLE_client_storage)
+		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+	
+	// 4 lines per hotspot, 6 floats per line (coord[x, y] color[r, g, b, a])
+	glBufferData(GL_ARRAY_BUFFER, RX_MAX_RENDER_HOTSPOT * 24 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW); glReportError();
+	
+	// configure the VAs
+	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
+	glVertexPointer(2, GL_FLOAT, 6 * sizeof(GLfloat), NULL); glReportError();
+	
+	glEnableClientState(GL_COLOR_ARRAY); glReportError();
+	glColorPointer(4, GL_FLOAT, 6 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+	
+	// allocate the first element and element count arrays
+	_hotspotDebugRenderFirstElementArray = new GLint[RX_MAX_RENDER_HOTSPOT];
+	_hotspotDebugRenderElementCountArray = new GLint[RX_MAX_RENDER_HOTSPOT];
 	
 	// alright, we've done all the work we could, let's now make those journal inventory textures
 	
@@ -557,6 +573,15 @@ init_failure:
 	
 	// re-enable client storage
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
+	
+	// bind 0 to ARRAY_BUFFER (e.g. back to client memory-backed vertex arrays)
+	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
+	
+	// bind 0 to the current VAO
+	glBindVertexArrayAPPLE(0); glReportError();
+	
+	// bind program 0 (e.g. back to fixed-function)
+	glUseProgram(0);
 	
 	// new texture, buffer and program objects
 	glFlush();
@@ -1357,22 +1382,18 @@ exit_render:
 	// render hotspots
 	if (RXEngineGetBool(@"rendering.renderHotspots")) {
 		NSArray* activeHotspots = [_front_render_state->card activeHotspots];
+		if ([activeHotspots count] > RX_MAX_RENDER_HOTSPOT)
+			activeHotspots = [activeHotspots subarrayWithRange:NSMakeRange(0, RX_MAX_RENDER_HOTSPOT)];
 		
-		// 4 lines per hotspot, 6 floats per line (coord[x, y] color[r, g, b, a])
-		GLfloat* hotspot_vertex_attribs = new GLfloat[4 * 6 * [activeHotspots count] * sizeof(GLfloat)];
-		GLint* first_array = new GLint[[activeHotspots count]];
-		GLint* count_array = new GLint[[activeHotspots count]];
+		glBindBuffer(GL_ARRAY_BUFFER, _hotspotDebugRenderVBO);
+		GLfloat* attribs = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 		
 		NSEnumerator* hotspots = [activeHotspots objectEnumerator];
 		RXHotspot* hotspot;
-		
-		GLfloat* attribs = hotspot_vertex_attribs;
-		GLint* first = first_array;
-		GLint* count = count_array;
 		GLint primitive_index = 0;
 		while ((hotspot = [hotspots nextObject])) {
-			first[primitive_index] = primitive_index * 4;
-			count[primitive_index] = 4;
+			_hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
+			_hotspotDebugRenderElementCountArray[primitive_index] = 4;
 			
 			NSRect frame = [hotspot worldViewFrame];
 			
@@ -1411,23 +1432,15 @@ exit_render:
 			primitive_index++;
 		}
 		
-		glBindVertexArrayAPPLE(_hotspotDebugRenderVAO); glReportError();
-		
+		if (GLEE_APPLE_flush_buffer_range)
+			glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, [activeHotspots count] * 24 * sizeof(GLfloat));
+		glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		
-		glEnableClientState(GL_VERTEX_ARRAY); glReportError();
-		glVertexPointer(2, GL_FLOAT, 6 * sizeof(GLfloat), hotspot_vertex_attribs); glReportError();
-		
-		glEnableClientState(GL_COLOR_ARRAY); glReportError();
-		glColorPointer(4, GL_FLOAT, 6 * sizeof(GLfloat), hotspot_vertex_attribs + 2); glReportError();
-		
-		glMultiDrawArrays(GL_LINE_LOOP, first_array, count_array, [activeHotspots count]); glReportError();
+		glBindVertexArrayAPPLE(_hotspotDebugRenderVAO); glReportError();		
+		glMultiDrawArrays(GL_LINE_LOOP, _hotspotDebugRenderFirstElementArray, _hotspotDebugRenderElementCountArray, [activeHotspots count]); glReportError();
 		
 		glBindVertexArrayAPPLE(0); glReportError();
-		
-		delete[] count_array;
-		delete[] first_array;
-		delete[] hotspot_vertex_attribs;
 	}	
 }
 
