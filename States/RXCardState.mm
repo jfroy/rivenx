@@ -1368,6 +1368,7 @@ init_failure:
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
 	
 	// draw the inventory
+	glUseProgram(_cardProgram); glReportError();
 	for (int inventory_i = 0; inventory_i < 3; inventory_i++) {
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[inventory_i]); glReportError();
 		glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inventory_i, 4); glReportError();
