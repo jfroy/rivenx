@@ -840,9 +840,6 @@ static NSMutableString* _scriptLogPrefix;
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
 	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
 	
-	// bind 0 to ARRAY_BUFFER (e.g. back to client memory-backed vertex arrays)
-	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
-	
 	// bind 0 to the current VAO
 	glBindVertexArrayAPPLE(0); glReportError();
 	
@@ -1881,9 +1878,6 @@ static NSMutableString* _scriptLogPrefix;
 	if (GLEE_APPLE_flush_buffer_range)
 		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, (_pictureCount + _dynamicPictureCount) * 16, 16);
 	glUnmapBuffer(GL_ARRAY_BUFFER);
-	
-	// bind 0 to ARRAY_BUFFER (e.g. back to client memory-backed vertex arrays)
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
 	// flush new objects
 	glFlush();

@@ -249,7 +249,7 @@ init_failure:
 	if (GLEE_APPLE_client_storage)
 		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
 	
-	// 4 triangle strip primitives, 4 vertices, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
+	// 4 triangle strip primitives, 4 vertices per strip, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
 	glBufferData(GL_ARRAY_BUFFER, 64 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
 	
 	// map the VBO and write the vertex attributes
@@ -275,49 +275,19 @@ init_failure:
 		positions += 4; tex_coords0 += 4;
 	}
 	
-	// let's find the widest inventory texture, use that as our baseline, toss in some generous margin, and compute bounds for the 3 inventory textures
+	// cache the dimensions of the inventory item textures in the inventory regions
 	_inventoryRegions[0].size.width = [[athrusDescriptor objectForKey:@"Width"] floatValue];
-	_inventoryRegions[1].size.width = [[catherineDescriptor objectForKey:@"Width"] floatValue];
-	_inventoryRegions[2].size.width = [[prisonDescriptor objectForKey:@"Width"] floatValue];
-	
-	// ah what the heck, we need the height too
 	_inventoryRegions[0].size.height = [[athrusDescriptor objectForKey:@"Height"] floatValue];
+	
+	_inventoryRegions[1].size.width = [[catherineDescriptor objectForKey:@"Width"] floatValue];
 	_inventoryRegions[1].size.height = [[catherineDescriptor objectForKey:@"Height"] floatValue];
+	
+	_inventoryRegions[2].size.width = [[prisonDescriptor objectForKey:@"Width"] floatValue];
 	_inventoryRegions[2].size.height = [[prisonDescriptor objectForKey:@"Height"] floatValue];
-	
-	float inventory_margin = 20.f;
-	float total_inventory_width = _inventoryRegions[0].size.width + _inventoryRegions[1].size.width + _inventoryRegions[2].size.width + 2 * inventory_margin;
-	
-	_inventoryRegions[0].origin.x = kRXCardViewportOriginOffset.x + (kRXCardViewportSize.width / 2.0f) - (total_inventory_width / 2.0f);
-	_inventoryRegions[0].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[0].size.height / 2.0f);
-	
-	_inventoryRegions[1].origin.x = _inventoryRegions[0].origin.x + _inventoryRegions[0].size.width + inventory_margin;
-	_inventoryRegions[1].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[1].size.height / 2.0f);
-	
-	_inventoryRegions[2].origin.x = _inventoryRegions[1].origin.x + _inventoryRegions[1].size.width + inventory_margin;
-	_inventoryRegions[2].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[2].size.height / 2.0f);
-	
-	for (int inventory_i = 0; inventory_i < 3; inventory_i++) {
-		positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y;
-		tex_coords0[0] = 0.0f; tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
-		positions += 4; tex_coords0 += 4;
 		
-		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width; positions[1] = _inventoryRegions[inventory_i].origin.y;
-		tex_coords0[0] = _inventoryRegions[inventory_i].size.width; tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
-		positions += 4; tex_coords0 += 4;
-		
-		positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
-		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
-		positions += 4; tex_coords0 += 4;
-		
-		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width; positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
-		tex_coords0[0] = _inventoryRegions[inventory_i].size.width; tex_coords0[1] = 0.0f;
-		positions += 4; tex_coords0 += 4;
-	}
-	
 	// unmap and flush the card composite VBO
 	if (GLEE_APPLE_flush_buffer_range)
-		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 64 * sizeof(GLfloat));
+		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 16 * sizeof(GLfloat));
 	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 	
 	// configure the VAs
@@ -573,9 +543,6 @@ init_failure:
 	
 	// re-enable client storage
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
-	
-	// bind 0 to ARRAY_BUFFER (e.g. back to client memory-backed vertex arrays)
-	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
 	
 	// bind 0 to the current VAO
 	glBindVertexArrayAPPLE(0); glReportError();
@@ -1239,6 +1206,50 @@ init_failure:
 		_movieFlushTasksDispatch.imp(movie, _movieFlushTasksDispatch.sel, outputTime);
 }
 
+- (void)_updateInventoryWithTimestamp:(const CVTimeStamp*)outputTime context:(CGLContextObj)cgl_ctx {
+	glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
+	GLfloat* buffer = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	
+	GLfloat* positions = buffer + 16;
+	GLfloat* tex_coords0 = positions + 2;
+	
+	float inventory_margin = 20.f;
+	float total_inventory_width = _inventoryRegions[0].size.width + _inventoryRegions[1].size.width + _inventoryRegions[2].size.width + 2 * inventory_margin;
+	
+	_inventoryRegions[0].origin.x = kRXCardViewportOriginOffset.x + (kRXCardViewportSize.width / 2.0f) - (total_inventory_width / 2.0f);
+	_inventoryRegions[0].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[0].size.height / 2.0f);
+	
+	_inventoryRegions[1].origin.x = _inventoryRegions[0].origin.x + _inventoryRegions[0].size.width + inventory_margin;
+	_inventoryRegions[1].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[1].size.height / 2.0f);
+	
+	_inventoryRegions[2].origin.x = _inventoryRegions[1].origin.x + _inventoryRegions[1].size.width + inventory_margin;
+	_inventoryRegions[2].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[2].size.height / 2.0f);
+	
+	// compute vertex positions and texture coordinates for the inventory items
+	for (int inventory_i = 0; inventory_i < 3; inventory_i++) {
+		positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width; positions[1] = _inventoryRegions[inventory_i].origin.y;
+		tex_coords0[0] = _inventoryRegions[inventory_i].size.width; tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width; positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
+		tex_coords0[0] = _inventoryRegions[inventory_i].size.width; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+	}
+	
+	// unmap and flush the card composite VBO
+	if (GLEE_APPLE_flush_buffer_range)
+		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), 48 * sizeof(GLfloat));
+	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
+}
+
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	OSSpinLockLock(&_renderLock);
@@ -1367,7 +1378,9 @@ init_failure:
 	// draw the card composite
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
 	
-	// draw the inventory
+	// update and draw the inventory
+	[self _updateInventoryWithTimestamp:outputTime context:cgl_ctx];
+	
 	glUseProgram(_cardProgram); glReportError();
 	for (int inventory_i = 0; inventory_i < 3; inventory_i++) {
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[inventory_i]); glReportError();
@@ -1436,7 +1449,6 @@ exit_render:
 		if (GLEE_APPLE_flush_buffer_range)
 			glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, [activeHotspots count] * 24 * sizeof(GLfloat));
 		glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		
 		glBindVertexArrayAPPLE(_hotspotDebugRenderVAO); glReportError();		
 		glMultiDrawArrays(GL_LINE_LOOP, _hotspotDebugRenderFirstElementArray, _hotspotDebugRenderElementCountArray, [activeHotspots count]); glReportError();
