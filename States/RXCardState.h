@@ -84,7 +84,8 @@ struct _rx_transition_program {
 	
 	GLuint _hotspotDebugRenderVAO;
 	
-	// inventory textures
+	// inventory
+	CGRect _inventoryRegions[3];
 	GLuint _inventoryTextures[3];
 	GLuint _inventoryTextureBuffer;
 }

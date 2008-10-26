@@ -270,75 +270,42 @@ init_failure:
 	}
 	
 	// let's find the widest inventory texture, use that as our baseline, toss in some generous margin, and compute bounds for the 3 inventory textures
-	uint32_t athrus_width = [[athrusDescriptor objectForKey:@"Width"] unsignedIntValue];
-	uint32_t catherine_width = [[catherineDescriptor objectForKey:@"Width"] unsignedIntValue];
-	uint32_t prison_width = [[prisonDescriptor objectForKey:@"Width"] unsignedIntValue];
-	uint32_t maximum_inventory_width = (athrus_width > catherine_width) ? (athrus_width > prison_width) ? athrus_width : prison_width : catherine_width;
+	_inventoryRegions[0].size.width = [[athrusDescriptor objectForKey:@"Width"] floatValue];
+	_inventoryRegions[1].size.width = [[catherineDescriptor objectForKey:@"Width"] floatValue];
+	_inventoryRegions[2].size.width = [[prisonDescriptor objectForKey:@"Width"] floatValue];
 	
 	// ah what the heck, we need the height too
-	uint32_t athrus_height = [[athrusDescriptor objectForKey:@"Height"] unsignedIntValue];
-	uint32_t catherine_height = [[catherineDescriptor objectForKey:@"Height"] unsignedIntValue];
-	uint32_t prison_height = [[prisonDescriptor objectForKey:@"Height"] unsignedIntValue];
-	uint32_t maximum_inventory_height = (athrus_height > catherine_height) ? (athrus_height > prison_height) ? athrus_height : prison_height : catherine_height;
+	_inventoryRegions[0].size.height = [[athrusDescriptor objectForKey:@"Height"] floatValue];
+	_inventoryRegions[1].size.height = [[catherineDescriptor objectForKey:@"Height"] floatValue];
+	_inventoryRegions[2].size.height = [[prisonDescriptor objectForKey:@"Height"] floatValue];
 	
-	// 5 px margin on both sides
-	GLfloat inventory_item_width = maximum_inventory_width + 10.0f;
-	CGPoint inventory_origin = CGPointMake((kRXCardViewportSize.width / 2.0f) - ((inventory_item_width * 3) / 2.0f), (kRXCardViewportOriginOffset.y / 2.0f) - (maximum_inventory_height / 2.0f));
+	float inventory_margin = 20.f;
+	float total_inventory_width = _inventoryRegions[0].size.width + _inventoryRegions[1].size.width + _inventoryRegions[2].size.width + 2 * inventory_margin;
 	
-	// athrus
-	{
-		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x; positions[1] = inventory_origin.y;
+	_inventoryRegions[0].origin.x = kRXCardViewportOriginOffset.x + (kRXCardViewportSize.width / 2.0f) - (total_inventory_width / 2.0f);
+	_inventoryRegions[0].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[0].size.height / 2.0f);
+	
+	_inventoryRegions[1].origin.x = _inventoryRegions[0].origin.x + _inventoryRegions[0].size.width + inventory_margin;
+	_inventoryRegions[1].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[1].size.height / 2.0f);
+	
+	_inventoryRegions[2].origin.x = _inventoryRegions[1].origin.x + _inventoryRegions[1].size.width + inventory_margin;
+	_inventoryRegions[2].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[2].size.height / 2.0f);
+	
+	for (int inventory_i = 0; inventory_i < 3; inventory_i++) {
+		positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width; positions[1] = _inventoryRegions[inventory_i].origin.y;
+		tex_coords0[0] = _inventoryRegions[inventory_i].size.width; tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
 		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
 		positions += 4; tex_coords0 += 4;
 		
-		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y;
-		tex_coords0[0] = inventory_item_width; tex_coords0[1] = 0.0f;
-		positions += 4; tex_coords0 += 4;
-		
-		positions[0] = kRXCardViewportOriginOffset.x; positions[1] = inventory_origin.y + maximum_inventory_height;
-		tex_coords0[0] = 0.0f; tex_coords0[5] = maximum_inventory_height;
-		positions += 4; tex_coords0 += 4;
-		
-		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y + maximum_inventory_height;
-		tex_coords0[0] = inventory_item_width; tex_coords0[1] = maximum_inventory_height;
-		positions += 4; tex_coords0 += 4;
-	}
-	
-	// catherine
-	{
-		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x; positions[1] = inventory_origin.y;
-		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
-		positions += 4; tex_coords0 += 4;
-		
-		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y;
-		tex_coords0[0] = inventory_item_width; tex_coords0[1] = 0.0f;
-		positions += 4; tex_coords0 += 4;
-		
-		positions[0] = kRXCardViewportOriginOffset.x; positions[1] = inventory_origin.y + maximum_inventory_height;
-		tex_coords0[0] = 0.0f; tex_coords0[5] = maximum_inventory_height;
-		positions += 4; tex_coords0 += 4;
-		
-		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y + maximum_inventory_height;
-		tex_coords0[0] = inventory_item_width; tex_coords0[1] = maximum_inventory_height;
-		positions += 4; tex_coords0 += 4;
-	}
-	
-	// prison
-	{
-		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x; positions[1] = inventory_origin.y;
-		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
-		positions += 4; tex_coords0 += 4;
-		
-		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y;
-		tex_coords0[0] = inventory_item_width; tex_coords0[1] = 0.0f;
-		positions += 4; tex_coords0 += 4;
-		
-		positions[0] = kRXCardViewportOriginOffset.x; positions[1] = inventory_origin.y + maximum_inventory_height;
-		tex_coords0[0] = 0.0f; tex_coords0[5] = maximum_inventory_height;
-		positions += 4; tex_coords0 += 4;
-		
-		positions[0] = kRXCardViewportOriginOffset.x + inventory_origin.x + inventory_item_width; positions[1] = inventory_origin.y + maximum_inventory_height;
-		tex_coords0[0] = inventory_item_width; tex_coords0[1] = maximum_inventory_height;
+		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width; positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
+		tex_coords0[0] = _inventoryRegions[inventory_i].size.width; tex_coords0[1] = 0.0f;
 		positions += 4; tex_coords0 += 4;
 	}
 	
@@ -1366,8 +1333,14 @@ init_failure:
 	// bind the card composite VAO
 	glBindVertexArrayAPPLE(_cardCompositeVAO); glReportError();
 	
-	// draw
+	// draw the card composite
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
+	
+	// draw the inventory
+	for (int inventory_i = 0; inventory_i < 3; inventory_i++) {
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[inventory_i]); glReportError();
+		glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inventory_i, 4); glReportError();
+	}
 	
 exit_render:
 	[p release];
@@ -1395,7 +1368,7 @@ exit_render:
 			first[primitive_index] = primitive_index * 4;
 			count[primitive_index] = 4;
 			
-			NSRect frame = [hotspot frame];
+			NSRect frame = [hotspot worldViewFrame];
 			
 			attribs[0] = frame.origin.x;
 			attribs[1] = frame.origin.y;
@@ -1577,7 +1550,7 @@ exit_flush_tasks:
 	NSEnumerator* hotpotEnum = [[_front_render_state->card activeHotspots] objectEnumerator];
 	RXHotspot* hotspot;
 	while ((hotspot = [hotpotEnum nextObject])) {
-		if (NSPointInRect(mousePoint, [hotspot frame])) break;
+		if (NSPointInRect(mousePoint, [hotspot worldViewFrame])) break;
 	}
 	
 	// if we were over another hotspot, we're no longer over it and we send a mouse exited event followed by a mouse entered event

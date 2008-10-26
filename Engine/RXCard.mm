@@ -1344,7 +1344,7 @@ static NSMutableString* _scriptLogPrefix;
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
 	[_activeHotspots addObjectsFromArray:_hotspots];
-	[_activeHotspots makeObjectsPerformSelector:@selector(makeEnabled)];
+	[_activeHotspots makeObjectsPerformSelector:@selector(enable)];
 	[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
 	OSSpinLockUnlock(&_activeHotspotsLock);
 	

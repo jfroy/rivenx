@@ -29,7 +29,7 @@
 	_globalFrame.size.height = _cardFrame.size.height * scale_y;
 }
 
-- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID frame:(NSRect)frame cursorID:(uint16_t)cursorID script:(NSDictionary *)script {
+- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID frame:(NSRect)frame cursorID:(uint16_t)cursorID script:(NSDictionary*)script {
 	self = [super init];
 	if (!self) return nil;
 	
@@ -72,7 +72,7 @@
 		return NSOrderedDescending;
 }
 
-- (NSRect)frame {
+- (NSRect)worldViewFrame {
 	return _globalFrame;
 }
 
@@ -88,7 +88,7 @@
 	return [NSString stringWithFormat: @"%@ {ID=%hu, frame=%@}", [super description], _ID, NSStringFromRect(_cardFrame)];
 }
 
-- (void)makeEnabled {
+- (void)enable {
 	enabled = YES;
 }
 
