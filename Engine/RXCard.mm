@@ -2636,4 +2636,125 @@ DEFINE_COMMAND(xacathbooknextpage) {
 	}
 }
 
+#pragma mark lab journal
+
+- (void)_updateLabJournal {
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"blabpage"];
+	assert(page > 0);
+	
+	if (page == 1) {
+		// disable hotspot 16
+		DISPATCH_COMMAND1(10, 16);
+	} else {
+		// enable hotspot 16
+		DISPATCH_COMMAND1(9, 16);
+	}
+	
+	DISPATCH_COMMAND1(39, page);
+}
+
+DEFINE_COMMAND(xblabopenbook) {
+	[self _updateLabJournal];
+}
+
+DEFINE_COMMAND(xblabbookprevpage) {
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"blabpage"];
+	assert(page > 1);
+	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"blabpage"];
+	
+	if (page == 2)
+		DISPATCH_COMMAND3(4, 8, 256, 0);
+	else
+		DISPATCH_COMMAND3(4, 3, 256, 0);
+	
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	[_scriptHandler queueTransition:transition];
+	[transition release];
+	
+	DISPATCH_COMMAND0(21);
+}
+
+DEFINE_COMMAND(xblabbooknextpage) {
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"blabpage"];
+	if (page < 22) {
+		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"blabpage"];
+		
+		if (page == 1)
+			DISPATCH_COMMAND3(4, 8, 256, 0);
+		else
+			DISPATCH_COMMAND3(4, 5, 256, 0);
+		
+		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+		[_scriptHandler queueTransition:transition];
+		[transition release];
+		
+		DISPATCH_COMMAND0(21);
+	}
+}
+
+#pragma mark gehn journal
+
+- (void)_updateGehnJournal {
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"ogehnpage"];
+	assert(page > 0);
+	
+	if (page == 1) {
+		// disable hotspots 7 and 9
+		DISPATCH_COMMAND1(10, 7);
+		DISPATCH_COMMAND1(10, 9);
+		
+		// enable hotspot 10
+		DISPATCH_COMMAND1(9, 10);
+	} else {
+		// enable hotspots 7 and 9
+		DISPATCH_COMMAND1(9, 7);
+		DISPATCH_COMMAND1(9, 9);
+		
+		// disable hotspot 10
+		DISPATCH_COMMAND1(10, 10);
+	}
+	
+	DISPATCH_COMMAND1(39, page);
+}
+
+DEFINE_COMMAND(xogehnopenbook) {
+	[self _updateGehnJournal];
+}
+
+DEFINE_COMMAND(xogehnbookprevpage) {
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"ogehnpage"];
+	assert(page > 1);
+	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"ogehnpage"];
+	
+	if (page == 2)
+		DISPATCH_COMMAND3(4, 8, 256, 0);
+	else
+		DISPATCH_COMMAND3(4, 3, 256, 0);
+	
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	[_scriptHandler queueTransition:transition];
+	[transition release];
+	
+	DISPATCH_COMMAND0(21);
+}
+
+DEFINE_COMMAND(xogehnbooknextpage) {
+	uint16_t page = [[g_world gameState] unsignedShortForKey:@"ogehnpage"];
+	if (page < 10) {
+		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"ogehnpage"];
+		
+		if (page == 1)
+			DISPATCH_COMMAND3(4, 8, 256, 0);
+		else
+			DISPATCH_COMMAND3(4, 5, 256, 0);
+		
+		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+		[_scriptHandler queueTransition:transition];
+		[transition release];
+		
+		DISPATCH_COMMAND0(21);
+	}
+}
+
+
 @end
