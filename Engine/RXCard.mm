@@ -1851,28 +1851,28 @@ static NSMutableString* _scriptLogPrefix;
 	vertex_attributes[1] = vertex_bottom_y;
 	
 	vertex_attributes[2] = samplingRect.origin.x;
-	vertex_attributes[3] = samplingRect.size.height;
+	vertex_attributes[3] = samplingRect.origin.y + samplingRect.size.height;
 	
 	// vertex 2
 	vertex_attributes[4] = vertex_right_x;
 	vertex_attributes[5] = vertex_bottom_y;
 	
-	vertex_attributes[6] = samplingRect.size.width;
-	vertex_attributes[7] = samplingRect.size.height;
+	vertex_attributes[6] = samplingRect.origin.x + samplingRect.size.width;
+	vertex_attributes[7] = samplingRect.origin.y + samplingRect.size.height;
 	
 	// vertex 3
 	vertex_attributes[8] = vertex_left_x;
 	vertex_attributes[9] = vertex_top_y;
 	
 	vertex_attributes[10] = samplingRect.origin.x;
-	vertex_attributes[11] = 0.0f;
+	vertex_attributes[11] = samplingRect.origin.y;
 	
 	// vertex 4
 	vertex_attributes[12] = vertex_right_x;
 	vertex_attributes[13] = vertex_top_y;
 	
-	vertex_attributes[14] = samplingRect.size.width;
-	vertex_attributes[15] = 0.0f;
+	vertex_attributes[14] = samplingRect.origin.x + samplingRect.size.width;
+	vertex_attributes[15] = samplingRect.origin.y;
 	
 	// unmap and flush the picture vertex buffer
 	if (GLEE_APPLE_flush_buffer_range)
@@ -2574,7 +2574,7 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 	if (page == 28) {
 		// GO MAGIC NUMBERS!
 		NSPoint combination_display_origin = NSMakePoint(156.0f, 120.0f);
-		NSPoint combination_sampling_origin = NSMakePoint(0.0f, 0.0f);
+		NSPoint combination_sampling_origin = NSMakePoint(32.0f * 3, 0.0f);
 		NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 25.0f);
 		
 		[self _drawPictureWithID:13 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
@@ -2651,6 +2651,29 @@ DEFINE_COMMAND(xacathbooknextpage) {
 	}
 	
 	DISPATCH_COMMAND1(39, page);
+	
+	// draw the dome combination
+	// FIXME: actually generate a combination per game...
+	if (page == 14) {
+		// GO MAGIC NUMBERS!
+		NSPoint combination_display_origin = NSMakePoint(240.0f, 285.0f);
+		NSPoint combination_sampling_origin = NSMakePoint(32.0f * 4, 0.0f);
+		NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 24.0f);
+		
+		[self _drawPictureWithID:364 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		combination_display_origin.x += combination_base_rect.size.width;
+		
+		[self _drawPictureWithID:365 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		combination_display_origin.x += combination_base_rect.size.width;
+		
+		[self _drawPictureWithID:366 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		combination_display_origin.x += combination_base_rect.size.width;
+		
+		[self _drawPictureWithID:367 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		combination_display_origin.x += combination_base_rect.size.width;
+		
+		[self _drawPictureWithID:368 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+	}
 }
 
 DEFINE_COMMAND(xblabopenbook) {
