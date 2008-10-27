@@ -1036,7 +1036,7 @@ init_failure:
 	_currentHotspot = nil;
 	
 	// setup the back render state
-	_back_render_state->card = newCard;
+	_back_render_state->card = [newCard retain];
 	_back_render_state->newCard = YES;
 	_back_render_state->transition = nil;
 	
@@ -1048,6 +1048,7 @@ init_failure:
 	
 	// notify that the front card has changed
 	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:newCard waitUntilDone:NO];
+	[newCard release];
 }
 
 - (void)_clearActiveCard {
