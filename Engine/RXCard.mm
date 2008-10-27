@@ -2691,23 +2691,7 @@ DEFINE_COMMAND(xblabbooknextpage) {
 - (void)_updateGehnJournal {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"ogehnpage"];
 	assert(page > 0);
-	
-	if (page == 1) {
-		// disable hotspots 7 and 9
-		DISPATCH_COMMAND1(10, 7);
-		DISPATCH_COMMAND1(10, 9);
 		
-		// enable hotspot 10
-		DISPATCH_COMMAND1(9, 10);
-	} else {
-		// enable hotspots 7 and 9
-		DISPATCH_COMMAND1(9, 7);
-		DISPATCH_COMMAND1(9, 9);
-		
-		// disable hotspot 10
-		DISPATCH_COMMAND1(10, 10);
-	}
-	
 	DISPATCH_COMMAND1(39, page);
 }
 
@@ -2717,13 +2701,12 @@ DEFINE_COMMAND(xogehnopenbook) {
 
 DEFINE_COMMAND(xogehnbookprevpage) {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"ogehnpage"];
-	assert(page > 1);
+	if (page <= 1)
+		return;
+	
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"ogehnpage"];
 	
-	if (page == 2)
-		DISPATCH_COMMAND3(4, 8, 256, 0);
-	else
-		DISPATCH_COMMAND3(4, 3, 256, 0);
+	DISPATCH_COMMAND3(4, 12, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
@@ -2734,20 +2717,18 @@ DEFINE_COMMAND(xogehnbookprevpage) {
 
 DEFINE_COMMAND(xogehnbooknextpage) {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"ogehnpage"];
-	if (page < 10) {
-		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"ogehnpage"];
-		
-		if (page == 1)
-			DISPATCH_COMMAND3(4, 8, 256, 0);
-		else
-			DISPATCH_COMMAND3(4, 5, 256, 0);
-		
-		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
-		[_scriptHandler queueTransition:transition];
-		[transition release];
-		
-		DISPATCH_COMMAND0(21);
-	}
+	if (page >= 13)
+		return;
+
+	[[g_world gameState] setUnsignedShort:page + 1 forKey:@"ogehnpage"];
+	
+	DISPATCH_COMMAND3(4, 13, 256, 0);
+	
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	[_scriptHandler queueTransition:transition];
+	[transition release];
+	
+	DISPATCH_COMMAND0(21);
 }
 
 
