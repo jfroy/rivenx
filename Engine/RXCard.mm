@@ -2662,10 +2662,7 @@ DEFINE_COMMAND(xblabbookprevpage) {
 	assert(page > 1);
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"blabpage"];
 	
-	if (page == 2)
-		DISPATCH_COMMAND3(4, 8, 256, 0);
-	else
-		DISPATCH_COMMAND3(4, 3, 256, 0);
+	DISPATCH_COMMAND3(4, 22, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
@@ -2679,10 +2676,7 @@ DEFINE_COMMAND(xblabbooknextpage) {
 	if (page < 22) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"blabpage"];
 		
-		if (page == 1)
-			DISPATCH_COMMAND3(4, 8, 256, 0);
-		else
-			DISPATCH_COMMAND3(4, 5, 256, 0);
+		DISPATCH_COMMAND3(4, 23, 256, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[_scriptHandler queueTransition:transition];
