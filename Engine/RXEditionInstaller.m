@@ -39,14 +39,17 @@
 
 - (void)_updateInstallerProgress:(BOOL)determinate {
 	[self willChangeValueForKey:@"progress"];
-	if (determinate) progress = ((double)_currentDirective / _directiveCount) + (_directiveProgress / _directiveCount);
-	else progress = -1.0;
+	if (determinate)
+        progress = ((double)_currentDirective / _directiveCount) + (_directiveProgress / _directiveCount);
+	else
+        progress = -1.0;
 	[self didChangeValueForKey:@"progress"];
 }
 
 - (BOOL)_performInstallSystemWide:(BOOL)systemWide fullInstall:(BOOL)full session:(NSModalSession)session error:(NSError**)error {
 	// we're one-shot
-	if (_didRun) ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+	if (_didRun)
+		ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
 	_didRun = YES;
 	
 	// destination depends on the install's scope
@@ -73,7 +76,7 @@
 		_directiveCount++;
 	}
 	
-	// second pass that actually runs the directives
+    // second pass that actually runs the directives
 	_currentDirective = 0;
 	directives = [[edition valueForKeyPath:@"installDirectives"] objectEnumerator];
 	while ((directive = [directives nextObject])) {
@@ -91,7 +94,8 @@
 		
 		BOOL success;
 		[directiveInv getReturnValue:&success];
-		if (!success) return NO;
+		if (!success)
+			return NO;
 		
 		_currentDirective++;
 		[self _updateInstallerProgress:YES];
@@ -109,7 +113,8 @@
 	[[edition userData] setValue:@"Minimal" forKey:@"Installation Type"];
 	
 	// write the edition's user data to disk
-	if (![edition writeUserData:error]) return NO;
+	if (![edition writeUserData:error])
+		return NO;
 	return YES;
 }
 
@@ -122,7 +127,8 @@
 	[[edition userData] setValue:@"Full" forKey:@"Installation Type"];
 	
 	// write the edition's user data to disk
-	if (![edition writeUserData:error]) return NO;
+	if (![edition writeUserData:error])
+		return NO;
 	return YES;
 }
 
@@ -137,6 +143,23 @@
 	}
 }
 
+- (NSString*)_waitForDisc:(NSString*)disc inModalSession:(NSModalSession)session error:(NSError**)error {
+	NSString* mountPath = [[RXEditionManager sharedEditionManager] mountPathForDisc:disc waitingInModalSession:session];
+	while (!mountPath) {
+		// set the UI to indeterminate waiting for disc
+		[self _updateInstallerProgress:NO];
+		[self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_INSERT_DISC", @"Editions", NULL), disc] forKey:@"stage"];
+		
+		mountPath = [[RXEditionManager sharedEditionManager] mountPathForDisc:disc waitingInModalSession:session];
+		if (session && [NSApp runModalSession:session] != NSRunContinuesResponse)
+			ReturnValueWithError(nil, @"RXErrorDomain", 0, nil, error);
+		if (!mountPath)
+			continue;
+	}
+	
+	return mountPath;
+}
+
 - (BOOL)_performStackCopy:(NSDictionary*)directive destination:(NSString*)destination modalSession:(NSModalSession)session error:(NSError**)error {
 	NSDictionary* stackDescriptors = [edition valueForKey:@"stackDescriptors"];
 	NSArray* discs = [edition valueForKey:@"discs"];
@@ -144,7 +167,8 @@
 	
 	// step 1: determine which stacks to operate on
 	NSArray* stacks = ([directive objectForKey:@"Include"]) ? [NSArray arrayWithObject:[directive objectForKey:@"Include"]] : [stackDescriptors allKeys];
-	if ([directive objectForKey:@"Exclude"]) [(NSMutableArray*)(stacks = [[stacks mutableCopy] autorelease]) removeObject:[directive objectForKey:@"Exclude"]];
+	if ([directive objectForKey:@"Exclude"])
+		[(NSMutableArray*)(stacks = [[stacks mutableCopy] autorelease]) removeObject:[directive objectForKey:@"Exclude"]];
 	
 	// step 2: establish a parallel array to the edition's discs mapping disc to stacks (in order to not have the user do mad swapping)
 	NSMutableArray* stacksForDiscs = [NSMutableArray array];
@@ -163,10 +187,12 @@
 			uint32_t stackDiscIndex = ([stackDescriptor objectForKey:@"Disc"]) ? [[stackDescriptor objectForKey:@"Disc"] unsignedIntValue] : 0;
 			
 			// if the directive has a disc override, apply it
-			if ([directive objectForKey:@"Disc"]) stackDiscIndex = [[directive objectForKey:@"Disc"] unsignedIntValue];
+			if ([directive objectForKey:@"Disc"])
+				stackDiscIndex = [[directive objectForKey:@"Disc"] unsignedIntValue];
 			
 			// if the disc index matched the current disc index, add the stack key to the array of stacks for the current disc
-			if (stackDiscIndex == discIndex) [discStacks addObject:stackKey];
+			if (stackDiscIndex == discIndex)
+				[discStacks addObject:stackKey];
 		}
 	}
 	
@@ -174,13 +200,15 @@
 	_discsProcessed = 0;
 	NSEnumerator* discStacksEnum = [stacksForDiscs objectEnumerator];
 	NSArray* discStacks;
-	while ((discStacks = [discStacksEnum nextObject])) if ([discStacks count] > 0) _discsToProcess++;
+	while ((discStacks = [discStacksEnum nextObject]))
+		if ([discStacks count] > 0)
+			_discsToProcess++;
 	
 	// step 4: process the stacks of each disc
 	
 	// update the progress
-	_directiveProgress = 0.0;
-	[self _updateInstallerProgress:YES];
+//	_directiveProgress = 0.0;
+//	[self _updateInstallerProgress:YES];
 	
 	// process the discs
 	discIndex = 0;
@@ -207,11 +235,13 @@
 			if (doCopy) {
 				NSString* directory = ([stackKey isEqualToString:@"aspit"]) ? [directories objectForKey:@"All"] : [directories objectForKey:@"Data"];
 				id archives = [stackDescriptor objectForKey:@"Data Archives"];
-				if ([archives isKindOfClass:[NSString class]]) [files addObject:[directory stringByAppendingPathComponent:archives]];
+				if ([archives isKindOfClass:[NSString class]])
+					[files addObject:[directory stringByAppendingPathComponent:archives]];
 				else {
 					NSEnumerator* filesEnum = [archives objectEnumerator];
 					NSString* file;
-					while ((file = [filesEnum nextObject])) [files addObject:[directory stringByAppendingPathComponent:file]];
+					while ((file = [filesEnum nextObject]))
+						[files addObject:[directory stringByAppendingPathComponent:file]];
 				}
 			}
 			
@@ -220,11 +250,13 @@
 			if (doCopy) {
 				NSString* directory = [directories objectForKey:@"Sound"];
 				id archives = [stackDescriptor objectForKey:@"Sound Archives"];
-				if ([archives isKindOfClass:[NSString class]]) [files addObject:[directory stringByAppendingPathComponent:archives]];
+				if ([archives isKindOfClass:[NSString class]])
+					[files addObject:[directory stringByAppendingPathComponent:archives]];
 				else {
 					NSEnumerator* filesEnum = [archives objectEnumerator];
 					NSString* file;
-					while ((file = [filesEnum nextObject])) [files addObject:[directory stringByAppendingPathComponent:file]];
+					while ((file = [filesEnum nextObject]))
+						[files addObject:[directory stringByAppendingPathComponent:file]];
 				}
 			}
 		}
@@ -233,23 +265,20 @@
 		_totalBytesToCopy = 0;
 		_totalBytesCopied = 0;
 		
-		// step 4.2: wait for the disc
+		// step 4.2: wait for the right disc
 		NSString* disc = [discs objectAtIndex:discIndex];
-		NSString* mountPath = [[RXEditionManager sharedEditionManager] mountPathForDisc:disc];
+		NSString* mountPath = nil;
 		
-		// if the disc we need is not mounted, wait for it. if there is no modal session, this will loop until the disc is mounted
-		while (!mountPath) {
-			// set the UI to indeterminate waiting for disc
-			[self _updateInstallerProgress:NO];
-			[self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_INSERT_DISC", @"Editions", NULL), disc] forKey:@"stage"];
-			
-			mountPath = [[RXEditionManager sharedEditionManager] mountPathForDisc:disc waitingInModalSession:session];
-			if (session && [NSApp runModalSession:session] != NSRunContinuesResponse) ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
-			if (!mountPath) continue;
+		while (_totalBytesToCopy == 0) {
+			mountPath = [self _waitForDisc:disc inModalSession:session error:error];
+			if (!mountPath)
+				return NO;
 			
 			// check that every file we need is on that disc, and count the number of bytes to copy at the same time
+			[self _updateInstallerProgress:NO];
 			[self setValue:NSLocalizedStringFromTable(@"INSTALLER_CHECKING_DISC", @"Editions", NULL) forKey:@"stage"];
-			if (session && [NSApp runModalSession:session] != NSRunContinuesResponse) ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+			if (session && [NSApp runModalSession:session] != NSRunContinuesResponse)
+				ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
 			
 			NSEnumerator* fileEnum = [files objectEnumerator];
 			NSString* filename;
@@ -266,7 +295,8 @@
 				// get the file size
 				// FIXME: handle errors
 				NSDictionary* attributes = BZFSAttributesOfItemAtPath(filePath, error);
-				if (attributes) _totalBytesToCopy += [attributes fileSize];
+				if (attributes)
+					_totalBytesToCopy += [attributes fileSize];
 			}
 		}
 		
