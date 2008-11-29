@@ -91,6 +91,7 @@ struct _rx_transition_program {
 	// inventory
 	CGRect _inventoryRegions[3];
 	NSRect _inventoryHotspotRegions[3];
+	uint16_t _inventoryDestinationCardID[3];
 	GLuint _inventoryTextures[3];
 	GLuint _inventoryTextureBuffer;
 }

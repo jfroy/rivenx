@@ -1528,7 +1528,7 @@ static NSMutableString* _scriptLogPrefix;
 
 - (void)mouseEnteredHotspot:(RXHotspot*)hotspot {
 	if (!hotspot)
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Hotspot object cannot be nil." userInfo:nil];
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
 	
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse entered %@", _scriptLogPrefix, hotspot);
@@ -1544,7 +1544,7 @@ static NSMutableString* _scriptLogPrefix;
 
 - (void)mouseExitedHotspot:(RXHotspot*)hotspot {
 	if (!hotspot)
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Hotspot object cannot be nil." userInfo:nil];
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
 
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouseExited %@ {", _scriptLogPrefix, hotspot);
@@ -1584,7 +1584,7 @@ static NSMutableString* _scriptLogPrefix;
 
 - (void)mouseDownInHotspot:(RXHotspot*)hotspot {
 	if (!hotspot)
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Hotspot object cannot be nil." userInfo:nil];
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
 
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouseDown in %@ {", _scriptLogPrefix, hotspot);
@@ -1620,7 +1620,7 @@ static NSMutableString* _scriptLogPrefix;
 
 - (void)mouseUpInHotspot:(RXHotspot*)hotspot {
 	if (!hotspot)
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Hotspot object cannot be nil." userInfo:nil];
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
 
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouseUp in %@ {", _scriptLogPrefix, hotspot);
