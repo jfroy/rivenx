@@ -1574,7 +1574,8 @@ exit_flush_tasks:
 }
 
 - (void)mouseMoved:(NSEvent*)event {
-	if (_ignoreUIEventsCounter > 0) return;
+	if (_ignoreUIEventsCounter > 0)
+		return;
 	
 	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
 	
@@ -1588,7 +1589,14 @@ exit_flush_tasks:
 	// if we were over another hotspot, we're no longer over it and we send a mouse exited event followed by a mouse entered event
 	if (_currentHotspot != hotspot || _resetHotspotState) {
 		// mouseExitedHotspot does not accept nil (we can't exit the "nil" hotspot)
-		if (_currentHotspot) [_front_render_state->card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+		if (_currentHotspot)
+			[_front_render_state->card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+		
+		// handle cursor changes here so we don't ping-pong across 2 threads
+		if (hotspot)
+			[g_worldView setCursor:[g_world cursorForID:[hotspot cursorID]]];
+		else
+			[g_worldView setCursor:[g_world defaultCursor]];
 		
 		// mouseEnteredHotspot accepts nil as the hotspot, to indicate we moved out of a hotspot onto no hotspot
 		[_front_render_state->card performSelector:@selector(mouseEnteredHotspot:) withObject:hotspot inThread:[g_world scriptThread]];

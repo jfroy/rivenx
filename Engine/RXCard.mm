@@ -1530,16 +1530,12 @@ static NSMutableString* _scriptLogPrefix;
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse entered no hotspot", _scriptLogPrefix);
 #endif
-		[g_worldView performSelectorOnMainThread:@selector(setCursor:) withObject:[g_world defaultCursor] waitUntilDone:NO];
 		return;
 	}
 	
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse entered %@", _scriptLogPrefix, hotspot);
 #endif
-	
-	// set the cursor associated with this hotspot
-	[g_worldView performSelectorOnMainThread:@selector(setCursor:) withObject:[g_world cursorForID:[hotspot cursorID]] waitUntilDone:NO];
 	
 	// schedule periodic execution of the "inside hotspot" programs
 	[_insideHotspotEventTimer invalidate];
