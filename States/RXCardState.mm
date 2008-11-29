@@ -1469,7 +1469,6 @@ exit_render:
 	if (!_front_render_state->card)
 		goto exit_flush_tasks;
 	
-	// FIXME: transitions not implemented yet, task destination card only
 	_postFlushCardImp(self, _postFlushCardSel, _front_render_state->card, outputTime);
 	
 exit_flush_tasks:
