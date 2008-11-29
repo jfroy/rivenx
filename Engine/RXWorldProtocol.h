@@ -45,6 +45,7 @@
 - (RXGameState*)gameState;
 
 - (NSCursor*)defaultCursor;
+- (NSCursor*)openHandCursor;
 - (NSCursor*)cursorForID:(uint16_t)ID;
 @end
 

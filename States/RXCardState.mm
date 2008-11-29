@@ -1640,26 +1640,31 @@ exit_flush_tasks:
 			break;
 	}
 	
+	// now check if we're over one of the inventory regions
 	if (!hotspot) {
 		for (int inventory_i = 0; inventory_i < 3; inventory_i++) {
-			
+			if (NSPointInRect(mousePoint, _inventoryHotspotRegions[inventory_i])) {
+				hotspot = (RXHotspot*)(inventory_i + 1);
+				break;
+			}
 		}
 	}
 	
 	// if we were over another hotspot, we're no longer over it and we send a mouse exited event followed by a mouse entered event
 	if (_currentHotspot != hotspot || _resetHotspotState) {
-		// mouseExitedHotspot does not accept nil (we can't exit the "nil" hotspot)
-		if (_currentHotspot)
+		// mouseExitedHotspot does not accept nil (we can't exit the "nil" hotspot); make sure _currentHotspot is not in PAGEZERO (e.g. that it is a valid object)
+		if (_currentHotspot > (RXHotspot*)0x1000)
 			[_front_render_state->card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 		
 		// handle cursor changes here so we don't ping-pong across 2 threads
-		if (hotspot)
-			[g_worldView setCursor:[g_world cursorForID:[hotspot cursorID]]];
-		else
+		if (hotspot == 0)
 			[g_worldView setCursor:[g_world defaultCursor]];
-		
-		// mouseEnteredHotspot accepts nil as the hotspot, to indicate we moved out of a hotspot onto no hotspot
-		[_front_render_state->card performSelector:@selector(mouseEnteredHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+		else if (hotspot < (RXHotspot*)0x1000)
+			[g_worldView setCursor:[g_world openHandCursor]];
+		else {
+			[g_worldView setCursor:[g_world cursorForID:[hotspot cursorID]]];
+			[_front_render_state->card performSelector:@selector(mouseEnteredHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+		}
 		
 		_currentHotspot = hotspot;
 		_resetHotspotState = NO;

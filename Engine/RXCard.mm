@@ -1117,6 +1117,7 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 #pragma mark -
+#pragma mark script execution
 
 - (size_t)_executeRivenProgram:(const void *)program count:(uint16_t)opcodeCount {
 	if (!_scriptHandler)
@@ -1478,6 +1479,7 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 #pragma mark -
+#pragma mark hotspots
 
 - (NSArray*)activeHotspots {
 	// WARNING: WILL BE CALLED BY THE MAIN THREAD
@@ -1525,13 +1527,8 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 - (void)mouseEnteredHotspot:(RXHotspot*)hotspot {
-	// it's possible to receive nil for hotspot, which means we're not over any hotspot; in that case, set the default cursor
-	if (!hotspot) {
-#if defined(DEBUG)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse entered no hotspot", _scriptLogPrefix);
-#endif
-		return;
-	}
+	if (!hotspot)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Hotspot object cannot be nil." userInfo:nil];
 	
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse entered %@", _scriptLogPrefix, hotspot);
@@ -1546,6 +1543,9 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 - (void)mouseExitedHotspot:(RXHotspot*)hotspot {
+	if (!hotspot)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Hotspot object cannot be nil." userInfo:nil];
+
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouseExited %@ {", _scriptLogPrefix, hotspot);
 	[_scriptLogPrefix appendString:@"    "];
@@ -1583,6 +1583,9 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 - (void)mouseDownInHotspot:(RXHotspot*)hotspot {
+	if (!hotspot)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Hotspot object cannot be nil." userInfo:nil];
+
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouseDown in %@ {", _scriptLogPrefix, hotspot);
 	[_scriptLogPrefix appendString:@"    "];
@@ -1616,6 +1619,9 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 - (void)mouseUpInHotspot:(RXHotspot*)hotspot {
+	if (!hotspot)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Hotspot object cannot be nil." userInfo:nil];
+
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouseUp in %@ {", _scriptLogPrefix, hotspot);
 	[_scriptLogPrefix appendString:@"    "];
@@ -1649,6 +1655,7 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 #pragma mark -
+#pragma mark movie playback
 
 - (void)_handleMovieRateChange:(NSNotification *)notification {
 	// WARNING: MUST RUN ON MAIN THREAD
@@ -1734,6 +1741,7 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 #pragma mark -
+#pragma mark dynamic pictures
 
 - (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive displayRect:(NSRect)displayRect samplingRect:(NSRect)samplingRect {
 	// if the front render state says we're done refreshing the static content and the back render state has not been modified, we can reset the dynamic picture count
@@ -2445,6 +2453,7 @@ static NSMutableString* _scriptLogPrefix;
 
 #define DEFINE_COMMAND(NAME) - (void)_external_ ## NAME:(const uint16_t)argc arguments:(const uint16_t*)argv
 
+#pragma mark -
 #pragma mark setup
 
 DEFINE_COMMAND(xasetupcomplete) {
@@ -2464,6 +2473,7 @@ DEFINE_COMMAND(xasetupcomplete) {
 	DISPATCH_COMMAND1(2, 1);
 }
 
+#pragma mark -
 #pragma mark atrus journal
 
 - (void)_updateAtrusJournal {
@@ -2532,6 +2542,7 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 	}
 }
 
+#pragma mark -
 #pragma mark catherine journal
 
 - (void)_updateCatherineJournal {
@@ -2632,6 +2643,7 @@ DEFINE_COMMAND(xacathbooknextpage) {
 	}
 }
 
+#pragma mark -
 #pragma mark lab journal
 
 - (void)_updateLabJournal {
@@ -2705,6 +2717,7 @@ DEFINE_COMMAND(xblabbooknextpage) {
 	}
 }
 
+#pragma mark -
 #pragma mark gehn journal
 
 - (void)_updateGehnJournal {
