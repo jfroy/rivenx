@@ -92,6 +92,7 @@ CF_INLINE rx_size_t RXGetGLViewportSize() {
 }
 
 CF_INLINE rx_rect_t RXEffectiveRendererFrame() {
+	// FIXME: need to cache the result of this function, since it should not change too often
 	rx_size_t viewportSize = RXGetGLViewportSize();
 	rx_size_t contentSize = kRXRendererViewportSize;
 	

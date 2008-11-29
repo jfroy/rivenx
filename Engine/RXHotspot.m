@@ -48,7 +48,8 @@
 	NSArray* keys = [[_script allKeys] sortedArrayUsingSelector:@selector(compare:)];
 	NSEnumerator* handlers = [keys objectEnumerator];
 	NSString* key;
-	while((key = [handlers nextObject])) [hotspot_handlers appendFormat:@"	  %@ = %d\n", key, [[_script objectForKey:key] count]];
+	while((key = [handlers nextObject]))
+		[hotspot_handlers appendFormat:@"	  %@ = %d\n", key, [[_script objectForKey:key] count]];
 	RXOLog(@"hotspot script:\n%@", hotspot_handlers);
 	[hotspot_handlers release];
 #endif

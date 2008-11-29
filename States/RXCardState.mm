@@ -484,7 +484,7 @@ init_failure:
 		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
 	
 	// 4 lines per hotspot, 6 floats per line (coord[x, y] color[r, g, b, a])
-	glBufferData(GL_ARRAY_BUFFER, RX_MAX_RENDER_HOTSPOT * 24 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW); glReportError();
+	glBufferData(GL_ARRAY_BUFFER, (RX_MAX_RENDER_HOTSPOT + 3) * 24 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW); glReportError();
 	
 	// configure the VAs
 	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
@@ -494,8 +494,8 @@ init_failure:
 	glColorPointer(4, GL_FLOAT, 6 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
 	
 	// allocate the first element and element count arrays
-	_hotspotDebugRenderFirstElementArray = new GLint[RX_MAX_RENDER_HOTSPOT];
-	_hotspotDebugRenderElementCountArray = new GLint[RX_MAX_RENDER_HOTSPOT];
+	_hotspotDebugRenderFirstElementArray = new GLint[RX_MAX_RENDER_HOTSPOT + 3];
+	_hotspotDebugRenderElementCountArray = new GLint[RX_MAX_RENDER_HOTSPOT + 3];
 	
 	// alright, we've done all the work we could, let's now make those journal inventory textures
 	
@@ -1249,6 +1249,18 @@ init_failure:
 	if (GLEE_APPLE_flush_buffer_range)
 		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), 48 * sizeof(GLfloat));
 	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
+	
+	// compute the hotspot regions by scaling the rendering regions
+	rx_rect_t contentRect = RXEffectiveRendererFrame();
+	float scale_x = (float)contentRect.size.width / (float)kRXRendererViewportSize.width;
+	float scale_y = (float)contentRect.size.height / (float)kRXRendererViewportSize.height;
+	
+	for (int inventory_i = 0; inventory_i < 3; inventory_i++) {
+		_inventoryHotspotRegions[inventory_i].origin.x = contentRect.origin.x + _inventoryRegions[inventory_i].origin.x * scale_x;
+		_inventoryHotspotRegions[inventory_i].origin.y = contentRect.origin.y + _inventoryRegions[inventory_i].origin.y * scale_y;
+		_inventoryHotspotRegions[inventory_i].size.width = _inventoryRegions[inventory_i].size.width * scale_x;
+		_inventoryHotspotRegions[inventory_i].size.height = _inventoryRegions[inventory_i].size.height * scale_y;
+	}
 }
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
@@ -1447,12 +1459,53 @@ exit_render:
 			primitive_index++;
 		}
 		
+		for (int inventory_i = 0; inventory_i < 3; inventory_i++) {
+			_hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
+			_hotspotDebugRenderElementCountArray[primitive_index] = 4;
+			
+			NSRect frame = _inventoryHotspotRegions[inventory_i];
+			
+			attribs[0] = frame.origin.x;
+			attribs[1] = frame.origin.y;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			attribs[0] = frame.origin.x + frame.size.width;
+			attribs[1] = frame.origin.y;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			attribs[0] = frame.origin.x + frame.size.width;
+			attribs[1] = frame.origin.y + frame.size.height;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			attribs[0] = frame.origin.x;
+			attribs[1] = frame.origin.y + frame.size.height;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			primitive_index++;
+		}
+		
 		if (GLEE_APPLE_flush_buffer_range)
 			glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, [activeHotspots count] * 24 * sizeof(GLfloat));
 		glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 		
 		glBindVertexArrayAPPLE(_hotspotDebugRenderVAO); glReportError();		
-		glMultiDrawArrays(GL_LINE_LOOP, _hotspotDebugRenderFirstElementArray, _hotspotDebugRenderElementCountArray, [activeHotspots count]); glReportError();
+		glMultiDrawArrays(GL_LINE_LOOP, _hotspotDebugRenderFirstElementArray, _hotspotDebugRenderElementCountArray, [activeHotspots count] + 3); glReportError();
 		
 		glBindVertexArrayAPPLE(0); glReportError();
 	}	
@@ -1583,7 +1636,14 @@ exit_flush_tasks:
 	NSEnumerator* hotpotEnum = [[_front_render_state->card activeHotspots] objectEnumerator];
 	RXHotspot* hotspot;
 	while ((hotspot = [hotpotEnum nextObject])) {
-		if (NSPointInRect(mousePoint, [hotspot worldViewFrame])) break;
+		if (NSPointInRect(mousePoint, [hotspot worldViewFrame]))
+			break;
+	}
+	
+	if (!hotspot) {
+		for (int inventory_i = 0; inventory_i < 3; inventory_i++) {
+			
+		}
 	}
 	
 	// if we were over another hotspot, we're no longer over it and we send a mouse exited event followed by a mouse entered event
