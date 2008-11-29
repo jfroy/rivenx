@@ -1631,6 +1631,9 @@ exit_flush_tasks:
 		return;
 	
 	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
+#if defined(DEBUG) && DEBUG > 2
+	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"moving mouse - %@", NSStringFromPoint(mousePoint));
+#endif
 	
 	// find over which hotspot the mouse is
 	NSEnumerator* hotpotEnum = [[_front_render_state->card activeHotspots] objectEnumerator];
@@ -1653,7 +1656,7 @@ exit_flush_tasks:
 	// if we were over another hotspot, we're no longer over it and we send a mouse exited event followed by a mouse entered event
 	if (_currentHotspot != hotspot || _resetHotspotState) {
 		// mouseExitedHotspot does not accept nil (we can't exit the "nil" hotspot); make sure _currentHotspot is not in PAGEZERO (e.g. that it is a valid object)
-		if (_currentHotspot > (RXHotspot*)0x1000)
+		if (_currentHotspot >= (RXHotspot*)0x1000)
 			[_front_render_state->card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 		
 		// handle cursor changes here so we don't ping-pong across 2 threads
@@ -1672,17 +1675,30 @@ exit_flush_tasks:
 }
 
 - (void)mouseDragged:(NSEvent*)event {
-	//RXOLog(@"Caught mouseDragged");
+#if defined(DEBUG) && DEBUG > 2
+	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"dragging mouse");
+#endif
+	_isDraggingMouse = YES;
 }
 
 - (void)mouseDown:(NSEvent*)event {
-	if (_ignoreUIEventsCounter > 0) return;
-	if (_currentHotspot) [_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+	if (_ignoreUIEventsCounter > 0)
+		return;
+	
+	if (_currentHotspot >= (RXHotspot*)0x1000)
+		[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 }
 
 - (void)mouseUp:(NSEvent*)event {
-	if (_ignoreUIEventsCounter > 0) return;
-	if (_currentHotspot) [_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+	if (_ignoreUIEventsCounter > 0)
+		return;
+	
+	if (_currentHotspot >= (RXHotspot*)0x1000)
+		[_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+	
+	if (_isDraggingMouse)
+		[self mouseMoved:event];
+	_isDraggingMouse = NO;
 }
 
 @end

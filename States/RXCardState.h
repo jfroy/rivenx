@@ -46,6 +46,7 @@ struct _rx_transition_program {
 	
 	// hotspot state handling
 	BOOL _resetHotspotState;
+	BOOL _isDraggingMouse;
 	RXHotspot* _currentHotspot;
 	
 	// sounds
