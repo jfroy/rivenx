@@ -1754,7 +1754,7 @@
 			};
 			name = Debug;
 		};
-		314959920E327B2E00E49C83 /* Debug_u */ = {
+		314959920E327B2E00E49C83 /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -1778,7 +1778,7 @@
 				);
 				PRODUCT_NAME = MHKKit;
 			};
-			name = Debug_u;
+			name = "Debug Release";
 		};
 		314959930E327B2E00E49C83 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1817,13 +1817,13 @@
 			};
 			name = Debug;
 		};
-		316E1EEB0E77803200F28E2A /* Debug_u */ = {
+		316E1EEB0E77803200F28E2A /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				INSTALL_PATH = /usr/local/bin;
 				PRODUCT_NAME = mhkdump;
 			};
-			name = Debug_u;
+			name = "Debug Release";
 		};
 		316E1EEC0E77803200F28E2A /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1858,7 +1858,7 @@
 			};
 			name = Debug;
 		};
-		31C3571E0D92A6AD00EDEF81 /* Debug_u */ = {
+		31C3571E0D92A6AD00EDEF81 /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Riven X.app/Contents/MacOS/Riven X";
@@ -1878,7 +1878,7 @@
 				TEST_HOST = "$(BUNDLE_LOADER)";
 				WRAPPER_EXTENSION = octest;
 			};
-			name = Debug_u;
+			name = "Debug Release";
 		};
 		31C3571F0D92A6AD00EDEF81 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1997,7 +1997,7 @@
 			};
 			name = Debug;
 		};
-		31D6AD900D4197E700629AEB /* Debug_u */ = {
+		31D6AD900D4197E700629AEB /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
@@ -2016,7 +2016,7 @@
 				PRODUCT_NAME = dump_save;
 				ZERO_LINK = NO;
 			};
-			name = Debug_u;
+			name = "Debug Release";
 		};
 		31D6AD910D4197E700629AEB /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2137,7 +2137,7 @@
 			};
 			name = Release;
 		};
-		31EAEB390A92530E004CC449 /* Debug_u */ = {
+		31EAEB390A92530E004CC449 /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
@@ -2156,9 +2156,9 @@
 				PRODUCT_NAME = plistize_stacks;
 				ZERO_LINK = NO;
 			};
-			name = Debug_u;
+			name = "Debug Release";
 		};
-		31EAEB3A0A92530E004CC449 /* Debug_u */ = {
+		31EAEB3A0A92530E004CC449 /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
@@ -2180,9 +2180,9 @@
 				WARNING_CFLAGS = "-Wall";
 				ZERO_LINK = NO;
 			};
-			name = Debug_u;
+			name = "Debug Release";
 		};
-		31EAEB3B0A92530E004CC449 /* Debug_u */ = {
+		31EAEB3B0A92530E004CC449 /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
@@ -2205,9 +2205,9 @@
 				WARNING_CFLAGS = "-Wall";
 				ZERO_LINK = NO;
 			};
-			name = Debug_u;
+			name = "Debug Release";
 		};
-		31EAEB3C0A92530E004CC449 /* Debug_u */ = {
+		31EAEB3C0A92530E004CC449 /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
@@ -2231,17 +2231,17 @@
 				PRODUCT_NAME = RXCardAudioSource_test;
 				ZERO_LINK = NO;
 			};
-			name = Debug_u;
+			name = "Debug Release";
 		};
-		31EAEB3D0A92530E004CC449 /* Debug_u */ = {
+		31EAEB3D0A92530E004CC449 /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 31B78EC70C88F25F00227E0F /* RivenX.xcconfig */;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx-devel-bzr.xml";
 			};
-			name = Debug_u;
+			name = "Debug Release";
 		};
-		31EAEB3E0A92530E004CC449 /* Debug_u */ = {
+		31EAEB3E0A92530E004CC449 /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */;
 			buildSettings = {
@@ -2256,7 +2256,7 @@
 				SDKROOT = macosx10.5;
 				STRIP_INSTALLED_PRODUCT = NO;
 			};
-			name = Debug_u;
+			name = "Debug Release";
 		};
 		31F3093908BE43C200417394 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -2281,7 +2281,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31333F5609B01A2300DB6FC7 /* Debug */,
-				31EAEB3A0A92530E004CC449 /* Debug_u */,
+				31EAEB3A0A92530E004CC449 /* Debug Release */,
 				31333F5809B01A2300DB6FC7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -2291,7 +2291,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				314959910E327B2E00E49C83 /* Debug */,
-				314959920E327B2E00E49C83 /* Debug_u */,
+				314959920E327B2E00E49C83 /* Debug Release */,
 				314959930E327B2E00E49C83 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -2301,7 +2301,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				316E1EEA0E77803200F28E2A /* Debug */,
-				316E1EEB0E77803200F28E2A /* Debug_u */,
+				316E1EEB0E77803200F28E2A /* Debug Release */,
 				316E1EEC0E77803200F28E2A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -2311,7 +2311,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31C3571D0D92A6AD00EDEF81 /* Debug */,
-				31C3571E0D92A6AD00EDEF81 /* Debug_u */,
+				31C3571E0D92A6AD00EDEF81 /* Debug Release */,
 				31C3571F0D92A6AD00EDEF81 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -2321,7 +2321,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31CB99B708B29A4100609EB5 /* Debug */,
-				31EAEB390A92530E004CC449 /* Debug_u */,
+				31EAEB390A92530E004CC449 /* Debug Release */,
 				31CB99B808B29A4100609EB5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -2331,7 +2331,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31CB99BB08B29A4100609EB5 /* Debug */,
-				31EAEB3E0A92530E004CC449 /* Debug_u */,
+				31EAEB3E0A92530E004CC449 /* Debug Release */,
 				31CB99BC08B29A4100609EB5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -2341,7 +2341,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31D6AD8F0D4197E700629AEB /* Debug */,
-				31D6AD900D4197E700629AEB /* Debug_u */,
+				31D6AD900D4197E700629AEB /* Debug Release */,
 				31D6AD910D4197E700629AEB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -2351,7 +2351,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31DAA10B09D888FA00F63F20 /* Debug */,
-				31EAEB3C0A92530E004CC449 /* Debug_u */,
+				31EAEB3C0A92530E004CC449 /* Debug Release */,
 				31DAA10D09D888FA00F63F20 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -2361,7 +2361,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31DC682509CB87EF00BFF447 /* Debug */,
-				31EAEB3B0A92530E004CC449 /* Debug_u */,
+				31EAEB3B0A92530E004CC449 /* Debug Release */,
 				31DC682709CB87EF00BFF447 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
@@ -2371,7 +2371,7 @@
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				31F3093908BE43C200417394 /* Debug */,
-				31EAEB3D0A92530E004CC449 /* Debug_u */,
+				31EAEB3D0A92530E004CC449 /* Debug Release */,
 				31F3093A08BE43C200417394 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
