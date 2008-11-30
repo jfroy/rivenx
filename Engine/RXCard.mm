@@ -2492,6 +2492,20 @@ DEFINE_COMMAND(xasetupcomplete) {
 }
 
 #pragma mark -
+#pragma mark shared journal support
+
+- (void)_returnFromJournal {
+	// schedule a cross-fade transition to the return card
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	[_scriptHandler queueTransition:transition];
+	[transition release];
+	
+	// change the active card to the saved return card
+	RXSimpleCardDescriptor* returnCard = [[g_world gameState] returnCard];
+	[_scriptHandler setActiveCardWithStack:returnCard->parentName ID:returnCard->cardID waitUntilDone:YES];
+}
+
+#pragma mark -
 #pragma mark atrus journal
 
 - (void)_updateAtrusJournal {
@@ -2522,14 +2536,7 @@ DEFINE_COMMAND(xaatrusopenbook) {
 }
 
 DEFINE_COMMAND(xaatrusbookback) {
-	// schedule a cross-fade transition to the return card
-	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
-	[_scriptHandler queueTransition:transition];
-	[transition release];
-	
-	// change the active card to the saved return card
-	RXSimpleCardDescriptor* returnCard = [[g_world gameState] returnCard];
-	[_scriptHandler setActiveCardWithStack:returnCard->parentName ID:returnCard->cardID waitUntilDone:YES];
+	[self _returnFromJournal];
 }
 
 DEFINE_COMMAND(xaatrusbookprevpage) {
@@ -2630,14 +2637,7 @@ DEFINE_COMMAND(xacathopenbook) {
 }
 
 DEFINE_COMMAND(xacathbookback) {	
-	// schedule a cross-fade transition to the return card
-	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
-	[_scriptHandler queueTransition:transition];
-	[transition release];
-	
-	// change the active card to the saved return card
-	RXSimpleCardDescriptor* returnCard = [[g_world gameState] returnCard];
-	[_scriptHandler setActiveCardWithStack:returnCard->parentName ID:returnCard->cardID waitUntilDone:YES];
+	[self _returnFromJournal];
 }
 
 DEFINE_COMMAND(xacathbookprevpage) {
@@ -2673,6 +2673,13 @@ DEFINE_COMMAND(xacathbooknextpage) {
 		
 		DISPATCH_COMMAND0(21);
 	}
+}
+
+#pragma mark -
+#pragma mark trap book
+
+DEFINE_COMMAND(xtrapbookback) {	
+	[self _returnFromJournal];
 }
 
 #pragma mark -
