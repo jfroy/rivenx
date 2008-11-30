@@ -682,7 +682,7 @@ static NSMutableString* _scriptLogPrefix;
 	_hotspotControlRecords = BUFFER_OFFSET(_blstData, sizeof(uint16_t));
 	
 	// byte order (and debug)
-#if defined(__LITTLE_ENDIAN__) || defined(DEBUG)
+#if defined(__LITTLE_ENDIAN__) || (defined(DEBUG) && DEBUG > 1)
 	uint16_t blstCount = CFSwapInt16BigToHost(*(uint16_t*)_blstData);
 	for (currentListIndex = 0; currentListIndex < blstCount; currentListIndex++) {
 		struct rx_blst_record* record = (struct rx_blst_record*)_hotspotControlRecords + currentListIndex;
