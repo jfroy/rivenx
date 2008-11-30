@@ -49,11 +49,11 @@ static const GLuint RX_MAX_RENDER_HOTSPOT = 20;
 
 static const GLuint RX_MAX_INVENTORY_ITEMS = 3;
 static const NSString* RX_INVENTORY_KEYS[3] = {
-	@"Athrus",
+	@"Atrus",
 	@"Catherine",
 	@"Prison"
 };
-static const int RX_INVENTORY_ATHRUS = 0;
+static const int RX_INVENTORY_ATRUS = 0;
 static const int RX_INVENTORY_CATHERINE = 1;
 static const int RX_INVENTORY_PRISON = 2;
 
@@ -1620,6 +1620,28 @@ exit_flush_tasks:
 	// meaning even though we changed the active set of hotspots, the one we're on may still be valid after
 }
 
+- (void)_handleInventoryMouseDown:(NSEvent*)event inventoryIndex:(uint32_t)index {
+	if (index >= RX_MAX_INVENTORY_ITEMS)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"OUT OF BOUNDS INVENTORY INDEX" userInfo:nil];
+	
+	RXEdition* edition = [[RXEditionManager sharedEditionManager] currentEdition];
+	
+	NSNumber* journalCardIDNumber = [[edition valueForKey:@"journalCardIDMap"] objectForKey:RX_INVENTORY_KEYS[index]];
+	if (!journalCardIDNumber)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO CARD ID FOR GIVEN INVENTORY KEY IN JOURNAL CARD ID MAP" userInfo:nil];
+	
+	// set the return card in the game state to the current card
+	[[g_world gameState] setReturnCard:[[_front_render_state->card descriptor] simpleDescriptor]];
+	
+	// schedule a cross-fade transition to the journal card
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	[self queueTransition:transition];
+	[transition release];
+	
+	// change the active card to the journal card
+	[self setActiveCardWithStack:@"aspit" ID:[journalCardIDNumber unsignedShortValue] waitUntilDone:NO];
+}
+
 - (void)mouseMoved:(NSEvent*)event {
 	if (_ignoreUIEventsCounter > 0)
 		return;
@@ -1681,6 +1703,8 @@ exit_flush_tasks:
 	
 	if (_currentHotspot >= (RXHotspot*)0x1000)
 		[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+	else if (_currentHotspot)
+		[self _handleInventoryMouseDown:event inventoryIndex:(uint32_t)_currentHotspot - 1];
 }
 
 - (void)mouseUp:(NSEvent*)event {

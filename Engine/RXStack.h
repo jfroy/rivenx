@@ -31,9 +31,9 @@
 	uint16_t _entryCardID;
 }
 
-- (id)initWithStackDescriptor:(NSDictionary *)descriptor key:(NSString *)key;
+- (id)initWithStackDescriptor:(NSDictionary*)descriptor key:(NSString*)key;
 
-- (NSString *)key;
+- (NSString*)key;
 - (uint16_t)entryCardID;
 
 - (NSString*)cardNameAtIndex:(uint32_t)index;

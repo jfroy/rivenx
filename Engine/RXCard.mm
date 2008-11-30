@@ -2048,7 +2048,8 @@ static NSMutableString* _scriptLogPrefix;
 // 2
 - (void)_opcode_goToCard:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to card ID %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to card ID %hu", _scriptLogPrefix, argv[0]);
 #endif
 
 	RXStack* parent = [_descriptor parent];
@@ -2094,9 +2095,11 @@ static NSMutableString* _scriptLogPrefix;
 	
 	RXStack* parent = [_descriptor parent];
 	NSString* name = [parent varNameAtIndex:argv[0]];
-	if (!name) name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
+	if (!name)
+		name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting variable %@ to %hu", _scriptLogPrefix, name, argv[1]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting variable %@ to %hu", _scriptLogPrefix, name, argv[1]);
 #endif
 	
 	[[g_world gameState] setUnsignedShort:argv[1] forKey:name];
@@ -2296,20 +2299,23 @@ static NSMutableString* _scriptLogPrefix;
 
 // 27
 - (void)_opcode_goToStack:(const uint16_t)argc arguments:(const uint16_t*) argv {
-	if (argc < 3) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 3)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
 	NSString* stackKey = [[_descriptor parent] stackNameAtIndex:argv[0]];
 	// FIXME: we need to be smarter about stack management. For now, we try to load the stack once. And it stays loaded. Forver
 	// make sure the requested stack has been loaded
 	RXStack* stack = [g_world activeStackWithKey:stackKey];
-	if (!stack) [g_world loadStackWithKey:stackKey waitUntilDone:YES];
+	if (!stack)
+		[g_world loadStackWithKey:stackKey waitUntilDone:YES];
 	stack = [g_world activeStackWithKey:stackKey];
 	
 	uint32_t card_rmap = (argv[1] << 16) | argv[2];
 	uint16_t card_id = [stack cardIDFromRMAPCode:card_rmap];
 	
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to stack %@ on card ID %hu", _scriptLogPrefix, stackKey, card_id);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to stack %@ on card ID %hu", _scriptLogPrefix, stackKey, card_id);
 #endif
 	
 	[_scriptHandler setActiveCardWithStack:stackKey ID:card_id waitUntilDone:YES];
@@ -2504,7 +2510,14 @@ DEFINE_COMMAND(xaatrusopenbook) {
 }
 
 DEFINE_COMMAND(xaatrusbookback) {
-
+	// schedule a cross-fade transition to the return card
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	[_scriptHandler queueTransition:transition];
+	[transition release];
+	
+	// change the active card to the saved return card
+	RXSimpleCardDescriptor* returnCard = [[g_world gameState] returnCard];
+	[_scriptHandler setActiveCardWithStack:returnCard->parentName ID:returnCard->cardID waitUntilDone:YES];
 }
 
 DEFINE_COMMAND(xaatrusbookprevpage) {
@@ -2604,8 +2617,15 @@ DEFINE_COMMAND(xacathopenbook) {
 	[self _updateCatherineJournal];
 }
 
-DEFINE_COMMAND(xacathbookback) {
-
+DEFINE_COMMAND(xacathbookback) {	
+	// schedule a cross-fade transition to the return card
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	[_scriptHandler queueTransition:transition];
+	[transition release];
+	
+	// change the active card to the saved return card
+	RXSimpleCardDescriptor* returnCard = [[g_world gameState] returnCard];
+	[_scriptHandler setActiveCardWithStack:returnCard->parentName ID:returnCard->cardID waitUntilDone:YES];
 }
 
 DEFINE_COMMAND(xacathbookprevpage) {

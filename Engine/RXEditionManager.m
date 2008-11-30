@@ -280,15 +280,18 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	// FIXME: this method needs to track opened archives when the time comes to eject a disc
 	
 	// if there is no current edition, bail out
-	if (!currentEdition) ReturnValueWithError(nil, @"RXErrorDomain", 0, nil, error);
+	if (!currentEdition)
+		ReturnValueWithError(nil, @"RXErrorDomain", 0, nil, error);
 	
 	// first look in the local data store
 	if (_localDataStore) {
 		archivePath = [_localDataStore stringByAppendingPathComponent:filename];
 		if (BZFSFileExists(archivePath)) {
 			archive = [[[MHKArchive alloc] initWithPath:archivePath error:error] autorelease];
-			if (!archive) return nil;
-			else return archive;
+			if (!archive)
+				return nil;
+			else
+				return archive;
 		}
 	}
 	
@@ -296,8 +299,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	archivePath = [[currentEdition valueForKey:@"userDataBase"] stringByAppendingPathComponent:filename];
 	if (BZFSFileExists(archivePath)) {
 		archive = [[[MHKArchive alloc] initWithPath:archivePath error:error] autorelease];
-		if (!archive) return nil;
-		else return archive;
+		if (!archive)
+			return nil;
+		else
+			return archive;
 	}
 	
 	// then look on the proper optical media

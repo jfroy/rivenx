@@ -383,7 +383,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	@try {
 		// FIXME: change this to use the current edition
 		NSDictionary* stackDescriptor = [[[RXEditionManager sharedEditionManager] currentEdition] valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@", stackKey]];
-		if (!stackDescriptor || ![stackDescriptor isKindOfClass:[NSDictionary class]]) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Stack descriptor object is nil or of the wrong type." userInfo:stackDescriptor];
+		if (!stackDescriptor || ![stackDescriptor isKindOfClass:[NSDictionary class]])
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Stack descriptor object is nil or of the wrong type." userInfo:stackDescriptor];
 		
 		stack = [[RXStack alloc] initWithStackDescriptor:stackDescriptor key:stackKey];
 		if (stack) {
@@ -421,25 +422,29 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		[self performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
 	} @finally {
 		// signal if we were asked to
-		if (signal) semaphore_signal(_stackInitSemaphore);
+		if (signal)
+			semaphore_signal(_stackInitSemaphore);
 	}
 }
 
 - (void)loadStackWithKey:(NSString*)stackKey waitUntilDone:(BOOL)waitFlag {
 	// WARNING: this method can run on any thread
 	// WARNING: this method allows for duplicate instances of the same stack to be loaded, always use activeStackWithKey first to check if the stack is available
-	if (_tornDown) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"loadStackWithKey: RXWorld IS TORN DOWN" userInfo:nil];
+	if (_tornDown)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"loadStackWithKey: RXWorld IS TORN DOWN" userInfo:nil];
 	
 	// fire the stack on a new thread
 	NSDictionary* initStackDict = [NSDictionary dictionaryWithObjectsAndKeys:stackKey, @"stackKey", [NSNumber numberWithBool:waitFlag], @"waitFlag", nil];
 	[self performSelector:@selector(_initializeStackWithInitializationDictionary:) withObject:initStackDict inThread:_stackThread];
 	
 	// if the request is synchronous, wait until we get signaled
-	if (waitFlag) semaphore_wait(_stackInitSemaphore);
+	if (waitFlag)
+		semaphore_wait(_stackInitSemaphore);
 }
 
 - (RXStack*)activeStackWithKey:(NSString*)key {
-	if (_tornDown) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
+	if (_tornDown)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
 	
 	pthread_rwlock_rdlock(&_activeStacksLock);
 	RXStack* stack = [_activeStacks objectForKey:key];
@@ -449,7 +454,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (NSArray*)activeStacks {
-	if (_tornDown) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
+	if (_tornDown)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
 	
 	pthread_rwlock_rdlock(&_activeStacksLock);
 	NSArray* stacks = [_activeStacks allValues];

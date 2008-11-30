@@ -16,7 +16,8 @@
 
 static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID) {
 	NSData* nameData = [archive dataWithResourceType:@"NAME" ID:resourceID];
-	if (!nameData) return nil;
+	if (!nameData)
+		return nil;
 	
 	uint16_t recordCount = CFSwapInt16BigToHost(*(const uint16_t *)[nameData bytes]);
 	NSMutableArray* recordArray = [[NSMutableArray alloc] initWithCapacity:recordCount];
@@ -24,8 +25,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	const uint16_t* offsetBase = (uint16_t *)BUFFER_OFFSET([nameData bytes], sizeof(uint16_t));
 	const uint8_t* stringBase = (uint8_t *)BUFFER_OFFSET([nameData bytes], sizeof(uint16_t) + (sizeof(uint16_t) * 2 * recordCount));
 	
-	uint16_t currentRecordIndex = 0;
-	for (; currentRecordIndex < recordCount; currentRecordIndex++) {
+	for (uint16_t currentRecordIndex = 0; currentRecordIndex < recordCount; currentRecordIndex++) {
 		uint16_t recordOffset = CFSwapInt16BigToHost(offsetBase[currentRecordIndex]);
 		const unsigned char* entryBase = (const unsigned char *)stringBase + recordOffset;
 		size_t recordLength = strlen((const char *)entryBase);
@@ -65,9 +65,10 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	return nil;
 }
 
-- (id)initWithStackDescriptor:(NSDictionary *)descriptor key:(NSString *)key {
+- (id)initWithStackDescriptor:(NSDictionary*)descriptor key:(NSString*)key {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	if (pthread_main_np()) {
 		[self release];
@@ -125,7 +126,8 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 		if ([dataArchives isKindOfClass:[NSString class]]) {
 			// only one archive
 			MHKArchive* anArchive = [sem dataArchiveWithFilename:dataArchives stackID:_key error:&error];
-			if (!anArchive) @throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", dataArchives] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+			if (!anArchive)
+				@throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", dataArchives] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 			[_dataArchives addObject:anArchive];
 			
 			// card descriptors
@@ -137,29 +139,34 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 			NSString* anArchiveName = nil;
 			while ((anArchiveName = [archivesEnum nextObject])) {
 				MHKArchive* anArchive = [sem dataArchiveWithFilename:anArchiveName stackID:_key error:&error];
-				if (!anArchive) @throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", anArchiveName] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+				if (!anArchive)
+					@throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", anArchiveName] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 				[_dataArchives addObject:anArchive];
 				
 				// card descriptors
 				NSArray* resourceDescriptors = [anArchive valueForKey:@"CARD"];
 				_cardCount += [resourceDescriptors count];
 			}
-		} else @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Data Archives object has an invalid type." userInfo:nil];
+		} else
+			@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Data Archives object has an invalid type." userInfo:nil];
 		
 		// load the sound archives
 		if ([soundArchives isKindOfClass:[NSString class]]) {
 			MHKArchive* anArchive = [sem soundArchiveWithFilename:soundArchives stackID:_key error:&error];
-			if (!anArchive) @throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", soundArchives] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+			if (!anArchive)
+				@throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", soundArchives] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 			[_soundArchives addObject:anArchive];
 		} else if ([soundArchives isKindOfClass:[NSArray class]]) {
 			NSEnumerator* archivesEnum = [soundArchives objectEnumerator];
 			NSString* anArchiveName = nil;
 			while ((anArchiveName = [archivesEnum nextObject])) {
 				MHKArchive* anArchive = [sem soundArchiveWithFilename:anArchiveName stackID:_key error:&error];
-				if (!anArchive) @throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", anArchiveName] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+				if (!anArchive)
+					@throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", anArchiveName] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 				[_soundArchives addObject:anArchive];
 			}
-		} else @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Sound Archives object has an invalid type." userInfo:nil];
+		} else
+			@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Sound Archives object has an invalid type." userInfo:nil];
 	} @catch (NSException* e) {
 		RXOLog(@"exception thrown during initialization: %@", e);
 		[self release];
@@ -227,17 +234,17 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	[super dealloc];
 }
 
-- (NSString *)description {
+- (NSString*)description {
 	return [NSString stringWithFormat: @"%@{%@}", [super description], _key];
 }
 
-- (NSString *)debugName {
+- (NSString*)debugName {
 	return _key;
 }
 
 #pragma mark -
 
-- (void)_runThreadWillDie:(NSNotification *)notification {
+- (void)_runThreadWillDie:(NSNotification*)notification {
 	if ([notification object] == [g_world stackThread]) {
 #if defined(DEBUG)
 		RXOLog(@"stack thread has exited while I still exist");
@@ -249,7 +256,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 
 #pragma mark -
 
-- (NSString *)key {
+- (NSString*)key {
 	return _key;
 }
 
