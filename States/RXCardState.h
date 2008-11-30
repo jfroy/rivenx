@@ -60,6 +60,8 @@ struct _rx_transition_program {
 	OSSpinLock _audioTaskThreadStatusLock;
 	semaphore_t _audioTaskThreadExitSemaphore;
 	
+	BOOL _forceFadeInOnNextSoundGroup;
+	
 	// transitions
 	semaphore_t _transitionSemaphore;
 	NSMutableArray* _transitionQueue;

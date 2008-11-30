@@ -534,7 +534,8 @@ static NSMutableString* _scriptLogPrefix;
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	_scriptHandler = nil;
 	
@@ -600,7 +601,8 @@ static NSMutableString* _scriptLogPrefix;
 	
 #pragma mark HSPT
 	fh = [_archive openResourceWithResourceType:@"HSPT" ID:resourceID];
-	if (!fh) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding HSPT resource." userInfo:nil];
+	if (!fh)
+		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding HSPT resource." userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	listData = malloc(listDataLength);
@@ -648,7 +650,8 @@ static NSMutableString* _scriptLogPrefix;
 		
 		// if this is a zip hotspot, skip it if Zip mode is disabled
 		// FIXME: Zip mode is always disabled currently
-		if (hspt_record->zip == 1) continue;
+		if (hspt_record->zip == 1)
+			continue;
 		
 		// allocate the hotspot object
 		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id frame:RXMakeNSRect(hspt_record->left, hspt_record->top, hspt_record->right, hspt_record->bottom) cursorID:hspt_record->mouse_cursor script:hotspotScript];
@@ -662,11 +665,12 @@ static NSMutableString* _scriptLogPrefix;
 	}
 	
 	// don't need the HSPT data anymore
-	free(listData); listData = NULL;
+	free(listData);
 	
 #pragma mark BLST
 	fh = [_archive openResourceWithResourceType:@"BLST" ID:resourceID];
-	if (!fh) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding BLST resource." userInfo:nil];
+	if (!fh)
+		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding BLST resource." userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	_blstData = malloc(listDataLength);
@@ -697,7 +701,8 @@ static NSMutableString* _scriptLogPrefix;
 	
 #pragma mark PLST
 	fh = [_archive openResourceWithResourceType:@"PLST" ID:resourceID];
-	if (!fh) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding PLST resource." userInfo:nil];
+	if (!fh)
+		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding PLST resource." userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	listData = malloc(listDataLength);
@@ -729,7 +734,8 @@ static NSMutableString* _scriptLogPrefix;
 	size_t textureStorageSize = 0;
 	for (currentListIndex = 0; currentListIndex < _pictureCount; currentListIndex++) {
 		NSDictionary* pictureDescriptor = [_archive bitmapDescriptorWithID:plstRecords[currentListIndex].bitmap_id error:&error];
-		if (!pictureDescriptor) @throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not get a picture resource's picture descriptor." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		if (!pictureDescriptor)
+			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not get a picture resource's picture descriptor." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 		pictureRecords[currentListIndex].width = [[pictureDescriptor objectForKey:@"Width"] floatValue];
 		pictureRecords[currentListIndex].height = [[pictureDescriptor objectForKey:@"Height"] floatValue];
@@ -845,11 +851,12 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// we don't need the picture records and the PLST data anymore
 	delete[] pictureRecords;
-	free(listData); listData = NULL;
+	free(listData);
 	
 #pragma mark FLST
 	fh = [_archive openResourceWithResourceType:@"FLST" ID:resourceID];
-	if (!fh) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding FLST resource." userInfo:nil];
+	if (!fh)
+		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding FLST resource." userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	listData = malloc(listDataLength);
@@ -872,7 +879,8 @@ static NSMutableString* _scriptLogPrefix;
 #endif
 
 		MHKFileHandle* sfxeHandle = [_archive openResourceWithResourceType:@"SFXE" ID:record->sfxe_id];
-		if (!sfxeHandle) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open a required SFXE resource." userInfo:nil];
+		if (!sfxeHandle)
+			@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open a required SFXE resource." userInfo:nil];
 		
 		size_t sfxeLength = (size_t)[sfxeHandle length];
 		assert(sfxeLength >= sizeof(struct rx_fsxe_record*));
@@ -960,7 +968,8 @@ static NSMutableString* _scriptLogPrefix;
 			int16_t dy = static_cast<int16_t>(kRXCardViewportSize.height - sfxeRecord->top - 1);
 			uint16_t command = CFSwapInt16BigToHost(*sfxeProgram);
 			while (command != 4) {
-				if (command == 1) dy--;
+				if (command == 1)
+					dy--;
 				else if (command == 3) {
 					int16_t dx = static_cast<int16_t>(CFSwapInt16BigToHost(*(sfxeProgram + 1)));
 					int16_t sx = static_cast<int16_t>(CFSwapInt16BigToHost(*(sfxeProgram + 2)));
@@ -1009,7 +1018,8 @@ static NSMutableString* _scriptLogPrefix;
 						frame_texture[p + 2] = static_cast<uint8_t>(delta_y + INT8_MAX);
 #endif
 					}
-				} else abort();
+				} else
+					abort();
 				
 				sfxeProgram++;
 				command = CFSwapInt16BigToHost(*sfxeProgram);
@@ -1033,7 +1043,7 @@ static NSMutableString* _scriptLogPrefix;
 	}
 	
 	// don't need the FLST data anymore
-	free(listData); listData = NULL;
+	free(listData);
 	
 	// new textures, buffer and program objects
 	glFlush();
@@ -1043,7 +1053,8 @@ static NSMutableString* _scriptLogPrefix;
 	
 #pragma mark SLST
 	fh = [_archive openResourceWithResourceType:@"SLST" ID:resourceID];
-	if (!fh) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding SLST resource." userInfo:nil];
+	if (!fh)
+		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding SLST resource." userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	listData = malloc(listDataLength);
@@ -1067,7 +1078,8 @@ static NSMutableString* _scriptLogPrefix;
 		
 		// create a sound group for the record
 		RXSoundGroup* group = [self _createSoundGroupWithSLSTRecord:slstRecordPointer soundCount:soundCount swapBytes:YES];
-		if (group) [_soundGroups addObject:group];
+		if (group)
+			[_soundGroups addObject:group];
 		[group release];
 		
 		// move on to the next record's sound_count field
@@ -1075,7 +1087,7 @@ static NSMutableString* _scriptLogPrefix;
 	}
 	
 	// don't need the SLST data anymore
-	free(listData); listData = NULL;
+	free(listData);
 	
 	// end of list records loading
 	
@@ -2466,7 +2478,7 @@ DEFINE_COMMAND(xasetupcomplete) {
 	// schedule a fade transition
 	DISPATCH_COMMAND1(18, 16);
 	
-	// disable sounds by activating an empty sound group with fade out
+	// activate an empty sound group with fade out to clear any playing sound from the sound setup card
 	RXSoundGroup* sgroup = [RXSoundGroup new];
 	sgroup->gain = 1.0f;
 	sgroup->loop = NO;

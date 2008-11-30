@@ -629,7 +629,8 @@ init_failure:
 
 - (void)activateSoundGroup:(RXSoundGroup*)soundGroup {
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
-	if ([NSThread currentThread] != [g_world scriptThread]) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activateSoundGroup: MUST RUN ON SCRIPT THREAD" userInfo:nil];
+	if ([NSThread currentThread] != [g_world scriptThread])
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activateSoundGroup: MUST RUN ON SCRIPT THREAD" userInfo:nil];
 
 	// cache a pointer to the audio renderer
 	RX::AudioRenderer* renderer = (reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer]));
@@ -733,15 +734,16 @@ init_failure:
 	[soundsToRemove intersectSet:_activeSounds];
 	
 	// now that any sources bound to be detached has been, go ahead and attach as many of the new sources as possible
-	if (soundGroup->fadeInOnActivation) {
+	if (soundGroup->fadeInOnActivation || _forceFadeInOnNextSoundGroup) {
 		// disabling the sources will prevent the fade in from starting before we update the graph
 		CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));
 		CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceDisableApplier, [g_world audioRenderer]);
 		renderer->AttachSources(sourcesToAdd);
 		CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceFadeInApplier, [g_world audioRenderer]);
-	} else renderer->AttachSources(sourcesToAdd);
+	} else
+		renderer->AttachSources(sourcesToAdd);
 	
-	// re-enable automatic updates. this will automatically do an update if one is needed
+	// re-enable automatic updates; this will automatically do an update if one is needed
 	renderer->SetAutomaticGraphUpdates(true);
 	
 	// delete any sources that were detached
@@ -752,7 +754,7 @@ init_failure:
 	
 	// ramps are go!
 	// FIXME: scheduling ramps in this manner is not atomic
-	if (soundGroup->fadeInOnActivation) {
+	if (soundGroup->fadeInOnActivation || _forceFadeInOnNextSoundGroup) {
 		CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));
 		CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceEnableApplier, [g_world audioRenderer]);
 	}
@@ -774,6 +776,9 @@ init_failure:
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"activateSoundGroup: _activeSounds = %@", _activeSounds);
 #endif
+	
+	// reset the fade in override flag
+	_forceFadeInOnNextSoundGroup = NO;
 	
 	// done with sourcesToAdd
 	CFRelease(sourcesToAdd);
@@ -1637,6 +1642,18 @@ exit_flush_tasks:
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[self queueTransition:transition];
 	[transition release];
+	
+	// activate an empty sound group with fade out to fade out the current card's ambient sounds
+	RXSoundGroup* sgroup = [RXSoundGroup new];
+	sgroup->gain = 1.0f;
+	sgroup->loop = NO;
+	sgroup->fadeOutActiveGroupBeforeActivating = YES;
+	sgroup->fadeInOnActivation = NO;
+	[self performSelector:@selector(activateSoundGroup:) withObject:sgroup inThread:[g_world scriptThread] waitUntilDone:NO];
+	[sgroup release];
+	
+	// leave ourselves a note to force a fade in on the next activate sound group command
+	_forceFadeInOnNextSoundGroup = YES;
 	
 	// change the active card to the journal card
 	[self setActiveCardWithStack:@"aspit" ID:[journalCardIDNumber unsignedShortValue] waitUntilDone:NO];
