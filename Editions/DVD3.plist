@@ -150,5 +150,17 @@
 			<string>T_SOUNDS.MHK</string>
 		</dict>
 	</dict>
+	<key>Journals</key>
+	<dict>
+		<key>Card ID Map</key>
+		<dict>
+			<key>Atrus</key>
+			<integer>5</integer>
+			<key>Catherine</key>
+			<integer>6</integer>
+			<key>Prison</key>
+			<integer>7</integer>
+		</dict>
+	</dict>
 </dict>
 </plist>

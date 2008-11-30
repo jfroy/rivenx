@@ -45,6 +45,18 @@ static const GLuint RX_CARD_STATIC_RENDER_INDEX = 0;
 static const GLuint RX_CARD_DYNAMIC_RENDER_INDEX = 1;
 static const GLuint RX_CARD_PREVIOUS_FRAME_INDEX = 2;
 
+static const GLuint RX_MAX_RENDER_HOTSPOT = 20;
+
+static const GLuint RX_MAX_INVENTORY_ITEMS = 3;
+static const NSString* RX_INVENTORY_KEYS[3] = {
+	@"Atrus",
+	@"Catherine",
+	@"Prison"
+};
+static const int RX_INVENTORY_ATRUS = 0;
+static const int RX_INVENTORY_CATHERINE = 1;
+static const int RX_INVENTORY_PRISON = 2;
+
 
 static const void* RXCardAudioSourceArrayWeakRetain(CFAllocatorRef allocator, const void* value) {
 	return value;
@@ -117,7 +129,8 @@ static void RXCardAudioSourceTaskApplier(const void* value, void* context) {
 
 - (id)init {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	_front_render_state = (struct _rx_card_state_render_state*)malloc(sizeof(struct _rx_card_state_render_state));
 	_back_render_state = (struct _rx_card_state_render_state*)malloc(sizeof(struct _rx_card_state_render_state));
@@ -131,10 +144,12 @@ static void RXCardAudioSourceTaskApplier(const void* value, void* context) {
 	
 	kern_return_t kerr;
 	kerr = semaphore_create(mach_task_self(), &_audioTaskThreadExitSemaphore, SYNC_POLICY_FIFO, 0);
-	if (kerr != 0) goto init_failure;
+	if (kerr != 0)
+		goto init_failure;
 	
 	kerr = semaphore_create(mach_task_self(), &_transitionSemaphore, SYNC_POLICY_FIFO, 0);
-	if (kerr != 0) goto init_failure;
+	if (kerr != 0)
+		goto init_failure;
 	
 	[self _initializeRendering];
 	
@@ -148,8 +163,10 @@ init_failure:
 - (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
-	if (_transitionSemaphore != 0) semaphore_destroy(mach_task_self(), _transitionSemaphore);
-	if (_audioTaskThreadExitSemaphore != 0) semaphore_destroy(mach_task_self(), _audioTaskThreadExitSemaphore);
+	if (_transitionSemaphore)
+		semaphore_destroy(mach_task_self(), _transitionSemaphore);
+	if (_audioTaskThreadExitSemaphore)
+		semaphore_destroy(mach_task_self(), _audioTaskThreadExitSemaphore);
 	
 	[_transitionQueue release];
 	
@@ -157,8 +174,10 @@ init_failure:
 	[_activeDataSounds release];
 	[_activeSounds release];
 	
-	if (_back_render_state) free((void *)_back_render_state);
-	if (_front_render_state) free((void *)_front_render_state);
+	if (_back_render_state)
+		free((void *)_back_render_state);
+	if (_front_render_state)
+		free((void *)_front_render_state);
 	
 	[super dealloc];
 }
@@ -166,13 +185,12 @@ init_failure:
 #pragma mark -
 
 - (void)_reportShaderProgramError:(NSError*)error {
-	if ([[error domain] isEqualToString:GLShaderCompileErrorDomain]) {
+	if ([[error domain] isEqualToString:GLShaderCompileErrorDomain])
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"%@ shader failed to compile:\n%@\n%@", [[error userInfo] objectForKey:@"GLShaderType"], [[error userInfo] objectForKey:@"GLCompileLog"], [[error userInfo] objectForKey:@"GLShaderSource"]);
-	} else if ([[error domain] isEqualToString:GLShaderLinkErrorDomain]) {
+	else if ([[error domain] isEqualToString:GLShaderLinkErrorDomain])
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"%@ shader program failed to link:\n%@", [[error userInfo] objectForKey:@"GLLinkLog"]);
-	} else {
+	else
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to create shader program: %@", error);
-	}
 }
 
 - (struct _rx_transition_program)_loadTransitionShaderWithName:(NSString*)name direction:(RXTransitionDirection)direction context:(CGLContextObj)cgl_ctx {
@@ -185,7 +203,7 @@ init_failure:
 	NSString* directionSource = [NSString stringWithFormat:@"#define RX_DIRECTION %d\n", direction];
 	NSArray* extraSource = [NSArray arrayWithObjects:@"#version 110\n", directionSource, nil];
 	
-	program.program = [GLShaderProgramManager shaderProgramWithName:name root:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Shaders" ofType:nil]] extraSources:extraSource epilogueIndex:[extraSource count] context:cgl_ctx error:&error];
+	program.program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:name extraSources:extraSource epilogueIndex:[extraSource count] context:cgl_ctx error:&error];
 	if (program.program == 0) {
 		[self _reportShaderProgramError:error];
 		return program;
@@ -210,52 +228,19 @@ init_failure:
 
 - (void)_initializeRendering {
 	// WARNING: WILL BE RUNNING ON THE MAIN THREAD
+	NSError* error;
+	
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	
 	// kick start the audio task thread
 	[NSThread detachNewThreadSelector:@selector(_audioTaskThread:) toTarget:self withObject:nil];
 	
-	// card texture coordinates VA
-	_cardTexCoords[0] = 0.0f;											_cardTexCoords[1] = 0.0f;
-	_cardTexCoords[2] = 0.0f;											_cardTexCoords[3] = kRXCardViewportSize.height;
-	_cardTexCoords[4] = kRXCardViewportSize.width;						_cardTexCoords[5] = kRXCardViewportSize.height;
-	_cardTexCoords[6] = kRXCardViewportSize.width;						_cardTexCoords[7] = 0.0f;
-	
-	// store the card render vertex attributes in a buffer object since they never change
-	glGenBuffers(1, &_cardRenderVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, _cardRenderVBO); glReportError();
-	
-	// 2 attributes per vertex x 4 vectors per attribute x 2 components per vector x size of a float
-	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
-	
-	// VM map the buffer object and cache some useful pointers
-	GLfloat* vertex_attributes = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
-	
-	vertex_attributes[0] = 0.0f;												vertex_attributes[1] = 0.0f;
-	vertex_attributes[2] = vertex_attributes[0];								vertex_attributes[3] = vertex_attributes[1] + kRXCardViewportSize.height;
-	vertex_attributes[4] = vertex_attributes[0] + kRXCardViewportSize.width;	vertex_attributes[5] = vertex_attributes[3];
-	vertex_attributes[6] = vertex_attributes[4];								vertex_attributes[7] = vertex_attributes[1];
-	
-	vertex_attributes[8] = 0.0f;												vertex_attributes[9] = 0.0f;
-	vertex_attributes[10] = 0.0f;												vertex_attributes[11] = kRXCardViewportSize.height;
-	vertex_attributes[12] = kRXCardViewportSize.width;							vertex_attributes[13] = kRXCardViewportSize.height;
-	vertex_attributes[14] = kRXCardViewportSize.width;							vertex_attributes[15] = 0.0f;
-	
-	_cardCompositeVertices[0] = kRXCardViewportOriginOffset.x;								_cardCompositeVertices[1] = kRXCardViewportOriginOffset.y;
-	_cardCompositeVertices[2] = _cardCompositeVertices[0];									_cardCompositeVertices[3] = _cardCompositeVertices[1] +  kRXCardViewportSize.height;
-	_cardCompositeVertices[4] = _cardCompositeVertices[2] +  kRXCardViewportSize.width;		_cardCompositeVertices[5] = _cardCompositeVertices[3];
-	_cardCompositeVertices[6] = _cardCompositeVertices[4];									_cardCompositeVertices[7] = _cardCompositeVertices[1];
-	
-	// flush the VBO
-	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
-	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
-	
 	// we need one FBO to render a card's composite texture and one FBO to apply the water effect; as well as matching textures for the color0 attachement point and one extra texture to store the previous frame
 	glGenFramebuffersEXT(2, _fbos);
 	glGenTextures(3, _textures);
 	
-	// disable client storage because it's incompatible with allocating texture space with NULL (which is what we want to do for FBO color attachement textures)
+	// disable client storage because it's incompatible with allocating texture space with NULL (which is what we want to do for FBO color attachement textures) and with the PIXEL_UNPACK buffer
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
 	
 	for (GLuint i = 0; i < 2; i++) {
@@ -279,7 +264,8 @@ init_failure:
 		
 		// completeness check
 		GLenum fboStatus = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-		if (fboStatus != GL_FRAMEBUFFER_COMPLETE_EXT) RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"FBO not complete, status 0x%04x\n", (unsigned int)fboStatus);
+		if (fboStatus != GL_FRAMEBUFFER_COMPLETE_EXT)
+			RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"FBO not complete, status 0x%04x\n", (unsigned int)fboStatus);
 	}
 	
 	// configure the additional texture (the previous frame texture)
@@ -298,16 +284,161 @@ init_failure:
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXRendererViewportSize.width, kRXRendererViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
 	}
 	
-	// re-enable client storage
-	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+	// get a reference to the extra bitmaps archive, and get the inventory texture descriptors
+	MHKArchive* extraBitmapsArchive = [g_world extraBitmapsArchive];
+	NSDictionary* journalDescriptors = [[g_world extraBitmapsDescriptor] objectForKey:@"Journals"];
 	
-	// shaders
-	NSURL* shaderRoot = [NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Shaders" ofType:nil]];
-	NSError* error;
+	// get the texture descriptors for the inventory textures and compute the total byte size of those textures (packed BGRA format)
+	// FIXME: we need actual error handling beyond just logging...
+	NSDictionary* inventoryTextureDescriptors[3];
+	uint32_t inventoryTotalTextureSize = 0;
+	for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+		inventoryTextureDescriptors[inventory_i] = [[g_world extraBitmapsArchive] bitmapDescriptorWithID:[[journalDescriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue] error:&error];
+		if (!inventoryTextureDescriptors[inventory_i]) {
+			RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get inventory texture descriptor for item \"%@\": %@", RX_INVENTORY_KEYS[inventory_i], error);
+			continue;
+		}
+		
+		// cache the dimensions of the inventory item textures in the inventory regions
+		_inventoryRegions[inventory_i].size.width = [[inventoryTextureDescriptors[inventory_i] objectForKey:@"Width"] floatValue];
+		_inventoryRegions[inventory_i].size.height = [[inventoryTextureDescriptors[inventory_i] objectForKey:@"Height"] floatValue];
+		
+		inventoryTotalTextureSize += (uint32_t)(_inventoryRegions[inventory_i].size.width * _inventoryRegions[inventory_i].size.height) << 2;
+	}
+	
+	// load the journal inventory textures in an unpack buffer object
+	glGenBuffers(1, &_inventoryTextureBuffer); glReportError();
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _inventoryTextureBuffer); glReportError();
+	
+	// allocate the texture buffer (aligned to 128 bytes)
+	inventoryTotalTextureSize = (inventoryTotalTextureSize & ~0x7f) + 0x80;
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, inventoryTotalTextureSize, NULL, GL_STATIC_READ); glReportError();
+	
+	// map the buffer in
+	void* inventoryBuffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
+	
+	// decompress the textures into the buffer
+	// FIXME: we need actual error handling beyond just logging...
+	for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+		if (![extraBitmapsArchive loadBitmapWithID:[[journalDescriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue] buffer:inventoryBuffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error]) {
+			RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to load inventory texture for item \"%@\": %@", RX_INVENTORY_KEYS[inventory_i], error);
+			continue;
+		}
+		
+		inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventoryRegions[inventory_i].size.width * _inventoryRegions[inventory_i].size.height) << 2);
+	}
+	
+	// unmap the pixel unpack buffer to begin the DMA transfer
+	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+	
+	// while we DMA the inventory textures, let's do some more work
+	
+	// card composite VAO / VA / VBO
+	
+	// gen the buffers
+	glGenVertexArraysAPPLE(1, &_cardCompositeVAO); glReportError();
+	glGenBuffers(1, &_cardCompositeVBO); glReportError();
+	
+	// bind them
+	glBindVertexArrayAPPLE(_cardCompositeVAO); glReportError();
+	glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
+	
+	// enable sub-range flushing if available
+	if (GLEE_APPLE_client_storage)
+		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+	
+	// 4 triangle strip primitives, 4 vertices per strip, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
+	glBufferData(GL_ARRAY_BUFFER, 64 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
+	
+	// map the VBO and write the vertex attributes
+	GLfloat* positions = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
+	GLfloat* tex_coords0 = positions + 2;
+	
+	// main card composite
+	{
+		positions[0] = kRXCardViewportOriginOffset.x; positions[1] = kRXCardViewportOriginOffset.y;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x + kRXCardViewportSize.width; positions[1] = kRXCardViewportOriginOffset.y;
+		tex_coords0[0] = kRXCardViewportSize.width; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x; positions[1] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = kRXCardViewportSize.height;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = kRXCardViewportOriginOffset.x + kRXCardViewportSize.width; positions[1] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
+		tex_coords0[0] = kRXCardViewportSize.width; tex_coords0[1] = kRXCardViewportSize.height;
+		positions += 4; tex_coords0 += 4;
+	}
+		
+	// unmap and flush the card composite VBO
+	if (GLEE_APPLE_flush_buffer_range)
+		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 16 * sizeof(GLfloat));
+	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
+	
+	// configure the VAs
+	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
+	glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 0)); glReportError();
+	
+	glClientActiveTexture(GL_TEXTURE0);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+	
+	// card render VAO / VA / VBO
+	
+	// gen the buffers
+	glGenVertexArraysAPPLE(1, &_cardRenderVAO); glReportError();
+	glGenBuffers(1, &_cardRenderVBO); glReportError();
+	
+	// bind them
+	glBindVertexArrayAPPLE(_cardRenderVAO); glReportError();
+	glBindBuffer(GL_ARRAY_BUFFER, _cardRenderVBO); glReportError();
+	
+	// enable sub-range flushing if available
+	if (GLEE_APPLE_client_storage)
+		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+	
+	// 4 vertices, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
+	glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
+	
+	// map the VBO and write the vertex attributes
+	positions = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
+	tex_coords0 = positions + 2;
+	
+	positions[0] = 0.0f; positions[1] = 0.0f;
+	tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
+	positions += 2; tex_coords0 += 2;
+	
+	positions[2] = kRXCardViewportSize.width; positions[3] = 0.0f;
+	tex_coords0[2] = kRXCardViewportSize.width; tex_coords0[3] = 0.0f;
+	positions += 2; tex_coords0 += 2;
+	
+	positions[4] = 0.0f; positions[5] = kRXCardViewportSize.height;
+	tex_coords0[4] = 0.0f; tex_coords0[5] = kRXCardViewportSize.height;
+	positions += 2; tex_coords0 += 2;
+	
+	positions[6] = kRXCardViewportSize.width; positions[7] = kRXCardViewportSize.height;
+	tex_coords0[6] = kRXCardViewportSize.width; tex_coords0[7] = kRXCardViewportSize.height;
+	
+	// unmap and flush the card render buffer
+	if (GLEE_APPLE_flush_buffer_range)
+		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 16 * sizeof(GLfloat));
+	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
+	
+	// configure the VAs
+	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
+	glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 0)); glReportError();
+	
+	glClientActiveTexture(GL_TEXTURE0);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
 	
 	// water animation shader
-	_waterProgram = [GLShaderProgramManager shaderProgramWithName:@"water" root:shaderRoot extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
-	if (_waterProgram == 0) [self _reportShaderProgramError:error];
+	_waterProgram = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"water" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
+	if (!_waterProgram)
+		[self _reportShaderProgramError:error];
 	
 	GLint cardTextureUniform = glGetUniformLocation(_waterProgram, "card_texture"); glReportError();
 	GLint displacementMapUniform = glGetUniformLocation(_waterProgram, "water_displacement_map"); glReportError();
@@ -319,8 +450,9 @@ init_failure:
 	glUniform1i(previousFrameUniform, 2); glReportError();
 	
 	// card shader
-	_cardProgram = [GLShaderProgramManager shaderProgramWithName:@"card" root:shaderRoot extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
-	if (_cardProgram == 0) [self _reportShaderProgramError:error];
+	_cardProgram = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"card" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
+	if (!_cardProgram)
+		[self _reportShaderProgramError:error];
 	
 	GLint destinationCardTextureUniform = glGetUniformLocation(_cardProgram, "destination_card"); glReportError();
 	glUseProgram(_cardProgram); glReportError();
@@ -334,6 +466,79 @@ init_failure:
 	_push[RXTransitionTop] = [self _loadTransitionShaderWithName:@"transition_push" direction:RXTransitionTop context:cgl_ctx];
 	_push[RXTransitionBottom] = [self _loadTransitionShaderWithName:@"transition_push" direction:RXTransitionBottom context:cgl_ctx];
 	
+	_slide_out[RXTransitionLeft] = [self _loadTransitionShaderWithName:@"transition_slide_out" direction:RXTransitionLeft context:cgl_ctx];
+	_slide_out[RXTransitionRight] = [self _loadTransitionShaderWithName:@"transition_slide_out" direction:RXTransitionRight context:cgl_ctx];
+	_slide_out[RXTransitionTop] = [self _loadTransitionShaderWithName:@"transition_slide_out" direction:RXTransitionTop context:cgl_ctx];
+	_slide_out[RXTransitionBottom] = [self _loadTransitionShaderWithName:@"transition_slide_out" direction:RXTransitionBottom context:cgl_ctx];
+	
+	_slide_in[RXTransitionLeft] = [self _loadTransitionShaderWithName:@"transition_slide_in" direction:RXTransitionLeft context:cgl_ctx];
+	_slide_in[RXTransitionRight] = [self _loadTransitionShaderWithName:@"transition_slide_in" direction:RXTransitionRight context:cgl_ctx];
+	_slide_in[RXTransitionTop] = [self _loadTransitionShaderWithName:@"transition_slide_in" direction:RXTransitionTop context:cgl_ctx];
+	_slide_in[RXTransitionBottom] = [self _loadTransitionShaderWithName:@"transition_slide_in" direction:RXTransitionBottom context:cgl_ctx];
+	
+	_swipe[RXTransitionLeft] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionLeft context:cgl_ctx];
+	_swipe[RXTransitionRight] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionRight context:cgl_ctx];
+	_swipe[RXTransitionTop] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionTop context:cgl_ctx];
+	_swipe[RXTransitionBottom] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionBottom context:cgl_ctx];
+	
+	// create a VAO and VBO for hotspot debug rendering
+	glGenVertexArraysAPPLE(1, &_hotspotDebugRenderVAO); glReportError();
+	glGenBuffers(1, &_hotspotDebugRenderVBO); glReportError();
+	
+	// bind them
+	glBindVertexArrayAPPLE(_hotspotDebugRenderVAO); glReportError();
+	glBindBuffer(GL_ARRAY_BUFFER, _hotspotDebugRenderVBO); glReportError();
+	
+	// enable sub-range flushing if available
+	if (GLEE_APPLE_client_storage)
+		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+	
+	// 4 lines per hotspot, 6 floats per line (coord[x, y] color[r, g, b, a])
+	glBufferData(GL_ARRAY_BUFFER, (RX_MAX_RENDER_HOTSPOT + RX_MAX_INVENTORY_ITEMS) * 24 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW); glReportError();
+	
+	// configure the VAs
+	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
+	glVertexPointer(2, GL_FLOAT, 6 * sizeof(GLfloat), NULL); glReportError();
+	
+	glEnableClientState(GL_COLOR_ARRAY); glReportError();
+	glColorPointer(4, GL_FLOAT, 6 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+	
+	// allocate the first element and element count arrays
+	_hotspotDebugRenderFirstElementArray = new GLint[RX_MAX_RENDER_HOTSPOT + RX_MAX_INVENTORY_ITEMS];
+	_hotspotDebugRenderElementCountArray = new GLint[RX_MAX_RENDER_HOTSPOT + RX_MAX_INVENTORY_ITEMS];
+	
+	// alright, we've done all the work we could, let's now make those inventory textures
+	
+	// create the textures and reset inventoryBuffer which we'll use as a buffer offset
+	glGenTextures(RX_MAX_INVENTORY_ITEMS, _inventoryTextures);
+	inventoryBuffer = 0;
+	
+	// decompress the textures into the buffer
+	// FIXME: we need actual error handling beyond just logging...
+	for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[inventory_i]); glReportError();
+		
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glReportError();
+		
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, (GLsizei)_inventoryRegions[inventory_i].size.width, (GLsizei)_inventoryRegions[inventory_i].size.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, inventoryBuffer); glReportError();
+		
+		inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventoryRegions[inventory_i].size.width * _inventoryRegions[inventory_i].size.height) << 2);
+	}
+	
+	// bind 0 to the unpack buffer (e.g. client memory unpacking)
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+	
+	// re-enable client storage
+	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
+	
+	// bind 0 to the current VAO
+	glBindVertexArrayAPPLE(0); glReportError();
+	
+	// bind program 0 (e.g. back to fixed-function)
 	glUseProgram(0);
 	
 	// new texture, buffer and program objects
@@ -424,24 +629,17 @@ init_failure:
 
 - (void)activateSoundGroup:(RXSoundGroup*)soundGroup {
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
-	if ([NSThread currentThread] != [g_world scriptThread]) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activateSoundGroup: MUST RUN ON SCRIPT THREAD" userInfo:nil];
+	if ([NSThread currentThread] != [g_world scriptThread])
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activateSoundGroup: MUST RUN ON SCRIPT THREAD" userInfo:nil];
 
 	// cache a pointer to the audio renderer
 	RX::AudioRenderer* renderer = (reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer]));
 	
 	// cache the sound group's sound set
-	NSSet* soundGroupSounds = [soundGroup valueForKey:@"sounds"];
+	NSSet* soundGroupSounds = [soundGroup sounds];
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"activating sound group %@ with sounds: %@", soundGroup, soundGroupSounds);
 #endif
-	
-	// fade flags
-	BOOL fadeOut = [[soundGroup valueForKey:@"fadeOutActiveGroupBeforeActivating"] boolValue];
-	BOOL fadeIn = [[soundGroup valueForKey:@"fadeInOnActivation"] boolValue];
-	
-	// loop and gain
-	BOOL loop = [[soundGroup valueForKey:@"loop"] boolValue];
-	float gain = [[soundGroup valueForKey:@"gain"] floatValue];
 	
 	// create an array of new sources
 	CFMutableArrayRef sourcesToAdd = CFArrayCreateMutable(NULL, 0, &g_weakAudioSourceArrayCallbacks);
@@ -470,7 +668,7 @@ init_failure:
 			}
 			
 			// create an audio source with the decompressor
-			sound->source = new RX::CardAudioSource(decompressor, sound->gain * gain, sound->pan, loop);
+			sound->source = new RX::CardAudioSource(decompressor, sound->gain * soundGroup->gain, sound->pan, soundGroup->loop);
 			assert(sound->source);
 			
 			// make sure the sound doesn't have a valid detach timestamp
@@ -493,14 +691,14 @@ init_failure:
 			oldSound->detachTimestampValid = NO;
 			
 			// looping
-			oldSound->source->SetLooping(loop);
+			oldSound->source->SetLooping(soundGroup->loop);
 			
 			// FIXME: pan ramp
 			renderer->SetSourcePan(*(oldSound->source), sound->pan);
 			
 			// gain; always use a ramp to prevent disrupting an ongoing ramp up
-			renderer->RampSourceGain(*(oldSound->source), oldSound->gain * gain, RX_AUDIO_FADE_DURATION);
-			oldSound->source->SetNominalGain(oldSound->gain * gain);
+			renderer->RampSourceGain(*(oldSound->source), oldSound->gain * soundGroup->gain, RX_AUDIO_FADE_DURATION);
+			oldSound->source->SetNominalGain(oldSound->gain * soundGroup->gain);
 		}
 	}
 	
@@ -509,7 +707,7 @@ init_failure:
 	CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceTaskApplier, renderer);
 	
 	// if no fade out is requested, mark every sound not already scheduled for detach as needing detach yesterday
-	if (!fadeOut) {
+	if (!soundGroup->fadeOutActiveGroupBeforeActivating) {
 		soundEnum = [soundsToRemove objectEnumerator];
 		while ((sound = [soundEnum nextObject])) {
 			if (sound->detachTimestampValid == NO) {
@@ -536,15 +734,16 @@ init_failure:
 	[soundsToRemove intersectSet:_activeSounds];
 	
 	// now that any sources bound to be detached has been, go ahead and attach as many of the new sources as possible
-	if (fadeIn) {
+	if (soundGroup->fadeInOnActivation || _forceFadeInOnNextSoundGroup) {
 		// disabling the sources will prevent the fade in from starting before we update the graph
 		CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));
 		CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceDisableApplier, [g_world audioRenderer]);
 		renderer->AttachSources(sourcesToAdd);
 		CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceFadeInApplier, [g_world audioRenderer]);
-	} else renderer->AttachSources(sourcesToAdd);
+	} else
+		renderer->AttachSources(sourcesToAdd);
 	
-	// re-enable automatic updates. this will automatically do an update if one is needed
+	// re-enable automatic updates; this will automatically do an update if one is needed
 	renderer->SetAutomaticGraphUpdates(true);
 	
 	// delete any sources that were detached
@@ -555,12 +754,12 @@ init_failure:
 	
 	// ramps are go!
 	// FIXME: scheduling ramps in this manner is not atomic
-	if (fadeIn) {
+	if (soundGroup->fadeInOnActivation || _forceFadeInOnNextSoundGroup) {
 		CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));
 		CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceEnableApplier, [g_world audioRenderer]);
 	}
 	
-	if (fadeOut) {
+	if (soundGroup->fadeOutActiveGroupBeforeActivating) {
 		CFMutableArrayRef sourcesToRemove = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_weakAudioSourceArrayCallbacks];
 		renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_FADE_DURATION);
 		CFRelease(sourcesToRemove);
@@ -577,6 +776,9 @@ init_failure:
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"activateSoundGroup: _activeSounds = %@", _activeSounds);
 #endif
+	
+	// reset the fade in override flag
+	_forceFadeInOnNextSoundGroup = NO;
 	
 	// done with sourcesToAdd
 	CFRelease(sourcesToAdd);
@@ -684,11 +886,13 @@ init_failure:
 
 - (void)swapRenderState:(RXCard*)sender {	
 	// if we'll queue a transition, mark script execution as being blocked now
-	if ([_transitionQueue count] > 0) [self setExecutingBlockingAction:YES];
+	if ([_transitionQueue count] > 0)
+		[self setExecutingBlockingAction:YES];
 	
 	// if a transition is ongoing, wait until its done
 	mach_timespec_t waitTime = {0, kRXTransitionDuration * 1e9};
-	while (_front_render_state->transition != nil) semaphore_timedwait(_transitionSemaphore, waitTime);
+	while (_front_render_state->transition != nil)
+		semaphore_timedwait(_transitionSemaphore, waitTime);
 	
 	// dequeue the top transition
 	if ([_transitionQueue count] > 0) {
@@ -766,6 +970,7 @@ init_failure:
 }
 
 #pragma mark -
+#pragma mark card switching
 
 - (void)_postCardSwitchNotification:(RXCard*)newCard {
 	// WARNING: MUST RUN ON THE MAIN THREAD
@@ -774,7 +979,8 @@ init_failure:
 
 - (void)_switchCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)simpleDescriptor {
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
-	if ([NSThread currentThread] != [g_world scriptThread]) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_switchCardWithSimpleDescriptor: MUST RUN ON SCRIPT THREAD" userInfo:nil];
+	if ([NSThread currentThread] != [g_world scriptThread])
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_switchCardWithSimpleDescriptor: MUST RUN ON SCRIPT THREAD" userInfo:nil];
 	
 	RXCard* newCard = nil;
 	
@@ -805,7 +1011,8 @@ init_failure:
 		// FIXME: need to be smarter about card loading (cache, locality, etc)
 		// load the new card in
 		RXCardDescriptor* newCardDescriptor = [[RXCardDescriptor alloc] initWithStack:newStack ID:simpleDescriptor->cardID];
-		if (!newCardDescriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"COULD NOT FIND CARD IN STACK" userInfo:nil]; 
+		if (!newCardDescriptor)
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"COULD NOT FIND CARD IN STACK" userInfo:nil]; 
 		
 		newCard = [[RXCard alloc] initWithCardDescriptor:newCardDescriptor];
 		[newCardDescriptor release];
@@ -826,7 +1033,7 @@ init_failure:
 	_currentHotspot = nil;
 	
 	// setup the back render state
-	_back_render_state->card = newCard;
+	_back_render_state->card = [newCard retain];
 	_back_render_state->newCard = YES;
 	_back_render_state->transition = nil;
 	
@@ -838,11 +1045,13 @@ init_failure:
 	
 	// notify that the front card has changed
 	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:newCard waitUntilDone:NO];
+	[newCard release];
 }
 
 - (void)_clearActiveCard {
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
-	if ([NSThread currentThread] != [g_world scriptThread]) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_clearActiveCard: MUST RUN ON SCRIPT THREAD" userInfo:nil];
+	if ([NSThread currentThread] != [g_world scriptThread])
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_clearActiveCard: MUST RUN ON SCRIPT THREAD" userInfo:nil];
 	
 	// switching card blocks script execution
 	[self setExecutingBlockingAction:YES];
@@ -871,20 +1080,23 @@ init_failure:
 
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {
 	// WARNING: CAN RUN ON ANY THREAD
-	if (!stackKey) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"stackKey CANNOT BE NIL" userInfo:nil];
+	if (!stackKey)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"stackKey CANNOT BE NIL" userInfo:nil];
+	
 	RXSimpleCardDescriptor* des = [[RXSimpleCardDescriptor alloc] initWithStackName:stackKey ID:cardID];
 	
-	// FIXME: we need to be smarter about stack management. For now, we try to load the stack once. And it stays loaded. Forver
+	// FIXME: we need to be smarter about stack management; right now, we load a stack when it is first needed and keep it in memory forever
 	// make sure the requested stack has been loaded
 	RXStack* stack = [g_world activeStackWithKey:des->parentName];
-	if (!stack) [g_world loadStackWithKey:des->parentName waitUntilDone:YES];
+	if (!stack)
+		[g_world loadStackWithKey:des->parentName waitUntilDone:YES];
 	
 	[self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:des inThread:[g_world scriptThread] waitUntilDone:wait];
 	
 	// if we have a card redirect entry, queue the final destination card switch
 	RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:des];
 	if (switchTableDestination) {		
-		RXTransition* transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0., 0., kRXCardViewportSize.width, kRXCardViewportSize.height)];
+		RXTransition* transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0.f, 0.f, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[self performSelector:@selector(queueTransition:) withObject:transition inThread:[g_world scriptThread] waitUntilDone:wait];
 		[transition release];
 		
@@ -899,6 +1111,7 @@ init_failure:
 }
 
 #pragma mark -
+#pragma mark rendering
 
 - (void)_renderCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
@@ -911,21 +1124,19 @@ init_failure:
 	glUseProgram(_cardProgram); glReportError();
 	
 	// render the static content of the card only when necessary
-	if (r->refresh_static) {		
+	if (r->refresh_static) {
 		// bind the static render FBO
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		
-		// render pictures
-		glBindBuffer(GL_ARRAY_BUFFER, card->_pictureVertexArrayBuffer); glReportError();
-		glVertexPointer(2, GL_FLOAT, 16, BUFFER_OFFSET(NULL, 0)); glReportError();
-		glTexCoordPointer(2, GL_FLOAT, 16, BUFFER_OFFSET(NULL, 8)); glReportError();
+		// bind the picture VAO
+		glBindVertexArrayAPPLE(card->_pictureVAO); glReportError();
 		
 		renderListEnumerator = [r->pictures objectEnumerator];
 		while ((renderObject = [renderListEnumerator nextObject])) {
 			// bind the picture texture and draw the quad
 			GLint pictureIndex = [(NSNumber*)renderObject intValue];
 			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, card->_pictureTextures[pictureIndex]); glReportError();
-			glDrawArrays(GL_QUADS, pictureIndex * 4, 4); glReportError();
+			glDrawArrays(GL_TRIANGLE_STRIP, pictureIndex * 4, 4); glReportError();
 		}
 		
 		// this is used as a fence to determine if the static content has been refreshed or not, so we set it to NO here
@@ -936,10 +1147,8 @@ init_failure:
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
 	glClear(GL_COLOR_BUFFER_BIT);
 	
-	// bind the generic vertex and texture coord. buffer and set the vertex arrays
-	glBindBuffer(GL_ARRAY_BUFFER, _cardRenderVBO); glReportError();
-	glVertexPointer(2, GL_FLOAT, 0, BUFFER_OFFSET(NULL, 0)); glReportError();
-	glTexCoordPointer(2, GL_FLOAT, 0, BUFFER_OFFSET(NULL, 8 * sizeof(GLfloat))); glReportError();
+	// bind the card render VAO
+	glBindVertexArrayAPPLE(_cardRenderVAO); glReportError();
 	
 	// water effect	
 	if (r->water_fx.sfxe != 0) {
@@ -959,7 +1168,7 @@ init_failure:
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		
 		// draw
-		glDrawArrays(GL_QUADS, 0, 4); glReportError();
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
 		
 		// copy the result
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_PREVIOUS_FRAME_INDEX]); glReportError();
@@ -980,24 +1189,79 @@ init_failure:
 	} else {
 		// simply render the static content
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
-		glDrawArrays(GL_QUADS, 0, 4); glReportError();
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
 	}
-	
-	// disable VBOs since RXMovie expect that to be the case
-	glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
 	
 	// render movies
 	renderListEnumerator = [r->movies objectEnumerator];
-	while ((renderObject = [renderListEnumerator nextObject])) _movieRenderDispatch.imp(renderObject, _movieRenderDispatch.sel, outputTime, cgl_ctx, self);
+	while ((renderObject = [renderListEnumerator nextObject]))
+		_movieRenderDispatch.imp(renderObject, _movieRenderDispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
 }
 
 - (void)_postFlushCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime {
 	NSEnumerator* e = [card->_frontRenderStatePtr->movies objectEnumerator];
 	RXMovie* movie;
-	while ((movie = [e nextObject])) _movieFlushTasksDispatch.imp(movie, _movieFlushTasksDispatch.sel, outputTime, self);
+	while ((movie = [e nextObject]))
+		_movieFlushTasksDispatch.imp(movie, _movieFlushTasksDispatch.sel, outputTime);
 }
 
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {
+- (void)_updateInventoryWithTimestamp:(const CVTimeStamp*)outputTime context:(CGLContextObj)cgl_ctx {
+	glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
+	GLfloat* buffer = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+	
+	GLfloat* positions = buffer + 16;
+	GLfloat* tex_coords0 = positions + 2;
+	
+	float inventory_margin = 20.f;
+	float total_inventory_width = _inventoryRegions[0].size.width + _inventoryRegions[1].size.width + _inventoryRegions[2].size.width + 2 * inventory_margin;
+	
+	_inventoryRegions[0].origin.x = kRXCardViewportOriginOffset.x + (kRXCardViewportSize.width / 2.0f) - (total_inventory_width / 2.0f);
+	_inventoryRegions[0].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[0].size.height / 2.0f);
+	
+	_inventoryRegions[1].origin.x = _inventoryRegions[0].origin.x + _inventoryRegions[0].size.width + inventory_margin;
+	_inventoryRegions[1].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[1].size.height / 2.0f);
+	
+	_inventoryRegions[2].origin.x = _inventoryRegions[1].origin.x + _inventoryRegions[1].size.width + inventory_margin;
+	_inventoryRegions[2].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[2].size.height / 2.0f);
+	
+	// compute vertex positions and texture coordinates for the inventory items
+	for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+		positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width; positions[1] = _inventoryRegions[inventory_i].origin.y;
+		tex_coords0[0] = _inventoryRegions[inventory_i].size.width; tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
+		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+		
+		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width; positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
+		tex_coords0[0] = _inventoryRegions[inventory_i].size.width; tex_coords0[1] = 0.0f;
+		positions += 4; tex_coords0 += 4;
+	}
+	
+	// unmap and flush the card composite VBO
+	if (GLEE_APPLE_flush_buffer_range)
+		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), 48 * sizeof(GLfloat));
+	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
+	
+	// compute the hotspot regions by scaling the rendering regions
+	rx_rect_t contentRect = RXEffectiveRendererFrame();
+	float scale_x = (float)contentRect.size.width / (float)kRXRendererViewportSize.width;
+	float scale_y = (float)contentRect.size.height / (float)kRXRendererViewportSize.height;
+	
+	for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+		_inventoryHotspotRegions[inventory_i].origin.x = contentRect.origin.x + _inventoryRegions[inventory_i].origin.x * scale_x;
+		_inventoryHotspotRegions[inventory_i].origin.y = contentRect.origin.y + _inventoryRegions[inventory_i].origin.y * scale_y;
+		_inventoryHotspotRegions[inventory_i].size.width = _inventoryRegions[inventory_i].size.width * scale_x;
+		_inventoryHotspotRegions[inventory_i].size.height = _inventoryRegions[inventory_i].size.height * scale_y;
+	}
+}
+
+- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	OSSpinLockLock(&_renderLock);
 	
@@ -1005,7 +1269,8 @@ init_failure:
 	NSAutoreleasePool* p = [NSAutoreleasePool new];
 	
 	// do nothing if there is no destination card
-	if (!_front_render_state->card) goto exit_render;
+	if (!_front_render_state->card)
+		goto exit_render;
 	
 	// transition priming
 	if (_front_render_state->transition && ![_front_render_state->transition isPrimed]) {
@@ -1043,13 +1308,14 @@ init_failure:
 	_renderCardImp(self, _renderCardSel, _front_render_state->card, outputTime, cgl_ctx);
 	
 	// final composite (active card + transitions + other special effects)
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ((RXStateCompositor*)parent)->_fbo); glReportError();
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo); glReportError();
 	glClear(GL_COLOR_BUFFER_BIT);
 	
 	if (_front_render_state->transition && [_front_render_state->transition isPrimed]) {
 		// compute the parametric transition parameter based on current time, start time and duration
 		float t = RXTimingTimestampDelta(outputTime->hostTime, _front_render_state->transition->startTime) / _front_render_state->transition->duration;
-		if (t > 1.0f) t = 1.0f;
+		if (t > 1.0f)
+			t = 1.0f;
 		
 		if (t >= 1.0f) {
 #if defined(DEBUG)
@@ -1075,14 +1341,35 @@ init_failure:
 					break;
 				
 				case RXTransitionSlide:
-					transition = _push + _front_render_state->transition->direction;
+					if (_front_render_state->transition->pushOld && _front_render_state->transition->pushNew)
+						transition = _push + _front_render_state->transition->direction;
+					else if (_front_render_state->transition->pushOld)
+						transition = _slide_out + _front_render_state->transition->direction;
+					else if (_front_render_state->transition->pushNew)
+						transition = _slide_in + _front_render_state->transition->direction;
+					else
+						transition = _swipe + _front_render_state->transition->direction;
 					break;
 			}
 			
 			// use the transition's program and update its t and margin uniforms
 			glUseProgram(transition->program); glReportError();
 			glUniform1f(transition->t_uniform, t); glReportError();
-			if (transition->margin_uniform != -1) glUniform1f(transition->margin_uniform, _cardCompositeVertices[_front_render_state->transition->direction / 2]); glReportError();
+			if (transition->margin_uniform != -1) {
+				GLfloat margin;
+				switch (_front_render_state->transition->direction) {
+					case RXTransitionLeft:
+					case RXTransitionRight:
+						margin = kRXCardViewportOriginOffset.x;
+						break;
+					case RXTransitionTop:
+					case RXTransitionBottom:
+						margin = kRXCardViewportOriginOffset.y;
+						break;
+				}
+				
+				glUniform1f(transition->margin_uniform, margin); glReportError();
+			}
 			
 			// bind the transition source texture on unit 1
 			glActiveTexture(GL_TEXTURE1); glReportError();
@@ -1096,11 +1383,20 @@ init_failure:
 	glActiveTexture(GL_TEXTURE0); glReportError();
 	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
 	
-	// set vertex arrays (we assume the card render method exited with no bound VBO)
-	glVertexPointer(2, GL_FLOAT, 0, _cardCompositeVertices); glReportError();
-	glTexCoordPointer(2, GL_FLOAT, 0, _cardTexCoords); glReportError();
+	// bind the card composite VAO
+	glBindVertexArrayAPPLE(_cardCompositeVAO); glReportError();
 	
-	glDrawArrays(GL_QUADS, 0, 4); glReportError();
+	// draw the card composite
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
+	
+	// update and draw the inventory
+	[self _updateInventoryWithTimestamp:outputTime context:cgl_ctx];
+	
+	glUseProgram(_cardProgram); glReportError();
+	for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[inventory_i]); glReportError();
+		glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inventory_i, 4); glReportError();
+	}
 	
 exit_render:
 	[p release];
@@ -1111,23 +1407,20 @@ exit_render:
 	// render hotspots
 	if (RXEngineGetBool(@"rendering.renderHotspots")) {
 		NSArray* activeHotspots = [_front_render_state->card activeHotspots];
-		// 4 lines per hotspot, 6 floats per line (coord[x, y] color[r, g, b, a])
-		GLfloat* hotspot_vertex_attribs = new GLfloat[4 * 6 * [activeHotspots count] * sizeof(GLfloat)];
-		GLint* first_array = new GLint[[activeHotspots count]];
-		GLint* count_array = new GLint[[activeHotspots count]];
+		if ([activeHotspots count] > RX_MAX_RENDER_HOTSPOT)
+			activeHotspots = [activeHotspots subarrayWithRange:NSMakeRange(0, RX_MAX_RENDER_HOTSPOT)];
+		
+		glBindBuffer(GL_ARRAY_BUFFER, _hotspotDebugRenderVBO);
+		GLfloat* attribs = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 		
 		NSEnumerator* hotspots = [activeHotspots objectEnumerator];
 		RXHotspot* hotspot;
-		
-		GLfloat* attribs = hotspot_vertex_attribs;
-		GLint* first = first_array;
-		GLint* count = count_array;
 		GLint primitive_index = 0;
 		while ((hotspot = [hotspots nextObject])) {
-			first[primitive_index] = primitive_index * 4;
-			count[primitive_index] = 4;
+			_hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
+			_hotspotDebugRenderElementCountArray[primitive_index] = 4;
 			
-			NSRect frame = [hotspot frame];
+			NSRect frame = [hotspot worldViewFrame];
 			
 			attribs[0] = frame.origin.x;
 			attribs[1] = frame.origin.y;
@@ -1164,23 +1457,59 @@ exit_render:
 			primitive_index++;
 		}
 		
-		glVertexPointer(2, GL_FLOAT, 6 * sizeof(GLfloat), hotspot_vertex_attribs); glReportError();
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
-		glColorPointer(4, GL_FLOAT, 6 * sizeof(GLfloat), hotspot_vertex_attribs + 2); glReportError();
+		for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+			_hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
+			_hotspotDebugRenderElementCountArray[primitive_index] = 4;
+			
+			NSRect frame = _inventoryHotspotRegions[inventory_i];
+			
+			attribs[0] = frame.origin.x;
+			attribs[1] = frame.origin.y;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			attribs[0] = frame.origin.x + frame.size.width;
+			attribs[1] = frame.origin.y;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			attribs[0] = frame.origin.x + frame.size.width;
+			attribs[1] = frame.origin.y + frame.size.height;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			attribs[0] = frame.origin.x;
+			attribs[1] = frame.origin.y + frame.size.height;
+			attribs[2] = 0.0f;
+			attribs[3] = 1.0f;
+			attribs[4] = 0.0f;
+			attribs[5] = 1.0f;
+			attribs += 6;
+			
+			primitive_index++;
+		}
 		
-		glMultiDrawArrays(GL_LINE_LOOP, first_array, count_array, [activeHotspots count]); glReportError();
+		if (GLEE_APPLE_flush_buffer_range)
+			glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, [activeHotspots count] * 24 * sizeof(GLfloat));
+		glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 		
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
+		glBindVertexArrayAPPLE(_hotspotDebugRenderVAO); glReportError();		
+		glMultiDrawArrays(GL_LINE_LOOP, _hotspotDebugRenderFirstElementArray, _hotspotDebugRenderElementCountArray, [activeHotspots count] + RX_MAX_INVENTORY_ITEMS); glReportError();
 		
-		delete[] count_array;
-		delete[] first_array;
-		delete[] hotspot_vertex_attribs;
+		glBindVertexArrayAPPLE(0); glReportError();
 	}	
 }
 
-- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent {
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	OSSpinLockLock(&_renderLock);
 	
@@ -1188,9 +1517,9 @@ exit_render:
 	NSAutoreleasePool* p = [NSAutoreleasePool new];
 	
 	// do nothing if there is no destination card
-	if (!_front_render_state->card) goto exit_flush_tasks;
+	if (!_front_render_state->card)
+		goto exit_flush_tasks;
 	
-	// FIXME: transitions not implemented yet, task destination card only
 	_postFlushCardImp(self, _postFlushCardSel, _front_render_state->card, outputTime);
 	
 exit_flush_tasks:
@@ -1199,6 +1528,7 @@ exit_flush_tasks:
 }
 
 #pragma mark -
+#pragma mark user event handling
 
 - (void)_updateCursorVisibility {
 	// WARNING: MUST RUN ON THE MAIN THREAD
@@ -1295,25 +1625,82 @@ exit_flush_tasks:
 	// meaning even though we changed the active set of hotspots, the one we're on may still be valid after
 }
 
+- (void)_handleInventoryMouseDown:(NSEvent*)event inventoryIndex:(uint32_t)index {
+	if (index >= RX_MAX_INVENTORY_ITEMS)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"OUT OF BOUNDS INVENTORY INDEX" userInfo:nil];
+	
+	RXEdition* edition = [[RXEditionManager sharedEditionManager] currentEdition];
+	
+	NSNumber* journalCardIDNumber = [[edition valueForKey:@"journalCardIDMap"] objectForKey:RX_INVENTORY_KEYS[index]];
+	if (!journalCardIDNumber)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO CARD ID FOR GIVEN INVENTORY KEY IN JOURNAL CARD ID MAP" userInfo:nil];
+	
+	// set the return card in the game state to the current card
+	[[g_world gameState] setReturnCard:[[_front_render_state->card descriptor] simpleDescriptor]];
+	
+	// schedule a cross-fade transition to the journal card
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	[self queueTransition:transition];
+	[transition release];
+	
+	// activate an empty sound group with fade out to fade out the current card's ambient sounds
+	RXSoundGroup* sgroup = [RXSoundGroup new];
+	sgroup->gain = 1.0f;
+	sgroup->loop = NO;
+	sgroup->fadeOutActiveGroupBeforeActivating = YES;
+	sgroup->fadeInOnActivation = NO;
+	[self performSelector:@selector(activateSoundGroup:) withObject:sgroup inThread:[g_world scriptThread] waitUntilDone:NO];
+	[sgroup release];
+	
+	// leave ourselves a note to force a fade in on the next activate sound group command
+	_forceFadeInOnNextSoundGroup = YES;
+	
+	// change the active card to the journal card
+	[self setActiveCardWithStack:@"aspit" ID:[journalCardIDNumber unsignedShortValue] waitUntilDone:NO];
+}
+
 - (void)mouseMoved:(NSEvent*)event {
-	if (_ignoreUIEventsCounter > 0) return;
+	if (_ignoreUIEventsCounter > 0)
+		return;
 	
 	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
+#if defined(DEBUG) && DEBUG > 2
+	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"moving mouse - %@", NSStringFromPoint(mousePoint));
+#endif
 	
 	// find over which hotspot the mouse is
 	NSEnumerator* hotpotEnum = [[_front_render_state->card activeHotspots] objectEnumerator];
 	RXHotspot* hotspot;
 	while ((hotspot = [hotpotEnum nextObject])) {
-		if (NSPointInRect(mousePoint, [hotspot frame])) break;
+		if (NSPointInRect(mousePoint, [hotspot worldViewFrame]))
+			break;
+	}
+	
+	// now check if we're over one of the inventory regions
+	if (!hotspot) {
+		for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+			if (NSPointInRect(mousePoint, _inventoryHotspotRegions[inventory_i])) {
+				hotspot = (RXHotspot*)(inventory_i + 1);
+				break;
+			}
+		}
 	}
 	
 	// if we were over another hotspot, we're no longer over it and we send a mouse exited event followed by a mouse entered event
 	if (_currentHotspot != hotspot || _resetHotspotState) {
-		// mouseExitedHotspot does not accept nil (we can't exit the "nil" hotspot)
-		if (_currentHotspot) [_front_render_state->card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+		// mouseExitedHotspot does not accept nil (we can't exit the "nil" hotspot); make sure _currentHotspot is not in PAGEZERO (e.g. that it is a valid object)
+		if (_currentHotspot >= (RXHotspot*)0x1000)
+			[_front_render_state->card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 		
-		// mouseEnteredHotspot accepts nil as the hotspot, to indicate we moved out of a hotspot onto no hotspot
-		[_front_render_state->card performSelector:@selector(mouseEnteredHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+		// handle cursor changes here so we don't ping-pong across 2 threads
+		if (hotspot == 0)
+			[g_worldView setCursor:[g_world defaultCursor]];
+		else if (hotspot < (RXHotspot*)0x1000)
+			[g_worldView setCursor:[g_world openHandCursor]];
+		else {
+			[g_worldView setCursor:[g_world cursorForID:[hotspot cursorID]]];
+			[_front_render_state->card performSelector:@selector(mouseEnteredHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+		}
 		
 		_currentHotspot = hotspot;
 		_resetHotspotState = NO;
@@ -1321,17 +1708,32 @@ exit_flush_tasks:
 }
 
 - (void)mouseDragged:(NSEvent*)event {
-	//RXOLog(@"Caught mouseDragged");
+#if defined(DEBUG) && DEBUG > 2
+	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"dragging mouse");
+#endif
+	_isDraggingMouse = YES;
 }
 
 - (void)mouseDown:(NSEvent*)event {
-	if (_ignoreUIEventsCounter > 0) return;
-	if (_currentHotspot) [_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+	if (_ignoreUIEventsCounter > 0)
+		return;
+	
+	if (_currentHotspot >= (RXHotspot*)0x1000)
+		[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+	else if (_currentHotspot)
+		[self _handleInventoryMouseDown:event inventoryIndex:(uint32_t)_currentHotspot - 1];
 }
 
 - (void)mouseUp:(NSEvent*)event {
-	if (_ignoreUIEventsCounter > 0) return;
-	if (_currentHotspot) [_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+	if (_ignoreUIEventsCounter > 0)
+		return;
+	
+	if (_currentHotspot >= (RXHotspot*)0x1000)
+		[_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+	
+	if (_isDraggingMouse)
+		[self mouseMoved:event];
+	_isDraggingMouse = NO;
 }
 
 @end

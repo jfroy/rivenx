@@ -22,12 +22,12 @@
 	BOOL enabled;
 }
 
-- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID frame:(NSRect)frame cursorID:(uint16_t)cursorID script:(NSDictionary *)script;
+- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID frame:(NSRect)frame cursorID:(uint16_t)cursorID script:(NSDictionary*)script;
 
-- (NSRect)frame;
+- (NSRect)worldViewFrame;
 - (uint16_t)cursorID;
 - (NSDictionary*)script;
 
-- (void)makeEnabled;
+- (void)enable;
 
 @end

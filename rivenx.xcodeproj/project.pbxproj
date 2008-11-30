@@ -131,6 +131,13 @@
 		316721B40D27F6A600FB2C0E /* CAPThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316721B20D27F6A600FB2C0E /* CAPThread.cpp */; };
 		316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 316721D90D27FB3200FB2C0E /* integer_pair_hash.c */; };
 		316C37B40987227800AC2C8E /* RXCardState.mm in Sources */ = {isa = PBXBuildFile; fileRef = 316C37B20987227800AC2C8E /* RXCardState.mm */; };
+		316E1F2A0E77806100F28E2A /* mhk_dump.m in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F270E77806100F28E2A /* mhk_dump.m */; };
+		316E1F2B0E77806100F28E2A /* mhk_dump_cmd.c in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F280E77806100F28E2A /* mhk_dump_cmd.c */; };
+		316E1F300E77809400F28E2A /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3158857A0C8729D800204DDD /* MHKKit.framework */; };
+		316E1F390E7780E600F28E2A /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31DCF73108CB855C00E351D9 /* QuartzCore.framework */; };
+		316E1F3B0E77810200F28E2A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
+		316E1F3D0E77810800F28E2A /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384B08C6A73E004B7FD0 /* CoreServices.framework */; };
+		316E1F3F0E77810F00F28E2A /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313C7E9F08CCFB4D00950A70 /* ApplicationServices.framework */; };
 		317403940CDC1A67006F3523 /* RXGameState.m in Sources */ = {isa = PBXBuildFile; fileRef = 317403930CDC1A67006F3523 /* RXGameState.m */; };
 		3185C43B0E06027800528220 /* sparkle.pem in Resources */ = {isa = PBXBuildFile; fileRef = 3185C43A0E06027800528220 /* sparkle.pem */; };
 		3185C4730E06046D00528220 /* RXVersionComparator.m in Sources */ = {isa = PBXBuildFile; fileRef = 3185C4720E06046D00528220 /* RXVersionComparator.m */; };
@@ -226,6 +233,13 @@
 			remoteGlobalIDString = 8DC2EF5B0486A6940098B216;
 			remoteInfo = MHKKit;
 		};
+		316E1F310E7780A100F28E2A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3149598E0E327B2D00E49C83;
+			remoteInfo = MHKKit;
+		};
 		31C357330D92A78900EDEF81 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
@@ -319,12 +333,6 @@
 		312F4D990DC263F400B3AF0D /* GLee.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLee.h; sourceTree = "<group>"; };
 		312F4D9A0DC263F400B3AF0D /* RXMovie.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXMovie.h; sourceTree = "<group>"; };
 		312F4D9B0DC263F400B3AF0D /* RXMovie.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXMovie.m; sourceTree = "<group>"; };
-		312F4D9C0DC263F400B3AF0D /* GLPBOFrameReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLPBOFrameReader.h; sourceTree = "<group>"; };
-		312F4D9D0DC263F400B3AF0D /* GLPBOFrameReader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLPBOFrameReader.m; sourceTree = "<group>"; };
-		312F4D9E0DC263F400B3AF0D /* GLQuad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLQuad.h; sourceTree = "<group>"; };
-		312F4D9F0DC263F400B3AF0D /* GLQuad.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLQuad.m; sourceTree = "<group>"; };
-		312F4DA00DC263F400B3AF0D /* GLShaderObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLShaderObject.h; sourceTree = "<group>"; };
-		312F4DA10DC263F400B3AF0D /* GLShaderObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLShaderObject.m; sourceTree = "<group>"; };
 		312F4DA20DC263F400B3AF0D /* GLShaderProgramManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLShaderProgramManager.h; sourceTree = "<group>"; };
 		312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLShaderProgramManager.m; sourceTree = "<group>"; };
 		312F4DA80DC263F400B3AF0D /* RXStateCompositor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXStateCompositor.h; sourceTree = "<group>"; };
@@ -413,6 +421,10 @@
 		316721D90D27FB3200FB2C0E /* integer_pair_hash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = integer_pair_hash.c; path = Additions/integer_pair_hash.c; sourceTree = "<group>"; };
 		316C37B10987227800AC2C8E /* RXCardState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXCardState.h; path = States/RXCardState.h; sourceTree = "<group>"; };
 		316C37B20987227800AC2C8E /* RXCardState.mm */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RXCardState.mm; path = States/RXCardState.mm; sourceTree = "<group>"; tabWidth = 4; usesTabs = 1; };
+		316E1EE80E77803100F28E2A /* mhkdump */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mhkdump; sourceTree = BUILT_PRODUCTS_DIR; };
+		316E1F270E77806100F28E2A /* mhk_dump.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = mhk_dump.m; path = mhk/mhk_dump.m; sourceTree = "<group>"; };
+		316E1F280E77806100F28E2A /* mhk_dump_cmd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mhk_dump_cmd.c; path = mhk/mhk_dump_cmd.c; sourceTree = "<group>"; };
+		316E1F290E77806100F28E2A /* mhk_dump_cmd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mhk_dump_cmd.h; path = mhk/mhk_dump_cmd.h; sourceTree = "<group>"; };
 		317403920CDC1A67006F3523 /* RXGameState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXGameState.h; sourceTree = "<group>"; };
 		317403930CDC1A67006F3523 /* RXGameState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXGameState.m; sourceTree = "<group>"; };
 		317A0E130A889C5D0076E5E9 /* RXAtomic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXAtomic.h; path = Base/RXAtomic.h; sourceTree = "<group>"; };
@@ -541,6 +553,18 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		316E1EE60E77803100F28E2A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				316E1F300E77809400F28E2A /* MHKKit.framework in Frameworks */,
+				316E1F390E7780E600F28E2A /* QuartzCore.framework in Frameworks */,
+				316E1F3B0E77810200F28E2A /* Foundation.framework in Frameworks */,
+				316E1F3D0E77810800F28E2A /* CoreServices.framework in Frameworks */,
+				316E1F3F0E77810F00F28E2A /* ApplicationServices.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		31C357190D92A6A700EDEF81 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -620,9 +644,9 @@
 			isa = PBXGroup;
 			children = (
 				31B78EC40C88F25F00227E0F /* Configuration */,
-				314959870E327AF900E49C83 /* MHKKit */,
 				31A9EF94094D285400C6A0AB /* RXBase.pch */,
 				31BC2E610D6DC419008FA476 /* Base */,
+				314959870E327AF900E49C83 /* MHKKit */,
 				31BC2E600D6DC3B6008FA476 /* Debug */,
 				31BAE6250A98D3110079DD0F /* Utilities */,
 				315547EB08C4C4CA00A2AA7A /* Application */,
@@ -642,6 +666,9 @@
 		08FB7795FE84155DC02AAC07 /* Other Programs */ = {
 			isa = PBXGroup;
 			children = (
+				316E1F270E77806100F28E2A /* mhk_dump.m */,
+				316E1F280E77806100F28E2A /* mhk_dump_cmd.c */,
+				316E1F290E77806100F28E2A /* mhk_dump_cmd.h */,
 				31FF29670D41996E00E3B5FF /* dump_save.m */,
 				08FB7796FE84155DC02AAC07 /* plistize_stacks.m */,
 			);
@@ -685,6 +712,7 @@
 				31D6AD8D0D4197E600629AEB /* dump_save */,
 				31C3571C0D92A6A700EDEF81 /* UnitTests.octest */,
 				3149598F0E327B2D00E49C83 /* MHKKit.framework */,
+				316E1EE80E77803100F28E2A /* mhkdump */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -761,12 +789,6 @@
 				312F4D970DC263F400B3AF0D /* GL_debug.h */,
 				312F4D980DC263F400B3AF0D /* GLee.c */,
 				312F4D990DC263F400B3AF0D /* GLee.h */,
-				312F4D9C0DC263F400B3AF0D /* GLPBOFrameReader.h */,
-				312F4D9D0DC263F400B3AF0D /* GLPBOFrameReader.m */,
-				312F4D9E0DC263F400B3AF0D /* GLQuad.h */,
-				312F4D9F0DC263F400B3AF0D /* GLQuad.m */,
-				312F4DA00DC263F400B3AF0D /* GLShaderObject.h */,
-				312F4DA10DC263F400B3AF0D /* GLShaderObject.m */,
 				312F4DA20DC263F400B3AF0D /* GLShaderProgramManager.h */,
 				312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */,
 			);
@@ -1107,9 +1129,9 @@
 			buildConfigurationList = 314959940E327B2E00E49C83 /* Build configuration list for PBXNativeTarget "MHKKit" */;
 			buildPhases = (
 				3149598A0E327B2D00E49C83 /* Headers */,
-				3149598B0E327B2D00E49C83 /* Resources */,
 				3149598C0E327B2D00E49C83 /* Sources */,
 				3149598D0E327B2D00E49C83 /* Frameworks */,
+				3149598B0E327B2D00E49C83 /* Resources */,
 				314959DA0E327D2800E49C83 /* copy_ffmpeg_license */,
 				314959D90E327D0800E49C83 /* copy_ffmpeg */,
 				314959DC0E327D3100E49C83 /* bzrversion */,
@@ -1122,6 +1144,23 @@
 			productName = MHKKit;
 			productReference = 3149598F0E327B2D00E49C83 /* MHKKit.framework */;
 			productType = "com.apple.product-type.framework";
+		};
+		316E1EE70E77803100F28E2A /* mhkdump */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 316E1F260E77805C00F28E2A /* Build configuration list for PBXNativeTarget "mhkdump" */;
+			buildPhases = (
+				316E1EE50E77803100F28E2A /* Sources */,
+				316E1EE60E77803100F28E2A /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				316E1F320E7780A100F28E2A /* PBXTargetDependency */,
+			);
+			name = mhkdump;
+			productName = mhkdump;
+			productReference = 316E1EE80E77803100F28E2A /* mhkdump */;
+			productType = "com.apple.product-type.tool";
 		};
 		31C3571B0D92A6A700EDEF81 /* UnitTests */ = {
 			isa = PBXNativeTarget;
@@ -1199,7 +1238,7 @@
 				31F3092F08BE43C100417394 /* Resources */,
 				314EF26409E45958002124D5 /* Copy Frameworks */,
 				314A02EE0B6E53D5003E92A1 /* bzrversion */,
-				31D6ACFC0D40530B00629AEB /* info_plist_process */,
+				31D109DE0E7C914100220991 /* set_appcast_url */,
 			);
 			buildRules = (
 			);
@@ -1254,6 +1293,7 @@
 				31C3571B0D92A6A700EDEF81 /* UnitTests */,
 				8DD76F960486AA7600D96B5E /* plistize_stacks */,
 				31D6AD8C0D4197E600629AEB /* dump_save */,
+				316E1EE70E77803100F28E2A /* mhkdump */,
 				31333F4F09B019E300DB6FC7 /* rxaudio_test */,
 				31DC67FE09CB879B00BFF447 /* VirtualRingBuffer_test */,
 				31DAA0DE09D888E100F63F20 /* RXCardAudioSource_test */,
@@ -1330,7 +1370,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "COPY_TOOL=\"${DEVELOPER_LIBRARY_DIR}/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nif [ ! -f \"${COPY_TOOL}\" ]; then\n\tCOPY_TOOL=\"/System/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nfi\n\n# libavutil\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib.dSYM\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcodec\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib.dSYM\" \"${BUILT_PRODUCTS_DIR}\"\n";
+			shellScript = "COPY_TOOL=\"${DEVELOPER_LIBRARY_DIR}/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nif [ ! -f \"${COPY_TOOL}\" ]; then\n\tCOPY_TOOL=\"/System/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nfi\n\n# libavutil\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcodec\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		314959DC0E327D3100E49C83 /* bzrversion */ = {
@@ -1359,8 +1399,8 @@
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = "/usr/bin/env python";
-			shellScript = "#-*- encoding: utf-8 -*-\n# Xcode auto-versioning script for Bazaar\n        \nimport os, re, sys\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# MACOSX_DEPLOYMENT_TARGET plays badly with Python...\nif \"MACOSX_DEPLOYMENT_TARGET\" in os.environ:\n\tdel os.environ[\"MACOSX_DEPLOYMENT_TARGET\"]\n\n# Add a few common directories to PATH\npathEntries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in pathEntries: pathEntries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in pathEntries: pathEntries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in pathEntries: pathEntries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(pathEntries)\n\n# Get the current bzr revision number and use it to set the CFBundleVersion value\np = os.popen2(['bzr', 'revno'])[1]\nREV = p.read()\np.close()\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\n\nmatchObject = re.compile(\"(?P<revision>[\\d]+)\").match(REV)\nif not matchObject:\n    print \"No Bazaar revision found\"\n    sys.exit(1)\nrevision = matchObject.group(\"revision\")\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"(?P<tag_begin>[\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(?P<tag_end></string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<tag_begin>bzr %s\\g<tag_end>' % revision, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
+			shellPath = /usr/bin/python2.5;
+			shellScript = "# -*- coding: utf-8 -*-\n# Xcode auto-versioning script for Bazaar\n\nimport os, re, subprocess, sys\nfrom os import path\n\nif not \"BUILT_PRODUCTS_DIR\" in os.environ:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# MACOSX_DEPLOYMENT_TARGET plays badly with Python\nif \"MACOSX_DEPLOYMENT_TARGET\" in os.environ:\n\tdel os.environ[\"MACOSX_DEPLOYMENT_TARGET\"]\n\n# add a few common directories to PATH\npath_entries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in path_entries: path_entries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in path_entries: path_entries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in path_entries: path_entries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(path_entries)\n\n# output a build strings file\nbuild_strings_format = r'--template=\"BUILD_VERSION\" = \"{revno}\";\\n\"BUILD_DATE\" = \"{build_date}\";\\n\"BUILD_BRANCH\" = \"{branch_nick}\";\\n'\nbuild_strings_command = ['bzr', 'version-info', '--custom', build_strings_format]\np = subprocess.Popen(build_strings_command, stdout=subprocess.PIPE, shell=False, close_fds=True)\nbuild_strings = p.communicate()[0].decode('utf8')\n\nresources_path = path.join(os.environ['TARGET_BUILD_DIR'], os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH'])\nbuild_strings_file = open(path.join(resources_path, u\"build.strings\"), 'w')\nbuild_strings_file.write(build_strings.encode('utf16'))\nbuild_strings_file.close()\n\n# get the current bzr revision number and use it to set the CFBundleVersion value\nrevision_command = ['bzr', 'revno']\np = subprocess.Popen(revision_command, stdout=subprocess.PIPE, shell=False, close_fds=True)\nrevision_string = p.communicate()[0].decode('utf8')[:-1]\n\ninfo_plist_file = open(path.join(os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH']), 'r+')\ninfo_plist = info_plist_file.read().decode('utf8')\ninfo_plist_file.close()\n\ninfo_re = re.compile(u\"(?P<tag_begin>[\\t ]+<key>CFBundleVersion</key>\\n[\\t ]+<string>).*?(?P<tag_end></string>)\", re.S | re.M)\ninfo_plist = info_re.sub(r'\\g<tag_begin>bzr %s\\g<tag_end>' % revision_string, info_plist)\n\ninfo_plist_file = open(path.join(os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH']), 'w')\ninfo_plist_file.write(info_plist.encode('utf8'))\ninfo_plist_file.close()\n";
 			showEnvVarsInLog = 0;
 		};
 		31C3571A0D92A6A700EDEF81 /* RunUnitTests */ = {
@@ -1377,19 +1417,19 @@
 			shellPath = /bin/sh;
 			shellScript = "# Run the unit tests in this test bundle.\n\"${SYSTEM_DEVELOPER_DIR}/Tools/RunUnitTests\"\n";
 		};
-		31D6ACFC0D40530B00629AEB /* info_plist_process */ = {
+		31D109DE0E7C914100220991 /* set_appcast_url */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = info_plist_process;
+			name = set_appcast_url;
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = "/usr/bin/env python";
-			shellScript = "#-*- encoding: utf-8 -*-\n\"\"\"Script to insert property list values because the preprocessor is broken\"\"\"\nimport os, re\n\nif os.getenv(\"BUILT_PRODUCTS_DIR\") is None:\n\tprint \"Must be run from Xcode\"\n\tsys.exit(1)\n\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\nAPPCAST = os.environ['APPCAST_URL']\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"([\\t ]+<key>SUFeedURL</key>\\n[\\t ]+<string>).*?(</string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<1>%s\\g<2>' % APPCAST, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
+			shellPath = /usr/bin/python2.5;
+			shellScript = "# -*- coding: utf-8 -*-\n\"\"\"Script to insert property list values because the preprocessor is broken\"\"\"\nimport os, re\n\nif not \"BUILT_PRODUCTS_DIR\" in os.environ:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\nAPPCAST = os.environ['APPCAST_URL']\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"([\\t ]+<key>SUFeedURL</key>\\n[\\t ]+<string>).*?(</string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<1>%s\\g<2>' % APPCAST, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1432,6 +1472,15 @@
 				314959B80E327BA500E49C83 /* MHKErrors.m in Sources */,
 				314959BC0E327BA500E49C83 /* MHKADPCMDecompressor.m in Sources */,
 				314959BE0E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		316E1EE50E77803100F28E2A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				316E1F2A0E77806100F28E2A /* mhk_dump.m in Sources */,
+				316E1F2B0E77806100F28E2A /* mhk_dump_cmd.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1584,6 +1633,11 @@
 			isa = PBXTargetDependency;
 			target = 3149598E0E327B2D00E49C83 /* MHKKit */;
 			targetProxy = 31495A4C0E327D7500E49C83 /* PBXContainerItemProxy */;
+		};
+		316E1F320E7780A100F28E2A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3149598E0E327B2D00E49C83 /* MHKKit */;
+			targetProxy = 316E1F310E7780A100F28E2A /* PBXContainerItemProxy */;
 		};
 		31C357340D92A78900EDEF81 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1752,6 +1806,34 @@
 			};
 			name = Release;
 		};
+		316E1EEA0E77803200F28E2A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = mhkdump;
+			};
+			name = Debug;
+		};
+		316E1EEB0E77803200F28E2A /* Debug_u */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = mhkdump;
+			};
+			name = Debug_u;
+		};
+		316E1EEC0E77803200F28E2A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = mhkdump;
+			};
+			name = Release;
+		};
 		31C3571D0D92A6AD00EDEF81 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1871,7 +1953,8 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					CoreAudio_StopOnFailure,
-					"DEBUG=1",
+					"DEBUG=2",
+					"DEBUG_GL=1",
 				);
 				GCC_VERSION = 4.0;
 				ONLY_ACTIVE_ARCH = YES;
@@ -2210,6 +2293,16 @@
 				314959910E327B2E00E49C83 /* Debug */,
 				314959920E327B2E00E49C83 /* Debug_u */,
 				314959930E327B2E00E49C83 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		316E1F260E77805C00F28E2A /* Build configuration list for PBXNativeTarget "mhkdump" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				316E1EEA0E77803200F28E2A /* Debug */,
+				316E1EEB0E77803200F28E2A /* Debug_u */,
+				316E1EEC0E77803200F28E2A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

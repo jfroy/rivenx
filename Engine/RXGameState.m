@@ -9,6 +9,8 @@
 #import "RXGameState.h"
 #import "RXEditionManager.h"
 
+static const int RX_GAME_STATE_CURRENT_VERSION = 1;
+
 
 @implementation RXGameState
 
@@ -29,7 +31,8 @@
 	RXGameState* gameState =  [NSKeyedUnarchiver unarchiveObjectWithData:archive];
 	
 	// set the write URL on the game state to indicate it has an existing location on the file system
-	if (gameState) gameState->_URL = [url retain];
+	if (gameState)
+		gameState->_URL = [url retain];
 	return gameState;
 }
 
@@ -49,7 +52,8 @@
 
 - (id)initWithEdition:(RXEdition*)edition {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	_accessLock = [NSRecursiveLock new];
 	
@@ -86,7 +90,8 @@
 
 - (id)initWithCoder:(NSCoder*)decoder {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	_accessLock = [NSRecursiveLock new];
 
@@ -97,6 +102,13 @@
 	int32_t version = [decoder decodeInt32ForKey:@"VERSION"];
 	
 	switch (version) {
+		case 1:
+			if (![decoder containsValueForKey:@"returnCard"]) {
+				[self release];
+				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand this save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
+			}
+			_returnCard = [[decoder decodeObjectForKey:@"returnCard"] retain];
+		
 		case 0:
 			if (![decoder containsValueForKey:@"editionKey"]) {
 				[self release];
@@ -131,14 +143,16 @@
 }
 
 - (void)encodeWithCoder:(NSCoder*)encoder {
-	if (![encoder allowsKeyedCoding]) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"RXGameState only supports keyed archiving." userInfo:nil];
+	if (![encoder allowsKeyedCoding])
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"RXGameState only supports keyed archiving." userInfo:nil];
 	
 	[_accessLock lock];
 	
-	[encoder encodeInt32:0 forKey:@"VERSION"];
+	[encoder encodeInt32:RX_GAME_STATE_CURRENT_VERSION forKey:@"VERSION"];
 	
 	[encoder encodeObject:[_edition valueForKey:@"key"] forKey:@"editionKey"];
 	[encoder encodeObject:_currentCard forKey:@"currentCard"];
+	[encoder encodeObject:_returnCard forKey:@"returnCard"];
 	[encoder encodeObject:_variables forKey:@"variables"];
 	
 	[_accessLock unlock];
@@ -150,6 +164,7 @@
 	[_edition release];
 	[_variables release];
 	[_currentCard release];
+	[_returnCard release];
 	[_URL release];
 	[_accessLock release];
 	
@@ -167,7 +182,8 @@
 - (BOOL)writeToURL:(NSURL*)url error:(NSError**)error {
 	// serialize ourselves as data
 	NSData* gameStateData = [NSKeyedArchiver archivedDataWithRootObject:self];
-	if (!gameStateData) ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+	if (!gameStateData)
+		ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
 	
 	// write the data
 	BOOL success = [gameStateData writeToURL:url options:NSAtomicWrite error:error];
@@ -187,8 +203,10 @@
 	
 	[_accessLock lock];
 	NSNumber* n = [_variables objectForKey:key];
-	if (n) v = [n unsignedShortValue];
-	else [self setUnsignedShort:0 forKey:key];
+	if (n)
+		v = [n unsignedShortValue];
+	else
+		[self setUnsignedShort:0 forKey:key];
 	[_accessLock unlock];
 	
 	return v;
@@ -200,8 +218,10 @@
 	
 	[_accessLock lock];
 	NSNumber* n = [_variables objectForKey:key];
-	if (n) v = [n shortValue];
-	else [self setShort:0 forKey:key];
+	if (n)
+		v = [n shortValue];
+	else
+		[self setShort:0 forKey:key];
 	[_accessLock unlock];
 	
 	return v;
@@ -246,6 +266,21 @@
 - (void)setCurrentCard:(RXSimpleCardDescriptor*)descriptor {
 	[_currentCard release];
 	_currentCard = [descriptor retain];
+	
+	[self setUnsignedShort:descriptor->cardID forKey:@"currentcardid"];
+	[self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->parentName] objectForKey:@"ID"] unsignedShortValue] forKey:@"currentstackid"];
+}
+
+- (RXSimpleCardDescriptor*)returnCard {
+	return _returnCard;
+}
+
+- (void)setReturnCard:(RXSimpleCardDescriptor*)descriptor {
+	[_returnCard release];
+	_returnCard = [descriptor retain];
+	
+	[self setUnsignedShort:descriptor->cardID forKey:@"returncardid"];
+	[self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->parentName] objectForKey:@"ID"] unsignedShortValue] forKey:@"returnstackid"];
 }
 
 @end

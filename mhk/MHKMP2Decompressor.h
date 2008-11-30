@@ -12,40 +12,38 @@
 #import <CoreAudio/CoreAudioTypes.h>
 #import <AudioToolbox/AudioConverter.h>
 
-#import <avcodec.h>
-
 
 @interface MHKMP2Decompressor : NSObject <MHKAudioDecompression> {
-	MHKFileHandle *__data_source;
+	MHKFileHandle* _data_source;
 	
-	UInt32 __channel_count;
-	AudioStreamBasicDescription __output_absd;
-	AudioStreamBasicDescription __decomp_absd;
+	UInt32 _channel_count;
+	AudioStreamBasicDescription _output_absd;
+	AudioStreamBasicDescription _decomp_absd;
 	
-	SInt64 __audio_packets_start_offset;
-	SInt64 __packet_count;
-	UInt32 __max_packet_size;
-	AudioStreamPacketDescription *__packet_table;
+	SInt64 _audio_packets_start_offset;
+	SInt64 _packet_count;
+	UInt32 _max_packet_size;
+	AudioStreamPacketDescription* _packet_table;
 	
-	SInt64 __frame_count;
-	UInt32 __bytes_to_drop;
+	SInt64 _frame_count;
+	UInt32 _bytes_to_drop;
 	
-	SInt64 __packet_index;
-	UInt32 __available_packets;
-	void *__packet_buffer;
-	void *__current_packet;
+	SInt64 _packet_index;
+	UInt32 _available_packets;
+	void* _packet_buffer;
+	void* _current_packet;
 	
-	UInt32 __decompression_buffer_position;
-	UInt32 __decompression_buffer_length;
-	void *__decompression_buffer;
+	UInt32 _decompression_buffer_position;
+	UInt32 _decompression_buffer_length;
+	void* _decompression_buffer;
 	
-	// CoreAudio stuff
-	AudioConverterRef __converter;
+	AudioConverterRef _converter;
 	
-	// ffmpeg stuff
-	AVCodecContext *__mp2_codec_context;
+	void* _mp2_codec_context;
+	
+	pthread_mutex_t _decompressor_lock;
 }
 
-- (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle *)fh error:(NSError **)errorPtr;
+- (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle*)fh error:(NSError**)errorPtr;
 
 @end

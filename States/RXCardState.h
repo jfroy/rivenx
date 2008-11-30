@@ -46,6 +46,7 @@ struct _rx_transition_program {
 	
 	// hotspot state handling
 	BOOL _resetHotspotState;
+	BOOL _isDraggingMouse;
 	RXHotspot* _currentHotspot;
 	
 	// sounds
@@ -59,13 +60,24 @@ struct _rx_transition_program {
 	OSSpinLock _audioTaskThreadStatusLock;
 	semaphore_t _audioTaskThreadExitSemaphore;
 	
+	BOOL _forceFadeInOnNextSoundGroup;
+	
 	// transitions
+	semaphore_t _transitionSemaphore;
 	NSMutableArray* _transitionQueue;
 	
+	struct _rx_transition_program _dissolve;
+	struct _rx_transition_program _push[4];
+	struct _rx_transition_program _slide_out[4];
+	struct _rx_transition_program _slide_in[4];
+	struct _rx_transition_program _swipe[4];
+	
 	// rendering
+	GLuint _cardRenderVAO;
 	GLuint _cardRenderVBO;
-	GLfloat _cardCompositeVertices[8];
-	GLfloat _cardTexCoords[8];
+	
+	GLuint _cardCompositeVAO;
+	GLuint _cardCompositeVBO;
 	
 	GLuint _fbos[2];
 	GLuint _textures[3];
@@ -73,9 +85,17 @@ struct _rx_transition_program {
 	GLuint _waterProgram;
 	GLuint _cardProgram;
 	
-	semaphore_t _transitionSemaphore;
-	struct _rx_transition_program _dissolve;
-	struct _rx_transition_program _push[4];
+	GLuint _hotspotDebugRenderVAO;
+	GLuint _hotspotDebugRenderVBO;
+	GLint* _hotspotDebugRenderFirstElementArray;
+	GLint* _hotspotDebugRenderElementCountArray;
+	
+	// inventory
+	CGRect _inventoryRegions[3];
+	NSRect _inventoryHotspotRegions[3];
+	uint16_t _inventoryDestinationCardID[3];
+	GLuint _inventoryTextures[3];
+	GLuint _inventoryTextureBuffer;
 }
 
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;

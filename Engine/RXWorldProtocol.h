@@ -14,6 +14,7 @@
 #import <sys/cdefs.h>
 
 #import <Foundation/Foundation.h>
+#import <MHKKit/MHKKit.h>
 
 #import "RXStack.h"
 #import "RXRendering.h"
@@ -26,8 +27,11 @@
 - (NSThread*)scriptThread;
 - (NSThread*)animationThread;
 
+- (MHKArchive*)extraBitmapsArchive;
+- (NSDictionary*)extraBitmapsDescriptor;
+
 - (NSArray*)activeStacks;
-- (RXStack*)activeStackWithKey:(NSString *)key;
+- (RXStack*)activeStackWithKey:(NSString*)key;
 
 - (void)loadStackWithKey:(NSString*)stackKey waitUntilDone:(BOOL)waitFlag;
 
@@ -41,6 +45,7 @@
 - (RXGameState*)gameState;
 
 - (NSCursor*)defaultCursor;
+- (NSCursor*)openHandCursor;
 - (NSCursor*)cursorForID:(uint16_t)ID;
 @end
 

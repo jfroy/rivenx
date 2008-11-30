@@ -20,29 +20,31 @@
 #endif
 
 #if defined(DEBUG)
-void glReportErrorWithFileLine(const char* file, const char* function, const int line) {
-#if defined(__APPLE__)
-	CGL_MACRO_DECLARE_CONTEXT()
-#endif // __APPLE__
-	
-	GLenum err = glGetError();
-#if defined(RIVENX)
-	if (GL_NO_ERROR != err) RXCFLog(kRXLoggingGraphics, kRXLoggingLevelError, CFSTR("GL error at %s:%s:%d: %s (0x%x)"), file, function, line, gluErrorString(err), (unsigned int)err);
-#else
-	if (GL_NO_ERROR != err) fprintf(stderr, "GL error at %s:%s:%d: %s (0x%x)\n", file, function, line, gluErrorString(err), (unsigned int)err);
-#endif // RIVENX
-}
 
 #if defined(__APPLE__)
+
 extern void glReportErrorWithFileLineCGLMacro(CGLContextObj cgl_ctx, const char* file, const char* function, const int line) {
 	GLenum err = glGetError();
 #if defined(RIVENX)
-	if (GL_NO_ERROR != err) RXCFLog(kRXLoggingGraphics, kRXLoggingLevelError, CFSTR("GL error at %s:%s:%d: %s (0x%x)"), file, function, line, gluErrorString(err), (unsigned int)err);
+	if (GL_NO_ERROR != err) {
+		RXCFLog(kRXLoggingGraphics, kRXLoggingLevelError, CFSTR("GL error at %s:%s:%d: %s (0x%x)"), file, function, line, gluErrorString(err), (unsigned int)err);
 #else
-	if (GL_NO_ERROR != err) fprintf(stderr, "GL error at %s:%s:%d: %s (0x%x)\n", file, function, line, gluErrorString(err), (unsigned int)err);
+	if (GL_NO_ERROR != err) {
+		fprintf(stderr, "GL error at %s:%s:%d: %s (0x%x)\n", file, function, line, gluErrorString(err), (unsigned int)err);
 #endif // RIVENX
+		abort();
+	}
 }
 
 #endif // __APPLE__
+
+void glReportErrorWithFileLine(const char* file, const char* function, const int line) {
+#if defined(__APPLE__)
+	CGL_MACRO_DECLARE_CONTEXT()
+	glReportErrorWithFileLineCGLMacro(CGL_MACRO_CONTEXT, file, function, line);
+#else
+#error not implemented
+#endif // __APPLE__
+}
 
 #endif // DEBUG

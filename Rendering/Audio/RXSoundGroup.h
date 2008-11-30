@@ -38,14 +38,17 @@
 @end
 
 @interface RXSoundGroup : NSObject {
-	BOOL _fadeOutActiveGroupBeforeActivating;
-	BOOL _fadeInOnActivation;
-	BOOL _loop;
-	float _gain;
+@public
+	BOOL fadeOutActiveGroupBeforeActivating;
+	BOOL fadeInOnActivation;
+	BOOL loop;
+	float gain;
 	
+@private
 	NSMutableSet* _sounds;
 }
 
-- (void)addSoundWithStack:(RXStack*)parent ID:(uint16_t)ID gain:(float)gain pan:(float)pan;
+- (void)addSoundWithStack:(RXStack*)parent ID:(uint16_t)ID gain:(float)g pan:(float)p;
+- (NSSet*)sounds;
 
 @end

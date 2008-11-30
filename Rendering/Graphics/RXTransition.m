@@ -27,7 +27,8 @@ static NSString* _kRXTransitionDirectionNames[4] = {
 
 - (id)initWithCode:(uint16_t)code region:(NSRect)rect {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	if (code <= 15) {
 		type = RXTransitionSlide;
@@ -39,6 +40,22 @@ static NSString* _kRXTransitionDirectionNames[4] = {
 		[self release];
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"INVALID TRANSITION CODE" userInfo:nil];
 	}
+	
+	region = rect;
+	
+	startTime = 0;
+	duration = kRXTransitionDuration;
+	
+	return self;
+}
+
+- (id)initWithType:(RXTransitionType)transitionType direction:(RXTransitionDirection)transitionDirection region:(NSRect)rect {
+	self = [super init];
+	if (!self)
+		return nil;
+	
+	type = transitionType;
+	direction = transitionDirection;
 	
 	region = rect;
 	

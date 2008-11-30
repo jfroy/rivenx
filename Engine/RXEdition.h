@@ -16,10 +16,13 @@
 	// should not be modified through KVC
 	NSString* key;
 	NSString* name;
+	
 	NSArray* discs;
-	NSDictionary* directories;
-	NSDictionary* stackSwitchTables;
 	NSArray* installDirectives;
+	NSDictionary* directories;
+	
+	NSDictionary* stackSwitchTables;
+	NSDictionary* journalCardIDMap;
 	
 	NSString* userBase;
 	NSString* userDataBase;

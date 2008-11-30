@@ -33,11 +33,11 @@
 	_delegate = delegate;
 }
 
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {
+- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 }
 
-- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent {
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 }
 

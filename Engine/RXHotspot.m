@@ -29,7 +29,7 @@
 	_globalFrame.size.height = _cardFrame.size.height * scale_y;
 }
 
-- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID frame:(NSRect)frame cursorID:(uint16_t)cursorID script:(NSDictionary *)script {
+- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID frame:(NSRect)frame cursorID:(uint16_t)cursorID script:(NSDictionary*)script {
 	self = [super init];
 	if (!self) return nil;
 	
@@ -48,7 +48,8 @@
 	NSArray* keys = [[_script allKeys] sortedArrayUsingSelector:@selector(compare:)];
 	NSEnumerator* handlers = [keys objectEnumerator];
 	NSString* key;
-	while((key = [handlers nextObject])) [hotspot_handlers appendFormat:@"	  %@ = %d\n", key, [[_script objectForKey:key] count]];
+	while((key = [handlers nextObject]))
+		[hotspot_handlers appendFormat:@"	  %@ = %d\n", key, [[_script objectForKey:key] count]];
 	RXOLog(@"hotspot script:\n%@", hotspot_handlers);
 	[hotspot_handlers release];
 #endif
@@ -72,7 +73,7 @@
 		return NSOrderedDescending;
 }
 
-- (NSRect)frame {
+- (NSRect)worldViewFrame {
 	return _globalFrame;
 }
 
@@ -88,7 +89,7 @@
 	return [NSString stringWithFormat: @"%@ {ID=%hu, frame=%@}", [super description], _ID, NSStringFromRect(_cardFrame)];
 }
 
-- (void)makeEnabled {
+- (void)enable {
 	enabled = YES;
 }
 

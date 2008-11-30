@@ -41,6 +41,7 @@ typedef uint8_t RXTransitionDirection;
 }
 
 - (id)initWithCode:(uint16_t)code region:(NSRect)rect;
+- (id)initWithType:(RXTransitionType)transitionType direction:(RXTransitionDirection)transitionDirection region:(NSRect)rect;
 
 - (BOOL)isPrimed;
 

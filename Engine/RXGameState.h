@@ -16,6 +16,7 @@
 	RXEdition* _edition;
 	NSMutableDictionary* _variables;
 	RXSimpleCardDescriptor* _currentCard;
+	RXSimpleCardDescriptor* _returnCard;
 	NSURL* _URL;
 	NSRecursiveLock* _accessLock;
 }
@@ -39,5 +40,8 @@
 
 - (RXSimpleCardDescriptor*)currentCard;
 - (void)setCurrentCard:(RXSimpleCardDescriptor*)descriptor;
+
+- (RXSimpleCardDescriptor*)returnCard;
+- (void)setReturnCard:(RXSimpleCardDescriptor*)descriptor;
 
 @end

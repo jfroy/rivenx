@@ -14,7 +14,7 @@
 
 __BEGIN_DECLS
 
-#if defined(DEBUG)
+#if defined(DEBUG_GL)
 
 extern void glReportErrorWithFileLine(const char* file, const char* function, const int line);
 
@@ -37,7 +37,7 @@ extern void glReportErrorWithFileLineCGLMacro(CGLContextObj cgl_ctx, const char*
 
 #else
 #define glReportError() 
-#endif // DEBUG
+#endif // DEBUG_GL
 
 __END_DECLS
 

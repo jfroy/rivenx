@@ -75,7 +75,9 @@ struct _rx_card_render_state {
 	
 	// pictures
 	GLuint _pictureCount;
+	GLuint _pictureVertexArrayBuffer;
 	void* _pictureTextureStorage;
+	
 	GLuint _dynamicPictureCount;
 	NSMapTable* _dynamicPictureMap;
 	
@@ -96,6 +98,7 @@ struct _rx_card_render_state {
 	
 	// rendering
 	BOOL _renderStateSwapsEnabled;
+	// FIXME: turn those into pointers, and allocate them on different cache lines (to keep it simple, pad by 128 bytes and align on 128 bytes)
 	struct _rx_card_render_state _renderState1;
 	struct _rx_card_render_state _renderState2;
 	
@@ -107,6 +110,9 @@ struct _rx_card_render_state {
 	uint16_t _lastExecutedProgramOpcode;
 	BOOL _queuedAPushTransition;
 	
+	// external commands
+	NSMapTable* _externalCommandLookup;
+	
 @public
 	// this is public ONLY for RXCardState
 	
@@ -115,7 +121,7 @@ struct _rx_card_render_state {
 	struct _rx_card_render_state* _backRenderStatePtr;
 	
 	// pictures
-	GLuint _pictureVertexArrayBuffer;
+	GLuint _pictureVAO;
 	GLuint* _pictureTextures;
 }
 

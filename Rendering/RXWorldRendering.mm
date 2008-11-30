@@ -9,6 +9,8 @@
 #import "RXWorldView.h"
 #import "RXWorld.h"
 
+#import "GLShaderProgramManager.h"
+
 #import "RXCardState.h"
 #import "RXCreditsState.h"
 #import "RXCyanMovieState.h"
@@ -23,15 +25,16 @@
 - (void)setInitialCard_:(NSNotification *)notification {
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXStackDidLoadNotification" object:nil];
 #if defined(DEBUG)
-	RXOLog(@"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
 #endif
-	[(RXCardState *)_cardState setActiveCardWithStack:@"aspit" ID:[[self activeStackWithKey:@"aspit"] entryCardID] waitUntilDone:NO];
+	[(RXCardState*)_cardState setActiveCardWithStack:@"aspit" ID:[[self activeStackWithKey:@"aspit"] entryCardID] waitUntilDone:NO];
 	[_stateCompositor setOpacity:1.0f ofState:_cardState];
 }
 
 - (void)_initializeRendering {
 	// WARNING: the world has to run on the main thread
-	if (!pthread_main_np()) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_initializeRenderer: MAIN THREAD ONLY" userInfo:nil];
+	if (!pthread_main_np())
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_initializeRenderer: MAIN THREAD ONLY" userInfo:nil];
 	
 	// initialize the audio renderer
 	RX::AudioRenderer* audioRenderer = new RX::AudioRenderer();
@@ -81,6 +84,9 @@
 	// set the world view as the content view
 	[renderWindow setContentView:_worldView];
 	[_worldView release];
+	
+	// initialize the shader manager
+	[GLShaderProgramManager sharedManager];
 	
 	// initialize the state compositor
 	_stateCompositor = [[RXStateCompositor alloc] init];

@@ -12,29 +12,27 @@
 #import <OpenGL/CGLMacro.h>
 #import <MHKKit/MHKKit.h>
 
+#import "Engine/RXWorldProtocol.h"
 #import "RXCreditsState.h"
-
-static const float kCardViewportBorders[4] = {22.0f, 16.0f, 66.0f, 16.0f};
 
 static const uint16_t kFirstCreditsTextureID = 302;
 static const GLuint kCreditsTextureCount = 19;
-static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 
 
 @implementation RXCreditsState
 
 - (id)init {
 	self = [super init];
+	if (!self) return nil;
 	
 	// initialize a few things for animations
 	CVTime displayLinkRP = CVDisplayLinkGetNominalOutputVideoRefreshPeriod([RXGetWorldView() displayLink]);
 	_animationPeriod = displayLinkRP.timeValue / (CFTimeInterval)(displayLinkRP.timeScale);
 	
-	// FIXME: need a new way to get the extra bitmaps archive
-	MHKArchive* archive = nil;
+	MHKArchive* archive = [g_world extraBitmapsArchive];
 	
 	// precompute the total storage we'll need because it will yield a far more efficient texture upload
-	const size_t textureStorageOffsetStep = kCreditsTextureSize.width * kCreditsTextureSize.height * 4;
+	const size_t textureStorageOffsetStep = kRXCardViewportSize.width * kRXCardViewportSize.height * 4;
 	size_t textureStorageSize = kCreditsTextureCount * textureStorageOffsetStep;
 	
 	// allocate one big chunk of memory for all the textures
@@ -67,8 +65,8 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 
 					 0, 
 					 GL_RGBA, 
-					 kCreditsTextureSize.width, 
-					 kCreditsTextureSize.height, 
+					 kRXCardViewportSize.width, 
+					 kRXCardViewportSize.height, 
 					 0, 
 					 GL_BGRA, 
 					 GL_UNSIGNED_INT_8_8_8_8_REV, 
@@ -78,44 +76,14 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		textureStorageOffset += textureStorageOffsetStep;
 	}
 	
-	// load up the split texturing shader
-	/*_splitTexturingVertexShader = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
-	_splitTexturingFragmentShader = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
-	_splitTexturingProgram = glCreateProgramObjectARB();
-	
-	glAttachObjectARB(_splitTexturingProgram, _splitTexturingVertexShader);
-	glAttachObjectARB(_splitTexturingProgram, _splitTexturingFragmentShader);
-	
-	glDeleteObjectARB(_splitTexturingVertexShader);
-	glDeleteObjectARB(_splitTexturingFragmentShader);
-	
-	NSString* source = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"split_texturing" ofType:@"vs" inDirectory:@"Shaders"] 
-												 encoding:NSASCIIStringEncoding 
-													error:NULL];
-	const GLcharARB* cSource = [source cStringUsingEncoding:NSASCIIStringEncoding];
-	glShaderSourceARB(_splitTexturingVertexShader, 1, &cSource, NULL);
-	glCompileShaderARB(_splitTexturingVertexShader);
-	
-	source = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"split_texturing" ofType:@"fs" inDirectory:@"Shaders"] 
-									   encoding:NSASCIIStringEncoding 
-										  error:NULL];
-	cSource = [source cStringUsingEncoding:NSASCIIStringEncoding];
-	glShaderSourceARB(_splitTexturingFragmentShader, 1, &cSource, NULL);
-	glCompileShaderARB(_splitTexturingFragmentShader);
-	
-	glLinkProgramARB(_splitTexturingProgram);*/
-#if defined(DEBUG)
-	//glValidateProgramARB(_splitTexturingProgram);
-#endif
-	
 	// all the textures are the same size, so we need one set of texture coordinates
 	_textureCoordinates[0][0] = 0.0f;
-	_textureCoordinates[0][1] = kCreditsTextureSize.height;
+	_textureCoordinates[0][1] = kRXCardViewportSize.height;
 	
-	_textureCoordinates[0][2] = kCreditsTextureSize.width;
-	_textureCoordinates[0][3] = kCreditsTextureSize.height;
+	_textureCoordinates[0][2] = kRXCardViewportSize.width;
+	_textureCoordinates[0][3] = kRXCardViewportSize.height;
 	
-	_textureCoordinates[0][4] = kCreditsTextureSize.width;
+	_textureCoordinates[0][4] = kRXCardViewportSize.width;
 	_textureCoordinates[0][5] = 0.0f;
 	
 	_textureCoordinates[0][6] = 0.0f;
@@ -125,7 +93,7 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	memcpy(_textureCoordinates[2], _textureCoordinates[0], sizeof(GLfloat) * 8);
 	
 	// precompute the total height of the "scroll box" (kCreditsTextureCount - 2 + 2)
-	_scrollBoxHeight = kCreditsTextureSize.height * 19.0f;
+	_scrollBoxHeight = kRXCardViewportSize.height * 19.0f;
 	
 	return self;
 }
@@ -147,78 +115,6 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	free(_textureStorage);
 	
 	[super dealloc];
-}
-
-- (void)_reshapeGL:(NSNotification *)notification {
-	// WARNING: IT IS ASSUMED THE CURRENT CONTEXT HAS BEEN LOCKED BY THE CALLER
-	CGLContextObj cgl_ctx = CGLGetCurrentContext();
-	
-#if defined(DEBUG)
-	RXOLog(@"%@: reshaping OpenGL", self);
-#endif
-	
-	// compute the credits viewport from the GL viewport and applicable borders
-	// FIXME: COMPUTATION IS NOT CORRECT
-	_viewportSize = RXGetGLViewportSize();
-	_viewportSize.width -= kCardViewportBorders[1] + kCardViewportBorders[3];
-	_viewportSize.height -= kCardViewportBorders[0] + kCardViewportBorders[2];
-	
-	// compute the origin for credit boxes such that they are horizontally centered and below the viewport
-	_bottomLeft = CGPointMake(floorf(kCardViewportBorders[1] + (_viewportSize.width / 2.0f) - (kCreditsTextureSize.width / 2.0f)), floorf(kCardViewportBorders[2] - kCreditsTextureSize.height));
-	
-	// set the scissor test around the credits box
-	glScissor(kCardViewportBorders[1], kCardViewportBorders[2], _viewportSize.width, _viewportSize.height);
-}
-
-- (void)arm {	
-	// prepare OpenGL
-	CGLContextObj cgl_ctx = CGLGetCurrentContext();
-	CGLLockContext(cgl_ctx);
-	{
-		// we need blending, and glColor at full white
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		
-		// disable any bound VBO
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		
-		// set the vertex and tex coordinate arrays
-		glVertexPointer(2, GL_FLOAT, 0, _textureBoxVertices);
-		glTexCoordPointer(2, GL_FLOAT, 0, _textureCoordinates);
-		
-		[self _reshapeGL:nil];
-		
-		// start using the split texturing program
-		//glUseProgramObjectARB(_splitTexturingProgram);
-	}
-	CGLUnlockContext(cgl_ctx);
-	
-	// we need to listen for OpenGL reshape notifications, so we can correct the OpenGL state
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_reshapeGL:) name:@"RXOpenGLDidReshapeNotification" object:nil];
-	
-	// animation standby
-	_animationState = 0;
-	_kickOffAnimation = YES;
-	_killAnimation = NO;
-	
-	// and start our lovely animation thread
-	[NSThread detachNewThreadSelector:@selector(_animationThreadMain:) toTarget:self withObject:nil];
-}
-
-- (void)diffuse {
-	// turn off blending and scissor test
-	CGLContextObj cgl_ctx = CGLGetCurrentContext();
-	CGLLockContext(cgl_ctx);
-	{
-		// don't bother with OpenGL anymore
-		[[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXOpenGLDidReshapeNotification" object:nil];
-		
-		// stop using the split texturing program
-		//glUseProgramObjectARB(0);
-	}
-	CGLUnlockContext(cgl_ctx);
-	
-	// kill the animation
-	_killAnimation = YES;
 }
 
 - (void)_animationThreadMain:(id)object {
@@ -269,15 +165,9 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		uint64_t wake_mach = _lastFireTime + animation_period_mach;
 		if(wake_mach > now_mach) mach_wait_until(wake_mach);
 	}
-	
-	[self performSelectorOnMainThread:@selector(diffuse) withObject:nil waitUntilDone:NO];
 }
 
-- (CGRect)renderRect {
-	return CGRectMake(kCardViewportBorders[1], kCardViewportBorders[2], _viewportSize.width, _viewportSize.height);
-}
-
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent {
+- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD	
 	if (_kickOffAnimation) {
 		_kickOffAnimation = NO;
@@ -290,20 +180,17 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 	if (_animationState < 7) {
 		// centered on screen
 		_textureBoxVertices[0][0] = _bottomLeft.x;
-		_textureBoxVertices[0][1] = kCardViewportBorders[2];
+		_textureBoxVertices[0][1] = kRXCardViewportOriginOffset.x;
 		
-		_textureBoxVertices[0][2] = _bottomLeft.x + kCreditsTextureSize.width;
-		_textureBoxVertices[0][3] = kCardViewportBorders[2];
+		_textureBoxVertices[0][2] = _bottomLeft.x + kRXCardViewportSize.width;
+		_textureBoxVertices[0][3] = kRXCardViewportOriginOffset.y;
 		
 		_textureBoxVertices[0][4] = _textureBoxVertices[0][2];
-		_textureBoxVertices[0][5] = kCardViewportBorders[2] + kCreditsTextureSize.height;
+		_textureBoxVertices[0][5] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
 		
 		_textureBoxVertices[0][6] = _bottomLeft.x;
 		_textureBoxVertices[0][7] = _textureBoxVertices[0][5];
 	}
-	
-	// enable scissor test
-	glEnable(GL_SCISSOR_TEST);
 	
 	// 302 fade in, over 1 second
 	if (_animationState == 1) {
@@ -354,13 +241,13 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		
 		if(_leadTextureIndex == 0) {
 			_textureBoxVertices[0][0] = _bottomLeft.x;
-			_textureBoxVertices[0][1] = kCardViewportBorders[2] - (kCreditsTextureSize.height * (1.0f - _textureIndexProgress));
+			_textureBoxVertices[0][1] = kRXCardViewportOriginOffset.y - (kRXCardViewportSize.height * (1.0f - _textureIndexProgress));
 			
-			_textureBoxVertices[0][2] = _bottomLeft.x + kCreditsTextureSize.width;
+			_textureBoxVertices[0][2] = _bottomLeft.x + kRXCardViewportSize.width;
 			_textureBoxVertices[0][3] = _textureBoxVertices[0][1];
 			
 			_textureBoxVertices[0][4] = _textureBoxVertices[0][2];
-			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kCreditsTextureSize.height;
+			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kRXCardViewportSize.height;
 			
 			_textureBoxVertices[0][6] = _bottomLeft.x;
 			_textureBoxVertices[0][7] = _textureBoxVertices[0][5];
@@ -372,13 +259,13 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		
 		if (_leadTextureIndex > 0 && _leadTextureIndex < 17) {
 			_textureBoxVertices[1][0] = _bottomLeft.x;
-			_textureBoxVertices[1][1] = kCardViewportBorders[2] - (kCreditsTextureSize.height * (1.0f - _textureIndexProgress + _leadTextureIndex));
+			_textureBoxVertices[1][1] = kRXCardViewportOriginOffset.y - (kRXCardViewportSize.height * (1.0f - _textureIndexProgress + _leadTextureIndex));
 			
-			_textureBoxVertices[1][2] = _bottomLeft.x + kCreditsTextureSize.width;
+			_textureBoxVertices[1][2] = _bottomLeft.x + kRXCardViewportSize.width;
 			_textureBoxVertices[1][3] = _textureBoxVertices[1][1];
 			
 			_textureBoxVertices[1][4] = _textureBoxVertices[1][2];
-			_textureBoxVertices[1][5] = _textureBoxVertices[1][1] + kCreditsTextureSize.height;
+			_textureBoxVertices[1][5] = _textureBoxVertices[1][1] + kRXCardViewportSize.height;
 			
 			_textureBoxVertices[1][6] = _bottomLeft.x;
 			_textureBoxVertices[1][7] = _textureBoxVertices[1][5];
@@ -386,11 +273,11 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 			_textureBoxVertices[0][0] = _bottomLeft.x;
 			_textureBoxVertices[0][1] = _textureBoxVertices[1][5];
 			
-			_textureBoxVertices[0][2] = _bottomLeft.x + kCreditsTextureSize.width;
+			_textureBoxVertices[0][2] = _bottomLeft.x + kRXCardViewportSize.width;
 			_textureBoxVertices[0][3] = _textureBoxVertices[0][1];
 			
 			_textureBoxVertices[0][4] = _textureBoxVertices[0][2];
-			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kCreditsTextureSize.height;
+			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kRXCardViewportSize.height;
 			
 			_textureBoxVertices[0][6] = _bottomLeft.x;
 			_textureBoxVertices[0][7] = _textureBoxVertices[0][5];
@@ -406,13 +293,13 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 		
 		if (_leadTextureIndex == 17) {
 			_textureBoxVertices[0][0] = _bottomLeft.x;
-			_textureBoxVertices[0][1] = kCardViewportBorders[2] - (kCreditsTextureSize.height * (1.0f - _textureIndexProgress + _leadTextureIndex - 1));
+			_textureBoxVertices[0][1] = kRXCardViewportOriginOffset.y - (kRXCardViewportSize.height * (1.0f - _textureIndexProgress + _leadTextureIndex - 1));
 			
-			_textureBoxVertices[0][2] = _bottomLeft.x + kCreditsTextureSize.width;
+			_textureBoxVertices[0][2] = _bottomLeft.x + kRXCardViewportSize.width;
 			_textureBoxVertices[0][3] = _textureBoxVertices[0][1];
 			
 			_textureBoxVertices[0][4] = _textureBoxVertices[0][2];
-			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kCreditsTextureSize.height;
+			_textureBoxVertices[0][5] = _textureBoxVertices[0][1] + kRXCardViewportSize.height;
 			
 			_textureBoxVertices[0][6] = _bottomLeft.x;
 			_textureBoxVertices[0][7] = _textureBoxVertices[0][5];
@@ -422,12 +309,9 @@ static const CGSize kCreditsTextureSize = {360.0f, 392.0f};
 			glDrawArrays(GL_QUADS, 0, 4);
 		}
 	}
-	
-	// disable scissor test
-	glDisable(GL_SCISSOR_TEST);
 }
 
-- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent {
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 }
 

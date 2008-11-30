@@ -92,6 +92,7 @@ CF_INLINE rx_size_t RXGetGLViewportSize() {
 }
 
 CF_INLINE rx_rect_t RXEffectiveRendererFrame() {
+	// FIXME: need to cache the result of this function, since it should not change too often
 	rx_size_t viewportSize = RXGetGLViewportSize();
 	rx_size_t contentSize = kRXRendererViewportSize;
 	
@@ -119,14 +120,14 @@ __END_DECLS
 
 // renderable object protocol
 @protocol RXRenderingProtocol
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx parent:(id)parent;
-- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime parent:(id)parent;
+- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo;
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime;
 @end
 
 __BEGIN_DECLS
 
-typedef void (*RXRendering_RenderIMP)(id, SEL, const CVTimeStamp*, CGLContextObj, id);
-typedef void (*RXRendering_PerformPostFlushTasksIMP)(id, SEL, const CVTimeStamp*, id);
+typedef void (*RXRendering_RenderIMP)(id, SEL, const CVTimeStamp*, CGLContextObj, GLuint);
+typedef void (*RXRendering_PerformPostFlushTasksIMP)(id, SEL, const CVTimeStamp*);
 
 struct _rx_render_dispatch {
 	RXRendering_RenderIMP imp;
@@ -140,8 +141,8 @@ struct _rx_post_flush_tasks_dispatch {
 };
 typedef struct _rx_post_flush_tasks_dispatch rx_post_flush_tasks_dispatch_t;
 
-#define RXRenderingRenderSelector @selector(render:inContext:parent:)
-#define RXRenderingPostFlushTasksSelector @selector(performPostFlushTasks:parent:)
+#define RXRenderingRenderSelector @selector(render:inContext:framebuffer:)
+#define RXRenderingPostFlushTasksSelector @selector(performPostFlushTasks:)
 
 CF_INLINE rx_render_dispatch_t RXGetRenderImplementation(Class impClass, SEL sel) {
 	rx_render_dispatch_t d;

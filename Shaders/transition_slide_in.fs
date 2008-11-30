@@ -21,15 +21,7 @@ uniform sampler2DRect destination;
 uniform float t;
 
 vec2 getSourceSampleCoords() {
-#if RX_DIRECTION == 0
-	return vec2(gl_TexCoord[0].s + (t * cardSize.x), gl_TexCoord[0].t);
-#elif RX_DIRECTION == 1
-	return vec2(gl_TexCoord[0].s - (t * cardSize.x), gl_TexCoord[0].t);
-#elif RX_DIRECTION == 2
-	return vec2(gl_TexCoord[0].s, gl_TexCoord[0].t - (t * cardSize.y));
-#elif RX_DIRECTION == 3
-	return vec2(gl_TexCoord[0].s, gl_TexCoord[0].t + (t * cardSize.y));
-#endif
+	return gl_TexCoord[0].st;
 }
 
 vec2 getDestinationSampleCoords() {

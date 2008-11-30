@@ -18,7 +18,7 @@
 	return nil;
 }
 
-- (id)_initWithArchive:(MHKArchive *)archive fork:(SInt16)forkRef descriptor:(NSDictionary *)desc {
+- (id)_initWithArchive:(MHKArchive*)archive fork:(SInt16)forkRef descriptor:(NSDictionary*)desc {
 	self = [super init];
 	if (!self) return nil;
 	
@@ -33,7 +33,7 @@
 	return self;
 }
 
-- (id)_initWithArchive:(MHKArchive *)archive fork:(SInt16)forkRef soundDescriptor:(NSDictionary *)sdesc {
+- (id)_initWithArchive:(MHKArchive*)archive fork:(SInt16)forkRef soundDescriptor:(NSDictionary*)sdesc {
 	self = [super init];
 	if (!self) return nil;
 	
@@ -53,44 +53,51 @@
 	[super dealloc];
 }
 
-- (UInt32)readDataOfLength:(UInt32)length inBuffer:(void *)buffer error:(NSError **)errorPtr {
+- (ssize_t)readDataOfLength:(size_t)length inBuffer:(void*)buffer error:(NSError**)errorPtr {
 	// is the request valid?
-	if (__position == __length) ReturnValueWithError(0, NSOSStatusErrorDomain, eofErr, nil, errorPtr)
-	if (__length - __position < length) length = __length - __position;
+	if (__position == __length)
+		ReturnValueWithError(-1, NSOSStatusErrorDomain, eofErr, nil, errorPtr)
+	
+	if (__length - __position < length)
+		length = __length - __position;
 	
 	// read the data from the file
 	UInt32 bytes_read = 0;
 	OSStatus err = FSReadFork(__forkRef, fsFromStart | forceReadMask, __offset + __position, length, buffer, &bytes_read);
-	if (err && err != eofErr) ReturnValueWithError(0, NSOSStatusErrorDomain, err, nil, errorPtr)
+	if (err && err != eofErr)
+		ReturnValueWithError(-1, NSOSStatusErrorDomain, err, nil, errorPtr)
 	
 	// update the position
 	__position += bytes_read;
 	
-	if (err) ReturnValueWithError(bytes_read, NSOSStatusErrorDomain, err, nil, errorPtr)
-	else ReturnValueWithNoError(bytes_read, errorPtr)
+	if (err)
+		ReturnValueWithError(bytes_read, NSOSStatusErrorDomain, err, nil, errorPtr)
+	return bytes_read;
 }
 
-- (void)readDataToEndOfFileInBuffer:(void *)buffer error:(NSError **)errorPtr {
-	[self readDataOfLength:__length inBuffer:buffer error:errorPtr];
+- (ssize_t)readDataToEndOfFileInBuffer:(void*)buffer error:(NSError**)errorPtr {
+	return [self readDataOfLength:__length inBuffer:buffer error:errorPtr];
 }
 
-- (SInt64)offsetInFile {
+- (off_t)offsetInFile {
 	return __position;
 }
 
-- (SInt64)seekToEndOfFile {
+- (off_t)seekToEndOfFile {
 	__position = __length;
 	return __position;
 }
 
-- (SInt64)seekToFileOffset:(SInt64)offset {
-	if (offset > __length) return -1;
+- (off_t)seekToFileOffset:(SInt64)offset {
+	if (offset > __length)
+		return -1;
+	
 	// Explicit cast OK here, MHK file sizes are 32 bit
 	__position = (UInt32)offset;
 	return __position;
 }
 
-- (SInt64)length {
+- (off_t)length {
 	return (SInt64)__length;
 }
 

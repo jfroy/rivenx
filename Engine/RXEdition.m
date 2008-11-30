@@ -18,29 +18,52 @@
 
 + (BOOL)_saneDescriptor:(NSDictionary*)descriptor {
 	// a valid edition descriptor must have 3 root keys, "Edition", "Stacks" and "Stack switch table"
-	if ([descriptor objectForKey:@"Edition"] == nil) return NO;
-	if ([descriptor objectForKey:@"Stacks"] == nil) return NO;
-	if ([descriptor objectForKey:@"Stack switch table"] == nil) return NO;
+	if (![descriptor objectForKey:@"Edition"])
+		return NO;
+	if (![descriptor objectForKey:@"Stacks"])
+		return NO;
+	if (![descriptor objectForKey:@"Stack switch table"])
+		return NO;
+	if (![descriptor objectForKey:@"Journals"])
+		return NO;
 	
 	// the Edtion sub-directionary must have a Key, a Discs and a Install Directives key
 	id edition = [descriptor objectForKey:@"Edition"];
-	if ([edition isKindOfClass:[NSDictionary class]] == NO) return NO;
-	if ([edition objectForKey:@"Key"] == nil) return NO;
-	if ([edition objectForKey:@"Discs"] == nil) return NO;
-	if ([edition objectForKey:@"Install Directives"] == nil) return NO;
-	if ([edition objectForKey:@"Directories"] == nil) return NO;
+	if (![edition isKindOfClass:[NSDictionary class]])
+		return NO;
+	if (![edition objectForKey:@"Key"])
+		return NO;
+	if (![edition objectForKey:@"Discs"])
+		return NO;
+	if (![edition objectForKey:@"Install Directives"])
+		return NO;
+	if (![edition objectForKey:@"Directories"])
+		return NO;
 	
 	// must have at least one disc
 	id discs = [edition objectForKey:@"Discs"];
-	if ([discs isKindOfClass:[NSArray class]] == NO) return NO;
-	if ([discs count] == 0) return NO;
+	if (![discs isKindOfClass:[NSArray class]])
+		return NO;
+	if ([discs count] == 0)
+		return NO;
 	
 	// Directories must be a dictionary and contain at least Data, Sound and All keys
 	id directories = [edition objectForKey:@"Directories"];
-	if ([directories isKindOfClass:[NSDictionary class]] == NO) return NO;
-	if ([directories objectForKey:@"Data"] == nil) return NO;
-	if ([directories objectForKey:@"Sound"] == nil) return NO;
-	if ([directories objectForKey:@"All"] == nil) return NO;
+	if (![directories isKindOfClass:[NSDictionary class]])
+		return NO;
+	if (![directories objectForKey:@"Data"])
+		return NO;
+	if (![directories objectForKey:@"Sound"])
+		return NO;
+	if (![directories objectForKey:@"All"])
+		return NO;
+	
+	// Journals must be a dictionary and contain at least a "Card ID Map" key
+	id journals = [descriptor objectForKey:@"Journals"];
+	if (![journals isKindOfClass:[NSDictionary class]])
+		return NO;
+	if (![journals objectForKey:@"Card ID Map"])
+		return NO;
 	
 	// good enough
 	return YES;
@@ -120,6 +143,8 @@
 	
 	stackSwitchTables = finalSwitchTable;
 	
+	journalCardIDMap = [[[_descriptor objectForKey:@"Journals"] objectForKey:@"Card ID Map"] retain];
+	
 	// create the support directory for the edition
 	// FIXME: we should offer system-wide editions as well
 	userBase = [[[[[RXWorld sharedWorld] worldUserBase] path] stringByAppendingPathComponent:key] retain];
@@ -172,6 +197,7 @@
 	[openArchives release];
 	
 	[stackSwitchTables release];
+	[journalCardIDMap release];
 	
 	[super dealloc];
 }

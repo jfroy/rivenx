@@ -361,7 +361,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 #pragma mark -
 
-- (void)postStackLoadedNotification_:(NSString *)stackKey {
+- (void)postStackLoadedNotification_:(NSString*)stackKey {
 	// WARNING: MUST RUN ON THE MAIN THREAD
 	if (!pthread_main_np()) {
 		[self performSelectorOnMainThread:@selector(postStackLoadedNotification_:) withObject:stackKey waitUntilDone:NO];
@@ -383,7 +383,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	@try {
 		// FIXME: change this to use the current edition
 		NSDictionary* stackDescriptor = [[[RXEditionManager sharedEditionManager] currentEdition] valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@", stackKey]];
-		if (!stackDescriptor || ![stackDescriptor isKindOfClass:[NSDictionary class]]) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Stack descriptor object is nil or of the wrong type." userInfo:stackDescriptor];
+		if (!stackDescriptor || ![stackDescriptor isKindOfClass:[NSDictionary class]])
+			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Stack descriptor object is nil or of the wrong type." userInfo:stackDescriptor];
 		
 		stack = [[RXStack alloc] initWithStackDescriptor:stackDescriptor key:stackKey];
 		if (stack) {
@@ -421,25 +422,29 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		[self performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
 	} @finally {
 		// signal if we were asked to
-		if (signal) semaphore_signal(_stackInitSemaphore);
+		if (signal)
+			semaphore_signal(_stackInitSemaphore);
 	}
 }
 
-- (void)loadStackWithKey:(NSString *)stackKey waitUntilDone:(BOOL)waitFlag {
+- (void)loadStackWithKey:(NSString*)stackKey waitUntilDone:(BOOL)waitFlag {
 	// WARNING: this method can run on any thread
 	// WARNING: this method allows for duplicate instances of the same stack to be loaded, always use activeStackWithKey first to check if the stack is available
-	if (_tornDown) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"loadStackWithKey: RXWorld IS TORN DOWN" userInfo:nil];
+	if (_tornDown)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"loadStackWithKey: RXWorld IS TORN DOWN" userInfo:nil];
 	
 	// fire the stack on a new thread
 	NSDictionary* initStackDict = [NSDictionary dictionaryWithObjectsAndKeys:stackKey, @"stackKey", [NSNumber numberWithBool:waitFlag], @"waitFlag", nil];
 	[self performSelector:@selector(_initializeStackWithInitializationDictionary:) withObject:initStackDict inThread:_stackThread];
 	
 	// if the request is synchronous, wait until we get signaled
-	if (waitFlag) semaphore_wait(_stackInitSemaphore);
+	if (waitFlag)
+		semaphore_wait(_stackInitSemaphore);
 }
 
-- (RXStack *)activeStackWithKey:(NSString *)key {
-	if (_tornDown) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
+- (RXStack*)activeStackWithKey:(NSString*)key {
+	if (_tornDown)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
 	
 	pthread_rwlock_rdlock(&_activeStacksLock);
 	RXStack* stack = [_activeStacks objectForKey:key];
@@ -448,8 +453,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return stack;
 }
 
-- (NSArray *)activeStacks {
-	if (_tornDown) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
+- (NSArray*)activeStacks {
+	if (_tornDown)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
 	
 	pthread_rwlock_rdlock(&_activeStacksLock);
 	NSArray* stacks = [_activeStacks allValues];
@@ -460,7 +466,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 #pragma mark -
 
-- (NSURL *)worldBase {
+- (NSURL*)worldBase {
 	// this method can run on any thread
 	return _worldBase;
 }
@@ -469,8 +475,12 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return _worldUserBase;
 }
 
-- (MHKArchive *)extraBitmapsArchive {
+- (MHKArchive*)extraBitmapsArchive {
 	return _extraBitmapsArchive;
+}
+
+- (NSDictionary*)extraBitmapsDescriptor {
+	return _extrasDescriptor;
 }
 
 - (NSView <RXWorldViewProtocol> *)worldView {
@@ -481,6 +491,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return [self cursorForID:3000];
 }
 
+- (NSCursor*)openHandCursor {
+	return [self cursorForID:2003];
+}
+
 - (NSCursor*)cursorForID:(uint16_t)ID {
 	uintptr_t key = ID;
 	return (NSCursor*)NSMapGet(_cursors, (const void*)key);
@@ -488,11 +502,11 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 #pragma mark -
 
-- (void *)audioRenderer {
+- (void*)audioRenderer {
 	return _audioRenderer;
 }
 
-- (RXStateCompositor *)stateCompositor {
+- (RXStateCompositor*)stateCompositor {
 	return _stateCompositor;
 }
 
@@ -565,15 +579,20 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 #pragma mark -
 
 - (id)valueForUndefinedKey:(NSString *)key {
-	if (!_engineVariables) return nil;
+	if (!_engineVariables)
+		return nil;
+	
 	pthread_mutex_lock(&_engineVariablesMutex);
 	id v = [_engineVariables valueForKeyPath:key];
 	pthread_mutex_unlock(&_engineVariablesMutex);
+	
 	return v;
 }
 
 - (void)setValue:(id)value forUndefinedKey:(NSString *)key {
-	if (!_engineVariables) return;
+	if (!_engineVariables)
+		return;
+	
 	pthread_mutex_lock(&_engineVariablesMutex);
 	[_engineVariables setValue:value forKeyPath:key];
 	pthread_mutex_unlock(&_engineVariablesMutex);

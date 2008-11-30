@@ -14,7 +14,7 @@
 	MHKFileHandle *data_source;
 	SInt64 data_source_init_offset;
 	
-	int channel_count;
+	int32_t channel_count;
 	AudioStreamBasicDescription output_absd;
 	SInt64 frame_count;
 	
@@ -27,9 +27,9 @@
 	int32_t step_index_left;
 	int32_t step_index_right;
 	
-	char *adpcm_buffer;
+	int8_t* adpcm_buffer;
 }
 
-- (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle *)fh error:(NSError **)errorPtr;
+- (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle*)fh error:(NSError**)errorPtr;
 
 @end

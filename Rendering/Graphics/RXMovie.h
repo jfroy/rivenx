@@ -21,6 +21,7 @@
 	
 	BOOL loop;
 	
+	GLuint _vao;
 	GLfloat _coordinates[16];
 	CGRect _renderRect;
 	

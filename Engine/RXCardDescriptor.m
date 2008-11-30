@@ -115,11 +115,12 @@ struct _RXCardDescriptorPrimer {
 		
 		// read the data from the archive
 		NSError* error;
-		[fh readDataToEndOfFileInBuffer:buffer error:&error];
-		if (error) continue;
+		if ([fh readDataToEndOfFileInBuffer:buffer error:&error] == -1)
+			continue;
 		
 		data = [NSData dataWithBytesNoCopy:buffer length:bufferLength freeWhenDone:YES];
-		if (data) break;
+		if (data)
+			break;
 	}
 	
 	struct _RXCardDescriptorPrimer primer = {archive, data};
@@ -173,6 +174,14 @@ struct _RXCardDescriptorPrimer {
 
 - (NSString *)description {
 	return [NSString stringWithFormat: @"%@ %03hu", [_parent key], _ID];
+}
+
+- (RXStack*)parent {
+	return _parent;
+}
+
+- (uint16_t)ID {
+	return _ID;
 }
 
 - (RXSimpleCardDescriptor*)simpleDescriptor {
