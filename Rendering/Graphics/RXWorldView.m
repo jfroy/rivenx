@@ -357,7 +357,7 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 #endif
 	
-	// disable fixed function features by default
+	// disable most features that we don't need
 	glDisable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DITHER);
@@ -365,7 +365,8 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_SCISSOR_TEST);
-	if (GLEE_ARB_multisample) glDisable(GL_MULTISAMPLE_ARB);
+	if (GLEE_ARB_multisample)
+		glDisable(GL_MULTISAMPLE_ARB);
 	
 	// pixel store state
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
@@ -381,7 +382,8 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	glHint(GL_FOG_HINT, GL_NICEST);
-	if (GLEE_APPLE_transform_hint) glHint(GL_TRANSFORM_HINT_APPLE, GL_NICEST);
+	if (GLEE_APPLE_transform_hint)
+		glHint(GL_TRANSFORM_HINT_APPLE, GL_NICEST);
 	
 	glReportError();
 }
