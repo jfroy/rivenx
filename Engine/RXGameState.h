@@ -36,6 +36,12 @@
 - (void)setUnsignedShort:(uint16_t)value forKey:(NSString*)key;
 - (void)setShort:(int16_t)value forKey:(NSString*)key;
 
+- (uint32_t)unsigned32ForKey:(NSString*)key;
+- (int32_t)signed32ForKey:(NSString*)key;
+
+- (void)setUnsigned32:(uint32_t)value forKey:(NSString*)key;
+- (void)setSigned32:(int32_t)value forKey:(NSString*)key;
+
 - (BOOL)isKeySet:(NSString*)key;
 
 - (RXSimpleCardDescriptor*)currentCard;

@@ -244,7 +244,7 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 3149598E0E327B2D00E49C83 /* MHKKit */;
+			remoteGlobalIDString = 3149598E0E327B2D00E49C83;
 			remoteInfo = MHKKit;
 		};
 		31C357330D92A78900EDEF81 /* PBXContainerItemProxy */ = {
