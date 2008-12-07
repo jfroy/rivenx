@@ -444,6 +444,7 @@
 		31863C590991AA28001A4A42 /* InterThreadMessaging.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = InterThreadMessaging.m; path = Additions/InterThreadMessaging.m; sourceTree = "<group>"; };
 		318CB4620E04917A00BD2C38 /* RXGameState_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXGameState_test.h; sourceTree = "<group>"; };
 		318CB4630E04917A00BD2C38 /* RXGameState_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXGameState_test.m; sourceTree = "<group>"; };
+		3195A6330EEC57860000CFB6 /* RXRivenScriptCommandAliases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRivenScriptCommandAliases.h; sourceTree = "<group>"; };
 		3196B9340D945CC100BC818E /* RXTiming.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXTiming.h; path = Base/RXTiming.h; sourceTree = "<group>"; };
 		3196B9350D945CC100BC818E /* RXTiming.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RXTiming.c; path = Base/RXTiming.c; sourceTree = "<group>"; };
 		3196BA150D947F8200BC818E /* CADebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CADebugger.cpp; path = /Developer/Examples/CoreAudio/PublicUtility/CADebugger.cpp; sourceTree = "<absolute>"; };
@@ -756,12 +757,13 @@
 				31225AC308C421790055628F /* RXCard.mm */,
 				31588871098D7A120090A6B6 /* RXCardDescriptor.h */,
 				31588872098D7A120090A6B6 /* RXCardDescriptor.m */,
+				31327B640DCF509E00280D8F /* RXCardExecutionProtocol.h */,
 				312EDC700A2E3B80005D26AF /* RXHotspot.h */,
 				312EDC710A2E3B80005D26AF /* RXHotspot.m */,
-				31863C0509919F87001A4A42 /* RXRivenScriptProtocol.h */,
 				312B048D0D9A8AE20012BE29 /* RXMovieProxy.h */,
 				312B048E0D9A8AE20012BE29 /* RXMovieProxy.m */,
-				31327B640DCF509E00280D8F /* RXCardExecutionProtocol.h */,
+				3195A6330EEC57860000CFB6 /* RXRivenScriptCommandAliases.h */,
+				31863C0509919F87001A4A42 /* RXRivenScriptProtocol.h */,
 			);
 			name = Card;
 			sourceTree = "<group>";
@@ -1966,7 +1968,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					CoreAudio_StopOnFailure,
-					"DEBUG=2",
+					"DEBUG=1",
 					"DEBUG_GL=1",
 				);
 				GCC_VERSION = 4.0;
