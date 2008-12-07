@@ -2275,8 +2275,9 @@ static NSMutableString* _scriptLogPrefix;
 	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@reloading card", _scriptLogPrefix);
 #endif
 	
-	RXStack* parent = [_descriptor parent];
-	[_scriptHandler setActiveCardWithStack:[parent key] ID:[_descriptor ID] waitUntilDone:YES];
+	// this command reloads whatever is the current card
+	RXSimpleCardDescriptor* current_card = [[g_world gameState] currentCard];
+	[_scriptHandler setActiveCardWithStack:current_card->parentName ID:current_card->cardID waitUntilDone:YES];
 }
 
 // 20
@@ -2829,6 +2830,21 @@ DEFINE_COMMAND(xicon) {
 		[[g_world gameState] setUnsigned32:1 forKey:@"atemp"];
 	else
 		[[g_world gameState] setUnsigned32:0 forKey:@"atemp"];
+}
+
+DEFINE_COMMAND(xcheckicons) {
+
+}
+
+DEFINE_COMMAND(xtoggleicon) {
+	// this command toggles the state of a particular icon for the rebel tunnel puzzle
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	uint32_t icon_bit = 1U << (argv[0] - 1);
+	
+	if (icon_bitfield & icon_bit)
+		[[g_world gameState] setUnsigned32:(icon_bitfield & ~icon_bit) forKey:@"jicons"];
+	else
+		[[g_world gameState] setUnsigned32:(icon_bitfield | icon_bit) forKey:@"jicons"];
 }
 
 DEFINE_COMMAND(xjtunnel103_pictfix) {
