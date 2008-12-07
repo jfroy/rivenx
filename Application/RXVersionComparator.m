@@ -6,8 +6,6 @@
 //  Copyright 2008 Apple Inc.. All rights reserved.
 //
 
-#import <Sparkle/SUStandardVersionComparator.h>
-
 #import "RXVersionComparator.h"
 
 

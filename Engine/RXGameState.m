@@ -246,7 +246,61 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 #endif
 	[self willChangeValueForKey:key];
 	[_accessLock lock];
-	[_variables setObject:[NSNumber numberWithUnsignedShort:value] forKey:key];
+	[_variables setObject:[NSNumber numberWithShort:value] forKey:key];
+	[_accessLock unlock];
+	[self didChangeValueForKey:key];
+}
+
+- (uint32_t)unsigned32ForKey:(NSString*)key {
+	key = [key lowercaseString];
+	uint16_t v = 0;
+	
+	[_accessLock lock];
+	NSNumber* n = [_variables objectForKey:key];
+	if (n)
+		v = [n unsignedIntValue];
+	else
+		[self setUnsigned32:0 forKey:key];
+	[_accessLock unlock];
+	
+	return v;
+}
+
+- (int32_t)signed32ForKey:(NSString*)key {
+	key = [key lowercaseString];
+	int16_t v = 0;
+	
+	[_accessLock lock];
+	NSNumber* n = [_variables objectForKey:key];
+	if (n)
+		v = [n intValue];
+	else
+		[self setSigned32:0 forKey:key];
+	[_accessLock unlock];
+	
+	return v;
+}
+
+- (void)setUnsigned32:(uint32_t)value forKey:(NSString*)key {
+	key = [key lowercaseString];
+#if defined(DEBUG)
+	RXOLog(@"setting variable %@ to %u", key, value);
+#endif
+	[self willChangeValueForKey:key];
+	[_accessLock lock];
+	[_variables setObject:[NSNumber numberWithUnsignedInt:value] forKey:key];
+	[_accessLock unlock];
+	[self didChangeValueForKey:key];
+}
+
+- (void)setSigned32:(int32_t)value forKey:(NSString*)key {
+	key = [key lowercaseString];
+#if defined(DEBUG)
+	RXOLog(@"setting variable %@ to %d", key, value);
+#endif
+	[self willChangeValueForKey:key];
+	[_accessLock lock];
+	[_variables setObject:[NSNumber numberWithInt:value] forKey:key];
 	[_accessLock unlock];
 	[self didChangeValueForKey:key];
 }
