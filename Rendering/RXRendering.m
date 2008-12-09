@@ -16,3 +16,4 @@ const rx_point_t kRXCardViewportOriginOffset = {16, 66};
 const double kRXTransitionDuration = 0.3;
 
 NSObject<RXWorldViewProtocol>* g_worldView = nil;
+NSObject<RXOpenGLEngineProtocol>* g_glEngine = nil;

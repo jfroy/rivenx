@@ -340,7 +340,7 @@ init_failure:
 	glGenBuffers(1, &_cardCompositeVBO); glReportError();
 	
 	// bind them
-	glBindVertexArrayAPPLE(_cardCompositeVAO); glReportError();
+	[g_glEngine bindVertexArrayObject:_cardCompositeVAO];
 	glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
 	
 	// enable sub-range flushing if available
@@ -393,7 +393,7 @@ init_failure:
 	glGenBuffers(1, &_cardRenderVBO); glReportError();
 	
 	// bind them
-	glBindVertexArrayAPPLE(_cardRenderVAO); glReportError();
+	[g_glEngine bindVertexArrayObject:_cardRenderVAO];
 	glBindBuffer(GL_ARRAY_BUFFER, _cardRenderVBO); glReportError();
 	
 	// enable sub-range flushing if available
@@ -486,7 +486,7 @@ init_failure:
 	glGenBuffers(1, &_hotspotDebugRenderVBO); glReportError();
 	
 	// bind them
-	glBindVertexArrayAPPLE(_hotspotDebugRenderVAO); glReportError();
+	[g_glEngine bindVertexArrayObject:_hotspotDebugRenderVAO];
 	glBindBuffer(GL_ARRAY_BUFFER, _hotspotDebugRenderVBO); glReportError();
 	
 	// enable sub-range flushing if available
@@ -536,7 +536,7 @@ init_failure:
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
 	
 	// bind 0 to the current VAO
-	glBindVertexArrayAPPLE(0); glReportError();
+	[g_glEngine bindVertexArrayObject:0];
 	
 	// bind program 0 (e.g. back to fixed-function)
 	glUseProgram(0);
@@ -1129,7 +1129,7 @@ init_failure:
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		
 		// bind the picture VAO
-		glBindVertexArrayAPPLE(card->_pictureVAO); glReportError();
+		[g_glEngine bindVertexArrayObject:card->_pictureVAO];
 		
 		renderListEnumerator = [r->pictures objectEnumerator];
 		while ((renderObject = [renderListEnumerator nextObject])) {
@@ -1148,7 +1148,7 @@ init_failure:
 	glClear(GL_COLOR_BUFFER_BIT);
 	
 	// bind the card render VAO
-	glBindVertexArrayAPPLE(_cardRenderVAO); glReportError();
+	[g_glEngine bindVertexArrayObject:_cardRenderVAO];
 	
 	// water effect	
 	if (r->water_fx.sfxe != 0) {
@@ -1384,7 +1384,7 @@ init_failure:
 	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
 	
 	// bind the card composite VAO
-	glBindVertexArrayAPPLE(_cardCompositeVAO); glReportError();
+	[g_glEngine bindVertexArrayObject:_cardCompositeVAO];
 	
 	// draw the card composite
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
@@ -1502,10 +1502,10 @@ exit_render:
 			glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, [activeHotspots count] * 24 * sizeof(GLfloat));
 		glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 		
-		glBindVertexArrayAPPLE(_hotspotDebugRenderVAO); glReportError();		
+		[g_glEngine bindVertexArrayObject:_hotspotDebugRenderVAO];
 		glMultiDrawArrays(GL_LINE_LOOP, _hotspotDebugRenderFirstElementArray, _hotspotDebugRenderElementCountArray, [activeHotspots count] + RX_MAX_INVENTORY_ITEMS); glReportError();
 		
-		glBindVertexArrayAPPLE(0); glReportError();
+		[g_glEngine bindVertexArrayObject:0];
 	}	
 }
 

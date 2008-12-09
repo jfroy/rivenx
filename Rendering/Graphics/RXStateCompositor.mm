@@ -88,14 +88,14 @@
 	
 	// configure the compositing VAO
 	glGenVertexArraysAPPLE(1, &_compositing_vao); glReportError();
-	glBindVertexArrayAPPLE(_compositing_vao); glReportError();
+	[g_glEngine bindVertexArrayObject:_compositing_vao];
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
 	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
 	glVertexPointer(2, GL_FLOAT, 0, vertex_coords); glReportError();
 	
-	glBindVertexArrayAPPLE(0); glReportError();
+	[g_glEngine bindVertexArrayObject:0];
 	
 	CGLUnlockContext(cgl_ctx);
 	
@@ -228,7 +228,7 @@
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
 	
 	// configure the tex coord array for the new state
-	glBindVertexArrayAPPLE(_compositing_vao); glReportError();
+	[g_glEngine bindVertexArrayObject:_compositing_vao];
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
@@ -236,7 +236,7 @@
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
 	glTexCoordPointer(2, GL_FLOAT, 0, tex_coords); glReportError();
 	
-	glBindVertexArrayAPPLE(0); glReportError();
+	[g_glEngine bindVertexArrayObject:0];
 	
 	CGLUnlockContext(cgl_ctx);
 	
@@ -390,7 +390,7 @@
 	glUniform4fv(_texture_blend_weights_uniform, 1, _texture_blend_weights); glReportError();
 	
 	// bind the compositing vao
-	glBindVertexArrayAPPLE(_compositing_vao); glReportError();
+	[g_glEngine bindVertexArrayObject:_compositing_vao];
 	
 	// bind render state textures
 	uint32_t state_count = [_states count];

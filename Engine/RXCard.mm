@@ -756,7 +756,7 @@ static NSMutableString* _scriptLogPrefix;
 	glGenVertexArraysAPPLE(1, &_pictureVAO); glReportError();
 	
 	// bind the card picture VAO and VBO
-	glBindVertexArrayAPPLE(_pictureVAO); glReportError();
+	[g_glEngine bindVertexArrayObject:_pictureVAO];
 	glBindBuffer(GL_ARRAY_BUFFER, _pictureVertexArrayBuffer); glReportError();
 	
 	// enable sub-range flushing if available
@@ -847,7 +847,7 @@ static NSMutableString* _scriptLogPrefix;
 	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
 	
 	// bind 0 to the current VAO
-	glBindVertexArrayAPPLE(0); glReportError();
+	[g_glEngine bindVertexArrayObject:0];
 	
 	// we don't need the picture records and the PLST data anymore
 	delete[] pictureRecords;

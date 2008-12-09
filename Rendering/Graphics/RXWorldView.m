@@ -281,8 +281,13 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 }
 
 - (void)bindVertexArrayObject:(GLuint)vao_id {
-	_vao_binding = vao_id;
-	glBindVertexArrayAPPLE(vao_id);
+	// WARNING: ASSUMES THE CALLER HAS LOCKED THE CONTEXT
+	CGLContextObj CGL_MACRO_CONTEXT = _renderCGLContext;
+	
+	if (vao_id != _vao_binding) {
+		_vao_binding = vao_id;
+		glBindVertexArrayAPPLE(vao_id); glReportError();
+	}
 }
 
 #pragma mark -

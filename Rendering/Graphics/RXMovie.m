@@ -113,7 +113,7 @@
 	
 	// create a VAO and prepare the VA state
 	glGenVertexArraysAPPLE(1, &_vao); glReportError();
-	glBindVertexArrayAPPLE(_vao); glReportError();
+	[g_glEngine bindVertexArrayObject:_vao];
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
@@ -124,7 +124,7 @@
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
 	glTexCoordPointer(2, GL_FLOAT, 0, _coordinates + 8); glReportError();
 	
-	glBindVertexArrayAPPLE(0); glReportError();
+	[g_glEngine bindVertexArrayObject:0];
 	
 	CGLUnlockContext(cgl_ctx);
 	
@@ -355,7 +355,7 @@
 	
 	// do we have an image to render?
 	if (_imageBuffer && !_invalidImage) {
-		glBindVertexArrayAPPLE(_vao);
+		[g_glEngine bindVertexArrayObject:_vao];
 		glDrawArrays(GL_QUADS, 0, 4); glReportError();
 	}
 }
