@@ -374,7 +374,7 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 #endif
 	
-	// disable fixed function features by default
+	// disable most features that we don't need
 	glDisable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
 	glDisable(GL_DITHER);

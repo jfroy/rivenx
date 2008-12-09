@@ -253,7 +253,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 
 - (uint32_t)unsigned32ForKey:(NSString*)key {
 	key = [key lowercaseString];
-	uint16_t v = 0;
+	uint32_t v = 0;
 	
 	[_accessLock lock];
 	NSNumber* n = [_variables objectForKey:key];
@@ -268,7 +268,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 
 - (int32_t)signed32ForKey:(NSString*)key {
 	key = [key lowercaseString];
-	int16_t v = 0;
+	int32_t v = 0;
 	
 	[_accessLock lock];
 	NSNumber* n = [_variables objectForKey:key];
@@ -333,8 +333,13 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	[_returnCard release];
 	_returnCard = [descriptor retain];
 	
-	[self setUnsignedShort:descriptor->cardID forKey:@"returncardid"];
-	[self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->parentName] objectForKey:@"ID"] unsignedShortValue] forKey:@"returnstackid"];
+	if (descriptor) {
+		[self setUnsignedShort:descriptor->cardID forKey:@"returncardid"];
+		[self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->parentName] objectForKey:@"ID"] unsignedShortValue] forKey:@"returnstackid"];
+	} else {
+		[self setUnsignedShort:0 forKey:@"returncardid"];
+		[self setUnsignedShort:0 forKey:@"returnstackid"];
+	}
 }
 
 @end

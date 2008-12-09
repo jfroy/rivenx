@@ -48,21 +48,21 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 
 static const char* optString = "p";
 static const struct option longOpts[] = {
-	{ "plist", required_argument, NULL, 'p' },
+	{ "plist", no_argument, NULL, 'p' },
 	{ NULL, no_argument, NULL, 0 }
 };
 
 int main(int argc, char* argv[]) {
 	NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
 	
-	NSString* plistPath = nil;
+	BOOL plist_output = NO;
 	
 	int longIndex;
 	int opt = getopt_long(argc, argv, optString, longOpts, &longIndex);
 	while (opt != -1) {
 		switch (opt) {
 			case 'p':
-				plistPath = [[NSString stringWithCString:optarg encoding:NSUTF8StringEncoding] stringByStandardizingPath];
+				plist_output = YES;
 				break;
 		}
 		
@@ -70,51 +70,59 @@ int main(int argc, char* argv[]) {
 	}
 	
 	if (optind == argc) {
-		printf("usage: %s [save file]\n", argv[0]);
+		printf("usage: %s [save file 1] [save file 2, ...]\n", argv[0]);
 		exit(1);
 	}
 	
-	NSError* error = nil;
-	MHKArchive* archive = [[MHKArchive alloc] initWithPath:[NSString stringWithUTF8String:argv[optind]] error:&error];
-	if(!archive) {
-		printf("failed to open archive (%s)\n", [[error description] UTF8String]);
-		exit(1);
+	for (int savei = optind; savei < argc; savei++) {
+		NSError* error = nil;
+		MHKArchive* archive = [[MHKArchive alloc] initWithPath:[NSString stringWithUTF8String:argv[savei]] error:&error];
+		if (!archive) {
+			fprintf(stderr, "failed to open archive (%s)\n", [[error description] UTF8String]);
+			continue;
+		}
+		
+		NSArray* names = _loadNAMEResourceWithID(archive, 1);
+		NSData* varsData = [archive dataWithResourceType:@"VARS" ID:1];
+		if (!varsData) {
+			fprintf(stderr, "failed to load the VARS resource with ID 1 from the archive\n");
+			continue;
+		}
+		
+		NSMutableDictionary* plist = nil;
+		if (plist_output)
+			plist = [NSMutableDictionary dictionary];
+		
+		struct _vars_record* vars = (struct _vars_record*)[varsData bytes];
+		uint32_t vars_count = [varsData length] / sizeof(struct _vars_record);
+		uint32_t vars_index = 0;
+		for (; vars_index < [names count]; vars_index++) {
+	#if defined(__LITTLE_ENDIAN__)
+			vars[vars_index].u0 = CFSwapInt32(vars[vars_index].u0);
+			vars[vars_index].u1 = CFSwapInt32(vars[vars_index].u1);
+			vars[vars_index].value = CFSwapInt32(vars[vars_index].value);
+	#endif
+			if (!plist_output)
+				printf("%s: u0=%u, u1=%u, value=%u\n", [[names objectAtIndex:vars_index] UTF8String], vars[vars_index].u0, vars[vars_index].u1, vars[vars_index].value);
+			else
+				[plist setObject:[NSNumber numberWithUnsignedLong:vars[vars_index].value] forKey:[names objectAtIndex:vars_index]];
+		}
+		
+		for (; vars_index < vars_count; vars_index++) {
+	#if defined(__LITTLE_ENDIAN__)
+			vars[vars_index].u0 = CFSwapInt32(vars[vars_index].u0);
+			vars[vars_index].u1 = CFSwapInt32(vars[vars_index].u1);
+			vars[vars_index].value = CFSwapInt32(vars[vars_index].value);
+	#endif
+			if (!plist_output)
+				printf("%u: u0=%u, u1=%u, value=%u\n", vars_index, vars[vars_index].u0, vars[vars_index].u1, vars[vars_index].value);
+			else 
+				[plist setObject:[NSNumber numberWithUnsignedLong:vars[vars_index].value] forKey:[NSString stringWithFormat:@"%u", vars_index]];
+		}
+		
+		if (plist)
+			[plist writeToFile:[[[[archive url] path] stringByDeletingPathExtension] stringByAppendingPathExtension:@"plist"] atomically:NO];
 	}
-	
-	NSArray* names = _loadNAMEResourceWithID(archive, 1);
-	NSData* varsData = [archive dataWithResourceType:@"VARS" ID:1];
-	if (!varsData) {
-		fprintf(stderr, "failed to load the VARS resource with ID 1 from the archive\n");
-		exit(1);
-	}
-	
-	NSMutableDictionary* plist = nil;
-	if (plistPath) plist = [NSMutableDictionary dictionary];
-	
-	struct _vars_record* vars = (struct _vars_record*)[varsData bytes];
-	uint32_t vars_count = [varsData length] / sizeof(struct _vars_record);
-	uint32_t vars_index = 0;
-	for (; vars_index < [names count]; vars_index++) {
-#if defined(__LITTLE_ENDIAN__)
-		vars[vars_index].u0 = CFSwapInt32(vars[vars_index].u0);
-		vars[vars_index].u1 = CFSwapInt32(vars[vars_index].u1);
-		vars[vars_index].value = CFSwapInt32(vars[vars_index].value);
-#endif
-		if (!plist) printf("%s: u0=%u, u1=%u, value=%u\n", [[names objectAtIndex:vars_index] UTF8String], vars[vars_index].u0, vars[vars_index].u1, vars[vars_index].value);
-		else [plist setObject:[NSNumber numberWithUnsignedLong:vars[vars_index].value] forKey:[names objectAtIndex:vars_index]];
-	}
-	
-	for (; vars_index < vars_count; vars_index++) {
-#if defined(__LITTLE_ENDIAN__)
-		vars[vars_index].u0 = CFSwapInt32(vars[vars_index].u0);
-		vars[vars_index].u1 = CFSwapInt32(vars[vars_index].u1);
-		vars[vars_index].value = CFSwapInt32(vars[vars_index].value);
-#endif
-		if (!plist) printf("%u: u0=%u, u1=%u, value=%u\n", vars_index, vars[vars_index].u0, vars[vars_index].u1, vars[vars_index].value);
-		else [plist setObject:[NSNumber numberWithUnsignedLong:vars[vars_index].value] forKey:[NSString stringWithFormat:@"%u", vars_index]];
-	}
-	
-	if (plist) [plist writeToFile:plistPath atomically:NO];
 	
 	[p release];
 	return 0;

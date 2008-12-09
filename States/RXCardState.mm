@@ -56,6 +56,7 @@ static const NSString* RX_INVENTORY_KEYS[3] = {
 static const int RX_INVENTORY_ATRUS = 0;
 static const int RX_INVENTORY_CATHERINE = 1;
 static const int RX_INVENTORY_PRISON = 2;
+static const float RX_INVENTORY_MARGIN = 20.f;
 
 
 static const void* RXCardAudioSourceArrayWeakRetain(CFAllocatorRef allocator, const void* value) {
@@ -530,6 +531,9 @@ init_failure:
 		
 		inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventoryRegions[inventory_i].size.width * _inventoryRegions[inventory_i].size.height) << 2);
 	}
+	
+	// the inventory begins at half opacity
+	_inventoryAlphaFactor = 0.5f;
 	
 	// bind 0 to the unpack buffer (e.g. client memory unpacking)
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -1210,26 +1214,40 @@ init_failure:
 }
 
 - (void)_updateInventoryWithTimestamp:(const CVTimeStamp*)outputTime context:(CGLContextObj)cgl_ctx {
+	RXGameState* game_state = [g_world gameState];
+	
+	// if the engine says the inventory should not be shown, set the number of inventory items to 0 and return
+	if (![game_state unsigned32ForKey:@"ainventory"]) {
+		_inventoryItemCount = 0;
+		return;
+	}
+	
+	// FIXME: right now we set the number of items to the maximum, irrespective of game state
+	_inventoryItemCount = RX_MAX_INVENTORY_ITEMS;
+	
 	glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
 	GLfloat* buffer = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
 	
 	GLfloat* positions = buffer + 16;
 	GLfloat* tex_coords0 = positions + 2;
 	
-	float inventory_margin = 20.f;
-	float total_inventory_width = _inventoryRegions[0].size.width + _inventoryRegions[1].size.width + _inventoryRegions[2].size.width + 2 * inventory_margin;
+	// compute the total inventory region width based on the number of items in the inventory
+	float total_inventory_width = _inventoryRegions[0].size.width;
+	for (GLuint inventory_i = 1; inventory_i < _inventoryItemCount; inventory_i++)
+		total_inventory_width += _inventoryRegions[inventory_i].size.width + RX_INVENTORY_MARGIN;
 	
+	// compute the first item's position
 	_inventoryRegions[0].origin.x = kRXCardViewportOriginOffset.x + (kRXCardViewportSize.width / 2.0f) - (total_inventory_width / 2.0f);
 	_inventoryRegions[0].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[0].size.height / 2.0f);
 	
-	_inventoryRegions[1].origin.x = _inventoryRegions[0].origin.x + _inventoryRegions[0].size.width + inventory_margin;
-	_inventoryRegions[1].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[1].size.height / 2.0f);
+	// compute the position of any additional item based on the position of the previous item
+	for (GLuint inventory_i = 1; inventory_i < _inventoryItemCount; inventory_i++) {
+		_inventoryRegions[inventory_i].origin.x = _inventoryRegions[inventory_i - 1].origin.x + _inventoryRegions[inventory_i - 1].size.width + RX_INVENTORY_MARGIN;
+		_inventoryRegions[inventory_i].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[1].size.height / 2.0f);
+	}
 	
-	_inventoryRegions[2].origin.x = _inventoryRegions[1].origin.x + _inventoryRegions[1].size.width + inventory_margin;
-	_inventoryRegions[2].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[2].size.height / 2.0f);
-	
-	// compute vertex positions and texture coordinates for the inventory items
-	for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+	// compute vertex positions and texture coordinates for the items
+	for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
 		positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y;
 		tex_coords0[0] = 0.0f; tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
 		positions += 4; tex_coords0 += 4;
@@ -1249,7 +1267,7 @@ init_failure:
 	
 	// unmap and flush the card composite VBO
 	if (GLEE_APPLE_flush_buffer_range)
-		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), 48 * sizeof(GLfloat));
+		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), _inventoryItemCount * 16 * sizeof(GLfloat));
 	glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 	
 	// compute the hotspot regions by scaling the rendering regions
@@ -1257,7 +1275,7 @@ init_failure:
 	float scale_x = (float)contentRect.size.width / (float)kRXRendererViewportSize.width;
 	float scale_y = (float)contentRect.size.height / (float)kRXRendererViewportSize.height;
 	
-	for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+	for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
 		_inventoryHotspotRegions[inventory_i].origin.x = contentRect.origin.x + _inventoryRegions[inventory_i].origin.x * scale_x;
 		_inventoryHotspotRegions[inventory_i].origin.y = contentRect.origin.y + _inventoryRegions[inventory_i].origin.y * scale_y;
 		_inventoryHotspotRegions[inventory_i].size.width = _inventoryRegions[inventory_i].size.width * scale_x;
@@ -1399,10 +1417,22 @@ init_failure:
 	// update and draw the inventory
 	[self _updateInventoryWithTimestamp:outputTime context:cgl_ctx];
 	
-	glUseProgram(_cardProgram); glReportError();
-	for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[inventory_i]); glReportError();
-		glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inventory_i, 4); glReportError();
+	if (_inventoryAlphaFactor > 0.f && _inventoryItemCount > 0) {
+		if (_inventoryAlphaFactor < 1.f) {
+			glBlendColor(1.f, 1.f, 1.f, _inventoryAlphaFactor);
+			glBlendFuncSeparate(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+			glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+			glEnable(GL_BLEND);
+		}
+		
+		glUseProgram(_cardProgram); glReportError();
+		for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
+			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[inventory_i]); glReportError();
+			glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inventory_i, 4); glReportError();
+		}
+		
+		if (_inventoryAlphaFactor < 1.f)
+			glDisable(GL_BLEND);
 	}
 	
 exit_render:
@@ -1467,7 +1497,7 @@ exit_render:
 			primitive_index++;
 		}
 		
-		for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+		for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
 			_hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
 			_hotspotDebugRenderElementCountArray[primitive_index] = 4;
 			
@@ -1513,7 +1543,7 @@ exit_render:
 		glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 		
 		[gl_state bindVertexArrayObject:_hotspotDebugRenderVAO];
-		glMultiDrawArrays(GL_LINE_LOOP, _hotspotDebugRenderFirstElementArray, _hotspotDebugRenderElementCountArray, [activeHotspots count] + RX_MAX_INVENTORY_ITEMS); glReportError();
+		glMultiDrawArrays(GL_LINE_LOOP, _hotspotDebugRenderFirstElementArray, _hotspotDebugRenderElementCountArray, [activeHotspots count] + _inventoryItemCount); glReportError();
 		
 		[gl_state bindVertexArrayObject:0];
 	}	
@@ -1670,10 +1700,18 @@ exit_flush_tasks:
 }
 
 - (void)mouseMoved:(NSEvent*)event {
+	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
+	
+	// if the mouse is below the game viewport, bring up the alpha of the inventory to 1; otherwise set it to 0.5
+	if (NSPointInRect(mousePoint, [(NSView*)g_worldView bounds]) && mousePoint.y < kRXCardViewportOriginOffset.y)
+		_inventoryAlphaFactor = 1.f;
+	else
+		_inventoryAlphaFactor = 0.5f;
+	
+	// if UI events are being ignored, we're done
 	if (_ignoreUIEventsCounter > 0)
 		return;
 	
-	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
 #if defined(DEBUG) && DEBUG > 2
 	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"moving mouse - %@", NSStringFromPoint(mousePoint));
 #endif
@@ -1688,7 +1726,7 @@ exit_flush_tasks:
 	
 	// now check if we're over one of the inventory regions
 	if (!hotspot) {
-		for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+		for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
 			if (NSPointInRect(mousePoint, _inventoryHotspotRegions[inventory_i])) {
 				hotspot = (RXHotspot*)(inventory_i + 1);
 				break;

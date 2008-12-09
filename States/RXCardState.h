@@ -96,6 +96,9 @@ struct _rx_transition_program {
 	uint16_t _inventoryDestinationCardID[3];
 	GLuint _inventoryTextures[3];
 	GLuint _inventoryTextureBuffer;
+	
+	uint32_t _inventoryItemCount;
+	float _inventoryAlphaFactor;
 }
 
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;

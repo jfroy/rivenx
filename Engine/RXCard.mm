@@ -15,12 +15,14 @@
 
 #import <OpenGL/CGLMacro.h>
 
+#import "RXCard.h"
+
 #import "RXAtomic.h"
 #import "RXWorldProtocol.h"
-#import "RXCard.h"
-#import "RXTransition.h"
 
+#import "RXTransition.h"
 #import "RXMovieProxy.h"
+#import "RXRivenScriptCommandAliases.h"
 
 // we can afford a reasonably large number here, since the space is only used for vertex data and texture IDs
 static const GLuint kDynamicPictureSlots = 100;
@@ -2203,15 +2205,18 @@ static NSMutableString* _scriptLogPrefix;
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID EXTERNAL COMMAND ID" userInfo:nil];
 	
 #if defined(DEBUG)
-	NSString* formatString = [NSString stringWithFormat:@"calling external %hu (%@) with arguments: {", externalID, externalName];
+	NSString* formatString = [NSString stringWithFormat:@"calling external %@(", externalName];
 	if (extarnalArgc > 1) {
 		for (; argi < extarnalArgc - 1; argi++)
 			formatString = [formatString stringByAppendingFormat:@"%hu, ", argv[2 + argi]];
 	}
 	if (extarnalArgc > 0)
 		formatString = [formatString stringByAppendingFormat:@"%hu", argv[2 + argi]];
-	formatString = [formatString stringByAppendingString:@"}"];
+	formatString = [formatString stringByAppendingString:@") {"];
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", _scriptLogPrefix, formatString);
+	
+	// augment script log indentation for the external command
+	[_scriptLogPrefix appendString:@"    "];
 #endif
 	
 	// dispatch the call to the external command
@@ -2221,7 +2226,12 @@ static NSMutableString* _scriptLogPrefix;
 		return;
 	}
 		
-	command_dispatch->imp(self, command_dispatch->sel, argc, argv);
+	command_dispatch->imp(self, command_dispatch->sel, extarnalArgc, argv + 2);
+	
+#if defined(DEBUG)
+	[_scriptLogPrefix deleteCharactersInRange:NSMakeRange([_scriptLogPrefix length] - 4, 4)];
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
+#endif
 }
 
 // 18
@@ -2266,8 +2276,9 @@ static NSMutableString* _scriptLogPrefix;
 	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@reloading card", _scriptLogPrefix);
 #endif
 	
-	RXStack* parent = [_descriptor parent];
-	[_scriptHandler setActiveCardWithStack:[parent key] ID:[_descriptor ID] waitUntilDone:YES];
+	// this command reloads whatever is the current card
+	RXSimpleCardDescriptor* current_card = [[g_world gameState] currentCard];
+	[_scriptHandler setActiveCardWithStack:current_card->parentName ID:current_card->cardID waitUntilDone:YES];
 }
 
 // 20
@@ -2504,6 +2515,9 @@ DEFINE_COMMAND(xasetupcomplete) {
 	// change the active card to the saved return card
 	RXSimpleCardDescriptor* returnCard = [[g_world gameState] returnCard];
 	[_scriptHandler setActiveCardWithStack:returnCard->parentName ID:returnCard->cardID waitUntilDone:YES];
+	
+	// reset the return card
+	[[g_world gameState] setReturnCard:nil];
 }
 
 #pragma mark -
@@ -2515,21 +2529,21 @@ DEFINE_COMMAND(xasetupcomplete) {
 	
 	if (page == 1) {
 		// disable hotspots 7 and 9
-		DISPATCH_COMMAND1(10, 7);
-		DISPATCH_COMMAND1(10, 9);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 9);
 		
 		// enable hotspot 10
-		DISPATCH_COMMAND1(9, 10);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 10);
 	} else {
 		// enable hotspots 7 and 9
-		DISPATCH_COMMAND1(9, 7);
-		DISPATCH_COMMAND1(9, 9);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 9);
 		
 		// disable hotspot 10
-		DISPATCH_COMMAND1(10, 10);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 10);
 	}
 	
-	DISPATCH_COMMAND1(39, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
 }
 
 DEFINE_COMMAND(xaatrusopenbook) {
@@ -2546,15 +2560,15 @@ DEFINE_COMMAND(xaatrusbookprevpage) {
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"aatruspage"];
 	
 	if (page == 2)
-		DISPATCH_COMMAND3(4, 8, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 8, 256, 0);
 	else
-		DISPATCH_COMMAND3(4, 3, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 3, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(21);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 }
 
 DEFINE_COMMAND(xaatrusbooknextpage) {
@@ -2563,15 +2577,15 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"aatruspage"];
 		
 		if (page == 1)
-			DISPATCH_COMMAND3(4, 8, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 8, 256, 0);
 		else
-			DISPATCH_COMMAND3(4, 5, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 5, 256, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[_scriptHandler queueTransition:transition];
 		[transition release];
 		
-		DISPATCH_COMMAND0(21);
+		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 	}
 }
 
@@ -2584,29 +2598,29 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 	
 	if (page == 1) {
 		// disable hotspots 7 and 9
-		DISPATCH_COMMAND1(10, 7);
-		DISPATCH_COMMAND1(10, 9);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 9);
 		
 		// enable hotspot 10
-		DISPATCH_COMMAND1(9, 10);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 10);
 	} else {
 		// enable hotspots 7 and 9
-		DISPATCH_COMMAND1(9, 7);
-		DISPATCH_COMMAND1(9, 9);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 9);
 		
 		// disable hotspot 10
-		DISPATCH_COMMAND1(10, 10);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 10);
 	}
 	
 	// draw the main page picture
-	DISPATCH_COMMAND1(39, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
 	
 	// draw the note edge
 	if (page > 1) {
 		if (page < 5)
-			DISPATCH_COMMAND1(39, 50);
+			DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 50);
 		else if (page > 5)
-			DISPATCH_COMMAND1(39, 51);
+			DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 51);
 	}
 	
 	// draw the telescope combination
@@ -2647,15 +2661,15 @@ DEFINE_COMMAND(xacathbookprevpage) {
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"acathpage"];
 	
 	if (page == 2)
-		DISPATCH_COMMAND3(4, 9, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 9, 256, 0);
 	else
-		DISPATCH_COMMAND3(4, 4, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 4, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionBottom region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(21);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 }
 
 DEFINE_COMMAND(xacathbooknextpage) {
@@ -2664,15 +2678,15 @@ DEFINE_COMMAND(xacathbooknextpage) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"acathpage"];
 		
 		if (page == 1)
-			DISPATCH_COMMAND3(4, 9, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 9, 256, 0);
 		else
-			DISPATCH_COMMAND3(4, 6, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 6, 256, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionTop region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[_scriptHandler queueTransition:transition];
 		[transition release];
 		
-		DISPATCH_COMMAND0(21);
+		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 	}
 }
 
@@ -2692,13 +2706,13 @@ DEFINE_COMMAND(xtrapbookback) {
 	
 	if (page == 1) {
 		// disable hotspot 16
-		DISPATCH_COMMAND1(10, 16);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 16);
 	} else {
 		// enable hotspot 16
-		DISPATCH_COMMAND1(9, 16);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 16);
 	}
 	
-	DISPATCH_COMMAND1(39, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
 	
 	// draw the dome combination
 	// FIXME: actually generate a combination per game...
@@ -2733,13 +2747,13 @@ DEFINE_COMMAND(xblabbookprevpage) {
 	assert(page > 1);
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"blabpage"];
 	
-	DISPATCH_COMMAND3(4, 22, 256, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 22, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(21);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 }
 
 DEFINE_COMMAND(xblabbooknextpage) {
@@ -2747,13 +2761,13 @@ DEFINE_COMMAND(xblabbooknextpage) {
 	if (page < 22) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"blabpage"];
 		
-		DISPATCH_COMMAND3(4, 23, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 23, 256, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[_scriptHandler queueTransition:transition];
 		[transition release];
 		
-		DISPATCH_COMMAND0(21);
+		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 	}
 }
 
@@ -2764,7 +2778,7 @@ DEFINE_COMMAND(xblabbooknextpage) {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"ogehnpage"];
 	assert(page > 0);
 		
-	DISPATCH_COMMAND1(39, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
 }
 
 DEFINE_COMMAND(xogehnopenbook) {
@@ -2778,13 +2792,13 @@ DEFINE_COMMAND(xogehnbookprevpage) {
 	
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"ogehnpage"];
 	
-	DISPATCH_COMMAND3(4, 12, 256, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 12, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(21);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 }
 
 DEFINE_COMMAND(xogehnbooknextpage) {
@@ -2794,14 +2808,66 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 
 	[[g_world gameState] setUnsignedShort:page + 1 forKey:@"ogehnpage"];
 	
-	DISPATCH_COMMAND3(4, 13, 256, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 13, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(21);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 }
 
+#pragma mark -
+#pragma mark rebel tunnel
+
+- (BOOL)_isIconDepressed:(uint16_t)index {
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	return (icon_bitfield & (1U << (index - 1))) ? YES : NO;
+}
+
+DEFINE_COMMAND(xicon) {
+	// this command sets the variable atemp to 1 if the specified icon is depressed, 0 otherwise
+	if ([self _isIconDepressed:argv[0]])
+		[[g_world gameState] setUnsigned32:1 forKey:@"atemp"];
+	else
+		[[g_world gameState] setUnsigned32:0 forKey:@"atemp"];
+}
+
+DEFINE_COMMAND(xcheckicons) {
+
+}
+
+DEFINE_COMMAND(xtoggleicon) {
+	// this command toggles the state of a particular icon for the rebel tunnel puzzle
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	uint32_t icon_bit = 1U << (argv[0] - 1);
+	
+	if (icon_bitfield & icon_bit)
+		[[g_world gameState] setUnsigned32:(icon_bitfield & ~icon_bit) forKey:@"jicons"];
+	else
+		[[g_world gameState] setUnsigned32:(icon_bitfield | icon_bit) forKey:@"jicons"];
+}
+
+DEFINE_COMMAND(xjtunnel103_pictfix) {
+	// this command needs to overlay pictures of depressed icons based on the value of jicons
+	
+	// this command does not use the helper _isIconDepressed method to avoid fetching jicons multiple times
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	
+	if (icon_bitfield & 1U)
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+	if (icon_bitfield & (1U << 1))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+	if (icon_bitfield & (1U << 2))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+	if (icon_bitfield & (1U << 3))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+	if (icon_bitfield & (1U << 22))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+	if (icon_bitfield & (1U << 23))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+	if (icon_bitfield & (1U << 24))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+}
 
 @end
