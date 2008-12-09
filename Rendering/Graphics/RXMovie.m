@@ -28,7 +28,10 @@
 
 - (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
+	
+	// we must be on the main thread to use QuickTime
 	if (!pthread_main_np()) {
 		[self release];
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie initWithMovie:disposeWhenDone:] MAIN THREAD ONLY" userInfo:nil];
@@ -200,11 +203,16 @@
 		[_movie release];
 	}
 	
-	if (_vao) glDeleteVertexArraysAPPLE(1, &_vao);
-	if (_visualContext) QTVisualContextRelease(_visualContext);
-	if (_imageBuffer) CFRelease(_imageBuffer);
-	if (_glTexture) glDeleteTextures(1, &_glTexture);
-	if (_textureStorage) free(_textureStorage);
+	if (_vao)
+		glDeleteVertexArraysAPPLE(1, &_vao);
+	if (_visualContext)
+		QTVisualContextRelease(_visualContext);
+	if (_imageBuffer)
+		CFRelease(_imageBuffer);
+	if (_glTexture)
+		glDeleteTextures(1, &_glTexture);
+	if (_textureStorage)
+		free(_textureStorage);
 	
 	CGLUnlockContext(cgl_ctx);
 	
@@ -219,7 +227,8 @@
 	CVTime rawOVL = CVDisplayLinkGetOutputVideoLatency(displayLink);
 	
 	// if the OVL is indefinite, exit
-	if (rawOVL.flags | kCVTimeIsIndefinite) return;
+	if (rawOVL.flags | kCVTimeIsIndefinite)
+		return;
 	
 	// set the expected read ahead
 	SInt64 ovl = rawOVL.timeValue / rawOVL.timeScale;
@@ -280,12 +289,14 @@
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
-	if (!_movie) return;
+	if (!_movie)
+		return;
 	
 	// does the visual context have a new image?
 	if (QTVisualContextIsNewImageAvailable(_visualContext, outputTime)) {
 		// release the old image
-		if (_imageBuffer) CVPixelBufferRelease(_imageBuffer);
+		if (_imageBuffer)
+			CVPixelBufferRelease(_imageBuffer);
 		
 		// get the new image
 		QTVisualContextCopyImageForTime(_visualContext, kCFAllocatorDefault, outputTime, &_imageBuffer);
@@ -320,7 +331,8 @@
 				// marshall the image data into the texture
 				CVPixelBufferLockBaseAddress(_imageBuffer, 0);
 				void* baseAddress = CVPixelBufferGetBaseAddress(_imageBuffer);
-				for (GLuint row = 0; row < height; row++) memcpy(BUFFER_OFFSET(_textureStorage, (row * 128) << 2), BUFFER_OFFSET(baseAddress, row * bytesPerRow), width << 2);
+				for (GLuint row = 0; row < height; row++)
+					memcpy(BUFFER_OFFSET(_textureStorage, (row * 128) << 2), BUFFER_OFFSET(baseAddress, row * bytesPerRow), width << 2);
 				CVPixelBufferUnlockBaseAddress(_imageBuffer, 0);
 				
 				// bind the texture object and update the texture data
@@ -333,8 +345,11 @@
 		}
 	} else if (_imageBuffer) {
 		// bind the correct texture object
-		if (CFGetTypeID(_imageBuffer) == CVOpenGLTextureGetTypeID()) glBindTexture(CVOpenGLTextureGetTarget(_imageBuffer), CVOpenGLTextureGetName(_imageBuffer));
-		else glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture);
+		// FIXME: ONLY TEXTURE_RECTANGLE_ARB WILL WORK WITH THE CARD SHADER
+		if (CFGetTypeID(_imageBuffer) == CVOpenGLTextureGetTypeID())
+			glBindTexture(CVOpenGLTextureGetTarget(_imageBuffer), CVOpenGLTextureGetName(_imageBuffer));
+		else
+			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture);
 		glReportError();
 	}
 	

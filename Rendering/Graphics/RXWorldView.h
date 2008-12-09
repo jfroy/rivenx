@@ -9,7 +9,7 @@
 #import "RXRendering.h"
 
 
-@interface RXWorldView : NSOpenGLView <RXWorldViewProtocol> {
+@interface RXWorldView : NSOpenGLView <RXWorldViewProtocol, RXOpenGLEngineProtocol> {
 	BOOL _tornDown;
 	
 	NSOpenGLContext* _renderContext;
@@ -42,6 +42,9 @@
 	BOOL _glInitialized;
 	
 	NSCursor* _cursor;
+	
+	// OpenGL state cache
+	GLuint _vao_binding;
 }
 
 @end

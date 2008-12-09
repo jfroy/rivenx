@@ -61,8 +61,14 @@ extern const double kRXTransitionDuration;
 
 __END_DECLS
 
+// OpenGL engine protocol
+@protocol RXOpenGLEngineProtocol
+- (GLuint)currentVertexArrayObject;
+- (void)bindVertexArrayObject:(GLuint)vao_id;
+@end
+
 // world view protocol
-@protocol RXWorldViewProtocol <NSCoding, NSObject>
+@protocol RXWorldViewProtocol <NSCoding>
 - (NSWindow*)window;
 
 - (void)tearDown;
@@ -82,6 +88,9 @@ __END_DECLS
 @end
 
 __BEGIN_DECLS
+
+// the OpenGL engine
+extern NSObject<RXOpenGLEngineProtocol>* g_glEngine;
 
 // the world view
 extern NSObject<RXWorldViewProtocol>* g_worldView;

@@ -36,7 +36,9 @@ static CVReturn _rx_render_output_callback(CVDisplayLinkRef displayLink,
 {
 	NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
 	
-	if (![(RXWorldView *)displayLinkContext lockFocusIfCanDraw]) goto end_outout_callback;
+	if (![(RXWorldView *)displayLinkContext lockFocusIfCanDraw])
+		goto end_outout_callback;
+	
 	[(RXWorldView *)displayLinkContext _render:inOutputTime];
 	[(RXWorldView *)displayLinkContext unlockFocus];
 	
@@ -90,8 +92,14 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 
 - (id)initWithFrame:(NSRect)frame {
 	self = [super initWithFrame:frame];
-	if (!self) return nil;
+	if (!self)
+		return nil;
+	
+	// initialize the global world view reference
 	g_worldView = self;
+	
+	// the world view is currently also the GL engine object
+	g_glEngine = self;
 	
 	// create an NSGL pixel format and then a context
 	NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:windowed_fsaa_attribs];
@@ -161,9 +169,8 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	// sync to VBL
 	GLint swapInterval = 1;
 	cglErr = CGLSetParameter(_renderCGLContext, kCGLCPSwapInterval, &swapInterval);
-	if (cglErr != kCGLNoError) {
+	if (cglErr != kCGLNoError)
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPSwapInterval failed with error %d: %s", cglErr, CGLErrorString(cglErr));
-	}
 	
 	// working color space
 	_workingColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
@@ -178,7 +185,8 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 }
 
 - (void)tearDown {
-	if (_tornDown) return;
+	if (_tornDown)
+		return;
 	_tornDown = YES;
 #if defined(DEBUG)
 	RXOLog(@"tearing down");
@@ -188,13 +196,15 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
 	// terminate the dislay link
-	if (_displayLink) CVDisplayLinkStop(_displayLink);
+	if (_displayLink)
+		CVDisplayLinkStop(_displayLink);
 }
 
 - (void)dealloc {
 	[self tearDown];
 	
-	if (_displayLink) CVDisplayLinkRelease(_displayLink);
+	if (_displayLink)
+		CVDisplayLinkRelease(_displayLink);
 	
 	[_renderContext release];
 	[_loadContext release];
@@ -208,6 +218,7 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 }
 
 #pragma mark -
+#pragma mark world view protocol
 
 - (CGLContextObj)renderContext {
 	return _renderCGLContext;
@@ -243,7 +254,8 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 
 - (void)setCursor:(NSCursor*)cursor {
 	// NSCursor instances are immutable
-	if (cursor == _cursor) return;
+	if (cursor == _cursor)
+		return;
 	
 #if defined(DEBUG)
 	if (cursor == [g_world defaultCursor])
@@ -262,6 +274,19 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 }
 
 #pragma mark -
+#pragma mark engine protocol
+
+- (GLuint)currentVertexArrayObject {
+	return _vao_binding;
+}
+
+- (void)bindVertexArrayObject:(GLuint)vao_id {
+	_vao_binding = vao_id;
+	glBindVertexArrayAPPLE(vao_id);
+}
+
+#pragma mark -
+#pragma mark event handling
 
 // we need to forward events to the state compositor, which will forward them to the rendering states
 
@@ -333,7 +358,8 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 
 - (BOOL)lockFocusIfCanDraw {
 	BOOL canDraw = [super lockFocusIfCanDraw];
-	if (canDraw && [[self openGLContext] view] != self) [[self openGLContext] setView:self];
+	if (canDraw && [[self openGLContext] view] != self)
+		[[self openGLContext] setView:self];
 	return canDraw;
 }
 
@@ -365,7 +391,8 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_SCISSOR_TEST);
-	if (GLEE_ARB_multisample) glDisable(GL_MULTISAMPLE_ARB);
+	if (GLEE_ARB_multisample)
+		glDisable(GL_MULTISAMPLE_ARB);
 	
 	// pixel store state
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
@@ -381,13 +408,15 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	glHint(GL_FOG_HINT, GL_NICEST);
-	if (GLEE_APPLE_transform_hint) glHint(GL_TRANSFORM_HINT_APPLE, GL_NICEST);
+	if (GLEE_APPLE_transform_hint)
+		glHint(GL_TRANSFORM_HINT_APPLE, GL_NICEST);
 	
 	glReportError();
 }
 
 - (void)prepareOpenGL {
-	if (_glInitialized) return;
+	if (_glInitialized)
+		return;
 	_glInitialized = YES;
 
 #if defined(DEBUG)
@@ -424,7 +453,8 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 }
 
 - (void)reshape {
-	if (!_glInitialized || _tornDown) return;
+	if (!_glInitialized || _tornDown)
+		return;
 	
 	float uiScale = ([self window]) ? [[self window] userSpaceScaleFactor] : 1.0F;
 	GLint viewportLeft, viewportBottom;
@@ -479,7 +509,8 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	
 	// ask ColorSync for our current display's profile
 	CMGetProfileByAVID((CMDisplayIDType)ddid, &displayProfile);
-	if (_displayColorSpace) CGColorSpaceRelease(_displayColorSpace);
+	if (_displayColorSpace)
+		CGColorSpaceRelease(_displayColorSpace);
 	
 	_displayColorSpace = CGColorSpaceCreateWithPlatformColorSpace(displayProfile);
 	CMCloseProfile(displayProfile);
@@ -547,7 +578,8 @@ major_number.minor_number major_number.minor_number.release_number
 }
 
 - (void)_render:(const CVTimeStamp*)outputTime {
-	if (_tornDown) return;
+	if (_tornDown)
+		return;
 	
 	CGLContextObj CGL_MACRO_CONTEXT = _renderCGLContext;
 	CGLLockContext(cgl_ctx);
