@@ -98,9 +98,6 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	// initialize the global world view reference
 	g_worldView = self;
 	
-	// the world view is currently also the GL engine object
-	g_glEngine = self;
-	
 	// create an NSGL pixel format and then a context
 	NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:windowed_fsaa_attribs];
 	_renderContext = [[NSOpenGLContext alloc] initWithFormat:format shareContext:nil];
@@ -133,6 +130,9 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	_renderCGLContext = [_renderContext CGLContextObj];
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"render context: %p", _renderCGLContext);
 	
+	// create the state object for the rendering context
+	g_renderContextState = [[RXOpenGLState alloc] initWithContext:_renderCGLContext];
+	
 	// create a load context and pair it with the render context
 	_loadContext = [[NSOpenGLContext alloc] initWithFormat:format shareContext:_renderContext];
 	if (!_loadContext) {
@@ -144,6 +144,9 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	// cache the underlying CGL objects
 	_loadCGLContext = [_loadContext CGLContextObj];
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"load context: %p", _loadCGLContext);
+	
+	// create the state object for the loading context
+	g_loadContextState = [[RXOpenGLState alloc] initWithContext:_loadCGLContext];
 	
 	// do base state setup for the load context
 	[self _baseOpenGLStateSetup:_loadCGLContext];
@@ -271,23 +274,6 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	
 	[_cursor set];
 	[[self window] invalidateCursorRectsForView:self];
-}
-
-#pragma mark -
-#pragma mark engine protocol
-
-- (GLuint)currentVertexArrayObject {
-	return _vao_binding;
-}
-
-- (void)bindVertexArrayObject:(GLuint)vao_id {
-	// WARNING: ASSUMES THE CALLER HAS LOCKED THE CONTEXT
-	CGLContextObj CGL_MACRO_CONTEXT = _renderCGLContext;
-	
-	if (vao_id != _vao_binding) {
-		_vao_binding = vao_id;
-		glBindVertexArrayAPPLE(vao_id); glReportError();
-	}
 }
 
 #pragma mark -

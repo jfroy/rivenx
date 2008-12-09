@@ -230,8 +230,10 @@ init_failure:
 	// WARNING: WILL BE RUNNING ON THE MAIN THREAD
 	NSError* error;
 	
+	// use the load context to prepare our GL objects
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
 	
 	// kick start the audio task thread
 	[NSThread detachNewThreadSelector:@selector(_audioTaskThread:) toTarget:self withObject:nil];
@@ -340,7 +342,7 @@ init_failure:
 	glGenBuffers(1, &_cardCompositeVBO); glReportError();
 	
 	// bind them
-	[g_glEngine bindVertexArrayObject:_cardCompositeVAO];
+	[gl_state bindVertexArrayObject:_cardCompositeVAO];
 	glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
 	
 	// enable sub-range flushing if available
@@ -393,7 +395,7 @@ init_failure:
 	glGenBuffers(1, &_cardRenderVBO); glReportError();
 	
 	// bind them
-	[g_glEngine bindVertexArrayObject:_cardRenderVAO];
+	[gl_state bindVertexArrayObject:_cardRenderVAO];
 	glBindBuffer(GL_ARRAY_BUFFER, _cardRenderVBO); glReportError();
 	
 	// enable sub-range flushing if available
@@ -486,7 +488,7 @@ init_failure:
 	glGenBuffers(1, &_hotspotDebugRenderVBO); glReportError();
 	
 	// bind them
-	[g_glEngine bindVertexArrayObject:_hotspotDebugRenderVAO];
+	[gl_state bindVertexArrayObject:_hotspotDebugRenderVAO];
 	glBindBuffer(GL_ARRAY_BUFFER, _hotspotDebugRenderVBO); glReportError();
 	
 	// enable sub-range flushing if available
@@ -536,7 +538,7 @@ init_failure:
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
 	
 	// bind 0 to the current VAO
-	[g_glEngine bindVertexArrayObject:0];
+	[gl_state bindVertexArrayObject:0];
 	
 	// bind program 0 (e.g. back to fixed-function)
 	glUseProgram(0);
@@ -1115,6 +1117,8 @@ init_failure:
 
 - (void)_renderCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+	
 	NSEnumerator* renderListEnumerator;
 	id renderObject;
 	
@@ -1129,7 +1133,7 @@ init_failure:
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		
 		// bind the picture VAO
-		[g_glEngine bindVertexArrayObject:card->_pictureVAO];
+		[gl_state bindVertexArrayObject:card->_pictureVAO];
 		
 		renderListEnumerator = [r->pictures objectEnumerator];
 		while ((renderObject = [renderListEnumerator nextObject])) {
@@ -1148,7 +1152,7 @@ init_failure:
 	glClear(GL_COLOR_BUFFER_BIT);
 	
 	// bind the card render VAO
-	[g_glEngine bindVertexArrayObject:_cardRenderVAO];
+	[gl_state bindVertexArrayObject:_cardRenderVAO];
 	
 	// water effect	
 	if (r->water_fx.sfxe != 0) {
@@ -1264,6 +1268,9 @@ init_failure:
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	OSSpinLockLock(&_renderLock);
+	
+	// alias the render context state object pointer
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
 	
 	// we need an inner pool within the scope of that lock, or we run the risk of autoreleased enumerators causing objects that should be deallocated on the main thread not to be
 	NSAutoreleasePool* p = [NSAutoreleasePool new];
@@ -1384,7 +1391,7 @@ init_failure:
 	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
 	
 	// bind the card composite VAO
-	[g_glEngine bindVertexArrayObject:_cardCompositeVAO];
+	[gl_state bindVertexArrayObject:_cardCompositeVAO];
 	
 	// draw the card composite
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
@@ -1404,6 +1411,9 @@ exit_render:
 }
 
 - (void)_renderInGlobalContext:(CGLContextObj)cgl_ctx {
+	// alias the render context state object pointer
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+	
 	// render hotspots
 	if (RXEngineGetBool(@"rendering.renderHotspots")) {
 		NSArray* activeHotspots = [_front_render_state->card activeHotspots];
@@ -1502,10 +1512,10 @@ exit_render:
 			glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, [activeHotspots count] * 24 * sizeof(GLfloat));
 		glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 		
-		[g_glEngine bindVertexArrayObject:_hotspotDebugRenderVAO];
+		[gl_state bindVertexArrayObject:_hotspotDebugRenderVAO];
 		glMultiDrawArrays(GL_LINE_LOOP, _hotspotDebugRenderFirstElementArray, _hotspotDebugRenderElementCountArray, [activeHotspots count] + RX_MAX_INVENTORY_ITEMS); glReportError();
 		
-		[g_glEngine bindVertexArrayObject:0];
+		[gl_state bindVertexArrayObject:0];
 	}	
 }
 

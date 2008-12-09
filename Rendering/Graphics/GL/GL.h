@@ -31,8 +31,6 @@ __BEGIN_DECLS
 #include <GL/glu.h>
 #endif
 
-#if defined(__cplusplus)
-}
-#endif
+__END_DECLS
 
 #endif // GL_H_INCLUDED

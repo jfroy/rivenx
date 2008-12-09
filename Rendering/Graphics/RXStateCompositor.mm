@@ -57,7 +57,8 @@
 
 - (id)init {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	NSError* error;
 	
@@ -67,8 +68,10 @@
 	
 	_renderStates = [_states copy];
 	
+	// use the load context to set things up
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
 	
 	// render state composition shader program
 	_compositing_program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"state_compositor" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
@@ -88,14 +91,14 @@
 	
 	// configure the compositing VAO
 	glGenVertexArraysAPPLE(1, &_compositing_vao); glReportError();
-	[g_glEngine bindVertexArrayObject:_compositing_vao];
+	[gl_state bindVertexArrayObject:_compositing_vao];
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
 	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
 	glVertexPointer(2, GL_FLOAT, 0, vertex_coords); glReportError();
 	
-	[g_glEngine bindVertexArrayObject:0];
+	[gl_state bindVertexArrayObject:0];
 	
 	CGLUnlockContext(cgl_ctx);
 	
@@ -188,8 +191,10 @@
 	descriptor->render = RXGetRenderImplementation([state class], RXRenderingRenderSelector);
 	descriptor->post_flush = RXGetPostFlushTasksImplementation([state class], RXRenderingPostFlushTasksSelector);
 	
+	// use the load context to prepare the state for the new render state
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
 	
 	glGenFramebuffersEXT(1, &(descriptor->fbo));
 	glGenTextures(1, &(descriptor->texture));
@@ -228,7 +233,7 @@
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
 	
 	// configure the tex coord array for the new state
-	[g_glEngine bindVertexArrayObject:_compositing_vao];
+	[gl_state bindVertexArrayObject:_compositing_vao];
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
@@ -236,7 +241,7 @@
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
 	glTexCoordPointer(2, GL_FLOAT, 0, tex_coords); glReportError();
 	
-	[g_glEngine bindVertexArrayObject:0];
+	[gl_state bindVertexArrayObject:0];
 	
 	CGLUnlockContext(cgl_ctx);
 	
@@ -353,6 +358,8 @@
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+	
 	NSArray* renderStates = [_renderStates retain];
 	
 	// if we have no state, we can exit immediately
@@ -390,7 +397,7 @@
 	glUniform4fv(_texture_blend_weights_uniform, 1, _texture_blend_weights); glReportError();
 	
 	// bind the compositing vao
-	[g_glEngine bindVertexArrayObject:_compositing_vao];
+	[gl_state bindVertexArrayObject:_compositing_vao];
 	
 	// bind render state textures
 	uint32_t state_count = [_states count];

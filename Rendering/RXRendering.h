@@ -62,7 +62,7 @@ extern const double kRXTransitionDuration;
 __END_DECLS
 
 // OpenGL engine protocol
-@protocol RXOpenGLEngineProtocol
+@protocol RXOpenGLStateProtocol
 - (GLuint)currentVertexArrayObject;
 - (void)bindVertexArrayObject:(GLuint)vao_id;
 @end
@@ -75,6 +75,7 @@ __END_DECLS
 
 - (CGLContextObj)renderContext;
 - (CGLContextObj)loadContext;
+
 - (CGLPixelFormatObj)cglPixelFormat;
 - (CVDisplayLinkRef)displayLink;
 
@@ -89,11 +90,12 @@ __END_DECLS
 
 __BEGIN_DECLS
 
-// the OpenGL engine
-extern NSObject<RXOpenGLEngineProtocol>* g_glEngine;
-
 // the world view
 extern NSObject<RXWorldViewProtocol>* g_worldView;
+
+// the context state objects
+extern NSObject<RXOpenGLStateProtocol>* g_renderContextState;
+extern NSObject<RXOpenGLStateProtocol>* g_loadContextState;
 
 // convenience functions related to the world view
 CF_INLINE rx_size_t RXGetGLViewportSize() {

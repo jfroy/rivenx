@@ -750,13 +750,14 @@ static NSMutableString* _scriptLogPrefix;
 	// get the load context
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
 	
 	// VAO and VBO for card pictures
 	glGenBuffers(1, &_pictureVertexArrayBuffer); glReportError();
 	glGenVertexArraysAPPLE(1, &_pictureVAO); glReportError();
 	
 	// bind the card picture VAO and VBO
-	[g_glEngine bindVertexArrayObject:_pictureVAO];
+	[gl_state bindVertexArrayObject:_pictureVAO];
 	glBindBuffer(GL_ARRAY_BUFFER, _pictureVertexArrayBuffer); glReportError();
 	
 	// enable sub-range flushing if available
@@ -847,7 +848,7 @@ static NSMutableString* _scriptLogPrefix;
 	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
 	
 	// bind 0 to the current VAO
-	[g_glEngine bindVertexArrayObject:0];
+	[gl_state bindVertexArrayObject:0];
 	
 	// we don't need the picture records and the PLST data anymore
 	delete[] pictureRecords;

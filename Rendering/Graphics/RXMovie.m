@@ -67,12 +67,15 @@
 	CFDictionarySetValue(visualContextOptions, kQTVisualContextPixelBufferAttributesKey, pixelBufferAttributes);
 	[pixelBufferAttributes release];
 	
-	// load context and the associated pixel format
+	// get the load context and the associated pixel format
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLPixelFormatObj pixel_format = [RXGetWorldView() cglPixelFormat];
 	
 	// lock the load context
 	CGLLockContext(cgl_ctx);
+	
+	// alias the load context state object pointer
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
 	
 	// if the movie is smaller than 128 bytes in either dimension, create a memory-backed visual context, otherwise go directly to OpenGL
 	if (_currentSize.width < 32 || _currentSize.height < 32) {
@@ -113,7 +116,7 @@
 	
 	// create a VAO and prepare the VA state
 	glGenVertexArraysAPPLE(1, &_vao); glReportError();
-	[g_glEngine bindVertexArrayObject:_vao];
+	[gl_state bindVertexArrayObject:_vao];
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
@@ -124,7 +127,7 @@
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
 	glTexCoordPointer(2, GL_FLOAT, 0, _coordinates + 8); glReportError();
 	
-	[g_glEngine bindVertexArrayObject:0];
+	[gl_state bindVertexArrayObject:0];
 	
 	CGLUnlockContext(cgl_ctx);
 	
@@ -292,6 +295,9 @@
 	if (!_movie)
 		return;
 	
+	// alias the render context state object pointer
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+	
 	// does the visual context have a new image?
 	if (QTVisualContextIsNewImageAvailable(_visualContext, outputTime)) {
 		// release the old image
@@ -355,7 +361,7 @@
 	
 	// do we have an image to render?
 	if (_imageBuffer && !_invalidImage) {
-		[g_glEngine bindVertexArrayObject:_vao];
+		[gl_state bindVertexArrayObject:_vao];
 		glDrawArrays(GL_QUADS, 0, 4); glReportError();
 	}
 }
