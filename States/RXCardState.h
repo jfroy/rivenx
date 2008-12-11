@@ -23,6 +23,10 @@
 struct _rx_card_state_render_state {
 	RXCard* card;
 	BOOL newCard;
+	
+	NSMutableArray* pictures;
+	NSMutableArray* movies;
+	
 	RXTransition* transition;
 };
 
@@ -35,8 +39,9 @@ struct _rx_transition_program {
 
 @interface RXCardState : RXRenderState <RXRivenScriptProtocol> {
 	// render state
+	void* _render_states_buffer;
 	struct _rx_card_state_render_state* volatile _front_render_state;
-	struct _rx_card_state_render_state* _back_render_state;
+	struct _rx_card_state_render_state* volatile _back_render_state;
 	OSSpinLock _renderLock;
 	
 	// event handling

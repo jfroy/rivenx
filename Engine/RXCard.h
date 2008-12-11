@@ -118,7 +118,7 @@ struct _rx_card_render_state {
 	
 	// render states
 	struct _rx_card_render_state* volatile _frontRenderStatePtr;
-	struct _rx_card_render_state* _backRenderStatePtr;
+	struct _rx_card_render_state* volatile _backRenderStatePtr;
 	
 	// pictures
 	GLuint _pictureVAO;

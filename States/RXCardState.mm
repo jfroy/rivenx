@@ -20,6 +20,7 @@
 
 #import "States/RXCardState.h"
 
+#import "Engine/RXHardwareProfiler.h"
 #import "Engine/RXHotspot.h"
 #import "Engine/RXMovieProxy.h"
 #import "Engine/RXEditionManager.h"
@@ -133,9 +134,24 @@ static void RXCardAudioSourceTaskApplier(const void* value, void* context) {
 	if (!self)
 		return nil;
 	
-	_front_render_state = (struct _rx_card_state_render_state*)malloc(sizeof(struct _rx_card_state_render_state));
-	_back_render_state = (struct _rx_card_state_render_state*)malloc(sizeof(struct _rx_card_state_render_state));
+	// get the cache line size
+	size_t cache_line_size = [[RXHardwareProfiler sharedHardwareProfiler] cacheLineSize];
+	
+	// allocate enough cache lines to store 2 render states without overlap
+	uint32_t render_state_cache_line_count = sizeof(struct _rx_card_state_render_state) / cache_line_size;
+	if (sizeof(struct _rx_card_state_render_state) % cache_line_size)
+		render_state_cache_line_count++;
+	
+	// allocate the cache lines
+	_render_states_buffer = malloc((render_state_cache_line_count * 2 + 1) * cache_line_size);
+	
+	// point each render state pointer at the beginning of a cache line
+	_front_render_state = (struct _rx_card_state_render_state*)BUFFER_OFFSET(((uintptr_t)_render_states_buffer & ~(cache_line_size - 1)), cache_line_size);
+	_back_render_state = (struct _rx_card_state_render_state*)BUFFER_OFFSET(((uintptr_t)_front_render_state & ~(cache_line_size - 1)), cache_line_size);
+	
+	// zero-fill the render states to be extra-safe
 	bzero((void*)_front_render_state, sizeof(struct _rx_card_state_render_state));
+	bzero((void*)_back_render_state, sizeof(struct _rx_card_state_render_state));
 	
 	_activeSounds = [NSMutableSet new];
 	_activeDataSounds = [NSMutableSet new];
@@ -175,10 +191,8 @@ init_failure:
 	[_activeDataSounds release];
 	[_activeSounds release];
 	
-	if (_back_render_state)
-		free((void *)_back_render_state);
-	if (_front_render_state)
-		free((void *)_front_render_state);
+	if (_render_states_buffer)
+		free(_render_states_buffer);
 	
 	[super dealloc];
 }

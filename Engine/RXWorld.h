@@ -7,16 +7,13 @@
 //
 
 #import <mach/semaphore.h>
-#import <mach/task.h>
-#import <mach/thread_act.h>
-#import <mach/thread_policy.h>
 
 #import <pthread.h>
 
-#import "RXWorldProtocol.h"
-
 #import <Cocoa/Cocoa.h>
 #import <MHKKit/MHKKit.h>
+
+#import "RXWorldProtocol.h"
 
 #import "RXGameState.h"
 #import "RXEditionManager.h"

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3103D4DB0EF0D3D40025170A /* RXPicture.m in Sources */ = {isa = PBXBuildFile; fileRef = 3103D4DA0EF0D3D40025170A /* RXPicture.m */; };
+		3103D4F40EF0DAF30025170A /* RXHardwareProfiler.m in Sources */ = {isa = PBXBuildFile; fileRef = 3103D4F30EF0DAF30025170A /* RXHardwareProfiler.m */; };
 		3105EC330D74844900609273 /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
 		3105EC610D74922500609273 /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
 		31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */; };
@@ -286,6 +288,10 @@
 /* Begin PBXFileReference section */
 		08FB7796FE84155DC02AAC07 /* plistize_stacks.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = plistize_stacks.m; sourceTree = "<group>"; };
 		08FB779EFE84155DC02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		3103D4D90EF0D3D40025170A /* RXPicture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXPicture.h; sourceTree = "<group>"; };
+		3103D4DA0EF0D3D40025170A /* RXPicture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXPicture.m; sourceTree = "<group>"; };
+		3103D4F20EF0DAF30025170A /* RXHardwareProfiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXHardwareProfiler.h; sourceTree = "<group>"; };
+		3103D4F30EF0DAF30025170A /* RXHardwareProfiler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXHardwareProfiler.m; sourceTree = "<group>"; };
 		3105EC310D74844900609273 /* RXLogCenter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXLogCenter.h; path = Base/RXLogCenter.h; sourceTree = "<group>"; };
 		3105EC320D74844900609273 /* RXLogCenter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXLogCenter.m; path = Base/RXLogCenter.m; sourceTree = "<group>"; };
 		3105EC5A0D748F2100609273 /* RXLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXLogging.h; path = Base/RXLogging.h; sourceTree = "<group>"; };
@@ -779,6 +785,8 @@
 				312F4D9B0DC263F400B3AF0D /* RXMovie.m */,
 				31D3D85E0EEE36FD00F2D1C4 /* RXOpenGLState.h */,
 				31D3D85F0EEE36FD00F2D1C4 /* RXOpenGLState.m */,
+				3103D4D90EF0D3D40025170A /* RXPicture.h */,
+				3103D4DA0EF0D3D40025170A /* RXPicture.m */,
 				312F4DA80DC263F400B3AF0D /* RXStateCompositor.h */,
 				312F4DA90DC263F400B3AF0D /* RXStateCompositor.mm */,
 				312F4DAA0DC263F400B3AF0D /* RXTextureBroker.h */,
@@ -1090,6 +1098,8 @@
 				31796FBC0D5D032500C493D2 /* Edition */,
 				317403920CDC1A67006F3523 /* RXGameState.h */,
 				317403930CDC1A67006F3523 /* RXGameState.m */,
+				3103D4F20EF0DAF30025170A /* RXHardwareProfiler.h */,
+				3103D4F30EF0DAF30025170A /* RXHardwareProfiler.m */,
 				31225ABC08C4216D0055628F /* RXStack.h */,
 				31225ABD08C4216D0055628F /* RXStack.m */,
 				31F3095508BE5FA200417394 /* RXWorld.h */,
@@ -1631,6 +1641,8 @@
 				31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */,
 				31A1FB210E0CA95200B2437A /* RXRenderStateOpacityAnimation.m in Sources */,
 				31D3D8600EEE36FD00F2D1C4 /* RXOpenGLState.m in Sources */,
+				3103D4DB0EF0D3D40025170A /* RXPicture.m in Sources */,
+				3103D4F40EF0DAF30025170A /* RXHardwareProfiler.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

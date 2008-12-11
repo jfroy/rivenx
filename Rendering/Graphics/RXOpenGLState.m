@@ -13,6 +13,10 @@
 
 @implementation RXOpenGLState
 
++ (BOOL)accessInstanceVariablesDirectly {
+	return NO;
+}
+
 - (void)_updateInternalState {
 	glGetIntegerv(GL_VERTEX_ARRAY_BINDING_APPLE, (GLint*)&_vao_binding);
 }
