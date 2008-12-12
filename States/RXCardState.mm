@@ -212,6 +212,7 @@ init_failure:
 }
 
 #pragma mark -
+#pragma mark rendering initialization
 
 - (void)_reportShaderProgramError:(NSError*)error {
 	if ([[error domain] isEqualToString:GLShaderCompileErrorDomain])
@@ -583,6 +584,7 @@ init_failure:
 }
 
 #pragma mark -
+#pragma mark audio rendering
 
 - (CFMutableArrayRef)_createSourceArrayFromSoundSets:(NSArray*)sets callbacks:(CFArrayCallBacks*)callbacks {
 	// create an array of sources that need to be deactivated
@@ -909,6 +911,15 @@ init_failure:
 }
 
 #pragma mark -
+#pragma mark riven script protocol implementation
+
+- (void)queuePicture:(RXPicture*)picture {
+	[_back_render_state->pictures addObject:picture];
+}
+
+- (void)queueMovie:(RXMovie*)movie {
+	[_back_render_state->movies addObject:movie];
+}
 
 - (void)queueTransition:(RXTransition*)transition {	
 	// queue the transition
@@ -1157,7 +1168,7 @@ init_failure:
 }
 
 #pragma mark -
-#pragma mark rendering
+#pragma mark graphics rendering
 
 - (void)_renderCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
