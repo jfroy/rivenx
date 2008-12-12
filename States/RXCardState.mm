@@ -137,7 +137,7 @@ static void RXCardAudioSourceTaskApplier(const void* value, void* context) {
 	// get the cache line size
 	size_t cache_line_size = [[RXHardwareProfiler sharedHardwareProfiler] cacheLineSize];
 	
-	// allocate enough cache lines to store 2 render states without overlap
+	// allocate enough cache lines to store 2 render states without overlap (to avoid false sharing)
 	uint32_t render_state_cache_line_count = sizeof(struct _rx_card_state_render_state) / cache_line_size;
 	if (sizeof(struct _rx_card_state_render_state) % cache_line_size)
 		render_state_cache_line_count++;
@@ -152,6 +152,13 @@ static void RXCardAudioSourceTaskApplier(const void* value, void* context) {
 	// zero-fill the render states to be extra-safe
 	bzero((void*)_front_render_state, sizeof(struct _rx_card_state_render_state));
 	bzero((void*)_back_render_state, sizeof(struct _rx_card_state_render_state));
+	
+	// allocate the arrays embedded in the render states
+	_front_render_state->pictures = [NSMutableArray new];
+	_front_render_state->movies = [NSMutableArray new];
+	
+	_back_render_state->pictures = [NSMutableArray new];
+	_back_render_state->movies = [NSMutableArray new];
 	
 	_activeSounds = [NSMutableSet new];
 	_activeDataSounds = [NSMutableSet new];
@@ -191,8 +198,15 @@ init_failure:
 	[_activeDataSounds release];
 	[_activeSounds release];
 	
-	if (_render_states_buffer)
+	if (_render_states_buffer) {
+		[_front_render_state->pictures release];
+		[_front_render_state->movies release];
+		
+		[_back_render_state->pictures release];
+		[_back_render_state->movies release];
+		
 		free(_render_states_buffer);
+	}
 	
 	[super dealloc];
 }
