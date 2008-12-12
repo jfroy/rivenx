@@ -463,7 +463,7 @@ static NSMutableString* _scriptLogPrefix;
 		
 		// load the movie up
 		CGPoint origin = CGPointMake(mlstRecords[currentListIndex].left, kRXCardViewportSize.height - mlstRecords[currentListIndex].top);
-		RXMovieProxy* movieProxy = [[RXMovieProxy alloc] initWithArchive:_archive ID:mlstRecords[currentListIndex].movie_id origin:origin loop:(mlstRecords[currentListIndex].loop == 1) ? YES : NO];
+		RXMovieProxy* movieProxy = [[RXMovieProxy alloc] initWithArchive:_archive ID:mlstRecords[currentListIndex].movie_id origin:origin loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO) owner:self];
 		
 		// add the movie to the movies array
 		[_movies addObject:movieProxy];

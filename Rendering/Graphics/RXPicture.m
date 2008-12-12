@@ -21,16 +21,21 @@
 	return nil;
 }
 
-- (id)initWithTexture:(GLuint)texid vao:(GLuint)vao index:(GLuint)index {
+- (id)initWithTexture:(GLuint)texid vao:(GLuint)vao index:(GLuint)index owner:(id)owner {
 	self = [super init];
 	if (!self)
 		return nil;
 	
+	_owner = owner;
 	_tex = texid;
 	_vao = vao;
 	_index = index;
 	
 	return self;
+}
+
+- (id)owner {
+	return _owner;
 }
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {

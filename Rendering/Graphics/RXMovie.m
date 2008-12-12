@@ -26,7 +26,7 @@
 	return nil;
 }
 
-- (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone {
+- (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone owner:(id)owner {
 	self = [super init];
 	if (!self)
 		return nil;
@@ -36,6 +36,8 @@
 		[self release];
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie initWithMovie:disposeWhenDone:] MAIN THREAD ONLY" userInfo:nil];
 	}
+	
+	_owner = owner;
 	
 	OSStatus err = noErr;
 	NSError* error = nil;
@@ -150,7 +152,7 @@
 	return self;
 }
 
-- (id)initWithURL:(NSURL *)movieURL {
+- (id)initWithURL:(NSURL *)movieURL owner:(id)owner {
 	if (!pthread_main_np()) {
 		[self release];
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie initWithURL:] MAIN THREAD ONLY" userInfo:nil];
@@ -184,7 +186,7 @@
 	}
 	
 	@try {
-		return [self initWithMovie:aMovie disposeWhenDone:YES];
+		return [self initWithMovie:aMovie disposeWhenDone:YES owner:owner];
 	} @catch(NSException* e) {
 		DisposeMovie(aMovie);
 		@throw e;
@@ -220,6 +222,10 @@
 	CGLUnlockContext(cgl_ctx);
 	
 	[super dealloc];
+}
+
+- (id)owner {
+	return _owner;
 }
 
 - (QTMovie*)movie {

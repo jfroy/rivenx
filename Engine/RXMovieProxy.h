@@ -13,14 +13,17 @@
 
 
 @interface RXMovieProxy : NSObject {
+	__weak id _owner;
+	
 	MHKArchive* _archive;
 	uint16_t _ID;
+	
 	BOOL _loop;
 	CGPoint _origin;
 	
 	RXMovie* _movie;
 }
 
-- (id)initWithArchive:(MHKArchive*)archive ID:(uint16_t)ID origin:(CGPoint)origin loop:(BOOL)loop;
+- (id)initWithArchive:(MHKArchive*)archive ID:(uint16_t)ID origin:(CGPoint)origin loop:(BOOL)loop owner:(id)owner;
 
 @end

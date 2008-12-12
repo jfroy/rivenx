@@ -17,11 +17,12 @@
 	return nil;
 }
 
-- (id)initWithArchive:(MHKArchive*)archive ID:(uint16_t)ID origin:(CGPoint)origin loop:(BOOL)loop {
+- (id)initWithArchive:(MHKArchive*)archive ID:(uint16_t)ID origin:(CGPoint)origin loop:(BOOL)loop owner:(id)owner {
 	self = [super init];
 	if (!self)
 		return nil;
 	
+	_owner = owner;
 	_archive = archive;
 	_ID = ID;
 	_origin = origin;
@@ -42,7 +43,7 @@
 	
 	// FIXME: error handling in [RXProxyMovie _loadMovie]
 	Movie movie = [_archive movieWithID:_ID error:NULL];
-	_movie = [[RXMovie alloc] initWithMovie:movie disposeWhenDone:YES];
+	_movie = [[RXMovie alloc] initWithMovie:movie disposeWhenDone:YES owner:_owner];
 	
 	// set movie attributes
 	[_movie setWorkingColorSpace:[RXGetWorldView() workingColorSpace]];
