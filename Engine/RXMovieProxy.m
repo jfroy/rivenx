@@ -36,6 +36,10 @@
 	[super dealloc];
 }
 
+- (id)owner {
+	return _owner;
+}
+
 - (void)_loadMovie {
 	// WARNING: MUST RUN ON MAIN THREAD
 	if (_movie)

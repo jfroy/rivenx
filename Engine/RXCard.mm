@@ -1097,9 +1097,7 @@ static NSMutableString* _scriptLogPrefix;
 #pragma mark rendering
 	// now that we know how many renderable graphic objects there are, allocate the render state objects
 	_renderState1.pictures = [NSMutableArray new];
-	_renderState1.movies = [NSMutableArray new];
 	_renderState2.pictures = [_renderState1.pictures mutableCopy];
-	_renderState2.movies = [_renderState1.movies mutableCopy];
 	
 	_frontRenderStatePtr = &_renderState1;
 	_backRenderStatePtr = &_renderState2;
@@ -1305,11 +1303,9 @@ static NSMutableString* _scriptLogPrefix;
 - (void)finalizeRenderStateSwap {
 	// release memory of the old card render state
 	[_backRenderStatePtr->pictures release];
-	[_backRenderStatePtr->movies release];
 	
 	// copy the non-volatile front card render state members to the back card render state
 	_backRenderStatePtr->pictures = [NSMutableArray new];
-	_backRenderStatePtr->movies = [_frontRenderStatePtr->movies mutableCopy];
 	
 	// mark the back render state as non-modified (render thread no longer cares about this render state structure)
 	_backRenderStatePtr->refresh_static = NO;
@@ -1323,14 +1319,6 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// the script handler will set our front render state to our back render state at the appropriate moment; when this returns, the swap has occured (front == back)
 	[_scriptHandler swapMovieRenderState:self];
-}
-
-- (void)finalizeMovieRenderStateSwap {
-	// release memory of the old card render state
-	[_backRenderStatePtr->movies release];
-	
-	// copy the non-volatile front card render state members to the back card render state
-	_backRenderStatePtr->movies = [_frontRenderStatePtr->movies mutableCopy];
 }
 
 #pragma mark -
@@ -1358,7 +1346,6 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// reset card state
 	[_backRenderStatePtr->pictures removeAllObjects];
-	[_backRenderStatePtr->movies removeAllObjects];
 	
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
@@ -1702,57 +1689,55 @@ static NSMutableString* _scriptLogPrefix;
 	}
 }
 
-- (void)_reallyDoPlayMovie:(RXMovie*)glMovie {
+- (void)_reallyDoPlayMovie:(RXMovie*)movie {
 	// WARNING: MUST RUN ON MAIN THREAD
 	
 	// do nothing if the movie is already playing
-	if ([[glMovie movie] rate] > 0.001f) return;
+	if ([[movie movie] rate] > 0.001f)
+		return;
 	
-	// put the movie at its beginning
-	if (![glMovie looping]) [glMovie gotoBeginning];
+	// put the movie at its beginning if it is not a looping movie
+	if (![movie looping])
+		[movie gotoBeginning];
 	
-	// add the movie to the render state
-	uint32_t movieIndex = [_backRenderStatePtr->movies indexOfObject:glMovie];
-	if (movieIndex != NSNotFound) [_backRenderStatePtr->movies removeObjectAtIndex:movieIndex];
-	[_backRenderStatePtr->movies addObject:glMovie];
+	// queue the movie for rendering
+	[_scriptHandler queueMovie:movie];
 	
 	// begin playback
-	[[glMovie movie] play];
+	[[movie movie] play];
 	
-	// swap render states (it is safe to do so because the script thread always waits for _playMovie to be done before continuing)
+	// swap the movie render states (it is safe to do so because the script thread always waits for _playMovie to be done before continuing)
 	[self _swapMovieRenderState];
 }
 
-- (void)_playMovie:(RXMovie*)glMovie {
+- (void)_playMovie:(RXMovie*)movie {
 	// WARNING: MUST RUN ON MAIN THREAD
 	
 	// register for rate notifications on the non-blocking movie handler
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleMovieRateChange:) name:QTMovieRateDidChangeNotification object:[glMovie movie]];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleMovieRateChange:) name:QTMovieRateDidChangeNotification object:[movie movie]];
 	
 	// play
-	[self _reallyDoPlayMovie:glMovie];
+	[self _reallyDoPlayMovie:movie];
 }
 
-- (void)_playBlockingMovie:(RXMovie*)glMovie {
+- (void)_playBlockingMovie:(RXMovie*)movie {
 	// WARNING: MUST RUN ON MAIN THREAD
 	
 	// register for rate notifications on the blocking movie handler
-	[[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieRateDidChangeNotification object:[glMovie movie]];
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieRateChange:) name:QTMovieRateDidChangeNotification object:[glMovie movie]];
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieRateDidChangeNotification object:[movie movie]];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieRateChange:) name:QTMovieRateDidChangeNotification object:[movie movie]];
 	
 	// inform the script handler script execution is now blocked
 	[_scriptHandler setExecutingBlockingAction:YES];
 	
 	// start playing the movie (this may be a no-op if the movie was already started)
-	[self _reallyDoPlayMovie:glMovie];
+	[self _reallyDoPlayMovie:movie];
 }
 
 
 - (void)_stopAllMovies {
 	// WARNING: MUST RUN ON MAIN THREAD
-	NSEnumerator* movies = [_backRenderStatePtr->movies objectEnumerator];
-	RXMovie* movie;
-	while ((movie = [movies nextObject])) [[movie movie] stop];
+	// FIXME: NOT IMPLEMENTED ANYMORE
 }
 
 #pragma mark -
@@ -1929,9 +1914,6 @@ static NSMutableString* _scriptLogPrefix;
 	if (_codeToMovieMap)
 		NSFreeMapTable(_codeToMovieMap);
 	[_movies release];
-	
-	[_frontRenderStatePtr->movies release];
-	[_backRenderStatePtr->movies release];
 }
 
 - (void)dealloc {
@@ -2041,6 +2023,7 @@ static NSMutableString* _scriptLogPrefix;
 	
 	if (argc > 0)
 		formatString = [formatString stringByAppendingFormat:@"%hu", argv[argi]];
+	
 	formatString = [formatString stringByAppendingString:@"}"];
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", _scriptLogPrefix, formatString);
 }
@@ -2074,7 +2057,8 @@ static NSMutableString* _scriptLogPrefix;
 // 3
 - (void)_opcode_enableSynthesizedSLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling a synthesized slst record", _scriptLogPrefix);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling a synthesized slst record", _scriptLogPrefix);
 #endif
 
 	RXSoundGroup* oldSoundGroup = _synthesizedSoundGroup;
@@ -2089,9 +2073,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 4
 - (void)_opcode_playLocalSound:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 3) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 3)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource with id %hu, volume %hu", _scriptLogPrefix, argv[0], argv[1]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource with id %hu, volume %hu", _scriptLogPrefix, argv[0], argv[1]);
 #endif
 	
 	RXDataSound* sound = [RXDataSound new];
@@ -2106,7 +2092,8 @@ static NSMutableString* _scriptLogPrefix;
 
 // 7
 - (void)_opcode_setVariable:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 2) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 2)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
 	RXStack* parent = [_descriptor parent];
 	NSString* name = [parent varNameAtIndex:argv[0]];
@@ -2122,9 +2109,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 9
 - (void)_opcode_enableHotspot:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling hotspot %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling hotspot %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	uint32_t key = argv[0];
@@ -2148,14 +2137,16 @@ static NSMutableString* _scriptLogPrefix;
 
 // 10
 - (void)_opcode_disableHotspot:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling hotspot %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling hotspot %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	uint32_t key = argv[0];
 	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet(_hotspotsIDMap, (void *)key));
-	if (!hotspot) abort();
+	assert(hotspot);
 	
 	if (hotspot->enabled) {
 		hotspot->enabled = NO;
@@ -2174,9 +2165,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 13
 - (void)_opcode_setCursor:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting cursor to %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting cursor to %hu", _scriptLogPrefix, argv[0]);
 #endif
 
 	[g_worldView performSelectorOnMainThread:@selector(setCursor:) withObject:[g_world cursorForID:argv[0]] waitUntilDone:NO];
@@ -2184,9 +2177,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 14
 - (void)_opcode_pause:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@pausing for %d msec", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@pausing for %d msec", _scriptLogPrefix, argv[0]);
 #endif
 	
 	[_scriptHandler setExecutingBlockingAction:YES];
@@ -2206,12 +2201,15 @@ static NSMutableString* _scriptLogPrefix;
 	
 #if defined(DEBUG)
 	NSString* formatString = [NSString stringWithFormat:@"calling external %@(", externalName];
+	
 	if (extarnalArgc > 1) {
 		for (; argi < extarnalArgc - 1; argi++)
 			formatString = [formatString stringByAppendingFormat:@"%hu, ", argv[2 + argi]];
 	}
+	
 	if (extarnalArgc > 0)
 		formatString = [formatString stringByAppendingFormat:@"%hu", argv[2 + argi]];
+	
 	formatString = [formatString stringByAppendingString:@") {"];
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", _scriptLogPrefix, formatString);
 	
@@ -2273,7 +2271,8 @@ static NSMutableString* _scriptLogPrefix;
 // 19
 - (void)_opcode_reloadCard:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@reloading card", _scriptLogPrefix);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@reloading card", _scriptLogPrefix);
 #endif
 	
 	// this command reloads whatever is the current card
@@ -2296,8 +2295,10 @@ static NSMutableString* _scriptLogPrefix;
 - (void)_opcode_enableAutomaticSwaps:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
 	if (!_disableScriptLogging) {
-		if (argv != NULL) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps", _scriptLogPrefix);
-		else RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps after prepareForRendering execution", _scriptLogPrefix);
+		if (argv != NULL)
+			RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps", _scriptLogPrefix);
+		else
+			RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps after prepareForRendering execution", _scriptLogPrefix);
 	}
 #endif
 	
@@ -2308,13 +2309,15 @@ static NSMutableString* _scriptLogPrefix;
 
 // 24
 - (void)_opcode_incrementVariable:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 2) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 2)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
 	RXStack* parent = [_descriptor parent];
 	NSString* name = [parent varNameAtIndex:argv[0]];
 	if (!name) name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@incrementing variable %@ by %hu", _scriptLogPrefix, name, argv[1]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@incrementing variable %@ by %hu", _scriptLogPrefix, name, argv[1]);
 #endif
 	
 	uint16_t v = [[g_world gameState] unsignedShortForKey:name];
@@ -2347,18 +2350,20 @@ static NSMutableString* _scriptLogPrefix;
 
 // 32
 - (void)_opcode_startMovieAndWaitUntilDone:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu and waiting until done", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu and waiting until done", _scriptLogPrefix, argv[0]);
 #endif
 	
 	// get the movie object
 	uintptr_t k = argv[0];
-	RXMovie* glMovie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
-	assert(glMovie);
+	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
+	assert(movie);
 	
 	// start the movie and register for rate change notifications
-	[self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:glMovie waitUntilDone:YES];
+	[self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:movie waitUntilDone:YES];
 	
 	// wait until the movie is done playing
 	semaphore_wait(_moviePlaybackSemaphore);
@@ -2366,25 +2371,29 @@ static NSMutableString* _scriptLogPrefix;
 
 // 33
 - (void)_opcode_startMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	// get the movie object
 	uintptr_t k = argv[0];
-	RXMovie* glMovie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
-	assert(glMovie);
+	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
+	assert(movie);
 	
 	// start the movie
-	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:glMovie waitUntilDone:YES];
+	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
 }
 
 // 39
 - (void)_opcode_activatePLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating plst record at index %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating plst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	[_backRenderStatePtr->pictures addObject:[NSNumber numberWithUnsignedShort:argv[0] - 1]];
@@ -2398,9 +2407,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 40
 - (void)_opcode_activateSLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	// the script handler is responsible for this
@@ -2412,9 +2423,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 41
 - (void)_opcode_prepareMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@WARNING: executing unknown opcode 41, implicit activation of mlst record at index %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@WARNING: executing unknown opcode 41, implicit activation of mlst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	uint16_t opcode_buffer[] = {argv[0], 0};
@@ -2423,9 +2436,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 43
 - (void)_opcode_activateBLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating blst record at index %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating blst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	struct rx_blst_record* record = (struct rx_blst_record *)_hotspotControlRecords + (argv[0] - 1);
@@ -2453,9 +2468,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 44
 - (void)_opcode_activateFLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating flst record at index %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating flst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	_backRenderStatePtr->water_fx.current_frame = 0;
@@ -2464,15 +2481,17 @@ static NSMutableString* _scriptLogPrefix;
 
 // 46
 - (void)_opcode_activateMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 2) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 2)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record at index %hu with u0=%hu", _scriptLogPrefix, argv[0], argv[1]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record at index %hu with u0=%hu", _scriptLogPrefix, argv[0], argv[1]);
 #endif
 	
 	// update the code to movie map
 	uintptr_t k = _mlstCodes[argv[0] - 1];
-	RXMovie* glMovie = [_movies objectAtIndex:argv[0] - 1];
-	NSMapInsert(_codeToMovieMap, (const void*)k, glMovie);
+	RXMovie* movie = [_movies objectAtIndex:argv[0] - 1];
+	NSMapInsert(_codeToMovieMap, (const void*)k, movie);
 }
 
 @end

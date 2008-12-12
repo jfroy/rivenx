@@ -49,7 +49,6 @@ struct _rx_card_sfxe_render_state {
 
 struct _rx_card_render_state {
 	NSMutableArray* pictures;
-	NSMutableArray* movies;
 	struct _rx_card_sfxe_render_state water_fx;
 	BOOL refresh_static;
 };

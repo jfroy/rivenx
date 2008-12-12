@@ -929,6 +929,10 @@ init_failure:
 }
 
 - (void)queueMovie:(RXMovie*)movie {
+	uint32_t index = [_back_render_state->movies indexOfObject:movie];
+	if (index != NSNotFound)
+		[_back_render_state->movies removeObjectAtIndex:index];
+	
 	[_back_render_state->movies addObject:movie];
 	[[movie owner] retain];
 }
@@ -997,7 +1001,7 @@ init_failure:
 	
 	CFArrayApplyFunction((CFArrayRef)_back_render_state->movies, CFRangeMake(0, [_back_render_state->movies count]), rx_release_owner_applier, self);
 	[_back_render_state->movies removeAllObjects];
-	[_back_render_state->movies addObjectsFromArray:_front_render_state->movies];
+//	[_back_render_state->movies addObjectsFromArray:_front_render_state->movies];
 	
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"swapped render state, front card=%@", _front_render_state->card);
@@ -1019,28 +1023,20 @@ init_failure:
 
 - (void)swapMovieRenderState:(RXCard*)sender {
 	NSMutableArray* previous_front_movies = _front_render_state->movies;
-	NSMutableArray* previous_card_front_movies = sender->_frontRenderStatePtr->movies;
 	
 	// take the render lock
 	OSSpinLockLock(&_renderLock);
 	
 	// swap the sending card's movie render state
 	_front_render_state->movies = _back_render_state->movies;
-	sender->_frontRenderStatePtr->movies = sender->_backRenderStatePtr->movies;
 	
 	// we can resume rendering now
 	OSSpinLockUnlock(&_renderLock);
 	
-	// set the old front card movie render state as the back card movie render state
-	sender->_backRenderStatePtr->movies = previous_card_front_movies;
-	
-	// finalize the card movie render state swap
-	[sender finalizeMovieRenderStateSwap];
-	
 	_back_render_state->movies = previous_front_movies;
 	CFArrayApplyFunction((CFArrayRef)_back_render_state->movies, CFRangeMake(0, [_back_render_state->movies count]), rx_release_owner_applier, self);
 	[_back_render_state->movies removeAllObjects];
-	[_back_render_state->movies addObjectsFromArray:_front_render_state->movies];
+//	[_back_render_state->movies addObjectsFromArray:_front_render_state->movies];
 }
 
 #pragma mark -
@@ -1269,13 +1265,13 @@ init_failure:
 	}
 	
 	// render movies
-	renderListEnumerator = [r->movies objectEnumerator];
+	renderListEnumerator = [_front_render_state->movies objectEnumerator];
 	while ((renderObject = [renderListEnumerator nextObject]))
 		_movieRenderDispatch.imp(renderObject, _movieRenderDispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
 }
 
 - (void)_postFlushCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime {
-	NSEnumerator* e = [card->_frontRenderStatePtr->movies objectEnumerator];
+	NSEnumerator* e = [_front_render_state->movies objectEnumerator];
 	RXMovie* movie;
 	while ((movie = [e nextObject]))
 		_movieFlushTasksDispatch.imp(movie, _movieFlushTasksDispatch.sel, outputTime);
