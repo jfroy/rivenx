@@ -22,10 +22,11 @@
 
 struct _rx_card_state_render_state {
 	RXCard* card;
-	BOOL newCard;
+	BOOL new_card;
 	
 	NSMutableArray* pictures;
-	NSMutableArray* movies;
+	NSMutableArray* volatile movies;
+	BOOL refresh_static;
 	
 	RXTransition* transition;
 };

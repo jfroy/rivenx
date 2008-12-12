@@ -939,7 +939,7 @@ init_failure:
 	}
 	
 	// save the front render state
-	struct _rx_card_state_render_state* oldFrontRenderState = _front_render_state;
+	struct _rx_card_state_render_state* previous_front_render_state = _front_render_state;
 	
 	// save the front card render state
 	struct _rx_card_render_state* oldCardFrontRenderState = sender->_frontRenderStatePtr;
@@ -947,7 +947,7 @@ init_failure:
 	// take the render lock
 	OSSpinLockLock(&_renderLock);
 	
-	// swap atomically (_front_render_state is volatile); only swap if the back render state has a front card
+	// swap atomically
 	_front_render_state = _back_render_state;
 	
 	// swap the sending card's render state (this is also atomic, _frontRenderStatePtr is volatile)
@@ -962,16 +962,23 @@ init_failure:
 	// finalize the card render state swap
 	[sender finalizeRenderStateSwap];
 	
-	// set the back render state to the old front render state; reset the new card flag
-	_back_render_state = oldFrontRenderState;
-	_back_render_state->newCard = NO;
+	// set the back render state to the old front render state
+	_back_render_state = previous_front_render_state;
+	
+	// finalize the swap by resetting the new back render state
+	_back_render_state->new_card = NO;
+	_back_render_state->refresh_static = NO;
+	
+	[_back_render_state->pictures removeAllObjects];
+	[_back_render_state->movies release];
+	_back_render_state->movies = [_front_render_state->movies mutableCopy];
 	
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"swapped render state, front card=%@", _front_render_state->card);
 #endif
 	
 	// if the front card has changed, we need to run the new card's "start rendering" program
-	if (_front_render_state->newCard) {
+	if (_front_render_state->new_card) {
 		// reclaim the back render state's card
 		[_back_render_state->card release];
 		_back_render_state->card = _front_render_state->card;
@@ -985,22 +992,27 @@ init_failure:
 }
 
 - (void)swapMovieRenderState:(RXCard*)sender {
-	NSMutableArray* oldFrontMovies = sender->_frontRenderStatePtr->movies;
+	NSMutableArray* previous_front_movies = _front_render_state->movies;
+	NSMutableArray* previous_card_front_movies = sender->_frontRenderStatePtr->movies;
 	
 	// take the render lock
 	OSSpinLockLock(&_renderLock);
 	
 	// swap the sending card's movie render state
+	_front_render_state->movies = _back_render_state->movies;
 	sender->_frontRenderStatePtr->movies = sender->_backRenderStatePtr->movies;
 	
 	// we can resume rendering now
 	OSSpinLockUnlock(&_renderLock);
 	
-	// set the old front card movi render state as the back card movie render state
-	sender->_backRenderStatePtr->movies = oldFrontMovies;
+	// set the old front card movie render state as the back card movie render state
+	sender->_backRenderStatePtr->movies = previous_card_front_movies;
 	
 	// finalize the card movie render state swap
 	[sender finalizeMovieRenderStateSwap];
+	
+	[previous_front_movies release];
+	_back_render_state->movies = [_front_render_state->movies mutableCopy];
 }
 
 #pragma mark -
@@ -1068,7 +1080,7 @@ init_failure:
 	
 	// setup the back render state
 	_back_render_state->card = [newCard retain];
-	_back_render_state->newCard = YES;
+	_back_render_state->new_card = YES;
 	_back_render_state->transition = nil;
 	
 	// run the stop rendering script on the old card
@@ -1096,7 +1108,7 @@ init_failure:
 	
 	// setup the back render state
 	_back_render_state->card = nil;
-	_back_render_state->newCard = YES;
+	_back_render_state->new_card = YES;
 	_back_render_state->transition = nil;
 	
 	// run the stop rendering script on the old card
