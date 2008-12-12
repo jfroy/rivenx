@@ -59,6 +59,8 @@ static const int RX_INVENTORY_CATHERINE = 1;
 static const int RX_INVENTORY_PRISON = 2;
 static const float RX_INVENTORY_MARGIN = 20.f;
 
+#pragma mark -
+#pragma mark audio source array callbacks
 
 static const void* RXCardAudioSourceArrayWeakRetain(CFAllocatorRef allocator, const void* value) {
 	return value;
@@ -84,6 +86,7 @@ static CFArrayCallBacks g_weakAudioSourceArrayCallbacks = {0, RXCardAudioSourceA
 static CFArrayCallBacks g_deleteOnReleaseAudioSourceArrayCallbacks = {0, RXCardAudioSourceArrayWeakRetain, RXCardAudioSourceArrayDeleteRelease, RXCardAudioSourceArrayDescription, RXCardAudioSourceArrayEqual};
 
 #pragma mark -
+#pragma mark audio array applier functions
 
 static void RXCardAudioSourceFadeInApplier(const void* value, void* context) {
 	RX::AudioRenderer* renderer = reinterpret_cast<RX::AudioRenderer*>(context);
@@ -105,6 +108,13 @@ static void RXCardAudioSourceDisableApplier(const void* value, void* context) {
 static void RXCardAudioSourceTaskApplier(const void* value, void* context) {
 	RX::CardAudioSource* source = const_cast<RX::CardAudioSource*>(reinterpret_cast<const RX::CardAudioSource*>(value));
 	source->RenderTask();
+}
+
+#pragma mark -
+#pragma mark render object release-owner array applier function
+
+static void rx_release_owner_applier(const void* value, void* context) {
+	[[(id)value owner] release];
 }
 
 #pragma mark -
@@ -915,10 +925,12 @@ init_failure:
 
 - (void)queuePicture:(RXPicture*)picture {
 	[_back_render_state->pictures addObject:picture];
+	[[picture owner] retain];
 }
 
 - (void)queueMovie:(RXMovie*)movie {
 	[_back_render_state->movies addObject:movie];
+	[[movie owner] retain];
 }
 
 - (void)queueTransition:(RXTransition*)transition {	
@@ -980,9 +992,12 @@ init_failure:
 	_back_render_state->new_card = NO;
 	_back_render_state->refresh_static = NO;
 	
+	CFArrayApplyFunction((CFArrayRef)_back_render_state->pictures, CFRangeMake(0, [_back_render_state->pictures count]), rx_release_owner_applier, self);
 	[_back_render_state->pictures removeAllObjects];
-	[_back_render_state->movies release];
-	_back_render_state->movies = [_front_render_state->movies mutableCopy];
+	
+	CFArrayApplyFunction((CFArrayRef)_back_render_state->movies, CFRangeMake(0, [_back_render_state->movies count]), rx_release_owner_applier, self);
+	[_back_render_state->movies removeAllObjects];
+	[_back_render_state->movies addObjectsFromArray:_front_render_state->movies];
 	
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"swapped render state, front card=%@", _front_render_state->card);
@@ -1022,8 +1037,10 @@ init_failure:
 	// finalize the card movie render state swap
 	[sender finalizeMovieRenderStateSwap];
 	
-	[previous_front_movies release];
-	_back_render_state->movies = [_front_render_state->movies mutableCopy];
+	_back_render_state->movies = previous_front_movies;
+	CFArrayApplyFunction((CFArrayRef)_back_render_state->movies, CFRangeMake(0, [_back_render_state->movies count]), rx_release_owner_applier, self);
+	[_back_render_state->movies removeAllObjects];
+	[_back_render_state->movies addObjectsFromArray:_front_render_state->movies];
 }
 
 #pragma mark -

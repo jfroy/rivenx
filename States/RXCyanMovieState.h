@@ -7,7 +7,7 @@
 //
 
 #import "RXRenderState.h"
-#import "RXMovie.h"
+#import "Rendering/Graphics/RXMovie.h"
 
 
 @interface RXCyanMovieState : RXRenderState {

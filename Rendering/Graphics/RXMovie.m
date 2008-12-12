@@ -152,7 +152,7 @@
 	return self;
 }
 
-- (id)initWithURL:(NSURL *)movieURL owner:(id)owner {
+- (id)initWithURL:(NSURL*)movieURL owner:(id)owner {
 	if (!pthread_main_np()) {
 		[self release];
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie initWithURL:] MAIN THREAD ONLY" userInfo:nil];

@@ -35,7 +35,7 @@
 }
 
 - (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone owner:(id)owner;
-- (id)initWithURL:(NSURL *)movieURL owner:(id)owner;
+- (id)initWithURL:(NSURL*)movieURL owner:(id)owner;
 
 - (id)owner;
 
