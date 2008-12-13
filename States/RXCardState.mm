@@ -498,12 +498,12 @@ init_failure:
 	glUniform1i(previousFrameUniform, 2); glReportError();
 	
 	// card shader
-	_cardProgram = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"card" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
-	if (!_cardProgram)
+	_single_rect_texture_program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"card" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
+	if (!_single_rect_texture_program)
 		[self _reportShaderProgramError:error];
 	
-	GLint destinationCardTextureUniform = glGetUniformLocation(_cardProgram, "destination_card"); glReportError();
-	glUseProgram(_cardProgram); glReportError();
+	GLint destinationCardTextureUniform = glGetUniformLocation(_single_rect_texture_program, "destination_card"); glReportError();
+	glUseProgram(_single_rect_texture_program); glReportError();
 	glUniform1i(destinationCardTextureUniform, 0); glReportError();
 	
 	// transition shaders
@@ -1207,35 +1207,28 @@ init_failure:
 	NSEnumerator* renderListEnumerator;
 	id renderObject;
 	
-	// use the card program
-	glUseProgram(_cardProgram); glReportError();
+	// use the rect texture program
+	glUseProgram(_single_rect_texture_program); glReportError();
 	
-	// render static card pictures only when necessary
-	if (r->refresh_static) {
+	if (r->refresh_static || [r->movies count]) {
 		// bind the static render FBO
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
-		
+	}
+	
+	// render static card pictures only when necessary
+	if (r->refresh_static) {		
 		// render each picture
 		renderListEnumerator = [r->pictures objectEnumerator];
 		while ((renderObject = [renderListEnumerator nextObject]))
 			picture_render_dispatch.imp(renderObject, picture_render_dispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
 		
 		// this is used as a fence to determine if the static content has been refreshed or not, so we set it to NO here
+		[r->pictures removeAllObjects];
 		r->refresh_static = NO;
 	}
 	
-	// bind the dynamic render FBO
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
-	glClear(GL_COLOR_BUFFER_BIT);
-	
-	// bind the card render VAO
-	[gl_state bindVertexArrayObject:_cardRenderVAO];
-	
-	// water effect	
-	if (r->water_fx.sfxe != 0) {
-		// use the water program
-		glUseProgram(_waterProgram); glReportError();
-		
+	// water effect phase 1
+	if (r->water_fx.sfxe != 0) {		
 		// setup the texture units
 		glActiveTexture(GL_TEXTURE2); glReportError();
 		if (r->water_fx.current_frame != 0)
@@ -1250,15 +1243,31 @@ init_failure:
 		glActiveTexture(GL_TEXTURE0); glReportError();
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		
-		// draw
+		// bind the dynamic render FBO
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
+		glClear(GL_COLOR_BUFFER_BIT);
+		
+		// bind the card render VAO
+		[gl_state bindVertexArrayObject:_cardRenderVAO];
+		
+		// draw the water effect
+		glUseProgram(_waterProgram); glReportError();
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
 		
-		// copy the result
+		// switch back to the single rect texture program
+		glUseProgram(_single_rect_texture_program); glReportError();
+	}
+		
+	// render movies; they will either be rendered into the static content texure or the dynamic content texture prior to that texture being readback into the previous frame texture for water animation
+	renderListEnumerator = [r->movies objectEnumerator];
+	while ((renderObject = [renderListEnumerator nextObject]))
+		_movieRenderDispatch.imp(renderObject, _movieRenderDispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
+	
+	// water animation phase 2; if we do not have an active water animation effect, simply blit the static content framebuffer to the dynamic content framebuffer
+	if (r->water_fx.sfxe != 0) {
+		// copy the frame into the previous frame texture
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_PREVIOUS_FRAME_INDEX]); glReportError();
 		glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height); glReportError();
-		
-		// use the card program again
-		glUseProgram(_cardProgram); glReportError();
 		
 		// if the render timestamp of the frame is 0, set it to now
 		if (r->water_fx.frame_timestamp == 0)
@@ -1271,15 +1280,17 @@ init_failure:
 			r->water_fx.frame_timestamp = 0;
 		}
 	} else {
-		// simply render the static content
-		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
+		// simply render the static content to the dynamic content texture
+		if (GLEE_EXT_framebuffer_blit) {
+			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
+			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
+			glBlitFramebufferEXT(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, GL_COLOR_BUFFER_BIT, GL_LINEAR); glReportError();
+		} else {
+			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
+			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
+		}
 	}
-	
-	// render movies
-	renderListEnumerator = [r->movies objectEnumerator];
-	while ((renderObject = [renderListEnumerator nextObject]))
-		_movieRenderDispatch.imp(renderObject, _movieRenderDispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
 }
 
 - (void)_postFlushCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime {
@@ -1431,8 +1442,8 @@ init_failure:
 			// signal we're no longer running a transition
 			semaphore_signal_all(_transitionSemaphore);
 			
-			// use the regular card shading program
-			glUseProgram(_cardProgram); glReportError();
+			// use the regular rect texture program
+			glUseProgram(_single_rect_texture_program); glReportError();
 		} else {
 			// determine which transition shading program to use based on the transition type
 			struct rx_transition_program* transition = NULL;
@@ -1477,7 +1488,7 @@ init_failure:
 			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _front_render_state->transition->sourceTexture); glReportError();
 		}
 	} else {
-		glUseProgram(_cardProgram); glReportError();
+		glUseProgram(_single_rect_texture_program); glReportError();
 	}
 	
 	// bind the dynamic card content texture to unit 0
@@ -1501,7 +1512,7 @@ init_failure:
 			glEnable(GL_BLEND);
 		}
 		
-		glUseProgram(_cardProgram); glReportError();
+		glUseProgram(_single_rect_texture_program); glReportError();
 		for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
 			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[inventory_i]); glReportError();
 			glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inventory_i, 4); glReportError();

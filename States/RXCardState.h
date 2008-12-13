@@ -97,7 +97,7 @@ struct rx_transition_program {
 	GLuint _textures[3];
 	
 	GLuint _waterProgram;
-	GLuint _cardProgram;
+	GLuint _single_rect_texture_program;
 	
 	GLuint _hotspotDebugRenderVAO;
 	GLuint _hotspotDebugRenderVBO;

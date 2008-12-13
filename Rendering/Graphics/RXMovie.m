@@ -81,7 +81,7 @@
 	// alias the load context state object pointer
 	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
 	
-	// if the movie is smaller than 128 bytes in either dimension, create a memory-backed visual context, otherwise go directly to OpenGL
+	// if the movie is smaller than 128 bytes in width, using a main-memory pixel buffer visual context and override the width to 128 bytes
 	if (_currentSize.width < 32) {
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"using main memory pixel buffer path");
