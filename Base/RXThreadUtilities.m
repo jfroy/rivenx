@@ -95,8 +95,10 @@ void RXThreadRunLoopRun(semaphore_t ready_semaphore, NSString* name) {
 		[[NSRunLoop currentRunLoop] run];
 	} @catch (NSException* e) {
 		NSError* error = [[e userInfo] objectForKey:NSUnderlyingErrorKey];
-		if (error) RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: \"%@\", ERROR: \"%@\"", e, error);
-		else RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: %@", e);
+		if (error)
+			RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: \"%@\", ERROR: \"%@\"", e, error);
+		else
+			RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: %@", e);
 		rx_print_exception_backtrace(e);
 		abort();
 	}

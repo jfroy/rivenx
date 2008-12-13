@@ -22,35 +22,44 @@
 
 __BEGIN_DECLS
 
-struct _rx_point {
+struct rx_point {
 	GLint x;
 	GLint y;
 };
-typedef struct _rx_point rx_point_t;
+typedef struct rx_point rx_point_t;
 
 CF_INLINE rx_point_t RXPointMake(GLint x, GLint y) {
 	rx_point_t point; point.x = x; point.y = y; return point;
 }
 
-struct _rx_size {
+struct rx_size {
 	GLsizei width;
 	GLsizei height;
 };
-typedef struct _rx_size rx_size_t;
+typedef struct rx_size rx_size_t;
 
 CF_INLINE rx_size_t RXSizeMake(GLsizei width, GLsizei height) {
 	rx_size_t size; size.width = width; size.height = height; return size;
 }
 
-struct _rx_rect {
+struct rx_rect {
 	rx_point_t origin;
 	rx_size_t size;
 };
-typedef struct _rx_rect rx_rect_t;
+typedef struct rx_rect rx_rect_t;
 
 CF_INLINE rx_rect_t RXRectMake(GLint x, GLint y, GLsizei width, GLsizei height) {
 	rx_rect_t rect; rect.origin = RXPointMake(x, y); rect.size = RXSizeMake(width, height); return rect;
 }
+
+struct rx_card_sfxe {
+	GLsizei nframes;
+	GLuint* frames;
+	void* frame_storage;
+	NSRect roi;
+	double fps;
+};
+typedef struct rx_card_sfxe rx_card_sfxe;
 
 extern const rx_size_t kRXRendererViewportSize;
 

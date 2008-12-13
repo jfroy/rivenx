@@ -11,6 +11,10 @@
 #import <stdbool.h>
 #import <unistd.h>
 
+#import <mach/task.h>
+#import <mach/thread_act.h>
+#import <mach/thread_policy.h>
+
 #import <objc/runtime.h>
 
 #import <OpenGL/CGLMacro.h>
@@ -21,6 +25,7 @@
 #import "RXWorldProtocol.h"
 #import "RXMovieProxy.h"
 #import "RXRivenScriptCommandAliases.h"
+#import "RXCoreStructures.h"
 
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXPicture.h"
@@ -56,90 +61,6 @@ struct rx_card_dynamic_picture {
 	GLuint texture;
 	GLuint buffer;
 };
-
-#pragma options align=packed
-struct rx_plst_record {
-	uint16_t index;
-	uint16_t bitmap_id;
-	uint16_t left;
-	uint16_t top;
-	uint16_t right;
-	uint16_t bottom;
-};
-
-struct rx_mlst_record {
-	uint16_t index;
-	uint16_t movie_id;
-	uint16_t code;
-	uint16_t left;
-	uint16_t top;
-	uint16_t u0[3];
-	uint16_t loop;
-	uint16_t volume;
-	uint16_t u1;
-};
-
-struct rx_slst_record1 {
-	uint16_t index;
-	uint16_t sound_count;
-};
-
-struct rx_slst_record2 {
-	uint16_t fade_flags;
-	uint16_t global_volume;
-	uint16_t u0;
-	uint16_t u1;
-};
-
-struct rx_hspt_record {
-	uint16_t blst_id;
-	int16_t name_rec;
-	int16_t left;
-	int16_t top;
-	int16_t right;
-	int16_t bottom;
-	uint16_t u0;
-	uint16_t mouse_cursor;
-	uint16_t index;
-	int16_t u1;
-	uint16_t zip;
-};
-
-struct rx_blst_record {
-	uint16_t index;
-	uint16_t enabled;
-	uint16_t hotspot_id;
-};
-
-struct rx_flst_record {
-	uint16_t index;
-	uint16_t sfxe_id;
-	uint16_t u0;
-};
-
-struct rx_fsxe_record {
-	uint16_t magic;
-	uint16_t frame_count;
-	uint32_t offset_table;
-	uint16_t left;
-	uint16_t top;
-	uint16_t right;
-	uint16_t bottom;
-	uint16_t fps;
-	uint16_t u0;
-	uint16_t alt_top;
-	uint16_t alt_left;
-	uint16_t alt_bottom;
-	uint16_t alt_right;
-	uint16_t u1;
-	uint16_t alt_frame_count;
-	uint32_t u2;
-	uint32_t u3;
-	uint32_t u4;
-	uint32_t u5;
-	uint32_t u6;
-};
-#pragma options align=reset
 
 CF_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) {
 	return NSMakePoint((float)x, (float)y);
@@ -878,7 +799,7 @@ static NSMutableString* _scriptLogPrefix;
 		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding FLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	_sfxeCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
-	_sfxes = new struct rx_card_sfxe[_sfxeCount];
+	_sfxes = new rx_card_sfxe[_sfxeCount];
 	
 	struct rx_flst_record* flstRecordPointer = reinterpret_cast<struct rx_flst_record*>(BUFFER_OFFSET(listData, sizeof(uint16_t)));
 	for (currentListIndex = 0; currentListIndex < _sfxeCount; currentListIndex++) {
@@ -927,7 +848,7 @@ static NSMutableString* _scriptLogPrefix;
 #endif
 		
 		// prepare the rx special effect structure
-		struct rx_card_sfxe* sfxe = _sfxes + currentListIndex;
+		rx_card_sfxe* sfxe = _sfxes + currentListIndex;
 		
 		// fill in some general information
 		sfxe->nframes = sfxeRecord->frame_count;
@@ -1928,12 +1849,12 @@ static NSMutableString* _scriptLogPrefix;
 			glDeleteBuffers(1, &_pictureVertexArrayBuffer);
 		if (_pictureTextures)
 			glDeleteTextures(_pictureCount, _pictureTextures);
-#if defined(GPU_WATER)
+		
 		if (_sfxes) {
 			for (uint16_t i = 0; i < _sfxeCount; i++)
 				glDeleteTextures(_sfxes[i].nframes, _sfxes[i].frames);
 		}
-#endif
+		
 		if (_dynamicPictureMap) {
 			NSMapEnumerator dynamicPictureEnum = NSEnumerateMapTable(_dynamicPictureMap);
 			uintptr_t key;
@@ -1977,14 +1898,10 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// sfxe
 	if (_sfxes) {
-#if defined(LLVM_WATER)
-		for (uint16_t i = 0; i < _sfxeCount; i++) [_sfxes[i].frames release];
-#elif defined(GPU_WATER)
 		for (uint16_t i = 0; i < _sfxeCount; i++) {
 			delete[] _sfxes[i].frames;
 			free(_sfxes[i].frame_storage);
 		}
-#endif
 		delete[] _sfxes;
 	}
 	
@@ -2481,9 +2398,7 @@ static NSMutableString* _scriptLogPrefix;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating flst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 
-	// FIXME: water sfxe activation needs to be redone for the new card render system
-//	_backRenderStatePtr->water_fx.current_frame = 0;
-//	_backRenderStatePtr->water_fx.sfxe = _sfxes + (argv[0] - 1);
+	[_scriptHandler queueSpecialEffect:_sfxes + (argv[0] - 1) owner:self];
 }
 
 // 46

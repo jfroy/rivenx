@@ -21,7 +21,8 @@
 #import "RXTransition.h"
 
 struct rx_sfxe_render_state {
-	struct rx_card_sfxe* sfxe;
+	rx_card_sfxe* sfxe;
+	id owner;
 	uint32_t current_frame;
 	uint64_t frame_timestamp;
 };
@@ -30,9 +31,8 @@ struct rx_card_state_render_state {
 	RXCard* card;
 	BOOL new_card;
 	
-	NSMutableArray* pictures;
 	BOOL refresh_static;
-	
+	NSMutableArray* pictures;
 	NSMutableArray* volatile movies;
 	struct rx_sfxe_render_state water_fx;
 	

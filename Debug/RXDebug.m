@@ -9,7 +9,8 @@
 
 void rx_print_exception_backtrace(NSException* e) {
 	NSArray* stack = [[[e userInfo] objectForKey:NSStackTraceKey] componentsSeparatedByString:@"  "];
-	if (!stack && [e respondsToSelector:@selector(callStackReturnAddresses)]) stack = [e callStackReturnAddresses];
+	if (!stack && [e respondsToSelector:@selector(callStackReturnAddresses)])
+		stack = [e callStackReturnAddresses];
 	
 	if (stack) {
 		// sometimes, the value 0x1 makes its way as the last call stack return address; ignore it
@@ -29,11 +30,15 @@ void rx_print_exception_backtrace(NSException* e) {
 		[args addObject:@"-p"];
 		[args addObject:pid];
 		[args addObjectsFromArray:stack];
-		// Note: function addresses are separated by double spaces, not a single space.
 		
 		[ls setLaunchPath:@"/usr/bin/atos"];
 		[ls setArguments:args];
-		[ls launch];
+		@try {
+			[ls launch];
+		} @catch (NSException* e) {
+			RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"FAILED TO LAUNCH atos TO SYMBOLIFICATE EXCEPTION BACKTRACE");
+		}
 		[ls release];
-	} else RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"NO BACKTRACE AVAILABLE");
+	} else
+		RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"NO BACKTRACE AVAILABLE");
 }

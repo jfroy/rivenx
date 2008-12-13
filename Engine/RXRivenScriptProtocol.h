@@ -9,6 +9,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "Rendering/RXRendering.h"
 #import "Rendering/Audio/RXSoundGroup.h"
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXPicture.h"
@@ -27,6 +28,7 @@
 
 - (void)queuePicture:(RXPicture*)picture;
 - (void)queueMovie:(RXMovie*)movie;
+- (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner;
 - (void)queueTransition:(RXTransition*)transition;
 
 - (void)swapRenderState:(RXCard*)sender;

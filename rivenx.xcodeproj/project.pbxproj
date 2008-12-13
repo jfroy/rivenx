@@ -357,8 +357,6 @@
 		312F4DAD0DC263F400B3AF0D /* RXTransition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXTransition.m; sourceTree = "<group>"; };
 		312F4DAE0DC263F400B3AF0D /* RXVBOBroker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVBOBroker.h; sourceTree = "<group>"; };
 		312F4DAF0DC263F400B3AF0D /* RXVBOBroker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVBOBroker.m; sourceTree = "<group>"; };
-		312F4DB00DC263F400B3AF0D /* RXWaterAnimationFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWaterAnimationFrame.h; sourceTree = "<group>"; };
-		312F4DB10DC263F400B3AF0D /* RXWaterAnimationFrame.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXWaterAnimationFrame.mm; sourceTree = "<group>"; };
 		312F4DB20DC263F400B3AF0D /* RXWorldView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWorldView.h; sourceTree = "<group>"; };
 		312F4DB30DC263F400B3AF0D /* RXWorldView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXWorldView.m; sourceTree = "<group>"; };
 		31327B640DCF509E00280D8F /* RXCardExecutionProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardExecutionProtocol.h; sourceTree = "<group>"; };
@@ -451,6 +449,7 @@
 		31863C590991AA28001A4A42 /* InterThreadMessaging.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = InterThreadMessaging.m; path = Additions/InterThreadMessaging.m; sourceTree = "<group>"; };
 		318CB4620E04917A00BD2C38 /* RXGameState_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXGameState_test.h; sourceTree = "<group>"; };
 		318CB4630E04917A00BD2C38 /* RXGameState_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXGameState_test.m; sourceTree = "<group>"; };
+		319288DB0EF43C630043B15A /* RXCoreStructures.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCoreStructures.h; sourceTree = "<group>"; };
 		3195A6330EEC57860000CFB6 /* RXRivenScriptCommandAliases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRivenScriptCommandAliases.h; sourceTree = "<group>"; };
 		3196B9340D945CC100BC818E /* RXTiming.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXTiming.h; path = Base/RXTiming.h; sourceTree = "<group>"; };
 		3196B9350D945CC100BC818E /* RXTiming.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RXTiming.c; path = Base/RXTiming.c; sourceTree = "<group>"; };
@@ -795,8 +794,6 @@
 				312F4DAD0DC263F400B3AF0D /* RXTransition.m */,
 				312F4DAE0DC263F400B3AF0D /* RXVBOBroker.h */,
 				312F4DAF0DC263F400B3AF0D /* RXVBOBroker.m */,
-				312F4DB00DC263F400B3AF0D /* RXWaterAnimationFrame.h */,
-				312F4DB10DC263F400B3AF0D /* RXWaterAnimationFrame.mm */,
 				312F4DB20DC263F400B3AF0D /* RXWorldView.h */,
 				312F4DB30DC263F400B3AF0D /* RXWorldView.m */,
 			);
@@ -1096,6 +1093,7 @@
 			children = (
 				312B048A0D9A8AB30012BE29 /* Card */,
 				31796FBC0D5D032500C493D2 /* Edition */,
+				319288DB0EF43C630043B15A /* RXCoreStructures.h */,
 				317403920CDC1A67006F3523 /* RXGameState.h */,
 				317403930CDC1A67006F3523 /* RXGameState.m */,
 				3103D4F20EF0DAF30025170A /* RXHardwareProfiler.h */,

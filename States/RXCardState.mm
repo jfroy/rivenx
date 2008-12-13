@@ -946,6 +946,12 @@ init_failure:
 	[[movie owner] retain];
 }
 
+- (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner {
+	_back_render_state->water_fx.sfxe = sfxe;
+	_back_render_state->water_fx.current_frame = 0;
+	_back_render_state->water_fx.owner = owner;
+}
+
 - (void)queueTransition:(RXTransition*)transition {	
 	// queue the transition
 	[_transitionQueue addObject:transition];
@@ -974,6 +980,9 @@ init_failure:
 #endif
 	}
 	
+	// retain the water effect owner at this time, since we're about to swap the render states
+	[_back_render_state->water_fx.owner retain];
+	
 	// save the front render state
 	struct rx_card_state_render_state* previous_front_render_state = _front_render_state;
 	
@@ -999,6 +1008,11 @@ init_failure:
 	CFArrayApplyFunction((CFArrayRef)_back_render_state->movies, CFRangeMake(0, [_back_render_state->movies count]), rx_release_owner_applier, self);
 	[_back_render_state->movies removeAllObjects];
 //	[_back_render_state->movies addObjectsFromArray:_front_render_state->movies];
+	
+	// release the back render state water effect's owner, since it is no longer active
+	[_back_render_state->water_fx.owner release];
+	_back_render_state->water_fx.owner = nil;
+	_back_render_state->water_fx.sfxe = NULL;
 	
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"swapped render state, front card=%@", _front_render_state->card);

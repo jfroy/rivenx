@@ -7,39 +7,19 @@
 //
 
 #import <mach/semaphore.h>
-#import <mach/task.h>
-#import <mach/thread_act.h>
-#import <mach/thread_policy.h>
 
 #import <Foundation/Foundation.h>
 
-#import "RXAtomic.h"
-#import "RXTiming.h"
+#import "Base/RXAtomic.h"
+#import "Base/RXTiming.h"
 
 #import "RXCardDescriptor.h"
-
-#import "RXHotspot.h"
-#import "RXSoundGroup.h"
-
-#import "RXRendering.h"
-#import "RXRivenScriptProtocol.h"
 #import "RXCardExecutionProtocol.h"
+#import "RXHotspot.h"
+#import "RXRivenScriptProtocol.h"
 
-#if defined(LLVM_WATER)
-#import "RXWaterAnimationFrame.h"
-#endif
-
-struct rx_card_sfxe {
-#if defined(LLVM_WATER)
-	NSMutableArray* frames;
-#elif defined(GPU_WATER)
-	GLsizei nframes;
-	GLuint* frames;
-	void* frame_storage;
-#endif
-	NSRect roi;
-	double fps;
-};
+#import "Rendering/RXRendering.h"
+#import "Rendering/Audio/RXSoundGroup.h"
 
 
 @interface RXCard : NSObject <RXCardExecutionProtocol> {
@@ -70,7 +50,7 @@ struct rx_card_sfxe {
 	
 	// special effects
 	uint16_t _sfxeCount;
-	struct rx_card_sfxe* _sfxes;
+	rx_card_sfxe* _sfxes;
 	
 	// movies
 	NSMutableArray* _movies;
@@ -103,8 +83,8 @@ struct rx_card_sfxe {
 }
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;
+
 - (RXCardDescriptor*)descriptor;
-- (NSString*)description;
 
 - (NSArray*)activeHotspots;
 - (void)mouseEnteredHotspot:(RXHotspot*)hotspot;
