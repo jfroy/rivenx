@@ -1314,10 +1314,6 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptHandler swapRenderState:self];
 }
 
-- (void)finalizeRenderStateSwap {
-
-}
-
 - (void)_swapMovieRenderState {
 	// movies are not included in the original engine's picture swapping mechanism, so this method is a little bit different
 #if defined(DEBUG)

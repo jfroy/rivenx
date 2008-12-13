@@ -995,9 +995,6 @@ init_failure:
 	// set the old front card render state as the back card render state
 	sender->_backRenderStatePtr = oldCardFrontRenderState;
 	
-	// finalize the card render state swap
-	[sender finalizeRenderStateSwap];
-	
 	// set the back render state to the old front render state
 	_back_render_state = previous_front_render_state;
 	
