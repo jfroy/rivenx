@@ -196,7 +196,8 @@
 }
 
 - (void)dealloc {
-	if (!pthread_main_np()) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie dealloc] MAIN THREAD ONLY" userInfo:nil];
+	if (!pthread_main_np())
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie dealloc] MAIN THREAD ONLY" userInfo:nil];
 	RXOLog2(kRXLoggingRendering, kRXLoggingLevelDebug, @"deallocating");
 	
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];

@@ -36,10 +36,6 @@
 	[super dealloc];
 }
 
-- (id)owner {
-	return _owner;
-}
-
 - (void)_loadMovie {
 	// WARNING: MUST RUN ON MAIN THREAD
 	if (_movie)
@@ -103,6 +99,38 @@
 	
 	// forward the message to the movie
 	[anInvocation invokeWithTarget:_movie]; 
+}
+
+#pragma mark -
+#pragma mark common known selectors
+
+- (id)owner {
+	// we don't need to allocate the movie to respond to this method
+	return _owner;
+}
+
+- (QTMovie*)movie {
+	// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	return [_movie movie];
+}
+
+- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
+	// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	[_movie render:outputTime inContext:cgl_ctx framebuffer:fbo];
+}
+
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
+	// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	[_movie performPostFlushTasks:outputTime];
 }
 
 @end

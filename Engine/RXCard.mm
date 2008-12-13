@@ -15,14 +15,15 @@
 
 #import <OpenGL/CGLMacro.h>
 
+#import "Base/RXAtomic.h"
+
 #import "RXCard.h"
-
-#import "RXAtomic.h"
 #import "RXWorldProtocol.h"
-
-#import "RXTransition.h"
 #import "RXMovieProxy.h"
 #import "RXRivenScriptCommandAliases.h"
+
+#import "Rendering/Graphics/RXTransition.h"
+#import "Rendering/Graphics/RXPicture.h"
 
 // we can afford a reasonably large number here, since the space is only used for vertex data and texture IDs
 static const GLuint kDynamicPictureSlots = 100;
@@ -474,10 +475,10 @@ static NSMutableString* _scriptLogPrefix;
 	}
 	
 	// don't need the MLST data anymore
-	free(listData); listData = NULL;
+	free(listData);
 	
 	// signal that we're done loading the movies
-	semaphore_signal(_movieLoadSemaphore);
+//	semaphore_signal(_movieLoadSemaphore);
 }
 
 - (RXSoundGroup*)_createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes {
@@ -567,12 +568,12 @@ static NSMutableString* _scriptLogPrefix;
 	}
 	
 	// movie load semaphore
-	kerr = semaphore_create(mach_task_self(), &_movieLoadSemaphore, SYNC_POLICY_FIFO, 0);
-	if (kerr != 0) {
-		[self release];
-		error = [NSError errorWithDomain:NSMachErrorDomain code:kerr userInfo:nil];
-		@throw [NSException exceptionWithName:@"RXSystemResourceException" reason:@"Could not create the movie load semaphore." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-	}
+//	kerr = semaphore_create(mach_task_self(), &_movieLoadSemaphore, SYNC_POLICY_FIFO, 0);
+//	if (kerr != 0) {
+//		[self release];
+//		error = [NSError errorWithDomain:NSMachErrorDomain code:kerr userInfo:nil];
+//		@throw [NSException exceptionWithName:@"RXSystemResourceException" reason:@"Could not create the movie load semaphore." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+//	}
 	
 	// active hotspots lock
 	_activeHotspotsLock = OS_SPINLOCK_INIT;
@@ -598,8 +599,9 @@ static NSMutableString* _scriptLogPrefix;
 	uint16_t currentListIndex = 0;
 	
 #pragma mark MLST
-	// movies need to be loaded on the main thread because of QuickTime limitations
-	[self performSelectorOnMainThread:@selector(_loadMovies) withObject:nil waitUntilDone:NO];
+
+	// we don't need to load movies on the main thread anymore since we actually create movie proxies
+	[self _loadMovies];
 	
 #pragma mark HSPT
 	fh = [_archive openResourceWithResourceType:@"HSPT" ID:resourceID];
@@ -1110,7 +1112,7 @@ static NSMutableString* _scriptLogPrefix;
 	_dynamicPictureCount = 0;
 	
 	// wait for movies
-	semaphore_wait(_movieLoadSemaphore);
+//	semaphore_wait(_movieLoadSemaphore);
 	
 	// we're done preparing the card
 #if defined(DEBUG)
@@ -1954,14 +1956,18 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// movies
 	[self performSelectorOnMainThread:@selector(_dealloc_movies) withObject:nil waitUntilDone:YES];
-	if (_mlstCodes) delete[] _mlstCodes;
+	if (_mlstCodes)
+		delete[] _mlstCodes;
 	semaphore_destroy(mach_task_self(), _moviePlaybackSemaphore);
-	semaphore_destroy(mach_task_self(), _movieLoadSemaphore);
+//	semaphore_destroy(mach_task_self(), _movieLoadSemaphore);
 	
 	// pictures
-	if (_pictureTextures) delete[] _pictureTextures;
-	if (_pictureTextureStorage) free(_pictureTextureStorage);
-	if (_dynamicPictureMap) NSFreeMapTable(_dynamicPictureMap);
+	if (_pictureTextures)
+		delete[] _pictureTextures;
+	if (_pictureTextureStorage)
+		free(_pictureTextureStorage);
+	if (_dynamicPictureMap)
+		NSFreeMapTable(_dynamicPictureMap);
 	
 	// sounds
 	[_soundGroups release];
@@ -1970,7 +1976,8 @@ static NSMutableString* _scriptLogPrefix;
 	// hotspots
 	[_insideHotspotEventTimer invalidate];
 	[_activeHotspots release];
-	if (_hotspotsIDMap) NSFreeMapTable(_hotspotsIDMap);
+	if (_hotspotsIDMap)
+		NSFreeMapTable(_hotspotsIDMap);
 	[_hotspots release];
 	
 	// sfxe
@@ -1987,7 +1994,8 @@ static NSMutableString* _scriptLogPrefix;
 	}
 	
 	// misc resources
-	if (_blstData) free(_blstData);
+	if (_blstData)
+		free(_blstData);
 	[_cardEvents release];
 	[_descriptor release];
 	
@@ -1999,7 +2007,6 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 @end
-
 
 #pragma mark -
 @implementation RXCard (RXCardOpcodes)
