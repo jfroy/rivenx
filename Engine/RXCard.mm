@@ -878,7 +878,7 @@ static NSMutableString* _scriptLogPrefix;
 		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding FLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	_sfxeCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
-	_sfxes = new _rx_card_sfxe[_sfxeCount];
+	_sfxes = new struct rx_card_sfxe[_sfxeCount];
 	
 	struct rx_flst_record* flstRecordPointer = reinterpret_cast<struct rx_flst_record*>(BUFFER_OFFSET(listData, sizeof(uint16_t)));
 	for (currentListIndex = 0; currentListIndex < _sfxeCount; currentListIndex++) {
@@ -927,7 +927,7 @@ static NSMutableString* _scriptLogPrefix;
 #endif
 		
 		// prepare the rx special effect structure
-		struct _rx_card_sfxe* sfxe = _sfxes + currentListIndex;
+		struct rx_card_sfxe* sfxe = _sfxes + currentListIndex;
 		
 		// fill in some general information
 		sfxe->nframes = sfxeRecord->frame_count;
@@ -1114,10 +1114,6 @@ static NSMutableString* _scriptLogPrefix;
 	// end of list records loading
 	
 #pragma mark rendering
-	
-	// now that we know how many renderable graphic objects there are, allocate the render state objects
-	_frontRenderStatePtr = &_renderState1;
-	_backRenderStatePtr = &_renderState2;
 	
 	// render state swaps are disabled by default
 	_renderStateSwapsEnabled = NO;
@@ -2484,9 +2480,10 @@ static NSMutableString* _scriptLogPrefix;
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating flst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
-	
-	_backRenderStatePtr->water_fx.current_frame = 0;
-	_backRenderStatePtr->water_fx.sfxe = _sfxes + (argv[0] - 1);
+
+	// FIXME: water sfxe activation needs to be redone for the new card render system
+//	_backRenderStatePtr->water_fx.current_frame = 0;
+//	_backRenderStatePtr->water_fx.sfxe = _sfxes + (argv[0] - 1);
 }
 
 // 46

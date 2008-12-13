@@ -29,7 +29,7 @@
 #import "RXWaterAnimationFrame.h"
 #endif
 
-struct _rx_card_sfxe {
+struct rx_card_sfxe {
 #if defined(LLVM_WATER)
 	NSMutableArray* frames;
 #elif defined(GPU_WATER)
@@ -39,16 +39,6 @@ struct _rx_card_sfxe {
 #endif
 	NSRect roi;
 	double fps;
-};
-
-struct _rx_card_sfxe_render_state {
-	struct _rx_card_sfxe* sfxe;
-	uint32_t current_frame;
-	uint64_t frame_timestamp;
-};
-
-struct _rx_card_render_state {
-	struct _rx_card_sfxe_render_state water_fx;
 };
 
 
@@ -80,7 +70,7 @@ struct _rx_card_render_state {
 	
 	// special effects
 	uint16_t _sfxeCount;
-	struct _rx_card_sfxe* _sfxes;
+	struct rx_card_sfxe* _sfxes;
 	
 	// movies
 	NSMutableArray* _movies;
@@ -95,9 +85,6 @@ struct _rx_card_render_state {
 	
 	// rendering
 	BOOL _renderStateSwapsEnabled;
-	// FIXME: turn those into pointers, and allocate them on different cache lines (to keep it simple, pad by 128 bytes and align on 128 bytes)
-	struct _rx_card_render_state _renderState1;
-	struct _rx_card_render_state _renderState2;
 	
 	BOOL _didActivatePLST;
 	BOOL _didActivateSLST;
@@ -109,13 +96,6 @@ struct _rx_card_render_state {
 	
 	// external commands
 	NSMapTable* _externalCommandLookup;
-	
-@public
-	// this is public ONLY for RXCardState
-	
-	// render states
-	struct _rx_card_render_state* volatile _frontRenderStatePtr;
-	struct _rx_card_render_state* volatile _backRenderStatePtr;
 	
 	// pictures
 	GLuint _pictureVAO;

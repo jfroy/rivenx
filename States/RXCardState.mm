@@ -154,20 +154,20 @@ static void rx_release_owner_applier(const void* value, void* context) {
 	size_t cache_line_size = [[RXHardwareProfiler sharedHardwareProfiler] cacheLineSize];
 	
 	// allocate enough cache lines to store 2 render states without overlap (to avoid false sharing)
-	uint32_t render_state_cache_line_count = sizeof(struct _rx_card_state_render_state) / cache_line_size;
-	if (sizeof(struct _rx_card_state_render_state) % cache_line_size)
+	uint32_t render_state_cache_line_count = sizeof(struct rx_card_state_render_state) / cache_line_size;
+	if (sizeof(struct rx_card_state_render_state) % cache_line_size)
 		render_state_cache_line_count++;
 	
 	// allocate the cache lines
 	_render_states_buffer = malloc((render_state_cache_line_count * 2 + 1) * cache_line_size);
 	
 	// point each render state pointer at the beginning of a cache line
-	_front_render_state = (struct _rx_card_state_render_state*)BUFFER_OFFSET(((uintptr_t)_render_states_buffer & ~(cache_line_size - 1)), cache_line_size);
-	_back_render_state = (struct _rx_card_state_render_state*)BUFFER_OFFSET(((uintptr_t)_front_render_state & ~(cache_line_size - 1)), cache_line_size);
+	_front_render_state = (struct rx_card_state_render_state*)BUFFER_OFFSET(((uintptr_t)_render_states_buffer & ~(cache_line_size - 1)), cache_line_size);
+	_back_render_state = (struct rx_card_state_render_state*)BUFFER_OFFSET(((uintptr_t)_front_render_state & ~(cache_line_size - 1)), cache_line_size);
 	
 	// zero-fill the render states to be extra-safe
-	bzero((void*)_front_render_state, sizeof(struct _rx_card_state_render_state));
-	bzero((void*)_back_render_state, sizeof(struct _rx_card_state_render_state));
+	bzero((void*)_front_render_state, sizeof(struct rx_card_state_render_state));
+	bzero((void*)_back_render_state, sizeof(struct rx_card_state_render_state));
 	
 	// allocate the arrays embedded in the render states
 	_front_render_state->pictures = [NSMutableArray new];
@@ -239,10 +239,10 @@ init_failure:
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to create shader program: %@", error);
 }
 
-- (struct _rx_transition_program)_loadTransitionShaderWithName:(NSString*)name direction:(RXTransitionDirection)direction context:(CGLContextObj)cgl_ctx {
+- (struct rx_transition_program)_loadTransitionShaderWithName:(NSString*)name direction:(RXTransitionDirection)direction context:(CGLContextObj)cgl_ctx {
 	NSError* error;
 	
-	struct _rx_transition_program program;
+	struct rx_transition_program program;
 	GLint sourceTextureUniform;
 	GLint destinationTextureUniform;
 	
@@ -975,10 +975,7 @@ init_failure:
 	}
 	
 	// save the front render state
-	struct _rx_card_state_render_state* previous_front_render_state = _front_render_state;
-	
-	// save the front card render state
-	struct _rx_card_render_state* oldCardFrontRenderState = sender->_frontRenderStatePtr;
+	struct rx_card_state_render_state* previous_front_render_state = _front_render_state;
 	
 	// take the render lock
 	OSSpinLockLock(&_renderLock);
@@ -986,14 +983,8 @@ init_failure:
 	// swap atomically
 	_front_render_state = _back_render_state;
 	
-	// swap the sending card's render state (this is also atomic, _frontRenderStatePtr is volatile)
-	sender->_frontRenderStatePtr = sender->_backRenderStatePtr;
-	
 	// we can resume rendering now
 	OSSpinLockUnlock(&_renderLock);
-	
-	// set the old front card render state as the back card render state
-	sender->_backRenderStatePtr = oldCardFrontRenderState;
 	
 	// set the back render state to the old front render state
 	_back_render_state = previous_front_render_state;
@@ -1191,28 +1182,32 @@ init_failure:
 
 - (void)_renderCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
+	
+	// read the front render state pointer once and alias it for this method
+	struct rx_card_state_render_state* r = _front_render_state;
+	
+	// alias the global render context state object
 	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
 	
+	// render object enumeration variables
 	NSEnumerator* renderListEnumerator;
 	id renderObject;
-	
-	struct _rx_card_render_state* r = card->_frontRenderStatePtr;
 	
 	// use the card program
 	glUseProgram(_cardProgram); glReportError();
 	
 	// render static card pictures only when necessary
-	if (_front_render_state->refresh_static) {
+	if (r->refresh_static) {
 		// bind the static render FBO
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		
 		// render each picture
-		renderListEnumerator = [_front_render_state->pictures objectEnumerator];
+		renderListEnumerator = [r->pictures objectEnumerator];
 		while ((renderObject = [renderListEnumerator nextObject]))
 			picture_render_dispatch.imp(renderObject, picture_render_dispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
 		
 		// this is used as a fence to determine if the static content has been refreshed or not, so we set it to NO here
-		_front_render_state->refresh_static = NO;
+		r->refresh_static = NO;
 	}
 	
 	// bind the dynamic render FBO
@@ -1268,7 +1263,7 @@ init_failure:
 	}
 	
 	// render movies
-	renderListEnumerator = [_front_render_state->movies objectEnumerator];
+	renderListEnumerator = [r->movies objectEnumerator];
 	while ((renderObject = [renderListEnumerator nextObject]))
 		_movieRenderDispatch.imp(renderObject, _movieRenderDispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
 }
@@ -1426,7 +1421,7 @@ init_failure:
 			glUseProgram(_cardProgram); glReportError();
 		} else {
 			// determine which transition shading program to use based on the transition type
-			struct _rx_transition_program* transition = NULL;
+			struct rx_transition_program* transition = NULL;
 			switch (_front_render_state->transition->type) {
 				case RXTransitionDissolve:
 					transition = &_dissolve;
