@@ -778,7 +778,7 @@ static NSMutableString* _scriptLogPrefix;
 	GLfloat* vertex_attributes = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
 	
 	// allocate the texture object ID array
-	_pictureTextures = new GLuint[_pictureCount + kDynamicPictureSlots];
+	_pictureTextures = new GLuint[_pictureCount];
 	glGenTextures(_pictureCount, _pictureTextures); glReportError();
 	
 	// for each PLST entry, load and upload the picture, compute needed coords
@@ -1116,9 +1116,6 @@ static NSMutableString* _scriptLogPrefix;
 #pragma mark rendering
 	
 	// now that we know how many renderable graphic objects there are, allocate the render state objects
-	_renderState1.pictures = [NSMutableArray new];
-	_renderState2.pictures = [_renderState1.pictures mutableCopy];
-	
 	_frontRenderStatePtr = &_renderState1;
 	_backRenderStatePtr = &_renderState2;
 	
@@ -1320,13 +1317,7 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptHandler swapRenderState:self];
 }
 
-- (void)finalizeRenderStateSwap {
-	// release memory of the old card render state
-	[_backRenderStatePtr->pictures release];
-	
-	// copy the non-volatile front card render state members to the back card render state
-	_backRenderStatePtr->pictures = [NSMutableArray new];
-	
+- (void)finalizeRenderStateSwap {	
 	// mark the back render state as non-modified (render thread no longer cares about this render state structure)
 	_backRenderStatePtr->refresh_static = NO;
 }
@@ -1364,9 +1355,6 @@ static NSMutableString* _scriptLogPrefix;
 	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
 	[self performSelectorOnMainThread:@selector(_stopAllMovies) withObject:nil waitUntilDone:YES];
 	
-	// reset card state
-	[_backRenderStatePtr->pictures removeAllObjects];
-	
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
 	[_activeHotspots addObjectsFromArray:_hotspots];
@@ -1395,10 +1383,8 @@ static NSMutableString* _scriptLogPrefix;
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first plst record", _scriptLogPrefix);
 #endif
-		[_backRenderStatePtr->pictures addObject:[NSNumber numberWithUnsignedShort:0]];
-		[self _swapRenderState];
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 1);
 	}
-	_didActivatePLST = YES;
 	
 	// swap render state (by faking an execution of command 21 -- _opcode_enableAutomaticSwaps)
 	 _riven_command_dispatch_table[21].imp(self, _riven_command_dispatch_table[21].sel, 0, NULL);
@@ -1910,9 +1896,10 @@ static NSMutableString* _scriptLogPrefix;
 	CGLUnlockContext([RXGetWorldView() renderContext]);
 	CGLUnlockContext(cgl_ctx);
 	
-	// add the dynamic picture index to the picture render array
-	[_backRenderStatePtr->pictures addObject:[NSNumber numberWithUnsignedInt:_pictureCount + _dynamicPictureCount]];
-	_pictureTextures[_pictureCount + _dynamicPictureCount] = dynamicPicture->texture;
+	// create an RXPicture for dynamic picture and queue it for rendering
+	RXPicture* picture = [[RXPicture alloc] initWithTexture:dynamicPicture->texture vao:_pictureVAO index:(4 * (_pictureCount + _dynamicPictureCount)) owner:self];
+	[_scriptHandler queuePicture:picture];
+	[picture release];
 	
 	// one more dynamic picture
 	_dynamicPictureCount++;
@@ -1943,19 +1930,20 @@ static NSMutableString* _scriptLogPrefix;
 
 	// stop receiving notifications
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
-	
-	// picture rendering
-	[_frontRenderStatePtr->pictures release];
-	[_backRenderStatePtr->pictures release];
 
 	// lock the GL context and clean up textures and GL buffers
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	{
-		if (_pictureVertexArrayBuffer != 0) glDeleteBuffers(1, &_pictureVertexArrayBuffer);
-		if (_pictureTextures) glDeleteTextures(_pictureCount, _pictureTextures);
+		if (_pictureVertexArrayBuffer != 0)
+			glDeleteBuffers(1, &_pictureVertexArrayBuffer);
+		if (_pictureTextures)
+			glDeleteTextures(_pictureCount, _pictureTextures);
 #if defined(GPU_WATER)
-		if (_sfxes) for (uint16_t i = 0; i < _sfxeCount; i++) glDeleteTextures(_sfxes[i].nframes, _sfxes[i].frames);
+		if (_sfxes) {
+			for (uint16_t i = 0; i < _sfxeCount; i++)
+				glDeleteTextures(_sfxes[i].nframes, _sfxes[i].frames);
+		}
 #endif
 		if (_dynamicPictureMap) {
 			NSMapEnumerator dynamicPictureEnum = NSEnumerateMapTable(_dynamicPictureMap);
