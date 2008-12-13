@@ -604,6 +604,7 @@ static NSMutableString* _scriptLogPrefix;
 	[self _loadMovies];
 	
 #pragma mark HSPT
+	
 	fh = [_archive openResourceWithResourceType:@"HSPT" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding HSPT resource." userInfo:nil];
@@ -672,6 +673,7 @@ static NSMutableString* _scriptLogPrefix;
 	free(listData);
 	
 #pragma mark BLST
+	
 	fh = [_archive openResourceWithResourceType:@"BLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding BLST resource." userInfo:nil];
@@ -798,7 +800,7 @@ static NSMutableString* _scriptLogPrefix;
 		glReportError();
 		
 		// specify the texture storage buffer as a texture range to encourage the framework to make a single mapping for the entire buffer
-//		glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, textureStorageSize, _pictureTextureStorage);
+		glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, textureStorageSize, _pictureTextureStorage);
 		
 		// upload the texture
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, pictureRecords[currentListIndex].width, pictureRecords[currentListIndex].height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)); glReportError();
@@ -1052,7 +1054,7 @@ static NSMutableString* _scriptLogPrefix;
 			glReportError();
 			
 			// specify the texture storage buffer as a texture range to encourage the framework to make a single mapping for the entire buffer
-//			glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, frame_size * sfxe->nframes, sfxe->frame_storage);
+			glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, frame_size * sfxe->nframes, sfxe->frame_storage);
 			
 			// specify the texture's image
 			glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, frame_texture); glReportError();
@@ -2421,7 +2423,7 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// create an RXPicture for the PLST record and queue it for rendering
 	GLuint index = argv[0] - 1;
-	RXPicture* picture = [[RXPicture alloc] initWithTexture:_pictureTextures[index] vao:_pictureVertexArrayBuffer index:4 * index owner:self];
+	RXPicture* picture = [[RXPicture alloc] initWithTexture:_pictureTextures[index] vao:_pictureVAO index:4 * index owner:self];
 	[_scriptHandler queuePicture:picture];
 	[picture release];
 	
