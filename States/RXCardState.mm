@@ -36,6 +36,9 @@ typedef void (*PostFlushCardImp_t)(id, SEL, RXCard*, const CVTimeStamp*);
 static PostFlushCardImp_t _postFlushCardImp;
 static SEL _postFlushCardSel = @selector(_postFlushCard:outputTime:);
 
+static rx_render_dispatch_t picture_render_dispatch;
+static rx_post_flush_tasks_dispatch_t picture_flush_task_dispatch;
+
 static rx_render_dispatch_t _movieRenderDispatch;
 static rx_post_flush_tasks_dispatch_t _movieFlushTasksDispatch;
 
@@ -133,6 +136,9 @@ static void rx_release_owner_applier(const void* value, void* context) {
 		
 		_renderCardImp = (RenderCardImp_t)[self instanceMethodForSelector:_renderCardSel];
 		_postFlushCardImp = (PostFlushCardImp_t)[self instanceMethodForSelector:_postFlushCardSel];
+		
+		picture_render_dispatch = RXGetRenderImplementation([RXPicture class], RXRenderingRenderSelector);
+		picture_flush_task_dispatch = RXGetPostFlushTasksImplementation([RXPicture class], RXRenderingPostFlushTasksSelector);
 		
 		_movieRenderDispatch = RXGetRenderImplementation([RXMovieProxy class], RXRenderingRenderSelector);
 		_movieFlushTasksDispatch = RXGetPostFlushTasksImplementation([RXMovieProxy class], RXRenderingPostFlushTasksSelector);
@@ -1200,16 +1206,10 @@ init_failure:
 		// bind the static render FBO
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		
-		// bind the picture VAO
-		[gl_state bindVertexArrayObject:card->_pictureVAO];
-		
-		renderListEnumerator = [r->pictures objectEnumerator];
-		while ((renderObject = [renderListEnumerator nextObject])) {
-			// bind the picture texture and draw the quad
-			GLint pictureIndex = [(NSNumber*)renderObject intValue];
-			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, card->_pictureTextures[pictureIndex]); glReportError();
-			glDrawArrays(GL_TRIANGLE_STRIP, pictureIndex * 4, 4); glReportError();
-		}
+		// render each picture
+		renderListEnumerator = [_front_render_state->pictures objectEnumerator];
+		while ((renderObject = [renderListEnumerator nextObject]))
+			picture_render_dispatch.imp(renderObject, picture_render_dispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
 		
 		// this is used as a fence to determine if the static content has been refreshed or not, so we set it to NO here
 		r->refresh_static = NO;
@@ -1229,8 +1229,10 @@ init_failure:
 		
 		// setup the texture units
 		glActiveTexture(GL_TEXTURE2); glReportError();
-		if (r->water_fx.current_frame != 0) glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_PREVIOUS_FRAME_INDEX]);
-		else glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]);
+		if (r->water_fx.current_frame != 0)
+			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_PREVIOUS_FRAME_INDEX]);
+		else
+			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]);
 		glReportError();
 			
 		glActiveTexture(GL_TEXTURE1); glReportError();
@@ -1250,7 +1252,8 @@ init_failure:
 		glUseProgram(_cardProgram); glReportError();
 		
 		// if the render timestamp of the frame is 0, set it to now
-		if (r->water_fx.frame_timestamp == 0) r->water_fx.frame_timestamp = outputTime->hostTime;
+		if (r->water_fx.frame_timestamp == 0)
+			r->water_fx.frame_timestamp = outputTime->hostTime;
 		
 		// if the frame has expired its duration, move to the next frame
 		double delta = RXTimingTimestampDelta(outputTime->hostTime, r->water_fx.frame_timestamp);

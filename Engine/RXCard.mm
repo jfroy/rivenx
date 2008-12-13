@@ -798,7 +798,7 @@ static NSMutableString* _scriptLogPrefix;
 		glReportError();
 		
 		// specify the texture storage buffer as a texture range to encourage the framework to make a single mapping for the entire buffer
-		glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, textureStorageSize, _pictureTextureStorage);
+//		glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, textureStorageSize, _pictureTextureStorage);
 		
 		// upload the texture
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, pictureRecords[currentListIndex].width, pictureRecords[currentListIndex].height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)); glReportError();
@@ -1052,7 +1052,7 @@ static NSMutableString* _scriptLogPrefix;
 			glReportError();
 			
 			// specify the texture storage buffer as a texture range to encourage the framework to make a single mapping for the entire buffer
-			glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, frame_size * sfxe->nframes, sfxe->frame_storage);
+//			glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, frame_size * sfxe->nframes, sfxe->frame_storage);
 			
 			// specify the texture's image
 			glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, frame_texture); glReportError();
@@ -2419,7 +2419,11 @@ static NSMutableString* _scriptLogPrefix;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating plst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
-	[_backRenderStatePtr->pictures addObject:[NSNumber numberWithUnsignedShort:argv[0] - 1]];
+	// create an RXPicture for the PLST record and queue it for rendering
+	GLuint index = argv[0] - 1;
+	RXPicture* picture = [[RXPicture alloc] initWithTexture:_pictureTextures[index] vao:_pictureVertexArrayBuffer index:4 * index owner:self];
+	[_scriptHandler queuePicture:picture];
+	[picture release];
 	
 	// opcode 39 triggers a render state swap
 	[self _swapRenderState];

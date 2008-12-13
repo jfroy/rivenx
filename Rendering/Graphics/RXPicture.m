@@ -6,6 +6,10 @@
 //  Copyright 2008 MacStorm. All rights reserved.
 //
 
+#import <OpenGL/CGLMacro.h>
+#import <OpenGL/CGLProfilerFunctionEnum.h>
+#import <OpenGL/CGLProfiler.h>
+
 #import "RXPicture.h"
 
 
@@ -43,6 +47,7 @@
 	
 	// alias the render context state object pointer
 	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+	
 	// bind the picture's VAO
 	[gl_state bindVertexArrayObject:_vao];
 	
