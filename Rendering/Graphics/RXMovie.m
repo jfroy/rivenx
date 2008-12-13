@@ -57,6 +57,8 @@
 	
 	// pixel buffer attributes
 	NSMutableDictionary* pixelBufferAttributes = [NSMutableDictionary new];
+	[pixelBufferAttributes setObject:[NSNumber numberWithInt:_currentSize.width] forKey:(NSString*)kCVPixelBufferWidthKey];
+	[pixelBufferAttributes setObject:[NSNumber numberWithInt:_currentSize.height] forKey:(NSString*)kCVPixelBufferHeightKey];
 	[pixelBufferAttributes setObject:[NSNumber numberWithInt:4] forKey:(NSString*)kCVPixelBufferBytesPerRowAlignmentKey];
 	[pixelBufferAttributes setObject:[NSNumber numberWithBool:YES] forKey:(NSString*)kCVPixelBufferOpenGLCompatibilityKey];
 #if defined(__LITTLE_ENDIAN__)
@@ -80,7 +82,7 @@
 	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
 	
 	// if the movie is smaller than 128 bytes in either dimension, create a memory-backed visual context, otherwise go directly to OpenGL
-	if (_currentSize.width < 32 || _currentSize.height < 32) {
+	if (_currentSize.width < 32) {
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"using main memory pixel buffer path");
 #endif
@@ -93,8 +95,8 @@
 		}
 		
 		// allocate a texture storage buffer and setup a texture object
-		_textureStorage = malloc(128 * 128 * 4);
-		bzero(_textureStorage, 128 * 128 * 4);
+		_textureStorage = malloc(128 * _currentSize.height * 4);
+		bzero(_textureStorage, 128 * _currentSize.height * 4);
 		
 		glGenTextures(1, &_glTexture); glReportError();
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();
@@ -106,7 +108,7 @@
 		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
 		glReportError();
 		
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 128, 128, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, _textureStorage); glReportError();
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 128, _currentSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, _textureStorage); glReportError();
 	} else {
 		err = QTOpenGLTextureContextCreate(NULL, cgl_ctx, pixel_format, visualContextOptions, &_visualContext);
 		CFRelease(visualContextOptions);
