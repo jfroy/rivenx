@@ -932,6 +932,9 @@ init_failure:
 - (void)queuePicture:(RXPicture*)picture {
 	[_back_render_state->pictures addObject:picture];
 	[[picture owner] retain];
+	
+	// queuing a picture invalidates the static content texture
+	_back_render_state->refresh_static = YES;
 }
 
 - (void)queueMovie:(RXMovie*)movie {
@@ -1201,8 +1204,8 @@ init_failure:
 	// use the card program
 	glUseProgram(_cardProgram); glReportError();
 	
-	// render the static content of the card only when necessary
-	if (r->refresh_static) {
+	// render static card pictures only when necessary
+	if (_front_render_state->refresh_static) {
 		// bind the static render FBO
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
 		
@@ -1212,7 +1215,7 @@ init_failure:
 			picture_render_dispatch.imp(renderObject, picture_render_dispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
 		
 		// this is used as a fence to determine if the static content has been refreshed or not, so we set it to NO here
-		r->refresh_static = NO;
+		_front_render_state->refresh_static = NO;
 	}
 	
 	// bind the dynamic render FBO

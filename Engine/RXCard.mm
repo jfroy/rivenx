@@ -1296,9 +1296,6 @@ static NSMutableString* _scriptLogPrefix;
 - (void)_swapRenderState {
 	// WARNING: THIS IS NOT THREAD SAFE, BUT WILL NOT INTERFERE WITH THE RENDER THREAD NEGATIVELY
 	
-	// leave a note for the renderer and also indicate the back render state has been modified
-	_backRenderStatePtr->refresh_static = YES;
-	
 	// if swaps are disabled, return immediatly
 	if (!_renderStateSwapsEnabled) {
 #if defined(DEBUG)
@@ -1317,9 +1314,8 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptHandler swapRenderState:self];
 }
 
-- (void)finalizeRenderStateSwap {	
-	// mark the back render state as non-modified (render thread no longer cares about this render state structure)
-	_backRenderStatePtr->refresh_static = NO;
+- (void)finalizeRenderStateSwap {
+
 }
 
 - (void)_swapMovieRenderState {
@@ -1750,31 +1746,32 @@ static NSMutableString* _scriptLogPrefix;
 #pragma mark dynamic pictures
 
 - (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive displayRect:(NSRect)displayRect samplingRect:(NSRect)samplingRect {
-	// if the front render state says we're done refreshing the static content and the back render state has not been modified, we can reset the dynamic picture count
-	if (_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO)
-		_dynamicPictureCount = 0;
-	
-	// check if we have a dynamic picture slot left
-	if (_dynamicPictureCount >= kDynamicPictureSlots) {
-		// if only the front render state needs refreshing, simply sleep until the render thread has rendered the static content
-		if (_frontRenderStatePtr->refresh_static == YES && _backRenderStatePtr->refresh_static == NO) {
-			while (_frontRenderStatePtr->refresh_static == YES)
-				usleep((useconds_t)(0.00833333f * 1.0e6));
-		} else {
-			// we're out of dynamic picture slots; *force* directly a render state swap now
-			[_scriptHandler swapRenderState:self];
-			
-			// then wait for the renderer to go over the new front render state
-			while (_frontRenderStatePtr->refresh_static == YES)
-				usleep((useconds_t)(0.00833333f * 1.0e6));
-		}
-		
-		// at this point both states should be unmodified
-		assert(_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO);
-		
-		// we can now safely reset the dynamic picture count
-		_dynamicPictureCount = 0;
-	}
+	// FIXME: dynamic picture count management needs to be re-done with the RXPicture system
+//	// if the front render state says we're done refreshing the static content and the back render state has not been modified, we can reset the dynamic picture count
+//	if (_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO)
+//		_dynamicPictureCount = 0;
+//	
+//	// check if we have a dynamic picture slot left
+//	if (_dynamicPictureCount >= kDynamicPictureSlots) {
+//		// if only the front render state needs refreshing, simply sleep until the render thread has rendered the static content
+//		if (_frontRenderStatePtr->refresh_static == YES && _backRenderStatePtr->refresh_static == NO) {
+//			while (_frontRenderStatePtr->refresh_static == YES)
+//				usleep((useconds_t)(0.00833333f * 1.0e6));
+//		} else {
+//			// we're out of dynamic picture slots; *force* directly a render state swap now
+//			[_scriptHandler swapRenderState:self];
+//			
+//			// then wait for the renderer to go over the new front render state
+//			while (_frontRenderStatePtr->refresh_static == YES)
+//				usleep((useconds_t)(0.00833333f * 1.0e6));
+//		}
+//		
+//		// at this point both states should be unmodified
+//		assert(_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO);
+//		
+//		// we can now safely reset the dynamic picture count
+//		_dynamicPictureCount = 0;
+//	}
 	
 	// get the resource descriptor for the tBMP resource
 	NSError* error;
