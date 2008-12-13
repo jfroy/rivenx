@@ -704,6 +704,7 @@ static NSMutableString* _scriptLogPrefix;
 #endif // defined(__LITTLE_ENDIAN__) || defined(DEBUG)
 	
 #pragma mark PLST
+	
 	fh = [_archive openResourceWithResourceType:@"PLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding PLST resource." userInfo:nil];
@@ -796,6 +797,9 @@ static NSMutableString* _scriptLogPrefix;
 		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
 		glReportError();
 		
+		// specify the texture storage buffer as a texture range to encourage the framework to make a single mapping for the entire buffer
+		glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, textureStorageSize, _pictureTextureStorage);
+		
 		// upload the texture
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, pictureRecords[currentListIndex].width, pictureRecords[currentListIndex].height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)); glReportError();
 		
@@ -859,6 +863,7 @@ static NSMutableString* _scriptLogPrefix;
 	free(listData);
 	
 #pragma mark FLST
+	
 	fh = [_archive openResourceWithResourceType:@"FLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding FLST resource." userInfo:nil];
@@ -928,10 +933,14 @@ static NSMutableString* _scriptLogPrefix;
 		sfxe->fps = static_cast<double>(sfxeRecord->fps);
 		sfxe->roi = RXMakeNSRect(sfxeRecord->left, sfxeRecord->top, sfxeRecord->right, sfxeRecord->bottom);
 		
+		// create a texture for each frame of animation
 		glGenTextures(sfxe->nframes, sfxe->frames);
+		
+		// allocate a single storage buffer for all the water displacement textures
 		size_t frame_size = kRXCardViewportSize.width * kRXCardViewportSize.height * sizeof(uint32_t);
 		sfxe->frame_storage = malloc(frame_size * sfxe->nframes);
 		
+		// generate the displacement textures by interpreting the water animation microcode
 		uint32_t* offset_table = reinterpret_cast<uint32_t*>(BUFFER_OFFSET(sfxeData, sfxeRecord->offset_table));
 		for (uint32_t frame = 0; frame < sfxeRecord->frame_count; frame++) {
 			uint16_t* sfxeProgram = reinterpret_cast<uint16_t*> (BUFFER_OFFSET(sfxeData, CFSwapInt32BigToHost(offset_table[frame])));
@@ -948,6 +957,7 @@ static NSMutableString* _scriptLogPrefix;
 				frame_texture[i + 2] = frame_texture[2];
 				frame_texture[i + 3] = frame_texture[3];
 			}
+			
 			GLint currentRow = 1;
 			GLsizei rowsAvailable = 1;
 			GLsizei rowsToCopy = kRXCardViewportSize.height - 1;
@@ -1041,6 +1051,10 @@ static NSMutableString* _scriptLogPrefix;
 			glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
 			glReportError();
 			
+			// specify the texture storage buffer as a texture range to encourage the framework to make a single mapping for the entire buffer
+			glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, frame_size * sfxe->nframes, sfxe->frame_storage);
+			
+			// specify the texture's image
 			glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, frame_texture); glReportError();
 		}
 		
@@ -1057,6 +1071,7 @@ static NSMutableString* _scriptLogPrefix;
 	CGLUnlockContext(cgl_ctx);
 	
 #pragma mark SLST
+	
 	fh = [_archive openResourceWithResourceType:@"SLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding SLST resource." userInfo:nil];
@@ -1097,6 +1112,7 @@ static NSMutableString* _scriptLogPrefix;
 	// end of list records loading
 	
 #pragma mark rendering
+	
 	// now that we know how many renderable graphic objects there are, allocate the render state objects
 	_renderState1.pictures = [NSMutableArray new];
 	_renderState2.pictures = [_renderState1.pictures mutableCopy];
