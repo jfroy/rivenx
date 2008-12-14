@@ -1223,7 +1223,6 @@ init_failure:
 			picture_render_dispatch.imp(renderObject, picture_render_dispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
 		
 		// this is used as a fence to determine if the static content has been refreshed or not, so we set it to NO here
-		[r->pictures removeAllObjects];
 		r->refresh_static = NO;
 	}
 	
