@@ -1274,6 +1274,9 @@ static NSMutableString* _scriptLogPrefix;
 	// reset the transition queue flag
 	_queuedAPushTransition = NO;
 	
+	// reset water animation
+	[_scriptHandler queueSpecialEffect:NULL owner:self];
+	
 	// execute loading programs (index 6)
 	NSArray* programs = [_cardEvents objectForKey:k_eventSelectors[6]];
 	uint32_t programCount = [programs count];
