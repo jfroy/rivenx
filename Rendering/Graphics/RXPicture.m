@@ -7,8 +7,6 @@
 //
 
 #import <OpenGL/CGLMacro.h>
-#import <OpenGL/CGLProfilerFunctionEnum.h>
-#import <OpenGL/CGLProfiler.h>
 
 #import "RXPicture.h"
 

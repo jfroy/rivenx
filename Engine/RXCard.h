@@ -43,9 +43,9 @@
 	// pictures
 	GLuint _pictureCount;
 	GLuint _pictureVertexArrayBuffer;
+	GLuint _pictureVAO;
+	GLuint* _pictureTextures;
 	void* _pictureTextureStorage;
-	
-	GLuint _dynamicPictureCount;
 	NSMapTable* _dynamicPictureMap;
 	
 	// special effects
@@ -76,10 +76,6 @@
 	
 	// external commands
 	NSMapTable* _externalCommandLookup;
-	
-	// pictures
-	GLuint _pictureVAO;
-	GLuint* _pictureTextures;
 }
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;

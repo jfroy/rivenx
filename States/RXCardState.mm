@@ -377,7 +377,7 @@ init_failure:
 	}
 	
 	// unmap the pixel unpack buffer to begin the DMA transfer
-	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
 	
 	// while we DMA the inventory textures, let's do some more work
 	
@@ -392,7 +392,7 @@ init_failure:
 	glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
 	
 	// enable sub-range flushing if available
-	if (GLEE_APPLE_client_storage)
+	if (GLEE_APPLE_flush_buffer_range)
 		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
 	
 	// 4 triangle strip primitives, 4 vertices per strip, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
@@ -445,7 +445,7 @@ init_failure:
 	glBindBuffer(GL_ARRAY_BUFFER, _cardRenderVBO); glReportError();
 	
 	// enable sub-range flushing if available
-	if (GLEE_APPLE_client_storage)
+	if (GLEE_APPLE_flush_buffer_range)
 		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
 	
 	// 4 vertices, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
@@ -538,7 +538,7 @@ init_failure:
 	glBindBuffer(GL_ARRAY_BUFFER, _hotspotDebugRenderVBO); glReportError();
 	
 	// enable sub-range flushing if available
-	if (GLEE_APPLE_client_storage)
+	if (GLEE_APPLE_flush_buffer_range)
 		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
 	
 	// 4 lines per hotspot, 6 floats per line (coord[x, y] color[r, g, b, a])
@@ -1205,7 +1205,7 @@ init_failure:
 	
 	// render object enumeration variables
 	NSEnumerator* renderListEnumerator;
-	id renderObject;
+	id<RXRenderingProtocol> renderObject;
 	
 	// use the rect texture program
 	glUseProgram(_single_rect_texture_program); glReportError();
@@ -1220,7 +1220,7 @@ init_failure:
 		// render each picture
 		renderListEnumerator = [r->pictures objectEnumerator];
 		while ((renderObject = [renderListEnumerator nextObject]))
-			picture_render_dispatch.imp(renderObject, picture_render_dispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
+			[renderObject render:outputTime inContext:cgl_ctx framebuffer:_fbos[RX_CARD_STATIC_RENDER_INDEX]];
 		
 		// this is used as a fence to determine if the static content has been refreshed or not, so we set it to NO here
 		r->refresh_static = NO;

@@ -29,9 +29,7 @@
 
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXPicture.h"
-
-// we can afford a reasonably large number here, since the space is only used for vertex data and texture IDs
-static const GLuint kDynamicPictureSlots = 100;
+#import "Rendering/Graphics/RXDynamicPicture.h"
 
 static const NSTimeInterval kInsideHotspotPeriodicEventPeriod = 0.1;
 
@@ -59,7 +57,6 @@ struct rx_card_picture_record {
 
 struct rx_card_dynamic_picture {
 	GLuint texture;
-	GLuint buffer;
 };
 
 CF_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) {
@@ -689,11 +686,11 @@ static NSMutableString* _scriptLogPrefix;
 	glBindBuffer(GL_ARRAY_BUFFER, _pictureVertexArrayBuffer); glReportError();
 	
 	// enable sub-range flushing if available
-	if (GLEE_APPLE_client_storage)
+	if (GLEE_APPLE_flush_buffer_range)
 		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
 	
 	// 4 vertices per picture [<position.x position.y> <texcoord0.s texcoord0.t>], floats
-	glBufferData(GL_ARRAY_BUFFER, (_pictureCount + kDynamicPictureSlots) * 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
+	glBufferData(GL_ARRAY_BUFFER, _pictureCount * 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
 	
 	// VM map the buffer object and cache some useful pointers
 	GLfloat* vertex_attributes = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
@@ -1041,7 +1038,6 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// map from tBMP resource to texture ID for dynamic pictures
 	_dynamicPictureMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSOwnedPointerMapValueCallBacks, 0);
-	_dynamicPictureCount = 0;
 	
 	// wait for movies
 //	semaphore_wait(_movieLoadSemaphore);
@@ -1659,49 +1655,22 @@ static NSMutableString* _scriptLogPrefix;
 #pragma mark dynamic pictures
 
 - (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive displayRect:(NSRect)displayRect samplingRect:(NSRect)samplingRect {
-	// FIXME: dynamic picture count management needs to be re-done with the RXPicture system
-//	// if the front render state says we're done refreshing the static content and the back render state has not been modified, we can reset the dynamic picture count
-//	if (_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO)
-//		_dynamicPictureCount = 0;
-//	
-//	// check if we have a dynamic picture slot left
-//	if (_dynamicPictureCount >= kDynamicPictureSlots) {
-//		// if only the front render state needs refreshing, simply sleep until the render thread has rendered the static content
-//		if (_frontRenderStatePtr->refresh_static == YES && _backRenderStatePtr->refresh_static == NO) {
-//			while (_frontRenderStatePtr->refresh_static == YES)
-//				usleep((useconds_t)(0.00833333f * 1.0e6));
-//		} else {
-//			// we're out of dynamic picture slots; *force* directly a render state swap now
-//			[_scriptHandler swapRenderState:self];
-//			
-//			// then wait for the renderer to go over the new front render state
-//			while (_frontRenderStatePtr->refresh_static == YES)
-//				usleep((useconds_t)(0.00833333f * 1.0e6));
-//		}
-//		
-//		// at this point both states should be unmodified
-//		assert(_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO);
-//		
-//		// we can now safely reset the dynamic picture count
-//		_dynamicPictureCount = 0;
-//	}
-	
 	// get the resource descriptor for the tBMP resource
 	NSError* error;
 	NSDictionary* pictureDescriptor = [archive bitmapDescriptorWithID:ID error:&error];
 	if (!pictureDescriptor)
 		@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not get a picture resource's picture descriptor." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
-	// if the samplingRect is zero, use the picture's full resolution
-	if (samplingRect.origin.x == 0.0f && samplingRect.origin.y == 0.0f && samplingRect.size.width == 0.0f && samplingRect.size.height == 0.0f)
-		samplingRect = NSMakeRect(0.0f, 0.0f, [[pictureDescriptor objectForKey:@"Width"] floatValue], [[pictureDescriptor objectForKey:@"Height"] floatValue]);
+	// if the samplingRect is empty, use the picture's full resolution
+	if (NSIsEmptyRect(samplingRect))
+		samplingRect.size = NSMakeSize([[pictureDescriptor objectForKey:@"Width"] floatValue], [[pictureDescriptor objectForKey:@"Height"] floatValue]);
+	if (displayRect.size.width > samplingRect.size.width)
+		displayRect.size.width = samplingRect.size.width;
+	if (displayRect.size.height > samplingRect.size.height)
+		displayRect.size.height = samplingRect.size.height;
 	
 	// compute the size of the buffer needed to store the texture; we'll be using MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED as the texture format, which is 4 bytes per pixel
 	GLsizeiptr pictureSize = [[pictureDescriptor objectForKey:@"Width"] intValue] * [[pictureDescriptor objectForKey:@"Height"] intValue] * 4;
-	
-	// get the load context
-	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
-	CGLLockContext(cgl_ctx);
 	
 	// check if we have a cache for the tBMP ID; create a dynamic picture structure otherwise and map it to the tBMP ID
 	uintptr_t dynamicPictureKey = ID;
@@ -1709,12 +1678,11 @@ static NSMutableString* _scriptLogPrefix;
 	if (dynamicPicture == NULL) {
 		dynamicPicture = reinterpret_cast<struct rx_card_dynamic_picture*>(malloc(sizeof(struct rx_card_dynamic_picture*)));
 		
-		// create a buffer object in which to decompress the tBMP resource
-		glGenBuffers(1, &(dynamicPicture->buffer)); glReportError();
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dynamicPicture->buffer); glReportError();
+		// get the load context
+		CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+		CGLLockContext(cgl_ctx);
 		
-		// allocate the buffer object and map it
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, pictureSize, NULL, GL_STATIC_DRAW);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, [RXDynamicPicture sharedDynamicPictureUnpackBuffer]); glReportError();
 		GLvoid* pictureBuffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
 		
 		// load the picture in the mapped picture buffer
@@ -1722,10 +1690,12 @@ static NSMutableString* _scriptLogPrefix;
 			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 		// unmap the unpack buffer
+		if (GLEE_APPLE_flush_buffer_range)
+			glFlushMappedBufferRangeAPPLE(GL_PIXEL_UNPACK_BUFFER, 0, pictureSize);
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
 		
 		// create a texture object and bind it
-		glGenTextures(1, &(dynamicPicture->texture)); glReportError();
+		glGenTextures(1, &dynamicPicture->texture); glReportError();
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, dynamicPicture->texture); glReportError();
 		
 		// texture parameters
@@ -1745,74 +1715,20 @@ static NSMutableString* _scriptLogPrefix;
 		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
 		
+		// we created a new texture object, so flush
+		glFlush();
+		
+		// unlock the load context
+		CGLUnlockContext(cgl_ctx);
+		
 		// map the tBMP ID to the dynamic picture
 		NSMapInsert(_dynamicPictureMap, (void*)dynamicPictureKey, dynamicPicture);
 	}
 	
-	// compute common vertex values
-	float vertex_left_x = displayRect.origin.x;
-	float vertex_right_x = vertex_left_x + displayRect.size.width;
-	float vertex_bottom_y = displayRect.origin.y;
-	float vertex_top_y = displayRect.origin.y + displayRect.size.height;
-	
-	// lock the render context since rendering will fail while the picture VBO is mapped
-	CGLLockContext([RXGetWorldView() renderContext]);
-	
-	// bind the the picture VBO 
-	glBindBuffer(GL_ARRAY_BUFFER, _pictureVertexArrayBuffer); glReportError();
-	
-	// map the picture VBO and move to the correct offset
-	GLfloat* vertex_attributes = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
-	vertex_attributes = vertex_attributes + ((_pictureCount + _dynamicPictureCount) * 16);
-	
-	// 4 vertices per picture [<position.x position.y> <texcoord0.s texcoord0.t>], floats, triangle strip primitives
-	// vertex 1
-	vertex_attributes[0] = vertex_left_x;
-	vertex_attributes[1] = vertex_bottom_y;
-	
-	vertex_attributes[2] = samplingRect.origin.x;
-	vertex_attributes[3] = samplingRect.origin.y + samplingRect.size.height;
-	
-	// vertex 2
-	vertex_attributes[4] = vertex_right_x;
-	vertex_attributes[5] = vertex_bottom_y;
-	
-	vertex_attributes[6] = samplingRect.origin.x + samplingRect.size.width;
-	vertex_attributes[7] = samplingRect.origin.y + samplingRect.size.height;
-	
-	// vertex 3
-	vertex_attributes[8] = vertex_left_x;
-	vertex_attributes[9] = vertex_top_y;
-	
-	vertex_attributes[10] = samplingRect.origin.x;
-	vertex_attributes[11] = samplingRect.origin.y;
-	
-	// vertex 4
-	vertex_attributes[12] = vertex_right_x;
-	vertex_attributes[13] = vertex_top_y;
-	
-	vertex_attributes[14] = samplingRect.origin.x + samplingRect.size.width;
-	vertex_attributes[15] = samplingRect.origin.y;
-	
-	// unmap and flush the picture vertex buffer
-	if (GLEE_APPLE_flush_buffer_range)
-		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, (_pictureCount + _dynamicPictureCount) * 16, 16);
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-	
-	// flush new objects
-	glFlush();
-	
-	// unlock the CGL contexts
-	CGLUnlockContext([RXGetWorldView() renderContext]);
-	CGLUnlockContext(cgl_ctx);
-	
-	// create an RXPicture for dynamic picture and queue it for rendering
-	RXPicture* picture = [[RXPicture alloc] initWithTexture:dynamicPicture->texture vao:_pictureVAO index:(4 * (_pictureCount + _dynamicPictureCount)) owner:self];
+	// create a RXDynamicPicture object and queue it for rendering
+	RXDynamicPicture* picture = [[RXDynamicPicture alloc] initWithTexture:dynamicPicture->texture samplingRect:samplingRect renderRect:displayRect owner:self];
 	[_scriptHandler queuePicture:picture];
 	[picture release];
-	
-	// one more dynamic picture
-	_dynamicPictureCount++;
 	
 	// swap the render state; this always marks the back render state as modified
 	[self _swapRenderState];
@@ -1859,10 +1775,8 @@ static NSMutableString* _scriptLogPrefix;
 			NSMapEnumerator dynamicPictureEnum = NSEnumerateMapTable(_dynamicPictureMap);
 			uintptr_t key;
 			struct rx_card_dynamic_picture* value;
-			while (NSNextMapEnumeratorPair(&dynamicPictureEnum, (void**)&key, (void**)&value)) {
-				glDeleteTextures(1, &(value->texture));
-				glDeleteBuffers(1, &(value->buffer));
-			}
+			while (NSNextMapEnumeratorPair(&dynamicPictureEnum, (void**)&key, (void**)&value))
+				glDeleteTextures(1, &value->texture);
 		}
 
 		// objects have gone away, so we flush
@@ -1951,8 +1865,9 @@ static NSMutableString* _scriptLogPrefix;
 - (void)_opcode_drawDynamicPicture:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 9)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
-	NSRect field_display_rect = RXMakeNSRect(argv[1], argv[2], argv[3], argv[4]);
-	NSRect sampling_rect = RXMakeNSRect(argv[5], argv[6], argv[7], argv[8]);
+	
+	NSRect field_display_rect = RXMakeNSRect(argv[1], argv[2], argv[3], argv[4] - 1);
+	NSRect sampling_rect = NSMakeRect(argv[5], argv[6], argv[7] - argv[5], argv[8] - argv[6]);
 	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)

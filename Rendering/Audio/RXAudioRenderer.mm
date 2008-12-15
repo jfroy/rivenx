@@ -92,8 +92,8 @@ busAllocationVector(0)
 {
 	CreateGraph();
 	
-	// on Tiger, parameter ramping on the stereo mixer is broken
-	if ([GTMSystemVersion isTiger]) _coarseRamps = true;
+	// always use "coarse" ramps
+	_coarseRamps = true;
 	
 #if defined(DEBUG)
 	CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> {sourceLimit=%u, coarseRamps=%d}"), this, sourceLimit, _coarseRamps);
@@ -495,7 +495,8 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 		
 		if (!(descriptor.start.mFlags & kAudioTimeStampSampleTimeValid)) {
 			// if the source is disabled, just slip over the descriptor and leave it as-is
-			if (!descriptor.source->enabled) continue;
+			if (!descriptor.source->enabled)
+				continue;
 			
 			// this is a new ramp parameter descriptor
 			descriptor.start = *inTimeStamp;
@@ -562,6 +563,10 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 				} else {
 					float t = static_cast<float>(abs(descriptor.event.eventValues.ramp.startBufferOffset)) / descriptor.event.eventValues.ramp.durationInFrames;
 					float v = (t * descriptor.event.eventValues.ramp.endValue) + ((1.0f - t) * descriptor.event.eventValues.ramp.startValue);
+					if (isnan(v) || !isnormal(v))
+						v = 0.0f;
+					else if (isinf(v))
+						v = 1.0f;
 					err = mixer->SetParameter(descriptor.event.parameter, descriptor.event.scope, descriptor.event.element, v);
 					if (err != noErr) {
 						fprintf(stderr, "mixer->SetParameter failed with error %ld\n", err);
