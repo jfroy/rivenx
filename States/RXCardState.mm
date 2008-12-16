@@ -932,9 +932,6 @@ init_failure:
 - (void)queuePicture:(RXPicture*)picture {
 	[_back_render_state->pictures addObject:picture];
 	[[picture owner] retain];
-	
-	// queuing a picture invalidates the static content texture
-	_back_render_state->refresh_static = YES;
 }
 
 - (void)queueMovie:(RXMovie*)movie {
@@ -956,9 +953,6 @@ init_failure:
 		_back_render_state->water_fx.owner = owner;
 	else
 		_back_render_state->water_fx.owner = nil;
-	
-	// mark the static content as needing a refresh, which will cause the static content to be copied into the "previous frame" texture
-	_back_render_state->refresh_static = YES;
 }
 
 - (void)queueTransition:(RXTransition*)transition {	
@@ -992,13 +986,33 @@ init_failure:
 	// retain the water effect owner at this time, since we're about to swap the render states
 	[_back_render_state->water_fx.owner retain];
 	
+	// indicate that this is a new render state
+	_back_render_state->refresh_static = YES;
+	
 	// save the front render state
 	struct rx_card_state_render_state* previous_front_render_state = _front_render_state;
 	
 	// take the render lock
 	OSSpinLockLock(&_renderLock);
 	
-	// swap atomically
+	if (_front_render_state->refresh_static) {
+		// we need to merge the back render state into the front render state because we swapped before we could even render a single frame
+		NSMutableArray* new_pictures = _back_render_state->pictures;
+		_back_render_state->pictures = _front_render_state->pictures;
+		_front_render_state->pictures = new_pictures;
+		
+		NSMutableArray* new_movies = _back_render_state->movies;
+		_back_render_state->movies = _front_render_state->movies;
+		_front_render_state->movies = new_movies;
+		
+		[_back_render_state->pictures addObjectsFromArray:new_pictures];
+		[_back_render_state->movies addObjectsFromArray:new_movies];
+		
+		[_front_render_state->pictures removeAllObjects];
+		[_front_render_state->movies removeAllObjects];
+	}
+	
+	// fast swap
 	_front_render_state = _back_render_state;
 	
 	// we can resume rendering now
@@ -1007,9 +1021,8 @@ init_failure:
 	// set the back render state to the old front render state
 	_back_render_state = previous_front_render_state;
 	
-	// finalize the swap by resetting the new back render state
+	// if we had a new card, it's now in place
 	_back_render_state->new_card = NO;
-	_back_render_state->refresh_static = NO;
 	
 	CFArrayApplyFunction((CFArrayRef)_back_render_state->pictures, CFRangeMake(0, [_back_render_state->pictures count]), rx_release_owner_applier, self);
 	[_back_render_state->pictures removeAllObjects];
@@ -1044,8 +1057,12 @@ init_failure:
 	// take the render lock
 	OSSpinLockLock(&_renderLock);
 	
-	// swap the sending card's movie render state
-	_front_render_state->movies = _back_render_state->movies;
+	if (_front_render_state->refresh_static)
+		// we need to merge the back render state into the front render state because we swapped before we could even render a single frame
+		[_front_render_state->movies addObjectsFromArray:_back_render_state->movies];
+	else
+		// swap the sending card's movie render state
+		_front_render_state->movies = _back_render_state->movies;
 	
 	// we can resume rendering now
 	OSSpinLockUnlock(&_renderLock);
@@ -1053,7 +1070,6 @@ init_failure:
 	_back_render_state->movies = previous_front_movies;
 	CFArrayApplyFunction((CFArrayRef)_back_render_state->movies, CFRangeMake(0, [_back_render_state->movies count]), rx_release_owner_applier, self);
 	[_back_render_state->movies removeAllObjects];
-//	[_back_render_state->movies addObjectsFromArray:_front_render_state->movies];
 }
 
 #pragma mark -
