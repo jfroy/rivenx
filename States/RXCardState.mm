@@ -1057,12 +1057,19 @@ init_failure:
 	// take the render lock
 	OSSpinLockLock(&_renderLock);
 	
-	if (_front_render_state->refresh_static)
+	if (_front_render_state->refresh_static) {
 		// we need to merge the back render state into the front render state because we swapped before we could even render a single frame
-		[_front_render_state->movies addObjectsFromArray:_back_render_state->movies];
-	else
-		// swap the sending card's movie render state
-		_front_render_state->movies = _back_render_state->movies;
+		NSMutableArray* new_movies = _back_render_state->movies;
+		_back_render_state->movies = _front_render_state->movies;
+		_front_render_state->movies = new_movies;
+		previous_front_movies = _front_render_state->movies;
+		
+		[_back_render_state->movies addObjectsFromArray:new_movies];
+		[_front_render_state->movies removeAllObjects];
+	}
+	
+	// swap the sending card's movie render state
+	_front_render_state->movies = _back_render_state->movies;
 	
 	// we can resume rendering now
 	OSSpinLockUnlock(&_renderLock);
