@@ -956,6 +956,9 @@ init_failure:
 		_back_render_state->water_fx.owner = owner;
 	else
 		_back_render_state->water_fx.owner = nil;
+	
+	// mark the static content as needing a refresh, which will cause the static content to be copied into the "previous frame" texture
+	_back_render_state->refresh_static = YES;
 }
 
 - (void)queueTransition:(RXTransition*)transition {	
@@ -1210,33 +1213,44 @@ init_failure:
 	NSEnumerator* renderListEnumerator;
 	id<RXRenderingProtocol> renderObject;
 	
-	// use the rect texture program
-	glUseProgram(_single_rect_texture_program); glReportError();
-	
-	if (r->refresh_static || [r->movies count]) {
-		// bind the static render FBO
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
-	}
-	
 	// render static card pictures only when necessary
-	if (r->refresh_static) {		
+	if (r->refresh_static) {
+		GLuint refresh_fbo;
+		if (r->water_fx.sfxe)
+			refresh_fbo = _fbos[RX_CARD_STATIC_RENDER_INDEX];
+		else
+			refresh_fbo = _fbos[RX_CARD_DYNAMIC_RENDER_INDEX];
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, refresh_fbo); glReportError();
+		
+		// use the rect texture program
+		glUseProgram(_single_rect_texture_program); glReportError();
+		
 		// render each picture
 		renderListEnumerator = [r->pictures objectEnumerator];
 		while ((renderObject = [renderListEnumerator nextObject]))
-			[renderObject render:outputTime inContext:cgl_ctx framebuffer:_fbos[RX_CARD_STATIC_RENDER_INDEX]];
+			[renderObject render:outputTime inContext:cgl_ctx framebuffer:refresh_fbo];
 		
-		// this is used as a fence to determine if the static content has been refreshed or not, so we set it to NO here
-		r->refresh_static = NO;
+		// if we have an active water special effect, we must reset it to frame 0 and copy the new static content into the "previous frame" texture if we changed the static content (e.g. new pictures)
+		if (r->water_fx.sfxe && [r->pictures count]) {
+			r->water_fx.current_frame = 0;
+			r->water_fx.frame_timestamp = 0;
+			
+			// copy the frame into the previous frame texture; texture0 should be the active texture image unit at this point
+			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_PREVIOUS_FRAME_INDEX]); glReportError();
+			glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height); glReportError();
+		}
+	}
+	
+	// bind the dynamic render FBO
+	if (r->water_fx.sfxe || !r->refresh_static) {
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
 	}
 	
 	// water effect phase 1
-	if (r->water_fx.sfxe != 0) {		
-		// setup the texture units
+	if (r->water_fx.sfxe) {		
+		// setup the texture image units
 		glActiveTexture(GL_TEXTURE2); glReportError();
-		if (r->water_fx.current_frame != 0)
-			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_PREVIOUS_FRAME_INDEX]);
-		else
-			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]);
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_PREVIOUS_FRAME_INDEX]);
 		glReportError();
 			
 		glActiveTexture(GL_TEXTURE1); glReportError();
@@ -1244,10 +1258,6 @@ init_failure:
 		
 		glActiveTexture(GL_TEXTURE0); glReportError();
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
-		
-		// bind the dynamic render FBO
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
-		glClear(GL_COLOR_BUFFER_BIT);
 		
 		// bind the card render VAO
 		[gl_state bindVertexArrayObject:_cardRenderVAO];
@@ -1258,15 +1268,18 @@ init_failure:
 		
 		// switch back to the single rect texture program
 		glUseProgram(_single_rect_texture_program); glReportError();
+	} else if (!r->refresh_static) {
+		// use the rect texture program
+		glUseProgram(_single_rect_texture_program); glReportError();
 	}
 		
 	// render movies; they will either be rendered into the static content texure or the dynamic content texture prior to that texture being readback into the previous frame texture for water animation
 	renderListEnumerator = [r->movies objectEnumerator];
 	while ((renderObject = [renderListEnumerator nextObject]))
-		_movieRenderDispatch.imp(renderObject, _movieRenderDispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
+		_movieRenderDispatch.imp(renderObject, _movieRenderDispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
 	
 	// water animation phase 2; if we do not have an active water animation effect, simply blit the static content framebuffer to the dynamic content framebuffer
-	if (r->water_fx.sfxe != 0) {
+	if (r->water_fx.sfxe) {
 		// copy the frame into the previous frame texture
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_PREVIOUS_FRAME_INDEX]); glReportError();
 		glCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height); glReportError();
@@ -1281,18 +1294,22 @@ init_failure:
 			r->water_fx.current_frame = (r->water_fx.current_frame + 1) % r->water_fx.sfxe->nframes;
 			r->water_fx.frame_timestamp = 0;
 		}
-	} else {
-		// simply render the static content to the dynamic content texture
-		if (GLEE_EXT_framebuffer_blit) {
-			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
-			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
-			glBlitFramebufferEXT(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, GL_COLOR_BUFFER_BIT, GL_LINEAR); glReportError();
-		} else {
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
-			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
-			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
-		}
+	} else if (r->refresh_static || [r->movies count]) {
+		// simply render the static content to the dynamic content texture; we only need to do this if we have active movies or if the static content was refreshed
+		
+//		if (GLEE_EXT_framebuffer_blit) {
+//			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
+//			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
+//			glBlitFramebufferEXT(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, GL_COLOR_BUFFER_BIT, GL_LINEAR); glReportError();
+//		} else {
+//			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
+//			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
+//			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
+//		}
 	}
+	
+	// any static content has been refreshed at the end of this method
+	r->refresh_static = NO;
 }
 
 - (void)_postFlushCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime {
