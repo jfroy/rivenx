@@ -2729,4 +2729,74 @@ DEFINE_COMMAND(xjtunnel103_pictfix) {
 		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
 }
 
+DEFINE_COMMAND(xjtunnel104_pictfix) {
+	// this command needs to overlay pictures of depressed icons based on the value of jicons
+	
+	// this command does not use the helper _isIconDepressed method to avoid fetching jicons multiple times
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	
+	if (icon_bitfield & (1U << 9))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+	if (icon_bitfield & (1U << 10))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+	if (icon_bitfield & (1U << 11))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+	if (icon_bitfield & (1U << 12))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+	if (icon_bitfield & (1U << 13))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+	if (icon_bitfield & (1U << 14))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+	if (icon_bitfield & (1U << 15))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+	if (icon_bitfield & (1U << 16))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 9);
+}
+
+DEFINE_COMMAND(xjtunnel105_pictfix) {
+	// this command needs to overlay pictures of depressed icons based on the value of jicons
+	
+	// this command does not use the helper _isIconDepressed method to avoid fetching jicons multiple times
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	
+	if (icon_bitfield & (1U << 3))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+	if (icon_bitfield & (1U << 4))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+	if (icon_bitfield & (1U << 5))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+	if (icon_bitfield & (1U << 6))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+	if (icon_bitfield & (1U << 7))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+	if (icon_bitfield & (1U << 8))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+	if (icon_bitfield & (1U << 9))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+}
+
+DEFINE_COMMAND(xjtunnel106_pictfix) {
+	// this command needs to overlay pictures of depressed icons based on the value of jicons
+	
+	// this command does not use the helper _isIconDepressed method to avoid fetching jicons multiple times
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	
+	if (icon_bitfield & (1U << 16))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+	if (icon_bitfield & (1U << 17))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+	if (icon_bitfield & (1U << 18))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+	if (icon_bitfield & (1U << 19))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+	if (icon_bitfield & (1U << 20))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+	if (icon_bitfield & (1U << 21))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+	if (icon_bitfield & (1U << 22))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+	if (icon_bitfield & (1U << 23))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 9);
+}
+
 @end
