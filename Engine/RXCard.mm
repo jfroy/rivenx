@@ -11,19 +11,25 @@
 #import <stdbool.h>
 #import <unistd.h>
 
+#import <mach/task.h>
+#import <mach/thread_act.h>
+#import <mach/thread_policy.h>
+
 #import <objc/runtime.h>
 
 #import <OpenGL/CGLMacro.h>
 
-#import "RXAtomic.h"
-#import "RXWorldProtocol.h"
+#import "Base/RXAtomic.h"
+
 #import "RXCard.h"
-#import "RXTransition.h"
-
+#import "RXWorldProtocol.h"
 #import "RXMovieProxy.h"
+#import "RXRivenScriptCommandAliases.h"
+#import "RXCoreStructures.h"
 
-// we can afford a reasonably large number here, since the space is only used for vertex data and texture IDs
-static const GLuint kDynamicPictureSlots = 100;
+#import "Rendering/Graphics/RXTransition.h"
+#import "Rendering/Graphics/RXPicture.h"
+#import "Rendering/Graphics/RXDynamicPicture.h"
 
 static const NSTimeInterval kInsideHotspotPeriodicEventPeriod = 0.1;
 
@@ -51,92 +57,7 @@ struct rx_card_picture_record {
 
 struct rx_card_dynamic_picture {
 	GLuint texture;
-	GLuint buffer;
 };
-
-#pragma options align=packed
-struct rx_plst_record {
-	uint16_t index;
-	uint16_t bitmap_id;
-	uint16_t left;
-	uint16_t top;
-	uint16_t right;
-	uint16_t bottom;
-};
-
-struct rx_mlst_record {
-	uint16_t index;
-	uint16_t movie_id;
-	uint16_t code;
-	uint16_t left;
-	uint16_t top;
-	uint16_t u0[3];
-	uint16_t loop;
-	uint16_t volume;
-	uint16_t u1;
-};
-
-struct rx_slst_record1 {
-	uint16_t index;
-	uint16_t sound_count;
-};
-
-struct rx_slst_record2 {
-	uint16_t fade_flags;
-	uint16_t global_volume;
-	uint16_t u0;
-	uint16_t u1;
-};
-
-struct rx_hspt_record {
-	uint16_t blst_id;
-	int16_t name_rec;
-	int16_t left;
-	int16_t top;
-	int16_t right;
-	int16_t bottom;
-	uint16_t u0;
-	uint16_t mouse_cursor;
-	uint16_t index;
-	int16_t u1;
-	uint16_t zip;
-};
-
-struct rx_blst_record {
-	uint16_t index;
-	uint16_t enabled;
-	uint16_t hotspot_id;
-};
-
-struct rx_flst_record {
-	uint16_t index;
-	uint16_t sfxe_id;
-	uint16_t u0;
-};
-
-struct rx_fsxe_record {
-	uint16_t magic;
-	uint16_t frame_count;
-	uint32_t offset_table;
-	uint16_t left;
-	uint16_t top;
-	uint16_t right;
-	uint16_t bottom;
-	uint16_t fps;
-	uint16_t u0;
-	uint16_t alt_top;
-	uint16_t alt_left;
-	uint16_t alt_bottom;
-	uint16_t alt_right;
-	uint16_t u1;
-	uint16_t alt_frame_count;
-	uint32_t u2;
-	uint32_t u3;
-	uint32_t u4;
-	uint32_t u5;
-	uint32_t u6;
-};
-#pragma options align=reset
 
 CF_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) {
 	return NSMakePoint((float)x, (float)y);
@@ -461,7 +382,7 @@ static NSMutableString* _scriptLogPrefix;
 		
 		// load the movie up
 		CGPoint origin = CGPointMake(mlstRecords[currentListIndex].left, kRXCardViewportSize.height - mlstRecords[currentListIndex].top);
-		RXMovieProxy* movieProxy = [[RXMovieProxy alloc] initWithArchive:_archive ID:mlstRecords[currentListIndex].movie_id origin:origin loop:(mlstRecords[currentListIndex].loop == 1) ? YES : NO];
+		RXMovieProxy* movieProxy = [[RXMovieProxy alloc] initWithArchive:_archive ID:mlstRecords[currentListIndex].movie_id origin:origin loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO) owner:self];
 		
 		// add the movie to the movies array
 		[_movies addObject:movieProxy];
@@ -472,10 +393,10 @@ static NSMutableString* _scriptLogPrefix;
 	}
 	
 	// don't need the MLST data anymore
-	free(listData); listData = NULL;
+	free(listData);
 	
 	// signal that we're done loading the movies
-	semaphore_signal(_movieLoadSemaphore);
+//	semaphore_signal(_movieLoadSemaphore);
 }
 
 - (RXSoundGroup*)_createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes {
@@ -565,12 +486,12 @@ static NSMutableString* _scriptLogPrefix;
 	}
 	
 	// movie load semaphore
-	kerr = semaphore_create(mach_task_self(), &_movieLoadSemaphore, SYNC_POLICY_FIFO, 0);
-	if (kerr != 0) {
-		[self release];
-		error = [NSError errorWithDomain:NSMachErrorDomain code:kerr userInfo:nil];
-		@throw [NSException exceptionWithName:@"RXSystemResourceException" reason:@"Could not create the movie load semaphore." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-	}
+//	kerr = semaphore_create(mach_task_self(), &_movieLoadSemaphore, SYNC_POLICY_FIFO, 0);
+//	if (kerr != 0) {
+//		[self release];
+//		error = [NSError errorWithDomain:NSMachErrorDomain code:kerr userInfo:nil];
+//		@throw [NSException exceptionWithName:@"RXSystemResourceException" reason:@"Could not create the movie load semaphore." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+//	}
 	
 	// active hotspots lock
 	_activeHotspotsLock = OS_SPINLOCK_INIT;
@@ -596,10 +517,12 @@ static NSMutableString* _scriptLogPrefix;
 	uint16_t currentListIndex = 0;
 	
 #pragma mark MLST
-	// movies need to be loaded on the main thread because of QuickTime limitations
-	[self performSelectorOnMainThread:@selector(_loadMovies) withObject:nil waitUntilDone:NO];
+
+	// we don't need to load movies on the main thread anymore since we actually create movie proxies
+	[self _loadMovies];
 	
 #pragma mark HSPT
+	
 	fh = [_archive openResourceWithResourceType:@"HSPT" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding HSPT resource." userInfo:nil];
@@ -668,6 +591,7 @@ static NSMutableString* _scriptLogPrefix;
 	free(listData);
 	
 #pragma mark BLST
+	
 	fh = [_archive openResourceWithResourceType:@"BLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding BLST resource." userInfo:nil];
@@ -700,6 +624,7 @@ static NSMutableString* _scriptLogPrefix;
 #endif // defined(__LITTLE_ENDIAN__) || defined(DEBUG)
 	
 #pragma mark PLST
+	
 	fh = [_archive openResourceWithResourceType:@"PLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding PLST resource." userInfo:nil];
@@ -750,27 +675,28 @@ static NSMutableString* _scriptLogPrefix;
 	// get the load context
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
 	
 	// VAO and VBO for card pictures
 	glGenBuffers(1, &_pictureVertexArrayBuffer); glReportError();
 	glGenVertexArraysAPPLE(1, &_pictureVAO); glReportError();
 	
 	// bind the card picture VAO and VBO
-	glBindVertexArrayAPPLE(_pictureVAO); glReportError();
+	[gl_state bindVertexArrayObject:_pictureVAO];
 	glBindBuffer(GL_ARRAY_BUFFER, _pictureVertexArrayBuffer); glReportError();
 	
 	// enable sub-range flushing if available
-	if (GLEE_APPLE_client_storage)
+	if (GLEE_APPLE_flush_buffer_range)
 		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
 	
 	// 4 vertices per picture [<position.x position.y> <texcoord0.s texcoord0.t>], floats
-	glBufferData(GL_ARRAY_BUFFER, (_pictureCount + kDynamicPictureSlots) * 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
+	glBufferData(GL_ARRAY_BUFFER, _pictureCount * 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
 	
 	// VM map the buffer object and cache some useful pointers
 	GLfloat* vertex_attributes = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
 	
 	// allocate the texture object ID array
-	_pictureTextures = new GLuint[_pictureCount + kDynamicPictureSlots];
+	_pictureTextures = new GLuint[_pictureCount];
 	glGenTextures(_pictureCount, _pictureTextures); glReportError();
 	
 	// for each PLST entry, load and upload the picture, compute needed coords
@@ -790,6 +716,9 @@ static NSMutableString* _scriptLogPrefix;
 		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
 		glReportError();
+		
+		// specify the texture storage buffer as a texture range to encourage the framework to make a single mapping for the entire buffer
+		glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, textureStorageSize, _pictureTextureStorage);
 		
 		// upload the texture
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, pictureRecords[currentListIndex].width, pictureRecords[currentListIndex].height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)); glReportError();
@@ -847,13 +776,14 @@ static NSMutableString* _scriptLogPrefix;
 	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
 	
 	// bind 0 to the current VAO
-	glBindVertexArrayAPPLE(0); glReportError();
+	[gl_state bindVertexArrayObject:0];
 	
 	// we don't need the picture records and the PLST data anymore
 	delete[] pictureRecords;
 	free(listData);
 	
 #pragma mark FLST
+	
 	fh = [_archive openResourceWithResourceType:@"FLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding FLST resource." userInfo:nil];
@@ -866,7 +796,7 @@ static NSMutableString* _scriptLogPrefix;
 		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding FLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	_sfxeCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
-	_sfxes = new _rx_card_sfxe[_sfxeCount];
+	_sfxes = new rx_card_sfxe[_sfxeCount];
 	
 	struct rx_flst_record* flstRecordPointer = reinterpret_cast<struct rx_flst_record*>(BUFFER_OFFSET(listData, sizeof(uint16_t)));
 	for (currentListIndex = 0; currentListIndex < _sfxeCount; currentListIndex++) {
@@ -915,7 +845,7 @@ static NSMutableString* _scriptLogPrefix;
 #endif
 		
 		// prepare the rx special effect structure
-		struct _rx_card_sfxe* sfxe = _sfxes + currentListIndex;
+		rx_card_sfxe* sfxe = _sfxes + currentListIndex;
 		
 		// fill in some general information
 		sfxe->nframes = sfxeRecord->frame_count;
@@ -923,10 +853,14 @@ static NSMutableString* _scriptLogPrefix;
 		sfxe->fps = static_cast<double>(sfxeRecord->fps);
 		sfxe->roi = RXMakeNSRect(sfxeRecord->left, sfxeRecord->top, sfxeRecord->right, sfxeRecord->bottom);
 		
+		// create a texture for each frame of animation
 		glGenTextures(sfxe->nframes, sfxe->frames);
+		
+		// allocate a single storage buffer for all the water displacement textures
 		size_t frame_size = kRXCardViewportSize.width * kRXCardViewportSize.height * sizeof(uint32_t);
 		sfxe->frame_storage = malloc(frame_size * sfxe->nframes);
 		
+		// generate the displacement textures by interpreting the water animation microcode
 		uint32_t* offset_table = reinterpret_cast<uint32_t*>(BUFFER_OFFSET(sfxeData, sfxeRecord->offset_table));
 		for (uint32_t frame = 0; frame < sfxeRecord->frame_count; frame++) {
 			uint16_t* sfxeProgram = reinterpret_cast<uint16_t*> (BUFFER_OFFSET(sfxeData, CFSwapInt32BigToHost(offset_table[frame])));
@@ -943,6 +877,7 @@ static NSMutableString* _scriptLogPrefix;
 				frame_texture[i + 2] = frame_texture[2];
 				frame_texture[i + 3] = frame_texture[3];
 			}
+			
 			GLint currentRow = 1;
 			GLsizei rowsAvailable = 1;
 			GLsizei rowsToCopy = kRXCardViewportSize.height - 1;
@@ -1036,6 +971,10 @@ static NSMutableString* _scriptLogPrefix;
 			glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
 			glReportError();
 			
+			// specify the texture storage buffer as a texture range to encourage the framework to make a single mapping for the entire buffer
+			glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, frame_size * sfxe->nframes, sfxe->frame_storage);
+			
+			// specify the texture's image
 			glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, frame_texture); glReportError();
 		}
 		
@@ -1052,6 +991,7 @@ static NSMutableString* _scriptLogPrefix;
 	CGLUnlockContext(cgl_ctx);
 	
 #pragma mark SLST
+	
 	fh = [_archive openResourceWithResourceType:@"SLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding SLST resource." userInfo:nil];
@@ -1092,24 +1032,15 @@ static NSMutableString* _scriptLogPrefix;
 	// end of list records loading
 	
 #pragma mark rendering
-	// now that we know how many renderable graphic objects there are, allocate the render state objects
-	_renderState1.pictures = [NSMutableArray new];
-	_renderState1.movies = [NSMutableArray new];
-	_renderState2.pictures = [_renderState1.pictures mutableCopy];
-	_renderState2.movies = [_renderState1.movies mutableCopy];
-	
-	_frontRenderStatePtr = &_renderState1;
-	_backRenderStatePtr = &_renderState2;
 	
 	// render state swaps are disabled by default
 	_renderStateSwapsEnabled = NO;
 	
 	// map from tBMP resource to texture ID for dynamic pictures
 	_dynamicPictureMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSOwnedPointerMapValueCallBacks, 0);
-	_dynamicPictureCount = 0;
 	
 	// wait for movies
-	semaphore_wait(_movieLoadSemaphore);
+//	semaphore_wait(_movieLoadSemaphore);
 	
 	// we're done preparing the card
 #if defined(DEBUG)
@@ -1278,9 +1209,6 @@ static NSMutableString* _scriptLogPrefix;
 - (void)_swapRenderState {
 	// WARNING: THIS IS NOT THREAD SAFE, BUT WILL NOT INTERFERE WITH THE RENDER THREAD NEGATIVELY
 	
-	// leave a note for the renderer and also indicate the back render state has been modified
-	_backRenderStatePtr->refresh_static = YES;
-	
 	// if swaps are disabled, return immediatly
 	if (!_renderStateSwapsEnabled) {
 #if defined(DEBUG)
@@ -1299,19 +1227,6 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptHandler swapRenderState:self];
 }
 
-- (void)finalizeRenderStateSwap {
-	// release memory of the old card render state
-	[_backRenderStatePtr->pictures release];
-	[_backRenderStatePtr->movies release];
-	
-	// copy the non-volatile front card render state members to the back card render state
-	_backRenderStatePtr->pictures = [NSMutableArray new];
-	_backRenderStatePtr->movies = [_frontRenderStatePtr->movies mutableCopy];
-	
-	// mark the back render state as non-modified (render thread no longer cares about this render state structure)
-	_backRenderStatePtr->refresh_static = NO;
-}
-
 - (void)_swapMovieRenderState {
 	// movies are not included in the original engine's picture swapping mechanism, so this method is a little bit different
 #if defined(DEBUG)
@@ -1320,14 +1235,6 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// the script handler will set our front render state to our back render state at the appropriate moment; when this returns, the swap has occured (front == back)
 	[_scriptHandler swapMovieRenderState:self];
-}
-
-- (void)finalizeMovieRenderStateSwap {
-	// release memory of the old card render state
-	[_backRenderStatePtr->movies release];
-	
-	// copy the non-volatile front card render state members to the back card render state
-	_backRenderStatePtr->movies = [_frontRenderStatePtr->movies mutableCopy];
 }
 
 #pragma mark -
@@ -1353,10 +1260,6 @@ static NSMutableString* _scriptLogPrefix;
 	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
 	[self performSelectorOnMainThread:@selector(_stopAllMovies) withObject:nil waitUntilDone:YES];
 	
-	// reset card state
-	[_backRenderStatePtr->pictures removeAllObjects];
-	[_backRenderStatePtr->movies removeAllObjects];
-	
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
 	[_activeHotspots addObjectsFromArray:_hotspots];
@@ -1370,6 +1273,9 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// reset the transition queue flag
 	_queuedAPushTransition = NO;
+	
+	// reset water animation
+	[_scriptHandler queueSpecialEffect:NULL owner:self];
 	
 	// execute loading programs (index 6)
 	NSArray* programs = [_cardEvents objectForKey:k_eventSelectors[6]];
@@ -1385,10 +1291,8 @@ static NSMutableString* _scriptLogPrefix;
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first plst record", _scriptLogPrefix);
 #endif
-		[_backRenderStatePtr->pictures addObject:[NSNumber numberWithUnsignedShort:0]];
-		[self _swapRenderState];
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 1);
 	}
-	_didActivatePLST = YES;
 	
 	// swap render state (by faking an execution of command 21 -- _opcode_enableAutomaticSwaps)
 	 _riven_command_dispatch_table[21].imp(self, _riven_command_dispatch_table[21].sel, 0, NULL);
@@ -1699,105 +1603,77 @@ static NSMutableString* _scriptLogPrefix;
 	}
 }
 
-- (void)_reallyDoPlayMovie:(RXMovie*)glMovie {
+- (void)_reallyDoPlayMovie:(RXMovie*)movie {
 	// WARNING: MUST RUN ON MAIN THREAD
 	
 	// do nothing if the movie is already playing
-	if ([[glMovie movie] rate] > 0.001f) return;
+	if ([[movie movie] rate] > 0.001f)
+		return;
 	
-	// put the movie at its beginning
-	if (![glMovie looping]) [glMovie gotoBeginning];
+	// put the movie at its beginning if it is not a looping movie
+	if (![movie looping])
+		[movie gotoBeginning];
 	
-	// add the movie to the render state
-	uint32_t movieIndex = [_backRenderStatePtr->movies indexOfObject:glMovie];
-	if (movieIndex != NSNotFound) [_backRenderStatePtr->movies removeObjectAtIndex:movieIndex];
-	[_backRenderStatePtr->movies addObject:glMovie];
+	// queue the movie for rendering
+	[_scriptHandler queueMovie:movie];
 	
 	// begin playback
-	[[glMovie movie] play];
+	[[movie movie] play];
 	
-	// swap render states (it is safe to do so because the script thread always waits for _playMovie to be done before continuing)
+	// swap the movie render states (it is safe to do so because the script thread always waits for _playMovie to be done before continuing)
 	[self _swapMovieRenderState];
 }
 
-- (void)_playMovie:(RXMovie*)glMovie {
+- (void)_playMovie:(RXMovie*)movie {
 	// WARNING: MUST RUN ON MAIN THREAD
 	
 	// register for rate notifications on the non-blocking movie handler
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleMovieRateChange:) name:QTMovieRateDidChangeNotification object:[glMovie movie]];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleMovieRateChange:) name:QTMovieRateDidChangeNotification object:[movie movie]];
 	
 	// play
-	[self _reallyDoPlayMovie:glMovie];
+	[self _reallyDoPlayMovie:movie];
 }
 
-- (void)_playBlockingMovie:(RXMovie*)glMovie {
+- (void)_playBlockingMovie:(RXMovie*)movie {
 	// WARNING: MUST RUN ON MAIN THREAD
 	
 	// register for rate notifications on the blocking movie handler
-	[[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieRateDidChangeNotification object:[glMovie movie]];
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieRateChange:) name:QTMovieRateDidChangeNotification object:[glMovie movie]];
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieRateDidChangeNotification object:[movie movie]];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieRateChange:) name:QTMovieRateDidChangeNotification object:[movie movie]];
 	
 	// inform the script handler script execution is now blocked
 	[_scriptHandler setExecutingBlockingAction:YES];
 	
 	// start playing the movie (this may be a no-op if the movie was already started)
-	[self _reallyDoPlayMovie:glMovie];
+	[self _reallyDoPlayMovie:movie];
 }
 
 
 - (void)_stopAllMovies {
 	// WARNING: MUST RUN ON MAIN THREAD
-	NSEnumerator* movies = [_backRenderStatePtr->movies objectEnumerator];
-	RXMovie* movie;
-	while ((movie = [movies nextObject])) [[movie movie] stop];
+	// FIXME: NOT IMPLEMENTED ANYMORE
 }
 
 #pragma mark -
 #pragma mark dynamic pictures
 
 - (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive displayRect:(NSRect)displayRect samplingRect:(NSRect)samplingRect {
-	// if the front render state says we're done refreshing the static content and the back render state has not been modified, we can reset the dynamic picture count
-	if (_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO)
-		_dynamicPictureCount = 0;
-	
-	// check if we have a dynamic picture slot left
-	if (_dynamicPictureCount >= kDynamicPictureSlots) {
-		// if only the front render state needs refreshing, simply sleep until the render thread has rendered the static content
-		if (_frontRenderStatePtr->refresh_static == YES && _backRenderStatePtr->refresh_static == NO) {
-			while (_frontRenderStatePtr->refresh_static == YES)
-				usleep((useconds_t)(0.00833333f * 1.0e6));
-		} else {
-			// we're out of dynamic picture slots; *force* directly a render state swap now
-			[_scriptHandler swapRenderState:self];
-			
-			// then wait for the renderer to go over the new front render state
-			while (_frontRenderStatePtr->refresh_static == YES)
-				usleep((useconds_t)(0.00833333f * 1.0e6));
-		}
-		
-		// at this point both states should be unmodified
-		assert(_frontRenderStatePtr->refresh_static == NO && _backRenderStatePtr->refresh_static == NO);
-		
-		// we can now safely reset the dynamic picture count
-		_dynamicPictureCount = 0;
-	}
-	
 	// get the resource descriptor for the tBMP resource
 	NSError* error;
 	NSDictionary* pictureDescriptor = [archive bitmapDescriptorWithID:ID error:&error];
 	if (!pictureDescriptor)
 		@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not get a picture resource's picture descriptor." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
-	// if the samplingRect is zero, use the picture's full resolution
-	if (samplingRect.origin.x == 0.0f && samplingRect.origin.y == 0.0f && samplingRect.size.width == 0.0f && samplingRect.size.height == 0.0f)
-		samplingRect = NSMakeRect(0.0f, 0.0f, [[pictureDescriptor objectForKey:@"Width"] floatValue], [[pictureDescriptor objectForKey:@"Height"] floatValue]);
+	// if the samplingRect is empty, use the picture's full resolution
+	if (NSIsEmptyRect(samplingRect))
+		samplingRect.size = NSMakeSize([[pictureDescriptor objectForKey:@"Width"] floatValue], [[pictureDescriptor objectForKey:@"Height"] floatValue]);
+	if (displayRect.size.width > samplingRect.size.width)
+		displayRect.size.width = samplingRect.size.width;
+	if (displayRect.size.height > samplingRect.size.height)
+		displayRect.size.height = samplingRect.size.height;
 	
 	// compute the size of the buffer needed to store the texture; we'll be using MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED as the texture format, which is 4 bytes per pixel
 	GLsizeiptr pictureSize = [[pictureDescriptor objectForKey:@"Width"] intValue] * [[pictureDescriptor objectForKey:@"Height"] intValue] * 4;
-	
-	// get the load context
-	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
-	CGLLockContext(cgl_ctx);
 	
 	// check if we have a cache for the tBMP ID; create a dynamic picture structure otherwise and map it to the tBMP ID
 	uintptr_t dynamicPictureKey = ID;
@@ -1805,12 +1681,11 @@ static NSMutableString* _scriptLogPrefix;
 	if (dynamicPicture == NULL) {
 		dynamicPicture = reinterpret_cast<struct rx_card_dynamic_picture*>(malloc(sizeof(struct rx_card_dynamic_picture*)));
 		
-		// create a buffer object in which to decompress the tBMP resource
-		glGenBuffers(1, &(dynamicPicture->buffer)); glReportError();
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dynamicPicture->buffer); glReportError();
+		// get the load context
+		CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+		CGLLockContext(cgl_ctx);
 		
-		// allocate the buffer object and map it
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, pictureSize, NULL, GL_STATIC_DRAW);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, [RXDynamicPicture sharedDynamicPictureUnpackBuffer]); glReportError();
 		GLvoid* pictureBuffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
 		
 		// load the picture in the mapped picture buffer
@@ -1818,10 +1693,12 @@ static NSMutableString* _scriptLogPrefix;
 			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 		// unmap the unpack buffer
+		if (GLEE_APPLE_flush_buffer_range)
+			glFlushMappedBufferRangeAPPLE(GL_PIXEL_UNPACK_BUFFER, 0, pictureSize);
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
 		
 		// create a texture object and bind it
-		glGenTextures(1, &(dynamicPicture->texture)); glReportError();
+		glGenTextures(1, &dynamicPicture->texture); glReportError();
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, dynamicPicture->texture); glReportError();
 		
 		// texture parameters
@@ -1841,73 +1718,20 @@ static NSMutableString* _scriptLogPrefix;
 		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
 		
+		// we created a new texture object, so flush
+		glFlush();
+		
+		// unlock the load context
+		CGLUnlockContext(cgl_ctx);
+		
 		// map the tBMP ID to the dynamic picture
 		NSMapInsert(_dynamicPictureMap, (void*)dynamicPictureKey, dynamicPicture);
 	}
 	
-	// compute common vertex values
-	float vertex_left_x = displayRect.origin.x;
-	float vertex_right_x = vertex_left_x + displayRect.size.width;
-	float vertex_bottom_y = displayRect.origin.y;
-	float vertex_top_y = displayRect.origin.y + displayRect.size.height;
-	
-	// lock the render context since rendering will fail while the picture VBO is mapped
-	CGLLockContext([RXGetWorldView() renderContext]);
-	
-	// bind the the picture VBO 
-	glBindBuffer(GL_ARRAY_BUFFER, _pictureVertexArrayBuffer); glReportError();
-	
-	// map the picture VBO and move to the correct offset
-	GLfloat* vertex_attributes = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
-	vertex_attributes = vertex_attributes + ((_pictureCount + _dynamicPictureCount) * 16);
-	
-	// 4 vertices per picture [<position.x position.y> <texcoord0.s texcoord0.t>], floats, triangle strip primitives
-	// vertex 1
-	vertex_attributes[0] = vertex_left_x;
-	vertex_attributes[1] = vertex_bottom_y;
-	
-	vertex_attributes[2] = samplingRect.origin.x;
-	vertex_attributes[3] = samplingRect.origin.y + samplingRect.size.height;
-	
-	// vertex 2
-	vertex_attributes[4] = vertex_right_x;
-	vertex_attributes[5] = vertex_bottom_y;
-	
-	vertex_attributes[6] = samplingRect.origin.x + samplingRect.size.width;
-	vertex_attributes[7] = samplingRect.origin.y + samplingRect.size.height;
-	
-	// vertex 3
-	vertex_attributes[8] = vertex_left_x;
-	vertex_attributes[9] = vertex_top_y;
-	
-	vertex_attributes[10] = samplingRect.origin.x;
-	vertex_attributes[11] = samplingRect.origin.y;
-	
-	// vertex 4
-	vertex_attributes[12] = vertex_right_x;
-	vertex_attributes[13] = vertex_top_y;
-	
-	vertex_attributes[14] = samplingRect.origin.x + samplingRect.size.width;
-	vertex_attributes[15] = samplingRect.origin.y;
-	
-	// unmap and flush the picture vertex buffer
-	if (GLEE_APPLE_flush_buffer_range)
-		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, (_pictureCount + _dynamicPictureCount) * 16, 16);
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-	
-	// flush new objects
-	glFlush();
-	
-	// unlock the CGL contexts
-	CGLUnlockContext([RXGetWorldView() renderContext]);
-	CGLUnlockContext(cgl_ctx);
-	
-	// add the dynamic picture index to the picture render array
-	[_backRenderStatePtr->pictures addObject:[NSNumber numberWithUnsignedInt:_pictureCount + _dynamicPictureCount]];
-	_pictureTextures[_pictureCount + _dynamicPictureCount] = dynamicPicture->texture;
-	
-	// one more dynamic picture
-	_dynamicPictureCount++;
+	// create a RXDynamicPicture object and queue it for rendering
+	RXDynamicPicture* picture = [[RXDynamicPicture alloc] initWithTexture:dynamicPicture->texture samplingRect:samplingRect renderRect:displayRect owner:self];
+	[_scriptHandler queuePicture:picture];
+	[picture release];
 	
 	// swap the render state; this always marks the back render state as modified
 	[self _swapRenderState];
@@ -1926,9 +1750,6 @@ static NSMutableString* _scriptLogPrefix;
 	if (_codeToMovieMap)
 		NSFreeMapTable(_codeToMovieMap);
 	[_movies release];
-	
-	[_frontRenderStatePtr->movies release];
-	[_backRenderStatePtr->movies release];
 }
 
 - (void)dealloc {
@@ -1938,28 +1759,27 @@ static NSMutableString* _scriptLogPrefix;
 
 	// stop receiving notifications
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
-	
-	// picture rendering
-	[_frontRenderStatePtr->pictures release];
-	[_backRenderStatePtr->pictures release];
 
 	// lock the GL context and clean up textures and GL buffers
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	{
-		if (_pictureVertexArrayBuffer != 0) glDeleteBuffers(1, &_pictureVertexArrayBuffer);
-		if (_pictureTextures) glDeleteTextures(_pictureCount, _pictureTextures);
-#if defined(GPU_WATER)
-		if (_sfxes) for (uint16_t i = 0; i < _sfxeCount; i++) glDeleteTextures(_sfxes[i].nframes, _sfxes[i].frames);
-#endif
+		if (_pictureVertexArrayBuffer != 0)
+			glDeleteBuffers(1, &_pictureVertexArrayBuffer);
+		if (_pictureTextures)
+			glDeleteTextures(_pictureCount, _pictureTextures);
+		
+		if (_sfxes) {
+			for (uint16_t i = 0; i < _sfxeCount; i++)
+				glDeleteTextures(_sfxes[i].nframes, _sfxes[i].frames);
+		}
+		
 		if (_dynamicPictureMap) {
 			NSMapEnumerator dynamicPictureEnum = NSEnumerateMapTable(_dynamicPictureMap);
 			uintptr_t key;
 			struct rx_card_dynamic_picture* value;
-			while (NSNextMapEnumeratorPair(&dynamicPictureEnum, (void**)&key, (void**)&value)) {
-				glDeleteTextures(1, &(value->texture));
-				glDeleteBuffers(1, &(value->buffer));
-			}
+			while (NSNextMapEnumeratorPair(&dynamicPictureEnum, (void**)&key, (void**)&value))
+				glDeleteTextures(1, &value->texture);
 		}
 
 		// objects have gone away, so we flush
@@ -1969,14 +1789,18 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// movies
 	[self performSelectorOnMainThread:@selector(_dealloc_movies) withObject:nil waitUntilDone:YES];
-	if (_mlstCodes) delete[] _mlstCodes;
+	if (_mlstCodes)
+		delete[] _mlstCodes;
 	semaphore_destroy(mach_task_self(), _moviePlaybackSemaphore);
-	semaphore_destroy(mach_task_self(), _movieLoadSemaphore);
+//	semaphore_destroy(mach_task_self(), _movieLoadSemaphore);
 	
 	// pictures
-	if (_pictureTextures) delete[] _pictureTextures;
-	if (_pictureTextureStorage) free(_pictureTextureStorage);
-	if (_dynamicPictureMap) NSFreeMapTable(_dynamicPictureMap);
+	if (_pictureTextures)
+		delete[] _pictureTextures;
+	if (_pictureTextureStorage)
+		free(_pictureTextureStorage);
+	if (_dynamicPictureMap)
+		NSFreeMapTable(_dynamicPictureMap);
 	
 	// sounds
 	[_soundGroups release];
@@ -1985,24 +1809,22 @@ static NSMutableString* _scriptLogPrefix;
 	// hotspots
 	[_insideHotspotEventTimer invalidate];
 	[_activeHotspots release];
-	if (_hotspotsIDMap) NSFreeMapTable(_hotspotsIDMap);
+	if (_hotspotsIDMap)
+		NSFreeMapTable(_hotspotsIDMap);
 	[_hotspots release];
 	
 	// sfxe
 	if (_sfxes) {
-#if defined(LLVM_WATER)
-		for (uint16_t i = 0; i < _sfxeCount; i++) [_sfxes[i].frames release];
-#elif defined(GPU_WATER)
 		for (uint16_t i = 0; i < _sfxeCount; i++) {
 			delete[] _sfxes[i].frames;
 			free(_sfxes[i].frame_storage);
 		}
-#endif
 		delete[] _sfxes;
 	}
 	
 	// misc resources
-	if (_blstData) free(_blstData);
+	if (_blstData)
+		free(_blstData);
 	[_cardEvents release];
 	[_descriptor release];
 	
@@ -2014,7 +1836,6 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 @end
-
 
 #pragma mark -
 @implementation RXCard (RXCardOpcodes)
@@ -2038,6 +1859,7 @@ static NSMutableString* _scriptLogPrefix;
 	
 	if (argc > 0)
 		formatString = [formatString stringByAppendingFormat:@"%hu", argv[argi]];
+	
 	formatString = [formatString stringByAppendingString:@"}"];
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", _scriptLogPrefix, formatString);
 }
@@ -2046,8 +1868,9 @@ static NSMutableString* _scriptLogPrefix;
 - (void)_opcode_drawDynamicPicture:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 9)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
-	NSRect field_display_rect = RXMakeNSRect(argv[1], argv[2], argv[3], argv[4]);
-	NSRect sampling_rect = RXMakeNSRect(argv[5], argv[6], argv[7], argv[8]);
+	
+	NSRect field_display_rect = RXMakeNSRect(argv[1], argv[2], argv[3], argv[4] - 1);
+	NSRect sampling_rect = NSMakeRect(argv[5], argv[6], argv[7] - argv[5], argv[8] - argv[6]);
 	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
@@ -2071,7 +1894,8 @@ static NSMutableString* _scriptLogPrefix;
 // 3
 - (void)_opcode_enableSynthesizedSLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling a synthesized slst record", _scriptLogPrefix);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling a synthesized slst record", _scriptLogPrefix);
 #endif
 
 	RXSoundGroup* oldSoundGroup = _synthesizedSoundGroup;
@@ -2086,9 +1910,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 4
 - (void)_opcode_playLocalSound:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 3) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 3)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource with id %hu, volume %hu", _scriptLogPrefix, argv[0], argv[1]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource with id %hu, volume %hu", _scriptLogPrefix, argv[0], argv[1]);
 #endif
 	
 	RXDataSound* sound = [RXDataSound new];
@@ -2103,7 +1929,8 @@ static NSMutableString* _scriptLogPrefix;
 
 // 7
 - (void)_opcode_setVariable:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 2) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 2)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
 	RXStack* parent = [_descriptor parent];
 	NSString* name = [parent varNameAtIndex:argv[0]];
@@ -2119,9 +1946,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 9
 - (void)_opcode_enableHotspot:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling hotspot %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling hotspot %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	uint32_t key = argv[0];
@@ -2145,14 +1974,16 @@ static NSMutableString* _scriptLogPrefix;
 
 // 10
 - (void)_opcode_disableHotspot:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling hotspot %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling hotspot %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	uint32_t key = argv[0];
 	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet(_hotspotsIDMap, (void *)key));
-	if (!hotspot) abort();
+	assert(hotspot);
 	
 	if (hotspot->enabled) {
 		hotspot->enabled = NO;
@@ -2171,9 +2002,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 13
 - (void)_opcode_setCursor:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting cursor to %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting cursor to %hu", _scriptLogPrefix, argv[0]);
 #endif
 
 	[g_worldView performSelectorOnMainThread:@selector(setCursor:) withObject:[g_world cursorForID:argv[0]] waitUntilDone:NO];
@@ -2181,9 +2014,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 14
 - (void)_opcode_pause:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@pausing for %d msec", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@pausing for %d msec", _scriptLogPrefix, argv[0]);
 #endif
 	
 	[_scriptHandler setExecutingBlockingAction:YES];
@@ -2202,15 +2037,21 @@ static NSMutableString* _scriptLogPrefix;
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID EXTERNAL COMMAND ID" userInfo:nil];
 	
 #if defined(DEBUG)
-	NSString* formatString = [NSString stringWithFormat:@"calling external %hu (%@) with arguments: {", externalID, externalName];
+	NSString* formatString = [NSString stringWithFormat:@"calling external %@(", externalName];
+	
 	if (extarnalArgc > 1) {
 		for (; argi < extarnalArgc - 1; argi++)
 			formatString = [formatString stringByAppendingFormat:@"%hu, ", argv[2 + argi]];
 	}
+	
 	if (extarnalArgc > 0)
 		formatString = [formatString stringByAppendingFormat:@"%hu", argv[2 + argi]];
-	formatString = [formatString stringByAppendingString:@"}"];
+	
+	formatString = [formatString stringByAppendingString:@") {"];
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", _scriptLogPrefix, formatString);
+	
+	// augment script log indentation for the external command
+	[_scriptLogPrefix appendString:@"    "];
 #endif
 	
 	// dispatch the call to the external command
@@ -2220,7 +2061,12 @@ static NSMutableString* _scriptLogPrefix;
 		return;
 	}
 		
-	command_dispatch->imp(self, command_dispatch->sel, argc, argv);
+	command_dispatch->imp(self, command_dispatch->sel, extarnalArgc, argv + 2);
+	
+#if defined(DEBUG)
+	[_scriptLogPrefix deleteCharactersInRange:NSMakeRange([_scriptLogPrefix length] - 4, 4)];
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
+#endif
 }
 
 // 18
@@ -2262,11 +2108,13 @@ static NSMutableString* _scriptLogPrefix;
 // 19
 - (void)_opcode_reloadCard:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@reloading card", _scriptLogPrefix);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@reloading card", _scriptLogPrefix);
 #endif
 	
-	RXStack* parent = [_descriptor parent];
-	[_scriptHandler setActiveCardWithStack:[parent key] ID:[_descriptor ID] waitUntilDone:YES];
+	// this command reloads whatever is the current card
+	RXSimpleCardDescriptor* current_card = [[g_world gameState] currentCard];
+	[_scriptHandler setActiveCardWithStack:current_card->parentName ID:current_card->cardID waitUntilDone:YES];
 }
 
 // 20
@@ -2284,8 +2132,10 @@ static NSMutableString* _scriptLogPrefix;
 - (void)_opcode_enableAutomaticSwaps:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
 	if (!_disableScriptLogging) {
-		if (argv != NULL) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps", _scriptLogPrefix);
-		else RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps after prepareForRendering execution", _scriptLogPrefix);
+		if (argv != NULL)
+			RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps", _scriptLogPrefix);
+		else
+			RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps after prepareForRendering execution", _scriptLogPrefix);
 	}
 #endif
 	
@@ -2296,13 +2146,15 @@ static NSMutableString* _scriptLogPrefix;
 
 // 24
 - (void)_opcode_incrementVariable:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 2) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 2)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
 	RXStack* parent = [_descriptor parent];
 	NSString* name = [parent varNameAtIndex:argv[0]];
 	if (!name) name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@incrementing variable %@ by %hu", _scriptLogPrefix, name, argv[1]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@incrementing variable %@ by %hu", _scriptLogPrefix, name, argv[1]);
 #endif
 	
 	uint16_t v = [[g_world gameState] unsignedShortForKey:name];
@@ -2335,18 +2187,20 @@ static NSMutableString* _scriptLogPrefix;
 
 // 32
 - (void)_opcode_startMovieAndWaitUntilDone:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu and waiting until done", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu and waiting until done", _scriptLogPrefix, argv[0]);
 #endif
 	
 	// get the movie object
 	uintptr_t k = argv[0];
-	RXMovie* glMovie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
-	assert(glMovie);
+	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
+	assert(movie);
 	
 	// start the movie and register for rate change notifications
-	[self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:glMovie waitUntilDone:YES];
+	[self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:movie waitUntilDone:YES];
 	
 	// wait until the movie is done playing
 	semaphore_wait(_moviePlaybackSemaphore);
@@ -2354,28 +2208,36 @@ static NSMutableString* _scriptLogPrefix;
 
 // 33
 - (void)_opcode_startMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	// get the movie object
 	uintptr_t k = argv[0];
-	RXMovie* glMovie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
-	assert(glMovie);
+	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
+	assert(movie);
 	
 	// start the movie
-	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:glMovie waitUntilDone:YES];
+	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
 }
 
 // 39
 - (void)_opcode_activatePLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating plst record at index %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating plst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
-	[_backRenderStatePtr->pictures addObject:[NSNumber numberWithUnsignedShort:argv[0] - 1]];
+	// create an RXPicture for the PLST record and queue it for rendering
+	GLuint index = argv[0] - 1;
+	RXPicture* picture = [[RXPicture alloc] initWithTexture:_pictureTextures[index] vao:_pictureVAO index:4 * index owner:self];
+	[_scriptHandler queuePicture:picture];
+	[picture release];
 	
 	// opcode 39 triggers a render state swap
 	[self _swapRenderState];
@@ -2386,9 +2248,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 40
 - (void)_opcode_activateSLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	// the script handler is responsible for this
@@ -2400,9 +2264,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 41
 - (void)_opcode_prepareMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@WARNING: executing unknown opcode 41, implicit activation of mlst record at index %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@WARNING: executing unknown opcode 41, implicit activation of mlst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	uint16_t opcode_buffer[] = {argv[0], 0};
@@ -2411,9 +2277,11 @@ static NSMutableString* _scriptLogPrefix;
 
 // 43
 - (void)_opcode_activateBLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating blst record at index %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating blst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
 	struct rx_blst_record* record = (struct rx_blst_record *)_hotspotControlRecords + (argv[0] - 1);
@@ -2441,26 +2309,29 @@ static NSMutableString* _scriptLogPrefix;
 
 // 44
 - (void)_opcode_activateFLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 1) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating flst record at index %hu", _scriptLogPrefix, argv[0]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating flst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
-	
-	_backRenderStatePtr->water_fx.current_frame = 0;
-	_backRenderStatePtr->water_fx.sfxe = _sfxes + (argv[0] - 1);
+
+	[_scriptHandler queueSpecialEffect:_sfxes + (argv[0] - 1) owner:self];
 }
 
 // 46
 - (void)_opcode_activateMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 2) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	if (argc < 2)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
-	if (!_disableScriptLogging) RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record at index %hu with u0=%hu", _scriptLogPrefix, argv[0], argv[1]);
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record at index %hu with u0=%hu", _scriptLogPrefix, argv[0], argv[1]);
 #endif
 	
 	// update the code to movie map
 	uintptr_t k = _mlstCodes[argv[0] - 1];
-	RXMovie* glMovie = [_movies objectAtIndex:argv[0] - 1];
-	NSMapInsert(_codeToMovieMap, (const void*)k, glMovie);
+	RXMovie* movie = [_movies objectAtIndex:argv[0] - 1];
+	NSMapInsert(_codeToMovieMap, (const void*)k, movie);
 }
 
 @end
@@ -2503,6 +2374,9 @@ DEFINE_COMMAND(xasetupcomplete) {
 	// change the active card to the saved return card
 	RXSimpleCardDescriptor* returnCard = [[g_world gameState] returnCard];
 	[_scriptHandler setActiveCardWithStack:returnCard->parentName ID:returnCard->cardID waitUntilDone:YES];
+	
+	// reset the return card
+	[[g_world gameState] setReturnCard:nil];
 }
 
 #pragma mark -
@@ -2514,21 +2388,21 @@ DEFINE_COMMAND(xasetupcomplete) {
 	
 	if (page == 1) {
 		// disable hotspots 7 and 9
-		DISPATCH_COMMAND1(10, 7);
-		DISPATCH_COMMAND1(10, 9);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 9);
 		
 		// enable hotspot 10
-		DISPATCH_COMMAND1(9, 10);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 10);
 	} else {
 		// enable hotspots 7 and 9
-		DISPATCH_COMMAND1(9, 7);
-		DISPATCH_COMMAND1(9, 9);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 9);
 		
 		// disable hotspot 10
-		DISPATCH_COMMAND1(10, 10);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 10);
 	}
 	
-	DISPATCH_COMMAND1(39, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
 }
 
 DEFINE_COMMAND(xaatrusopenbook) {
@@ -2545,15 +2419,15 @@ DEFINE_COMMAND(xaatrusbookprevpage) {
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"aatruspage"];
 	
 	if (page == 2)
-		DISPATCH_COMMAND3(4, 8, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 8, 256, 0);
 	else
-		DISPATCH_COMMAND3(4, 3, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 3, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(21);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 }
 
 DEFINE_COMMAND(xaatrusbooknextpage) {
@@ -2562,15 +2436,15 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"aatruspage"];
 		
 		if (page == 1)
-			DISPATCH_COMMAND3(4, 8, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 8, 256, 0);
 		else
-			DISPATCH_COMMAND3(4, 5, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 5, 256, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[_scriptHandler queueTransition:transition];
 		[transition release];
 		
-		DISPATCH_COMMAND0(21);
+		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 	}
 }
 
@@ -2583,29 +2457,29 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 	
 	if (page == 1) {
 		// disable hotspots 7 and 9
-		DISPATCH_COMMAND1(10, 7);
-		DISPATCH_COMMAND1(10, 9);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 9);
 		
 		// enable hotspot 10
-		DISPATCH_COMMAND1(9, 10);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 10);
 	} else {
 		// enable hotspots 7 and 9
-		DISPATCH_COMMAND1(9, 7);
-		DISPATCH_COMMAND1(9, 9);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 9);
 		
 		// disable hotspot 10
-		DISPATCH_COMMAND1(10, 10);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 10);
 	}
 	
 	// draw the main page picture
-	DISPATCH_COMMAND1(39, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
 	
 	// draw the note edge
 	if (page > 1) {
 		if (page < 5)
-			DISPATCH_COMMAND1(39, 50);
+			DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 50);
 		else if (page > 5)
-			DISPATCH_COMMAND1(39, 51);
+			DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 51);
 	}
 	
 	// draw the telescope combination
@@ -2646,15 +2520,15 @@ DEFINE_COMMAND(xacathbookprevpage) {
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"acathpage"];
 	
 	if (page == 2)
-		DISPATCH_COMMAND3(4, 9, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 9, 256, 0);
 	else
-		DISPATCH_COMMAND3(4, 4, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 4, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionBottom region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(21);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 }
 
 DEFINE_COMMAND(xacathbooknextpage) {
@@ -2663,15 +2537,15 @@ DEFINE_COMMAND(xacathbooknextpage) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"acathpage"];
 		
 		if (page == 1)
-			DISPATCH_COMMAND3(4, 9, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 9, 256, 0);
 		else
-			DISPATCH_COMMAND3(4, 6, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 6, 256, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionTop region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[_scriptHandler queueTransition:transition];
 		[transition release];
 		
-		DISPATCH_COMMAND0(21);
+		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 	}
 }
 
@@ -2691,13 +2565,13 @@ DEFINE_COMMAND(xtrapbookback) {
 	
 	if (page == 1) {
 		// disable hotspot 16
-		DISPATCH_COMMAND1(10, 16);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 16);
 	} else {
 		// enable hotspot 16
-		DISPATCH_COMMAND1(9, 16);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 16);
 	}
 	
-	DISPATCH_COMMAND1(39, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
 	
 	// draw the dome combination
 	// FIXME: actually generate a combination per game...
@@ -2732,13 +2606,13 @@ DEFINE_COMMAND(xblabbookprevpage) {
 	assert(page > 1);
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"blabpage"];
 	
-	DISPATCH_COMMAND3(4, 22, 256, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 22, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(21);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 }
 
 DEFINE_COMMAND(xblabbooknextpage) {
@@ -2746,13 +2620,13 @@ DEFINE_COMMAND(xblabbooknextpage) {
 	if (page < 22) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"blabpage"];
 		
-		DISPATCH_COMMAND3(4, 23, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 23, 256, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[_scriptHandler queueTransition:transition];
 		[transition release];
 		
-		DISPATCH_COMMAND0(21);
+		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 	}
 }
 
@@ -2763,7 +2637,7 @@ DEFINE_COMMAND(xblabbooknextpage) {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"ogehnpage"];
 	assert(page > 0);
 		
-	DISPATCH_COMMAND1(39, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
 }
 
 DEFINE_COMMAND(xogehnopenbook) {
@@ -2777,13 +2651,13 @@ DEFINE_COMMAND(xogehnbookprevpage) {
 	
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"ogehnpage"];
 	
-	DISPATCH_COMMAND3(4, 12, 256, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 12, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(21);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 }
 
 DEFINE_COMMAND(xogehnbooknextpage) {
@@ -2793,14 +2667,66 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 
 	[[g_world gameState] setUnsignedShort:page + 1 forKey:@"ogehnpage"];
 	
-	DISPATCH_COMMAND3(4, 13, 256, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 13, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[_scriptHandler queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(21);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
 }
 
+#pragma mark -
+#pragma mark rebel tunnel
+
+- (BOOL)_isIconDepressed:(uint16_t)index {
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	return (icon_bitfield & (1U << (index - 1))) ? YES : NO;
+}
+
+DEFINE_COMMAND(xicon) {
+	// this command sets the variable atemp to 1 if the specified icon is depressed, 0 otherwise
+	if ([self _isIconDepressed:argv[0]])
+		[[g_world gameState] setUnsigned32:1 forKey:@"atemp"];
+	else
+		[[g_world gameState] setUnsigned32:0 forKey:@"atemp"];
+}
+
+DEFINE_COMMAND(xcheckicons) {
+
+}
+
+DEFINE_COMMAND(xtoggleicon) {
+	// this command toggles the state of a particular icon for the rebel tunnel puzzle
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	uint32_t icon_bit = 1U << (argv[0] - 1);
+	
+	if (icon_bitfield & icon_bit)
+		[[g_world gameState] setUnsigned32:(icon_bitfield & ~icon_bit) forKey:@"jicons"];
+	else
+		[[g_world gameState] setUnsigned32:(icon_bitfield | icon_bit) forKey:@"jicons"];
+}
+
+DEFINE_COMMAND(xjtunnel103_pictfix) {
+	// this command needs to overlay pictures of depressed icons based on the value of jicons
+	
+	// this command does not use the helper _isIconDepressed method to avoid fetching jicons multiple times
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	
+	if (icon_bitfield & 1U)
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+	if (icon_bitfield & (1U << 1))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+	if (icon_bitfield & (1U << 2))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+	if (icon_bitfield & (1U << 3))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+	if (icon_bitfield & (1U << 22))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+	if (icon_bitfield & (1U << 23))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+	if (icon_bitfield & (1U << 24))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+}
 
 @end

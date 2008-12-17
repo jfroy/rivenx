@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3103D4DB0EF0D3D40025170A /* RXPicture.m in Sources */ = {isa = PBXBuildFile; fileRef = 3103D4DA0EF0D3D40025170A /* RXPicture.m */; };
+		3103D4F40EF0DAF30025170A /* RXHardwareProfiler.m in Sources */ = {isa = PBXBuildFile; fileRef = 3103D4F30EF0DAF30025170A /* RXHardwareProfiler.m */; };
 		3105EC330D74844900609273 /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
 		3105EC610D74922500609273 /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
 		31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */; };
@@ -19,6 +21,7 @@
 		3114FFDB0D58ED280099AF69 /* ImagePreviewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FFDA0D58ED280099AF69 /* ImagePreviewCell.m */; };
 		31154B510B4990E9002FCEDD /* Shaders in Resources */ = {isa = PBXBuildFile; fileRef = 31154B4D0B4990E9002FCEDD /* Shaders */; };
 		311B7C840BCC4D0500653D2D /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
+		311EDC9A0EF59CCD002CAB47 /* RXDynamicPicture.m in Sources */ = {isa = PBXBuildFile; fileRef = 311EDC990EF59CCD002CAB47 /* RXDynamicPicture.m */; };
 		311FD39208C03AF20045BE11 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311FD39108C03AF20045BE11 /* Cocoa.framework */; };
 		311FD3DB08C0426C0045BE11 /* cocoa_main.m in Sources */ = {isa = PBXBuildFile; fileRef = 311FD3DA08C0426C0045BE11 /* cocoa_main.m */; };
 		31225ABE08C4216D0055628F /* RXStack.m in Sources */ = {isa = PBXBuildFile; fileRef = 31225ABD08C4216D0055628F /* RXStack.m */; };
@@ -171,6 +174,7 @@
 		31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9A0DBC07A700E970E1 /* MainMenu.xib */; };
 		31D21B9D0DBC07B500E970E1 /* EditionManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9C0DBC07B500E970E1 /* EditionManager.xib */; };
 		31D21B9F0DBC07C300E970E1 /* DebugConsole.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */; };
+		31D3D8600EEE36FD00F2D1C4 /* RXOpenGLState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31D3D85F0EEE36FD00F2D1C4 /* RXOpenGLState.m */; };
 		31DAA10F09D8892000F63F20 /* RXCardAudioSource_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */; };
 		31DAA12D09D88B2300F63F20 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
 		31DAA12E09D88B2B00F63F20 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384A08C6A73E004B7FD0 /* CoreFoundation.framework */; };
@@ -240,6 +244,13 @@
 			remoteGlobalIDString = 3149598E0E327B2D00E49C83;
 			remoteInfo = MHKKit;
 		};
+		31BA9E1E0EE65F28003C4457 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3149598E0E327B2D00E49C83;
+			remoteInfo = MHKKit;
+		};
 		31C357330D92A78900EDEF81 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
@@ -278,6 +289,10 @@
 /* Begin PBXFileReference section */
 		08FB7796FE84155DC02AAC07 /* plistize_stacks.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = plistize_stacks.m; sourceTree = "<group>"; };
 		08FB779EFE84155DC02AAC07 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		3103D4D90EF0D3D40025170A /* RXPicture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXPicture.h; sourceTree = "<group>"; };
+		3103D4DA0EF0D3D40025170A /* RXPicture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXPicture.m; sourceTree = "<group>"; };
+		3103D4F20EF0DAF30025170A /* RXHardwareProfiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXHardwareProfiler.h; sourceTree = "<group>"; };
+		3103D4F30EF0DAF30025170A /* RXHardwareProfiler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXHardwareProfiler.m; sourceTree = "<group>"; };
 		3105EC310D74844900609273 /* RXLogCenter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXLogCenter.h; path = Base/RXLogCenter.h; sourceTree = "<group>"; };
 		3105EC320D74844900609273 /* RXLogCenter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXLogCenter.m; path = Base/RXLogCenter.m; sourceTree = "<group>"; };
 		3105EC5A0D748F2100609273 /* RXLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXLogging.h; path = Base/RXLogging.h; sourceTree = "<group>"; };
@@ -299,6 +314,8 @@
 		31154B4D0B4990E9002FCEDD /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Shaders; sourceTree = "<group>"; };
 		311B7C810BCC4D0500653D2D /* RXDebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXDebug.h; sourceTree = "<group>"; };
 		311B7C820BCC4D0500653D2D /* RXDebug.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = RXDebug.m; sourceTree = "<group>"; tabWidth = 4; usesTabs = 1; };
+		311EDC980EF59CCD002CAB47 /* RXDynamicPicture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXDynamicPicture.h; sourceTree = "<group>"; };
+		311EDC990EF59CCD002CAB47 /* RXDynamicPicture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXDynamicPicture.m; sourceTree = "<group>"; };
 		311FD39108C03AF20045BE11 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		311FD3DA08C0426C0045BE11 /* cocoa_main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = cocoa_main.m; sourceTree = "<group>"; };
 		31225ABC08C4216D0055628F /* RXStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXStack.h; sourceTree = "<group>"; };
@@ -343,8 +360,6 @@
 		312F4DAD0DC263F400B3AF0D /* RXTransition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXTransition.m; sourceTree = "<group>"; };
 		312F4DAE0DC263F400B3AF0D /* RXVBOBroker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVBOBroker.h; sourceTree = "<group>"; };
 		312F4DAF0DC263F400B3AF0D /* RXVBOBroker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVBOBroker.m; sourceTree = "<group>"; };
-		312F4DB00DC263F400B3AF0D /* RXWaterAnimationFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWaterAnimationFrame.h; sourceTree = "<group>"; };
-		312F4DB10DC263F400B3AF0D /* RXWaterAnimationFrame.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXWaterAnimationFrame.mm; sourceTree = "<group>"; };
 		312F4DB20DC263F400B3AF0D /* RXWorldView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWorldView.h; sourceTree = "<group>"; };
 		312F4DB30DC263F400B3AF0D /* RXWorldView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXWorldView.m; sourceTree = "<group>"; };
 		31327B640DCF509E00280D8F /* RXCardExecutionProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardExecutionProtocol.h; sourceTree = "<group>"; };
@@ -437,6 +452,8 @@
 		31863C590991AA28001A4A42 /* InterThreadMessaging.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = InterThreadMessaging.m; path = Additions/InterThreadMessaging.m; sourceTree = "<group>"; };
 		318CB4620E04917A00BD2C38 /* RXGameState_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXGameState_test.h; sourceTree = "<group>"; };
 		318CB4630E04917A00BD2C38 /* RXGameState_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXGameState_test.m; sourceTree = "<group>"; };
+		319288DB0EF43C630043B15A /* RXCoreStructures.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCoreStructures.h; sourceTree = "<group>"; };
+		3195A6330EEC57860000CFB6 /* RXRivenScriptCommandAliases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRivenScriptCommandAliases.h; sourceTree = "<group>"; };
 		3196B9340D945CC100BC818E /* RXTiming.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXTiming.h; path = Base/RXTiming.h; sourceTree = "<group>"; };
 		3196B9350D945CC100BC818E /* RXTiming.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RXTiming.c; path = Base/RXTiming.c; sourceTree = "<group>"; };
 		3196BA150D947F8200BC818E /* CADebugger.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CADebugger.cpp; path = /Developer/Examples/CoreAudio/PublicUtility/CADebugger.cpp; sourceTree = "<absolute>"; };
@@ -475,6 +492,8 @@
 		31D21B9A0DBC07A700E970E1 /* MainMenu.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainMenu.xib; sourceTree = "<group>"; };
 		31D21B9C0DBC07B500E970E1 /* EditionManager.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = EditionManager.xib; sourceTree = "<group>"; };
 		31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = DebugConsole.xib; sourceTree = "<group>"; };
+		31D3D85E0EEE36FD00F2D1C4 /* RXOpenGLState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXOpenGLState.h; sourceTree = "<group>"; };
+		31D3D85F0EEE36FD00F2D1C4 /* RXOpenGLState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXOpenGLState.m; sourceTree = "<group>"; };
 		31D6AD8D0D4197E600629AEB /* dump_save */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = dump_save; sourceTree = BUILT_PRODUCTS_DIR; };
 		31DAA0DF09D888E100F63F20 /* RXCardAudioSource_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RXCardAudioSource_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.objcpp; path = RXCardAudioSource_test.mm; sourceTree = "<group>"; };
@@ -749,12 +768,13 @@
 				31225AC308C421790055628F /* RXCard.mm */,
 				31588871098D7A120090A6B6 /* RXCardDescriptor.h */,
 				31588872098D7A120090A6B6 /* RXCardDescriptor.m */,
+				31327B640DCF509E00280D8F /* RXCardExecutionProtocol.h */,
 				312EDC700A2E3B80005D26AF /* RXHotspot.h */,
 				312EDC710A2E3B80005D26AF /* RXHotspot.m */,
-				31863C0509919F87001A4A42 /* RXRivenScriptProtocol.h */,
 				312B048D0D9A8AE20012BE29 /* RXMovieProxy.h */,
 				312B048E0D9A8AE20012BE29 /* RXMovieProxy.m */,
-				31327B640DCF509E00280D8F /* RXCardExecutionProtocol.h */,
+				3195A6330EEC57860000CFB6 /* RXRivenScriptCommandAliases.h */,
+				31863C0509919F87001A4A42 /* RXRivenScriptProtocol.h */,
 			);
 			name = Card;
 			sourceTree = "<group>";
@@ -763,8 +783,14 @@
 			isa = PBXGroup;
 			children = (
 				312F4D940DC263F400B3AF0D /* GL */,
+				311EDC980EF59CCD002CAB47 /* RXDynamicPicture.h */,
+				311EDC990EF59CCD002CAB47 /* RXDynamicPicture.m */,
 				312F4D9A0DC263F400B3AF0D /* RXMovie.h */,
 				312F4D9B0DC263F400B3AF0D /* RXMovie.m */,
+				31D3D85E0EEE36FD00F2D1C4 /* RXOpenGLState.h */,
+				31D3D85F0EEE36FD00F2D1C4 /* RXOpenGLState.m */,
+				3103D4D90EF0D3D40025170A /* RXPicture.h */,
+				3103D4DA0EF0D3D40025170A /* RXPicture.m */,
 				312F4DA80DC263F400B3AF0D /* RXStateCompositor.h */,
 				312F4DA90DC263F400B3AF0D /* RXStateCompositor.mm */,
 				312F4DAA0DC263F400B3AF0D /* RXTextureBroker.h */,
@@ -773,8 +799,6 @@
 				312F4DAD0DC263F400B3AF0D /* RXTransition.m */,
 				312F4DAE0DC263F400B3AF0D /* RXVBOBroker.h */,
 				312F4DAF0DC263F400B3AF0D /* RXVBOBroker.m */,
-				312F4DB00DC263F400B3AF0D /* RXWaterAnimationFrame.h */,
-				312F4DB10DC263F400B3AF0D /* RXWaterAnimationFrame.mm */,
 				312F4DB20DC263F400B3AF0D /* RXWorldView.h */,
 				312F4DB30DC263F400B3AF0D /* RXWorldView.m */,
 			);
@@ -1074,8 +1098,11 @@
 			children = (
 				312B048A0D9A8AB30012BE29 /* Card */,
 				31796FBC0D5D032500C493D2 /* Edition */,
+				319288DB0EF43C630043B15A /* RXCoreStructures.h */,
 				317403920CDC1A67006F3523 /* RXGameState.h */,
 				317403930CDC1A67006F3523 /* RXGameState.m */,
+				3103D4F20EF0DAF30025170A /* RXHardwareProfiler.h */,
+				3103D4F30EF0DAF30025170A /* RXHardwareProfiler.m */,
 				31225ABC08C4216D0055628F /* RXStack.h */,
 				31225ABD08C4216D0055628F /* RXStack.m */,
 				31F3095508BE5FA200417394 /* RXWorld.h */,
@@ -1191,6 +1218,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				31BA9E1F0EE65F28003C4457 /* PBXTargetDependency */,
 			);
 			name = dump_save;
 			productName = dump_save;
@@ -1615,6 +1643,10 @@
 				3185C4730E06046D00528220 /* RXVersionComparator.m in Sources */,
 				31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */,
 				31A1FB210E0CA95200B2437A /* RXRenderStateOpacityAnimation.m in Sources */,
+				31D3D8600EEE36FD00F2D1C4 /* RXOpenGLState.m in Sources */,
+				3103D4DB0EF0D3D40025170A /* RXPicture.m in Sources */,
+				3103D4F40EF0DAF30025170A /* RXHardwareProfiler.m in Sources */,
+				311EDC9A0EF59CCD002CAB47 /* RXDynamicPicture.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1638,6 +1670,11 @@
 			isa = PBXTargetDependency;
 			target = 3149598E0E327B2D00E49C83 /* MHKKit */;
 			targetProxy = 316E1F310E7780A100F28E2A /* PBXContainerItemProxy */;
+		};
+		31BA9E1F0EE65F28003C4457 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3149598E0E327B2D00E49C83 /* MHKKit */;
+			targetProxy = 31BA9E1E0EE65F28003C4457 /* PBXContainerItemProxy */;
 		};
 		31C357340D92A78900EDEF81 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1953,7 +1990,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					CoreAudio_StopOnFailure,
-					"DEBUG=2",
+					"DEBUG=1",
 					"DEBUG_GL=1",
 				);
 				GCC_VERSION = 4.0;

@@ -17,10 +17,12 @@
 	return nil;
 }
 
-- (id)initWithArchive:(MHKArchive*)archive ID:(uint16_t)ID origin:(CGPoint)origin loop:(BOOL)loop {
+- (id)initWithArchive:(MHKArchive*)archive ID:(uint16_t)ID origin:(CGPoint)origin loop:(BOOL)loop owner:(id)owner {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
+	_owner = owner;
 	_archive = archive;
 	_ID = ID;
 	_origin = origin;
@@ -36,11 +38,12 @@
 
 - (void)_loadMovie {
 	// WARNING: MUST RUN ON MAIN THREAD
-	if (_movie) return;
+	if (_movie)
+		return;
 	
 	// FIXME: error handling in [RXProxyMovie _loadMovie]
 	Movie movie = [_archive movieWithID:_ID error:NULL];
-	_movie = [[RXMovie alloc] initWithMovie:movie disposeWhenDone:YES];
+	_movie = [[RXMovie alloc] initWithMovie:movie disposeWhenDone:YES owner:_owner];
 	
 	// set movie attributes
 	[_movie setWorkingColorSpace:[RXGetWorldView() workingColorSpace]];
@@ -58,38 +61,76 @@
 }
 
 + (BOOL)instancesRespondToSelector:(SEL)aSelector {
-	if ([super instancesRespondToSelector:aSelector]) return YES;
+	if ([super instancesRespondToSelector:aSelector])
+		return YES;
 	return [RXMovie instancesRespondToSelector:aSelector];
 }
 
 + (NSMethodSignature*)instanceMethodSignatureForSelector:(SEL)aSelector {
 	NSMethodSignature* signature = [super instanceMethodSignatureForSelector:aSelector];
-	if (signature) return signature;
+	if (signature)
+		return signature;
 	return [RXMovie instanceMethodSignatureForSelector:aSelector];
 }
 
 - (BOOL)isKindOfClass:(Class)aClass {
-	if ([super isKindOfClass:aClass]) return YES;
+	if ([super isKindOfClass:aClass])
+		return YES;
 	return [aClass isSubclassOfClass:[RXMovie class]];
 }
 
 - (BOOL)respondsToSelector:(SEL)aSelector {
-	if ([super respondsToSelector:aSelector]) return YES;
+	if ([super respondsToSelector:aSelector])
+		return YES;
 	return [RXMovie instancesRespondToSelector:aSelector];
 }
 
 - (NSMethodSignature*)methodSignatureForSelector:(SEL)aSelector {
 	NSMethodSignature* signature = [super methodSignatureForSelector:aSelector];
-	if (signature) return signature;
+	if (signature)
+		return signature;
 	return [RXMovie instanceMethodSignatureForSelector:aSelector];
 }
 
 - (void)forwardInvocation:(NSInvocation*)anInvocation {
 	// if the movie has not been loaded yet, do that on the main thread
-	if (!_movie) [self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
 	
 	// forward the message to the movie
 	[anInvocation invokeWithTarget:_movie]; 
+}
+
+#pragma mark -
+#pragma mark common known selectors
+
+- (id)owner {
+	// we don't need to allocate the movie to respond to this method
+	return _owner;
+}
+
+- (QTMovie*)movie {
+	// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	return [_movie movie];
+}
+
+- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
+	// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	[_movie render:outputTime inContext:cgl_ctx framebuffer:fbo];
+}
+
+- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
+	// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	[_movie performPostFlushTasks:outputTime];
 }
 
 @end

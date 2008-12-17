@@ -7,52 +7,19 @@
 //
 
 #import <mach/semaphore.h>
-#import <mach/task.h>
-#import <mach/thread_act.h>
-#import <mach/thread_policy.h>
 
 #import <Foundation/Foundation.h>
 
-#import "RXAtomic.h"
-#import "RXTiming.h"
+#import "Base/RXAtomic.h"
+#import "Base/RXTiming.h"
 
 #import "RXCardDescriptor.h"
-
-#import "RXHotspot.h"
-#import "RXSoundGroup.h"
-
-#import "RXRendering.h"
-#import "RXRivenScriptProtocol.h"
 #import "RXCardExecutionProtocol.h"
+#import "RXHotspot.h"
+#import "RXRivenScriptProtocol.h"
 
-#if defined(LLVM_WATER)
-#import "RXWaterAnimationFrame.h"
-#endif
-
-struct _rx_card_sfxe {
-#if defined(LLVM_WATER)
-	NSMutableArray* frames;
-#elif defined(GPU_WATER)
-	GLsizei nframes;
-	GLuint* frames;
-	void* frame_storage;
-#endif
-	NSRect roi;
-	double fps;
-};
-
-struct _rx_card_sfxe_render_state {
-	struct _rx_card_sfxe* sfxe;
-	uint32_t current_frame;
-	uint64_t frame_timestamp;
-};
-
-struct _rx_card_render_state {
-	NSMutableArray* pictures;
-	NSMutableArray* movies;
-	struct _rx_card_sfxe_render_state water_fx;
-	BOOL refresh_static;
-};
+#import "Rendering/RXRendering.h"
+#import "Rendering/Audio/RXSoundGroup.h"
 
 
 @interface RXCard : NSObject <RXCardExecutionProtocol> {
@@ -76,14 +43,14 @@ struct _rx_card_render_state {
 	// pictures
 	GLuint _pictureCount;
 	GLuint _pictureVertexArrayBuffer;
+	GLuint _pictureVAO;
+	GLuint* _pictureTextures;
 	void* _pictureTextureStorage;
-	
-	GLuint _dynamicPictureCount;
 	NSMapTable* _dynamicPictureMap;
 	
 	// special effects
 	uint16_t _sfxeCount;
-	struct _rx_card_sfxe* _sfxes;
+	rx_card_sfxe* _sfxes;
 	
 	// movies
 	NSMutableArray* _movies;
@@ -98,9 +65,6 @@ struct _rx_card_render_state {
 	
 	// rendering
 	BOOL _renderStateSwapsEnabled;
-	// FIXME: turn those into pointers, and allocate them on different cache lines (to keep it simple, pad by 128 bytes and align on 128 bytes)
-	struct _rx_card_render_state _renderState1;
-	struct _rx_card_render_state _renderState2;
 	
 	BOOL _didActivatePLST;
 	BOOL _didActivateSLST;
@@ -112,22 +76,11 @@ struct _rx_card_render_state {
 	
 	// external commands
 	NSMapTable* _externalCommandLookup;
-	
-@public
-	// this is public ONLY for RXCardState
-	
-	// render states
-	struct _rx_card_render_state* volatile _frontRenderStatePtr;
-	struct _rx_card_render_state* _backRenderStatePtr;
-	
-	// pictures
-	GLuint _pictureVAO;
-	GLuint* _pictureTextures;
 }
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;
+
 - (RXCardDescriptor*)descriptor;
-- (NSString*)description;
 
 - (NSArray*)activeHotspots;
 - (void)mouseEnteredHotspot:(RXHotspot*)hotspot;

@@ -16,7 +16,4 @@
 - (void)prepareForRendering;
 - (void)startRendering;
 - (void)stopRendering;
-
-- (void)finalizeRenderStateSwap;
-- (void)finalizeMovieRenderStateSwap;
 @end

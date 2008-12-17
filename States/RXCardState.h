@@ -20,13 +20,26 @@
 #import "RXStack.h"
 #import "RXTransition.h"
 
-struct _rx_card_state_render_state {
+struct rx_sfxe_render_state {
+	rx_card_sfxe* sfxe;
+	id owner;
+	uint32_t current_frame;
+	uint64_t frame_timestamp;
+};
+
+struct rx_card_state_render_state {
 	RXCard* card;
-	BOOL newCard;
+	BOOL new_card;
+	
+	BOOL refresh_static;
+	NSMutableArray* pictures;
+	NSMutableArray* volatile movies;
+	struct rx_sfxe_render_state water_fx;
+	
 	RXTransition* transition;
 };
 
-struct _rx_transition_program {
+struct rx_transition_program {
 	GLuint program;
 	GLint t_uniform;
 	GLint margin_uniform;
@@ -35,8 +48,9 @@ struct _rx_transition_program {
 
 @interface RXCardState : RXRenderState <RXRivenScriptProtocol> {
 	// render state
-	struct _rx_card_state_render_state* volatile _front_render_state;
-	struct _rx_card_state_render_state* _back_render_state;
+	void* _render_states_buffer;
+	struct rx_card_state_render_state* volatile _front_render_state;
+	struct rx_card_state_render_state* volatile _back_render_state;
 	OSSpinLock _renderLock;
 	
 	// event handling
@@ -66,11 +80,11 @@ struct _rx_transition_program {
 	semaphore_t _transitionSemaphore;
 	NSMutableArray* _transitionQueue;
 	
-	struct _rx_transition_program _dissolve;
-	struct _rx_transition_program _push[4];
-	struct _rx_transition_program _slide_out[4];
-	struct _rx_transition_program _slide_in[4];
-	struct _rx_transition_program _swipe[4];
+	struct rx_transition_program _dissolve;
+	struct rx_transition_program _push[4];
+	struct rx_transition_program _slide_out[4];
+	struct rx_transition_program _slide_in[4];
+	struct rx_transition_program _swipe[4];
 	
 	// rendering
 	GLuint _cardRenderVAO;
@@ -83,7 +97,7 @@ struct _rx_transition_program {
 	GLuint _textures[3];
 	
 	GLuint _waterProgram;
-	GLuint _cardProgram;
+	GLuint _single_rect_texture_program;
 	
 	GLuint _hotspotDebugRenderVAO;
 	GLuint _hotspotDebugRenderVBO;
@@ -96,6 +110,9 @@ struct _rx_transition_program {
 	uint16_t _inventoryDestinationCardID[3];
 	GLuint _inventoryTextures[3];
 	GLuint _inventoryTextureBuffer;
+	
+	uint32_t _inventoryItemCount;
+	float _inventoryAlphaFactor;
 }
 
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;

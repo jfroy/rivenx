@@ -26,13 +26,18 @@
 	return nil;
 }
 
-- (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone {
+- (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone owner:(id)owner {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
+	
+	// we must be on the main thread to use QuickTime
 	if (!pthread_main_np()) {
 		[self release];
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie initWithMovie:disposeWhenDone:] MAIN THREAD ONLY" userInfo:nil];
 	}
+	
+	_owner = owner;
 	
 	OSStatus err = noErr;
 	NSError* error = nil;
@@ -52,6 +57,8 @@
 	
 	// pixel buffer attributes
 	NSMutableDictionary* pixelBufferAttributes = [NSMutableDictionary new];
+	[pixelBufferAttributes setObject:[NSNumber numberWithInt:_currentSize.width] forKey:(NSString*)kCVPixelBufferWidthKey];
+	[pixelBufferAttributes setObject:[NSNumber numberWithInt:_currentSize.height] forKey:(NSString*)kCVPixelBufferHeightKey];
 	[pixelBufferAttributes setObject:[NSNumber numberWithInt:4] forKey:(NSString*)kCVPixelBufferBytesPerRowAlignmentKey];
 	[pixelBufferAttributes setObject:[NSNumber numberWithBool:YES] forKey:(NSString*)kCVPixelBufferOpenGLCompatibilityKey];
 #if defined(__LITTLE_ENDIAN__)
@@ -64,15 +71,18 @@
 	CFDictionarySetValue(visualContextOptions, kQTVisualContextPixelBufferAttributesKey, pixelBufferAttributes);
 	[pixelBufferAttributes release];
 	
-	// load context and the associated pixel format
+	// get the load context and the associated pixel format
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLPixelFormatObj pixel_format = [RXGetWorldView() cglPixelFormat];
 	
 	// lock the load context
 	CGLLockContext(cgl_ctx);
 	
-	// if the movie is smaller than 128 bytes in either dimension, create a memory-backed visual context, otherwise go directly to OpenGL
-	if (_currentSize.width < 32 || _currentSize.height < 32) {
+	// alias the load context state object pointer
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
+	
+	// if the movie is smaller than 128 bytes in width, using a main-memory pixel buffer visual context and override the width to 128 bytes
+	if (_currentSize.width < 32) {
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"using main memory pixel buffer path");
 #endif
@@ -85,8 +95,8 @@
 		}
 		
 		// allocate a texture storage buffer and setup a texture object
-		_textureStorage = malloc(128 * 128 * 4);
-		bzero(_textureStorage, 128 * 128 * 4);
+		_textureStorage = malloc(128 * _currentSize.height * 4);
+		bzero(_textureStorage, 128 * _currentSize.height * 4);
 		
 		glGenTextures(1, &_glTexture); glReportError();
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();
@@ -98,7 +108,7 @@
 		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
 		glReportError();
 		
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 128, 128, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, _textureStorage); glReportError();
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 128, _currentSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, _textureStorage); glReportError();
 	} else {
 		err = QTOpenGLTextureContextCreate(NULL, cgl_ctx, pixel_format, visualContextOptions, &_visualContext);
 		CFRelease(visualContextOptions);
@@ -110,7 +120,7 @@
 	
 	// create a VAO and prepare the VA state
 	glGenVertexArraysAPPLE(1, &_vao); glReportError();
-	glBindVertexArrayAPPLE(_vao); glReportError();
+	[gl_state bindVertexArrayObject:_vao];
 	
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	
@@ -121,7 +131,7 @@
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
 	glTexCoordPointer(2, GL_FLOAT, 0, _coordinates + 8); glReportError();
 	
-	glBindVertexArrayAPPLE(0); glReportError();
+	[gl_state bindVertexArrayObject:0];
 	
 	CGLUnlockContext(cgl_ctx);
 	
@@ -144,7 +154,7 @@
 	return self;
 }
 
-- (id)initWithURL:(NSURL *)movieURL {
+- (id)initWithURL:(NSURL*)movieURL owner:(id)owner {
 	if (!pthread_main_np()) {
 		[self release];
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie initWithURL:] MAIN THREAD ONLY" userInfo:nil];
@@ -178,7 +188,7 @@
 	}
 	
 	@try {
-		return [self initWithMovie:aMovie disposeWhenDone:YES];
+		return [self initWithMovie:aMovie disposeWhenDone:YES owner:owner];
 	} @catch(NSException* e) {
 		DisposeMovie(aMovie);
 		@throw e;
@@ -188,7 +198,8 @@
 }
 
 - (void)dealloc {
-	if (!pthread_main_np()) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie dealloc] MAIN THREAD ONLY" userInfo:nil];
+	if (!pthread_main_np())
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie dealloc] MAIN THREAD ONLY" userInfo:nil];
 	RXOLog2(kRXLoggingRendering, kRXLoggingLevelDebug, @"deallocating");
 	
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
@@ -200,15 +211,24 @@
 		[_movie release];
 	}
 	
-	if (_vao) glDeleteVertexArraysAPPLE(1, &_vao);
-	if (_visualContext) QTVisualContextRelease(_visualContext);
-	if (_imageBuffer) CFRelease(_imageBuffer);
-	if (_glTexture) glDeleteTextures(1, &_glTexture);
-	if (_textureStorage) free(_textureStorage);
+	if (_vao)
+		glDeleteVertexArraysAPPLE(1, &_vao);
+	if (_visualContext)
+		QTVisualContextRelease(_visualContext);
+	if (_imageBuffer)
+		CFRelease(_imageBuffer);
+	if (_glTexture)
+		glDeleteTextures(1, &_glTexture);
+	if (_textureStorage)
+		free(_textureStorage);
 	
 	CGLUnlockContext(cgl_ctx);
 	
 	[super dealloc];
+}
+
+- (id)owner {
+	return _owner;
 }
 
 - (QTMovie*)movie {
@@ -219,7 +239,8 @@
 	CVTime rawOVL = CVDisplayLinkGetOutputVideoLatency(displayLink);
 	
 	// if the OVL is indefinite, exit
-	if (rawOVL.flags | kCVTimeIsIndefinite) return;
+	if (rawOVL.flags | kCVTimeIsIndefinite)
+		return;
 	
 	// set the expected read ahead
 	SInt64 ovl = rawOVL.timeValue / rawOVL.timeScale;
@@ -280,12 +301,17 @@
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
-	if (!_movie) return;
+	if (!_movie)
+		return;
+	
+	// alias the render context state object pointer
+	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
 	
 	// does the visual context have a new image?
 	if (QTVisualContextIsNewImageAvailable(_visualContext, outputTime)) {
 		// release the old image
-		if (_imageBuffer) CVPixelBufferRelease(_imageBuffer);
+		if (_imageBuffer)
+			CVPixelBufferRelease(_imageBuffer);
 		
 		// get the new image
 		QTVisualContextCopyImageForTime(_visualContext, kCFAllocatorDefault, outputTime, &_imageBuffer);
@@ -320,7 +346,8 @@
 				// marshall the image data into the texture
 				CVPixelBufferLockBaseAddress(_imageBuffer, 0);
 				void* baseAddress = CVPixelBufferGetBaseAddress(_imageBuffer);
-				for (GLuint row = 0; row < height; row++) memcpy(BUFFER_OFFSET(_textureStorage, (row * 128) << 2), BUFFER_OFFSET(baseAddress, row * bytesPerRow), width << 2);
+				for (GLuint row = 0; row < height; row++)
+					memcpy(BUFFER_OFFSET(_textureStorage, (row * 128) << 2), BUFFER_OFFSET(baseAddress, row * bytesPerRow), width << 2);
 				CVPixelBufferUnlockBaseAddress(_imageBuffer, 0);
 				
 				// bind the texture object and update the texture data
@@ -333,14 +360,17 @@
 		}
 	} else if (_imageBuffer) {
 		// bind the correct texture object
-		if (CFGetTypeID(_imageBuffer) == CVOpenGLTextureGetTypeID()) glBindTexture(CVOpenGLTextureGetTarget(_imageBuffer), CVOpenGLTextureGetName(_imageBuffer));
-		else glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture);
+		// FIXME: ONLY TEXTURE_RECTANGLE_ARB WILL WORK WITH THE CARD SHADER
+		if (CFGetTypeID(_imageBuffer) == CVOpenGLTextureGetTypeID())
+			glBindTexture(CVOpenGLTextureGetTarget(_imageBuffer), CVOpenGLTextureGetName(_imageBuffer));
+		else
+			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture);
 		glReportError();
 	}
 	
 	// do we have an image to render?
 	if (_imageBuffer && !_invalidImage) {
-		glBindVertexArrayAPPLE(_vao);
+		[gl_state bindVertexArrayObject:_vao];
 		glDrawArrays(GL_QUADS, 0, 4); glReportError();
 	}
 }

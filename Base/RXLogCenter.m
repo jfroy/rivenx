@@ -67,6 +67,14 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 	}
 	fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
 	[_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingScript encoding:NSASCIIStringEncoding]];
+	
+	fd = open([[_logsBase stringByAppendingPathComponent:@"Base.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_CREAT, 0600);
+	if (fd == -1) {
+		error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
+		@throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	}
+	fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
+	[_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingBase encoding:NSASCIIStringEncoding]];
 	 
 	// open a generic log file
 	_genericLogFD = open([[_logsBase stringByAppendingPathComponent:@"Riven X.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_CREAT, 0600);
@@ -104,17 +112,20 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 }
 
 - (void)log:(NSString*)message facility:(NSString*)facility level:(int)level {
-	if (_toreDown) return;
+	if (_toreDown)
+		return;
 	
 	// check against the level filter
-	if ((ASL_FILTER_MASK(level) & _levelFilter) == 0) return;
+	if ((ASL_FILTER_MASK(level) & _levelFilter) == 0)
+		return;
 	
 	// message data as UTF-8
 	NSData* messageData = [message dataUsingEncoding:NSUTF8StringEncoding];
 	
 	// write to all appropriate log files
 	NSFileHandle* fh = [_facilityFDMap objectForKey:facility];
-	if (fh) write([fh fileDescriptor], [messageData bytes], [messageData length]);
+	if (fh)
+		write([fh fileDescriptor], [messageData bytes], [messageData length]);
 	
 	// always write to the generic log
 	write(_genericLogFD, [messageData bytes], [messageData length]);

@@ -7,6 +7,7 @@
 //
 
 #import "RXRendering.h"
+#import "Rendering/Graphics/RXOpenGLState.h"
 
 
 @interface RXWorldView : NSOpenGLView <RXWorldViewProtocol> {

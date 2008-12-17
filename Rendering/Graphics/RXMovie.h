@@ -13,6 +13,8 @@
 
 
 @interface RXMovie : NSObject <RXRenderingProtocol> {
+	__weak id _owner;
+	
 	QTMovie* _movie;
 	QTVisualContextRef _visualContext;
 	
@@ -32,8 +34,10 @@
 	BOOL _invalidImage;
 }
 
-- (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone;
-- (id)initWithURL:(NSURL *)movieURL;
+- (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone owner:(id)owner;
+- (id)initWithURL:(NSURL*)movieURL owner:(id)owner;
+
+- (id)owner;
 
 - (QTMovie*)movie;
 

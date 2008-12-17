@@ -56,7 +56,8 @@ extern NSObject <RXWorldProtocol>* g_world;
 
 CF_INLINE BOOL RXEngineGetBool(NSString* path) {
 	id o = [g_world valueForKeyPath:path];
-	if (!o) return NO;
+	if (!o)
+		return NO;
 	return [o boolValue];
 }
 

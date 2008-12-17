@@ -6,6 +6,10 @@
 //	Copyright 2005 MacStorm. All rights reserved.
 //
 
+#import <mach/task.h>
+#import <mach/thread_act.h>
+#import <mach/thread_policy.h>
+
 #import <sys/param.h>
 #import <sys/mount.h>
 
@@ -46,11 +50,13 @@ NSObject* g_world = nil;
 - (void)_initEngineVariables {
 	NSError* error = nil;
 	NSData* defaultVarData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"EngineVariables" ofType:@"plist"] options:0 error:&error];
-	if (!defaultVarData) @throw [NSException exceptionWithName:@"RXMissingDefaultEngineVariablesException" reason:@"Unable to find EngineVariables.plist." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+	if (!defaultVarData)
+		@throw [NSException exceptionWithName:@"RXMissingDefaultEngineVariablesException" reason:@"Unable to find EngineVariables.plist." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 	
 	NSString* errorString = nil;
 	_engineVariables = [[NSPropertyListSerialization propertyListFromData:defaultVarData mutabilityOption:NSPropertyListMutableContainers format:NULL errorDescription:&errorString] retain];
-	if (!_engineVariables) @throw [NSException exceptionWithName:@"RXInvalidDefaultEngineVariablesException" reason:@"Unable to load the default engine variables." userInfo:[NSDictionary dictionaryWithObject:errorString forKey:@"RXErrorString"]];
+	if (!_engineVariables)
+		@throw [NSException exceptionWithName:@"RXInvalidDefaultEngineVariablesException" reason:@"Unable to load the default engine variables." userInfo:[NSDictionary dictionaryWithObject:errorString forKey:@"RXErrorString"]];
 	[errorString release];
 	
 #if defined(DEBUG)
@@ -62,13 +68,15 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (id)init {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	@try {
 		_tornDown = NO;
 		
 		// WARNING: the world has to run on the main thread
-		if (!pthread_main_np()) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"initSingleton: MAIN THREAD ONLY" userInfo:nil];
+		if (!pthread_main_np())
+			@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"initSingleton: MAIN THREAD ONLY" userInfo:nil];
 		
 		// initialize threading
 		RXInitThreading();

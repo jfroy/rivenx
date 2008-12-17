@@ -28,12 +28,13 @@ static rx_render_dispatch_t _clear_dispatch;
 
 - (id)init {
 	self = [super init];
-	if(!self) return self;
+	if (!self)
+		return self;
 	
 	id <RXWorldViewProtocol> view = RXGetWorldView();
 	
 	// allocate the Cyan movie
-	_cyanMovie = [[RXMovie alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Cyan Worlds" ofType:@"mp4"]]];
+	_cyanMovie = [[RXMovie alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Cyan Worlds" ofType:@"mp4"]] owner:self];
 	[_cyanMovie setWorkingColorSpace:[view workingColorSpace]];
 	[_cyanMovie setOutputColorSpace:[view displayColorSpace]];
 	[_cyanMovie setExpectedReadAheadFromDisplayLink:[view displayLink]];
@@ -68,7 +69,6 @@ static rx_render_dispatch_t _clear_dispatch;
 }
 
 - (void)arm {
-	RXOLog(@"starting movie");
 	[[_cyanMovie movie] gotoBeginning];
 	[[_cyanMovie movie] play];
 	_dispatch = _render_dispatch;
