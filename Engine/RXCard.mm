@@ -2684,6 +2684,24 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 	return (icon_bitfield & (1U << (index - 1))) ? YES : NO;
 }
 
+- (uint32_t)_countDepressedIcons {
+	uint32_t icon_sequence = [[g_world gameState] unsigned32ForKey:@"jiconorder"];
+	if (icon_sequence >= (1U << 25))
+		return 6;
+	else if (icon_sequence >= (1U << 20))
+		return 5;
+	else if (icon_sequence >= (1U << 15))
+		return 4;
+	else if (icon_sequence >= (1U << 10))
+		return 3;
+	else if (icon_sequence >= (1U << 5))
+		return 2;
+	else if (icon_sequence >= (1U << 1))
+		return 1;
+	else
+		return 0;
+}
+
 DEFINE_COMMAND(xicon) {
 	// this command sets the variable atemp to 1 if the specified icon is depressed, 0 otherwise
 	if ([self _isIconDepressed:argv[0]])
@@ -2693,18 +2711,29 @@ DEFINE_COMMAND(xicon) {
 }
 
 DEFINE_COMMAND(xcheckicons) {
-
+	// this command verifies the state of the icons and takes appropriate action based on the icon sequence
+	
 }
 
 DEFINE_COMMAND(xtoggleicon) {
 	// this command toggles the state of a particular icon for the rebel tunnel puzzle
+	uint32_t icon_sequence = [[g_world gameState] unsigned32ForKey:@"jiconorder"];
+	uint32_t correct_icon_sequence = [[g_world gameState] unsigned32ForKey:@"jiconcorrectorder"];
 	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
 	uint32_t icon_bit = 1U << (argv[0] - 1);
 	
-	if (icon_bitfield & icon_bit)
+	if (icon_bitfield & icon_bit) {
 		[[g_world gameState] setUnsigned32:(icon_bitfield & ~icon_bit) forKey:@"jicons"];
-	else
+		icon_sequence >>= 5;
+	} else {
 		[[g_world gameState] setUnsigned32:(icon_bitfield | icon_bit) forKey:@"jicons"];
+		icon_sequence = icon_sequence << 5 | argv[0];
+	}
+	
+	[[g_world gameState] setUnsigned32:icon_sequence forKey:@"jiconorder"];
+	
+	if (icon_sequence == correct_icon_sequence)
+		[[g_world gameState] setUnsignedShort:1 forKey:@"jrbook"];
 }
 
 DEFINE_COMMAND(xjtunnel103_pictfix) {

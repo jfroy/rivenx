@@ -36,11 +36,11 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	return gameState;
 }
 
-- (void)_initRandomValues {
+- (void)_initializeState {
 	[self setShort:-2 forKey:@"aDomeCombo"];
 	[self setShort:-2 forKey:@"pCorrectOrder"];
 	[self setShort:-2 forKey:@"tCorrectOrder"];
-	[self setShort:-2 forKey:@"jIconCorrectOrder"];
+	[self setUnsigned32:12068577 forKey:@"jIconCorrectOrder"];
 	[self setShort:-2 forKey:@"pCorrectOrder"];
 }
 
@@ -79,8 +79,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	
 	_edition = [edition retain];
 	
-	// a certain part of the game state is random generated; defer that work to another dedicated method
-	[self _initRandomValues];
+	[self _initializeState];
 	
 	// no URL for new game states
 	_URL = nil;
