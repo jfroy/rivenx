@@ -266,7 +266,7 @@ static NSMutableString* _scriptLogPrefix;
 		_riven_command_dispatch_table[25].sel = @selector(_opcode_noop:arguments:);
 		_riven_command_dispatch_table[26].sel = @selector(_opcode_noop:arguments:);
 		_riven_command_dispatch_table[27].sel = @selector(_opcode_goToStack:arguments:);
-		_riven_command_dispatch_table[28].sel = @selector(_opcode_noop:arguments:);
+		_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMLST:arguments:);
 		_riven_command_dispatch_table[29].sel = @selector(_opcode_noop:arguments:);
 		_riven_command_dispatch_table[30].sel = @selector(_opcode_noop:arguments:);
 		_riven_command_dispatch_table[31].sel = @selector(_opcode_noop:arguments:);
@@ -1258,7 +1258,7 @@ static NSMutableString* _scriptLogPrefix;
 	_riven_command_dispatch_table[20].imp(self, _riven_command_dispatch_table[20].sel, 0, NULL);
 	 
 	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
-	[self performSelectorOnMainThread:@selector(_stopAllMovies) withObject:nil waitUntilDone:YES];
+	[(NSObject*)_scriptHandler performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
 	
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
@@ -1375,8 +1375,9 @@ static NSMutableString* _scriptLogPrefix;
 		[self _executeRivenProgram:[[program objectForKey:@"program"] bytes] count:[[program objectForKey:@"opcodeCount"] unsignedShortValue]];
 	}
 	
-	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
-	[self performSelectorOnMainThread:@selector(_stopAllMovies) withObject:nil waitUntilDone:YES];
+//	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
+//	// FIXME: _stopAllMovies IS NOT IMPLEMENTED RIGHT NOW
+//	[self performSelectorOnMainThread:@selector(_stopAllMovies) withObject:nil waitUntilDone:YES];
 	
 	// invalidate the "inside hotspot" timer
 	[_insideHotspotEventTimer invalidate];
@@ -1615,7 +1616,7 @@ static NSMutableString* _scriptLogPrefix;
 		[movie gotoBeginning];
 	
 	// queue the movie for rendering
-	[_scriptHandler queueMovie:movie];
+	[_scriptHandler enableMovie:movie];
 	
 	// begin playback
 	[[movie movie] play];
@@ -1648,10 +1649,15 @@ static NSMutableString* _scriptLogPrefix;
 	[self _reallyDoPlayMovie:movie];
 }
 
-
-- (void)_stopAllMovies {
-	// WARNING: MUST RUN ON MAIN THREAD
-	// FIXME: NOT IMPLEMENTED ANYMORE
+- (void)_stopMovie:(RXMovie*)movie {
+	// disable the movie in the card renderer
+	[_scriptHandler disableMovie:movie];
+	
+	// stop playback
+	[[movie movie] stop];
+	
+	// swap the movie render states
+	[self _swapMovieRenderState];
 }
 
 #pragma mark -
@@ -1745,7 +1751,10 @@ static NSMutableString* _scriptLogPrefix;
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_dealloc_movies: MAIN THREAD ONLY" userInfo:nil];
 	
 	// stop all movies (because we really want them to be stopped by the time the card is tearing down...)
-	[self _stopAllMovies];
+	NSEnumerator* movie_enum = [_movies objectEnumerator];
+	RXMovie* movie;
+	while ((movie = [movie_enum nextObject]))
+		[[movie movie] stop];
 	
 	if (_codeToMovieMap)
 		NSFreeMapTable(_codeToMovieMap);
@@ -2058,6 +2067,10 @@ static NSMutableString* _scriptLogPrefix;
 	rx_command_dispatch_entry_t* command_dispatch = (rx_command_dispatch_entry_t*)NSMapGet(_riven_external_command_dispatch_map, externalName);
 	if (!command_dispatch) {
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    WARNING: external command is not implemented!", _scriptLogPrefix);
+#if defined(DEBUG)
+		[_scriptLogPrefix deleteCharactersInRange:NSMakeRange([_scriptLogPrefix length] - 4, 4)];
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
+#endif
 		return;
 	}
 		
@@ -2183,6 +2196,24 @@ static NSMutableString* _scriptLogPrefix;
 #endif
 	
 	[_scriptHandler setActiveCardWithStack:stackKey ID:card_id waitUntilDone:YES];
+}
+
+// 28
+- (void)_opcode_disableMLST:(const uint16_t)argc arguments:(const uint16_t*) argv {
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling movie with code %hu", _scriptLogPrefix, argv[0]);
+#endif
+	
+	// get the movie object
+	uintptr_t k = argv[0];
+	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
+	assert(movie);
+	
+	// stop the movie on the main thread and block until done
+	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
 }
 
 // 32

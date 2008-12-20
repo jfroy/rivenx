@@ -27,9 +27,12 @@
 - (void)setExecutingBlockingAction:(BOOL)blocking;
 
 - (void)queuePicture:(RXPicture*)picture;
-- (void)queueMovie:(RXMovie*)movie;
 - (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner;
 - (void)queueTransition:(RXTransition*)transition;
+
+- (void)enableMovie:(RXMovie*)movie;
+- (void)disableMovie:(RXMovie*)movie;
+- (void)disableAllMovies;
 
 - (void)swapRenderState:(RXCard*)sender;
 - (void)swapMovieRenderState:(RXCard*)sender;

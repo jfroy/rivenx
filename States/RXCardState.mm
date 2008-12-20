@@ -120,6 +120,10 @@ static void rx_release_owner_applier(const void* value, void* context) {
 	[[(id)value owner] release];
 }
 
+//static void rx_retain_owner_applier(const void* value, void* context) {
+//	[[(id)value owner] retain];
+//}
+
 #pragma mark -
 
 @interface RXCardState (RXCardStatePrivate)
@@ -934,13 +938,58 @@ init_failure:
 	[[picture owner] retain];
 }
 
-- (void)queueMovie:(RXMovie*)movie {
-	uint32_t index = [_back_render_state->movies indexOfObject:movie];
-	if (index != NSNotFound)
-		[_back_render_state->movies removeObjectAtIndex:index];
+- (void)enableMovie:(RXMovie*)movie {
+	OSSpinLockLock(&_renderLock);
 	
-	[_back_render_state->movies addObject:movie];
-	[[movie owner] retain];
+	uint32_t index = [_front_render_state->movies indexOfObject:movie];
+	if (index != NSNotFound)
+		[_front_render_state->movies removeObjectAtIndex:index];
+	
+	[_front_render_state->movies addObject:movie];
+	
+	if (index == NSNotFound)
+		[[movie owner] retain];
+	
+	OSSpinLockUnlock(&_renderLock);
+	
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"enabled movie %@, back movie list count at %d", movie, [_front_render_state->movies count]);
+#endif
+}
+
+
+- (void)disableMovie:(RXMovie*)movie {
+	OSSpinLockLock(&_renderLock);
+	
+	uint32_t index = [_front_render_state->movies indexOfObject:movie];
+	if (index != NSNotFound) {
+		[[movie movie] stop];
+		[[movie owner] release];
+		[_front_render_state->movies removeObjectAtIndex:index];
+	}
+	
+	OSSpinLockUnlock(&_renderLock);
+	
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled movie %@, back movie list count at %d", movie, [_front_render_state->movies count]);
+#endif
+}
+
+- (void)disableAllMovies {
+	OSSpinLockLock(&_renderLock);
+	
+	NSEnumerator* movie_enum = [_front_render_state->movies objectEnumerator];
+	RXMovie* movie;
+	while ((movie = [movie_enum nextObject]))
+		[[movie movie] stop];
+	CFArrayApplyFunction((CFArrayRef)_front_render_state->movies, CFRangeMake(0, [_front_render_state->movies count]), rx_release_owner_applier, self);
+	[_front_render_state->movies removeAllObjects];
+	
+	OSSpinLockUnlock(&_renderLock);
+	
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled all movies, back movie list count at %d", [_front_render_state->movies count]);
+#endif
 }
 
 - (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner {
@@ -1001,16 +1050,20 @@ init_failure:
 		_back_render_state->pictures = _front_render_state->pictures;
 		_front_render_state->pictures = new_pictures;
 		
-		NSMutableArray* new_movies = _back_render_state->movies;
-		_back_render_state->movies = _front_render_state->movies;
-		_front_render_state->movies = new_movies;
+//		NSMutableArray* new_movies = _back_render_state->movies;
+//		_back_render_state->movies = _front_render_state->movies;
+//		_front_render_state->movies = new_movies;
 		
 		[_back_render_state->pictures addObjectsFromArray:new_pictures];
-		[_back_render_state->movies addObjectsFromArray:new_movies];
+//		[_back_render_state->movies addObjectsFromArray:new_movies];
 		
 		[_front_render_state->pictures removeAllObjects];
-		[_front_render_state->movies removeAllObjects];
+//		[_front_render_state->movies removeAllObjects];
 	}
+	
+	NSMutableArray* new_movies = _back_render_state->movies;
+	_back_render_state->movies = _front_render_state->movies;
+	_front_render_state->movies = new_movies;
 	
 	// fast swap
 	_front_render_state = _back_render_state;
@@ -1027,8 +1080,8 @@ init_failure:
 	CFArrayApplyFunction((CFArrayRef)_back_render_state->pictures, CFRangeMake(0, [_back_render_state->pictures count]), rx_release_owner_applier, self);
 	[_back_render_state->pictures removeAllObjects];
 	
-	CFArrayApplyFunction((CFArrayRef)_back_render_state->movies, CFRangeMake(0, [_back_render_state->movies count]), rx_release_owner_applier, self);
-	[_back_render_state->movies removeAllObjects];
+//	CFArrayApplyFunction((CFArrayRef)_back_render_state->movies, CFRangeMake(0, [_back_render_state->movies count]), rx_release_owner_applier, self);
+//	[_back_render_state->movies removeAllObjects];
 	
 	// release the back render state water effect's owner, since it is no longer active
 	[_back_render_state->water_fx.owner release];
@@ -1052,31 +1105,35 @@ init_failure:
 }
 
 - (void)swapMovieRenderState:(RXCard*)sender {
-	NSMutableArray* previous_front_movies = _front_render_state->movies;
+//	NSMutableArray* previous_front_movies = _front_render_state->movies;
 	
 	// take the render lock
-	OSSpinLockLock(&_renderLock);
+//	OSSpinLockLock(&_renderLock);
 	
-	if (_front_render_state->refresh_static) {
-		// we need to merge the back render state into the front render state because we swapped before we could even render a single frame
-		NSMutableArray* new_movies = _back_render_state->movies;
-		_back_render_state->movies = _front_render_state->movies;
-		_front_render_state->movies = new_movies;
-		previous_front_movies = _front_render_state->movies;
-		
-		[_back_render_state->movies addObjectsFromArray:new_movies];
-		[_front_render_state->movies removeAllObjects];
-	}
+//	if (_front_render_state->refresh_static) {
+//		// we need to merge the back render state into the front render state because we swapped before we could even render a single frame
+//		NSMutableArray* new_movies = _back_render_state->movies;
+//		_back_render_state->movies = _front_render_state->movies;
+//		_front_render_state->movies = new_movies;
+//		previous_front_movies = _front_render_state->movies;
+//		
+//		[_back_render_state->movies addObjectsFromArray:new_movies];
+//		[_front_render_state->movies removeAllObjects];
+//	}
 	
-	// swap the sending card's movie render state
-	_front_render_state->movies = _back_render_state->movies;
+//	// swap the sending card's movie render state
+//	CFArrayApplyFunction((CFArrayRef)_front_render_state->movies, CFRangeMake(0, [_front_render_state->movies count]), rx_release_owner_applier, self);
+//	[_front_render_state->movies removeAllObjects];
+//	
+//	[_front_render_state->movies addObjectsFromArray:_back_render_state->movies];
+//	CFArrayApplyFunction((CFArrayRef)_front_render_state->movies, CFRangeMake(0, [_front_render_state->movies count]), rx_retain_owner_applier, self);
+//	
+//	// we can resume rendering now
+//	OSSpinLockUnlock(&_renderLock);
 	
-	// we can resume rendering now
-	OSSpinLockUnlock(&_renderLock);
-	
-	_back_render_state->movies = previous_front_movies;
-	CFArrayApplyFunction((CFArrayRef)_back_render_state->movies, CFRangeMake(0, [_back_render_state->movies count]), rx_release_owner_applier, self);
-	[_back_render_state->movies removeAllObjects];
+//	_back_render_state->movies = previous_front_movies;
+//	CFArrayApplyFunction((CFArrayRef)_back_render_state->movies, CFRangeMake(0, [_back_render_state->movies count]), rx_release_owner_applier, self);
+//	[_back_render_state->movies removeAllObjects];
 }
 
 #pragma mark -
