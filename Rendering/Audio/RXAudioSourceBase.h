@@ -12,8 +12,8 @@
 
 #include "RXAudioRenderer.h"
 
-#include "CAStreamBasicDescription.h"
-#include "CAAudioUnit.h"
+#include "Rendering/Audio/PublicUtility/CAStreamBasicDescription.h"
+#include "Rendering/Audio/PublicUtility/CAAudioUnit.h"
 
 namespace RX {
 

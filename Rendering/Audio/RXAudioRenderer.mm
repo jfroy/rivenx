@@ -23,7 +23,7 @@
 
 #import "GTMSystemVersion.h"
 
-#include "CAComponentDescription.h"
+#include "Rendering/Audio/PublicUtility/CAComponentDescription.h"
 
 namespace RX {
 
