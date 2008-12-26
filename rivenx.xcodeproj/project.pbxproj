@@ -419,6 +419,7 @@
 		31863C590991AA28001A4A42 /* InterThreadMessaging.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = InterThreadMessaging.m; path = Additions/InterThreadMessaging.m; sourceTree = "<group>"; };
 		318CB4620E04917A00BD2C38 /* RXGameState_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXGameState_test.h; sourceTree = "<group>"; };
 		318CB4630E04917A00BD2C38 /* RXGameState_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXGameState_test.m; sourceTree = "<group>"; };
+		318F91A00F050B3C006F6D41 /* MHKBase.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKBase.pch; path = mhk/MHKBase.pch; sourceTree = "<group>"; };
 		319288DB0EF43C630043B15A /* RXCoreStructures.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCoreStructures.h; sourceTree = "<group>"; };
 		3195A6330EEC57860000CFB6 /* RXRivenScriptCommandAliases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRivenScriptCommandAliases.h; sourceTree = "<group>"; };
 		3196B9340D945CC100BC818E /* RXTiming.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXTiming.h; path = Base/RXTiming.h; sourceTree = "<group>"; };
@@ -786,8 +787,6 @@
 		314959870E327AF900E49C83 /* MHKKit */ = {
 			isa = PBXGroup;
 			children = (
-				314959900E327B2D00E49C83 /* MHKKit-Info.plist */,
-				3149599E0E327BA500E49C83 /* MHKKit.h */,
 				314959950E327BA500E49C83 /* MHKADPCMDecompressor.h */,
 				314959A60E327BA500E49C83 /* MHKADPCMDecompressor.m */,
 				314959A70E327BA500E49C83 /* MHKArchive.h */,
@@ -796,10 +795,13 @@
 				314959A80E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m */,
 				314959960E327BA500E49C83 /* MHKArchiveWAVAdditions.m */,
 				314959A30E327BA500E49C83 /* MHKAudioDecompression.h */,
+				318F91A00F050B3C006F6D41 /* MHKBase.pch */,
 				3149599D0E327BA500E49C83 /* MHKErrors.h */,
 				314959A20E327BA500E49C83 /* MHKErrors.m */,
 				314959A00E327BA500E49C83 /* MHKFileHandle.h */,
 				314959980E327BA500E49C83 /* MHKFileHandle.m */,
+				314959900E327B2D00E49C83 /* MHKKit-Info.plist */,
+				3149599E0E327BA500E49C83 /* MHKKit.h */,
 				314959A50E327BA500E49C83 /* MHKMP2Decompressor.h */,
 				314959990E327BA500E49C83 /* MHKMP2Decompressor.m */,
 				314959970E327BA500E49C83 /* mohawk_bitmap.c */,
@@ -1673,6 +1675,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PREFIX_HEADER = mhk/MHKBase.pch;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/ffmpeg\"",
@@ -1699,6 +1702,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PREFIX_HEADER = mhk/MHKBase.pch;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/ffmpeg\"",
@@ -1725,6 +1729,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_PREFIX_HEADER = mhk/MHKBase.pch;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/ffmpeg\"",
