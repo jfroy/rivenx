@@ -20,7 +20,8 @@
 
 - (id)_initWithArchive:(MHKArchive*)archive fork:(SInt16)forkRef descriptor:(NSDictionary*)desc {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	// weak reference, MHKArchive ensures it won't go away until all its files have dealloc-ed
 	__owner = archive;
@@ -35,7 +36,8 @@
 
 - (id)_initWithArchive:(MHKArchive*)archive fork:(SInt16)forkRef soundDescriptor:(NSDictionary*)sdesc {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	// weak reference, MHKArchive ensures it won't go away until all its files have dealloc-ed
 	__owner = archive;
@@ -56,7 +58,7 @@
 - (ssize_t)readDataOfLength:(size_t)length inBuffer:(void*)buffer error:(NSError**)errorPtr {
 	// is the request valid?
 	if (__position == __length)
-		ReturnValueWithError(-1, NSOSStatusErrorDomain, eofErr, nil, errorPtr)
+		ReturnValueWithError(-1, NSOSStatusErrorDomain, eofErr, nil, errorPtr);
 	
 	if (__length - __position < length)
 		length = __length - __position;
@@ -65,13 +67,13 @@
 	UInt32 bytes_read = 0;
 	OSStatus err = FSReadFork(__forkRef, fsFromStart | forceReadMask, __offset + __position, length, buffer, &bytes_read);
 	if (err && err != eofErr)
-		ReturnValueWithError(-1, NSOSStatusErrorDomain, err, nil, errorPtr)
+		ReturnValueWithError(-1, NSOSStatusErrorDomain, err, nil, errorPtr);
 	
 	// update the position
 	__position += bytes_read;
 	
 	if (err)
-		ReturnValueWithError(bytes_read, NSOSStatusErrorDomain, err, nil, errorPtr)
+		ReturnValueWithError(bytes_read, NSOSStatusErrorDomain, err, nil, errorPtr);
 	return bytes_read;
 }
 

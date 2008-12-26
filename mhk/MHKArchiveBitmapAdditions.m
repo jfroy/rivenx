@@ -21,7 +21,7 @@
 	// get a resource descriptor
 	NSDictionary* descriptor = [self resourceDescriptorWithResourceType:@"tBMP" ID:bitmapID];
 	if (!descriptor)
-		ReturnNULLWithError(MHKErrorDomain, errUnknownID, nil, errorPtr)
+		ReturnNULLWithError(MHKErrorDomain, errUnknownID, nil, errorPtr);
 	
 	// seek to the tBMP resource
 	SInt64 resource_offset = [[descriptor objectForKey:@"Offset"] longLongValue];
@@ -31,7 +31,7 @@
 	ByteCount bytes_read = 0;
 	OSStatus err = FSReadFork(forkRef, fsFromStart, resource_offset, sizeof(MHK_BITMAP_header), &bitmap_header, &bytes_read);
 	if (err)
-		ReturnNULLWithError(NSOSStatusErrorDomain, err, nil, errorPtr)
+		ReturnNULLWithError(NSOSStatusErrorDomain, err, nil, errorPtr);
 	MHK_BITMAP_header_fton(&bitmap_header);
 	
 	// make the bitmap descriptor
@@ -47,7 +47,7 @@
 	// get a resource descriptor
 	NSDictionary *descriptor = [self resourceDescriptorWithResourceType:@"tBMP" ID:bitmapID];
 	if (!descriptor)
-		ReturnValueWithError(NO, MHKErrorDomain, errUnknownID, nil, errorPtr)
+		ReturnValueWithError(NO, MHKErrorDomain, errUnknownID, nil, errorPtr);
 	
 	// seek to the tBMP resource
 	SInt64 resource_offset = [[descriptor objectForKey:@"Offset"] longLongValue];
@@ -57,13 +57,13 @@
 	ByteCount bytes_read = 0;
 	OSStatus err = FSReadFork(forkRef, fsFromStart, resource_offset, sizeof(MHK_BITMAP_header), &bitmap_header, &bytes_read);
 	if (err)
-		ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, errorPtr)
+		ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, errorPtr);
 	MHK_BITMAP_header_fton(&bitmap_header);
 	
 	if (bitmap_header.truecolor_flag == 4) {
 		err = read_raw_bgr_pixels(forkRef, resource_offset + bytes_read, &bitmap_header, pixels, format);
 		if (err)
-			ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, errorPtr)
+			ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, errorPtr);
 		return YES;
 	}
 	
@@ -76,9 +76,9 @@
 	else if (bitmap_header.compression_flag == MHK_BITMAP_COMPRESSED)
 		err = read_compressed_indexed_pixels(forkRef, resource_offset, &bitmap_header, pixels, format);
 	else
-		ReturnValueWithError(NO, MHKErrorDomain, errInvalidBitmapCompression, nil, errorPtr)
+		ReturnValueWithError(NO, MHKErrorDomain, errInvalidBitmapCompression, nil, errorPtr);
 	if (err)
-		ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, errorPtr)
+		ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, errorPtr);
 	
 	// we're done
 	return YES;

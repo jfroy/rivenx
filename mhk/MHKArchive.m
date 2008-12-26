@@ -18,14 +18,14 @@
 #import "PHSErrorMacros.h"
 
 
-struct __descriptor_binary_tree {
+struct descriptor_binary_tree {
 	uint16_t resource_id;
-	NSDictionary *descriptor;
+	NSDictionary* descriptor;
 };
 
 static int __descriptor_binary_tree_compare(const void* v1, const void* v2) {
-	struct __descriptor_binary_tree* descriptor_1 = (struct __descriptor_binary_tree*)v1;
-	struct __descriptor_binary_tree* descriptor_2 = (struct __descriptor_binary_tree*)v2;
+	struct descriptor_binary_tree* descriptor_1 = (struct descriptor_binary_tree*)v1;
+	struct descriptor_binary_tree* descriptor_2 = (struct descriptor_binary_tree*)v2;
 	
 	if (descriptor_1->resource_id < descriptor_2->resource_id)
 		return -1;
@@ -208,7 +208,7 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	}
 	
 	// allocate the descriptor binary tree entries
-	struct __descriptor_binary_tree* descriptor_tree = calloc(rsrc_table_header.count, sizeof(struct __descriptor_binary_tree));
+	struct descriptor_binary_tree* descriptor_tree = calloc(rsrc_table_header.count, sizeof(struct descriptor_binary_tree));
 	
 	// iterate over the resources
 	uint16_t resource_index = 0;
@@ -277,10 +277,10 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	
 	// in order to be able to perform binary searching, we need to sort the descriptor tree entries
 	// i'm guessing they will most likely already be sorted, so mergesort should be the fastest (and we've got plenty of ram now)
-	mergesort(descriptor_tree, rsrc_table_header.count, sizeof(struct __descriptor_binary_tree), &__descriptor_binary_tree_compare);
+	mergesort(descriptor_tree, rsrc_table_header.count, sizeof(struct descriptor_binary_tree), &__descriptor_binary_tree_compare);
 	
 	// store the sorted array in a NSData, then associate to type with the trees dictionary
-	NSData* descriptor_tree_data = [[NSData alloc] initWithBytesNoCopy:descriptor_tree length:rsrc_table_header.count * sizeof(struct __descriptor_binary_tree) freeWhenDone:YES];
+	NSData* descriptor_tree_data = [[NSData alloc] initWithBytesNoCopy:descriptor_tree length:rsrc_table_header.count * sizeof(struct descriptor_binary_tree) freeWhenDone:YES];
 	[file_descriptor_trees setObject:descriptor_tree_data forKey:type_key];
 	[descriptor_tree_data release];
 	
@@ -481,18 +481,18 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	HFSUniStr255 dataForkName;
 	err = FSGetDataForkName(&dataForkName);
 	if (err)
-		ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr)
+		ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr);
 	
 	// get an FSRef for the Mohak archive
 	FSRef archiveRef;
 	if (!CFURLGetFSRef((CFURLRef)mhk_url, &archiveRef))
-		ReturnFromInitWithError(NSOSStatusErrorDomain, fnfErr, nil, errorPtr)
+		ReturnFromInitWithError(NSOSStatusErrorDomain, fnfErr, nil, errorPtr);
 	
 	// open the data fork in read-only mode
 	forkRef = 0;
 	err = FSOpenFork(&archiveRef, dataForkName.length, dataForkName.unicode, fsRdPerm, &forkRef);
 	if (err)
-		ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr)
+		ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr);
 	
 	// get the file size
 	SInt64 fork_size = 0;
@@ -502,12 +502,12 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	
 	// we only support 32 bits for archive sizes
 	if (fork_size > ULONG_MAX)
-		ReturnFromInitWithError(MHKErrorDomain, errFileTooLarge, nil, errorPtr)
+		ReturnFromInitWithError(MHKErrorDomain, errFileTooLarge, nil, errorPtr);
 	archive_size = (uint32_t)fork_size;
 	
 	// process the archive
 	if (![self load_mhk])
-		ReturnFromInitWithError(MHKErrorDomain, errBadArchive, nil, errorPtr)
+		ReturnFromInitWithError(MHKErrorDomain, errBadArchive, nil, errorPtr);
 	
 	// allocate the sound descriptor cache and its rw lock
 	pthread_rwlock_init(&__cached_sound_descriptors_rwlock, NULL);
@@ -553,7 +553,7 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 		return nil;
 	
 	uint16_t n = [[file_descriptor_arrays objectForKey:type] count];
-	const struct __descriptor_binary_tree* binary_tree = [binary_tree_data bytes];
+	const struct descriptor_binary_tree* binary_tree = [binary_tree_data bytes];
 	
 	if (n == 0)
 		return nil;

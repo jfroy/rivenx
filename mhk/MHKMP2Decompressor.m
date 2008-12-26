@@ -204,7 +204,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	_packet_table = calloc(packet_table_length, sizeof(AudioStreamPacketDescription));
 	if (!_packet_table) {
 		free(read_buffer);
-		ReturnWithError(NSPOSIXErrorDomain, errno, nil, errorPtr)
+		ReturnWithError(NSPOSIXErrorDomain, errno, nil, errorPtr);
 	}
 	
 	// loop while we still have data left to process
@@ -237,7 +237,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 					_packet_table = reallocf(_packet_table, packet_table_length * sizeof(AudioStreamPacketDescription));
 					if (!_packet_table) {
 						free(read_buffer);
-						ReturnWithError(NSPOSIXErrorDomain, errno, nil, errorPtr)
+						ReturnWithError(NSPOSIXErrorDomain, errno, nil, errorPtr);
 					}
 				}
 				
@@ -307,15 +307,16 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 
 - (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle *)fh error:(NSError **)errorPtr {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	// we can't do anything without ffmpeg
 	if (!MHKMP2Decompressor_libav_available)
-		ReturnFromInitWithError(MHKErrorDomain, errFFMPEGNotAvailable, nil, errorPtr)
+		ReturnFromInitWithError(MHKErrorDomain, errFFMPEGNotAvailable, nil, errorPtr);
 	
 	// MPEG 2 audio can only store 1 or 2 channels
 	if (channels != 1 && channels != 2)
-		ReturnFromInitWithError(MHKErrorDomain, errInvalidChannelCount, nil, errorPtr)
+		ReturnFromInitWithError(MHKErrorDomain, errInvalidChannelCount, nil, errorPtr);
 	
 	_channel_count = channels;
 	_frame_count = frames;
@@ -344,21 +345,21 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	// using the input and output absds, setup an AudioConverter
 	OSStatus err = AudioConverterNew(&_decomp_absd, &_output_absd, &_converter);
 	if (err)
-		ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr)
+		ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr);
 	
 	// allocate the codec context
 	pthread_mutex_lock(&ffmpeg_mutex);
 	_mp2_codec_context = _ffmpeg_state.avcodec_alloc_context();
 	if (!_mp2_codec_context) {
 		pthread_mutex_unlock(&ffmpeg_mutex);
-		ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr)
+		ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr);
 	}
 	
 	// open the codec
 	int result = _ffmpeg_state.avcodec_open((AVCodecContext*)_mp2_codec_context, _ffmpeg_state.mp2_codec);
 	pthread_mutex_unlock(&ffmpeg_mutex);
 	if (result < 0)
-		ReturnFromInitWithError(MHKffmpegErrorDomain, result, nil, errorPtr)
+		ReturnFromInitWithError(MHKffmpegErrorDomain, result, nil, errorPtr);
 	
 	NSError* local_error = nil;
 	
@@ -401,7 +402,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	SInt64 integer_frame_count = _packet_count * MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET;
 	
 	// if we're told we have more frames than we can have, bail
-	if (_frame_count > integer_frame_count) ReturnFromInitWithError(MHKErrorDomain, errInvalidFrameCount, nil, errorPtr)
+	if (_frame_count > integer_frame_count)
+		ReturnFromInitWithError(MHKErrorDomain, errInvalidFrameCount, nil, errorPtr);
 	
 	// compute how many bytes we should drop from the first packet (where extra silence will be)
 	_bytes_to_drop = FRAME_SKIP_FUDGE * _decomp_absd.mBytesPerFrame;
@@ -410,12 +412,12 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	_decompression_buffer_length = MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET * sizeof(SInt16) * _channel_count;
 	_decompression_buffer = malloc(_decompression_buffer_length);
 	if (!_decompression_buffer)
-		ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr)
+		ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr);
 	
 	// allocate the packet buffer
 	_packet_buffer = malloc(_max_packet_size * 50);
 	if (!_packet_buffer)
-		ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr)
+		ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr);
 	
 	// create the decompressor lock
 	pthread_mutex_init(&_decompressor_lock, NULL);
@@ -429,17 +431,23 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 - (void)dealloc {
 	// close the decoder
 	pthread_mutex_lock(&ffmpeg_mutex);
-	if (_mp2_codec_context) _ffmpeg_state.avcodec_close((AVCodecContext*)_mp2_codec_context);
+	if (_mp2_codec_context)
+		_ffmpeg_state.avcodec_close((AVCodecContext*)_mp2_codec_context);
 	pthread_mutex_unlock(&ffmpeg_mutex);
 	
 	// close the converter
-	if (_converter) AudioConverterDispose(_converter);
+	if (_converter)
+		AudioConverterDispose(_converter);
 	
 	// free memory resources
-	if (_packet_buffer) free(_packet_buffer);
-	if (_decompression_buffer) free(_decompression_buffer);
-	if (_mp2_codec_context) free(_mp2_codec_context);
-	if (_packet_table) free(_packet_table);
+	if (_packet_buffer)
+		free(_packet_buffer);
+	if (_decompression_buffer)
+		free(_decompression_buffer);
+	if (_mp2_codec_context)
+		free(_mp2_codec_context);
+	if (_packet_table)
+		free(_packet_table);
 	
 	[_data_source release];
 	
@@ -509,7 +517,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 										  BUFFER_OFFSET(_decompression_buffer, _decompression_buffer_position), 
 										  &converted_bytes, 
 										  BUFFER_OFFSET(abl->mBuffers[0].mData, decompressed_bytes));
-		if (err) goto AbortFill;
+		if (err)
+			goto AbortFill;
 		
 		// update decompression state
 		decompressed_bytes += converted_bytes;
