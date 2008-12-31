@@ -2734,10 +2734,14 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 }
 
 DEFINE_COMMAND(xicon) {
-	// this command sets the variable atemp to 1 if the specified icon is depressed, 0 otherwise
-	if ([self _isIconDepressed:argv[0]])
-		[[g_world gameState] setUnsigned32:1 forKey:@"atemp"];
-	else
+	// this command sets the variable atemp to 1 if the specified icon is depressed, 0 otherwise; sets atemp to 2 if the icon cannot be depressed
+	uint32_t icon_sequence = [[g_world gameState] unsigned32ForKey:@"jiconorder"];
+	if ([self _isIconDepressed:argv[0]]) {
+		if (argv[0] != (icon_sequence & 0x1F))
+			[[g_world gameState] setUnsigned32:2 forKey:@"atemp"];
+		else
+			[[g_world gameState] setUnsigned32:1 forKey:@"atemp"];
+	} else
 		[[g_world gameState] setUnsigned32:0 forKey:@"atemp"];
 }
 
