@@ -1933,6 +1933,21 @@ static NSMutableString* _scriptLogPrefix;
 	sound->pan = 0.5f;
 	
 	[_scriptHandler playDataSound:sound];
+	
+	// EXPERIMENTAL: use argv[2] as a boolean to indicate "blocking" playback
+	if (argv[2]) {
+		[_scriptHandler setExecutingBlockingAction:YES];
+		double duration;
+		if (sound->source)
+			duration = sound->source->Duration();
+		else {
+			id <MHKAudioDecompression> decompressor = [sound audioDecompressor];
+			duration = [decompressor frameCount] / [decompressor outputFormat].mSampleRate;
+		}
+		usleep(duration * 1E6);
+		[_scriptHandler setExecutingBlockingAction:NO];
+	}
+	
 	[sound release];
 }
 
@@ -2746,8 +2761,13 @@ DEFINE_COMMAND(xicon) {
 }
 
 DEFINE_COMMAND(xcheckicons) {
-	// this command verifies the state of the icons and takes appropriate action based on the icon sequence
-	
+	// this command resets the icon puzzle when a 6th icon is pressed
+	if ([self _countDepressedIcons] >= 5) {
+		[[g_world gameState] setUnsigned32:0 forKey:@"jicons"];
+		[[g_world gameState] setUnsigned32:0 forKey:@"jiconorder"];
+		
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 46, (short)kSoundGainDivisor, 1);
+	}
 }
 
 DEFINE_COMMAND(xtoggleicon) {

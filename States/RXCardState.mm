@@ -845,7 +845,8 @@ init_failure:
 
 - (void)playDataSound:(RXDataSound*)sound {
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
-	if ([NSThread currentThread] != [g_world scriptThread]) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"playDataSound: MUST RUN ON SCRIPT THREAD" userInfo:nil];
+	if ([NSThread currentThread] != [g_world scriptThread])
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"playDataSound: MUST RUN ON SCRIPT THREAD" userInfo:nil];
 	
 	// cache a pointer to the audio renderer
 	RX::AudioRenderer* renderer = (reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer]));

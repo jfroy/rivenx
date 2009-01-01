@@ -19,16 +19,16 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	if (!nameData)
 		return nil;
 	
-	uint16_t recordCount = CFSwapInt16BigToHost(*(const uint16_t *)[nameData bytes]);
+	uint16_t recordCount = CFSwapInt16BigToHost(*(const uint16_t*)[nameData bytes]);
 	NSMutableArray* recordArray = [[NSMutableArray alloc] initWithCapacity:recordCount];
 	
-	const uint16_t* offsetBase = (uint16_t *)BUFFER_OFFSET([nameData bytes], sizeof(uint16_t));
-	const uint8_t* stringBase = (uint8_t *)BUFFER_OFFSET([nameData bytes], sizeof(uint16_t) + (sizeof(uint16_t) * 2 * recordCount));
+	const uint16_t* offsetBase = (uint16_t*)BUFFER_OFFSET([nameData bytes], sizeof(uint16_t));
+	const uint8_t* stringBase = (uint8_t*)BUFFER_OFFSET([nameData bytes], sizeof(uint16_t) + (sizeof(uint16_t) * 2 * recordCount));
 	
 	for (uint16_t currentRecordIndex = 0; currentRecordIndex < recordCount; currentRecordIndex++) {
 		uint16_t recordOffset = CFSwapInt16BigToHost(offsetBase[currentRecordIndex]);
-		const unsigned char* entryBase = (const unsigned char *)stringBase + recordOffset;
-		size_t recordLength = strlen((const char *)entryBase);
+		const unsigned char* entryBase = (const unsigned char*)stringBase + recordOffset;
+		size_t recordLength = strlen((const char*)entryBase);
 		
 		// check for leading and closing 0xbd
 		if (*entryBase == 0xbd) {
@@ -36,7 +36,8 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 			recordLength--;
 		}
 		
-		if (*(entryBase + recordLength - 1) == 0xbd) recordLength--;
+		if (*(entryBase + recordLength - 1) == 0xbd)
+			recordLength--;
 		
 		NSString* record = [[NSString alloc] initWithBytes:entryBase length:recordLength encoding:NSASCIIStringEncoding];
 		[recordArray addObject:record];
@@ -294,7 +295,8 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	code = CFSwapInt32(code);
 #endif
 	while (*(rmap_data + card_id) != code && (rmap_data + card_id) < rmap_end) card_id++;
-	if (rmap_data == rmap_end) return 0;
+	if (rmap_data == rmap_end)
+		return 0;
 	return card_id;
 }
 
@@ -305,7 +307,8 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	while ((archive = [archiveEnum nextObject])) {
 		// try to get the decompressor from the archive...
 		decompressor = [archive decompressorWithSoundID:soundID error:NULL];
-		if (decompressor) break;
+		if (decompressor)
+			break;
 	}
 	return decompressor;
 }
@@ -317,7 +320,8 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	while ((archive = [archiveEnum nextObject])) {
 		// try to get the decompressor from the archive...
 		decompressor = [archive decompressorWithSoundID:soundID error:NULL];
-		if (decompressor) break;
+		if (decompressor)
+			break;
 	}
 	return decompressor;
 }
