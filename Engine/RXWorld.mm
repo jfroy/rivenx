@@ -116,15 +116,16 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		[self _initEngineVariables];
 		
 		// world base is the parent directory of the application bundle
-		_worldBase = [[NSURL alloc] initFileURLWithPath:[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent]];
+		_worldBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent], kCFURLPOSIXPathStyle, true);
 		
 		// the world user base is a "Riven X" folder inside the user's Application Support folder
 		NSString* userBase = [[NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
 		if (!BZFSDirectoryExists(userBase)) {
 			BOOL success = BZFSCreateDirectory(userBase, &error);
-			if (!success) @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create its support folder in your Application Support folder." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+			if (!success)
+				@throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create its support folder in your Application Support folder." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		}
-		_worldUserBase = [[NSURL alloc] initFileURLWithPath:userBase];
+		_worldUserBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)userBase, kCFURLPOSIXPathStyle, true);
 		
 		// register for current edition change notifications
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_currentEditionChanged:) name:@"RXCurrentEditionChangedNotification" object:nil];
@@ -134,9 +135,12 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		
 		// load Extras.MHK archive
 		_extraBitmapsArchive = [[MHKArchive alloc] initWithURL:[NSURL URLWithString:@"Extras.MHK" relativeToURL:_worldBase] error:&error];
-		if (!_extraBitmapsArchive) _extraBitmapsArchive = [[MHKArchive alloc] initWithURL:[NSURL URLWithString:@"Extras.MHK"] error:&error];
-		if (!_extraBitmapsArchive) _extraBitmapsArchive = [[MHKArchive alloc] initWithPath:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"MHK"] error:&error];
-		if (!_extraBitmapsArchive) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Extras.MHK." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+		if (!_extraBitmapsArchive)
+			_extraBitmapsArchive = [[MHKArchive alloc] initWithURL:[NSURL URLWithString:@"Extras.MHK"] error:&error];
+		if (!_extraBitmapsArchive)
+			_extraBitmapsArchive = [[MHKArchive alloc] initWithPath:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"MHK"] error:&error];
+		if (!_extraBitmapsArchive)
+			@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Extras.MHK." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 		
 		// load Extras.plist
 		_extrasDescriptor = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"plist"]];
