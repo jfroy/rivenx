@@ -266,7 +266,7 @@ static NSMutableString* _scriptLogPrefix;
 		_riven_command_dispatch_table[25].sel = @selector(_opcode_noop:arguments:);
 		_riven_command_dispatch_table[26].sel = @selector(_opcode_noop:arguments:);
 		_riven_command_dispatch_table[27].sel = @selector(_opcode_goToStack:arguments:);
-		_riven_command_dispatch_table[28].sel = @selector(_opcode_noop:arguments:);
+		_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMLST:arguments:);
 		_riven_command_dispatch_table[29].sel = @selector(_opcode_noop:arguments:);
 		_riven_command_dispatch_table[30].sel = @selector(_opcode_noop:arguments:);
 		_riven_command_dispatch_table[31].sel = @selector(_opcode_noop:arguments:);
@@ -1258,7 +1258,7 @@ static NSMutableString* _scriptLogPrefix;
 	_riven_command_dispatch_table[20].imp(self, _riven_command_dispatch_table[20].sel, 0, NULL);
 	 
 	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
-	[self performSelectorOnMainThread:@selector(_stopAllMovies) withObject:nil waitUntilDone:YES];
+	[(NSObject*)_scriptHandler performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
 	
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
@@ -1375,8 +1375,9 @@ static NSMutableString* _scriptLogPrefix;
 		[self _executeRivenProgram:[[program objectForKey:@"program"] bytes] count:[[program objectForKey:@"opcodeCount"] unsignedShortValue]];
 	}
 	
-	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
-	[self performSelectorOnMainThread:@selector(_stopAllMovies) withObject:nil waitUntilDone:YES];
+//	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
+//	// FIXME: _stopAllMovies IS NOT IMPLEMENTED RIGHT NOW
+//	[self performSelectorOnMainThread:@selector(_stopAllMovies) withObject:nil waitUntilDone:YES];
 	
 	// invalidate the "inside hotspot" timer
 	[_insideHotspotEventTimer invalidate];
@@ -1615,7 +1616,7 @@ static NSMutableString* _scriptLogPrefix;
 		[movie gotoBeginning];
 	
 	// queue the movie for rendering
-	[_scriptHandler queueMovie:movie];
+	[_scriptHandler enableMovie:movie];
 	
 	// begin playback
 	[[movie movie] play];
@@ -1648,10 +1649,15 @@ static NSMutableString* _scriptLogPrefix;
 	[self _reallyDoPlayMovie:movie];
 }
 
-
-- (void)_stopAllMovies {
-	// WARNING: MUST RUN ON MAIN THREAD
-	// FIXME: NOT IMPLEMENTED ANYMORE
+- (void)_stopMovie:(RXMovie*)movie {
+	// disable the movie in the card renderer
+	[_scriptHandler disableMovie:movie];
+	
+	// stop playback
+	[[movie movie] stop];
+	
+	// swap the movie render states
+	[self _swapMovieRenderState];
 }
 
 #pragma mark -
@@ -1745,7 +1751,10 @@ static NSMutableString* _scriptLogPrefix;
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_dealloc_movies: MAIN THREAD ONLY" userInfo:nil];
 	
 	// stop all movies (because we really want them to be stopped by the time the card is tearing down...)
-	[self _stopAllMovies];
+	NSEnumerator* movie_enum = [_movies objectEnumerator];
+	RXMovie* movie;
+	while ((movie = [movie_enum nextObject]))
+		[[movie movie] stop];
 	
 	if (_codeToMovieMap)
 		NSFreeMapTable(_codeToMovieMap);
@@ -1924,6 +1933,21 @@ static NSMutableString* _scriptLogPrefix;
 	sound->pan = 0.5f;
 	
 	[_scriptHandler playDataSound:sound];
+	
+	// EXPERIMENTAL: use argv[2] as a boolean to indicate "blocking" playback
+	if (argv[2]) {
+		[_scriptHandler setExecutingBlockingAction:YES];
+		double duration;
+		if (sound->source)
+			duration = sound->source->Duration();
+		else {
+			id <MHKAudioDecompression> decompressor = [sound audioDecompressor];
+			duration = [decompressor frameCount] / [decompressor outputFormat].mSampleRate;
+		}
+		usleep(duration * 1E6);
+		[_scriptHandler setExecutingBlockingAction:NO];
+	}
+	
 	[sound release];
 }
 
@@ -2058,6 +2082,10 @@ static NSMutableString* _scriptLogPrefix;
 	rx_command_dispatch_entry_t* command_dispatch = (rx_command_dispatch_entry_t*)NSMapGet(_riven_external_command_dispatch_map, externalName);
 	if (!command_dispatch) {
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    WARNING: external command is not implemented!", _scriptLogPrefix);
+#if defined(DEBUG)
+		[_scriptLogPrefix deleteCharactersInRange:NSMakeRange([_scriptLogPrefix length] - 4, 4)];
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
+#endif
 		return;
 	}
 		
@@ -2183,6 +2211,24 @@ static NSMutableString* _scriptLogPrefix;
 #endif
 	
 	[_scriptHandler setActiveCardWithStack:stackKey ID:card_id waitUntilDone:YES];
+}
+
+// 28
+- (void)_opcode_disableMLST:(const uint16_t)argc arguments:(const uint16_t*) argv {
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling movie with code %hu", _scriptLogPrefix, argv[0]);
+#endif
+	
+	// get the movie object
+	uintptr_t k = argv[0];
+	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
+	assert(movie);
+	
+	// stop the movie on the main thread and block until done
+	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
 }
 
 // 32
@@ -2684,27 +2730,65 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 	return (icon_bitfield & (1U << (index - 1))) ? YES : NO;
 }
 
-DEFINE_COMMAND(xicon) {
-	// this command sets the variable atemp to 1 if the specified icon is depressed, 0 otherwise
-	if ([self _isIconDepressed:argv[0]])
-		[[g_world gameState] setUnsigned32:1 forKey:@"atemp"];
+- (uint32_t)_countDepressedIcons {
+	uint32_t icon_sequence = [[g_world gameState] unsigned32ForKey:@"jiconorder"];
+	if (icon_sequence >= (1U << 25))
+		return 6;
+	else if (icon_sequence >= (1U << 20))
+		return 5;
+	else if (icon_sequence >= (1U << 15))
+		return 4;
+	else if (icon_sequence >= (1U << 10))
+		return 3;
+	else if (icon_sequence >= (1U << 5))
+		return 2;
+	else if (icon_sequence >= (1U << 1))
+		return 1;
 	else
+		return 0;
+}
+
+DEFINE_COMMAND(xicon) {
+	// this command sets the variable atemp to 1 if the specified icon is depressed, 0 otherwise; sets atemp to 2 if the icon cannot be depressed
+	uint32_t icon_sequence = [[g_world gameState] unsigned32ForKey:@"jiconorder"];
+	if ([self _isIconDepressed:argv[0]]) {
+		if (argv[0] != (icon_sequence & 0x1F))
+			[[g_world gameState] setUnsigned32:2 forKey:@"atemp"];
+		else
+			[[g_world gameState] setUnsigned32:1 forKey:@"atemp"];
+	} else
 		[[g_world gameState] setUnsigned32:0 forKey:@"atemp"];
 }
 
 DEFINE_COMMAND(xcheckicons) {
-
+	// this command resets the icon puzzle when a 6th icon is pressed
+	if ([self _countDepressedIcons] >= 5) {
+		[[g_world gameState] setUnsigned32:0 forKey:@"jicons"];
+		[[g_world gameState] setUnsigned32:0 forKey:@"jiconorder"];
+		
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 46, (short)kSoundGainDivisor, 1);
+	}
 }
 
 DEFINE_COMMAND(xtoggleicon) {
 	// this command toggles the state of a particular icon for the rebel tunnel puzzle
+	uint32_t icon_sequence = [[g_world gameState] unsigned32ForKey:@"jiconorder"];
+	uint32_t correct_icon_sequence = [[g_world gameState] unsigned32ForKey:@"jiconcorrectorder"];
 	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
 	uint32_t icon_bit = 1U << (argv[0] - 1);
 	
-	if (icon_bitfield & icon_bit)
+	if (icon_bitfield & icon_bit) {
 		[[g_world gameState] setUnsigned32:(icon_bitfield & ~icon_bit) forKey:@"jicons"];
-	else
+		icon_sequence >>= 5;
+	} else {
 		[[g_world gameState] setUnsigned32:(icon_bitfield | icon_bit) forKey:@"jicons"];
+		icon_sequence = icon_sequence << 5 | argv[0];
+	}
+	
+	[[g_world gameState] setUnsigned32:icon_sequence forKey:@"jiconorder"];
+	
+	if (icon_sequence == correct_icon_sequence)
+		[[g_world gameState] setUnsignedShort:1 forKey:@"jrbook"];
 }
 
 DEFINE_COMMAND(xjtunnel103_pictfix) {
@@ -2727,6 +2811,76 @@ DEFINE_COMMAND(xjtunnel103_pictfix) {
 		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
 	if (icon_bitfield & (1U << 24))
 		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+}
+
+DEFINE_COMMAND(xjtunnel104_pictfix) {
+	// this command needs to overlay pictures of depressed icons based on the value of jicons
+	
+	// this command does not use the helper _isIconDepressed method to avoid fetching jicons multiple times
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	
+	if (icon_bitfield & (1U << 9))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+	if (icon_bitfield & (1U << 10))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+	if (icon_bitfield & (1U << 11))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+	if (icon_bitfield & (1U << 12))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+	if (icon_bitfield & (1U << 13))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+	if (icon_bitfield & (1U << 14))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+	if (icon_bitfield & (1U << 15))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+	if (icon_bitfield & (1U << 16))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 9);
+}
+
+DEFINE_COMMAND(xjtunnel105_pictfix) {
+	// this command needs to overlay pictures of depressed icons based on the value of jicons
+	
+	// this command does not use the helper _isIconDepressed method to avoid fetching jicons multiple times
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	
+	if (icon_bitfield & (1U << 3))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+	if (icon_bitfield & (1U << 4))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+	if (icon_bitfield & (1U << 5))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+	if (icon_bitfield & (1U << 6))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+	if (icon_bitfield & (1U << 7))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+	if (icon_bitfield & (1U << 8))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+	if (icon_bitfield & (1U << 9))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+}
+
+DEFINE_COMMAND(xjtunnel106_pictfix) {
+	// this command needs to overlay pictures of depressed icons based on the value of jicons
+	
+	// this command does not use the helper _isIconDepressed method to avoid fetching jicons multiple times
+	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
+	
+	if (icon_bitfield & (1U << 16))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+	if (icon_bitfield & (1U << 17))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+	if (icon_bitfield & (1U << 18))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+	if (icon_bitfield & (1U << 19))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+	if (icon_bitfield & (1U << 20))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+	if (icon_bitfield & (1U << 21))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+	if (icon_bitfield & (1U << 22))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+	if (icon_bitfield & (1U << 23))
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 9);
 }
 
 @end

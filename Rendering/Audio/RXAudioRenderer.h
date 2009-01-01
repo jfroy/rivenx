@@ -16,10 +16,10 @@
 #include <AudioUnit/AudioUnit.h>
 #include <AudioToolbox/AudioToolbox.h>
 
-#include "CAAudioUnit.h"
-#include "CAGuard.h"
-#include "CAThreadSafeList.h"
-#include "CAXException.h"
+#include "Rendering/Audio/PublicUtility/CAAudioUnit.h"
+#include "Rendering/Audio/PublicUtility/CAGuard.h"
+#include "Rendering/Audio/PublicUtility/CAThreadSafeList.h"
+#include "Rendering/Audio/PublicUtility/CAXException.h"
 
 
 namespace RX {

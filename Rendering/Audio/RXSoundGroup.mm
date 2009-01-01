@@ -17,9 +17,11 @@
 }
 
 - (BOOL)isEqual:(id)anObject {
-	if (![anObject isKindOfClass:[self class]]) return NO;
+	if (![anObject isKindOfClass:[self class]])
+		return NO;
 	RXSound* sound = (RXSound*)anObject;
-	if (sound->ID == self->ID && sound->parent == self->parent) return YES;
+	if (sound->ID == self->ID && sound->parent == self->parent)
+		return YES;
 	return NO;
 }
 
@@ -54,7 +56,8 @@
 
 - (id)init {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	_sounds = [NSMutableSet new];
 	

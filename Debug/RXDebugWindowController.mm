@@ -60,6 +60,17 @@
 	[renderingState setActiveCardWithStack:current_card->parentName ID:current_card->cardID waitUntilDone:NO];
 }
 
+- (void)get:(NSArray*)commandComponents from:(CLIView*)sender {
+	if ([commandComponents count] < 2)
+		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"get [variable]" userInfo:nil];
+	NSString* path = [commandComponents objectAtIndex:1];
+	
+	if ([[g_world gameState] isKeySet:path])
+		[sender putText:[NSString stringWithFormat:@"%d\n", [[g_world gameState] signed32ForKey:path]]];
+	else
+		[sender putText:[NSString stringWithFormat:@"%@\n", [[g_world valueForKeyPath:path] stringValue]]];
+}
+
 - (void)set:(NSArray*)commandComponents from:(CLIView*)sender {
 	if ([commandComponents count] < 3)
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"set [variable] [value]" userInfo:nil];

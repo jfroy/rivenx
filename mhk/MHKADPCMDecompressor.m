@@ -74,7 +74,7 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
 	
 	// ADPCM only works for 1 or 2 channels
 	if (channels != 1 && channels != 2)
-		ReturnFromInitWithError(MHKErrorDomain, errInvalidChannelCount, nil, errorPtr)
+		ReturnFromInitWithError(MHKErrorDomain, errInvalidChannelCount, nil, errorPtr);
 		
 	channel_count = channels;
 	data_source = [fh retain];

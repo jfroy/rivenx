@@ -23,7 +23,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 
 - (id)init {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	NSError* error;
 	
@@ -39,7 +40,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 	_logsBase = [[[logsURL path] stringByAppendingPathComponent:@"Riven X"] retain];
 	if (!BZFSDirectoryExists(_logsBase)) {
 		BOOL success = BZFSCreateDirectory(_logsBase, &error);
-		if (!success) @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create its logs folder in your Logs folder." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		if (!success)
+			@throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create its logs folder in your Logs folder." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	}
 	
 	// map facilities to certain log files
@@ -50,7 +52,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 	int fd;
 	NSFileHandle* fh;
 	
-	fd = open([[_logsBase stringByAppendingPathComponent:@"Rendering.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_CREAT, 0600);
+	fd = open([[_logsBase stringByAppendingPathComponent:@"Rendering.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
 	if (fd == -1) {
 		error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
 		@throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
@@ -60,7 +62,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 	[_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingGraphics encoding:NSASCIIStringEncoding]];
 	[_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingAudio encoding:NSASCIIStringEncoding]];
 	
-	fd = open([[_logsBase stringByAppendingPathComponent:@"Script.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_CREAT, 0600);
+	fd = open([[_logsBase stringByAppendingPathComponent:@"Script.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
 	if (fd == -1) {
 		error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
 		@throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
@@ -68,7 +70,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 	fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
 	[_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingScript encoding:NSASCIIStringEncoding]];
 	
-	fd = open([[_logsBase stringByAppendingPathComponent:@"Base.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_CREAT, 0600);
+	fd = open([[_logsBase stringByAppendingPathComponent:@"Base.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
 	if (fd == -1) {
 		error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
 		@throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
@@ -77,7 +79,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 	[_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingBase encoding:NSASCIIStringEncoding]];
 	 
 	// open a generic log file
-	_genericLogFD = open([[_logsBase stringByAppendingPathComponent:@"Riven X.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_CREAT, 0600);
+	_genericLogFD = open([[_logsBase stringByAppendingPathComponent:@"Riven X.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
 	
 	_levelFilter = ASL_FILTER_MASK_UPTO(ASL_LEVEL_NOTICE);
 #if defined(DEBUG)
@@ -100,7 +102,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 }
 
 - (void)tearDown {
-	if (_toreDown) return;
+	if (_toreDown)
+		return;
 	_toreDown = YES;
 	
 	[_facilityFDMap removeAllObjects];
