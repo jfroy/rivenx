@@ -57,6 +57,7 @@ struct rx_transition_program {
 	int32_t _ignoreUIEventsCounter;
 	int32_t _scriptExecutionBlockedCounter;
 	NSCursor* _cursorBackup;
+	NSRect _mouseVector;
 	
 	// hotspot state handling
 	BOOL _resetHotspotState;
@@ -115,7 +116,7 @@ struct rx_transition_program {
 	float _inventoryAlphaFactor;
 }
 
-- (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;
+- (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;
 - (void)clearActiveCardWaitingUntilDone:(BOOL)wait;
 
 @end

@@ -1246,7 +1246,7 @@ init_failure:
 	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:nil waitUntilDone:NO];
 }
 
-- (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {
+- (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {
 	// WARNING: CAN RUN ON ANY THREAD
 	if (!stackKey)
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"stackKey CANNOT BE NIL" userInfo:nil];
@@ -1886,7 +1886,7 @@ exit_flush_tasks:
 	[self setActiveCardWithStack:@"aspit" ID:[journalCardIDNumber unsignedShortValue] waitUntilDone:NO];
 }
 
-- (void)mouseMoved:(NSEvent*)event {
+- (void)_trackMouse:(NSEvent*)event {
 	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
 	
 	// if the mouse is below the game viewport, bring up the alpha of the inventory to 1; otherwise set it to 0.5
@@ -1900,8 +1900,15 @@ exit_flush_tasks:
 		return;
 	
 #if defined(DEBUG) && DEBUG > 2
-	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"moving mouse - %@", NSStringFromPoint(mousePoint));
+	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"tracking mouse: position=%@, dragging=%s", NSStringFromPoint(mousePoint), (_isDraggingMouse) ? "YES" : "NO");
 #endif
+	
+	// update the mouse vector
+	if (_isDraggingMouse) {
+		_mouseVector.size.width = mousePoint.x - _mouseVector.origin.x;
+		_mouseVector.size.height = mousePoint.y - _mouseVector.origin.y;
+	} else
+		_mouseVector.origin = mousePoint;
 	
 	// find over which hotspot the mouse is
 	NSEnumerator* hotpotEnum = [[_front_render_state->card activeHotspots] objectEnumerator];
@@ -1915,19 +1922,20 @@ exit_flush_tasks:
 	if (!hotspot) {
 		for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
 			if (NSPointInRect(mousePoint, _inventoryHotspotRegions[inventory_i])) {
+				// set hotspot to the inventory item index (plus one to avoid the value 0); the following block of code will check if hotspot is not 0 and below PAGEZERO, and act accordingly
 				hotspot = (RXHotspot*)(inventory_i + 1);
 				break;
 			}
 		}
 	}
 	
-	// if we were over another hotspot, we're no longer over it and we send a mouse exited event followed by a mouse entered event
-	if (_currentHotspot != hotspot || _resetHotspotState) {
-		// mouseExitedHotspot does not accept nil (we can't exit the "nil" hotspot); make sure _currentHotspot is not in PAGEZERO (e.g. that it is a valid object)
+	// if we are over a different hotspot than the current hotspot, we need to send a mouse exited event followed by a mouse entered event to the old current hotspot and new current hotspot, respectively; we only do this if the mouse is not being dragged
+	if ((_currentHotspot != hotspot || _resetHotspotState) && !_isDraggingMouse) {
+		// mouseExitedHotspot does not accept nil (we can't exit the "nil" hotspot); also make sure _currentHotspot is not in PAGEZERO (e.g. that it is a valid object)
 		if (_currentHotspot >= (RXHotspot*)0x1000)
 			[_front_render_state->card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 		
-		// handle cursor changes here so we don't ping-pong across 2 threads
+		// handle cursor changes here so we don't ping-pong across 2 threads (at least for a hotspot's cursor, the inventory item cursor and the default cursor)
 		if (hotspot == 0)
 			[g_worldView setCursor:[g_world defaultCursor]];
 		else if (hotspot < (RXHotspot*)0x1000)
@@ -1937,21 +1945,29 @@ exit_flush_tasks:
 			[_front_render_state->card performSelector:@selector(mouseEnteredHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
 		}
 		
+		// update the current hotspot to the new current hotspot and indicate the hotspot state has been reset
 		_currentHotspot = hotspot;
 		_resetHotspotState = NO;
 	}
 }
 
+- (void)mouseMoved:(NSEvent*)event {
+	_isDraggingMouse = NO;
+	[self _trackMouse:event];
+}
+
 - (void)mouseDragged:(NSEvent*)event {
-#if defined(DEBUG) && DEBUG > 2
-	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"dragging mouse");
-#endif
 	_isDraggingMouse = YES;
+	[self _trackMouse:event];
 }
 
 - (void)mouseDown:(NSEvent*)event {
 	if (_ignoreUIEventsCounter > 0)
 		return;
+	
+	// update the mouse vector
+	_mouseVector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
+	_mouseVector.size = NSZeroSize;
 	
 	if (_currentHotspot >= (RXHotspot*)0x1000)
 		[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
@@ -1962,6 +1978,10 @@ exit_flush_tasks:
 - (void)mouseUp:(NSEvent*)event {
 	if (_ignoreUIEventsCounter > 0)
 		return;
+	
+	// update the mouse vector
+	_mouseVector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
+	_mouseVector.size = NSZeroSize;
 	
 	if (_currentHotspot >= (RXHotspot*)0x1000)
 		[_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];

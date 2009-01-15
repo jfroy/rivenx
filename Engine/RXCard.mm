@@ -1412,8 +1412,10 @@ static NSMutableString* _scriptLogPrefix;
 	RXHotspot* hotspot = [timer userInfo];
 
 #if defined(DEBUG)
-//	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouseInside %@ {", _scriptLogPrefix, hotspot);
-//	[_scriptLogPrefix appendString:@"    "];
+#if DEBUG > 2
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse inside %@ {", _scriptLogPrefix, hotspot);
+	[_scriptLogPrefix appendString:@"    "];
+#endif
 	_disableScriptLogging = YES;
 #endif
 	
@@ -1433,8 +1435,10 @@ static NSMutableString* _scriptLogPrefix;
 	
 #if defined(DEBUG)
 	_disableScriptLogging = NO;
-//	[_scriptLogPrefix deleteCharactersInRange:NSMakeRange([_scriptLogPrefix length] - 4, 4)];
-//	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
+#if DEBUG > 2
+	[_scriptLogPrefix deleteCharactersInRange:NSMakeRange([_scriptLogPrefix length] - 4, 4)];
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
+#endif
 #endif
 
 	// release the card to match the retain above
@@ -1464,7 +1468,7 @@ static NSMutableString* _scriptLogPrefix;
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
 
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouseExited %@ {", _scriptLogPrefix, hotspot);
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse exited %@ {", _scriptLogPrefix, hotspot);
 	[_scriptLogPrefix appendString:@"    "];
 #endif
 	
@@ -1504,7 +1508,7 @@ static NSMutableString* _scriptLogPrefix;
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
 
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouseDown in %@ {", _scriptLogPrefix, hotspot);
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse down in %@ {", _scriptLogPrefix, hotspot);
 	[_scriptLogPrefix appendString:@"    "];
 #endif
 
@@ -1540,7 +1544,7 @@ static NSMutableString* _scriptLogPrefix;
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
 
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouseUp in %@ {", _scriptLogPrefix, hotspot);
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse up in %@ {", _scriptLogPrefix, hotspot);
 	[_scriptLogPrefix appendString:@"    "];
 #endif
 
@@ -2881,6 +2885,13 @@ DEFINE_COMMAND(xjtunnel106_pictfix) {
 		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
 	if (icon_bitfield & (1U << 23))
 		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 9);
+}
+
+#pragma mark -
+#pragma mark jungle elevator
+
+DEFINE_COMMAND(xhandlecontrolmid) {
+
 }
 
 @end
