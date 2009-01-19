@@ -2036,8 +2036,8 @@ static NSMutableString* _scriptLogPrefix;
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting cursor to %hu", _scriptLogPrefix, argv[0]);
 #endif
-
-	[g_worldView performSelectorOnMainThread:@selector(setCursor:) withObject:[g_world cursorForID:argv[0]] waitUntilDone:NO];
+	
+	[g_worldView setCursor:[g_world cursorForID:argv[0]]];
 }
 
 // 14

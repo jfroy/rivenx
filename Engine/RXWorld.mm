@@ -165,7 +165,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		while ((cursorKey = [cursorEnum nextObject])) {
 			NSPoint cursorHotspot = NSPointFromString([cursorMetadata objectForKey:cursorKey]);
 			NSImage* cursorImage = [[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:cursorKey ofType:@"png" inDirectory:@"cursors"]];
-			if (!cursorImage) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:[NSString stringWithFormat:@"Unable to find cursor %@.", cursorKey] userInfo:nil];
+			if (!cursorImage)
+				@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:[NSString stringWithFormat:@"Unable to find cursor %@.", cursorKey] userInfo:nil];
 			
 			NSCursor* cursor = [[NSCursor alloc] initWithImage:cursorImage hotSpot:cursorHotspot];
 			uintptr_t key = [cursorKey intValue];
@@ -228,7 +229,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (void)tearDown {
 	// WARNING: this method can only run on the main thread
-	if (!pthread_main_np()) @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_tearDown: MAIN THREAD ONLY" userInfo:nil];
+	if (!pthread_main_np())
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_tearDown: MAIN THREAD ONLY" userInfo:nil];
 	
 #if defined(DEBUG)
 	RXOLog(@"tearing down");
@@ -241,13 +243,15 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	[[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 	
 	// cut window delegate messages
-	if (RXGetWorldView()) [[RXGetWorldView() window] setDelegate:nil];
+	if (RXGetWorldView())
+		[[RXGetWorldView() window] setDelegate:nil];
 	
 	// tear the world view down
 	[RXGetWorldView() tearDown];
 	
 	// stop audio rendering
-	if (_audioRenderer) (reinterpret_cast<RX::AudioRenderer *>(_audioRenderer))->Stop();
+	if (_audioRenderer)
+		reinterpret_cast<RX::AudioRenderer*>(_audioRenderer)->Stop();
 	
 	// rendering states
 	[_cardState release]; _cardState = nil;
@@ -258,7 +262,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	[_stateCompositor release];
 	
 	// audio renderer
-	delete reinterpret_cast<RX::AudioRenderer *>(_audioRenderer);
+	delete reinterpret_cast<RX::AudioRenderer*>(_audioRenderer);
 	
 	// take the stack creation write lock
 	pthread_rwlock_wrlock(&_stackCreationLock);
@@ -274,8 +278,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	pthread_rwlock_destroy(&_stackCreationLock);
 	
 	// terminate threads
-	if (_stackThread) [self performSelector:@selector(_stopThreadRunloop) inThread:_stackThread];
-	if (_scriptThread) [self performSelector:@selector(_stopThreadRunloop) inThread:_scriptThread];
+	if (_stackThread)
+		[self performSelector:@selector(_stopThreadRunloop) inThread:_stackThread];
+	if (_scriptThread)
+		[self performSelector:@selector(_stopThreadRunloop) inThread:_scriptThread];
 	
 	// stack thread creation cond / mutex
 	semaphore_destroy(mach_task_self(), _threadInitSemaphore);
@@ -285,7 +291,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	[_extraBitmapsArchive release]; _extraBitmapsArchive = nil;
 	
 	// cursors
-	if (_cursors) NSFreeMapTable(_cursors);
+	if (_cursors)
+		NSFreeMapTable(_cursors);
 	
 	// game state
 	[_gameState release]; _gameState = nil;
@@ -310,9 +317,12 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	
 	NSDictionary* userInfo = [e userInfo];
 	if (userInfo) {
-		if ([userInfo objectForKey:NSUnderlyingErrorKey]) [failureAlert setInformativeText:[[userInfo objectForKey:NSUnderlyingErrorKey] description]];
-		else [failureAlert setInformativeText:[e name]];
-	} else [failureAlert setInformativeText:[e name]];
+		if ([userInfo objectForKey:NSUnderlyingErrorKey])
+			[failureAlert setInformativeText:[[userInfo objectForKey:NSUnderlyingErrorKey] description]];
+		else
+			[failureAlert setInformativeText:[e name]];
+	} else
+		[failureAlert setInformativeText:[e name]];
 	
 	[failureAlert runModal];
 	[failureAlert release];

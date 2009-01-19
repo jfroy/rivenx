@@ -260,6 +260,12 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	if (cursor == _cursor)
 		return;
 	
+	// the rest of this method must run on the main thread
+	if (!pthread_main_np()) {
+		[self performSelectorOnMainThread:@selector(setCursor:) withObject:cursor waitUntilDone:NO];
+		return;
+	}
+	
 #if defined(DEBUG)
 	if (cursor == [g_world defaultCursor])
 		RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"setting cursor to default cursor");
@@ -269,8 +275,9 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 		RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"setting cursor to %@", cursor);
 #endif
 	
-	[_cursor release];
+	NSCursor* old = _cursor;
 	_cursor = [cursor retain];
+	[old release];
 	
 	[_cursor set];
 	[[self window] invalidateCursorRectsForView:self];
