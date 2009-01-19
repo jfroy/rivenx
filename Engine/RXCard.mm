@@ -2891,7 +2891,7 @@ DEFINE_COMMAND(xjtunnel106_pictfix) {
 #pragma mark jungle elevator
 
 DEFINE_COMMAND(xhandlecontrolmid) {
-
+	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.2]] && isfinite([_scriptHandler mouseVector].size.width)) {}
 }
 
 @end

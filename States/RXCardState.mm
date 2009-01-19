@@ -201,7 +201,8 @@ static void rx_release_owner_applier(const void* value, void* context) {
 	
 	// initialize the mouse vector
 	_mouseVector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
-	_mouseVector.size = NSZeroSize;
+	_mouseVector.size.width = INFINITY;
+	_mouseVector.size.height = INFINITY;
 	
 	return self;
 	
@@ -1937,10 +1938,6 @@ exit_flush_tasks:
 	else
 		_inventoryAlphaFactor = 0.5f;
 	
-	// if UI events are being ignored, we're done
-	if (_ignoreUIEventsCounter > 0)
-		return;
-	
 #if defined(DEBUG) && DEBUG > 2
 	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"tracking mouse: position=%@, dragging=%s", NSStringFromPoint(mousePoint), (_isDraggingMouse) ? "YES" : "NO");
 #endif
@@ -1953,6 +1950,10 @@ exit_flush_tasks:
 	} else
 		_mouseVector.origin = mousePoint;
 	OSSpinLockUnlock(&_mouseVectorLock);
+	
+	// if UI events are being ignored, we're done
+	if (_ignoreUIEventsCounter > 0)
+		return;
 	
 	// find over which hotspot the mouse is
 	NSEnumerator* hotpotEnum = [[_front_render_state->card activeHotspots] objectEnumerator];
@@ -2006,14 +2007,15 @@ exit_flush_tasks:
 }
 
 - (void)mouseDown:(NSEvent*)event {
-	if (_ignoreUIEventsCounter > 0)
-		return;
-	
 	// update the mouse vector
 	OSSpinLockLock(&_mouseVectorLock);
 	_mouseVector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
 	_mouseVector.size = NSZeroSize;
 	OSSpinLockUnlock(&_mouseVectorLock);
+	
+	
+	if (_ignoreUIEventsCounter > 0)
+		return;
 	
 	if (_currentHotspot >= (RXHotspot*)0x1000)
 		[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
@@ -2022,21 +2024,18 @@ exit_flush_tasks:
 }
 
 - (void)mouseUp:(NSEvent*)event {
-	if (_ignoreUIEventsCounter > 0)
-		return;
-	
 	// update the mouse vector
 	OSSpinLockLock(&_mouseVectorLock);
 	_mouseVector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
-	_mouseVector.size = NSZeroSize;
+	_mouseVector.size.width = INFINITY;
+	_mouseVector.size.height = INFINITY;
 	OSSpinLockUnlock(&_mouseVectorLock);
+
+	if (_ignoreUIEventsCounter > 0)
+		return;
 	
 	if (_currentHotspot >= (RXHotspot*)0x1000)
 		[_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
-	
-	if (_isDraggingMouse)
-		[self mouseMoved:event];
-	_isDraggingMouse = NO;
 }
 
 @end
