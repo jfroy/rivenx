@@ -23,8 +23,9 @@
 - (void)playDataSound:(RXDataSound*)sound;
 
 - (void)setProcessUIEvents:(BOOL)process;
-- (void)resetHotspotState;
 - (void)setExecutingBlockingAction:(BOOL)blocking;
+- (void)resetHotspotState;
+- (NSRect)mouseVector;
 
 - (void)queuePicture:(RXPicture*)picture;
 - (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner;

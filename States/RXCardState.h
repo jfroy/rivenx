@@ -58,6 +58,7 @@ struct rx_transition_program {
 	int32_t _scriptExecutionBlockedCounter;
 	NSCursor* _cursorBackup;
 	NSRect _mouseVector;
+	OSSpinLock _mouseVectorLock;
 	
 	// hotspot state handling
 	BOOL _resetHotspotState;

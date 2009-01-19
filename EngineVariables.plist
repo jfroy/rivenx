@@ -8,6 +8,8 @@
 		<integer>0</integer>
 		<key>audioRamps</key>
 		<integer>1</integer>
+		<key>mouse_info</key>
+		<integer>1</integer>
 	</dict>
 </dict>
 </plist>

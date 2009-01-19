@@ -372,7 +372,8 @@
 	RXRenderStateCompositionDescriptor* descriptor;
 	while ((descriptor = [stateEnum nextObject])) {
 		// If the state is fully transparent, we can skip rendering altogether
-		if (descriptor->opacity == 0.0f) continue;
+		if (descriptor->opacity == 0.0f)
+			continue;
 		
 		// bind the render state's framebuffer and clear its color buffers
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, descriptor->fbo); glReportError();
@@ -389,7 +390,8 @@
 	glValidateProgram(_compositing_program); glReportError();
 	GLint valid;
 	glGetProgramiv(_compositing_program, GL_VALIDATE_STATUS, &valid);
-	if (valid != GL_TRUE) RXOLog(@"program not valid: %u", _compositing_program);
+	if (valid != GL_TRUE)
+		RXOLog(@"program not valid: %u", _compositing_program);
 #endif
 	
 	// bind the compositor program and update the render state blend uniform

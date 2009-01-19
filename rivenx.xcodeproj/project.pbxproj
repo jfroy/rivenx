@@ -12,6 +12,7 @@
 		3105EC330D74844900609273 /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
 		3105EC610D74922500609273 /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
 		31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */; };
+		311138A70F23FB000009C6C1 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311138A60F23FB000009C6C1 /* GLUT.framework */; };
 		311400080D58F0230099AF69 /* GTMSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 311400070D58F0230099AF69 /* GTMSystemVersion.m */; };
 		311400640D58F5CA0099AF69 /* RXEditionProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 311400630D58F5CA0099AF69 /* RXEditionProxy.m */; };
 		3114FE980D58C8AE0099AF69 /* Editions.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3114FE960D58C8AE0099AF69 /* Editions.strings */; };
@@ -272,6 +273,7 @@
 		3105EC320D74844900609273 /* RXLogCenter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXLogCenter.m; path = Base/RXLogCenter.m; sourceTree = "<group>"; };
 		3105EC5A0D748F2100609273 /* RXLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXLogging.h; path = Base/RXLogging.h; sourceTree = "<group>"; };
 		3105EC600D74922500609273 /* RXLogging.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXLogging.m; path = Base/RXLogging.m; sourceTree = "<group>"; };
+		311138A60F23FB000009C6C1 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = /System/Library/Frameworks/GLUT.framework; sourceTree = "<absolute>"; };
 		311400060D58F0230099AF69 /* GTMSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMSystemVersion.h; path = Additions/GTMSystemVersion.h; sourceTree = "<group>"; };
 		311400070D58F0230099AF69 /* GTMSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GTMSystemVersion.m; path = Additions/GTMSystemVersion.m; sourceTree = "<group>"; };
 		3114000B0D58F07F0099AF69 /* GTMObjectSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMObjectSingleton.h; path = Additions/GTMObjectSingleton.h; sourceTree = "<group>"; };
@@ -598,6 +600,7 @@
 				31AE54570DE0ADD6000E71CF /* ExceptionHandling.framework in Frameworks */,
 				3153E7F40DE5ABC900DF63B8 /* Carbon.framework in Frameworks */,
 				315D438C0E328582003F7EDD /* Sparkle.framework in Frameworks */,
+				311138A70F23FB000009C6C1 /* GLUT.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -663,6 +666,7 @@
 				31AE54560DE0ADD6000E71CF /* ExceptionHandling.framework */,
 				08FB779EFE84155DC02AAC07 /* Foundation.framework */,
 				31863BAE09919B04001A4A42 /* FScript.framework */,
+				311138A60F23FB000009C6C1 /* GLUT.framework */,
 				3145383F08C6A5F4004B7FD0 /* IOKit.framework */,
 				3158857A0C8729D800204DDD /* MHKKit.framework */,
 				31DCF72F08CB855C00E351D9 /* OpenGL.framework */,

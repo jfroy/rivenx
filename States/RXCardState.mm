@@ -10,6 +10,8 @@
 #import <OpenGL/CGLProfilerFunctionEnum.h>
 #import <OpenGL/CGLProfiler.h>
 
+#import <GLUT/GLUT.h>
+
 #import <mach/mach.h>
 #import <mach/mach_time.h>
 
@@ -196,6 +198,10 @@ static void rx_release_owner_applier(const void* value, void* context) {
 		goto init_failure;
 	
 	[self _initializeRendering];
+	
+	// initialize the mouse vector
+	_mouseVector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
+	_mouseVector.size = NSZeroSize;
 	
 	return self;
 	
@@ -1733,7 +1739,36 @@ exit_render:
 		glMultiDrawArrays(GL_LINE_LOOP, _hotspotDebugRenderFirstElementArray, _hotspotDebugRenderElementCountArray, [activeHotspots count] + _inventoryItemCount); glReportError();
 		
 		[gl_state bindVertexArrayObject:0];
-	}	
+	}
+	
+	if (RXEngineGetBool(@"rendering.mouse_info")) {
+		char mouse_info[100];
+		NSRect mouse = [self mouseVector];
+		snprintf(mouse_info, 100, "mouse vector: (%f, %f) (%f, %f)", mouse.origin.x, mouse.origin.y, mouse.size.width, mouse.size.height);
+		
+		GLfloat background_strip[] = {
+			9.5f, 19.5f, 0.0f,
+			9.5f + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char *)mouse_info), 19.5f, 0.0f,
+			9.5f, 19.5f + 13.0f, 0.0f,
+			9.5f + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char *)mouse_info), 19.5f + 13.0f, 0.0f
+		};
+		
+		[gl_state bindVertexArrayObject:0];
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glVertexPointer(3, GL_FLOAT, 0, background_strip);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		
+		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		
+		glDisableClientState(GL_VERTEX_ARRAY);
+		
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		glRasterPos3d(10.5f, 20.5f, 0.0f);
+		size_t l = strlen(mouse_info);
+		for (size_t i = 0; i < l; i++)
+			glutBitmapCharacter(GLUT_BITMAP_8_BY_13, mouse_info[i]);
+	}
 }
 
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
@@ -1852,6 +1887,13 @@ exit_flush_tasks:
 	// meaning even though we changed the active set of hotspots, the one we're on may still be valid after
 }
 
+- (NSRect)mouseVector {
+	OSSpinLockLock(&_mouseVectorLock);
+	NSRect r = _mouseVector;
+	OSSpinLockUnlock(&_mouseVectorLock);
+	return r;
+}
+
 - (void)_handleInventoryMouseDown:(NSEvent*)event inventoryIndex:(uint32_t)index {
 	if (index >= RX_MAX_INVENTORY_ITEMS)
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"OUT OF BOUNDS INVENTORY INDEX" userInfo:nil];
@@ -1904,11 +1946,13 @@ exit_flush_tasks:
 #endif
 	
 	// update the mouse vector
+	OSSpinLockLock(&_mouseVectorLock);
 	if (_isDraggingMouse) {
 		_mouseVector.size.width = mousePoint.x - _mouseVector.origin.x;
 		_mouseVector.size.height = mousePoint.y - _mouseVector.origin.y;
 	} else
 		_mouseVector.origin = mousePoint;
+	OSSpinLockUnlock(&_mouseVectorLock);
 	
 	// find over which hotspot the mouse is
 	NSEnumerator* hotpotEnum = [[_front_render_state->card activeHotspots] objectEnumerator];
@@ -1966,8 +2010,10 @@ exit_flush_tasks:
 		return;
 	
 	// update the mouse vector
+	OSSpinLockLock(&_mouseVectorLock);
 	_mouseVector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
 	_mouseVector.size = NSZeroSize;
+	OSSpinLockUnlock(&_mouseVectorLock);
 	
 	if (_currentHotspot >= (RXHotspot*)0x1000)
 		[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
@@ -1980,8 +2026,10 @@ exit_flush_tasks:
 		return;
 	
 	// update the mouse vector
+	OSSpinLockLock(&_mouseVectorLock);
 	_mouseVector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
 	_mouseVector.size = NSZeroSize;
+	OSSpinLockUnlock(&_mouseVectorLock);
 	
 	if (_currentHotspot >= (RXHotspot*)0x1000)
 		[_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
