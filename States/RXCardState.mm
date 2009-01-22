@@ -30,13 +30,13 @@
 #import "Rendering/Audio/RXCardAudioSource.h"
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
 
-typedef void (*RenderCardImp_t)(id, SEL, RXCard*, const CVTimeStamp*, CGLContextObj);
+typedef void (*RenderCardImp_t)(id, SEL, const CVTimeStamp*, CGLContextObj);
 static RenderCardImp_t _renderCardImp;
-static SEL _renderCardSel = @selector(_renderCard:outputTime:inContext:);
+static SEL _renderCardSel = @selector(_renderCard:inContext:);
 
-typedef void (*PostFlushCardImp_t)(id, SEL, RXCard*, const CVTimeStamp*);
+typedef void (*PostFlushCardImp_t)(id, SEL, const CVTimeStamp*);
 static PostFlushCardImp_t _postFlushCardImp;
-static SEL _postFlushCardSel = @selector(_postFlushCard:outputTime:);
+static SEL _postFlushCardSel = @selector(_postFlushCard:);
 
 static rx_render_dispatch_t picture_render_dispatch;
 static rx_post_flush_tasks_dispatch_t picture_flush_task_dispatch;
@@ -1288,7 +1288,7 @@ init_failure:
 #pragma mark -
 #pragma mark graphics rendering
 
-- (void)_renderCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx {
+- (void)_renderCard:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	
 	// read the front render state pointer once and alias it for this method
@@ -1382,25 +1382,13 @@ init_failure:
 			r->water_fx.current_frame = (r->water_fx.current_frame + 1) % r->water_fx.sfxe->nframes;
 			r->water_fx.frame_timestamp = 0;
 		}
-	} else if (r->refresh_static || [r->movies count]) {
-		// simply render the static content to the dynamic content texture; we only need to do this if we have active movies or if the static content was refreshed
-		
-//		if (GLEE_EXT_framebuffer_blit) {
-//			glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
-//			glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, _fbos[RX_CARD_STATIC_RENDER_INDEX]);
-//			glBlitFramebufferEXT(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, GL_COLOR_BUFFER_BIT, GL_LINEAR); glReportError();
-//		} else {
-//			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
-//			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_STATIC_RENDER_INDEX]); glReportError();
-//			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
-//		}
 	}
 	
 	// any static content has been refreshed at the end of this method
 	r->refresh_static = NO;
 }
 
-- (void)_postFlushCard:(RXCard*)card outputTime:(const CVTimeStamp*)outputTime {
+- (void)_postFlushCard:(const CVTimeStamp*)outputTime {
 	NSEnumerator* e = [_front_render_state->movies objectEnumerator];
 	RXMovie* movie;
 	while ((movie = [e nextObject]))
@@ -1524,7 +1512,7 @@ init_failure:
 	}
 	
 	// render the front card
-	_renderCardImp(self, _renderCardSel, _front_render_state->card, outputTime, cgl_ctx);
+	_renderCardImp(self, _renderCardSel, outputTime, cgl_ctx);
 	
 	// final composite (active card + transitions + other special effects)
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo); glReportError();
@@ -1783,7 +1771,7 @@ exit_render:
 	if (!_front_render_state->card)
 		goto exit_flush_tasks;
 	
-	_postFlushCardImp(self, _postFlushCardSel, _front_render_state->card, outputTime);
+	_postFlushCardImp(self, _postFlushCardSel, outputTime);
 	
 exit_flush_tasks:
 	[p release];
