@@ -1173,6 +1173,9 @@ init_failure:
 	// run the stop rendering script on the old card
 	[_front_render_state->card stopRendering];
 	
+	// we have to update the current card in the game state now, otherwise refresh card commands in the prepare for rendering script will jump back to the old card
+	[[g_world gameState] setCurrentCard:[[_back_render_state->card descriptor] simpleDescriptor]];
+	
 	// run the prepare for rendering script on the new card
 	[_back_render_state->card prepareForRendering];
 	

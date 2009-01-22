@@ -559,11 +559,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 - (void)_activeCardDidChange:(NSNotification*)notification {
 	// WARNING: WILL RUN ON THE MAIN THREAD
 	
-	// if the new active card is not nil (e.g. we did not clear the active card), update the game state's active card descriptor
-	if ([notification object])
-		[_gameState setCurrentCard:[(RXCardDescriptor*)[[notification object] descriptor] simpleDescriptor]];
 	// if we have a new game state to load and we just cleared the active card, do the swap
-	else if (_gameStateToLoad) {	
+	if (![notification object] && _gameStateToLoad) {	
 		// swap the game state
 		[_gameState release];
 		_gameState = _gameStateToLoad;
