@@ -1102,10 +1102,6 @@ init_failure:
 	}
 }
 
-- (void)swapMovieRenderState:(RXCard*)sender {
-
-}
-
 #pragma mark -
 #pragma mark card switching
 

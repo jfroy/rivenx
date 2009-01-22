@@ -1227,16 +1227,6 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptHandler swapRenderState:self];
 }
 
-- (void)_swapMovieRenderState {
-	// movies are not included in the original engine's picture swapping mechanism, so this method is a little bit different
-#if defined(DEBUG)
-	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"swapping movie render state");
-#endif
-	
-	// the script handler will set our front render state to our back render state at the appropriate moment; when this returns, the swap has occured (front == back)
-	[_scriptHandler swapMovieRenderState:self];
-}
-
 #pragma mark -
 
 - (void)prepareForRendering {
@@ -1624,9 +1614,6 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// begin playback
 	[[movie movie] play];
-	
-	// swap the movie render states (it is safe to do so because the script thread always waits for _playMovie to be done before continuing)
-	[self _swapMovieRenderState];
 }
 
 - (void)_playMovie:(RXMovie*)movie {
@@ -1659,9 +1646,6 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// stop playback
 	[[movie movie] stop];
-	
-	// swap the movie render states
-	[self _swapMovieRenderState];
 }
 
 #pragma mark -

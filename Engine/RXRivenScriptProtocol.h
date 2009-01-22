@@ -36,7 +36,6 @@
 - (void)disableAllMovies;
 
 - (void)swapRenderState:(RXCard*)sender;
-- (void)swapMovieRenderState:(RXCard*)sender;
 
 - (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;
 @end
