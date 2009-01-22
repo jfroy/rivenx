@@ -64,7 +64,7 @@
 #if defined(__LITTLE_ENDIAN__)
 	[pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_422YpCbCr8] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
 #else
-	[pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_32ARGB] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
+	[pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_422YpCbCr8] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
 #endif
 
 	CFMutableDictionaryRef visualContextOptions = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
@@ -109,7 +109,11 @@
 		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
 		glReportError();
 		
+#if defined(__LITTLE_ENDIAN__)
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB8, MAX(_currentSize.width, 128), _currentSize.height, 0, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, _textureStorage); glReportError();
+#else
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB8, MAX(_currentSize.width, 128), _currentSize.height, 0, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, _textureStorage); glReportError();
+#endif
 	} else {
 		err = QTOpenGLTextureContextCreate(NULL, cgl_ctx, pixel_format, visualContextOptions, &_visualContext);
 		CFRelease(visualContextOptions);
@@ -353,7 +357,12 @@
 				
 				// bind the texture object and update the texture data
 				glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();
+				
+#if defined(__LITTLE_ENDIAN__)
 				glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, MAX(_currentSize.width, 128), height, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, _textureStorage); glReportError();
+#else
+				glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, MAX(_currentSize.width, 128), height, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, _textureStorage); glReportError();
+#endif
 			}
 			
 			// mark the texture as valid
