@@ -62,7 +62,7 @@
 	[pixelBufferAttributes setObject:[NSNumber numberWithInt:4] forKey:(NSString*)kCVPixelBufferBytesPerRowAlignmentKey];
 	[pixelBufferAttributes setObject:[NSNumber numberWithBool:YES] forKey:(NSString*)kCVPixelBufferOpenGLCompatibilityKey];
 #if defined(__LITTLE_ENDIAN__)
-	[pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_32BGRA] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
+	[pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_422YpCbCr8] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
 #else
 	[pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_32ARGB] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
 #endif
@@ -82,7 +82,8 @@
 	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
 	
 	// if the movie is smaller than 128 bytes in width, using a main-memory pixel buffer visual context and override the width to 128 bytes
-	if (_currentSize.width < 32) {
+//	if (_currentSize.width < 32) {
+	if (1) {
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"using main memory pixel buffer path");
 #endif
@@ -95,8 +96,8 @@
 		}
 		
 		// allocate a texture storage buffer and setup a texture object
-		_textureStorage = malloc(128 * _currentSize.height * 4);
-		bzero(_textureStorage, 128 * _currentSize.height * 4);
+		_textureStorage = malloc(MAX((int)_currentSize.width, 128) * (int)_currentSize.height * 4);
+		bzero(_textureStorage, MAX((int)_currentSize.width, 128) * (int)_currentSize.height * 4);
 		
 		glGenTextures(1, &_glTexture); glReportError();
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();
@@ -108,7 +109,7 @@
 		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
 		glReportError();
 		
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 128, _currentSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, _textureStorage); glReportError();
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB8, MAX(_currentSize.width, 128), _currentSize.height, 0, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, _textureStorage); glReportError();
 	} else {
 		err = QTOpenGLTextureContextCreate(NULL, cgl_ctx, pixel_format, visualContextOptions, &_visualContext);
 		CFRelease(visualContextOptions);
@@ -347,12 +348,12 @@
 				CVPixelBufferLockBaseAddress(_imageBuffer, 0);
 				void* baseAddress = CVPixelBufferGetBaseAddress(_imageBuffer);
 				for (GLuint row = 0; row < height; row++)
-					memcpy(BUFFER_OFFSET(_textureStorage, (row * 128) << 2), BUFFER_OFFSET(baseAddress, row * bytesPerRow), width << 2);
+					memcpy(BUFFER_OFFSET(_textureStorage, (row * MAX((int)_currentSize.width, 128)) << 1), BUFFER_OFFSET(baseAddress, row * bytesPerRow), width << 1);
 				CVPixelBufferUnlockBaseAddress(_imageBuffer, 0);
 				
 				// bind the texture object and update the texture data
 				glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();
-				glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, 128, height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, _textureStorage); glReportError();
+				glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, MAX(_currentSize.width, 128), height, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, _textureStorage); glReportError();
 			}
 			
 			// mark the texture as valid
