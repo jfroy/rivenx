@@ -82,8 +82,7 @@
 	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
 	
 	// if the movie is smaller than 128 bytes in width, using a main-memory pixel buffer visual context and override the width to 128 bytes
-//	if (_currentSize.width < 32) {
-	if (1) {
+	if (_currentSize.width < 32) {
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"using main memory pixel buffer path");
 #endif
@@ -96,8 +95,8 @@
 		}
 		
 		// allocate a texture storage buffer and setup a texture object
-		_textureStorage = malloc(MAX((int)_currentSize.width, 128) * (int)_currentSize.height * 4);
-		bzero(_textureStorage, MAX((int)_currentSize.width, 128) * (int)_currentSize.height * 4);
+		_textureStorage = malloc(MAX((int)_currentSize.width, 128) * (int)_currentSize.height * 2);
+		bzero(_textureStorage, MAX((int)_currentSize.width, 128) * (int)_currentSize.height * 2);
 		
 		glGenTextures(1, &_glTexture); glReportError();
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();

@@ -24,13 +24,13 @@
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
-	<string>Riven X</string>
+	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleGetInfoString</key>
 	<string>0.7d5, Copyright © 2005-2008 MacStorm.</string>
 	<key>CFBundleIconFile</key>
 	<string>rivenx</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.macstorm.rivenx</string>
+	<string>org.macstorm.${PRODUCT_NAME:identifier}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -67,12 +67,12 @@
 	<key>UTExportedTypeDeclarations</key>
 	<array>
 		<dict>
-			<key>UTTypeDescription</key>
-			<string>Riven X game file</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
 			</array>
+			<key>UTTypeDescription</key>
+			<string>Riven X game file</string>
 			<key>UTTypeIdentifier</key>
 			<string>org.macstorm.rivenx.game</string>
 			<key>UTTypeTagSpecification</key>
