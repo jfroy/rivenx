@@ -25,6 +25,8 @@
 		31225ABE08C4216D0055628F /* RXStack.m in Sources */ = {isa = PBXBuildFile; fileRef = 31225ABD08C4216D0055628F /* RXStack.m */; };
 		31225AC408C421790055628F /* RXCard.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31225AC308C421790055628F /* RXCard.mm */; };
 		3124F2A909C36792009BA3CF /* RXSoundGroup.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3124F2A609C36782009BA3CF /* RXSoundGroup.mm */; };
+		312876F90F2972E900A114FF /* CardInspector.xib in Resources */ = {isa = PBXBuildFile; fileRef = 312876F80F2972E900A114FF /* CardInspector.xib */; };
+		312877240F2985DE00A114FF /* RXCardCollectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 312877230F2985DE00A114FF /* RXCardCollectionView.m */; };
 		312A89650D57B25600FCDF91 /* RXEdition.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A895F0D57B25600FCDF91 /* RXEdition.m */; };
 		312A89660D57B25600FCDF91 /* RXEditionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89610D57B25600FCDF91 /* RXEditionManager.m */; };
 		312A89670D57B25600FCDF91 /* RXEditionManagerWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89630D57B25600FCDF91 /* RXEditionManagerWindowController.m */; };
@@ -295,6 +297,9 @@
 		31225AC308C421790055628F /* RXCard.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXCard.mm; sourceTree = "<group>"; };
 		3124F2A509C36782009BA3CF /* RXSoundGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXSoundGroup.h; sourceTree = "<group>"; };
 		3124F2A609C36782009BA3CF /* RXSoundGroup.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXSoundGroup.mm; sourceTree = "<group>"; };
+		312876F80F2972E900A114FF /* CardInspector.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CardInspector.xib; sourceTree = "<group>"; };
+		312877220F2985DE00A114FF /* RXCardCollectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardCollectionView.h; sourceTree = "<group>"; };
+		312877230F2985DE00A114FF /* RXCardCollectionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardCollectionView.m; sourceTree = "<group>"; };
 		312A895E0D57B25600FCDF91 /* RXEdition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXEdition.h; sourceTree = "<group>"; };
 		312A895F0D57B25600FCDF91 /* RXEdition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXEdition.m; sourceTree = "<group>"; };
 		312A89600D57B25600FCDF91 /* RXEditionManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXEditionManager.h; sourceTree = "<group>"; };
@@ -934,6 +939,8 @@
 				93FDAD45098A78DE00D94CD0 /* RXDebugWindowController.mm */,
 				311B7C810BCC4D0500653D2D /* RXDebug.h */,
 				311B7C820BCC4D0500653D2D /* RXDebug.m */,
+				312877220F2985DE00A114FF /* RXCardCollectionView.h */,
+				312877230F2985DE00A114FF /* RXCardCollectionView.m */,
 			);
 			path = Debug;
 			sourceTree = "<group>";
@@ -996,6 +1003,7 @@
 			children = (
 				31F1BEA50D3B03D000CFE301 /* about.png */,
 				312D9ECB0D4D81A3006E384C /* About.strings */,
+				312876F80F2972E900A114FF /* CardInspector.xib */,
 				31DAAF0C0DDE21EF00D06D0C /* cursors */,
 				31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */,
 				31B741C00B8414EA00D1A247 /* Cyan Worlds.mp4 */,
@@ -1308,6 +1316,7 @@
 				31DAAF260DDE21EF00D06D0C /* cursors in Resources */,
 				31DAAF270DDE21EF00D06D0C /* sounds in Resources */,
 				3185C43B0E06027800528220 /* sparkle.pem in Resources */,
+				312876F90F2972E900A114FF /* CardInspector.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1550,6 +1559,7 @@
 				31A14BF50F03F7D3006EFF93 /* CAComponent.cpp in Sources */,
 				31A14C020F03F8EC006EFF93 /* CADebugger.cpp in Sources */,
 				31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */,
+				312877240F2985DE00A114FF /* RXCardCollectionView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
