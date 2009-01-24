@@ -16,12 +16,24 @@
 	[super dealloc];
 }
 
+- (IBAction)showWindow:(id)sender {
+	if ([self isWindowLoaded])
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
+	[super showWindow:sender];
+}
+
 - (void)windowDidLoad {
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
 }
 
+- (void)windowWillClose:(NSNotification*)notification {
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXActiveCardDidChange" object:nil];
+}
+
 - (void)_activeCardDidChange:(NSNotification*)notification {
 	RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"active card did change received by card inspector");
+	id card = [notification object];
+	[_cardContentView setContent:[card valueForKey:@"movies"]];
 }
 
 @end

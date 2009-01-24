@@ -31,7 +31,7 @@
 		312A89660D57B25600FCDF91 /* RXEditionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89610D57B25600FCDF91 /* RXEditionManager.m */; };
 		312A89670D57B25600FCDF91 /* RXEditionManagerWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89630D57B25600FCDF91 /* RXEditionManagerWindowController.m */; };
 		312A896D0D57B33700FCDF91 /* Editions in Resources */ = {isa = PBXBuildFile; fileRef = 312A89690D57B33700FCDF91 /* Editions */; };
-		312B048F0D9A8AE20012BE29 /* RXMovieProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 312B048E0D9A8AE20012BE29 /* RXMovieProxy.m */; };
+		312B048F0D9A8AE20012BE29 /* RXMovieProxy.mm in Sources */ = {isa = PBXBuildFile; fileRef = 312B048E0D9A8AE20012BE29 /* RXMovieProxy.mm */; };
 		312D9ECD0D4D81A3006E384C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9EC70D4D81A3006E384C /* InfoPlist.strings */; };
 		312D9ECE0D4D81A3006E384C /* Extras.MHK in Resources */ = {isa = PBXBuildFile; fileRef = 312D9EC90D4D81A3006E384C /* Extras.MHK */; };
 		312D9ECF0D4D81A3006E384C /* About.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9ECB0D4D81A3006E384C /* About.strings */; };
@@ -309,7 +309,7 @@
 		312A89630D57B25600FCDF91 /* RXEditionManagerWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXEditionManagerWindowController.m; sourceTree = "<group>"; };
 		312A89690D57B33700FCDF91 /* Editions */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Editions; sourceTree = "<group>"; };
 		312B048D0D9A8AE20012BE29 /* RXMovieProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXMovieProxy.h; sourceTree = "<group>"; };
-		312B048E0D9A8AE20012BE29 /* RXMovieProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXMovieProxy.m; sourceTree = "<group>"; };
+		312B048E0D9A8AE20012BE29 /* RXMovieProxy.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXMovieProxy.mm; sourceTree = "<group>"; };
 		312D9EC80D4D81A3006E384C /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		312D9ECA0D4D81A3006E384C /* en */ = {isa = PBXFileReference; lastKnownFileType = file; name = en; path = en.lproj/Extras.MHK; sourceTree = "<group>"; };
 		312D9ECC0D4D81A3006E384C /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/About.strings; sourceTree = "<group>"; };
@@ -734,7 +734,7 @@
 				312EDC700A2E3B80005D26AF /* RXHotspot.h */,
 				312EDC710A2E3B80005D26AF /* RXHotspot.m */,
 				312B048D0D9A8AE20012BE29 /* RXMovieProxy.h */,
-				312B048E0D9A8AE20012BE29 /* RXMovieProxy.m */,
+				312B048E0D9A8AE20012BE29 /* RXMovieProxy.mm */,
 				3195A6330EEC57860000CFB6 /* RXRivenScriptCommandAliases.h */,
 				31863C0509919F87001A4A42 /* RXRivenScriptProtocol.h */,
 			);
@@ -1538,7 +1538,7 @@
 				3105EC610D74922500609273 /* RXLogging.m in Sources */,
 				3196B9360D945CC100BC818E /* RXTiming.c in Sources */,
 				319926E20D96A81000ED1B47 /* RXSystemProfiler.m in Sources */,
-				312B048F0D9A8AE20012BE29 /* RXMovieProxy.m in Sources */,
+				312B048F0D9A8AE20012BE29 /* RXMovieProxy.mm in Sources */,
 				312F4D8F0DC2639C00B3AF0D /* RXRendering.m in Sources */,
 				312F4D900DC2639C00B3AF0D /* RXWorldRendering.mm in Sources */,
 				312F4DB40DC263F600B3AF0D /* GL_debug.c in Sources */,

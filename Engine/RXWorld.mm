@@ -59,10 +59,24 @@ NSObject* g_world = nil;
 		@throw [NSException exceptionWithName:@"RXInvalidDefaultEngineVariablesException" reason:@"Unable to load the default engine variables." userInfo:[NSDictionary dictionaryWithObject:errorString forKey:@"RXErrorString"]];
 	[errorString release];
 	
+	// observe the volume key path
+	[[_engineVariables objectForKey:@"rendering"] addObserver:self forKeyPath:@"volume" options:NSKeyValueObservingOptionNew context:[_engineVariables objectForKey:@"rendering"]];
+	
 #if defined(DEBUG)
 
 #endif
 }
+
+- (void) observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context {
+    if (context == [_engineVariables objectForKey:@"rendering"]) {
+		if ([keyPath isEqualToString:@"volume"])
+			reinterpret_cast<RX::AudioRenderer*>(_audioRenderer)->SetGain([[change objectForKey:NSKeyValueChangeNewKey] floatValue]);
+	}
+	else {
+		[super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+	}
+}
+
 
 GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
@@ -247,7 +261,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	[RXGetWorldView() tearDown];
 	
 	// stop audio rendering
-	if (_audioRenderer) (reinterpret_cast<RX::AudioRenderer *>(_audioRenderer))->Stop();
+	if (_audioRenderer)
+		(reinterpret_cast<RX::AudioRenderer *>(_audioRenderer))->Stop();
 	
 	// rendering states
 	[_cardState release]; _cardState = nil;
@@ -522,10 +537,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return _stateCompositor;
 }
 
-//- (RXTextureBroker *)textureBroker {
-//	return _textureBroker;
-//}
-
 #pragma mark -
 
 - (RXRenderState*)cyanMovieRenderState {
@@ -582,15 +593,19 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return YES;
 }
 
+#pragma mark -
+
 - (void)_dumpEngineVariables {
 	pthread_mutex_lock(&_engineVariablesMutex);
 	RXOLog(@"dumping engine variables\n%@", _engineVariables);
 	pthread_mutex_unlock(&_engineVariablesMutex);
 }
 
-#pragma mark -
+- (NSMutableDictionary*)rendering {
+	return [_engineVariables objectForKey:@"rendering"];
+}
 
-- (id)valueForUndefinedKey:(NSString *)key {
+- (id)valueForUndefinedKey:(NSString*)key {
 	if (!_engineVariables)
 		return nil;
 	
@@ -601,7 +616,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return v;
 }
 
-- (void)setValue:(id)value forUndefinedKey:(NSString *)key {
+- (void)setValue:(id)value forUndefinedKey:(NSString*)key {
 	if (!_engineVariables)
 		return;
 	

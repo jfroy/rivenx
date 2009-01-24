@@ -10,7 +10,7 @@
 
 
 @interface RXCardInspectorController : NSWindowController {
-
+	IBOutlet NSCollectionView* _cardContentView;
 }
 
 @end

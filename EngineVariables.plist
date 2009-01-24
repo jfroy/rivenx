@@ -4,6 +4,8 @@
 <dict>
 	<key>rendering</key>
 	<dict>
+		<key>volume</key>
+		<real>1</real>
 		<key>renderHotspots</key>
 		<integer>0</integer>
 		<key>audioRamps</key>
