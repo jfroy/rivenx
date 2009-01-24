@@ -16,6 +16,7 @@
 	NSWindowController* _debugConsoleWC;
 	NSWindowController* _engineVariableEditorWC;
 	NSWindowController* _gameVariableEditorWC;
+	NSWindowController* _card_inspector_controller;
 #endif
 	
 	IBOutlet NSWindow* _aboutBox;

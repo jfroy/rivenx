@@ -174,6 +174,7 @@
 		31DAAF0B0DDE21BB00D06D0C /* Cursors.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */; };
 		31DAAF260DDE21EF00D06D0C /* cursors in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF0C0DDE21EF00D06D0C /* cursors */; };
 		31DAAF270DDE21EF00D06D0C /* sounds in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF210DDE21EF00D06D0C /* sounds */; };
+		31DBC9660F2AE1DB004B9277 /* RXCardInspectorController.m in Sources */ = {isa = PBXBuildFile; fileRef = 31DBC9650F2AE1DB004B9277 /* RXCardInspectorController.m */; };
 		31DC682909CB880A00BFF447 /* VirtualRingBuffer_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */; };
 		31DC684209CB8E6B00BFF447 /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
 		31DC684309CB8EBD00BFF447 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
@@ -480,6 +481,8 @@
 		31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */ = {isa = PBXFileReference; lastKnownFileType = file.bplist; path = Cursors.plist; sourceTree = "<group>"; };
 		31DAAF0C0DDE21EF00D06D0C /* cursors */ = {isa = PBXFileReference; lastKnownFileType = folder; path = cursors; sourceTree = "<group>"; };
 		31DAAF210DDE21EF00D06D0C /* sounds */ = {isa = PBXFileReference; lastKnownFileType = folder; path = sounds; sourceTree = "<group>"; };
+		31DBC9640F2AE1DB004B9277 /* RXCardInspectorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardInspectorController.h; sourceTree = "<group>"; };
+		31DBC9650F2AE1DB004B9277 /* RXCardInspectorController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardInspectorController.m; sourceTree = "<group>"; };
 		31DC67FF09CB879B00BFF447 /* VirtualRingBuffer_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = VirtualRingBuffer_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VirtualRingBuffer_test.m; sourceTree = "<group>"; };
 		31DCF72F08CB855C00E351D9 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
@@ -941,6 +944,8 @@
 				311B7C820BCC4D0500653D2D /* RXDebug.m */,
 				312877220F2985DE00A114FF /* RXCardCollectionView.h */,
 				312877230F2985DE00A114FF /* RXCardCollectionView.m */,
+				31DBC9640F2AE1DB004B9277 /* RXCardInspectorController.h */,
+				31DBC9650F2AE1DB004B9277 /* RXCardInspectorController.m */,
 			);
 			path = Debug;
 			sourceTree = "<group>";
@@ -1560,6 +1565,7 @@
 				31A14C020F03F8EC006EFF93 /* CADebugger.cpp in Sources */,
 				31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */,
 				312877240F2985DE00A114FF /* RXCardCollectionView.m in Sources */,
+				31DBC9660F2AE1DB004B9277 /* RXCardInspectorController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
