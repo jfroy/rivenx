@@ -59,9 +59,6 @@ NSObject* g_world = nil;
 		@throw [NSException exceptionWithName:@"RXInvalidDefaultEngineVariablesException" reason:@"Unable to load the default engine variables." userInfo:[NSDictionary dictionaryWithObject:errorString forKey:@"RXErrorString"]];
 	[errorString release];
 	
-	// observe the volume key path
-	[[_engineVariables objectForKey:@"rendering"] addObserver:self forKeyPath:@"volume" options:NSKeyValueObservingOptionNew context:[_engineVariables objectForKey:@"rendering"]];
-	
 #if defined(DEBUG)
 
 #endif
