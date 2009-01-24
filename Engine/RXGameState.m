@@ -313,24 +313,40 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 }
 
 - (RXSimpleCardDescriptor*)currentCard {
-	return _currentCard;
+	[_accessLock lock];
+	RXSimpleCardDescriptor* card = _currentCard;
+	[_accessLock unlock];
+	
+	return card;
 }
 
 - (void)setCurrentCard:(RXSimpleCardDescriptor*)descriptor {
-	[_currentCard release];
+	[_accessLock lock];
+	
+	id old = _currentCard;
 	_currentCard = [descriptor retain];
+	[old release];
 	
 	[self setUnsignedShort:descriptor->cardID forKey:@"currentcardid"];
 	[self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->parentName] objectForKey:@"ID"] unsignedShortValue] forKey:@"currentstackid"];
+	
+	[_accessLock unlock];
 }
 
 - (RXSimpleCardDescriptor*)returnCard {
-	return _returnCard;
+	[_accessLock lock];
+	RXSimpleCardDescriptor* card = _returnCard;
+	[_accessLock unlock];
+	
+	return card;
 }
 
 - (void)setReturnCard:(RXSimpleCardDescriptor*)descriptor {
-	[_returnCard release];
+	[_accessLock lock];
+	
+	id old = _returnCard;
 	_returnCard = [descriptor retain];
+	[old release];
 	
 	if (descriptor) {
 		[self setUnsignedShort:descriptor->cardID forKey:@"returncardid"];
@@ -339,6 +355,8 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 		[self setUnsignedShort:0 forKey:@"returncardid"];
 		[self setUnsignedShort:0 forKey:@"returnstackid"];
 	}
+	
+	[_accessLock unlock];
 }
 
 @end

@@ -26,11 +26,13 @@
 		31225ABE08C4216D0055628F /* RXStack.m in Sources */ = {isa = PBXBuildFile; fileRef = 31225ABD08C4216D0055628F /* RXStack.m */; };
 		31225AC408C421790055628F /* RXCard.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31225AC308C421790055628F /* RXCard.mm */; };
 		3124F2A909C36792009BA3CF /* RXSoundGroup.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3124F2A609C36782009BA3CF /* RXSoundGroup.mm */; };
+		312876F90F2972E900A114FF /* CardInspector.xib in Resources */ = {isa = PBXBuildFile; fileRef = 312876F80F2972E900A114FF /* CardInspector.xib */; };
+		312877240F2985DE00A114FF /* RXCardCollectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 312877230F2985DE00A114FF /* RXCardCollectionView.m */; };
 		312A89650D57B25600FCDF91 /* RXEdition.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A895F0D57B25600FCDF91 /* RXEdition.m */; };
 		312A89660D57B25600FCDF91 /* RXEditionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89610D57B25600FCDF91 /* RXEditionManager.m */; };
 		312A89670D57B25600FCDF91 /* RXEditionManagerWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89630D57B25600FCDF91 /* RXEditionManagerWindowController.m */; };
 		312A896D0D57B33700FCDF91 /* Editions in Resources */ = {isa = PBXBuildFile; fileRef = 312A89690D57B33700FCDF91 /* Editions */; };
-		312B048F0D9A8AE20012BE29 /* RXMovieProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 312B048E0D9A8AE20012BE29 /* RXMovieProxy.m */; };
+		312B048F0D9A8AE20012BE29 /* RXMovieProxy.mm in Sources */ = {isa = PBXBuildFile; fileRef = 312B048E0D9A8AE20012BE29 /* RXMovieProxy.mm */; };
 		312D9ECD0D4D81A3006E384C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9EC70D4D81A3006E384C /* InfoPlist.strings */; };
 		312D9ECE0D4D81A3006E384C /* Extras.MHK in Resources */ = {isa = PBXBuildFile; fileRef = 312D9EC90D4D81A3006E384C /* Extras.MHK */; };
 		312D9ECF0D4D81A3006E384C /* About.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9ECB0D4D81A3006E384C /* About.strings */; };
@@ -180,6 +182,7 @@
 		31DAAF0B0DDE21BB00D06D0C /* Cursors.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */; };
 		31DAAF260DDE21EF00D06D0C /* cursors in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF0C0DDE21EF00D06D0C /* cursors */; };
 		31DAAF270DDE21EF00D06D0C /* sounds in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF210DDE21EF00D06D0C /* sounds */; };
+		31DBC9660F2AE1DB004B9277 /* RXCardInspectorController.m in Sources */ = {isa = PBXBuildFile; fileRef = 31DBC9650F2AE1DB004B9277 /* RXCardInspectorController.m */; };
 		31DC682909CB880A00BFF447 /* VirtualRingBuffer_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */; };
 		31DC684209CB8E6B00BFF447 /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
 		31DC684309CB8EBD00BFF447 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
@@ -311,6 +314,9 @@
 		31225AC308C421790055628F /* RXCard.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXCard.mm; sourceTree = "<group>"; };
 		3124F2A509C36782009BA3CF /* RXSoundGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXSoundGroup.h; sourceTree = "<group>"; };
 		3124F2A609C36782009BA3CF /* RXSoundGroup.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXSoundGroup.mm; sourceTree = "<group>"; };
+		312876F80F2972E900A114FF /* CardInspector.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CardInspector.xib; sourceTree = "<group>"; };
+		312877220F2985DE00A114FF /* RXCardCollectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardCollectionView.h; sourceTree = "<group>"; };
+		312877230F2985DE00A114FF /* RXCardCollectionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardCollectionView.m; sourceTree = "<group>"; };
 		312A895E0D57B25600FCDF91 /* RXEdition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXEdition.h; sourceTree = "<group>"; };
 		312A895F0D57B25600FCDF91 /* RXEdition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXEdition.m; sourceTree = "<group>"; };
 		312A89600D57B25600FCDF91 /* RXEditionManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXEditionManager.h; sourceTree = "<group>"; };
@@ -319,7 +325,7 @@
 		312A89630D57B25600FCDF91 /* RXEditionManagerWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXEditionManagerWindowController.m; sourceTree = "<group>"; };
 		312A89690D57B33700FCDF91 /* Editions */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Editions; sourceTree = "<group>"; };
 		312B048D0D9A8AE20012BE29 /* RXMovieProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXMovieProxy.h; sourceTree = "<group>"; };
-		312B048E0D9A8AE20012BE29 /* RXMovieProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXMovieProxy.m; sourceTree = "<group>"; };
+		312B048E0D9A8AE20012BE29 /* RXMovieProxy.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXMovieProxy.mm; sourceTree = "<group>"; };
 		312D9EC80D4D81A3006E384C /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		312D9ECA0D4D81A3006E384C /* en */ = {isa = PBXFileReference; lastKnownFileType = file; name = en; path = en.lproj/Extras.MHK; sourceTree = "<group>"; };
 		312D9ECC0D4D81A3006E384C /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/About.strings; sourceTree = "<group>"; };
@@ -498,6 +504,8 @@
 		31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */ = {isa = PBXFileReference; lastKnownFileType = file.bplist; path = Cursors.plist; sourceTree = "<group>"; };
 		31DAAF0C0DDE21EF00D06D0C /* cursors */ = {isa = PBXFileReference; lastKnownFileType = folder; path = cursors; sourceTree = "<group>"; };
 		31DAAF210DDE21EF00D06D0C /* sounds */ = {isa = PBXFileReference; lastKnownFileType = folder; path = sounds; sourceTree = "<group>"; };
+		31DBC9640F2AE1DB004B9277 /* RXCardInspectorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardInspectorController.h; sourceTree = "<group>"; };
+		31DBC9650F2AE1DB004B9277 /* RXCardInspectorController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardInspectorController.m; sourceTree = "<group>"; };
 		31DC67FF09CB879B00BFF447 /* VirtualRingBuffer_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = VirtualRingBuffer_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VirtualRingBuffer_test.m; sourceTree = "<group>"; };
 		31DCF72F08CB855C00E351D9 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
@@ -764,7 +772,7 @@
 				312EDC700A2E3B80005D26AF /* RXHotspot.h */,
 				312EDC710A2E3B80005D26AF /* RXHotspot.m */,
 				312B048D0D9A8AE20012BE29 /* RXMovieProxy.h */,
-				312B048E0D9A8AE20012BE29 /* RXMovieProxy.m */,
+				312B048E0D9A8AE20012BE29 /* RXMovieProxy.mm */,
 				3195A6330EEC57860000CFB6 /* RXRivenScriptCommandAliases.h */,
 				31863C0509919F87001A4A42 /* RXRivenScriptProtocol.h */,
 			);
@@ -985,6 +993,10 @@
 				93FDAD45098A78DE00D94CD0 /* RXDebugWindowController.mm */,
 				311B7C810BCC4D0500653D2D /* RXDebug.h */,
 				311B7C820BCC4D0500653D2D /* RXDebug.m */,
+				312877220F2985DE00A114FF /* RXCardCollectionView.h */,
+				312877230F2985DE00A114FF /* RXCardCollectionView.m */,
+				31DBC9640F2AE1DB004B9277 /* RXCardInspectorController.h */,
+				31DBC9650F2AE1DB004B9277 /* RXCardInspectorController.m */,
 			);
 			path = Debug;
 			sourceTree = "<group>";
@@ -1047,6 +1059,7 @@
 			children = (
 				31F1BEA50D3B03D000CFE301 /* about.png */,
 				312D9ECB0D4D81A3006E384C /* About.strings */,
+				312876F80F2972E900A114FF /* CardInspector.xib */,
 				31DAAF0C0DDE21EF00D06D0C /* cursors */,
 				31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */,
 				31B741C00B8414EA00D1A247 /* Cyan Worlds.mp4 */,
@@ -1386,6 +1399,7 @@
 				31DAAF260DDE21EF00D06D0C /* cursors in Resources */,
 				31DAAF270DDE21EF00D06D0C /* sounds in Resources */,
 				3185C43B0E06027800528220 /* sparkle.pem in Resources */,
+				312876F90F2972E900A114FF /* CardInspector.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1611,7 +1625,7 @@
 				3105EC610D74922500609273 /* RXLogging.m in Sources */,
 				3196B9360D945CC100BC818E /* RXTiming.c in Sources */,
 				319926E20D96A81000ED1B47 /* RXSystemProfiler.m in Sources */,
-				312B048F0D9A8AE20012BE29 /* RXMovieProxy.m in Sources */,
+				312B048F0D9A8AE20012BE29 /* RXMovieProxy.mm in Sources */,
 				312F4D8F0DC2639C00B3AF0D /* RXRendering.m in Sources */,
 				312F4D900DC2639C00B3AF0D /* RXWorldRendering.mm in Sources */,
 				312F4DB40DC263F600B3AF0D /* GL_debug.c in Sources */,
@@ -1637,6 +1651,8 @@
 				31A14BF50F03F7D3006EFF93 /* CAComponent.cpp in Sources */,
 				31A14C020F03F8EC006EFF93 /* CADebugger.cpp in Sources */,
 				31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */,
+				312877240F2985DE00A114FF /* RXCardCollectionView.m in Sources */,
+				31DBC9660F2AE1DB004B9277 /* RXCardInspectorController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -197,12 +197,16 @@ static void rx_release_owner_applier(const void* value, void* context) {
 	if (kerr != 0)
 		goto init_failure;
 	
+	// initialize all the rendering stuff (shaders, textures, buffers, VAOs)
 	[self _initializeRendering];
 	
 	// initialize the mouse vector
 	_mouseVector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
 	_mouseVector.size.width = INFINITY;
 	_mouseVector.size.height = INFINITY;
+	
+	// register for current card request notifications
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_broadcastCurrentCard:) name:@"RXBroadcastCurrentCardNotification" object:nil];
 	
 	return self;
 	
@@ -1108,6 +1112,10 @@ init_failure:
 - (void)_postCardSwitchNotification:(RXCard*)newCard {
 	// WARNING: MUST RUN ON THE MAIN THREAD
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"RXActiveCardDidChange" object:newCard];
+}
+
+- (void)_broadcastCurrentCard:(NSNotification*)notification {
+	[self _postCardSwitchNotification:_front_render_state->card];
 }
 
 - (void)_switchCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)simpleDescriptor {

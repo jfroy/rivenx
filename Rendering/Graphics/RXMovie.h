@@ -9,7 +9,7 @@
 #import <QuickTime/QuickTime.h>
 #import <QTKit/QTKit.h>
 
-#import "RXRendering.h"
+#import "Rendering/RXRendering.h"
 
 
 @interface RXMovie : NSObject <RXRenderingProtocol> {

@@ -1053,14 +1053,22 @@ static NSMutableString* _scriptLogPrefix;
 	return _descriptor;
 }
 
+- (NSArray*)movies {
+	return _movies;
+}
+
+- (NSArray*)pictures {
+	return nil;
+}
+
+#pragma mark -
+#pragma mark script execution
+
 - (void)setRivenScriptHandler:(id <RXRivenScriptProtocol>)handler {
 	if (![handler conformsToProtocol:@protocol(RXRivenScriptProtocol)])
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"OBJECT DOES NOT CONFORM TO RXRivenScriptProtocol" userInfo:nil];
 	_scriptHandler = handler;
 }
-
-#pragma mark -
-#pragma mark script execution
 
 - (size_t)_executeRivenProgram:(const void *)program count:(uint16_t)opcodeCount {
 	if (!_scriptHandler)

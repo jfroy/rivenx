@@ -7,9 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
-
 #import <MHKKit/MHKArchive.h>
-#import "RXMovie.h"
+
+#import "Rendering/Graphics/RXMovie.h"
 
 
 @interface RXMovieProxy : NSObject {

@@ -41,6 +41,9 @@
 	_audioRenderer = reinterpret_cast<void *>(audioRenderer);
 	audioRenderer->Initialize();
 	
+	// we can now observe the volume key path rendering setting
+	[[_engineVariables objectForKey:@"rendering"] addObserver:self forKeyPath:@"volume" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionInitial context:[_engineVariables objectForKey:@"rendering"]];
+	
 	// FIXME: we should store the last screen ID (index? some other?) used and keep using that
 	// create our window on the main screen
 	NSScreen* mainScreen = [NSScreen mainScreen];

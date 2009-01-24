@@ -8,6 +8,9 @@
 
 #import "RXMovieProxy.h"
 
+#import "Engine/RXWorldProtocol.h"
+#import "Rendering/Audio/RXAudioRenderer.h"
+
 
 @implementation RXMovieProxy
 
@@ -57,7 +60,8 @@
 	renderRect.origin.y = _origin.y - renderRect.size.height;
 	[_movie setRenderRect:renderRect];
 	
-	// FIXME: set movie volume
+	// scale the movie's volume by the audio engine's gain
+	[[_movie movie] setVolume:reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer])->Gain()];
 }
 
 + (BOOL)instancesRespondToSelector:(SEL)aSelector {

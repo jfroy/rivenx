@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-#import "RXRendering.h"
+#import "Rendering/RXRendering.h"
 
 
 @interface RXPicture : NSObject <RXRenderingProtocol> {
