@@ -1699,34 +1699,69 @@ exit_render:
 		[gl_state bindVertexArrayObject:0];
 	}
 	
+	// character buffer for debug strings to render
+	char debug_buffer[100];
+	
+	// VA for the background strip we'll paint before a debug string
+	NSPoint background_origin = NSMakePoint(9.5, 19.5);
+	GLfloat background_strip[12] = {
+		background_origin.x, background_origin.y, 0.0f,
+		background_origin.x, background_origin.y, 0.0f,
+		background_origin.x, background_origin.y + 13.0f, 0.0f,
+		background_origin.x, background_origin.y + 13.0f, 0.0f
+	};
+	
+	// setup the pipeline to use the client memory VA we defined above
+	[gl_state bindVertexArrayObject:0];
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glVertexPointer(3, GL_FLOAT, 0, background_strip);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	
+	// mouse info
 	if (RXEngineGetBool(@"rendering.mouse_info")) {
-		char mouse_info[100];
 		NSRect mouse = [self mouseVector];
-		snprintf(mouse_info, 100, "mouse vector: (%f, %f) (%f, %f)", mouse.origin.x, mouse.origin.y, mouse.size.width, mouse.size.height);
+		snprintf(debug_buffer, 100, "mouse vector: (%f, %f) (%f, %f)", mouse.origin.x, mouse.origin.y, mouse.size.width, mouse.size.height);
 		
-		GLfloat background_strip[] = {
-			9.5f, 19.5f, 0.0f,
-			9.5f + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char *)mouse_info), 19.5f, 0.0f,
-			9.5f, 19.5f + 13.0f, 0.0f,
-			9.5f + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char *)mouse_info), 19.5f + 13.0f, 0.0f
-		};
-		
-		[gl_state bindVertexArrayObject:0];
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glVertexPointer(3, GL_FLOAT, 0, background_strip);
-		glEnableClientState(GL_VERTEX_ARRAY);
+		background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
+		background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
 		
 		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		
-		glDisableClientState(GL_VERTEX_ARRAY);
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		glRasterPos3d(10.5f, background_origin.y + 1.0, 0.0f);
+		size_t l = strlen(debug_buffer);
+		for (size_t i = 0; i < l; i++)
+			glutBitmapCharacter(GLUT_BITMAP_8_BY_13, debug_buffer[i]);
+	}
+	
+	// go up to the next debug line
+	background_origin.y += 13.0;
+	background_strip[1] = background_strip[7];
+	background_strip[4] = background_strip[7];
+	background_strip[7] = background_strip[7] + 13.0f;
+	background_strip[10] = background_strip[7];
+	
+	// card info
+	if (RXEngineGetBool(@"rendering.card_info") && _front_render_state->card) {
+		RXSimpleCardDescriptor* scd = [[_front_render_state->card descriptor] simpleDescriptor];
+		snprintf(debug_buffer, 100, "card: %s %d", [scd->parentName cStringUsingEncoding:NSASCIIStringEncoding], scd->cardID);
+		
+		background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
+		background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
+		
+		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glRasterPos3d(10.5f, 20.5f, 0.0f);
-		size_t l = strlen(mouse_info);
+		glRasterPos3d(10.5f, background_origin.y + 1.0, 0.0f);
+		size_t l = strlen(debug_buffer);
 		for (size_t i = 0; i < l; i++)
-			glutBitmapCharacter(GLUT_BITMAP_8_BY_13, mouse_info[i]);
+			glutBitmapCharacter(GLUT_BITMAP_8_BY_13, debug_buffer[i]);
 	}
+	
+	// re-disable the VA in VAO 0
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
@@ -1779,72 +1814,6 @@ exit_flush_tasks:
 	}
 }
 
-- (void)setProcessUIEvents:(BOOL)process {
-	if (process) {
-		assert(_ignoreUIEventsCounter > 0);
-		OSAtomicDecrement32Barrier(&_ignoreUIEventsCounter);
-#if defined(DEBUG) && DEBUG > 1
-	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"UI events ignore counter decreased to %u ", _ignoreUIEventsCounter);
-#endif
-		
-		// if the count falls to 0, refresh hotspots by faking a mouseMoved event
-		if (_ignoreUIEventsCounter == 0 && _resetHotspotState) {
-			NSEvent* mouseEvent = [NSEvent mouseEventWithType:NSMouseMoved 
-													 location:[[g_worldView window] mouseLocationOutsideOfEventStream] 
-												modifierFlags:0 
-													timestamp:[[NSApp currentEvent] timestamp] 
-												 windowNumber:[[g_worldView window] windowNumber] 
-													  context:[[g_worldView window] graphicsContext] 
-												  eventNumber:0 
-												   clickCount:0 
-													 pressure:0.0f];
-			[[g_worldView window] postEvent:mouseEvent atStart:YES];
-		}
-	} else {
-		assert(_ignoreUIEventsCounter < INT32_MAX);
-		OSAtomicIncrement32Barrier(&_ignoreUIEventsCounter);
-#if defined(DEBUG) && DEBUG > 1
-	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"UI events ignore counter increased to %u ", _ignoreUIEventsCounter);
-#endif
-	}
-}
-
-- (void)setExecutingBlockingAction:(BOOL)blocking {
-	if (blocking) {
-		assert(_scriptExecutionBlockedCounter < INT32_MAX);
-		OSAtomicIncrement32Barrier(&_scriptExecutionBlockedCounter);
-		
-		if (_scriptExecutionBlockedCounter == 1) {
-			// when the script thread is executing a blocking action, we implicitly ignore UI events
-			[self setProcessUIEvents:NO];
-			
-			// update the cursor visibility (hide it)
-			[self _updateCursorVisibility];
-		}
-	} else {
-		assert(_scriptExecutionBlockedCounter > 0);
-		OSAtomicDecrement32Barrier(&_scriptExecutionBlockedCounter);
-		
-		if (_scriptExecutionBlockedCounter == 0) {
-			// update the cursor visibility (show the previous cursor if the cursor state has not been reset); do this before enabling UI processing so the cursor visibility update is queued on the main thread before the mouse moved event
-			[self _updateCursorVisibility];
-			
-			// re-enable UI event processing; this will take care of updating the cursor if the hotspot state has been reset
-			[self setProcessUIEvents:YES];
-		}
-	}
-}
-
-- (void)resetHotspotState {
-	// this method is called when switching card and when changing the set of active hotspots from a script
-	
-	// setting this to yes will cause a mouse moved even to be synthesized the next time the ignore UI events counter reaches 0
-	_resetHotspotState = YES;
-	
-	// note that we do not set the current hotspot to nil in this method, because if may be called within the scope of a particular card, 
-	// meaning even though we changed the active set of hotspots, the one we're on may still be valid after
-}
-
 - (NSRect)mouseVector {
 	OSSpinLockLock(&_mouseVectorLock);
 	NSRect r = _mouseVector;
@@ -1886,9 +1855,7 @@ exit_flush_tasks:
 	[self setActiveCardWithStack:@"aspit" ID:[journalCardIDNumber unsignedShortValue] waitUntilDone:NO];
 }
 
-- (void)_trackMouse:(NSEvent*)event {
-	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
-	
+- (void)_trackMouse:(NSPoint*)mousePoint {
 	// if the mouse is below the game viewport, bring up the alpha of the inventory to 1; otherwise set it to 0.5
 	if (NSPointInRect(mousePoint, [(NSView*)g_worldView bounds]) && mousePoint.y < kRXCardViewportOriginOffset.y)
 		_inventoryAlphaFactor = 1.f;
@@ -1953,14 +1920,74 @@ exit_flush_tasks:
 	}
 }
 
+- (void)setProcessUIEvents:(BOOL)process {
+	if (process) {
+		assert(_ignoreUIEventsCounter > 0);
+		OSAtomicDecrement32Barrier(&_ignoreUIEventsCounter);
+#if defined(DEBUG) && DEBUG > 1
+	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"UI events ignore counter decreased to %u ", _ignoreUIEventsCounter);
+#endif
+		
+		// if the count falls to 0, refresh hotspots by faking a mouseMoved event
+		if (_ignoreUIEventsCounter == 0 && _resetHotspotState) {
+			NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil]
+			[self _trackMouse:mousePoint];
+		}
+	} else {
+		assert(_ignoreUIEventsCounter < INT32_MAX);
+		OSAtomicIncrement32Barrier(&_ignoreUIEventsCounter);
+#if defined(DEBUG) && DEBUG > 1
+	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"UI events ignore counter increased to %u ", _ignoreUIEventsCounter);
+#endif
+	}
+}
+
+- (void)setExecutingBlockingAction:(BOOL)blocking {
+	if (blocking) {
+		assert(_scriptExecutionBlockedCounter < INT32_MAX);
+		OSAtomicIncrement32Barrier(&_scriptExecutionBlockedCounter);
+		
+		if (_scriptExecutionBlockedCounter == 1) {
+			// when the script thread is executing a blocking action, we implicitly ignore UI events
+			[self setProcessUIEvents:NO];
+			
+			// update the cursor visibility (hide it)
+			[self _updateCursorVisibility];
+		}
+	} else {
+		assert(_scriptExecutionBlockedCounter > 0);
+		OSAtomicDecrement32Barrier(&_scriptExecutionBlockedCounter);
+		
+		if (_scriptExecutionBlockedCounter == 0) {
+			// update the cursor visibility (show the previous cursor if the cursor state has not been reset); do this before enabling UI processing so the cursor visibility update is queued on the main thread before the mouse moved event
+			[self _updateCursorVisibility];
+			
+			// re-enable UI event processing; this will take care of updating the cursor if the hotspot state has been reset
+			[self setProcessUIEvents:YES];
+		}
+	}
+}
+
+- (void)resetHotspotState {
+	// this method is called when switching card and when changing the set of active hotspots from a script
+	
+	// setting this to yes will cause a mouse moved even to be synthesized the next time the ignore UI events counter reaches 0
+	_resetHotspotState = YES;
+	
+	// note that we do not set the current hotspot to nil in this method, because if may be called within the scope of a particular card, 
+	// meaning even though we changed the active set of hotspots, the one we're on may still be valid after
+}
+
 - (void)mouseMoved:(NSEvent*)event {
 	_isDraggingMouse = NO;
-	[self _trackMouse:event];
+	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
+	[self _trackMouse:mousePoint];
 }
 
 - (void)mouseDragged:(NSEvent*)event {
 	_isDraggingMouse = YES;
-	[self _trackMouse:event];
+	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
+	[self _trackMouse:mousePoint];
 }
 
 - (void)mouseDown:(NSEvent*)event {

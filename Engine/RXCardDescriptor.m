@@ -185,7 +185,8 @@ struct _RXCardDescriptorPrimer {
 }
 
 - (RXSimpleCardDescriptor*)simpleDescriptor {
-	if (_simpleDescriptor) return _simpleDescriptor;
+	if (_simpleDescriptor)
+		return _simpleDescriptor;
 	_simpleDescriptor = [[RXSimpleCardDescriptor alloc] initWithStackName:[_parent key] ID:_ID];
 	return _simpleDescriptor;
 }

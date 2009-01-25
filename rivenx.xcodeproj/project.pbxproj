@@ -183,6 +183,7 @@
 		31DAAF260DDE21EF00D06D0C /* cursors in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF0C0DDE21EF00D06D0C /* cursors */; };
 		31DAAF270DDE21EF00D06D0C /* sounds in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF210DDE21EF00D06D0C /* sounds */; };
 		31DBC9660F2AE1DB004B9277 /* RXCardInspectorController.m in Sources */ = {isa = PBXBuildFile; fileRef = 31DBC9650F2AE1DB004B9277 /* RXCardInspectorController.m */; };
+		31DBCAD40F2BEB6A004B9277 /* MHKKit.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
 		31DC682909CB880A00BFF447 /* VirtualRingBuffer_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */; };
 		31DC684209CB8E6B00BFF447 /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
 		31DC684309CB8EBD00BFF447 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
@@ -275,6 +276,16 @@
 				31863BE009919B29001A4A42 /* FScript.framework in Copy Frameworks */,
 			);
 			name = "Copy Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		31DBCAE40F2BEB77004B9277 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				31DBCAD40F2BEB6A004B9277 /* MHKKit.framework in CopyFiles */,
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -1188,6 +1199,7 @@
 				317ACC780F285B780040FFFD /* Resources */,
 				317ACC790F285B780040FFFD /* Sources */,
 				317ACC7A0F285B780040FFFD /* Frameworks */,
+				31DBCAE40F2BEB77004B9277 /* CopyFiles */,
 			);
 			buildRules = (
 			);

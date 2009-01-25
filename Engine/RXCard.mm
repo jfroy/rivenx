@@ -2326,15 +2326,17 @@ static NSMutableString* _scriptLogPrefix;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating blst record at index %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
-	struct rx_blst_record* record = (struct rx_blst_record *)_hotspotControlRecords + (argv[0] - 1);
+	struct rx_blst_record* record = (struct rx_blst_record*)_hotspotControlRecords + (argv[0] - 1);
 	uint32_t key = record->hotspot_id;
 	
 	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet(_hotspotsIDMap, (void *)key));
 	assert(hotspot);
 	
 	OSSpinLockLock(&_activeHotspotsLock);
-	if (record->enabled == 1 && !hotspot->enabled) [_activeHotspots addObject:hotspot];
-	else if (record->enabled == 0 && hotspot->enabled) [_activeHotspots removeObject:hotspot];
+	if (record->enabled == 1 && !hotspot->enabled)
+		[_activeHotspots addObject:hotspot];
+	else if (record->enabled == 0 && hotspot->enabled)
+		[_activeHotspots removeObject:hotspot];
 	OSSpinLockUnlock(&_activeHotspotsLock);
 	
 	hotspot->enabled = record->enabled;
@@ -2883,7 +2885,18 @@ DEFINE_COMMAND(xjtunnel106_pictfix) {
 #pragma mark jungle elevator
 
 DEFINE_COMMAND(xhandlecontrolmid) {
-	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.2]] && isfinite([_scriptHandler mouseVector].size.width)) {}
+	NSRect mouse_vector = [_scriptHandler mouseVector];
+	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.2]] && isfinite(mouse_vector.size.width)) {
+		if (mouse_vector.size.height > 40.0f) {
+			// if the mouth is open, we need to close it before going up or down
+			if ([[g_world gameState] unsigned32ForKey:@"jwmouth"]) {
+				[[g_world gameState] setUnsignedShort:0 forKey:@"jwmouth"];
+				DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 3);
+			}
+		}
+		
+		mouse_vector = [_scriptHandler mouseVector];
+	}
 }
 
 @end
