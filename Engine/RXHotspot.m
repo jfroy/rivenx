@@ -7,7 +7,8 @@
 //
 
 #import "RXHotspot.h"
-#import "RXRendering.h"
+
+#import "Rendering/RXRendering.h"
 
 
 @implementation RXHotspot

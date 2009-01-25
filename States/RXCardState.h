@@ -53,15 +53,10 @@ struct rx_transition_program {
 	struct rx_card_state_render_state* volatile _back_render_state;
 	OSSpinLock _renderLock;
 	
-	// event handling
-	int32_t _ignoreUIEventsCounter;
-	int32_t _scriptExecutionBlockedCounter;
+	// mouse and hotspots handling
 	NSCursor* _cursorBackup;
 	NSRect _mouseVector;
 	OSSpinLock _mouseVectorLock;
-	
-	// hotspot state handling
-	BOOL _resetHotspotState;
 	BOOL _isDraggingMouse;
 	RXHotspot* _currentHotspot;
 	

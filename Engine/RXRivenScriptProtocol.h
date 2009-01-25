@@ -22,9 +22,6 @@
 - (void)activateSoundGroup:(RXSoundGroup*)soundGroup;
 - (void)playDataSound:(RXDataSound*)sound;
 
-- (void)setProcessUIEvents:(BOOL)process;
-- (void)setExecutingBlockingAction:(BOOL)blocking;
-- (void)resetHotspotState;
 - (NSRect)mouseVector;
 
 - (void)queuePicture:(RXPicture*)picture;

@@ -1026,8 +1026,8 @@ init_failure:
 
 - (void)swapRenderState:(RXCard*)sender {	
 	// if we'll queue a transition, mark script execution as being blocked now
-	if ([_transitionQueue count] > 0)
-		[self setExecutingBlockingAction:YES];
+//	if ([_transitionQueue count] > 0)
+//		[self setExecutingBlockingAction:YES];
 	
 	// if a transition is ongoing, wait until its done
 	mach_timespec_t waitTime = {0, kRXTransitionDuration * 1e9};
@@ -1100,9 +1100,6 @@ init_failure:
 		
 		// run the new front card's "start rendering" script
 		[_front_render_state->card startRendering];
-		
-		// the card switch is done; we're no longer blocking script execution
-		[self setExecutingBlockingAction:NO];
 	}
 }
 
@@ -1166,13 +1163,6 @@ init_failure:
 #endif
 	}
 	
-	// switching card blocks script execution
-	[self setExecutingBlockingAction:YES];
-	
-	// changing card completely invalidates the hotspot state, so we also nuke the current hotspot
-	[self resetHotspotState];
-	_currentHotspot = nil;
-	
 	// setup the back render state
 	_back_render_state->card = [newCard retain];
 	_back_render_state->new_card = YES;
@@ -1196,13 +1186,6 @@ init_failure:
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
 	if ([NSThread currentThread] != [g_world scriptThread])
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_clearActiveCard: MUST RUN ON SCRIPT THREAD" userInfo:nil];
-	
-	// switching card blocks script execution
-	[self setExecutingBlockingAction:YES];
-	
-	// changing card completely invalidates the hotspot state, so we also nuke the current hotspot
-	[self resetHotspotState];
-	_currentHotspot = nil;
 	
 	// setup the back render state
 	_back_render_state->card = nil;
@@ -1500,9 +1483,6 @@ init_failure:
 			[_front_render_state->transition release];
 			_front_render_state->transition = nil;
 			
-			// mark script execution as being unblocked
-			[self setExecutingBlockingAction:NO];
-			
 			// signal we're no longer running a transition
 			semaphore_signal_all(_transitionSemaphore);
 			
@@ -1785,35 +1765,6 @@ exit_flush_tasks:
 #pragma mark -
 #pragma mark user event handling
 
-- (void)_updateCursorVisibility {
-	// WARNING: MUST RUN ON THE MAIN THREAD
-	if (!pthread_main_np()) {
-		[self performSelectorOnMainThread:@selector(_updateCursorVisibility) withObject:nil waitUntilDone:NO];
-		return;
-	}
-	
-	// if script execution is blocked, we hide the cursor by setting it to the invisible cursor (we don't want to hide the cursor system-wide, just over the game viewport)
-	if (_scriptExecutionBlockedCounter > 0) {
-		_cursorBackup = [g_worldView cursor];
-		[g_worldView setCursor:[g_world cursorForID:9000]];
-		
-		// disable saving
-		[[NSApp delegate] setValue:[NSNumber numberWithBool:NO] forKey:@"savingEnabled"];
-		
-	// otherwise if the hotspot state has not been reset, we restore the previous cursor
-	} else {
-		if (!_resetHotspotState) {
-#if defined(DEBUG)
-			RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"resetting cursor to previous cursor");
-#endif
-			[g_worldView setCursor:_cursorBackup];
-		}
-		
-		// enable saving
-		[[NSApp delegate] setValue:[NSNumber numberWithBool:YES] forKey:@"savingEnabled"];
-	}
-}
-
 - (NSRect)mouseVector {
 	OSSpinLockLock(&_mouseVectorLock);
 	NSRect r = _mouseVector;
@@ -1855,42 +1806,29 @@ exit_flush_tasks:
 	[self setActiveCardWithStack:@"aspit" ID:[journalCardIDNumber unsignedShortValue] waitUntilDone:NO];
 }
 
-- (void)_trackMouse:(NSPoint*)mousePoint {
-	// if the mouse is below the game viewport, bring up the alpha of the inventory to 1; otherwise set it to 0.5
-	if (NSPointInRect(mousePoint, [(NSView*)g_worldView bounds]) && mousePoint.y < kRXCardViewportOriginOffset.y)
-		_inventoryAlphaFactor = 1.f;
-	else
-		_inventoryAlphaFactor = 0.5f;
-	
+- (void)_updateHotspotState {
 #if defined(DEBUG) && DEBUG > 2
 	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"tracking mouse: position=%@, dragging=%s", NSStringFromPoint(mousePoint), (_isDraggingMouse) ? "YES" : "NO");
 #endif
-	
-	// update the mouse vector
-	OSSpinLockLock(&_mouseVectorLock);
-	if (_isDraggingMouse) {
-		_mouseVector.size.width = mousePoint.x - _mouseVector.origin.x;
-		_mouseVector.size.height = mousePoint.y - _mouseVector.origin.y;
-	} else
-		_mouseVector.origin = mousePoint;
-	OSSpinLockUnlock(&_mouseVectorLock);
-	
-	// if UI events are being ignored, we're done
-	if (_ignoreUIEventsCounter > 0)
-		return;
+
+	// if the mouse is below the game viewport, bring up the alpha of the inventory to 1; otherwise set it to 0.5
+	if (NSPointInRect(_mouseVector.origin, [(NSView*)g_worldView bounds]) && _mouseVector.origin.y < kRXCardViewportOriginOffset.y)
+		_inventoryAlphaFactor = 1.f;
+	else
+		_inventoryAlphaFactor = 0.5f;
 	
 	// find over which hotspot the mouse is
 	NSEnumerator* hotpotEnum = [[_front_render_state->card activeHotspots] objectEnumerator];
 	RXHotspot* hotspot;
 	while ((hotspot = [hotpotEnum nextObject])) {
-		if (NSPointInRect(mousePoint, [hotspot worldViewFrame]))
+		if (NSPointInRect(_mouseVector.origin, [hotspot worldViewFrame]))
 			break;
 	}
 	
 	// now check if we're over one of the inventory regions
 	if (!hotspot) {
 		for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
-			if (NSPointInRect(mousePoint, _inventoryHotspotRegions[inventory_i])) {
+			if (NSPointInRect(_mouseVector.origin, _inventoryHotspotRegions[inventory_i])) {
 				// set hotspot to the inventory item index (plus one to avoid the value 0); the following block of code will check if hotspot is not 0 and below PAGEZERO, and act accordingly
 				hotspot = (RXHotspot*)(inventory_i + 1);
 				break;
@@ -1898,96 +1836,48 @@ exit_flush_tasks:
 		}
 	}
 	
-	// if we are over a different hotspot than the current hotspot, we need to send a mouse exited event followed by a mouse entered event to the old current hotspot and new current hotspot, respectively; we only do this if the mouse is not being dragged
-	if ((_currentHotspot != hotspot || _resetHotspotState) && !_isDraggingMouse) {
-		// mouseExitedHotspot does not accept nil (we can't exit the "nil" hotspot); also make sure _currentHotspot is not in PAGEZERO (e.g. that it is a valid object)
-		if (_currentHotspot >= (RXHotspot*)0x1000)
-			[_front_render_state->card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
-		
-		// handle cursor changes here so we don't ping-pong across 2 threads (at least for a hotspot's cursor, the inventory item cursor and the default cursor)
-		if (hotspot == 0)
-			[g_worldView setCursor:[g_world defaultCursor]];
-		else if (hotspot < (RXHotspot*)0x1000)
-			[g_worldView setCursor:[g_world openHandCursor]];
-		else {
-			[g_worldView setCursor:[g_world cursorForID:[hotspot cursorID]]];
-			[_front_render_state->card performSelector:@selector(mouseEnteredHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
-		}
-		
-		// update the current hotspot to the new current hotspot and indicate the hotspot state has been reset
-		_currentHotspot = hotspot;
-		_resetHotspotState = NO;
+	// if we are over a different hotspot than the current hotspot, we need to send a mouse exited event to the old hotspot; we only do this if the mouse is not being dragged (as we allow to drag the mouse outside of a hotspot's bounds)
+	if (_currentHotspot >= (RXHotspot*)0x1000 && _currentHotspot != hotspot && !_isDraggingMouse) {
+		[_front_render_state->card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 	}
-}
-
-- (void)setProcessUIEvents:(BOOL)process {
-	if (process) {
-		assert(_ignoreUIEventsCounter > 0);
-		OSAtomicDecrement32Barrier(&_ignoreUIEventsCounter);
-#if defined(DEBUG) && DEBUG > 1
-	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"UI events ignore counter decreased to %u ", _ignoreUIEventsCounter);
-#endif
-		
-		// if the count falls to 0, refresh hotspots by faking a mouseMoved event
-		if (_ignoreUIEventsCounter == 0 && _resetHotspotState) {
-			NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil]
-			[self _trackMouse:mousePoint];
-		}
-	} else {
-		assert(_ignoreUIEventsCounter < INT32_MAX);
-		OSAtomicIncrement32Barrier(&_ignoreUIEventsCounter);
-#if defined(DEBUG) && DEBUG > 1
-	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"UI events ignore counter increased to %u ", _ignoreUIEventsCounter);
-#endif
-	}
-}
-
-- (void)setExecutingBlockingAction:(BOOL)blocking {
-	if (blocking) {
-		assert(_scriptExecutionBlockedCounter < INT32_MAX);
-		OSAtomicIncrement32Barrier(&_scriptExecutionBlockedCounter);
-		
-		if (_scriptExecutionBlockedCounter == 1) {
-			// when the script thread is executing a blocking action, we implicitly ignore UI events
-			[self setProcessUIEvents:NO];
-			
-			// update the cursor visibility (hide it)
-			[self _updateCursorVisibility];
-		}
-	} else {
-		assert(_scriptExecutionBlockedCounter > 0);
-		OSAtomicDecrement32Barrier(&_scriptExecutionBlockedCounter);
-		
-		if (_scriptExecutionBlockedCounter == 0) {
-			// update the cursor visibility (show the previous cursor if the cursor state has not been reset); do this before enabling UI processing so the cursor visibility update is queued on the main thread before the mouse moved event
-			[self _updateCursorVisibility];
-			
-			// re-enable UI event processing; this will take care of updating the cursor if the hotspot state has been reset
-			[self setProcessUIEvents:YES];
-		}
-	}
-}
-
-- (void)resetHotspotState {
-	// this method is called when switching card and when changing the set of active hotspots from a script
 	
-	// setting this to yes will cause a mouse moved even to be synthesized the next time the ignore UI events counter reaches 0
-	_resetHotspotState = YES;
+	// handle cursor changes here so we don't ping-pong across 2 threads (at least for a hotspot's cursor, the inventory item cursor and the default cursor)
+	if (hotspot == 0)
+		[g_worldView setCursor:[g_world defaultCursor]];
+	else if (hotspot < (RXHotspot*)0x1000)
+		[g_worldView setCursor:[g_world openHandCursor]];
+	else {
+		[g_worldView setCursor:[g_world cursorForID:[hotspot cursorID]]];
+		[_front_render_state->card performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+	}
 	
-	// note that we do not set the current hotspot to nil in this method, because if may be called within the scope of a particular card, 
-	// meaning even though we changed the active set of hotspots, the one we're on may still be valid after
+	// update the current hotspot to the new current hotspot
+	_currentHotspot = hotspot;
 }
 
 - (void)mouseMoved:(NSEvent*)event {
-	_isDraggingMouse = NO;
 	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
-	[self _trackMouse:mousePoint];
+	
+	// update the mouse vector
+	OSSpinLockLock(&_mouseVectorLock);
+	_mouseVector.origin = mousePoint;
+	OSSpinLockUnlock(&_mouseVectorLock);
+	
+	// finally we need to update the hotspot state
+	[self _updateHotspotState];
 }
 
 - (void)mouseDragged:(NSEvent*)event {
-	_isDraggingMouse = YES;
 	NSPoint mousePoint = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
-	[self _trackMouse:mousePoint];
+	
+	// update the mouse vector
+	OSSpinLockLock(&_mouseVectorLock);
+	_mouseVector.size.width = mousePoint.x - _mouseVector.origin.x;
+	_mouseVector.size.height = mousePoint.y - _mouseVector.origin.y;
+	OSSpinLockUnlock(&_mouseVectorLock);
+	
+	// finally we need to update the hotspot state
+	[self _updateHotspotState];
 }
 
 - (void)mouseDown:(NSEvent*)event {
@@ -1997,10 +1887,10 @@ exit_flush_tasks:
 	_mouseVector.size = NSZeroSize;
 	OSSpinLockUnlock(&_mouseVectorLock);
 	
+	// indicate that we are dragging the mouse
+	_isDraggingMouse = YES;
 	
-	if (_ignoreUIEventsCounter > 0)
-		return;
-	
+	// if the current hotspot is valid, send it a mouse down event; if the current hotspot is an inventory hotspot, handle that too
 	if (_currentHotspot >= (RXHotspot*)0x1000)
 		[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 	else if (_currentHotspot)
@@ -2014,12 +1904,16 @@ exit_flush_tasks:
 	_mouseVector.size.width = INFINITY;
 	_mouseVector.size.height = INFINITY;
 	OSSpinLockUnlock(&_mouseVectorLock);
-
-	if (_ignoreUIEventsCounter > 0)
-		return;
 	
+	// indicate that we are not dragging the mouse
+	_isDraggingMouse = NO;
+	
+	// if the current hotspot is valid and has received a mouse down, we send it a mouse up event
 	if (_currentHotspot >= (RXHotspot*)0x1000)
 		[_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+	
+	// finally we need to update the hotspot state
+	[self _updateHotspotState];
 }
 
 @end

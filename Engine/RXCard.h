@@ -38,7 +38,6 @@
 	void* _hotspotControlRecords;
 	NSMutableArray* _activeHotspots;
 	OSSpinLock _activeHotspotsLock;
-	NSTimer* _insideHotspotEventTimer;
 	
 	// pictures
 	GLuint _pictureCount;
@@ -81,11 +80,5 @@
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;
 
 - (RXCardDescriptor*)descriptor;
-
-- (NSArray*)activeHotspots;
-- (void)mouseEnteredHotspot:(RXHotspot*)hotspot;
-- (void)mouseExitedHotspot:(RXHotspot*)hotspot;
-- (void)mouseDownInHotspot:(RXHotspot*)hotspot;
-- (void)mouseUpInHotspot:(RXHotspot*)hotspot;
 
 @end

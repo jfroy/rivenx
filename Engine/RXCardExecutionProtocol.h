@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "RXHotspot.h"
 #import "RXRivenScriptProtocol.h"
 
 @protocol RXCardExecutionProtocol
@@ -16,4 +17,10 @@
 - (void)prepareForRendering;
 - (void)startRendering;
 - (void)stopRendering;
+
+- (NSArray*)activeHotspots;
+- (void)mouseInsideHotspot:(RXHotspot*)hotspot;
+- (void)mouseExitedHotspot:(RXHotspot*)hotspot;
+- (void)mouseDownInHotspot:(RXHotspot*)hotspot;
+- (void)mouseUpInHotspot:(RXHotspot*)hotspot;
 @end

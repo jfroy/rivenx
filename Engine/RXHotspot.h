@@ -6,6 +6,8 @@
 //	Copyright 2006 MacStorm. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+
 
 @interface RXHotspot : NSObject {
 @private
