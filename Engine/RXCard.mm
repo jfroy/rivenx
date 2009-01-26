@@ -1561,6 +1561,9 @@ static NSMutableString* _scriptLogPrefix;
 		
 		// signal the movie playback semaphore to unblock the script thread
 		semaphore_signal(_moviePlaybackSemaphore);
+		
+		// show the mouse cursor
+		[_scriptHandler showMouseCursor];
 	}
 }
 
@@ -1598,6 +1601,9 @@ static NSMutableString* _scriptLogPrefix;
 	// register for rate notifications on the blocking movie handler
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieRateDidChangeNotification object:[movie movie]];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieRateChange:) name:QTMovieRateDidChangeNotification object:[movie movie]];
+	
+	// hide the mouse cursor
+	[_scriptHandler hideMouseCursor];
 	
 	// start playing the movie (this may be a no-op if the movie was already started)
 	[self _reallyDoPlayMovie:movie];
@@ -1893,7 +1899,10 @@ static NSMutableString* _scriptLogPrefix;
 			id <MHKAudioDecompression> decompressor = [sound audioDecompressor];
 			duration = [decompressor frameCount] / [decompressor outputFormat].mSampleRate;
 		}
+		
+		[_scriptHandler hideMouseCursor];
 		usleep(duration * 1E6);
+		[_scriptHandler showMouseCursor];
 	}
 	
 	[sound release];
@@ -1989,7 +1998,9 @@ static NSMutableString* _scriptLogPrefix;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@pausing for %d msec", _scriptLogPrefix, argv[0]);
 #endif
 	
+	[_scriptHandler hideMouseCursor];
 	usleep(argv[0] * 1000);
+	[_scriptHandler showMouseCursor];
 }
 
 // 17
