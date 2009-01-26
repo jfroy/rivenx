@@ -1245,12 +1245,8 @@ static NSMutableString* _scriptLogPrefix;
 
 	// disable UI event processing while a program executes; retain the card while a program executes
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:NO];
 		[self retain];
 	}
-	
-	// prepare for rendering "blocks" script execution, aka hides the cursor
-	[_scriptHandler setExecutingBlockingAction:YES];
 
 	// disable automatic render state swaps by faking an execution of opcode 20
 	_riven_command_dispatch_table[20].imp(self, _riven_command_dispatch_table[20].sel, 0, NULL);
@@ -1300,12 +1296,8 @@ static NSMutableString* _scriptLogPrefix;
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
 #endif
 	
-	// mark script execution as being unblocked
-	[_scriptHandler setExecutingBlockingAction:NO];
-	
 	// enable UI event processing when we're done executing the top-level program; release the card as well
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:YES];
 		[self release];
 	}
 }
@@ -1318,7 +1310,6 @@ static NSMutableString* _scriptLogPrefix;
 
 	// disable UI event processing while a program executes; retain the card while a program executes
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:NO];
 		[self retain];
 	}
 	
@@ -1347,7 +1338,6 @@ static NSMutableString* _scriptLogPrefix;
 
 	// enable UI event processing when we're done executing the top-level program; release the card as well
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:YES];
 		[self release];
 	}
 }
@@ -1360,7 +1350,6 @@ static NSMutableString* _scriptLogPrefix;
 
 	// disable UI event processing while a program executes; retain the card while a program executes
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:NO];
 		[self retain];
 	}
 	
@@ -1373,14 +1362,6 @@ static NSMutableString* _scriptLogPrefix;
 		[self _executeRivenProgram:[[program objectForKey:@"program"] bytes] count:[[program objectForKey:@"opcodeCount"] unsignedShortValue]];
 	}
 	
-//	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
-//	// FIXME: _stopAllMovies IS NOT IMPLEMENTED RIGHT NOW
-//	[self performSelectorOnMainThread:@selector(_stopAllMovies) withObject:nil waitUntilDone:YES];
-	
-	// invalidate the "inside hotspot" timer
-	[_insideHotspotEventTimer invalidate];
-	_insideHotspotEventTimer = nil;
-	
 #if defined(DEBUG)
 	[_scriptLogPrefix deleteCharactersInRange:NSMakeRange([_scriptLogPrefix length] - 4, 4)];
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
@@ -1388,7 +1369,6 @@ static NSMutableString* _scriptLogPrefix;
 
 	// enable UI event processing when we're done executing the top-level program; release the card as well
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:YES];
 		[self release];
 	}
 }
@@ -1406,8 +1386,9 @@ static NSMutableString* _scriptLogPrefix;
 	return hotspots;
 }
 
-- (void)_mouseInsideHotspot:(NSTimer*)timer {
-	RXHotspot* hotspot = [timer userInfo];
+- (void)mouseInsideHotspot:(RXHotspot*)hotspot {
+	if (!hotspot)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
 
 #if defined(DEBUG)
 #if DEBUG > 2
@@ -1445,22 +1426,6 @@ static NSMutableString* _scriptLogPrefix;
 	}
 }
 
-- (void)mouseEnteredHotspot:(RXHotspot*)hotspot {
-	if (!hotspot)
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
-	
-#if defined(DEBUG)
-	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse entered %@", _scriptLogPrefix, hotspot);
-#endif
-	
-	// schedule periodic execution of the "inside hotspot" programs
-	[_insideHotspotEventTimer invalidate];
-	_insideHotspotEventTimer = [NSTimer scheduledTimerWithTimeInterval:kInsideHotspotPeriodicEventPeriod target:self selector:@selector(_mouseInsideHotspot:) userInfo:hotspot repeats:YES];
-	
-	// immediatly run the "inside hotspot" program
-	[self _mouseInsideHotspot:_insideHotspotEventTimer];
-}
-
 - (void)mouseExitedHotspot:(RXHotspot*)hotspot {
 	if (!hotspot)
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
@@ -1470,13 +1435,8 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptLogPrefix appendString:@"    "];
 #endif
 	
-	// stop periodic "inside hotspot" events
-	[_insideHotspotEventTimer invalidate];
-	_insideHotspotEventTimer = nil;
-	
 	// disable UI event processing while a program executes; retain the card while a program executes
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:NO];
 		[self retain];
 	}
 	
@@ -1496,7 +1456,6 @@ static NSMutableString* _scriptLogPrefix;
 
 	// enable UI event processing when we're done executing the top-level program; release the card as well
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:YES];
 		[self release];
 	}
 }
@@ -1509,10 +1468,9 @@ static NSMutableString* _scriptLogPrefix;
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse down in %@ {", _scriptLogPrefix, hotspot);
 	[_scriptLogPrefix appendString:@"    "];
 #endif
-
+	
 	// disable UI event processing while a program executes; retain the card while a program executes
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:NO];
 		[self retain];
 	}
 	
@@ -1532,9 +1490,11 @@ static NSMutableString* _scriptLogPrefix;
 
 	// enable UI event processing when we're done executing the top-level program; release the card as well
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:YES];
 		[self release];
 	}
+	
+	// we need to show the cursor at the end of processing a mouse down message
+	[_scriptHandler showMouseCursor];
 }
 
 - (void)mouseUpInHotspot:(RXHotspot*)hotspot {
@@ -1548,7 +1508,6 @@ static NSMutableString* _scriptLogPrefix;
 
 	// disable UI event processing while a program executes; retain the card while a program executes
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:NO];
 		[self retain];
 	}
 	
@@ -1568,9 +1527,11 @@ static NSMutableString* _scriptLogPrefix;
 
 	// enable UI event processing when we're done executing the top-level program; release the card as well
 	if (_programExecutionDepth == 0) {
-		[_scriptHandler setProcessUIEvents:YES];
 		[self release];
 	}
+	
+	// we need to enable hotspot handling at the end of mouse up messages
+	[_scriptHandler enableHotspotHandling];
 }
 
 #pragma mark -
@@ -1598,11 +1559,11 @@ static NSMutableString* _scriptLogPrefix;
 		RXOLog2(kRXLoggingRendering, kRXLoggingLevelDebug, @"resuming script execution after blocking movie %@ playback", [notification object]);
 #endif
 		
-		// inform the script handler script execution is no longer blocked
-		[_scriptHandler setExecutingBlockingAction:NO];
-		
 		// signal the movie playback semaphore to unblock the script thread
 		semaphore_signal(_moviePlaybackSemaphore);
+		
+		// show the mouse cursor
+		[_scriptHandler showMouseCursor];
 	}
 }
 
@@ -1641,8 +1602,8 @@ static NSMutableString* _scriptLogPrefix;
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieRateDidChangeNotification object:[movie movie]];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieRateChange:) name:QTMovieRateDidChangeNotification object:[movie movie]];
 	
-	// inform the script handler script execution is now blocked
-	[_scriptHandler setExecutingBlockingAction:YES];
+	// hide the mouse cursor
+	[_scriptHandler hideMouseCursor];
 	
 	// start playing the movie (this may be a no-op if the movie was already started)
 	[self _reallyDoPlayMovie:movie];
@@ -1812,7 +1773,6 @@ static NSMutableString* _scriptLogPrefix;
 	[_synthesizedSoundGroup release];
 	
 	// hotspots
-	[_insideHotspotEventTimer invalidate];
 	[_activeHotspots release];
 	if (_hotspotsIDMap)
 		NSFreeMapTable(_hotspotsIDMap);
@@ -1932,7 +1892,6 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// EXPERIMENTAL: use argv[2] as a boolean to indicate "blocking" playback
 	if (argv[2]) {
-		[_scriptHandler setExecutingBlockingAction:YES];
 		double duration;
 		if (sound->source)
 			duration = sound->source->Duration();
@@ -1940,8 +1899,10 @@ static NSMutableString* _scriptLogPrefix;
 			id <MHKAudioDecompression> decompressor = [sound audioDecompressor];
 			duration = [decompressor frameCount] / [decompressor outputFormat].mSampleRate;
 		}
+		
+		[_scriptHandler hideMouseCursor];
 		usleep(duration * 1E6);
-		[_scriptHandler setExecutingBlockingAction:NO];
+		[_scriptHandler showMouseCursor];
 	}
 	
 	[sound release];
@@ -1985,10 +1946,8 @@ static NSMutableString* _scriptLogPrefix;
 		[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
 		OSSpinLockUnlock(&_activeHotspotsLock);
 		
-		[_insideHotspotEventTimer invalidate];
-		_insideHotspotEventTimer = nil;
-		
-		[_scriptHandler resetHotspotState];
+		// instruct the script handler to update the hotspot state
+		[_scriptHandler updateHotspotState];
 	}
 }
 
@@ -2013,10 +1972,8 @@ static NSMutableString* _scriptLogPrefix;
 		[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
 		OSSpinLockUnlock(&_activeHotspotsLock);
 		
-		[_insideHotspotEventTimer invalidate];
-		_insideHotspotEventTimer = nil;
-		
-		[_scriptHandler resetHotspotState];
+		// instruct the script handler to update the hotspot state
+		[_scriptHandler updateHotspotState];
 	}
 }
 
@@ -2041,9 +1998,9 @@ static NSMutableString* _scriptLogPrefix;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@pausing for %d msec", _scriptLogPrefix, argv[0]);
 #endif
 	
-	[_scriptHandler setExecutingBlockingAction:YES];
+	[_scriptHandler hideMouseCursor];
 	usleep(argv[0] * 1000);
-	[_scriptHandler setExecutingBlockingAction:NO];
+	[_scriptHandler showMouseCursor];
 }
 
 // 17
@@ -2345,10 +2302,8 @@ static NSMutableString* _scriptLogPrefix;
 	[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
 	OSSpinLockUnlock(&_activeHotspotsLock);
 	
-	[_insideHotspotEventTimer invalidate];
-	_insideHotspotEventTimer = nil;
-	
-	[_scriptHandler resetHotspotState];
+	// instruct the script handler to update the hotspot state
+	[_scriptHandler updateHotspotState];
 }
 
 // 44

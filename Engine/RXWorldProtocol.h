@@ -46,6 +46,7 @@
 
 - (NSCursor*)defaultCursor;
 - (NSCursor*)openHandCursor;
+- (NSCursor*)invisibleCursor;
 - (NSCursor*)cursorForID:(uint16_t)ID;
 @end
 

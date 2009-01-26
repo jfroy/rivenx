@@ -7,7 +7,8 @@
 //
 
 #import "RXHotspot.h"
-#import "RXRendering.h"
+
+#import "Rendering/RXRendering.h"
 
 
 @implementation RXHotspot
@@ -85,7 +86,7 @@
 	return _script;
 }
 
-- (NSString *)description {
+- (NSString*)description {
 	return [NSString stringWithFormat: @"%@ {ID=%hu, frame=%@}", [super description], _ID, NSStringFromRect(_cardFrame)];
 }
 

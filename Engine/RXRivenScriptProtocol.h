@@ -22,10 +22,13 @@
 - (void)activateSoundGroup:(RXSoundGroup*)soundGroup;
 - (void)playDataSound:(RXDataSound*)sound;
 
-- (void)setProcessUIEvents:(BOOL)process;
-- (void)setExecutingBlockingAction:(BOOL)blocking;
-- (void)resetHotspotState;
 - (NSRect)mouseVector;
+- (void)showMouseCursor;
+- (void)hideMouseCursor;
+
+- (void)enableHotspotHandling;
+- (void)disableHotspotHandling;
+- (void)updateHotspotState;
 
 - (void)queuePicture:(RXPicture*)picture;
 - (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner;

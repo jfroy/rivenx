@@ -528,6 +528,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	return [self cursorForID:2003];
 }
 
+- (NSCursor*)invisibleCursor {
+	return [self cursorForID:9000];
+}
+
 - (NSCursor*)cursorForID:(uint16_t)ID {
 	uintptr_t key = ID;
 	return (NSCursor*)NSMapGet(_cursors, (const void*)key);
