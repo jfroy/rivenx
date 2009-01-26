@@ -266,7 +266,7 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 		return;
 	}
 	
-#if defined(DEBUG)
+#if defined(DEBUG) && DEBUG > 1
 	if (cursor == [g_world defaultCursor])
 		RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"setting cursor to default cursor");
 	else if (cursor == [g_world openHandCursor])
