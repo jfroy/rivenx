@@ -211,6 +211,10 @@ static void rx_release_owner_applier(const void* value, void* context) {
 	// register for current card request notifications
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_broadcastCurrentCard:) name:@"RXBroadcastCurrentCardNotification" object:nil];
 	
+	// register for window key notifications to update the hotspot state
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleWindowDidBecomeKey:) name:NSWindowDidBecomeKeyNotification object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleWindowDidResignKey:) name:NSWindowDidResignKeyNotification object:nil];
+	
 	return self;
 	
 init_failure:
@@ -2071,6 +2075,34 @@ exit_flush_tasks:
 	
 	// finally we need to update the hotspot state; updateHotspotState will take care of sending the mouse up even if it sees a mouse down hotspot and the mouse is still over the hotspot
 	[self updateHotspotState];
+}
+
+- (void)_handleWindowDidBecomeKey:(NSNotification*)notification {
+	NSWindow* window = [notification object];
+	if (window == [g_worldView window]) {
+		// update the mouse vector
+		OSSpinLockLock(&_mouseVectorLock);
+		
+		_mouseVector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
+		if (NSPointInRect(_mouseVector.origin, [(NSView*)g_worldView bounds])) {
+			if (GetCurrentButtonState() & 0x1) {
+				_mouseVector.size.width = 0.0;
+				_mouseVector.size.height = 0.0;
+			} else {
+				_mouseVector.size.width = INFINITY;
+				_mouseVector.size.height = INFINITY;
+			}
+		}
+		
+		OSSpinLockUnlock(&_mouseVectorLock);
+		
+		// update the hotspot state
+		[self updateHotspotState];
+	}
+}
+
+- (void)_handleWindowDidResignKey:(NSNotification*)notification {
+
 }
 
 @end

@@ -48,9 +48,6 @@
 }
 
 - (BOOL)becomeFirstResponder {
-#if defined(DEBUG)
-	RXOLog(@"became first responder");
-#endif
 	return YES;
 }
 
