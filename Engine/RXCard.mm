@@ -1493,8 +1493,8 @@ static NSMutableString* _scriptLogPrefix;
 		[self release];
 	}
 	
-	// we need to enable hotspot handling at the end of mouse down messages
-	[_scriptHandler enableHotspotHandling];
+	// we need to show the cursor at the end of processing a mouse down message
+	[_scriptHandler showMouseCursor];
 }
 
 - (void)mouseUpInHotspot:(RXHotspot*)hotspot {
