@@ -86,7 +86,7 @@
 	return _script;
 }
 
-- (NSString *)description {
+- (NSString*)description {
 	return [NSString stringWithFormat: @"%@ {ID=%hu, frame=%@}", [super description], _ID, NSStringFromRect(_cardFrame)];
 }
 

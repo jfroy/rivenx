@@ -23,6 +23,7 @@
 - (void)playDataSound:(RXDataSound*)sound;
 
 - (NSRect)mouseVector;
+- (void)updateHotspotState;
 
 - (void)queuePicture:(RXPicture*)picture;
 - (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner;

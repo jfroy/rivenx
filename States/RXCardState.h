@@ -52,13 +52,14 @@ struct rx_transition_program {
 	struct rx_card_state_render_state* volatile _front_render_state;
 	struct rx_card_state_render_state* volatile _back_render_state;
 	OSSpinLock _renderLock;
+	OSSpinLock _state_swap_lock;
 	
 	// mouse and hotspots handling
 	NSCursor* _cursorBackup;
 	NSRect _mouseVector;
 	OSSpinLock _mouseVectorLock;
-	BOOL _isDraggingMouse;
 	RXHotspot* _currentHotspot;
+	RXHotspot* _mouse_down_hotspot;
 	
 	// sounds
 	NSMutableSet* _activeSounds;

@@ -197,6 +197,9 @@ static void rx_release_owner_applier(const void* value, void* context) {
 	if (kerr != 0)
 		goto init_failure;
 	
+	_renderLock = OS_SPINLOCK_INIT;
+	_state_swap_lock = OS_SPINLOCK_INIT;
+	
 	// initialize all the rendering stuff (shaders, textures, buffers, VAOs)
 	[self _initializeRendering];
 	
@@ -1070,6 +1073,9 @@ init_failure:
 	_back_render_state->movies = _front_render_state->movies;
 	_front_render_state->movies = new_movies;
 	
+	// take the state swap lock
+	OSSpinLockLock(&_state_swap_lock);
+	
 	// fast swap
 	_front_render_state = _back_render_state;
 	
@@ -1100,7 +1106,13 @@ init_failure:
 		
 		// run the new front card's "start rendering" script
 		[_front_render_state->card startRendering];
+		
+		// we need to update the hotspot state since the front card has changed
+		[self updateHotspotState];
 	}
+	
+	// release the state swap lock
+	OSSpinLockUnlock(&_state_swap_lock);
 }
 
 #pragma mark -
@@ -1112,7 +1124,9 @@ init_failure:
 }
 
 - (void)_broadcastCurrentCard:(NSNotification*)notification {
+	OSSpinLockLock(&_state_swap_lock);
 	[self _postCardSwitchNotification:_front_render_state->card];
+	OSSpinLockUnlock(&_state_swap_lock);
 }
 
 - (void)_switchCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)simpleDescriptor {
@@ -1120,23 +1134,26 @@ init_failure:
 	if ([NSThread currentThread] != [g_world scriptThread])
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_switchCardWithSimpleDescriptor: MUST RUN ON SCRIPT THREAD" userInfo:nil];
 	
-	RXCard* newCard = nil;
+	RXCard* new_card = nil;
+	
+	// because this method will always execute in the script thread, we do not have to protect access to the front card
+	RXCard* front_card = _front_render_state->card;
 	
 	// if we're switching to the same card, don't allocate another copy of it
-	if (_front_render_state->card) {
-		RXCardDescriptor* activeDescriptor = [_front_render_state->card descriptor];
+	if (front_card) {
+		RXCardDescriptor* activeDescriptor = [front_card descriptor];
 		RXStack* activeStack = [activeDescriptor valueForKey:@"parent"];
 		NSNumber* activeID = [activeDescriptor valueForKey:@"ID"];
 		if ([[activeStack key] isEqualToString:simpleDescriptor->parentName] && simpleDescriptor->cardID == [activeID unsignedShortValue]) {
-			newCard = [_front_render_state->card retain];
+			new_card = [front_card retain];
 #if (DEBUG)
-			RXOLog(@"reloading front card: %@", _front_render_state->card);
+			RXOLog(@"reloading front card: %@", front_card);
 #endif
 		}
 	}
 	
 	// if we're switching to a different card, create it
-	if (newCard == nil) {
+	if (new_card == nil) {
 		// if we don't have the stack, bail
 		RXStack* newStack = [g_world activeStackWithKey:simpleDescriptor->parentName];
 		if (!newStack) {
@@ -1152,19 +1169,19 @@ init_failure:
 		if (!newCardDescriptor)
 			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"COULD NOT FIND CARD IN STACK" userInfo:nil]; 
 		
-		newCard = [[RXCard alloc] initWithCardDescriptor:newCardDescriptor];
+		new_card = [[RXCard alloc] initWithCardDescriptor:newCardDescriptor];
 		[newCardDescriptor release];
 		
 		// set ourselves as the Riven script handler
-		[newCard setRivenScriptHandler:self];
+		[new_card setRivenScriptHandler:self];
 		
 #if (DEBUG)
-		RXOLog(@"switch card: {from=%@, to=%@}", _front_render_state->card, newCard);
+		RXOLog(@"switch card: {from=%@, to=%@}", _front_render_state->card, new_card);
 #endif
 	}
 	
-	// setup the back render state
-	_back_render_state->card = [newCard retain];
+	// setup the back render state; notice that the ownership of new_card is transferred to the back render state and thus we will not need a release elsewhere to match the card's allocation
+	_back_render_state->card = new_card;
 	_back_render_state->new_card = YES;
 	_back_render_state->transition = nil;
 	
@@ -1172,14 +1189,13 @@ init_failure:
 	[_front_render_state->card stopRendering];
 	
 	// we have to update the current card in the game state now, otherwise refresh card commands in the prepare for rendering script will jump back to the old card
-	[[g_world gameState] setCurrentCard:[[_back_render_state->card descriptor] simpleDescriptor]];
+	[[g_world gameState] setCurrentCard:[[new_card descriptor] simpleDescriptor]];
 	
 	// run the prepare for rendering script on the new card
 	[_back_render_state->card prepareForRendering];
 	
 	// notify that the front card has changed
-	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:newCard waitUntilDone:NO];
-	[newCard release];
+	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:new_card waitUntilDone:NO];
 }
 
 - (void)_clearActiveCard {
@@ -1192,7 +1208,7 @@ init_failure:
 	_back_render_state->new_card = YES;
 	_back_render_state->transition = nil;
 	
-	// run the stop rendering script on the old card
+	// run the stop rendering script on the old card; note that we do not need to protect access to the front card since this method will always execute on the script thread
 	[_front_render_state->card stopRendering];
 	
 	// wipe out the transition queue
@@ -1574,10 +1590,18 @@ exit_render:
 - (void)_renderInGlobalContext:(CGLContextObj)cgl_ctx {
 	// alias the render context state object pointer
 	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+	RXCard* front_card = nil;
 	
 	// render hotspots
-	if (RXEngineGetBool(@"rendering.renderHotspots")) {
-		NSArray* activeHotspots = [_front_render_state->card activeHotspots];
+	if (RXEngineGetBool(@"rendering.hotspots_info")) {
+		// need to take the render lock to avoid a race condition with the script thread executing a card swap
+		if (!front_card) {
+			OSSpinLockLock(&_state_swap_lock);
+			front_card = [_front_render_state->card retain];
+			OSSpinLockUnlock(&_state_swap_lock);
+		}
+		
+		NSArray* activeHotspots = [front_card activeHotspots];
 		if ([activeHotspots count] > RX_MAX_RENDER_HOTSPOT)
 			activeHotspots = [activeHotspots subarrayWithRange:NSMakeRange(0, RX_MAX_RENDER_HOTSPOT)];
 		
@@ -1697,6 +1721,40 @@ exit_render:
 	glVertexPointer(3, GL_FLOAT, 0, background_strip);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	
+	// card info
+	if (RXEngineGetBool(@"rendering.card_info")) {
+		// need to take the render lock to avoid a race condition with the script thread executing a card swap
+		if (!front_card) {
+			OSSpinLockLock(&_state_swap_lock);
+			front_card = [_front_render_state->card retain];
+			OSSpinLockUnlock(&_state_swap_lock);
+		}
+		
+		if (front_card) {		
+			RXSimpleCardDescriptor* scd = [[front_card descriptor] simpleDescriptor];
+			snprintf(debug_buffer, 100, "card: %s %d", [scd->parentName cStringUsingEncoding:NSASCIIStringEncoding], scd->cardID);
+			
+			background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
+			background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
+			
+			glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+			
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			glRasterPos3d(10.5f, background_origin.y + 1.0, 0.0f);
+			size_t l = strlen(debug_buffer);
+			for (size_t i = 0; i < l; i++)
+				glutBitmapCharacter(GLUT_BITMAP_8_BY_13, debug_buffer[i]);
+		}
+		
+		// go up to the next debug line
+		background_origin.y += 13.0;
+		background_strip[1] = background_strip[7];
+		background_strip[4] = background_strip[7];
+		background_strip[7] = background_strip[7] + 13.0f;
+		background_strip[10] = background_strip[7];
+	}
+	
 	// mouse info
 	if (RXEngineGetBool(@"rendering.mouse_info")) {
 		NSRect mouse = [self mouseVector];
@@ -1713,19 +1771,22 @@ exit_render:
 		size_t l = strlen(debug_buffer);
 		for (size_t i = 0; i < l; i++)
 			glutBitmapCharacter(GLUT_BITMAP_8_BY_13, debug_buffer[i]);
+		
+		// go up to the next debug line
+		background_origin.y += 13.0;
+		background_strip[1] = background_strip[7];
+		background_strip[4] = background_strip[7];
+		background_strip[7] = background_strip[7] + 13.0f;
+		background_strip[10] = background_strip[7];
 	}
 	
-	// go up to the next debug line
-	background_origin.y += 13.0;
-	background_strip[1] = background_strip[7];
-	background_strip[4] = background_strip[7];
-	background_strip[7] = background_strip[7] + 13.0f;
-	background_strip[10] = background_strip[7];
-	
-	// card info
-	if (RXEngineGetBool(@"rendering.card_info") && _front_render_state->card) {
-		RXSimpleCardDescriptor* scd = [[_front_render_state->card descriptor] simpleDescriptor];
-		snprintf(debug_buffer, 100, "card: %s %d", [scd->parentName cStringUsingEncoding:NSASCIIStringEncoding], scd->cardID);
+	// hotspots info (part 2)
+	if (RXEngineGetBool(@"rendering.hotspots_info")) {
+		OSSpinLockLock(&_state_swap_lock);
+		RXHotspot* hotspot = [_currentHotspot retain];
+		OSSpinLockUnlock(&_state_swap_lock);
+		
+		snprintf(debug_buffer, 100, "current hotspot: %s", (hotspot) ? [[hotspot description] cStringUsingEncoding:NSASCIIStringEncoding] : "none");
 		
 		background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
 		background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
@@ -1738,10 +1799,15 @@ exit_render:
 		size_t l = strlen(debug_buffer);
 		for (size_t i = 0; i < l; i++)
 			glutBitmapCharacter(GLUT_BITMAP_8_BY_13, debug_buffer[i]);
+		
+		[hotspot release];
 	}
 	
 	// re-disable the VA in VAO 0
 	glDisableClientState(GL_VERTEX_ARRAY);
+	
+	// release front_card
+	[front_card release];
 }
 
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
@@ -1773,6 +1839,8 @@ exit_flush_tasks:
 }
 
 - (void)_handleInventoryMouseDown:(NSEvent*)event inventoryIndex:(uint32_t)index {
+	// WARNING: this method assumes the state swap lock has been taken by the caller
+	
 	if (index >= RX_MAX_INVENTORY_ITEMS)
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"OUT OF BOUNDS INVENTORY INDEX" userInfo:nil];
 	
@@ -1782,7 +1850,7 @@ exit_flush_tasks:
 	if (!journalCardIDNumber)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO CARD ID FOR GIVEN INVENTORY KEY IN JOURNAL CARD ID MAP" userInfo:nil];
 	
-	// set the return card in the game state to the current card
+	// set the return card in the game state to the current card; need to take the render lock to avoid a race condition with the script thread executing a card swap
 	[[g_world gameState] setReturnCard:[[_front_render_state->card descriptor] simpleDescriptor]];
 	
 	// schedule a cross-fade transition to the journal card
@@ -1806,29 +1874,43 @@ exit_flush_tasks:
 	[self setActiveCardWithStack:@"aspit" ID:[journalCardIDNumber unsignedShortValue] waitUntilDone:NO];
 }
 
-- (void)_updateHotspotState {
-#if defined(DEBUG) && DEBUG > 2
-	RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"tracking mouse: position=%@, dragging=%s", NSStringFromPoint(mousePoint), (_isDraggingMouse) ? "YES" : "NO");
-#endif
+- (void)updateHotspotState {
+	// NOTE: this method must run on the main thread and will bounce itself there if needed
+	if (!pthread_main_np()) {
+		[self performSelectorOnMainThread:@selector(updateHotspotState) withObject:nil waitUntilDone:NO];
+		return;
+	}
+
+	// get the mouse vector using the getter since it will take the spin lock and return a copy
+	NSRect mouse_vector = [self mouseVector];
+	
+	// hotspot updates cannot occur during a card switch
+	OSSpinLockLock(&_state_swap_lock);
+	
+	// cache the front card
+	RXCard* front_card = _front_render_state->card;
+	
+	// get the front card's active hotspots
+	NSArray* active_hotspots = [front_card activeHotspots];
 
 	// if the mouse is below the game viewport, bring up the alpha of the inventory to 1; otherwise set it to 0.5
-	if (NSPointInRect(_mouseVector.origin, [(NSView*)g_worldView bounds]) && _mouseVector.origin.y < kRXCardViewportOriginOffset.y)
+	if (NSPointInRect(mouse_vector.origin, [(NSView*)g_worldView bounds]) && mouse_vector.origin.y < kRXCardViewportOriginOffset.y)
 		_inventoryAlphaFactor = 1.f;
 	else
 		_inventoryAlphaFactor = 0.5f;
 	
 	// find over which hotspot the mouse is
-	NSEnumerator* hotpotEnum = [[_front_render_state->card activeHotspots] objectEnumerator];
+	NSEnumerator* hotspots_enum = [active_hotspots objectEnumerator];
 	RXHotspot* hotspot;
-	while ((hotspot = [hotpotEnum nextObject])) {
-		if (NSPointInRect(_mouseVector.origin, [hotspot worldViewFrame]))
+	while ((hotspot = [hotspots_enum nextObject])) {
+		if (NSPointInRect(mouse_vector.origin, [hotspot worldViewFrame]))
 			break;
 	}
 	
 	// now check if we're over one of the inventory regions
 	if (!hotspot) {
 		for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
-			if (NSPointInRect(_mouseVector.origin, _inventoryHotspotRegions[inventory_i])) {
+			if (NSPointInRect(mouse_vector.origin, _inventoryHotspotRegions[inventory_i])) {
 				// set hotspot to the inventory item index (plus one to avoid the value 0); the following block of code will check if hotspot is not 0 and below PAGEZERO, and act accordingly
 				hotspot = (RXHotspot*)(inventory_i + 1);
 				break;
@@ -1836,9 +1918,11 @@ exit_flush_tasks:
 		}
 	}
 	
+	// note that because we're using performSelector:withObject:inThread:, even if this is executing in the script thread, the mouse event handlers will be deferred until the next run loop cycle
+	
 	// if we are over a different hotspot than the current hotspot, we need to send a mouse exited event to the old hotspot; we only do this if the mouse is not being dragged (as we allow to drag the mouse outside of a hotspot's bounds)
-	if (_currentHotspot >= (RXHotspot*)0x1000 && _currentHotspot != hotspot && !_isDraggingMouse) {
-		[_front_render_state->card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+	if (_currentHotspot >= (RXHotspot*)0x1000 && _currentHotspot != hotspot && isinf(mouse_vector.size.width)) {
+		[front_card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 	}
 	
 	// handle cursor changes here so we don't ping-pong across 2 threads (at least for a hotspot's cursor, the inventory item cursor and the default cursor)
@@ -1848,11 +1932,15 @@ exit_flush_tasks:
 		[g_worldView setCursor:[g_world openHandCursor]];
 	else {
 		[g_worldView setCursor:[g_world cursorForID:[hotspot cursorID]]];
-		[_front_render_state->card performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+//		[front_card performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
 	}
 	
 	// update the current hotspot to the new current hotspot
-	_currentHotspot = hotspot;
+	id old = _currentHotspot;
+	_currentHotspot = [hotspot retain];
+	[old release];
+	
+	OSSpinLockUnlock(&_state_swap_lock);
 }
 
 - (void)mouseMoved:(NSEvent*)event {
@@ -1864,7 +1952,7 @@ exit_flush_tasks:
 	OSSpinLockUnlock(&_mouseVectorLock);
 	
 	// finally we need to update the hotspot state
-	[self _updateHotspotState];
+	[self updateHotspotState];
 }
 
 - (void)mouseDragged:(NSEvent*)event {
@@ -1877,7 +1965,7 @@ exit_flush_tasks:
 	OSSpinLockUnlock(&_mouseVectorLock);
 	
 	// finally we need to update the hotspot state
-	[self _updateHotspotState];
+	[self updateHotspotState];
 }
 
 - (void)mouseDown:(NSEvent*)event {
@@ -1887,14 +1975,17 @@ exit_flush_tasks:
 	_mouseVector.size = NSZeroSize;
 	OSSpinLockUnlock(&_mouseVectorLock);
 	
-	// indicate that we are dragging the mouse
-	_isDraggingMouse = YES;
+	// cannot use the front cardduring state swaps
+	OSSpinLockLock(&_state_swap_lock);
 	
 	// if the current hotspot is valid, send it a mouse down event; if the current hotspot is an inventory hotspot, handle that too
-	if (_currentHotspot >= (RXHotspot*)0x1000)
+	if (_currentHotspot >= (RXHotspot*)0x1000) {
+		_mouse_down_hotspot = [_currentHotspot retain];
 		[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
-	else if (_currentHotspot)
+	} else if (_currentHotspot)
 		[self _handleInventoryMouseDown:event inventoryIndex:(uint32_t)_currentHotspot - 1];
+	
+	OSSpinLockUnlock(&_state_swap_lock);
 }
 
 - (void)mouseUp:(NSEvent*)event {
@@ -1905,15 +1996,19 @@ exit_flush_tasks:
 	_mouseVector.size.height = INFINITY;
 	OSSpinLockUnlock(&_mouseVectorLock);
 	
-	// indicate that we are not dragging the mouse
-	_isDraggingMouse = NO;
+	// cannot use the front cardduring state swaps
+	OSSpinLockLock(&_state_swap_lock);
 	
 	// if the current hotspot is valid and has received a mouse down, we send it a mouse up event
-	if (_currentHotspot >= (RXHotspot*)0x1000)
+	if (_currentHotspot >= (RXHotspot*)0x1000 && _currentHotspot == _mouse_down_hotspot)
 		[_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+	[_mouse_down_hotspot release];
+	_mouse_down_hotspot = nil;
+	
+	OSSpinLockUnlock(&_state_swap_lock);
 	
 	// finally we need to update the hotspot state
-	[self _updateHotspotState];
+	[self updateHotspotState];
 }
 
 @end

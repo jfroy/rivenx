@@ -5,10 +5,10 @@
 	<key>rendering</key>
 	<dict>
 		<key>card_info</key>
-		<integer>1</integer>
+		<integer>0</integer>
 		<key>volume</key>
 		<integer>0</integer>
-		<key>renderHotspots</key>
+		<key>hotspots_info</key>
 		<integer>0</integer>
 		<key>audioRamps</key>
 		<integer>1</integer>

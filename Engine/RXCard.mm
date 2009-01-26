@@ -1930,6 +1930,9 @@ static NSMutableString* _scriptLogPrefix;
 		[_activeHotspots addObject:hotspot];
 		[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
 		OSSpinLockUnlock(&_activeHotspotsLock);
+		
+		// instruct the script handler to update the hotspot state
+		[_scriptHandler updateHotspotState];
 	}
 }
 
@@ -1953,6 +1956,9 @@ static NSMutableString* _scriptLogPrefix;
 		[_activeHotspots removeObject:hotspot];
 		[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
 		OSSpinLockUnlock(&_activeHotspotsLock);
+		
+		// instruct the script handler to update the hotspot state
+		[_scriptHandler updateHotspotState];
 	}
 }
 
@@ -2278,6 +2284,9 @@ static NSMutableString* _scriptLogPrefix;
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
 	OSSpinLockUnlock(&_activeHotspotsLock);
+	
+	// instruct the script handler to update the hotspot state
+	[_scriptHandler updateHotspotState];
 }
 
 // 44
