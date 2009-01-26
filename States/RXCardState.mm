@@ -2110,15 +2110,8 @@ exit_flush_tasks:
 		OSSpinLockLock(&_mouseVectorLock);
 		
 		_mouseVector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
-		if (NSPointInRect(_mouseVector.origin, [(NSView*)g_worldView bounds])) {
-			if (GetCurrentButtonState() & 0x1) {
-				_mouseVector.size.width = 0.0;
-				_mouseVector.size.height = 0.0;
-			} else {
-				_mouseVector.size.width = INFINITY;
-				_mouseVector.size.height = INFINITY;
-			}
-		}
+		_mouseVector.size.width = INFINITY;
+		_mouseVector.size.height = INFINITY;
 		
 		OSSpinLockUnlock(&_mouseVectorLock);
 		
