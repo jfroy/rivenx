@@ -1028,9 +1028,9 @@ init_failure:
 }
 
 - (void)swapRenderState:(RXCard*)sender {	
-	// if we'll queue a transition, mark script execution as being blocked now
-//	if ([_transitionQueue count] > 0)
-//		[self setExecutingBlockingAction:YES];
+	// if we'll queue a transition, disable hotspot handling now (before we potentially block on an on-going transition)
+	if ([_transitionQueue count] > 0)
+		[self disableHotspotHandling];
 	
 	// if a transition is ongoing, wait until its done
 	mach_timespec_t waitTime = {0, kRXTransitionDuration * 1e9};
@@ -1510,6 +1510,9 @@ init_failure:
 			// signal we're no longer running a transition
 			semaphore_signal_all(_transitionSemaphore);
 			
+			// enable hotspot handling
+			[self enableHotspotHandling];
+			
 			// use the regular rect texture program
 			glUseProgram(_single_rect_texture_program); glReportError();
 		} else {
@@ -1948,8 +1951,14 @@ exit_flush_tasks:
 	// update the current hotspot to the new current hotspot
 	if (_currentHotspot != hotspot) {
 		id old = _currentHotspot;
-		_currentHotspot = [hotspot retain];
-		[old release];
+		
+		if (hotspot >= (RXHotspot*)0x1000)
+			_currentHotspot = [hotspot retain];
+		else
+			_currentHotspot = hotspot;
+		
+		if (old >= (RXHotspot*)0x1000)
+			[old release];
 	}
 	
 	OSSpinLockUnlock(&_state_swap_lock);
