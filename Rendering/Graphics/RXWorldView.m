@@ -279,7 +279,6 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	_cursor = [cursor retain];
 	[old release];
 	
-	[_cursor set];
 	[[self window] invalidateCursorRectsForView:self];
 }
 
@@ -316,9 +315,6 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 			if (screenLoc.y < displayBounds.size.height - _menuBarHeight) {
 				if ([NSMenu menuBarVisible]) {
 					[NSMenu setMenuBarVisible:NO];
-					
-					// restore our cursor
-					[_cursor set];
 				}
 			} else {
 				if (![NSMenu menuBarVisible]) {
