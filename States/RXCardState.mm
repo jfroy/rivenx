@@ -1032,9 +1032,9 @@ init_failure:
 }
 
 - (void)swapRenderState:(RXCard*)sender {	
-	// if we'll queue a transition, disable hotspot handling now (before we potentially block on an on-going transition)
+	// if we'll queue a transition, hide the cursor
 	if ([_transitionQueue count] > 0)
-		[self disableHotspotHandling];
+		[self hideMouseCursor];
 	
 	// if a transition is ongoing, wait until its done
 	mach_timespec_t waitTime = {0, kRXTransitionDuration * 1e9};
@@ -1114,11 +1114,8 @@ init_failure:
 		// run the new front card's "start rendering" script
 		[_front_render_state->card startRendering];
 		
-		// enable hotspot handling again
-		[self enableHotspotHandling];
-		
-		// we need to update the hotspot state since the front card has changed
-		[self updateHotspotState];
+		// show the mouse cursor now that the card switch is done
+		[self showMouseCursor];
 	}
 }
 
@@ -1221,8 +1218,8 @@ init_failure:
 	// wipe out the transition queue
 	[_transitionQueue removeAllObjects];
 	
-	// disable hotspot handling
-	[self disableHotspotHandling];
+	// hide the mouse cursor
+	[self hideMouseCursor];
 	
 	// fake a swap render state
 	[self swapRenderState:_front_render_state->card];
@@ -1244,8 +1241,8 @@ init_failure:
 	if (!stack)
 		[g_world loadStackWithKey:des->parentName waitUntilDone:YES];
 	
-	// disable hotspot handling and switch card on the script thread
-	[self disableHotspotHandling];
+	// hide the mouse cursor and switch card on the script thread
+	[self hideMouseCursor];
 	[self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:des inThread:[g_world scriptThread] waitUntilDone:wait];
 	
 	// if we have a card redirect entry, queue the final destination card switch
@@ -1514,8 +1511,8 @@ init_failure:
 			// signal we're no longer running a transition
 			semaphore_signal_all(_transitionSemaphore);
 			
-			// enable hotspot handling
-			[self enableHotspotHandling];
+			// show the cursor again
+			[self showMouseCursor];
 			
 			// use the regular rect texture program
 			glUseProgram(_single_rect_texture_program); glReportError();
@@ -1854,11 +1851,31 @@ exit_flush_tasks:
 }
 
 - (void)showMouseCursor {
-
+	[self enableHotspotHandling];
+	
+	int32_t updated_counter = OSAtomicDecrement32Barrier(&_cursor_hide_counter);
+	assert(updated_counter >= 0);
+	
+	if (updated_counter == 0) {
+		// if the hotspot handling disable counter is at 0, updateHotspotState ran and updated the cursor; so if it's > 0, we need to restore the backup
+		if (_hotspot_handling_disable_counter > 0)
+			[g_worldView setCursor:_hidden_cursor];
+	
+		[_hidden_cursor release];
+		_hidden_cursor = nil;
+	}
 }
 
 - (void)hideMouseCursor {
-
+	[self disableHotspotHandling];
+	
+	int32_t updated_counter = OSAtomicIncrement32Barrier(&_cursor_hide_counter);
+	assert(updated_counter >= 0);
+	
+	if (updated_counter == 1) {
+		_hidden_cursor = [[g_worldView cursor] retain];
+		[g_worldView setCursor:[g_world invisibleCursor]];
+	}
 }
 
 - (void)enableHotspotHandling {

@@ -60,6 +60,8 @@ struct rx_transition_program {
 	RXHotspot* _currentHotspot;
 	RXHotspot* _mouse_down_hotspot;
 	int32_t volatile _hotspot_handling_disable_counter;
+	NSCursor* _hidden_cursor;
+	int32_t volatile _cursor_hide_counter;
 	
 	// sounds
 	NSMutableSet* _activeSounds;

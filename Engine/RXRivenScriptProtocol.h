@@ -23,6 +23,9 @@
 - (void)playDataSound:(RXDataSound*)sound;
 
 - (NSRect)mouseVector;
+- (void)showMouseCursor;
+- (void)hideMouseCursor;
+
 - (void)enableHotspotHandling;
 - (void)disableHotspotHandling;
 - (void)updateHotspotState;
