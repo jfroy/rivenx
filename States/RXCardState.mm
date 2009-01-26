@@ -1083,6 +1083,9 @@ init_failure:
 	// fast swap
 	_front_render_state = _back_render_state;
 	
+	// release the state swap lock
+	OSSpinLockUnlock(&_state_swap_lock);
+	
 	// we can resume rendering now
 	OSSpinLockUnlock(&_renderLock);
 	
@@ -1117,9 +1120,6 @@ init_failure:
 		// we need to update the hotspot state since the front card has changed
 		[self updateHotspotState];
 	}
-	
-	// release the state swap lock
-	OSSpinLockUnlock(&_state_swap_lock);
 }
 
 #pragma mark -
@@ -1853,6 +1853,14 @@ exit_flush_tasks:
 	return r;
 }
 
+- (void)showMouseCursor {
+
+}
+
+- (void)hideMouseCursor {
+
+}
+
 - (void)enableHotspotHandling {
 	int32_t updated_counter = OSAtomicDecrement32Barrier(&_hotspot_handling_disable_counter);
 	assert(updated_counter >= 0);
@@ -1948,8 +1956,9 @@ exit_flush_tasks:
 	else {
 		[g_worldView setCursor:[g_world cursorForID:[hotspot cursorID]]];
 		
-		// valid hotspots receive periodic "inside hotspot" messages; note that we do NOT disable hotspot handling for "inside hotspot" messages
-		[front_card performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+		// valid hotspots receive periodic "inside hotspot" messages when the mouse is not dragging; note that we do NOT disable hotspot handling for "inside hotspot" messages
+		if (isinf(mouse_vector.size.width))
+			[front_card performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
 	}
 	
 	// update the current hotspot to the new current hotspot
