@@ -1107,6 +1107,9 @@ init_failure:
 		// run the new front card's "start rendering" script
 		[_front_render_state->card startRendering];
 		
+		// enable hotspot handling again
+		[self enableHotspotHandling];
+		
 		// we need to update the hotspot state since the front card has changed
 		[self updateHotspotState];
 	}
@@ -1214,6 +1217,9 @@ init_failure:
 	// wipe out the transition queue
 	[_transitionQueue removeAllObjects];
 	
+	// disable hotspot handling
+	[self disableHotspotHandling];
+	
 	// fake a swap render state
 	[self swapRenderState:_front_render_state->card];
 	
@@ -1234,6 +1240,8 @@ init_failure:
 	if (!stack)
 		[g_world loadStackWithKey:des->parentName waitUntilDone:YES];
 	
+	// disable hotspot handling and switch card on the script thread
+	[self disableHotspotHandling];
 	[self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:des inThread:[g_world scriptThread] waitUntilDone:wait];
 	
 	// if we have a card redirect entry, queue the final destination card switch
@@ -1838,18 +1846,45 @@ exit_flush_tasks:
 	return r;
 }
 
+- (void)enableHotspotHandling {
+	int32_t updated_counter = OSAtomicDecrement32Barrier(&_hotspot_handling_disable_counter);
+	assert(updated_counter >= 0);
+	
+	if (updated_counter == 0)
+		[self updateHotspotState];
+}
+
+- (void)disableHotspotHandling {
+	int32_t updated_counter = OSAtomicIncrement32Barrier(&_hotspot_handling_disable_counter);
+	assert(updated_counter >= 0);
+	
+	if (updated_counter == 1)
+		[self updateHotspotState];
+}
+
 - (void)updateHotspotState {
 	// NOTE: this method must run on the main thread and will bounce itself there if needed
 	if (!pthread_main_np()) {
 		[self performSelectorOnMainThread:@selector(updateHotspotState) withObject:nil waitUntilDone:NO];
 		return;
 	}
-
-	// get the mouse vector using the getter since it will take the spin lock and return a copy
-	NSRect mouse_vector = [self mouseVector];
+	
+	// if hotspot handling is disabled, simply return
+	if (_hotspot_handling_disable_counter > 0) {
+		return;
+	}
 	
 	// hotspot updates cannot occur during a card switch
 	OSSpinLockLock(&_state_swap_lock);
+	
+	// check if hotspot handling is disabled again (last time, this is only to handle the situation where we might have slept a little while on the spin lock
+	if (_hotspot_handling_disable_counter > 0) {
+		OSSpinLockUnlock(&_state_swap_lock);
+		return;
+	}
+	
+	// get the mouse vector using the getter since it will take the spin lock and return a copy
+	NSRect mouse_vector = [self mouseVector];
 	
 	// cache the front card
 	RXCard* front_card = _front_render_state->card;
@@ -1882,10 +1917,19 @@ exit_flush_tasks:
 		}
 	}
 	
-	// note that because we're using performSelector:withObject:inThread:, even if this is executing in the script thread, the mouse event handlers will be deferred until the next run loop cycle
+	// if the new current hotspot is valid, matches the mouse down hotspot and the mouse is not dragging, we need to send a mouse up message to the hotspot
+	if (hotspot >= (RXHotspot*)0x1000 && hotspot == _mouse_down_hotspot && isinf(mouse_vector.size.width)) {
+		// reset the mouse down hotspot
+		[_mouse_down_hotspot release];
+		_mouse_down_hotspot = nil;
 	
-	// if we are over a different hotspot than the current hotspot, we need to send a mouse exited event to the old hotspot; we only do this if the mouse is not being dragged (as we allow to drag the mouse outside of a hotspot's bounds)
-	if (_currentHotspot >= (RXHotspot*)0x1000 && _currentHotspot != hotspot && isinf(mouse_vector.size.width)) {
+		[self disableHotspotHandling];
+		[_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+	}
+	
+	// if the old current hotspot is valid, doesn't match the new current hotspot and is still active, we need to send the old current hotspot a mouse exited message
+	if (_currentHotspot >= (RXHotspot*)0x1000 && _currentHotspot != hotspot && [active_hotspots indexOfObjectIdenticalTo:_currentHotspot] != NSNotFound) {
+		// note that we DO NOT disable hotspot handling for "exited hotspot" messages
 		[front_card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 	}
 	
@@ -1896,13 +1940,17 @@ exit_flush_tasks:
 		[g_worldView setCursor:[g_world openHandCursor]];
 	else {
 		[g_worldView setCursor:[g_world cursorForID:[hotspot cursorID]]];
+		
+		// valid hotspots receive periodic "inside hotspot" messages; note that we do NOT disable hotspot handling for "inside hotspot" messages
 		[front_card performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
 	}
 	
 	// update the current hotspot to the new current hotspot
-	id old = _currentHotspot;
-	_currentHotspot = [hotspot retain];
-	[old release];
+	if (_currentHotspot != hotspot) {
+		id old = _currentHotspot;
+		_currentHotspot = [hotspot retain];
+		[old release];
+	}
 	
 	OSSpinLockUnlock(&_state_swap_lock);
 }
@@ -1975,17 +2023,28 @@ exit_flush_tasks:
 	_mouseVector.size = NSZeroSize;
 	OSSpinLockUnlock(&_mouseVectorLock);
 	
-	// cannot use the front cardduring state swaps
+	// if hotspot handling is disabled, simply return
+	if (_hotspot_handling_disable_counter > 0) {
+		return;
+	}
+	
+	// cannot use the front card during state swaps
 	OSSpinLockLock(&_state_swap_lock);
 	
-	// if the current hotspot is valid, send it a mouse down event; if the current hotspot is an inventory hotspot, handle that too
+	// if the current hotspot is valid, send it a mouse down event; if the current "hotspot" is an inventory item, handle that too
 	if (_currentHotspot >= (RXHotspot*)0x1000) {
+		// remember the last hotspot for which we've sent a "mouse down" message
 		_mouse_down_hotspot = [_currentHotspot retain];
+		
+		[self disableHotspotHandling];
 		[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 	} else if (_currentHotspot)
 		[self _handleInventoryMouseDown:event inventoryIndex:(uint32_t)_currentHotspot - 1];
 	
 	OSSpinLockUnlock(&_state_swap_lock);
+	
+	// we do not need to call updateHotspotState from mouse down, since handling the inventory condition would be difficult there 
+	// (can't retain a non-valid pointer value, e.g. can't store the dummy _currentHotspot value into _mouse_down_hotspot
 }
 
 - (void)mouseUp:(NSEvent*)event {
@@ -1996,18 +2055,12 @@ exit_flush_tasks:
 	_mouseVector.size.height = INFINITY;
 	OSSpinLockUnlock(&_mouseVectorLock);
 	
-	// cannot use the front cardduring state swaps
-	OSSpinLockLock(&_state_swap_lock);
+	// if hotspot handling is disabled, simply return
+	if (_hotspot_handling_disable_counter > 0) {
+		return;
+	}
 	
-	// if the current hotspot is valid and has received a mouse down, we send it a mouse up event
-	if (_currentHotspot >= (RXHotspot*)0x1000 && _currentHotspot == _mouse_down_hotspot)
-		[_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
-	[_mouse_down_hotspot release];
-	_mouse_down_hotspot = nil;
-	
-	OSSpinLockUnlock(&_state_swap_lock);
-	
-	// finally we need to update the hotspot state
+	// finally we need to update the hotspot state; updateHotspotState will take care of sending the mouse up even if it sees a mouse down hotspot and the mouse is still over the hotspot
 	[self updateHotspotState];
 }
 

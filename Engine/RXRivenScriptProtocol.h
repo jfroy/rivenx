@@ -23,6 +23,8 @@
 - (void)playDataSound:(RXDataSound*)sound;
 
 - (NSRect)mouseVector;
+- (void)enableHotspotHandling;
+- (void)disableHotspotHandling;
 - (void)updateHotspotState;
 
 - (void)queuePicture:(RXPicture*)picture;

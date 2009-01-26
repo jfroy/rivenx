@@ -55,11 +55,11 @@ struct rx_transition_program {
 	OSSpinLock _state_swap_lock;
 	
 	// mouse and hotspots handling
-	NSCursor* _cursorBackup;
 	NSRect _mouseVector;
 	OSSpinLock _mouseVectorLock;
 	RXHotspot* _currentHotspot;
 	RXHotspot* _mouse_down_hotspot;
+	int32_t volatile _hotspot_handling_disable_counter;
 	
 	// sounds
 	NSMutableSet* _activeSounds;

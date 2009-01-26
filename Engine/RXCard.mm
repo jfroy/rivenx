@@ -1468,7 +1468,7 @@ static NSMutableString* _scriptLogPrefix;
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse down in %@ {", _scriptLogPrefix, hotspot);
 	[_scriptLogPrefix appendString:@"    "];
 #endif
-
+	
 	// disable UI event processing while a program executes; retain the card while a program executes
 	if (_programExecutionDepth == 0) {
 		[self retain];
@@ -1492,6 +1492,9 @@ static NSMutableString* _scriptLogPrefix;
 	if (_programExecutionDepth == 0) {
 		[self release];
 	}
+	
+	// we need to enable hotspot handling at the end of mouse down messages
+	[_scriptHandler enableHotspotHandling];
 }
 
 - (void)mouseUpInHotspot:(RXHotspot*)hotspot {
@@ -1526,6 +1529,9 @@ static NSMutableString* _scriptLogPrefix;
 	if (_programExecutionDepth == 0) {
 		[self release];
 	}
+	
+	// we need to enable hotspot handling at the end of mouse up messages
+	[_scriptHandler enableHotspotHandling];
 }
 
 #pragma mark -
