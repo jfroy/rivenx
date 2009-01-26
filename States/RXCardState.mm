@@ -1838,42 +1838,6 @@ exit_flush_tasks:
 	return r;
 }
 
-- (void)_handleInventoryMouseDown:(NSEvent*)event inventoryIndex:(uint32_t)index {
-	// WARNING: this method assumes the state swap lock has been taken by the caller
-	
-	if (index >= RX_MAX_INVENTORY_ITEMS)
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"OUT OF BOUNDS INVENTORY INDEX" userInfo:nil];
-	
-	RXEdition* edition = [[RXEditionManager sharedEditionManager] currentEdition];
-	
-	NSNumber* journalCardIDNumber = [[edition valueForKey:@"journalCardIDMap"] objectForKey:RX_INVENTORY_KEYS[index]];
-	if (!journalCardIDNumber)
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO CARD ID FOR GIVEN INVENTORY KEY IN JOURNAL CARD ID MAP" userInfo:nil];
-	
-	// set the return card in the game state to the current card; need to take the render lock to avoid a race condition with the script thread executing a card swap
-	[[g_world gameState] setReturnCard:[[_front_render_state->card descriptor] simpleDescriptor]];
-	
-	// schedule a cross-fade transition to the journal card
-	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
-	[self queueTransition:transition];
-	[transition release];
-	
-	// activate an empty sound group with fade out to fade out the current card's ambient sounds
-	RXSoundGroup* sgroup = [RXSoundGroup new];
-	sgroup->gain = 1.0f;
-	sgroup->loop = NO;
-	sgroup->fadeOutActiveGroupBeforeActivating = YES;
-	sgroup->fadeInOnActivation = NO;
-	[self performSelector:@selector(activateSoundGroup:) withObject:sgroup inThread:[g_world scriptThread] waitUntilDone:NO];
-	[sgroup release];
-	
-	// leave ourselves a note to force a fade in on the next activate sound group command
-	_forceFadeInOnNextSoundGroup = YES;
-	
-	// change the active card to the journal card
-	[self setActiveCardWithStack:@"aspit" ID:[journalCardIDNumber unsignedShortValue] waitUntilDone:NO];
-}
-
 - (void)updateHotspotState {
 	// NOTE: this method must run on the main thread and will bounce itself there if needed
 	if (!pthread_main_np()) {
@@ -1932,7 +1896,7 @@ exit_flush_tasks:
 		[g_worldView setCursor:[g_world openHandCursor]];
 	else {
 		[g_worldView setCursor:[g_world cursorForID:[hotspot cursorID]]];
-//		[front_card performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+		[front_card performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
 	}
 	
 	// update the current hotspot to the new current hotspot
@@ -1941,6 +1905,42 @@ exit_flush_tasks:
 	[old release];
 	
 	OSSpinLockUnlock(&_state_swap_lock);
+}
+
+- (void)_handleInventoryMouseDown:(NSEvent*)event inventoryIndex:(uint32_t)index {
+	// WARNING: this method assumes the state swap lock has been taken by the caller
+	
+	if (index >= RX_MAX_INVENTORY_ITEMS)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"OUT OF BOUNDS INVENTORY INDEX" userInfo:nil];
+	
+	RXEdition* edition = [[RXEditionManager sharedEditionManager] currentEdition];
+	
+	NSNumber* journalCardIDNumber = [[edition valueForKey:@"journalCardIDMap"] objectForKey:RX_INVENTORY_KEYS[index]];
+	if (!journalCardIDNumber)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO CARD ID FOR GIVEN INVENTORY KEY IN JOURNAL CARD ID MAP" userInfo:nil];
+	
+	// set the return card in the game state to the current card; need to take the render lock to avoid a race condition with the script thread executing a card swap
+	[[g_world gameState] setReturnCard:[[_front_render_state->card descriptor] simpleDescriptor]];
+	
+	// schedule a cross-fade transition to the journal card
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	[self queueTransition:transition];
+	[transition release];
+	
+	// activate an empty sound group with fade out to fade out the current card's ambient sounds
+	RXSoundGroup* sgroup = [RXSoundGroup new];
+	sgroup->gain = 1.0f;
+	sgroup->loop = NO;
+	sgroup->fadeOutActiveGroupBeforeActivating = YES;
+	sgroup->fadeInOnActivation = NO;
+	[self performSelector:@selector(activateSoundGroup:) withObject:sgroup inThread:[g_world scriptThread] waitUntilDone:NO];
+	[sgroup release];
+	
+	// leave ourselves a note to force a fade in on the next activate sound group command
+	_forceFadeInOnNextSoundGroup = YES;
+	
+	// change the active card to the journal card
+	[self setActiveCardWithStack:@"aspit" ID:[journalCardIDNumber unsignedShortValue] waitUntilDone:NO];
 }
 
 - (void)mouseMoved:(NSEvent*)event {
