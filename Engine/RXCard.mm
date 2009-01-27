@@ -31,10 +31,10 @@
 #import "Rendering/Graphics/RXPicture.h"
 #import "Rendering/Graphics/RXDynamicPicture.h"
 
-static const NSTimeInterval kInsideHotspotPeriodicEventPeriod = 0.1;
-
-static const float kSoundGainDivisor = 256.0f;
+static const float kSoundGainDivisor = 255.0f;
 static const float kMovieGainDivisor = 500.0f;
+
+static const NSTimeInterval k_mouse_tracking_loop_period = 0.05;
 
 static const NSString* k_eventSelectors[] = {
 	@"mouseDown",
@@ -2908,7 +2908,7 @@ DEFINE_COMMAND(xhandlecontrolup) {
 	NSRect mouse_vector = [_scriptHandler mouseVector];
 	[_scriptHandler setMouseCursor:2004];
 
-	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.2]] && isfinite(mouse_vector.size.width)) {
+	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
 			// play the switch down movie
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
@@ -2932,7 +2932,7 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 	NSRect mouse_vector = [_scriptHandler mouseVector];
 	[_scriptHandler setMouseCursor:2004];
 	
-	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.2]] && isfinite(mouse_vector.size.width)) {
+	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
 			// play the switch up movie
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 7);
@@ -2972,7 +2972,7 @@ DEFINE_COMMAND(xhandlecontroldown) {
 	NSRect mouse_vector = [_scriptHandler mouseVector];
 	[_scriptHandler setMouseCursor:2004];
 
-	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.2]] && isfinite(mouse_vector.size.width)) {
+	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
 			// play the switch up movie
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
@@ -2986,6 +2986,26 @@ DEFINE_COMMAND(xhandlecontroldown) {
 			// we're all done
 			break;
 		}
+		
+		[_scriptHandler setMouseCursor:2004];
+		mouse_vector = [_scriptHandler mouseVector];
+	}
+}
+
+#pragma mark -
+#pragma mark boiler control valve
+
+DEFINE_COMMAND(xvalvecontrol) {
+	NSRect mouse_vector = [_scriptHandler mouseVector];
+	[_scriptHandler setMouseCursor:2004];
+	
+	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
+		
+		// code 1: 1 -> 2
+		// code 2: 0 -> 1
+		// code 3: 1 -> 0
+		// code 4: 2 -> 1
+		
 		
 		[_scriptHandler setMouseCursor:2004];
 		mouse_vector = [_scriptHandler mouseVector];
