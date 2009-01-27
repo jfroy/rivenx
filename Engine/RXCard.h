@@ -72,6 +72,7 @@
 	uint32_t _programExecutionDepth;
 	uint16_t _lastExecutedProgramOpcode;
 	BOOL _queuedAPushTransition;
+	BOOL _did_hide_mouse;
 	
 	// external commands
 	NSMapTable* _externalCommandLookup;

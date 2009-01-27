@@ -1243,7 +1243,7 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptLogPrefix appendString:@"    "];
 #endif
 
-	// disable UI event processing while a program executes; retain the card while a program executes
+	// retain the card while it executes programs
 	if (_programExecutionDepth == 0) {
 		[self retain];
 	}
@@ -1296,9 +1296,15 @@ static NSMutableString* _scriptLogPrefix;
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
 #endif
 	
-	// enable UI event processing when we're done executing the top-level program; release the card as well
+	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
 		[self release];
+		
+		// if the card hid the mouse cursor while executing programs, we can now show it again
+		if (_did_hide_mouse) {
+			[_scriptHandler showMouseCursor];
+			_did_hide_mouse = NO;
+		}
 	}
 }
 
@@ -1308,7 +1314,7 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptLogPrefix appendString:@"    "];
 #endif
 
-	// disable UI event processing while a program executes; retain the card while a program executes
+	// retain the card while it executes programs
 	if (_programExecutionDepth == 0) {
 		[self retain];
 	}
@@ -1336,9 +1342,15 @@ static NSMutableString* _scriptLogPrefix;
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
 #endif
 
-	// enable UI event processing when we're done executing the top-level program; release the card as well
+	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
 		[self release];
+		
+		// if the card hid the mouse cursor while executing programs, we can now show it again
+		if (_did_hide_mouse) {
+			[_scriptHandler showMouseCursor];
+			_did_hide_mouse = NO;
+		}
 	}
 }
 
@@ -1348,7 +1360,7 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptLogPrefix appendString:@"    "];
 #endif
 
-	// disable UI event processing while a program executes; retain the card while a program executes
+	// retain the card while it executes programs
 	if (_programExecutionDepth == 0) {
 		[self retain];
 	}
@@ -1367,9 +1379,15 @@ static NSMutableString* _scriptLogPrefix;
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
 #endif
 
-	// enable UI event processing when we're done executing the top-level program; release the card as well
+	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
 		[self release];
+		
+		// if the card hid the mouse cursor while executing programs, we can now show it again
+		if (_did_hide_mouse) {
+			[_scriptHandler showMouseCursor];
+			_did_hide_mouse = NO;
+		}
 	}
 }
 
@@ -1398,7 +1416,7 @@ static NSMutableString* _scriptLogPrefix;
 	_disableScriptLogging = YES;
 #endif
 	
-	// we don't disable UI event processing for mouse inside programs; retain the card while a program executes
+	// retain the card while it executes programs
 	if (_programExecutionDepth == 0) {
 		[self retain];
 	}
@@ -1420,9 +1438,15 @@ static NSMutableString* _scriptLogPrefix;
 #endif
 #endif
 
-	// release the card to match the retain above
+	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
 		[self release];
+		
+		// if the card hid the mouse cursor while executing programs, we can now show it again
+		if (_did_hide_mouse) {
+			[_scriptHandler showMouseCursor];
+			_did_hide_mouse = NO;
+		}
 	}
 }
 
@@ -1435,7 +1459,7 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptLogPrefix appendString:@"    "];
 #endif
 	
-	// disable UI event processing while a program executes; retain the card while a program executes
+	// retain the card while it executes programs
 	if (_programExecutionDepth == 0) {
 		[self retain];
 	}
@@ -1454,9 +1478,15 @@ static NSMutableString* _scriptLogPrefix;
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
 #endif
 
-	// enable UI event processing when we're done executing the top-level program; release the card as well
+	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
 		[self release];
+		
+		// if the card hid the mouse cursor while executing programs, we can now show it again
+		if (_did_hide_mouse) {
+			[_scriptHandler showMouseCursor];
+			_did_hide_mouse = NO;
+		}
 	}
 }
 
@@ -1469,7 +1499,7 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptLogPrefix appendString:@"    "];
 #endif
 	
-	// disable UI event processing while a program executes; retain the card while a program executes
+	// retain the card while it executes programs
 	if (_programExecutionDepth == 0) {
 		[self retain];
 	}
@@ -1488,13 +1518,19 @@ static NSMutableString* _scriptLogPrefix;
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
 #endif
 
-	// enable UI event processing when we're done executing the top-level program; release the card as well
+	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
 		[self release];
+		
+		// if the card hid the mouse cursor while executing programs, we can now show it again
+		if (_did_hide_mouse) {
+			[_scriptHandler showMouseCursor];
+			_did_hide_mouse = NO;
+		}
 	}
 	
-	// we need to show the cursor at the end of processing a mouse down message
-	[_scriptHandler showMouseCursor];
+	// we need to enable hotspot handling at the end of mouse down messages
+	[_scriptHandler enableHotspotHandling];
 }
 
 - (void)mouseUpInHotspot:(RXHotspot*)hotspot {
@@ -1506,7 +1542,7 @@ static NSMutableString* _scriptLogPrefix;
 	[_scriptLogPrefix appendString:@"    "];
 #endif
 
-	// disable UI event processing while a program executes; retain the card while a program executes
+	// retain the card while it executes programs
 	if (_programExecutionDepth == 0) {
 		[self retain];
 	}
@@ -1525,9 +1561,15 @@ static NSMutableString* _scriptLogPrefix;
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", _scriptLogPrefix);
 #endif
 
-	// enable UI event processing when we're done executing the top-level program; release the card as well
+	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
 		[self release];
+		
+		// if the card hid the mouse cursor while executing programs, we can now show it again
+		if (_did_hide_mouse) {
+			[_scriptHandler showMouseCursor];
+			_did_hide_mouse = NO;
+		}
 	}
 	
 	// we need to enable hotspot handling at the end of mouse up messages
@@ -1561,9 +1603,6 @@ static NSMutableString* _scriptLogPrefix;
 		
 		// signal the movie playback semaphore to unblock the script thread
 		semaphore_signal(_moviePlaybackSemaphore);
-		
-		// show the mouse cursor
-		[_scriptHandler showMouseCursor];
 	}
 }
 
@@ -1603,7 +1642,10 @@ static NSMutableString* _scriptLogPrefix;
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieRateChange:) name:QTMovieRateDidChangeNotification object:[movie movie]];
 	
 	// hide the mouse cursor
-	[_scriptHandler hideMouseCursor];
+	if (!_did_hide_mouse) {
+		_did_hide_mouse = YES;
+		[_scriptHandler hideMouseCursor];
+	}
 	
 	// start playing the movie (this may be a no-op if the movie was already started)
 	[self _reallyDoPlayMovie:movie];
@@ -1900,9 +1942,13 @@ static NSMutableString* _scriptLogPrefix;
 			duration = [decompressor frameCount] / [decompressor outputFormat].mSampleRate;
 		}
 		
-		[_scriptHandler hideMouseCursor];
+		// hide the mouse cursor
+		if (!_did_hide_mouse) {
+			_did_hide_mouse = YES;
+			[_scriptHandler hideMouseCursor];
+		}
+		
 		usleep(duration * 1E6);
-		[_scriptHandler showMouseCursor];
 	}
 	
 	[sound release];
@@ -1998,9 +2044,13 @@ static NSMutableString* _scriptLogPrefix;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@pausing for %d msec", _scriptLogPrefix, argv[0]);
 #endif
 	
-	[_scriptHandler hideMouseCursor];
+	// hide the mouse cursor
+	if (!_did_hide_mouse) {
+		_did_hide_mouse = YES;
+		[_scriptHandler hideMouseCursor];
+	}
+	
 	usleep(argv[0] * 1000);
-	[_scriptHandler showMouseCursor];
 }
 
 // 17

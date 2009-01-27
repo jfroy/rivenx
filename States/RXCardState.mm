@@ -2085,8 +2085,7 @@ exit_flush_tasks:
 		// remember the last hotspot for which we've sent a "mouse down" message
 		_mouse_down_hotspot = [_currentHotspot retain];
 		
-		// we hide the cursor for mouse down, since most of the action takes place there and we don't want the cursor popping in and out of existence
-		[self hideMouseCursor];
+		[self disableHotspotHandling];
 		[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 	} else if (_currentHotspot)
 		[self _handleInventoryMouseDown:event inventoryIndex:(uint32_t)_currentHotspot - 1];
