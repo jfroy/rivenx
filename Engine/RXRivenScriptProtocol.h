@@ -25,6 +25,7 @@
 - (NSRect)mouseVector;
 - (void)showMouseCursor;
 - (void)hideMouseCursor;
+- (void)setMouseCursor:(uint16_t)cursorID;
 
 - (void)enableHotspotHandling;
 - (void)disableHotspotHandling;

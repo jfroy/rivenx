@@ -1986,7 +1986,7 @@ static NSMutableString* _scriptLogPrefix;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting cursor to %hu", _scriptLogPrefix, argv[0]);
 #endif
 	
-	[g_worldView setCursor:[g_world cursorForID:argv[0]]];
+	[_scriptHandler setMouseCursor:argv[0]];
 }
 
 // 14

@@ -1878,6 +1878,16 @@ exit_flush_tasks:
 	}
 }
 
+- (void)setMouseCursor:(uint16_t)cursorID {
+	NSCursor* new_cursor = [g_world cursorForID:cursorID];
+	if (_cursor_hide_counter > 0) {
+		id old = _hidden_cursor;
+		_hidden_cursor = [new_cursor retain];
+		[old release];
+	} else
+		[g_worldView setCursor:new_cursor];
+}
+
 - (void)enableHotspotHandling {
 	int32_t updated_counter = OSAtomicDecrement32Barrier(&_hotspot_handling_disable_counter);
 	assert(updated_counter >= 0);
