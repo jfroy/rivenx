@@ -370,7 +370,7 @@ static NSMutableString* _scriptLogPrefix;
 #endif
 	
 	for (currentListIndex = 0; currentListIndex < movieCount; currentListIndex++) {
-#if defined(DEBUG) && DEBUG > 1
+#if defined(DEBUG)
 		RXOLog(@"loading mlst entry: {movie ID: %hu, code: %hu, left: %hu, top: %hu, loop: %hu, volume: %hu}",
 			mlstRecords[currentListIndex].movie_id,
 			mlstRecords[currentListIndex].code,
@@ -2889,17 +2889,105 @@ DEFINE_COMMAND(xjtunnel106_pictfix) {
 #pragma mark -
 #pragma mark jungle elevator
 
-DEFINE_COMMAND(xhandlecontrolmid) {
+- (void)_handleJungleElevatorMouth {
+	// if the mouth is open, we need to close it before going up or down
+	if ([[g_world gameState] unsigned32ForKey:@"jwmouth"]) {
+		[[g_world gameState] setUnsignedShort:0 forKey:@"jwmouth"];
+		
+		// play the close mouth movie
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 3);
+		
+		// play the mouth control lever movie
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 8);
+	}
+}
+
+static const float k_jungle_elevator_trigger_magnitude = 16.0f;
+
+DEFINE_COMMAND(xhandlecontrolup) {
 	NSRect mouse_vector = [_scriptHandler mouseVector];
+	[_scriptHandler setMouseCursor:2004];
+
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.2]] && isfinite(mouse_vector.size.width)) {
-		if (mouse_vector.size.height > 40.0f) {
-			// if the mouth is open, we need to close it before going up or down
-			if ([[g_world gameState] unsigned32ForKey:@"jwmouth"]) {
-				[[g_world gameState] setUnsignedShort:0 forKey:@"jwmouth"];
-				DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 3);
-			}
+		if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
+			// play the switch down movie
+			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
+			
+			// play the going down movie
+			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+			
+			// go to card jspit 392
+			DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, 392);
+			
+			// we're all done
+			break;
 		}
 		
+		[_scriptHandler setMouseCursor:2004];
+		mouse_vector = [_scriptHandler mouseVector];
+	}
+}
+
+DEFINE_COMMAND(xhandlecontrolmid) {
+	NSRect mouse_vector = [_scriptHandler mouseVector];
+	[_scriptHandler setMouseCursor:2004];
+	
+	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.2]] && isfinite(mouse_vector.size.width)) {
+		if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
+			// play the switch up movie
+			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 7);
+			
+			[self _handleJungleElevatorMouth];
+			
+			// play the going up movie
+			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 5);
+			
+			// go to card jspit 361
+			DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, 361);
+			
+			// we're all done
+			break;
+		} else if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
+			// play the switch up movie
+			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 6);
+			
+			[self _handleJungleElevatorMouth];
+			
+			// play the going down movie
+			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 4);
+			
+			// go to card jspit 395
+			DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, 395);
+			
+			// we're all done
+			break;
+		}
+		
+		[_scriptHandler setMouseCursor:2004];
+		mouse_vector = [_scriptHandler mouseVector];
+	}
+}
+
+DEFINE_COMMAND(xhandlecontroldown) {
+	NSRect mouse_vector = [_scriptHandler mouseVector];
+	[_scriptHandler setMouseCursor:2004];
+
+	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.2]] && isfinite(mouse_vector.size.width)) {
+		if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
+			// play the switch up movie
+			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
+			
+			// play the going up movie
+			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+			
+			// go to card jspit 392
+			DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, 392);
+			
+			// we're all done
+			break;
+		}
+		
+		[_scriptHandler setMouseCursor:2004];
 		mouse_vector = [_scriptHandler mouseVector];
 	}
 }
