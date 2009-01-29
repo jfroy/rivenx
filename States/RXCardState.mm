@@ -1770,7 +1770,11 @@ exit_render:
 	// mouse info
 	if (RXEngineGetBool(@"rendering.mouse_info")) {
 		NSRect mouse = [self mouseVector];
-		snprintf(debug_buffer, 100, "mouse vector: (%f, %f) (%f, %f)", mouse.origin.x, mouse.origin.y, mouse.size.width, mouse.size.height);
+		
+		float theta = 180.0f * atan2f(mouse.size.height, mouse.size.width) * M_1_PI;
+		float r = sqrtf((mouse.size.height * mouse.size.height) + (mouse.size.width * mouse.size.width));
+		
+		snprintf(debug_buffer, 100, "mouse vector: (%d, %d) (%.3f, %.3f) (%.3f, %.3f)", (int)mouse.origin.x, (int)mouse.origin.y, mouse.size.width, mouse.size.height, theta, r);
 		
 		background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
 		background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
@@ -1848,6 +1852,17 @@ exit_flush_tasks:
 	NSRect r = _mouseVector;
 	OSSpinLockUnlock(&_mouseVectorLock);
 	return r;
+}
+
+- (void)resetMouseVector {
+	OSSpinLockLock(&_mouseVectorLock);
+	if (isfinite(_mouseVector.size.width)) {
+		_mouseVector.origin.x = _mouseVector.origin.x + _mouseVector.size.width;
+		_mouseVector.origin.y = _mouseVector.origin.y + _mouseVector.size.height;
+		_mouseVector.size.width = 0.0;
+		_mouseVector.size.height = 0.0;
+	}
+	OSSpinLockUnlock(&_mouseVectorLock);
 }
 
 - (void)showMouseCursor {

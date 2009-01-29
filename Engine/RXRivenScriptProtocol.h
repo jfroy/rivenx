@@ -23,6 +23,8 @@
 - (void)playDataSound:(RXDataSound*)sound;
 
 - (NSRect)mouseVector;
+- (void)resetMouseVector;
+
 - (void)showMouseCursor;
 - (void)hideMouseCursor;
 - (void)setMouseCursor:(uint16_t)cursorID;

@@ -2886,12 +2886,24 @@ DEFINE_COMMAND(xjtunnel106_pictfix) {
 		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 9);
 }
 
+
+DEFINE_COMMAND(xreseticons) {
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@xreseticons was called, resetting the entire rebel icon puzzle state", _scriptLogPrefix);
+#endif
+
+	[[g_world gameState] setUnsigned32:0 forKey:@"jiconorder"];
+	[[g_world gameState] setUnsigned32:0 forKey:@"jicons"];
+	[[g_world gameState] setUnsignedShort:0 forKey:@"jrbook"];
+}
+
 #pragma mark -
 #pragma mark jungle elevator
 
 - (void)_handleJungleElevatorMouth {
 	// if the mouth is open, we need to close it before going up or down
-	if ([[g_world gameState] unsigned32ForKey:@"jwmouth"]) {
+	if ([[g_world gameState] unsignedShortForKey:@"jwmouth"]) {
 		[[g_world gameState] setUnsignedShort:0 forKey:@"jwmouth"];
 		
 		// play the close mouth movie
@@ -2996,10 +3008,53 @@ DEFINE_COMMAND(xhandlecontroldown) {
 #pragma mark boiler control valve
 
 DEFINE_COMMAND(xvalvecontrol) {
+	uint16_t valve_state = [[g_world gameState] unsignedShortForKey:@"bvalve"];
+	
 	NSRect mouse_vector = [_scriptHandler mouseVector];
 	[_scriptHandler setMouseCursor:2004];
 	
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
+		float theta = 180.0f * atan2f(mouse_vector.size.height, mouse_vector.size.width) * M_1_PI;
+		float r = sqrtf((mouse_vector.size.height * mouse_vector.size.height) + (mouse_vector.size.width * mouse_vector.size.width));
+		
+		switch (valve_state) {
+			case 0:
+				if (theta <= -90.0f && theta >= -150.0f && r >= 40.0f) {
+					valve_state = 1;
+					[[g_world gameState] setUnsignedShort:valve_state forKey:@"bvalve"];
+					DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+					DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+				}
+				break;
+			case 1:
+				if (theta <= 80.0f && theta >= -10.0f && r >= 40.0f) {
+					valve_state = 0;
+					[[g_world gameState] setUnsignedShort:valve_state forKey:@"bvalve"];
+					DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 3);
+					DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+				} else if ((theta <= -60.0f || theta >= 160.0f) && r >= 20.0f) {
+					valve_state = 2;
+					[[g_world gameState] setUnsignedShort:valve_state forKey:@"bvalve"];
+					DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
+					DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+				}
+				break;
+			case 2:
+				if (theta <= 30.0f && theta >= -30.0f && r >= 20.0f) {
+					valve_state = 1;
+					[[g_world gameState] setUnsignedShort:valve_state forKey:@"bvalve"];
+					DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 4);
+					DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+				}
+				break;
+		}
+		
+		if (_did_hide_mouse) {
+			[_scriptHandler resetMouseVector];
+			[_scriptHandler showMouseCursor];
+			_did_hide_mouse = NO;
+		}
+		
 		
 		// code 1: 1 -> 2
 		// code 2: 0 -> 1
