@@ -447,7 +447,7 @@ static NSMutableString* _scriptLogPrefix;
 		[group addSoundWithStack:parent ID:soundID gain:sourceGain pan:sourcePan];
 	}
 	
-#if defined(DEBUG) && DEBUG > 1
+#if defined(DEBUG)
 	RXOLog(@"created sound group: %@", group);
 #endif
 	return group;
@@ -3005,7 +3005,7 @@ DEFINE_COMMAND(xhandlecontroldown) {
 }
 
 #pragma mark -
-#pragma mark boiler control valve
+#pragma mark boiler central
 
 DEFINE_COMMAND(xvalvecontrol) {
 	uint16_t valve_state = [[g_world gameState] unsignedShortForKey:@"bvalve"];
@@ -3049,22 +3049,34 @@ DEFINE_COMMAND(xvalvecontrol) {
 				break;
 		}
 		
+		// if we did hide the mouse, it means we played one of the valve movies; if so, break out of the mouse tracking loop
 		if (_did_hide_mouse) {
-			[_scriptHandler resetMouseVector];
-			[_scriptHandler showMouseCursor];
-			_did_hide_mouse = NO;
-		}
-		
-		
-		// code 1: 1 -> 2
-		// code 2: 0 -> 1
-		// code 3: 1 -> 0
-		// code 4: 2 -> 1
-		
+			break;
+		}		
 		
 		[_scriptHandler setMouseCursor:2004];
 		mouse_vector = [_scriptHandler mouseVector];
 	}
 }
+
+DEFINE_COMMAND(xbchipper) {
+	[_scriptHandler setMouseCursor:2004];
+
+	uint16_t valve_state = [[g_world gameState] unsignedShortForKey:@"bvalve"];
+	if (valve_state != 2)
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
+	else if (valve_state == 2)
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+}
+
+DEFINE_COMMAND(xbupdateboiler) {
+	// likely needs to activate the correct MLST record with code 11 for the boiler state change and then play the movie in question
+}
+
+DEFINE_COMMAND(xbchangeboiler) {
+
+}
+
+
 
 @end
