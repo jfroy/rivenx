@@ -91,7 +91,8 @@
 	if (BZFSFileExists(userDataPath)) {
 		NSData* userRawData = [NSData dataWithContentsOfFile:userDataPath options:0 error:&error];
 		// FIXME: should be nicer than blower up, say by offering to create a new user data file and moving the old one aside, heck asking to go in Time Machine
-		if (!userRawData) @throw [NSException exceptionWithName:@"RXCorruptedEditionUserDataException" reason:[NSString stringWithFormat:@"Your data for the %@ is corrupted.", name] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+		if (!userRawData)
+			@throw [NSException exceptionWithName:@"RXCorruptedEditionUserDataException" reason:[NSString stringWithFormat:@"Your data for the %@ is corrupted.", name] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 		_userData = [[NSPropertyListSerialization propertyListFromData:userRawData mutabilityOption:NSPropertyListMutableContainers format:NULL errorDescription:NULL] retain];
 	} else {
 		// create a new user data directionary
@@ -150,7 +151,8 @@
 	userBase = [[[[[RXWorld sharedWorld] worldUserBase] path] stringByAppendingPathComponent:key] retain];
 	if (!BZFSDirectoryExists(userBase)) {
 		success = BZFSCreateDirectory(userBase, &error);
-		if (!success) @throw [NSException exceptionWithName:@"RXFilesystemException" reason:[NSString stringWithFormat:@"Riven X was unable to create a support folder for the %@.", name] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		if (!success)
+			@throw [NSException exceptionWithName:@"RXFilesystemException" reason:[NSString stringWithFormat:@"Riven X was unable to create a support folder for the %@.", name] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	}
 	
 	// sub-directory in the edition user base for data files
@@ -158,7 +160,8 @@
 	userDataBase = [[userBase stringByAppendingPathComponent:@"Data"] retain];
 	if (!BZFSDirectoryExists(userDataBase)) {
 		success = BZFSCreateDirectory(userDataBase, &error);
-		if (!success) @throw [NSException exceptionWithName:@"RXFilesystemException" reason:[NSString stringWithFormat:@"Riven X was unable to create the Data folder for the %@.", name] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		if (!success)
+			@throw [NSException exceptionWithName:@"RXFilesystemException" reason:[NSString stringWithFormat:@"Riven X was unable to create the Data folder for the %@.", name] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	}
 	
 	stackDescriptors = [_descriptor objectForKey:@"Stacks"];

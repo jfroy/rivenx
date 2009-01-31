@@ -31,34 +31,34 @@ static rx_render_dispatch_t _clear_dispatch;
 	if (!self)
 		return self;
 	
-	id <RXWorldViewProtocol> view = RXGetWorldView();
-	
-	// allocate the Cyan movie
-	_cyanMovie = [[RXMovie alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Cyan Worlds" ofType:@"mp4"]] owner:self];
-	[_cyanMovie setWorkingColorSpace:[view workingColorSpace]];
-	[_cyanMovie setOutputColorSpace:[view displayColorSpace]];
-	[_cyanMovie setExpectedReadAheadFromDisplayLink:[view displayLink]];
-	
-	// we need to know when the movie ends
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_cyanMovieIsDone:) name:QTMovieDidEndNotification object:[_cyanMovie movie]];
-	
-	// compute where to render the cyan logo
-	CGRect cyanMovieRect;
-	CGSize currentSize = [_cyanMovie currentSize];
-	float aspectRatio = currentSize.width / currentSize.height;
-	rx_size_t glSize = RXGetGLViewportSize();
-	
-	if (aspectRatio >= 1.0F) {
-		cyanMovieRect.origin.x = 0.0F;
-		cyanMovieRect.size.width = glSize.width;
-		cyanMovieRect.size.height = glSize.width / aspectRatio;
-		cyanMovieRect.origin.y = (glSize.height / 2.0F) - (cyanMovieRect.size.height / 2.0F);
-	} else {
-		cyanMovieRect.origin.y = 0.0F;
-		cyanMovieRect.size.height = glSize.height;
-		cyanMovieRect.size.width = glSize.height * aspectRatio;
-		cyanMovieRect.origin.x = (glSize.width / 2.0F) - (cyanMovieRect.size.width / 2.0F);
-	}
+//	id <RXWorldViewProtocol> view = RXGetWorldView();
+//	
+//	// allocate the Cyan movie
+//	_cyanMovie = [[RXMovie alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Cyan Worlds" ofType:@"mp4"]] owner:self];
+//	[_cyanMovie setWorkingColorSpace:[view workingColorSpace]];
+//	[_cyanMovie setOutputColorSpace:[view displayColorSpace]];
+//	[_cyanMovie setExpectedReadAheadFromDisplayLink:[view displayLink]];
+//	
+//	// we need to know when the movie ends
+//	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_cyanMovieIsDone:) name:QTMovieDidEndNotification object:[_cyanMovie movie]];
+//	
+//	// compute where to render the cyan logo
+//	CGRect cyanMovieRect;
+//	CGSize currentSize = [_cyanMovie currentSize];
+//	float aspectRatio = currentSize.width / currentSize.height;
+//	rx_size_t glSize = RXGetGLViewportSize();
+//	
+//	if (aspectRatio >= 1.0F) {
+//		cyanMovieRect.origin.x = 0.0F;
+//		cyanMovieRect.size.width = glSize.width;
+//		cyanMovieRect.size.height = glSize.width / aspectRatio;
+//		cyanMovieRect.origin.y = (glSize.height / 2.0F) - (cyanMovieRect.size.height / 2.0F);
+//	} else {
+//		cyanMovieRect.origin.y = 0.0F;
+//		cyanMovieRect.size.height = glSize.height;
+//		cyanMovieRect.size.width = glSize.height * aspectRatio;
+//		cyanMovieRect.origin.x = (glSize.width / 2.0F) - (cyanMovieRect.size.width / 2.0F);
+//	}
 	
 	return self;
 }

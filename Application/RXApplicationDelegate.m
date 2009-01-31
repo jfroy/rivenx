@@ -67,19 +67,24 @@
 }
 #endif
 
-- (id <SUVersionComparison>)versionComparatorForHostBundle:(NSBundle *)hb {
+- (id <SUVersionComparison>)versionComparatorForHostBundle:(NSBundle*)hb {
 	return versionComparator;
 }
 
-- (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException*)exception mask:(NSUInteger)aMask {
-	rx_print_exception_backtrace(exception);
-	return YES;
+- (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException*)e mask:(NSUInteger)aMask {
+	NSError* error = [[e userInfo] objectForKey:NSUnderlyingErrorKey];
+	if (error)
+		RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: \"%@\", ERROR: \"%@\"", e, error);
+	else
+		RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: %@", e);
+	rx_print_exception_backtrace(e);
+	return NO;
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification*)aNotification {
 #if defined(DEBUG)
 	[[NSExceptionHandler defaultExceptionHandler] setDelegate:self];
-	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:NSLogUncaughtExceptionMask | NSLogUncaughtSystemExceptionMask | NSLogUncaughtRuntimeErrorMask | NSLogTopLevelExceptionMask | NSLogOtherExceptionMask];
+	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:NSLogAndHandleEveryExceptionMask];
 #endif
 	
 	[RXWorld sharedWorld];

@@ -212,6 +212,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		
 		semaphore_wait(_threadInitSemaphore);
 		semaphore_wait(_threadInitSemaphore);
+		semaphore_wait(_threadInitSemaphore);
 		
 		// initialize the render states
 		[self _initializeRenderStates];

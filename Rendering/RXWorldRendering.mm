@@ -103,6 +103,9 @@
 	
 	// start the audio renderer
 	audioRenderer->Start();
+	
+	// initialize QuickTime
+	EnterMovies();
 }
 
 - (void)_initializeRenderStates {

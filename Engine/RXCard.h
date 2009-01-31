@@ -54,7 +54,6 @@
 	// movies
 	NSMutableArray* _movies;
 	uint16_t* _mlstCodes;
-	NSMapTable* _codeToMovieMap;
 	semaphore_t _movieLoadSemaphore;
 	semaphore_t _moviePlaybackSemaphore;
 	

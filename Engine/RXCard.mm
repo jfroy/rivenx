@@ -32,7 +32,6 @@
 #import "Rendering/Graphics/RXDynamicPicture.h"
 
 static const float kSoundGainDivisor = 255.0f;
-static const float kMovieGainDivisor = 500.0f;
 
 static const NSTimeInterval k_mouse_tracking_loop_period = 0.05;
 
@@ -222,6 +221,8 @@ CF_INLINE void rx_dispatch_command5(RXCard* target, rx_command_dispatch_entry_t*
 static rx_command_dispatch_entry_t _riven_command_dispatch_table[47];
 static NSMapTable* _riven_external_command_dispatch_map;
 
+static NSMapTable* rx_code_to_movie_map;
+
 static NSMutableString* _scriptLogPrefix;
 
 
@@ -234,61 +235,64 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 + (void)initialize {
-	if (self == [RXCard class]) {
-		_scriptLogPrefix = [NSMutableString new];
-		
-		// build the principal command dispatch table
-		_riven_command_dispatch_table[0].sel = @selector(_invalid_opcode:arguments:);
-		_riven_command_dispatch_table[1].sel = @selector(_opcode_drawDynamicPicture:arguments:);
-		_riven_command_dispatch_table[2].sel = @selector(_opcode_goToCard:arguments:);
-		_riven_command_dispatch_table[3].sel = @selector(_opcode_enableSynthesizedSLST:arguments:);
-		_riven_command_dispatch_table[4].sel = @selector(_opcode_playLocalSound:arguments:);
-		_riven_command_dispatch_table[5].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[6].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[7].sel = @selector(_opcode_setVariable:arguments:);
-		_riven_command_dispatch_table[8].sel = @selector(_invalid_opcode:arguments:);
-		_riven_command_dispatch_table[9].sel = @selector(_opcode_enableHotspot:arguments:);
-		_riven_command_dispatch_table[10].sel = @selector(_opcode_disableHotspot:arguments:);
-		_riven_command_dispatch_table[11].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[12].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[13].sel = @selector(_opcode_setCursor:arguments:);
-		_riven_command_dispatch_table[14].sel = @selector(_opcode_pause:arguments:);
-		_riven_command_dispatch_table[15].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[16].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[17].sel = @selector(_opcode_callExternal:arguments:);
-		_riven_command_dispatch_table[18].sel = @selector(_opcode_scheduleTransition:arguments:);
-		_riven_command_dispatch_table[19].sel = @selector(_opcode_reloadCard:arguments:);
-		_riven_command_dispatch_table[20].sel = @selector(_opcode_disableAutomaticSwaps:arguments:);
-		_riven_command_dispatch_table[21].sel = @selector(_opcode_enableAutomaticSwaps:arguments:);
-		_riven_command_dispatch_table[22].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[23].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[24].sel = @selector(_opcode_incrementVariable:arguments:);
-		_riven_command_dispatch_table[25].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[26].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[27].sel = @selector(_opcode_goToStack:arguments:);
-		_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMLST:arguments:);
-		_riven_command_dispatch_table[29].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[30].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[31].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[32].sel = @selector(_opcode_startMovieAndWaitUntilDone:arguments:);
-		_riven_command_dispatch_table[33].sel = @selector(_opcode_startMovie:arguments:);
-		_riven_command_dispatch_table[34].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[35].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[37].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[38].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[39].sel = @selector(_opcode_activatePLST:arguments:);
-		_riven_command_dispatch_table[40].sel = @selector(_opcode_activateSLST:arguments:);
-		_riven_command_dispatch_table[41].sel = @selector(_opcode_prepareMLST:arguments:);
-		_riven_command_dispatch_table[42].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[43].sel = @selector(_opcode_activateBLST:arguments:);
-		_riven_command_dispatch_table[44].sel = @selector(_opcode_activateFLST:arguments:);
-		_riven_command_dispatch_table[45].sel = @selector(_opcode_noop:arguments:);
-		_riven_command_dispatch_table[46].sel = @selector(_opcode_activateMLST:arguments:);
-		
-		for (unsigned char selectorIndex = 0; selectorIndex < 47; selectorIndex++)
-			_riven_command_dispatch_table[selectorIndex].imp = (rx_command_imp_t)[self instanceMethodForSelector:_riven_command_dispatch_table[selectorIndex].sel];
-	}
+	static BOOL initialized = NO;
+	if (initialized)
+		return;
+	initialized = YES;
+	
+	_scriptLogPrefix = [NSMutableString new];
+	
+	// build the principal command dispatch table
+	_riven_command_dispatch_table[0].sel = @selector(_invalid_opcode:arguments:);
+	_riven_command_dispatch_table[1].sel = @selector(_opcode_drawDynamicPicture:arguments:);
+	_riven_command_dispatch_table[2].sel = @selector(_opcode_goToCard:arguments:);
+	_riven_command_dispatch_table[3].sel = @selector(_opcode_enableSynthesizedSLST:arguments:);
+	_riven_command_dispatch_table[4].sel = @selector(_opcode_playLocalSound:arguments:);
+	_riven_command_dispatch_table[5].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[6].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[7].sel = @selector(_opcode_setVariable:arguments:);
+	_riven_command_dispatch_table[8].sel = @selector(_invalid_opcode:arguments:);
+	_riven_command_dispatch_table[9].sel = @selector(_opcode_enableHotspot:arguments:);
+	_riven_command_dispatch_table[10].sel = @selector(_opcode_disableHotspot:arguments:);
+	_riven_command_dispatch_table[11].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[12].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[13].sel = @selector(_opcode_setCursor:arguments:);
+	_riven_command_dispatch_table[14].sel = @selector(_opcode_pause:arguments:);
+	_riven_command_dispatch_table[15].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[16].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[17].sel = @selector(_opcode_callExternal:arguments:);
+	_riven_command_dispatch_table[18].sel = @selector(_opcode_scheduleTransition:arguments:);
+	_riven_command_dispatch_table[19].sel = @selector(_opcode_reloadCard:arguments:);
+	_riven_command_dispatch_table[20].sel = @selector(_opcode_disableAutomaticSwaps:arguments:);
+	_riven_command_dispatch_table[21].sel = @selector(_opcode_enableAutomaticSwaps:arguments:);
+	_riven_command_dispatch_table[22].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[23].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[24].sel = @selector(_opcode_incrementVariable:arguments:);
+	_riven_command_dispatch_table[25].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[26].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[27].sel = @selector(_opcode_goToStack:arguments:);
+	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMLST:arguments:);
+	_riven_command_dispatch_table[29].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[30].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[31].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[32].sel = @selector(_opcode_startMovieAndWaitUntilDone:arguments:);
+	_riven_command_dispatch_table[33].sel = @selector(_opcode_startMovie:arguments:);
+	_riven_command_dispatch_table[34].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[35].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[37].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[38].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[39].sel = @selector(_opcode_activatePLST:arguments:);
+	_riven_command_dispatch_table[40].sel = @selector(_opcode_activateSLST:arguments:);
+	_riven_command_dispatch_table[41].sel = @selector(_opcode_prepareMLST:arguments:);
+	_riven_command_dispatch_table[42].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[43].sel = @selector(_opcode_activateBLST:arguments:);
+	_riven_command_dispatch_table[44].sel = @selector(_opcode_activateFLST:arguments:);
+	_riven_command_dispatch_table[45].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[46].sel = @selector(_opcode_activateMLST:arguments:);
+	
+	for (unsigned char selectorIndex = 0; selectorIndex < 47; selectorIndex++)
+		_riven_command_dispatch_table[selectorIndex].imp = (rx_command_imp_t)[self instanceMethodForSelector:_riven_command_dispatch_table[selectorIndex].sel];
 	
 	// search for external command implementation methods and register them
 	_riven_external_command_dispatch_map = NSCreateMapTable(NSObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, 0);
@@ -315,6 +319,9 @@ static NSMutableString* _scriptLogPrefix;
 			}
 		}
 	}
+	
+	// create the shared movie code map
+	rx_code_to_movie_map = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
 }
 
 - (id)init {
@@ -350,7 +357,6 @@ static NSMutableString* _scriptLogPrefix;
 	// allocate movie management objects
 	_movies = [NSMutableArray new];
 	_mlstCodes = new uint16_t[movieCount];
-	_codeToMovieMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, 0);
 	
 	// swap the records if needed
 #if defined(__LITTLE_ENDIAN__)
@@ -1253,6 +1259,7 @@ static NSMutableString* _scriptLogPrefix;
 	 
 	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
 	[(NSObject*)_scriptHandler performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
+	NSResetMapTable(rx_code_to_movie_map);
 	
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
@@ -1285,7 +1292,7 @@ static NSMutableString* _scriptLogPrefix;
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first plst record", _scriptLogPrefix);
 #endif
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 1);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
 	}
 	
 	// swap render state (by faking an execution of command 21 -- _opcode_enableAutomaticSwaps)
@@ -1579,27 +1586,19 @@ static NSMutableString* _scriptLogPrefix;
 #pragma mark -
 #pragma mark movie playback
 
-- (void)_handleMovieRateChange:(NSNotification *)notification {
+- (void)_handleMovieRateChange:(NSNotification*)notification {
 	// WARNING: MUST RUN ON MAIN THREAD
 	float rate = [[[notification userInfo] objectForKey:QTMovieRateDidChangeNotificationParameter] floatValue];
 	if (rate < 0.001f) {
-#if defined(DEBUG)
-		RXOLog2(kRXLoggingRendering, kRXLoggingLevelDebug, @"%@ has stopped playing", [notification object]);
-#endif
-		
 		[[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieRateDidChangeNotification object:[notification object]];
 	}
 }
 
-- (void)_handleBlockingMovieRateChange:(NSNotification *)notification {
+- (void)_handleBlockingMovieRateChange:(NSNotification*)notification {
 	// WARNING: MUST RUN ON MAIN THREAD
 	float rate = [[[notification userInfo] objectForKey:QTMovieRateDidChangeNotificationParameter] floatValue];
 	if (rate < 0.001f) {
 		[self _handleMovieRateChange:notification];
-		
-#if defined(DEBUG)
-		RXOLog2(kRXLoggingRendering, kRXLoggingLevelDebug, @"resuming script execution after blocking movie %@ playback", [notification object]);
-#endif
 		
 		// signal the movie playback semaphore to unblock the script thread
 		semaphore_signal(_moviePlaybackSemaphore);
@@ -1744,22 +1743,6 @@ static NSMutableString* _scriptLogPrefix;
 
 #pragma mark -
 
-- (void)_dealloc_movies {
-	// WARNING: this method can only run on the main thread
-	if (!pthread_main_np())
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_dealloc_movies: MAIN THREAD ONLY" userInfo:nil];
-	
-	// stop all movies (because we really want them to be stopped by the time the card is tearing down...)
-	NSEnumerator* movie_enum = [_movies objectEnumerator];
-	RXMovie* movie;
-	while ((movie = [movie_enum nextObject]))
-		[[movie movie] stop];
-	
-	if (_codeToMovieMap)
-		NSFreeMapTable(_codeToMovieMap);
-	[_movies release];
-}
-
 - (void)dealloc {
 #if defined(DEBUG)
 	RXOLog(@"deallocating");
@@ -1796,7 +1779,7 @@ static NSMutableString* _scriptLogPrefix;
 	CGLUnlockContext(cgl_ctx);
 	
 	// movies
-	[self performSelectorOnMainThread:@selector(_dealloc_movies) withObject:nil waitUntilDone:YES];
+	[_movies release];
 	if (_mlstCodes)
 		delete[] _mlstCodes;
 	semaphore_destroy(mach_task_self(), _moviePlaybackSemaphore);
@@ -2227,11 +2210,14 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// get the movie object
 	uintptr_t k = argv[0];
-	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
+	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(rx_code_to_movie_map, (const void*)k));
 	assert(movie);
 	
 	// stop the movie on the main thread and block until done
 	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
+	
+	// remove the movie from the code mapping
+	NSMapRemove(rx_code_to_movie_map, (const void*)k);
 }
 
 // 32
@@ -2245,7 +2231,7 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// get the movie object
 	uintptr_t k = argv[0];
-	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
+	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(rx_code_to_movie_map, (const void*)k));
 	assert(movie);
 	
 	// start the movie and register for rate change notifications
@@ -2266,7 +2252,7 @@ static NSMutableString* _scriptLogPrefix;
 	
 	// get the movie object
 	uintptr_t k = argv[0];
-	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(_codeToMovieMap, (const void*)k));
+	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(rx_code_to_movie_map, (const void*)k));
 	assert(movie);
 	
 	// start the movie
@@ -2315,13 +2301,19 @@ static NSMutableString* _scriptLogPrefix;
 - (void)_opcode_prepareMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 1)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	uintptr_t k = _mlstCodes[argv[0] - 1];
+	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@WARNING: executing unknown opcode 41, implicit activation of mlst record at index %hu", _scriptLogPrefix, argv[0]);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@activating and playing in background mlst record %hu, code %hu (u0=%hu)", _scriptLogPrefix, argv[0], k, argv[1]);
 #endif
 	
-	uint16_t opcode_buffer[] = {argv[0], 0};
-	_riven_command_dispatch_table[46].imp(self, _riven_command_dispatch_table[46].sel, 2, opcode_buffer);
+	// update the code to movie map
+	RXMovie* movie = [_movies objectAtIndex:argv[0] - 1];
+	NSMapInsert(rx_code_to_movie_map, (const void*)k, movie);
+	
+	// start the movie
+	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
 }
 
 // 43
@@ -2372,15 +2364,16 @@ static NSMutableString* _scriptLogPrefix;
 - (void)_opcode_activateMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 2)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	uintptr_t k = _mlstCodes[argv[0] - 1];
+
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record at index %hu with u0=%hu", _scriptLogPrefix, argv[0], argv[1]);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record %hu, code %hu (u0=%hu)", _scriptLogPrefix, argv[0], k, argv[1]);
 #endif
 	
 	// update the code to movie map
-	uintptr_t k = _mlstCodes[argv[0] - 1];
 	RXMovie* movie = [_movies objectAtIndex:argv[0] - 1];
-	NSMapInsert(_codeToMovieMap, (const void*)k, movie);
+	NSMapInsert(rx_code_to_movie_map, (const void*)k, movie);
 }
 
 @end
@@ -2451,7 +2444,7 @@ DEFINE_COMMAND(xasetupcomplete) {
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 10);
 	}
 	
-	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, page);
 }
 
 DEFINE_COMMAND(xaatrusopenbook) {
@@ -2521,14 +2514,14 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 	}
 	
 	// draw the main page picture
-	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, page);
 	
 	// draw the note edge
 	if (page > 1) {
 		if (page < 5)
-			DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 50);
+			DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 50);
 		else if (page > 5)
-			DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 51);
+			DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 51);
 	}
 	
 	// draw the telescope combination
@@ -2620,7 +2613,7 @@ DEFINE_COMMAND(xtrapbookback) {
 		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 16);
 	}
 	
-	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, page);
 	
 	// draw the dome combination
 	// FIXME: actually generate a combination per game...
@@ -2686,7 +2679,7 @@ DEFINE_COMMAND(xblabbooknextpage) {
 	uint16_t page = [[g_world gameState] unsignedShortForKey:@"ogehnpage"];
 	assert(page > 0);
 		
-	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, page);
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, page);
 }
 
 DEFINE_COMMAND(xogehnopenbook) {
@@ -2801,19 +2794,19 @@ DEFINE_COMMAND(xjtunnel103_pictfix) {
 	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
 	
 	if (icon_bitfield & 1U)
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 2);
 	if (icon_bitfield & (1U << 1))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 3);
 	if (icon_bitfield & (1U << 2))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 4);
 	if (icon_bitfield & (1U << 3))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 5);
 	if (icon_bitfield & (1U << 22))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 6);
 	if (icon_bitfield & (1U << 23))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 7);
 	if (icon_bitfield & (1U << 24))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 8);
 }
 
 DEFINE_COMMAND(xjtunnel104_pictfix) {
@@ -2823,21 +2816,21 @@ DEFINE_COMMAND(xjtunnel104_pictfix) {
 	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
 	
 	if (icon_bitfield & (1U << 9))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 2);
 	if (icon_bitfield & (1U << 10))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 3);
 	if (icon_bitfield & (1U << 11))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 4);
 	if (icon_bitfield & (1U << 12))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 5);
 	if (icon_bitfield & (1U << 13))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 6);
 	if (icon_bitfield & (1U << 14))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 7);
 	if (icon_bitfield & (1U << 15))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 8);
 	if (icon_bitfield & (1U << 16))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 9);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 9);
 }
 
 DEFINE_COMMAND(xjtunnel105_pictfix) {
@@ -2847,19 +2840,19 @@ DEFINE_COMMAND(xjtunnel105_pictfix) {
 	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
 	
 	if (icon_bitfield & (1U << 3))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 2);
 	if (icon_bitfield & (1U << 4))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 3);
 	if (icon_bitfield & (1U << 5))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 4);
 	if (icon_bitfield & (1U << 6))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 5);
 	if (icon_bitfield & (1U << 7))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 6);
 	if (icon_bitfield & (1U << 8))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 7);
 	if (icon_bitfield & (1U << 9))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 8);
 }
 
 DEFINE_COMMAND(xjtunnel106_pictfix) {
@@ -2869,21 +2862,21 @@ DEFINE_COMMAND(xjtunnel106_pictfix) {
 	uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
 	
 	if (icon_bitfield & (1U << 16))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 2);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 2);
 	if (icon_bitfield & (1U << 17))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 3);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 3);
 	if (icon_bitfield & (1U << 18))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 4);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 4);
 	if (icon_bitfield & (1U << 19))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 5);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 5);
 	if (icon_bitfield & (1U << 20))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 6);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 6);
 	if (icon_bitfield & (1U << 21))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 7);
 	if (icon_bitfield & (1U << 22))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 8);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 8);
 	if (icon_bitfield & (1U << 23))
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_PLST, 9);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 9);
 }
 
 
@@ -3070,13 +3063,57 @@ DEFINE_COMMAND(xbchipper) {
 }
 
 DEFINE_COMMAND(xbupdateboiler) {
-	// likely needs to activate the correct MLST record with code 11 for the boiler state change and then play the movie in question
+	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 11);
 }
 
 DEFINE_COMMAND(xbchangeboiler) {
-
+	uint16_t heat = [[g_world gameState] unsignedShortForKey:@"bheat"];
+	uint16_t water = [[g_world gameState] unsignedShortForKey:@"bblrwtr"];
+	uint16_t platform = [[g_world gameState] unsignedShortForKey:@"bblrgrt"];
+	
+	if (argv[0] == 2) {		
+		if (heat) {
+			// we are turning off the heat
+			if (water) {
+				if (platform)
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 23, 0);
+				else
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 20, 0);
+			}
+		} else {
+			// we are turning on the heat
+			if (water) {
+				if (platform)
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 18, 0);
+				else
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 15, 0);
+			}
+		}
+	} else if (argv[0] == 3) {
+		if (platform) {
+			// we are lowering the platform
+			if (water) {
+				if (heat)
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 24, 0);
+				else
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 17, 0);
+			} else
+				DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 11, 0);
+		} else {
+			// we are raising the platform
+			if (water) {
+				if (heat)
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 21, 0);
+				else
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 14, 0);
+			} else
+				DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 9, 11);
+		}
+	}
 }
 
-
+DEFINE_COMMAND(xsoundplug) {
+	// this needs to activate the correct SLST record based on the state of the boiler and the card
+}
 
 @end

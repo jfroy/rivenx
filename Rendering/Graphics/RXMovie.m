@@ -14,6 +14,36 @@
 
 #import "RXMovie.h"
 
+
+@interface RXMovieReaper : NSObject {
+@public
+	QTMovie* movie;
+	QTVisualContextRef vc;
+}
+@end
+
+@implementation RXMovieReaper
+
+- (void)dealloc {
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingRendering, kRXLoggingLevelDebug, @"deallocating");
+#endif
+
+	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+	CGLLockContext(cgl_ctx);
+	
+	[movie release];
+	if (vc)
+		QTVisualContextRelease(vc);
+	
+	CGLUnlockContext(cgl_ctx);
+	
+	[super dealloc];
+}
+
+@end
+
+
 @implementation RXMovie
 
 + (BOOL)accessInstanceVariablesDirectly {
@@ -46,7 +76,7 @@
 	_movie = [[QTMovie alloc] initWithQuickTimeMovie:movie disposeWhenDone:disposeWhenDone error:&error];
 	if (!_movie) {
 		[self release];
-		@throw [NSException exceptionWithName:@"RXMovieException" reason:@"[QTMovie initWithQuickTimeMovie:disposeWhenDone:error:] failed." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+		@throw [NSException exceptionWithName:@"RXMovieException" reason:@"[QTMovie initWithQuickTimeMovie:disposeWhenDone:error:] failed." userInfo:(error) ? [NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey] : nil];
 	}
 	
 	// no particular movie hints initially
@@ -202,31 +232,34 @@
 }
 
 - (void)dealloc {
-	if (!pthread_main_np())
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie dealloc] MAIN THREAD ONLY" userInfo:nil];
+#if defined(DEBUG)
 	RXOLog2(kRXLoggingRendering, kRXLoggingLevelDebug, @"deallocating");
+#endif
 	
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	
-	if (_movie) {
-		[_movie stop];
-		SetMovieVisualContext([_movie quickTimeMovie], NULL);
-		[_movie release];
-	}
-	
 	if (_vao)
 		glDeleteVertexArraysAPPLE(1, &_vao);
-	if (_visualContext)
-		QTVisualContextRelease(_visualContext);
-	if (_imageBuffer)
-		CFRelease(_imageBuffer);
 	if (_glTexture)
 		glDeleteTextures(1, &_glTexture);
 	if (_textureStorage)
 		free(_textureStorage);
+	if (_imageBuffer)
+		CFRelease(_imageBuffer);
 	
 	CGLUnlockContext(cgl_ctx);
+	
+	if (_movie || _visualContext) {
+		RXMovieReaper* reaper = [RXMovieReaper new];
+		reaper->movie = _movie;
+		reaper->vc = _visualContext;
+		
+		if (!pthread_main_np())
+			[reaper performSelectorOnMainThread:@selector(release) withObject:nil waitUntilDone:NO];
+		else
+			[reaper release];
+	}
 	
 	[super dealloc];
 }

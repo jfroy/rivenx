@@ -44,8 +44,11 @@
 	if (_movie)
 		return;
 	
-	// FIXME: error handling in [RXProxyMovie _loadMovie]
-	Movie movie = [_archive movieWithID:_ID error:NULL];
+	NSError* error = nil;
+	Movie movie = [_archive movieWithID:_ID error:&error];
+	if (!movie)
+		@throw [NSException exceptionWithName:@"RXMovieException" reason:@"[RXMovieProxy _loadMovie] failed to get movie from archive." userInfo:(error) ? [NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey] : nil];
+	
 	_movie = [[RXMovie alloc] initWithMovie:movie disposeWhenDone:YES owner:_owner];
 	
 	// set movie attributes

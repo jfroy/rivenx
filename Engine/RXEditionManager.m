@@ -63,7 +63,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	// search for Riven data stores
 	NSEnumerator* mediaEnum = [mountedMedia objectEnumerator];
 	NSString* mediaMountPath = nil;
-	while ((mediaMountPath = [mediaEnum nextObject])) [self _scanMountPath:mediaMountPath];
+	while ((mediaMountPath = [mediaEnum nextObject]))
+		[self _scanMountPath:mediaMountPath];
 }
 
 #pragma mark -
@@ -71,7 +72,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 - (BOOL)_writeSettings {
 	NSString* serializationError;
 	NSData* settingsData = [NSPropertyListSerialization dataFromPropertyList:_editionManagerSettings format:NSPropertyListBinaryFormat_v1_0 errorDescription:&serializationError];
-	if (!settingsData) return NO;
+	if (!settingsData)
+		return NO;
 	
 	NSString* editionManagerSettingsPath = [[[[RXWorld sharedWorld] worldUserBase] path] stringByAppendingPathComponent:@"Edtion Manager.plist"];
 	return [settingsData writeToFile:editionManagerSettingsPath options:NSAtomicWrite error:NULL];
@@ -81,7 +83,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
 - (id)init	{
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	editions = [NSMutableDictionary new];
 	editionProxies = [NSMutableArray new];
@@ -91,15 +94,19 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	
 	// find the Editions directory
 	NSString* editionsDirectory = [[NSBundle mainBundle] pathForResource:@"Editions" ofType:nil];
-	if (!editionsDirectory) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Riven X could not find the Editions bundle resource directory." userInfo:nil];
+	if (!editionsDirectory)
+		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Riven X could not find the Editions bundle resource directory." userInfo:nil];
 	
 	// get its content
 	NSFileManager* fm = [NSFileManager defaultManager];
 	NSArray* editionPlists;
 	NSError* error = nil;
-	if ([fm respondsToSelector:@selector(contentsOfDirectoryAtPath:error:)]) editionPlists = [fm contentsOfDirectoryAtPath:editionsDirectory error:&error];
-	else editionPlists = [fm directoryContentsAtPath:editionsDirectory];
-	if (!editionPlists) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Riven X could not iterate the Editions bundle resource directory." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	if ([fm respondsToSelector:@selector(contentsOfDirectoryAtPath:error:)])
+		editionPlists = [fm contentsOfDirectoryAtPath:editionsDirectory error:&error];
+	else
+		editionPlists = [fm directoryContentsAtPath:editionsDirectory];
+	if (!editionPlists)
+		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Riven X could not iterate the Editions bundle resource directory." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	// iterate over its content
 	NSEnumerator* e = [editionPlists objectEnumerator];
@@ -110,7 +117,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 		
 		// try to allocate an edition object
 		RXEdition* ed = [[RXEdition alloc] initWithDescriptor:[NSDictionary dictionaryWithContentsOfFile:editionPlistPath]];
-		if (!ed) RXOLog(@"failed to load edition %@", editionPlist);
+		if (!ed)
+			RXOLog(@"failed to load edition %@", editionPlist);
 		else {
 			[editions setObject:ed forKey:[ed valueForKey:@"key"]];
 			[editionProxies addObject:[ed proxy]];
@@ -149,17 +157,21 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	NSString* editionManagerSettingsPath = [[[[RXWorld sharedWorld] worldUserBase] path] stringByAppendingPathComponent:@"Edtion Manager.plist"];
 	if (BZFSFileExists(editionManagerSettingsPath)) {
 		NSData* settingsData = [NSData dataWithContentsOfFile:editionManagerSettingsPath options:0 error:&error];
-		if (settingsData == nil) @throw [NSException exceptionWithName:@"RXIOException" reason:@"Riven X could not load the existing edition manager settings." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		if (settingsData == nil)
+			@throw [NSException exceptionWithName:@"RXIOException" reason:@"Riven X could not load the existing edition manager settings." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 		NSString* serializationError;
 		_editionManagerSettings = [[NSPropertyListSerialization propertyListFromData:settingsData mutabilityOption:NSPropertyListMutableContainers format:NULL errorDescription:&serializationError] retain];
-		if (_editionManagerSettings == nil) @throw [NSException exceptionWithName:@"RXIOException" reason:@"Riven X could not load the existing edition manager settings." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:serializationError, @"RXErrorString", nil]];
-	} else _editionManagerSettings = [NSMutableDictionary new];
+		if (_editionManagerSettings == nil)
+			@throw [NSException exceptionWithName:@"RXIOException" reason:@"Riven X could not load the existing edition manager settings." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:serializationError, @"RXErrorString", nil]];
+	} else
+		_editionManagerSettings = [NSMutableDictionary new];
 	
 	// if we have an edition selection saved in the settings, try to use it; otherwise, display the edition manager; we use a performSelector because the world is not done initializing when the edition manager is initialized and we must defer the edition changed notification until the next run loop cycle
 	NSString* editionChoiceMemory = [_editionManagerSettings objectForKey:@"RXEditionChoiceMemory"];
 	BOOL optKeyDown = ((GetCurrentKeyModifiers() & (optionKey | rightOptionKey)) != 0) ? YES : NO;
-	if (editionChoiceMemory && [editions objectForKey:editionChoiceMemory] && !optKeyDown) [self performSelectorOnMainThread:@selector(_makeEditionChoiceMemoryCurrent) withObject:nil waitUntilDone:NO];
+	if (editionChoiceMemory && [editions objectForKey:editionChoiceMemory] && !optKeyDown)
+		[self performSelectorOnMainThread:@selector(_makeEditionChoiceMemoryCurrent) withObject:nil waitUntilDone:NO];
 	else {
 		_windowController = [[RXEditionManagerWindowController alloc] initWithWindowNibName:@"EditionManager"];
 		
@@ -171,7 +183,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 }
 
 - (void)tearDown {
-	if (_tornDown) return;
+	if (_tornDown)
+		return;
 	_tornDown = YES;
 	
 	[[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
@@ -204,17 +217,20 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
 - (BOOL)makeEditionCurrent:(RXEdition*)edition rememberChoice:(BOOL)remember error:(NSError**)error {
 	// check that this edition is actually known to us
-	if ([editions objectForKey:[edition valueForKey:@"key"]] == nil) ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+	if ([editions objectForKey:[edition valueForKey:@"key"]] == nil)
+		ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
 	
 	// check that this edition can become current
-	if (![edition canBecomeCurrent]) ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+	if (![edition canBecomeCurrent])
+		ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
 	
 	// if we're told to remember thise choice, write the setting
-	if (remember) [_editionManagerSettings setObject:[edition valueForKey:@"key"] forKey:@"RXEditionChoiceMemory"];
-	else [_editionManagerSettings removeObjectForKey:@"RXEditionChoiceMemory"];
+	if (remember)
+		[_editionManagerSettings setObject:[edition valueForKey:@"key"] forKey:@"RXEditionChoiceMemory"];
+	else
+		[_editionManagerSettings removeObjectForKey:@"RXEditionChoiceMemory"];
 	[self _writeSettings];
 	
-	// okay!
 	currentEdition = edition;
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"RXCurrentEditionChangedNotification" object:edition];
 	
@@ -256,7 +272,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	NSEnumerator* discEnum = [_validMountPaths objectEnumerator];
 	NSString* mount;
 	while ((mount = [discEnum nextObject])) {
-		if ([[mount lastPathComponent] isEqualToString:disc]) return mount;
+		if ([[mount lastPathComponent] isEqualToString:disc])
+			return mount;
 	}
 	
 	// if there's a modal session, wait for the disc while driving the session
@@ -318,21 +335,25 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	
 	// get the directory for the requested type of archive
 	NSString* directory = [[currentEdition valueForKey:@"directories"] objectForKey:dirKey];
-	if (!directory) ReturnValueWithError(nil, @"RXErrorDomain", 0, nil, error);
+	if (!directory)
+		ReturnValueWithError(nil, @"RXErrorDomain", 0, nil, error);
 	
 	// compute the final on-disc archive path
 	archivePath = [[mountPath stringByAppendingPathComponent:directory] stringByAppendingPathComponent:filename];
 	if (BZFSFileExists(archivePath)) {
 		archive = [[[MHKArchive alloc] initWithPath:archivePath error:error] autorelease];
-		if (!archive) return nil;
-		else return archive;
+		if (!archive)
+			return nil;
+		else
+			return archive;
 	}
 	
 	ReturnValueWithError(nil, @"RXErrorDomain", 0, nil, error);
 }
 
 - (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackID:(NSString*)stackID error:(NSError**)error {
-	if ([stackID isEqualToString:@"aspit"]) return [self _archiveWithFilename:filename directoryKey:@"All" stackID:stackID error:error];
+	if ([stackID isEqualToString:@"aspit"])
+		return [self _archiveWithFilename:filename directoryKey:@"All" stackID:stackID error:error];
 	return [self _archiveWithFilename:filename directoryKey:@"Data" stackID:stackID error:error];
 }
 
