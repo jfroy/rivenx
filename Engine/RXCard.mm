@@ -20,7 +20,6 @@
 #import "Base/RXAtomic.h"
 
 #import "RXCard.h"
-#import "RXCoreStructures.h"
 #import "RXScriptDecoding.h"
 
 #import "Rendering/Graphics/RXTransition.h"
@@ -299,13 +298,13 @@ struct rx_card_picture_record {
 	if ([fh readDataToEndOfFileInBuffer:_blstData error:&error] == -1)
 		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding BLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
-	_hotspotControlRecords = BUFFER_OFFSET(_blstData, sizeof(uint16_t));
+	_hotspotControlRecords = (struct rx_blst_record*)BUFFER_OFFSET(_blstData, sizeof(uint16_t));
 	
 	// byte order (and debug)
 #if defined(__LITTLE_ENDIAN__) || (defined(DEBUG) && DEBUG > 1)
 	uint16_t blstCount = CFSwapInt16BigToHost(*(uint16_t*)_blstData);
 	for (currentListIndex = 0; currentListIndex < blstCount; currentListIndex++) {
-		struct rx_blst_record* record = (struct rx_blst_record*)_hotspotControlRecords + currentListIndex;
+		struct rx_blst_record* record = _hotspotControlRecords + currentListIndex;
 		
 #if defined(__LITTLE_ENDIAN__)
 		record->index = CFSwapInt16(record->index);
@@ -742,8 +741,16 @@ struct rx_card_picture_record {
 	return _archive;
 }
 
-- (NSArray*)pictures {
-	return nil;
+- (GLuint)pictureCount {
+	return _pictureCount;
+}
+
+- (GLuint)pictureVAO {
+	return _pictureVAO;
+}
+
+- (GLuint*)pictureTextures {
+	return _pictureTextures;
 }
 
 - (NSDictionary*)events {
@@ -758,12 +765,20 @@ struct rx_card_picture_record {
 	return _hotspotsIDMap;
 }
 
+- (struct rx_blst_record*)hotspotControlRecords {
+	return _hotspotControlRecords;
+}
+
 - (NSArray*)movies {
 	return _movies;
 }
 
 - (uint16_t*)movieCodes {
 	return _mlstCodes;
+}
+
+- (NSArray*)soundGroups {
+	return _soundGroups;
 }
 
 - (rx_card_sfxe*)sfxes {

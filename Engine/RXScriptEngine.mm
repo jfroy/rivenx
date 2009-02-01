@@ -467,7 +467,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// activate the first picture if none has been enabled already
-	if (_pictureCount > 0 && !_didActivatePLST) {
+	if ([card pictureCount] > 0 && !_didActivatePLST) {
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first plst record", logPrefix);
 #endif
@@ -515,11 +515,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// activate the first sound group if none has been enabled already
-	if ([_soundGroups count] > 0 && !_didActivateSLST) {
+	if ([[card soundGroups] count] > 0 && !_didActivateSLST) {
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first slst record", logPrefix);
 #endif
-		[controller activateSoundGroup:[_soundGroups objectAtIndex:0]];
+		[controller activateSoundGroup:[[card soundGroups] objectAtIndex:0]];
 	}
 	_didActivateSLST = YES;
 	
@@ -1363,7 +1363,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// create an RXPicture for the PLST record and queue it for rendering
 	GLuint index = argv[0] - 1;
-	RXPicture* picture = [[RXPicture alloc] initWithTexture:_pictureTextures[index] vao:_pictureVAO index:4 * index owner:self];
+	RXPicture* picture = [[RXPicture alloc] initWithTexture:[card pictureTextures][index] vao:[card pictureVAO] index:4 * index owner:self];
 	[controller queuePicture:picture];
 	[picture release];
 	
@@ -1384,7 +1384,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	// the script handler is responsible for this
-	[controller activateSoundGroup:[_soundGroups objectAtIndex:argv[0] - 1]];
+	[controller activateSoundGroup:[[card soundGroups] objectAtIndex:argv[0] - 1]];
 	
 	// indicate that an SLST record has been activated (to manage the automatic activation of SLST record 1 if none has been)
 	_didActivateSLST = YES;
@@ -1418,7 +1418,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating blst record at index %hu", logPrefix, argv[0]);
 #endif
 	
-	struct rx_blst_record* record = (struct rx_blst_record*)_hotspotControlRecords + (argv[0] - 1);
+	struct rx_blst_record* record = [card hotspotControlRecords] + (argv[0] - 1);
 	uint32_t key = record->hotspot_id;
 	
 	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet([card hotspotsIDMap], (void *)key));

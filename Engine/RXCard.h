@@ -14,6 +14,7 @@
 #import "Base/RXTiming.h"
 
 #import "RXCardDescriptor.h"
+#import "RXCoreStructures.h"
 #import "RXHotspot.h"
 #import "RXCardProtocols.h"
 
@@ -31,7 +32,7 @@
 	NSMutableArray* _hotspots;
 	NSMapTable* _hotspotsIDMap;
 	void* _blstData;
-	void* _hotspotControlRecords;
+	struct rx_blst_record* _hotspotControlRecords;
 	
 	// pictures
 	GLuint _pictureCount;
@@ -60,9 +61,16 @@
 - (NSDictionary*)events;
 - (NSArray*)hotspots;
 - (NSMapTable*)hotspotsIDMap;
+- (struct rx_blst_record*)hotspotControlRecords;
+
+- (GLuint)pictureCount;
+- (GLuint)pictureVAO;
+- (GLuint*)pictureTextures;
 
 - (NSArray*)movies;
 - (uint16_t*)movieCodes;
+- (NSArray*)soundGroups;
+
 - (rx_card_sfxe*)sfxes;
 
 - (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes;
