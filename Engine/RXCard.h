@@ -16,7 +16,7 @@
 #import "RXCardDescriptor.h"
 #import "RXCardExecutionProtocol.h"
 #import "RXHotspot.h"
-#import "RXRivenScriptProtocol.h"
+#import "RXCardProtocols.h"
 
 #import "Rendering/RXRendering.h"
 #import "Rendering/Audio/RXSoundGroup.h"
@@ -26,7 +26,7 @@
 	RXCardDescriptor* _descriptor;
 	MHKArchive* _archive;
 	
-	id <RXRivenScriptProtocol> _scriptHandler;
+	id <RXCardRendererProtocol> _scriptHandler;
 	
 	NSDictionary* _cardEvents;
 	BOOL _disableScriptLogging;
@@ -60,25 +60,9 @@
 	// sounds
 	NSMutableArray* _soundGroups;
 	RXSoundGroup* _synthesizedSoundGroup;
-	
-	// rendering
-	BOOL _renderStateSwapsEnabled;
-	
-	BOOL _didActivatePLST;
-	BOOL _didActivateSLST;
-	
-	// program execution
-	uint32_t _programExecutionDepth;
-	uint16_t _lastExecutedProgramOpcode;
-	BOOL _queuedAPushTransition;
-	BOOL _did_hide_mouse;
-	
-	// external commands
-	NSMapTable* _externalCommandLookup;
 }
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;
-
 - (RXCardDescriptor*)descriptor;
 
 @end

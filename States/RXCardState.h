@@ -46,7 +46,7 @@ struct rx_transition_program {
 	GLint card_size_uniform;
 };
 
-@interface RXCardState : RXRenderState <RXRivenScriptProtocol> {
+@interface RXCardState : RXRenderState <RXCardRendererProtocol> {
 	// render state
 	void* _render_states_buffer;
 	struct rx_card_state_render_state* volatile _front_render_state;

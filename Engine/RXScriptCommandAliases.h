@@ -1,11 +1,10 @@
-/*
- *  RXRivenScriptCommandAliases.h
- *  rivenx
- *
- *  Created by Jean-Francois Roy on 07/12/2008.
- *  Copyright 2008 MacStorm. All rights reserved.
- *
- */
+//
+//	RXScriptCommandAliases.h
+//	rivenx
+//
+//	Created by Jean-Francois Roy on 07/12/2008.
+//	Copyright 2008 MacStorm. All rights reserved.
+//
 
 #define RX_COMMAND_GOTO_CARD 2
 #define RX_COMMAND_PLAY_LOCAL_SOUND 4

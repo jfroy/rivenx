@@ -1,11 +1,10 @@
-/*
- *	RXRivenScriptProtocol.h
- *	rivenx
- *
- *	Created by Jean-Francois Roy on 01/02/2006.
- *	Copyright 2006 MacStorm. All rights reserved.
- *
- */
+//
+//  RXCardProtocols.h
+//  rivenx
+//
+//  Created by Jean-Francois Roy on 01/02/2006.
+//  Copyright 2006 MacStorm. All rights reserved.
+//
 
 #import <Foundation/Foundation.h>
 
@@ -18,10 +17,23 @@
 
 @class RXCard;
 
-@protocol RXRivenScriptProtocol <NSObject>
+@protocol RXCardRendererProtocol <NSObject>
 - (void)activateSoundGroup:(RXSoundGroup*)soundGroup;
 - (void)playDataSound:(RXDataSound*)sound;
 
+- (void)queuePicture:(RXPicture*)picture;
+- (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner;
+- (void)queueTransition:(RXTransition*)transition;
+
+- (void)enableMovie:(RXMovie*)movie;
+- (void)disableMovie:(RXMovie*)movie;
+- (void)disableAllMovies;
+
+- (void)update;
+@end
+
+
+@protocol RXCardEventsHandlerProtocol <NSObject>
 - (NSRect)mouseVector;
 - (void)resetMouseVector;
 
@@ -32,16 +44,4 @@
 - (void)enableHotspotHandling;
 - (void)disableHotspotHandling;
 - (void)updateHotspotState;
-
-- (void)queuePicture:(RXPicture*)picture;
-- (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner;
-- (void)queueTransition:(RXTransition*)transition;
-
-- (void)enableMovie:(RXMovie*)movie;
-- (void)disableMovie:(RXMovie*)movie;
-- (void)disableAllMovies;
-
-- (void)swapRenderState:(RXCard*)sender;
-
-- (void)setActiveCardWithStack:(NSString *)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;
 @end

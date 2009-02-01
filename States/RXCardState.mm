@@ -1031,7 +1031,7 @@ init_failure:
 #endif
 }
 
-- (void)swapRenderState:(RXCard*)sender {	
+- (void)update {
 	// if we'll queue a transition, hide the cursor
 	if ([_transitionQueue count] > 0)
 		[self hideMouseCursor];
@@ -1222,7 +1222,7 @@ init_failure:
 	[self hideMouseCursor];
 	
 	// fake a swap render state
-	[self swapRenderState:_front_render_state->card];
+	[self update];
 	
 	// notify that the front card has changed
 	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:nil waitUntilDone:NO];

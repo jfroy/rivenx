@@ -197,6 +197,8 @@
 		31F1BEA60D3B03D000CFE301 /* about.png in Resources */ = {isa = PBXBuildFile; fileRef = 31F1BEA50D3B03D000CFE301 /* about.png */; };
 		31F1BED60D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 31F1BED50D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf */; };
 		31F3095708BE5FA200417394 /* RXWorld.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31F3095608BE5FA200417394 /* RXWorld.mm */; };
+		31F4EFEA0F35312700A68652 /* RXScriptEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = 31F4EFE90F35312700A68652 /* RXScriptEngine.m */; };
+		31F4F0020F3533EF00A68652 /* RXScriptDecoding.m in Sources */ = {isa = PBXBuildFile; fileRef = 31F4F0010F3533EF00A68652 /* RXScriptDecoding.m */; };
 		31FA569F0C5AD15D005DE22F /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
 		31FF295E0D4198EE00E3B5FF /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3158857A0C8729D800204DDD /* MHKKit.framework */; };
 		31FF295F0D4198F400E3B5FF /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
@@ -366,7 +368,7 @@
 		312F4DAF0DC263F400B3AF0D /* RXVBOBroker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVBOBroker.m; sourceTree = "<group>"; };
 		312F4DB20DC263F400B3AF0D /* RXWorldView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWorldView.h; sourceTree = "<group>"; };
 		312F4DB30DC263F400B3AF0D /* RXWorldView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXWorldView.m; sourceTree = "<group>"; };
-		31327B640DCF509E00280D8F /* RXCardExecutionProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardExecutionProtocol.h; sourceTree = "<group>"; };
+		31327B640DCF509E00280D8F /* RXScriptEngineProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptEngineProtocol.h; sourceTree = "<group>"; };
 		31333F5009B019E300DB6FC7 /* rxaudio_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = rxaudio_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = rxaudio_test.mm; sourceTree = "<group>"; };
 		3133D9A80D5CDC45004DAD5E /* PHSErrorMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PHSErrorMacros.h; path = Base/PHSErrorMacros.h; sourceTree = "<group>"; };
@@ -454,14 +456,14 @@
 		3185C4710E06046D00528220 /* RXVersionComparator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVersionComparator.h; sourceTree = "<group>"; };
 		3185C4720E06046D00528220 /* RXVersionComparator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVersionComparator.m; sourceTree = "<group>"; };
 		31863BAE09919B04001A4A42 /* FScript.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = FScript.framework; sourceTree = "<group>"; };
-		31863C0509919F87001A4A42 /* RXRivenScriptProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRivenScriptProtocol.h; sourceTree = "<group>"; };
+		31863C0509919F87001A4A42 /* RXCardProtocols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardProtocols.h; sourceTree = "<group>"; };
 		31863C580991AA28001A4A42 /* InterThreadMessaging.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = InterThreadMessaging.h; path = Additions/InterThreadMessaging.h; sourceTree = "<group>"; };
 		31863C590991AA28001A4A42 /* InterThreadMessaging.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = InterThreadMessaging.m; path = Additions/InterThreadMessaging.m; sourceTree = "<group>"; };
 		318CB4620E04917A00BD2C38 /* RXGameState_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXGameState_test.h; sourceTree = "<group>"; };
 		318CB4630E04917A00BD2C38 /* RXGameState_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXGameState_test.m; sourceTree = "<group>"; };
 		318F91A00F050B3C006F6D41 /* MHKBase.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKBase.pch; path = mhk/MHKBase.pch; sourceTree = "<group>"; };
 		319288DB0EF43C630043B15A /* RXCoreStructures.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCoreStructures.h; sourceTree = "<group>"; };
-		3195A6330EEC57860000CFB6 /* RXRivenScriptCommandAliases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRivenScriptCommandAliases.h; sourceTree = "<group>"; };
+		3195A6330EEC57860000CFB6 /* RXScriptCommandAliases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptCommandAliases.h; sourceTree = "<group>"; };
 		3196B9340D945CC100BC818E /* RXTiming.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXTiming.h; path = Base/RXTiming.h; sourceTree = "<group>"; };
 		3196B9350D945CC100BC818E /* RXTiming.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = RXTiming.c; path = Base/RXTiming.c; sourceTree = "<group>"; };
 		319926E00D96A81000ED1B47 /* RXSystemProfiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXSystemProfiler.h; path = Base/RXSystemProfiler.h; sourceTree = "<group>"; };
@@ -531,6 +533,10 @@
 		31F3093508BE43C100417394 /* Riven X-Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; path = "Riven X-Info.plist"; sourceTree = "<group>"; };
 		31F3095508BE5FA200417394 /* RXWorld.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWorld.h; sourceTree = "<group>"; };
 		31F3095608BE5FA200417394 /* RXWorld.mm */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXWorld.mm; sourceTree = "<group>"; tabWidth = 4; usesTabs = 1; };
+		31F4EFE80F35312700A68652 /* RXScriptEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptEngine.h; sourceTree = "<group>"; };
+		31F4EFE90F35312700A68652 /* RXScriptEngine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptEngine.m; sourceTree = "<group>"; };
+		31F4F0000F3533EF00A68652 /* RXScriptDecoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptDecoding.h; sourceTree = "<group>"; };
+		31F4F0010F3533EF00A68652 /* RXScriptDecoding.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptDecoding.m; sourceTree = "<group>"; };
 		31FA569D0C5AD15D005DE22F /* RXErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXErrors.h; path = Base/RXErrors.h; sourceTree = "<group>"; };
 		31FA569E0C5AD15D005DE22F /* RXErrors.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXErrors.m; path = Base/RXErrors.m; sourceTree = "<group>"; };
 		31FF29670D41996E00E3B5FF /* dump_save.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = dump_save.m; sourceTree = "<group>"; };
@@ -772,24 +778,6 @@
 			name = "Foundation Additions";
 			sourceTree = "<group>";
 		};
-		312B048A0D9A8AB30012BE29 /* Card */ = {
-			isa = PBXGroup;
-			children = (
-				31225AC208C421790055628F /* RXCard.h */,
-				31225AC308C421790055628F /* RXCard.mm */,
-				31588871098D7A120090A6B6 /* RXCardDescriptor.h */,
-				31588872098D7A120090A6B6 /* RXCardDescriptor.m */,
-				31327B640DCF509E00280D8F /* RXCardExecutionProtocol.h */,
-				312EDC700A2E3B80005D26AF /* RXHotspot.h */,
-				312EDC710A2E3B80005D26AF /* RXHotspot.m */,
-				312B048D0D9A8AE20012BE29 /* RXMovieProxy.h */,
-				312B048E0D9A8AE20012BE29 /* RXMovieProxy.mm */,
-				3195A6330EEC57860000CFB6 /* RXRivenScriptCommandAliases.h */,
-				31863C0509919F87001A4A42 /* RXRivenScriptProtocol.h */,
-			);
-			name = Card;
-			sourceTree = "<group>";
-		};
 		312F4D930DC263F400B3AF0D /* Graphics */ = {
 			isa = PBXGroup;
 			children = (
@@ -911,23 +899,6 @@
 				3185C4720E06046D00528220 /* RXVersionComparator.m */,
 			);
 			path = Application;
-			sourceTree = "<group>";
-		};
-		31796FBC0D5D032500C493D2 /* Edition */ = {
-			isa = PBXGroup;
-			children = (
-				312A895E0D57B25600FCDF91 /* RXEdition.h */,
-				312A895F0D57B25600FCDF91 /* RXEdition.m */,
-				31C545510D5D50620024B486 /* RXEditionInstaller.h */,
-				31C545520D5D50620024B486 /* RXEditionInstaller.m */,
-				312A89600D57B25600FCDF91 /* RXEditionManager.h */,
-				312A89610D57B25600FCDF91 /* RXEditionManager.m */,
-				312A89620D57B25600FCDF91 /* RXEditionManagerWindowController.h */,
-				312A89630D57B25600FCDF91 /* RXEditionManagerWindowController.m */,
-				311400620D58F5CA0099AF69 /* RXEditionProxy.h */,
-				311400630D58F5CA0099AF69 /* RXEditionProxy.m */,
-			);
-			name = Edition;
 			sourceTree = "<group>";
 		};
 		317ACC740F285B540040FFFD /* MHKMoviePlayer */ = {
@@ -1099,13 +1070,36 @@
 		31F3094108BE440E00417394 /* Engine */ = {
 			isa = PBXGroup;
 			children = (
-				312B048A0D9A8AB30012BE29 /* Card */,
-				31796FBC0D5D032500C493D2 /* Edition */,
+				31225AC208C421790055628F /* RXCard.h */,
+				31225AC308C421790055628F /* RXCard.mm */,
+				31588871098D7A120090A6B6 /* RXCardDescriptor.h */,
+				31588872098D7A120090A6B6 /* RXCardDescriptor.m */,
+				31863C0509919F87001A4A42 /* RXCardProtocols.h */,
 				319288DB0EF43C630043B15A /* RXCoreStructures.h */,
+				312A895E0D57B25600FCDF91 /* RXEdition.h */,
+				312A895F0D57B25600FCDF91 /* RXEdition.m */,
+				31C545510D5D50620024B486 /* RXEditionInstaller.h */,
+				31C545520D5D50620024B486 /* RXEditionInstaller.m */,
+				312A89600D57B25600FCDF91 /* RXEditionManager.h */,
+				312A89610D57B25600FCDF91 /* RXEditionManager.m */,
+				312A89620D57B25600FCDF91 /* RXEditionManagerWindowController.h */,
+				312A89630D57B25600FCDF91 /* RXEditionManagerWindowController.m */,
+				311400620D58F5CA0099AF69 /* RXEditionProxy.h */,
+				311400630D58F5CA0099AF69 /* RXEditionProxy.m */,
 				317403920CDC1A67006F3523 /* RXGameState.h */,
 				317403930CDC1A67006F3523 /* RXGameState.m */,
 				3103D4F20EF0DAF30025170A /* RXHardwareProfiler.h */,
 				3103D4F30EF0DAF30025170A /* RXHardwareProfiler.m */,
+				312EDC700A2E3B80005D26AF /* RXHotspot.h */,
+				312EDC710A2E3B80005D26AF /* RXHotspot.m */,
+				312B048D0D9A8AE20012BE29 /* RXMovieProxy.h */,
+				312B048E0D9A8AE20012BE29 /* RXMovieProxy.mm */,
+				3195A6330EEC57860000CFB6 /* RXScriptCommandAliases.h */,
+				31F4F0000F3533EF00A68652 /* RXScriptDecoding.h */,
+				31F4F0010F3533EF00A68652 /* RXScriptDecoding.m */,
+				31F4EFE80F35312700A68652 /* RXScriptEngine.h */,
+				31F4EFE90F35312700A68652 /* RXScriptEngine.m */,
+				31327B640DCF509E00280D8F /* RXScriptEngineProtocol.h */,
 				31225ABC08C4216D0055628F /* RXStack.h */,
 				31225ABD08C4216D0055628F /* RXStack.m */,
 				31F3095508BE5FA200417394 /* RXWorld.h */,
@@ -1665,6 +1659,8 @@
 				31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */,
 				312877240F2985DE00A114FF /* RXCardCollectionView.m in Sources */,
 				31DBC9660F2AE1DB004B9277 /* RXCardInspectorController.m in Sources */,
+				31F4EFEA0F35312700A68652 /* RXScriptEngine.m in Sources */,
+				31F4F0020F3533EF00A68652 /* RXScriptDecoding.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
