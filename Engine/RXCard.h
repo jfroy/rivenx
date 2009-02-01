@@ -58,6 +58,7 @@
 
 - (RXCardDescriptor*)descriptor;
 - (NSDictionary*)events;
+- (NSArray*)hotspots;
 
 - (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes;
 

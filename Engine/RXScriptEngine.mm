@@ -392,7 +392,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
-	[_activeHotspots addObjectsFromArray:_hotspots];
+	[_activeHotspots addObjectsFromArray:[card hotspots]];
 	[_activeHotspots makeObjectsPerformSelector:@selector(enable)];
 	[_activeHotspots sortUsingSelector:@selector(compareByID:)];
 	OSSpinLockUnlock(&_activeHotspotsLock);
@@ -408,7 +408,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[controller queueSpecialEffect:NULL owner:self];
 	
 	// execute loading programs (index 6)
-	NSArray* programs = [_cardEvents objectForKey:RXCardPrepareScriptKey];
+	NSArray* programs = [[card events] objectForKey:RXCardPrepareScriptKey];
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for(; programIndex < programCount; programIndex++) {
@@ -456,7 +456,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// execute rendering programs (index 9)
-	NSArray* programs = [_cardEvents objectForKey:RXStartRenderingScriptKey];
+	NSArray* programs = [[card events] objectForKey:RXStartRenderingScriptKey];
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -502,7 +502,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// execute leaving programs (index 7)
-	NSArray* programs = [_cardEvents objectForKey:RXCardStopRenderingScriptKey];
+	NSArray* programs = [[card events] objectForKey:RXCardStopRenderingScriptKey];
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {

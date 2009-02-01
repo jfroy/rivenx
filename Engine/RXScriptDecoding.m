@@ -22,17 +22,17 @@ NSString* const RXStartRenderingScriptKey = @"start rendering";
 NSString* const RXScreenUpdateScriptKey = @"screen update";
 
 static NSString* const script_keys_array[11] = {
-	RXMouseDownScriptKey,
-	RXUnknown1ScriptKey,
-	RXMouseUpScriptKey,
-	RXUnknown3ScriptKey,
-	RXMouseInsideScriptKey,
-	RXMouseExitedScriptKey,
-	RXCardPrepareScriptKey,
-	RXCardStopRenderingScriptKey,
-	RXUnknown8ScriptKey,
-	RXStartRenderingScriptKey,
-	RXScreenUpdateScriptKey
+	@"mouse down",
+	@"unknown 1",
+	@"mouse up",
+	@"unknown 3",
+	@"mouse inside",
+	@"mouse exited",
+	@"prepare card",
+	@"stop rendering",
+	@"unknown 8",
+	@"start rendering",
+	@"screen update"
 };
 
 size_t rx_compute_riven_script_length(const void* script, uint16_t command_count, bool byte_swap) {

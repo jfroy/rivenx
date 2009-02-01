@@ -759,8 +759,6 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 	
 	// end of list records loading
 	
-#pragma mark rendering
-	
 	// map from tBMP resource to texture ID for dynamic pictures
 	_dynamicPictureMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSOwnedPointerMapValueCallBacks, 0);
 	
@@ -788,6 +786,10 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 
 - (NSDictionary*)events {
 	return _cardEvents;
+}
+
+- (NSArray*)hotspots {
+	return _hotspots;
 }
 
 - (void)dealloc {
