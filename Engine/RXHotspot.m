@@ -94,7 +94,7 @@
 }
 
 - (NSString*)description {
-	return [NSString stringWithFormat: @"%@ {ID=%hu, frame=%@}", [super description], _ID, NSStringFromRect(_cardFrame)];
+	return [NSString stringWithFormat: @"{ID=%hu, frame=%@}", _ID, NSStringFromRect(_cardFrame)];
 }
 
 - (void)enable {

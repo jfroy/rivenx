@@ -1324,7 +1324,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
 	
 	// remove the movie from the code-movie map
-	NSMapRemove(code2movieMap, (const void*)k);
+//	NSMapRemove(code2movieMap, (const void*)k);
 }
 
 // 32

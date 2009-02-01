@@ -2128,6 +2128,8 @@ exit_flush_tasks:
 }
 
 - (void)_handleWindowDidBecomeKey:(NSNotification*)notification {
+	// FIXME: there may be a time-sensitive crash lurking around here
+
 	NSWindow* window = [notification object];
 	if (window == [g_worldView window]) {
 		// update the mouse vector
