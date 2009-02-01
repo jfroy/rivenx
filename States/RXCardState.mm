@@ -1945,9 +1945,6 @@ exit_flush_tasks:
 	// get the mouse vector using the getter since it will take the spin lock and return a copy
 	NSRect mouse_vector = [self mouseVector];
 	
-	// cache the front card
-	RXCard* front_card = _front_render_state->card;
-	
 	// get the front card's active hotspots
 	NSArray* active_hotspots = [sengine activeHotspots];
 
