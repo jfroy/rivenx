@@ -452,7 +452,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[_activeHotspots removeAllObjects];
 	[_activeHotspots addObjectsFromArray:[card hotspots]];
 	[_activeHotspots makeObjectsPerformSelector:@selector(enable)];
-	[_activeHotspots sortUsingSelector:@selector(compareByID:)];
+	[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
 	OSSpinLockUnlock(&_activeHotspotsLock);
 	
 	// reset auto-activation states
@@ -1078,7 +1078,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		
 		OSSpinLockLock(&_activeHotspotsLock);
 		[_activeHotspots addObject:hotspot];
-		[_activeHotspots sortUsingSelector:@selector(compareByID:)];
+		[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
 		OSSpinLockUnlock(&_activeHotspotsLock);
 		
 		// instruct the script handler to update the hotspot state
@@ -1104,7 +1104,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		
 		OSSpinLockLock(&_activeHotspotsLock);
 		[_activeHotspots removeObject:hotspot];
-		[_activeHotspots sortUsingSelector:@selector(compareByID:)];
+		[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
 		OSSpinLockUnlock(&_activeHotspotsLock);
 		
 		// instruct the script handler to update the hotspot state
@@ -1448,7 +1448,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	hotspot->enabled = record->enabled;
 	
 	OSSpinLockLock(&_activeHotspotsLock);
-	[_activeHotspots sortUsingSelector:@selector(compareByID:)];
+	[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
 	OSSpinLockUnlock(&_activeHotspotsLock);
 	
 	// instruct the script handler to update the hotspot state
