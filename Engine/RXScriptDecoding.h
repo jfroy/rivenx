@@ -7,6 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <sys/cdefs.h>
+
+__BEGIN_DECLS
 
 enum {
 	kScriptTypeMouseDown = 0,
@@ -36,3 +39,5 @@ extern NSString* const RXScreenUpdateScriptKey;
 
 size_t rx_compute_riven_script_length(const void* script, uint16_t command_count, bool byte_swap);
 NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length);
+
+__END_DECLS
