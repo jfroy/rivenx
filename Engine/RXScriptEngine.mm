@@ -247,6 +247,13 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 - (void)setCard:(RXCard*)c {
+	if (c == card)
+		return;
+	
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"setting card to %@", c);
+#endif
+	
 	id old = card;
 	card = [c retain];
 	[old release];
@@ -437,7 +444,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[20].imp(self, _riven_command_dispatch_table[20].sel, 0, NULL);
 	 
 	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
-//	[(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
+	[(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
 //	NSResetMapTable(code2movieMap);
 	
 	OSSpinLockLock(&_activeHotspotsLock);
