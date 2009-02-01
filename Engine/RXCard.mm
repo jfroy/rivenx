@@ -33,10 +33,6 @@ struct rx_card_picture_record {
 	float height;
 };
 
-struct rx_card_dynamic_picture {
-	GLuint texture;
-};
-
 CF_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) {
 	return NSMakePoint((float)x, (float)y);
 }
@@ -181,7 +177,7 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 		[group addSoundWithStack:parent ID:soundID gain:sourceGain pan:sourcePan];
 	}
 	
-#if defined(DEBUG)
+#if defined(DEBUG) && DEBUG > 1
 	RXOLog(@"created sound group: %@", group);
 #endif
 	return group;
@@ -206,24 +202,7 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 #if defined(DEBUG)
 	RXOLog(@"initializing card");
 #endif
-	kern_return_t kerr;
 	NSError* error;
-	
-	// movie playback semaphore
-	kerr = semaphore_create(mach_task_self(), &_moviePlaybackSemaphore, SYNC_POLICY_FIFO, 0);
-	if (kerr != 0) {
-		[self release];
-		error = [NSError errorWithDomain:NSMachErrorDomain code:kerr userInfo:nil];
-		@throw [NSException exceptionWithName:@"RXSystemResourceException" reason:@"Could not create the movie playback semaphore." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-	}
-	
-	// movie load semaphore
-//	kerr = semaphore_create(mach_task_self(), &_movieLoadSemaphore, SYNC_POLICY_FIFO, 0);
-//	if (kerr != 0) {
-//		[self release];
-//		error = [NSError errorWithDomain:NSMachErrorDomain code:kerr userInfo:nil];
-//		@throw [NSException exceptionWithName:@"RXSystemResourceException" reason:@"Could not create the movie load semaphore." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-//	}
 	
 	NSData* cardData = [cardDescriptor valueForKey:@"data"];
 	_archive = [cardDescriptor valueForKey:@"archive"];
@@ -759,12 +738,6 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 	
 	// end of list records loading
 	
-	// map from tBMP resource to texture ID for dynamic pictures
-	_dynamicPictureMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSOwnedPointerMapValueCallBacks, 0);
-	
-	// wait for movies
-//	semaphore_wait(_movieLoadSemaphore);
-	
 	// we're done preparing the card
 #if defined(DEBUG)
 	RXOLog(@"initialized card");
@@ -813,14 +786,6 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 			for (uint16_t i = 0; i < _sfxeCount; i++)
 				glDeleteTextures(_sfxes[i].nframes, _sfxes[i].frames);
 		}
-		
-		if (_dynamicPictureMap) {
-			NSMapEnumerator dynamicPictureEnum = NSEnumerateMapTable(_dynamicPictureMap);
-			uintptr_t key;
-			struct rx_card_dynamic_picture* value;
-			while (NSNextMapEnumeratorPair(&dynamicPictureEnum, (void**)&key, (void**)&value))
-				glDeleteTextures(1, &value->texture);
-		}
 
 		// objects have gone away, so we flush
 		glFlush();
@@ -831,16 +796,12 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 	[_movies release];
 	if (_mlstCodes)
 		delete[] _mlstCodes;
-	semaphore_destroy(mach_task_self(), _moviePlaybackSemaphore);
-//	semaphore_destroy(mach_task_self(), _movieLoadSemaphore);
 	
 	// pictures
 	if (_pictureTextures)
 		delete[] _pictureTextures;
 	if (_pictureTextureStorage)
 		free(_pictureTextureStorage);
-	if (_dynamicPictureMap)
-		NSFreeMapTable(_dynamicPictureMap);
 	
 	// sounds
 	[_soundGroups release];

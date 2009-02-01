@@ -6,6 +6,8 @@
 //  Copyright 2009 MacStorm. All rights reserved.
 //
 
+#import <mach/semaphore.h>
+
 #import <Foundation/Foundation.h>
 
 #import "RXCard.h"
@@ -17,29 +19,28 @@
 @interface RXScriptEngine : NSObject <RXScriptEngineProtocol> {
 	__weak id<RXScriptEngineControllerProtocol> controller;
 	RXCard* card;
-
-	NSMutableString* logPrefix;
-	BOOL _disableScriptLogging;
-	
-	NSMapTable* code2movieMap;
-	
-	// hotpots
-	NSMutableArray* _activeHotspots;
-	OSSpinLock _activeHotspotsLock;
-	
-	// rendering
-	BOOL _renderStateSwapsEnabled;
-	
-	BOOL _didActivatePLST;
-	BOOL _didActivateSLST;
 	
 	// program execution
 	uint32_t _programExecutionDepth;
 	uint16_t _lastExecutedProgramOpcode;
 	BOOL _queuedAPushTransition;
+
+	NSMutableString* logPrefix;
+	BOOL _disableScriptLogging;
+	
+	NSMutableArray* _activeHotspots;
+	OSSpinLock _activeHotspotsLock;
 	BOOL _did_hide_mouse;
 	
+	// rendering support
+	NSMapTable* _dynamicPictureMap;
+	NSMapTable* code2movieMap;
+	semaphore_t _moviePlaybackSemaphore;
 	RXSoundGroup* _synthesizedSoundGroup;
+	
+	BOOL _renderStateSwapsEnabled;
+	BOOL _didActivatePLST;
+	BOOL _didActivateSLST;
 }
 
 - (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr;

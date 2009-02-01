@@ -24,8 +24,18 @@
 #import "RXScriptCommandAliases.h"
 #import "RXWorldProtocol.h"
 
+#import "Rendering/Graphics/RXTransition.h"
+#import "Rendering/Graphics/RXPicture.h"
+#import "Rendering/Graphics/RXDynamicPicture.h"
+#import "Rendering/Graphics/RXMovieProxy.h"
+
 
 static const NSTimeInterval k_mouse_tracking_loop_period = 0.05;
+
+
+struct rx_card_dynamic_picture {
+	GLuint texture;
+};
 
 
 typedef void (*rx_command_imp_t)(id, SEL, const uint16_t, const uint16_t*);
@@ -177,6 +187,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 - (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr {
+	NSError* error;
+	kern_return_t kerr;
+	
 	self = [super init];
 	if (!self)
 		return nil;
@@ -184,17 +197,46 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	controller = ctlr;
 	
 	logPrefix = [NSMutableString new];
-	code2movieMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
-	_renderStateSwapsEnabled = YES;
+	
 	_activeHotspotsLock = OS_SPINLOCK_INIT;
 	_activeHotspots = [NSMutableArray new];
+	
+	code2movieMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
+	_dynamicPictureMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSOwnedPointerMapValueCallBacks, 0);
+	
+	kerr = semaphore_create(mach_task_self(), &_moviePlaybackSemaphore, SYNC_POLICY_FIFO, 0);
+	if (kerr != 0) {
+		[self release];
+		error = [NSError errorWithDomain:NSMachErrorDomain code:kerr userInfo:nil];
+		@throw [NSException exceptionWithName:@"RXSystemResourceException" reason:@"Could not create the movie playback semaphore." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	}
+	
+	_renderStateSwapsEnabled = YES;
 	
 	return self;
 }
 
 - (void)dealloc {
 	[_synthesizedSoundGroup release];
-
+	
+	// lock the GL context and clean up textures and GL buffers
+	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+	CGLLockContext(cgl_ctx);
+	
+	if (_dynamicPictureMap) {
+		NSMapEnumerator dynamicPictureEnum = NSEnumerateMapTable(_dynamicPictureMap);
+		uintptr_t key;
+		struct rx_card_dynamic_picture* value;
+		while (NSNextMapEnumeratorPair(&dynamicPictureEnum, (void**)&key, (void**)&value))
+			glDeleteTextures(1, &value->texture);
+		
+		NSFreeMapTable(_dynamicPictureMap);
+	}
+	
+	glFlush();
+	CGLUnlockContext(cgl_ctx);
+	
+	semaphore_destroy(mach_task_self(), _moviePlaybackSemaphore);
 	[_activeHotspots release];
 	NSFreeMapTable(code2movieMap);
 	[logPrefix release];

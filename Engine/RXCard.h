@@ -24,6 +24,7 @@
 	RXCardDescriptor* _descriptor;
 	MHKArchive* _archive;
 	
+	// scripts
 	NSDictionary* _cardEvents;
 	
 	// hotspots
@@ -38,20 +39,17 @@
 	GLuint _pictureVAO;
 	GLuint* _pictureTextures;
 	void* _pictureTextureStorage;
-	NSMapTable* _dynamicPictureMap;
-	
-	// special effects
-	uint16_t _sfxeCount;
-	rx_card_sfxe* _sfxes;
 	
 	// movies
 	NSMutableArray* _movies;
 	uint16_t* _mlstCodes;
-	semaphore_t _movieLoadSemaphore;
-	semaphore_t _moviePlaybackSemaphore;
 	
-	// sounds
+	// sound groups
 	NSMutableArray* _soundGroups;
+	
+	// special effects
+	uint16_t _sfxeCount;
+	rx_card_sfxe* _sfxes;
 }
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;
