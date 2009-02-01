@@ -1983,13 +1983,13 @@ exit_flush_tasks:
 		_mouse_down_hotspot = nil;
 	
 		[self disableHotspotHandling];
-		[_front_render_state->card performSelector:@selector(mouseUpInHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+		[sengine performSelector:@selector(mouseUpInHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
 	}
 	
 	// if the old current hotspot is valid, doesn't match the new current hotspot and is still active, we need to send the old current hotspot a mouse exited message
 	if (_currentHotspot >= (RXHotspot*)0x1000 && _currentHotspot != hotspot && [active_hotspots indexOfObjectIdenticalTo:_currentHotspot] != NSNotFound) {
 		// note that we DO NOT disable hotspot handling for "exited hotspot" messages
-		[front_card performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+		[sengine performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 	}
 	
 	// handle cursor changes here so we don't ping-pong across 2 threads (at least for a hotspot's cursor, the inventory item cursor and the default cursor)
@@ -2002,7 +2002,7 @@ exit_flush_tasks:
 		
 		// valid hotspots receive periodic "inside hotspot" messages when the mouse is not dragging; note that we do NOT disable hotspot handling for "inside hotspot" messages
 		if (isinf(mouse_vector.size.width))
-			[front_card performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+			[sengine performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
 	}
 	
 	// update the current hotspot to the new current hotspot
@@ -2103,7 +2103,7 @@ exit_flush_tasks:
 		_mouse_down_hotspot = [_currentHotspot retain];
 		
 		[self disableHotspotHandling];
-		[_front_render_state->card performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+		[sengine performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 	} else if (_currentHotspot)
 		[self _handleInventoryMouseDown:event inventoryIndex:(uint32_t)_currentHotspot - 1];
 	
