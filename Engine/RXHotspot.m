@@ -74,6 +74,13 @@
 		return NSOrderedDescending;
 }
 
+- (NSComparisonResult)compareByID:(RXHotspot*)other {
+	if (other->_ID < _ID)
+		return NSOrderedAscending;
+	else
+		return NSOrderedDescending;
+}
+
 - (NSRect)worldViewFrame {
 	return _globalFrame;
 }

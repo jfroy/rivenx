@@ -76,7 +76,8 @@ static size_t rx_compute_riven_script_length(const void* script, uint16_t comman
 		scriptOffset += 2;
 		
 		uint16_t argumentCount = *(const uint16_t*)BUFFER_OFFSET(script, scriptOffset);
-		if (byte_swap) argumentCount = CFSwapInt16BigToHost(argumentCount);
+		if (byte_swap)
+			argumentCount = CFSwapInt16BigToHost(argumentCount);
 		size_t argumentsOffset = 2 * (argumentCount + 1);
 		scriptOffset += argumentsOffset;
 		
@@ -84,7 +85,8 @@ static size_t rx_compute_riven_script_length(const void* script, uint16_t comman
 		if (commandNumber == 8) {
 			// arg 0 is the variable, arg 1 is the number of cases
 			uint16_t caseCount = *(const uint16_t*)BUFFER_OFFSET(script, scriptOffset - argumentsOffset + 4);
-			if (byte_swap) caseCount = CFSwapInt16BigToHost(caseCount);
+			if (byte_swap)
+				caseCount = CFSwapInt16BigToHost(caseCount);
 			
 			uint16_t currentCaseIndex = 0;
 			for (; currentCaseIndex < caseCount; currentCaseIndex++) {
@@ -92,7 +94,8 @@ static size_t rx_compute_riven_script_length(const void* script, uint16_t comman
 				scriptOffset += 2;
 				
 				uint16_t caseCommandCount = *(const uint16_t*)BUFFER_OFFSET(script, scriptOffset);
-				if (byte_swap) caseCommandCount = CFSwapInt16BigToHost(caseCommandCount);
+				if (byte_swap)
+					caseCommandCount = CFSwapInt16BigToHost(caseCommandCount);
 				scriptOffset += 2;
 				
 				size_t caseCommandListLength = rx_compute_riven_script_length(BUFFER_OFFSET(script, scriptOffset), caseCommandCount, byte_swap);
@@ -115,7 +118,8 @@ static NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script
 	uint32_t eventTypeCount = sizeof(k_eventSelectors) / sizeof(NSString *);
 	uint16_t currentEventIndex = 0;
 	NSMutableArray** eventProgramsPerType = (NSMutableArray**)malloc(sizeof(NSMutableArray*) * eventTypeCount);
-	for (; currentEventIndex < eventTypeCount; currentEventIndex++) eventProgramsPerType[currentEventIndex] = [[NSMutableArray alloc] initWithCapacity:eventCount];
+	for (; currentEventIndex < eventTypeCount; currentEventIndex++)
+		eventProgramsPerType[currentEventIndex] = [[NSMutableArray alloc] initWithCapacity:eventCount];
 	
 	// process the programs
 	for (currentEventIndex = 0; currentEventIndex < eventCount; currentEventIndex++) {
@@ -158,13 +162,15 @@ static NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script
 	NSDictionary* scriptDictionary = [[NSDictionary alloc] initWithObjects:eventProgramsPerType forKeys:k_eventSelectors count:eventTypeCount];
 	
 	// release the program arrays now that they're in the dictionary
-	for (currentEventIndex = 0; currentEventIndex < eventTypeCount; currentEventIndex++) [eventProgramsPerType[currentEventIndex] release];
+	for (currentEventIndex = 0; currentEventIndex < eventTypeCount; currentEventIndex++)
+		[eventProgramsPerType[currentEventIndex] release];
 	
 	// release the program array array.
 	free(eventProgramsPerType);
 	
 	// return total script length and script dictionary
-	if (script_length) *script_length = scriptOffset;
+	if (script_length)
+		*script_length = scriptOffset;
 	return scriptDictionary;
 }
 
@@ -271,7 +277,7 @@ static NSMutableString* _scriptLogPrefix;
 	_riven_command_dispatch_table[25].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[26].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[27].sel = @selector(_opcode_goToStack:arguments:);
-	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMLST:arguments:);
+	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMovie:arguments:);
 	_riven_command_dispatch_table[29].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[30].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[31].sel = @selector(_opcode_noop:arguments:);
@@ -1258,14 +1264,14 @@ static NSMutableString* _scriptLogPrefix;
 	_riven_command_dispatch_table[20].imp(self, _riven_command_dispatch_table[20].sel, 0, NULL);
 	 
 	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
-	[(NSObject*)_scriptHandler performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
-	NSResetMapTable(rx_code_to_movie_map);
+//	[(NSObject*)_scriptHandler performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
+//	NSResetMapTable(rx_code_to_movie_map);
 	
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
 	[_activeHotspots addObjectsFromArray:_hotspots];
 	[_activeHotspots makeObjectsPerformSelector:@selector(enable)];
-	[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
+	[_activeHotspots sortUsingSelector:@selector(compareByID:)];
 	OSSpinLockUnlock(&_activeHotspotsLock);
 	
 	// reset auto-activation states
@@ -1972,7 +1978,7 @@ static NSMutableString* _scriptLogPrefix;
 		
 		OSSpinLockLock(&_activeHotspotsLock);
 		[_activeHotspots addObject:hotspot];
-		[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
+		[_activeHotspots sortUsingSelector:@selector(compareByID:)];
 		OSSpinLockUnlock(&_activeHotspotsLock);
 		
 		// instruct the script handler to update the hotspot state
@@ -1998,7 +2004,7 @@ static NSMutableString* _scriptLogPrefix;
 		
 		OSSpinLockLock(&_activeHotspotsLock);
 		[_activeHotspots removeObject:hotspot];
-		[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
+		[_activeHotspots sortUsingSelector:@selector(compareByID:)];
 		OSSpinLockUnlock(&_activeHotspotsLock);
 		
 		// instruct the script handler to update the hotspot state
@@ -2200,9 +2206,10 @@ static NSMutableString* _scriptLogPrefix;
 }
 
 // 28
-- (void)_opcode_disableMLST:(const uint16_t)argc arguments:(const uint16_t*) argv {
+- (void)_opcode_disableMovie:(const uint16_t)argc arguments:(const uint16_t*) argv {
 	if (argc < 1)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling movie with code %hu", _scriptLogPrefix, argv[0]);
@@ -2216,7 +2223,7 @@ static NSMutableString* _scriptLogPrefix;
 	// stop the movie on the main thread and block until done
 	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
 	
-	// remove the movie from the code mapping
+	// remove the movie from the code-movie map
 	NSMapRemove(rx_code_to_movie_map, (const void*)k);
 }
 
@@ -2341,7 +2348,7 @@ static NSMutableString* _scriptLogPrefix;
 	hotspot->enabled = record->enabled;
 	
 	OSSpinLockLock(&_activeHotspotsLock);
-	[_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
+	[_activeHotspots sortUsingSelector:@selector(compareByID:)];
 	OSSpinLockUnlock(&_activeHotspotsLock);
 	
 	// instruct the script handler to update the hotspot state
@@ -3057,9 +3064,10 @@ DEFINE_COMMAND(xbchipper) {
 
 	uint16_t valve_state = [[g_world gameState] unsignedShortForKey:@"bvalve"];
 	if (valve_state != 2)
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
-	else if (valve_state == 2)
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+		return;
+	
+	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+	// FIXME: need to disable that movie code
 }
 
 DEFINE_COMMAND(xbupdateboiler) {
