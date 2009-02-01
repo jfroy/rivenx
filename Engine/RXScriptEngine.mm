@@ -959,7 +959,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@drawing dynamic picture ID %hu in rect {{%f, %f}, {%f, %f}}", logPrefix, argv[0], field_display_rect.origin.x, field_display_rect.origin.y, field_display_rect.size.width, field_display_rect.size.height);
 #endif
 	
-	[self _drawPictureWithID:argv[0] archive:_archive displayRect:field_display_rect samplingRect:sampling_rect];
+	[self _drawPictureWithID:argv[0] archive:[card archive] displayRect:field_display_rect samplingRect:sampling_rect];
 }
 
 // 2
@@ -969,7 +969,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to card ID %hu", logPrefix, argv[0]);
 #endif
 
-	RXStack* parent = [_descriptor parent];
+	RXStack* parent = [[card descriptor] parent];
 	[controller setActiveCardWithStack:[parent key] ID:argv[0] waitUntilDone:YES];
 }
 
@@ -1000,7 +1000,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	RXDataSound* sound = [RXDataSound new];
-	sound->parent = [_descriptor parent];
+	sound->parent = [[card descriptor] parent];
 	sound->ID = argv[0];
 	sound->gain = (float)argv[1] / kRXSoundGainDivisor;
 	sound->pan = 0.5f;
@@ -1034,7 +1034,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (argc < 2)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
-	RXStack* parent = [_descriptor parent];
+	RXStack* parent = [[card descriptor] parent];
 	NSString* name = [parent varNameAtIndex:argv[0]];
 	if (!name)
 		name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
@@ -1056,7 +1056,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	uint32_t key = argv[0];
-	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet(_hotspotsIDMap, (void*)key));
+	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet([card hotspotsIDMap], (void*)key));
 	assert(hotspot);
 	
 	if (!hotspot->enabled) {
@@ -1082,7 +1082,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	uint32_t key = argv[0];
-	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet(_hotspotsIDMap, (void *)key));
+	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet([card hotspotsIDMap], (void *)key));
 	assert(hotspot);
 	
 	if (hotspot->enabled) {
@@ -1134,7 +1134,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uint16_t externalID = argv[0];
 	uint16_t extarnalArgc = argv[1];
 	
-	NSString* externalName = [[_descriptor parent] externalNameAtIndex:externalID];
+	NSString* externalName = [[[card descriptor] parent] externalNameAtIndex:externalID];
 	if (!externalName)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID EXTERNAL COMMAND ID" userInfo:nil];
 	
@@ -1255,7 +1255,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (argc < 2)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
-	RXStack* parent = [_descriptor parent];
+	RXStack* parent = [[card descriptor] parent];
 	NSString* name = [parent varNameAtIndex:argv[0]];
 	if (!name) name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
 #if defined(DEBUG)
@@ -1272,7 +1272,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (argc < 3)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
-	NSString* stackKey = [[_descriptor parent] stackNameAtIndex:argv[0]];
+	NSString* stackKey = [[[card descriptor] parent] stackNameAtIndex:argv[0]];
 	// FIXME: we need to be smarter about stack management. For now, we try to load the stack once. And it stays loaded. Forver
 	// make sure the requested stack has been loaded
 	RXStack* stack = [g_world activeStackWithKey:stackKey];
@@ -1394,7 +1394,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 - (void)_opcode_prepareMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 1)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
-	uintptr_t k = _mlstCodes[argv[0] - 1];
+	uintptr_t k = [card movieCodes][argv[0] - 1];
 	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
@@ -1402,7 +1402,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	// update the code to movie map
-	RXMovie* movie = [_movies objectAtIndex:argv[0] - 1];
+	RXMovie* movie = [[card movies] objectAtIndex:argv[0] - 1];
 	NSMapInsert(code2movieMap, (const void*)k, movie);
 	
 	// start the movie
@@ -1421,7 +1421,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	struct rx_blst_record* record = (struct rx_blst_record*)_hotspotControlRecords + (argv[0] - 1);
 	uint32_t key = record->hotspot_id;
 	
-	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet(_hotspotsIDMap, (void *)key));
+	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet([card hotspotsIDMap], (void *)key));
 	assert(hotspot);
 	
 	OSSpinLockLock(&_activeHotspotsLock);
@@ -1450,14 +1450,14 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating flst record at index %hu", logPrefix, argv[0]);
 #endif
 
-	[controller queueSpecialEffect:_sfxes + (argv[0] - 1) owner:self];
+	[controller queueSpecialEffect:[card sfxes] + (argv[0] - 1) owner:self];
 }
 
 // 46
 - (void)_opcode_activateMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 2)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
-	uintptr_t k = _mlstCodes[argv[0] - 1];
+	uintptr_t k = [card movieCodes][argv[0] - 1];
 
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
@@ -1465,7 +1465,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	// update the code to movie map
-	RXMovie* movie = [_movies objectAtIndex:argv[0] - 1];
+	RXMovie* movie = [[card movies] objectAtIndex:argv[0] - 1];
 	NSMapInsert(code2movieMap, (const void*)k, movie);
 }
 
@@ -1619,19 +1619,19 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 		NSPoint combination_sampling_origin = NSMakePoint(32.0f * 3, 0.0f);
 		NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 25.0f);
 		
-		[self _drawPictureWithID:13 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:13 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:14 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:14 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:15 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:15 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:16 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:16 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:17 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:17 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 	}
 }
 
@@ -1710,19 +1710,19 @@ DEFINE_COMMAND(xtrapbookback) {
 		NSPoint combination_sampling_origin = NSMakePoint(32.0f * 4, 0.0f);
 		NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 24.0f);
 		
-		[self _drawPictureWithID:364 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:364 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:365 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:365 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:366 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:366 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:367 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:367 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:368 archive:_archive displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:368 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 	}
 }
 

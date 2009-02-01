@@ -33,14 +33,6 @@ struct rx_card_picture_record {
 	float height;
 };
 
-CF_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) {
-	return NSMakePoint((float)x, (float)y);
-}
-
-CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) {
-	return NSMakeRect((float)left, (float)(kRXCardViewportSize.height - bottom), (float)(right - left), (float)(bottom - top));
-}
-
 
 @implementation RXCard
 
@@ -124,9 +116,6 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 	
 	// don't need the MLST data anymore
 	free(listData);
-	
-	// signal that we're done loading the movies
-//	semaphore_signal(_movieLoadSemaphore);
 }
 
 - (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes {
@@ -749,8 +738,8 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 	return _descriptor;
 }
 
-- (NSArray*)movies {
-	return _movies;
+- (MHKArchive*)archive {
+	return _archive;
 }
 
 - (NSArray*)pictures {
@@ -763,6 +752,22 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 
 - (NSArray*)hotspots {
 	return _hotspots;
+}
+
+- (NSMapTable*)hotspotsIDMap {
+	return _hotspotsIDMap;
+}
+
+- (NSArray*)movies {
+	return _movies;
+}
+
+- (uint16_t*)movieCodes {
+	return _mlstCodes;
+}
+
+- (rx_card_sfxe*)sfxes {
+	return _sfxes;
 }
 
 - (void)dealloc {

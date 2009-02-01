@@ -55,8 +55,15 @@
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;
 
 - (RXCardDescriptor*)descriptor;
+- (MHKArchive*)archive;
+
 - (NSDictionary*)events;
 - (NSArray*)hotspots;
+- (NSMapTable*)hotspotsIDMap;
+
+- (NSArray*)movies;
+- (uint16_t*)movieCodes;
+- (rx_card_sfxe*)sfxes;
 
 - (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes;
 
