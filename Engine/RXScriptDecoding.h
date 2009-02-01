@@ -22,17 +22,17 @@ enum {
 	kScriptTypeScreenUpdate,
 };
 
-NSString* const RXMouseDownScriptKey;
-NSString* const RXUnknown1ScriptKey;
-NSString* const RXMouseUpScriptKey;
-NSString* const RXUnknown3ScriptKey;
-NSString* const RXMouseInsideScriptKey;
-NSString* const RXMouseExitedScriptKey;
-NSString* const RXCardPrepareScriptKey;
-NSString* const RXCardStopRenderingScriptKey;
-NSString* const RXUnknown8ScriptKey;
-NSString* const RXStartRenderingScriptKey;
-NSString* const RXScreenUpdateScriptKey;
+extern NSString* const RXMouseDownScriptKey;
+extern NSString* const RXUnknown1ScriptKey;
+extern NSString* const RXMouseUpScriptKey;
+extern NSString* const RXUnknown3ScriptKey;
+extern NSString* const RXMouseInsideScriptKey;
+extern NSString* const RXMouseExitedScriptKey;
+extern NSString* const RXCardPrepareScriptKey;
+extern NSString* const RXCardStopRenderingScriptKey;
+extern NSString* const RXUnknown8ScriptKey;
+extern NSString* const RXStartRenderingScriptKey;
+extern NSString* const RXScreenUpdateScriptKey;
 
 size_t rx_compute_riven_script_length(const void* script, uint16_t command_count, bool byte_swap);
-NSArray* rx_decode_riven_script(const void* script, uint32_t* script_length);
+NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length);

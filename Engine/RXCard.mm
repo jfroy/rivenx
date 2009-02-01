@@ -15,21 +15,18 @@
 #import <mach/thread_act.h>
 #import <mach/thread_policy.h>
 
-#import <objc/runtime.h>
-
 #import <OpenGL/CGLMacro.h>
 
 #import "Base/RXAtomic.h"
 
 #import "RXCard.h"
-#import "RXWorldProtocol.h"
-#import "RXMovieProxy.h"
-#import "RXRivenScriptCommandAliases.h"
 #import "RXCoreStructures.h"
+#import "RXScriptDecoding.h"
 
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXPicture.h"
 #import "Rendering/Graphics/RXDynamicPicture.h"
+#import "Rendering/Graphics/RXMovieProxy.h"
 
 static const float kSoundGainDivisor = 255.0f;
 
@@ -198,8 +195,6 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 	self = [super init];
 	if (!self)
 		return nil;
-	
-	_scriptHandler = nil;
 	
 	// check that the descriptor is "valid"
 	if (!cardDescriptor || ![cardDescriptor isKindOfClass:[RXCardDescriptor class]]) { 
@@ -774,9 +769,6 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 	
 #pragma mark rendering
 	
-	// render state swaps are disabled by default
-	_renderStateSwapsEnabled = NO;
-	
 	// map from tBMP resource to texture ID for dynamic pictures
 	_dynamicPictureMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSOwnedPointerMapValueCallBacks, 0);
 	
@@ -854,7 +846,6 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 	
 	// sounds
 	[_soundGroups release];
-	[_synthesizedSoundGroup release];
 	
 	// hotspots
 	[_activeHotspots release];

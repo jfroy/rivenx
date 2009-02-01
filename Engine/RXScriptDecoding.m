@@ -21,7 +21,7 @@ NSString* const RXUnknown8ScriptKey = @"unknown 8";
 NSString* const RXStartRenderingScriptKey = @"start rendering";
 NSString* const RXScreenUpdateScriptKey = @"screen update";
 
-static NSString* const script_keys_array[] = {
+static NSString* const script_keys_array[11] = {
 	RXMouseDownScriptKey,
 	RXUnknown1ScriptKey,
 	RXMouseUpScriptKey,
@@ -33,7 +33,7 @@ static NSString* const script_keys_array[] = {
 	RXUnknown8ScriptKey,
 	RXStartRenderingScriptKey,
 	RXScreenUpdateScriptKey
-}
+};
 
 size_t rx_compute_riven_script_length(const void* script, uint16_t command_count, bool byte_swap) {
 	size_t scriptOffset = 0;

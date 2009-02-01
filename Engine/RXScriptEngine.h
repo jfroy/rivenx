@@ -8,7 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
-#import "RXScriptEngineProtocol.h"
+#import "RXScriptEngineProtocols.h"
+
+#import "Rendering/Audio/RXSoundGroup.h"
 
 
 @interface RXScriptEngine : NSObject <RXScriptEngineProtocol> {
@@ -28,8 +30,10 @@
 	uint16_t _lastExecutedProgramOpcode;
 	BOOL _queuedAPushTransition;
 	BOOL _did_hide_mouse;
+	
+	RXSoundGroup* _synthesizedSoundGroup;
 }
 
-- (void)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr;
+- (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr;
 
 @end

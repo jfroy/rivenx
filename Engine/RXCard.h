@@ -14,19 +14,15 @@
 #import "Base/RXTiming.h"
 
 #import "RXCardDescriptor.h"
-#import "RXCardExecutionProtocol.h"
 #import "RXHotspot.h"
 #import "RXCardProtocols.h"
 
 #import "Rendering/RXRendering.h"
-#import "Rendering/Audio/RXSoundGroup.h"
 
 
-@interface RXCard : NSObject <RXCardExecutionProtocol> {
+@interface RXCard : NSObject {
 	RXCardDescriptor* _descriptor;
 	MHKArchive* _archive;
-	
-	id <RXCardRendererProtocol> _scriptHandler;
 	
 	NSDictionary* _cardEvents;
 	BOOL _disableScriptLogging;
@@ -59,7 +55,6 @@
 	
 	// sounds
 	NSMutableArray* _soundGroups;
-	RXSoundGroup* _synthesizedSoundGroup;
 }
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;

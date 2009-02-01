@@ -6,7 +6,22 @@
 //  Copyright 2009 MacStorm. All rights reserved.
 //
 
+#import <assert.h>
+#import <limits.h>
+#import <stdbool.h>
+#import <unistd.h>
+
+#import <mach/task.h>
+#import <mach/thread_act.h>
+#import <mach/thread_policy.h>
+
+#import <OpenGL/CGLMacro.h>
+
+#import <objc/runtime.h>
+
 #import "RXScriptEngine.h"
+#import "RXScriptCommandAliases.h"
+#import "RXWorldProtocol.h"
 
 typedef void (*rx_command_imp_t)(id, SEL, const uint16_t, const uint16_t*);
 struct _rx_command_dispatch_entry {
@@ -156,7 +171,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	return nil;
 }
 
-- (void)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr {
+- (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr {
 	self = [super init];
 	if (!self)
 		return nil;
@@ -166,6 +181,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	logPrefix = [NSMutableString new];
 	code2movieMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
 	
+	_renderStateSwapsEnabled = YES;
+	
 	return self;
 }
 
@@ -173,13 +190,15 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[logPrefix release];
 	NSFreeMapTable(code2movieMap);
 	
+	[_synthesizedSoundGroup release];
+	
 	[super dealloc];
 }
 
 #pragma mark -
 #pragma mark script execution
 
-- (size_t)_executeRivenProgram:(const void *)program count:(uint16_t)opcodeCount {
+- (size_t)_executeRivenProgram:(const void*)program count:(uint16_t)opcodeCount {
 	if (!controller)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO RIVEN SCRIPT HANDLER" userInfo:nil];
 	

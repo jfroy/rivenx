@@ -24,11 +24,11 @@
 
 #import "Engine/RXHardwareProfiler.h"
 #import "Engine/RXHotspot.h"
-#import "Engine/RXMovieProxy.h"
 #import "Engine/RXEditionManager.h"
 
 #import "Rendering/Audio/RXCardAudioSource.h"
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
+#import "Rendering/Graphics/RXMovieProxy.h"
 
 typedef void (*RenderCardImp_t)(id, SEL, const CVTimeStamp*, CGLContextObj);
 static RenderCardImp_t _renderCardImp;
@@ -156,6 +156,8 @@ static void rx_release_owner_applier(const void* value, void* context) {
 	if (!self)
 		return nil;
 	
+	sengine = [[RXScriptEngine alloc] initWithController:self];
+	
 	// get the cache line size
 	size_t cache_line_size = [[RXHardwareProfiler sharedHardwareProfiler] cacheLineSize];
 	
@@ -245,6 +247,8 @@ init_failure:
 		
 		free(_render_states_buffer);
 	}
+	
+	[sengine release];
 	
 	[super dealloc];
 }
@@ -1112,7 +1116,7 @@ init_failure:
 		_back_render_state->card = _front_render_state->card;
 		
 		// run the new front card's "start rendering" script
-		[_front_render_state->card startRendering];
+		[sengine startRendering];
 		
 		// show the mouse cursor now that the card switch is done
 		[self showMouseCursor];
@@ -1176,9 +1180,6 @@ init_failure:
 		new_card = [[RXCard alloc] initWithCardDescriptor:newCardDescriptor];
 		[newCardDescriptor release];
 		
-		// set ourselves as the Riven script handler
-		[new_card setRivenScriptHandler:self];
-		
 #if (DEBUG)
 		RXOLog(@"switch card: {from=%@, to=%@}", _front_render_state->card, new_card);
 #endif
@@ -1190,13 +1191,13 @@ init_failure:
 	_back_render_state->transition = nil;
 	
 	// run the stop rendering script on the old card
-	[_front_render_state->card stopRendering];
+	[sengine stopRendering];
 	
 	// we have to update the current card in the game state now, otherwise refresh card commands in the prepare for rendering script will jump back to the old card
 	[[g_world gameState] setCurrentCard:[[new_card descriptor] simpleDescriptor]];
 	
 	// run the prepare for rendering script on the new card
-	[_back_render_state->card prepareForRendering];
+	[sengine prepareForRendering];
 	
 	// notify that the front card has changed
 	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:new_card waitUntilDone:NO];
@@ -1213,7 +1214,7 @@ init_failure:
 	_back_render_state->transition = nil;
 	
 	// run the stop rendering script on the old card; note that we do not need to protect access to the front card since this method will always execute on the script thread
-	[_front_render_state->card stopRendering];
+	[sengine stopRendering];
 	
 	// wipe out the transition queue
 	[_transitionQueue removeAllObjects];
@@ -1613,7 +1614,7 @@ exit_render:
 			OSSpinLockUnlock(&_state_swap_lock);
 		}
 		
-		NSArray* activeHotspots = [front_card activeHotspots];
+		NSArray* activeHotspots = [sengine activeHotspots];
 		if ([activeHotspots count] > RX_MAX_RENDER_HOTSPOT)
 			activeHotspots = [activeHotspots subarrayWithRange:NSMakeRange(0, RX_MAX_RENDER_HOTSPOT)];
 		
@@ -1947,7 +1948,7 @@ exit_flush_tasks:
 	RXCard* front_card = _front_render_state->card;
 	
 	// get the front card's active hotspots
-	NSArray* active_hotspots = [front_card activeHotspots];
+	NSArray* active_hotspots = [sengine activeHotspots];
 
 	// if the mouse is below the game viewport, bring up the alpha of the inventory to 1; otherwise set it to 0.5
 	if (NSPointInRect(mouse_vector.origin, [(NSView*)g_worldView bounds]) && mouse_vector.origin.y < kRXCardViewportOriginOffset.y)

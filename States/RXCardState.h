@@ -13,12 +13,15 @@
 #import <mach/thread_act.h>
 #import <mach/thread_policy.h>
 
-#import "RXRenderState.h"
-#import "RXAtomic.h"
+#import "Base/RXAtomic.h"
 
-#import "RXCard.h"
-#import "RXStack.h"
-#import "RXTransition.h"
+#import "States/RXRenderState.h"
+
+#import "Engine/RXCard.h"
+#import "Engine/RXStack.h"
+#import "Engine/RXScriptEngine.h"
+
+#import "Rendering/Graphics/RXTransition.h"
 
 struct rx_sfxe_render_state {
 	rx_card_sfxe* sfxe;
@@ -46,7 +49,9 @@ struct rx_transition_program {
 	GLint card_size_uniform;
 };
 
-@interface RXCardState : RXRenderState <RXCardRendererProtocol> {
+@interface RXCardState : RXRenderState <RXScriptEngineControllerProtocol> {
+	RXScriptEngine* sengine;
+	
 	// render state
 	void* _render_states_buffer;
 	struct rx_card_state_render_state* volatile _front_render_state;
