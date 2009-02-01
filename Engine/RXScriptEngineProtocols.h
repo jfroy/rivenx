@@ -12,6 +12,8 @@
 #import "RXCardProtocols.h"
 
 @protocol RXScriptEngineProtocol <NSObject>
+- (void)setCard:(RXCard*)c;
+
 - (void)prepareForRendering;
 - (void)startRendering;
 - (void)stopRendering;

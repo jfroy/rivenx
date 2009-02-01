@@ -241,7 +241,15 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	NSFreeMapTable(code2movieMap);
 	[logPrefix release];
 	
+	[card release];
+	
 	[super dealloc];
+}
+
+- (void)setCard:(RXCard*)c {
+	id old = card;
+	card = [c retain];
+	[old release];
 }
 
 #pragma mark -

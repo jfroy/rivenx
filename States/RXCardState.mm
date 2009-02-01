@@ -1195,6 +1195,7 @@ init_failure:
 	
 	// we have to update the current card in the game state now, otherwise refresh card commands in the prepare for rendering script will jump back to the old card
 	[[g_world gameState] setCurrentCard:[[new_card descriptor] simpleDescriptor]];
+	[sengine setCard:new_card];
 	
 	// run the prepare for rendering script on the new card
 	[sengine prepareForRendering];
