@@ -19,9 +19,14 @@
 
 #import <objc/runtime.h>
 
+#import "RXScriptDecoding.h"
 #import "RXScriptEngine.h"
 #import "RXScriptCommandAliases.h"
 #import "RXWorldProtocol.h"
+
+
+static const NSTimeInterval k_mouse_tracking_loop_period = 0.05;
+
 
 typedef void (*rx_command_imp_t)(id, SEL, const uint16_t, const uint16_t*);
 struct _rx_command_dispatch_entry {
@@ -180,17 +185,19 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	logPrefix = [NSMutableString new];
 	code2movieMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
-	
 	_renderStateSwapsEnabled = YES;
+	_activeHotspotsLock = OS_SPINLOCK_INIT;
+	_activeHotspots = [NSMutableArray new];
 	
 	return self;
 }
 
 - (void)dealloc {
-	[logPrefix release];
-	NSFreeMapTable(code2movieMap);
-	
 	[_synthesizedSoundGroup release];
+
+	[_activeHotspots release];
+	NSFreeMapTable(code2movieMap);
+	[logPrefix release];
 	
 	[super dealloc];
 }
@@ -202,7 +209,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (!controller)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO RIVEN SCRIPT HANDLER" userInfo:nil];
 	
-	RXStack* parent = [_descriptor parent];
+	RXStack* parent = [[card descriptor] parent];
 	
 	// bump the execution depth
 	_programExecutionDepth++;
@@ -325,7 +332,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// this is a bit of a hack, but disable automatic render state swaps while running screen update programs
 	_renderStateSwapsEnabled = NO;
 	
-	NSArray* programs = [_cardEvents objectForKey:k_eventSelectors[10]];
+	NSArray* programs = [[card events] objectForKey:RXScreenUpdateScriptKey];
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -401,7 +408,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[controller queueSpecialEffect:NULL owner:self];
 	
 	// execute loading programs (index 6)
-	NSArray* programs = [_cardEvents objectForKey:k_eventSelectors[6]];
+	NSArray* programs = [_cardEvents objectForKey:RXCardPrepareScriptKey];
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for(; programIndex < programCount; programIndex++) {
@@ -449,7 +456,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// execute rendering programs (index 9)
-	NSArray* programs = [_cardEvents objectForKey:k_eventSelectors[9]];
+	NSArray* programs = [_cardEvents objectForKey:RXStartRenderingScriptKey];
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -495,7 +502,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// execute leaving programs (index 7)
-	NSArray* programs = [_cardEvents objectForKey:k_eventSelectors[7]];
+	NSArray* programs = [_cardEvents objectForKey:RXCardStopRenderingScriptKey];
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -551,7 +558,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// execute mouse moved programs (index 4)
-	NSArray* programs = [[hotspot script] objectForKey:k_eventSelectors[4]];
+	NSArray* programs = [[hotspot script] objectForKey:RXMouseInsideScriptKey];
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -594,7 +601,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// execute mouse leave programs (index 5)
-	NSArray* programs = [[hotspot script] objectForKey:k_eventSelectors[5]];
+	NSArray* programs = [[hotspot script] objectForKey:RXMouseExitedScriptKey];
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -634,7 +641,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// execute mouse down programs (index 0)
-	NSArray* programs = [[hotspot script] objectForKey:k_eventSelectors[0]];
+	NSArray* programs = [[hotspot script] objectForKey:RXMouseDownScriptKey];
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -677,7 +684,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// execute mouse up programs (index 2)
-	NSArray* programs = [[hotspot script] objectForKey:k_eventSelectors[2]];
+	NSArray* programs = [[hotspot script] objectForKey:RXMouseUpScriptKey];
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -927,7 +934,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 	// argv + 1 is suitable for _createSoundGroupWithSLSTRecord
 	uint16_t soundCount = argv[0];
-	_synthesizedSoundGroup = [self _createSoundGroupWithSLSTRecord:(argv + 1) soundCount:soundCount swapBytes:NO];
+	_synthesizedSoundGroup = [card createSoundGroupWithSLSTRecord:(argv + 1) soundCount:soundCount swapBytes:NO];
 	
 	[controller activateSoundGroup:_synthesizedSoundGroup];
 	[oldSoundGroup release];
@@ -945,7 +952,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	RXDataSound* sound = [RXDataSound new];
 	sound->parent = [_descriptor parent];
 	sound->ID = argv[0];
-	sound->gain = (float)argv[1] / kSoundGainDivisor;
+	sound->gain = (float)argv[1] / kRXSoundGainDivisor;
 	sound->pan = 0.5f;
 	
 	[controller playDataSound:sound];
@@ -1412,12 +1419,6 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	NSMapInsert(code2movieMap, (const void*)k, movie);
 }
 
-@end
-
-
-#pragma mark -
-@implementation RXCard (RXCardExternals)
-
 #define DEFINE_COMMAND(NAME) - (void)_external_ ## NAME:(const uint16_t)argc arguments:(const uint16_t*)argv
 
 #pragma mark -
@@ -1798,7 +1799,7 @@ DEFINE_COMMAND(xcheckicons) {
 		[[g_world gameState] setUnsigned32:0 forKey:@"jicons"];
 		[[g_world gameState] setUnsigned32:0 forKey:@"jiconorder"];
 		
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 46, (short)kSoundGainDivisor, 1);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 46, (short)kRXSoundGainDivisor, 1);
 	}
 }
 

@@ -28,10 +28,6 @@
 #import "Rendering/Graphics/RXDynamicPicture.h"
 #import "Rendering/Graphics/RXMovieProxy.h"
 
-static const float kSoundGainDivisor = 255.0f;
-
-static const NSTimeInterval k_mouse_tracking_loop_period = 0.05;
-
 struct rx_card_picture_record {
 	float width;
 	float height;
@@ -137,7 +133,7 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 //	semaphore_signal(_movieLoadSemaphore);
 }
 
-- (RXSoundGroup*)_createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes {
+- (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes {
 	RXSoundGroup* group = [RXSoundGroup new];
 	RXStack* parent = [_descriptor parent];
 	
@@ -163,7 +159,7 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 	uint16_t integerGain = *(groupParameters + 2);
 	if (swapBytes)
 		integerGain = CFSwapInt16BigToHost(integerGain);
-	float gain = (float)integerGain / kSoundGainDivisor;
+	float gain = (float)integerGain / kRXSoundGainDivisor;
 	group->gain = gain;
 	
 	uint16_t soundIndex = 0;
@@ -175,7 +171,7 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 		uint16_t sourceIntegerGain = *(sourceGains + soundIndex);
 		if (swapBytes)
 			sourceIntegerGain = CFSwapInt16BigToHost(sourceIntegerGain);
-		float sourceGain = (float)sourceIntegerGain / kSoundGainDivisor;
+		float sourceGain = (float)sourceIntegerGain / kRXSoundGainDivisor;
 		
 		int16_t sourceIntegerPan = *((int16_t*)(sourcePans + soundIndex));
 		if (swapBytes)
@@ -229,9 +225,6 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 //		@throw [NSException exceptionWithName:@"RXSystemResourceException" reason:@"Could not create the movie load semaphore." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 //	}
 	
-	// active hotspots lock
-	_activeHotspotsLock = OS_SPINLOCK_INIT;
-	
 	NSData* cardData = [cardDescriptor valueForKey:@"data"];
 	_archive = [cardDescriptor valueForKey:@"archive"];
 	uint16_t resourceID = [cardDescriptor ID];
@@ -276,7 +269,6 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 	_hotspots = [[NSMutableArray alloc] initWithCapacity:hotspotCount];
 	
 	_hotspotsIDMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
-	_activeHotspots = [[NSMutableArray alloc] initWithCapacity:hotspotCount];
 	
 	// load the hotspots
 	for (currentListIndex = 0; currentListIndex < hotspotCount; currentListIndex++) {
@@ -753,7 +745,7 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 		slstRecordPointer++;
 		
 		// create a sound group for the record
-		RXSoundGroup* group = [self _createSoundGroupWithSLSTRecord:slstRecordPointer soundCount:soundCount swapBytes:YES];
+		RXSoundGroup* group = [self createSoundGroupWithSLSTRecord:slstRecordPointer soundCount:soundCount swapBytes:YES];
 		if (group)
 			[_soundGroups addObject:group];
 		[group release];
@@ -792,6 +784,10 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 
 - (NSArray*)pictures {
 	return nil;
+}
+
+- (NSDictionary*)events {
+	return _cardEvents;
 }
 
 - (void)dealloc {
@@ -848,7 +844,6 @@ CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint1
 	[_soundGroups release];
 	
 	// hotspots
-	[_activeHotspots release];
 	if (_hotspotsIDMap)
 		NSFreeMapTable(_hotspotsIDMap);
 	[_hotspots release];

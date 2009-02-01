@@ -25,15 +25,12 @@
 	MHKArchive* _archive;
 	
 	NSDictionary* _cardEvents;
-	BOOL _disableScriptLogging;
 	
 	// hotspots
 	NSMutableArray* _hotspots;
 	NSMapTable* _hotspotsIDMap;
 	void* _blstData;
 	void* _hotspotControlRecords;
-	NSMutableArray* _activeHotspots;
-	OSSpinLock _activeHotspotsLock;
 	
 	// pictures
 	GLuint _pictureCount;
@@ -58,6 +55,10 @@
 }
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;
+
 - (RXCardDescriptor*)descriptor;
+- (NSDictionary*)events;
+
+- (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes;
 
 @end

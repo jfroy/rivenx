@@ -10,7 +10,7 @@
 
 #import "RXCardCollectionView.h"
 
-#import "Engine/RXMovieProxy.h"
+#import "Rendering/Graphics/RXMovieProxy.h"
 #import "Rendering/Graphics/RXPicture.h"
 
 

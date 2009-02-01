@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
+#import "RXCard.h"
 #import "RXScriptEngineProtocols.h"
 
 #import "Rendering/Audio/RXSoundGroup.h"
@@ -15,9 +16,16 @@
 
 @interface RXScriptEngine : NSObject <RXScriptEngineProtocol> {
 	__weak id<RXScriptEngineControllerProtocol> controller;
+	RXCard* card;
 
 	NSMutableString* logPrefix;
+	BOOL _disableScriptLogging;
+	
 	NSMapTable* code2movieMap;
+	
+	// hotpots
+	NSMutableArray* _activeHotspots;
+	OSSpinLock _activeHotspotsLock;
 	
 	// rendering
 	BOOL _renderStateSwapsEnabled;

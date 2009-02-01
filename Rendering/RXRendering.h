@@ -68,6 +68,8 @@ extern const rx_point_t kRXCardViewportOriginOffset;
 
 extern const double kRXTransitionDuration;
 
+extern const float kRXSoundGainDivisor;
+
 __END_DECLS
 
 // OpenGL engine protocol

@@ -15,6 +15,8 @@ const rx_point_t kRXCardViewportOriginOffset = {16, 66};
 
 const double kRXTransitionDuration = 0.3;
 
+const float kRXSoundGainDivisor = 255.0f;
+
 NSObject<RXWorldViewProtocol>* g_worldView = nil;
 
 NSObject<RXOpenGLStateProtocol>* g_renderContextState = nil;
