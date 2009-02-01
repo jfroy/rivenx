@@ -436,8 +436,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 
 	// retain the card while it executes programs
+	RXCard* executing_card = card;
 	if (_programExecutionDepth == 0) {
-		[self retain];
+		[executing_card retain];
 	}
 
 	// disable automatic render state swaps by faking an execution of opcode 20
@@ -491,7 +492,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
-		[self release];
+		[executing_card release];
 		
 		// if the card hid the mouse cursor while executing programs, we can now show it again
 		if (_did_hide_mouse) {
@@ -508,8 +509,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 
 	// retain the card while it executes programs
+	RXCard* executing_card = card;
 	if (_programExecutionDepth == 0) {
-		[self retain];
+		[executing_card retain];
 	}
 	
 	// execute rendering programs (index 9)
@@ -537,7 +539,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
-		[self release];
+		[executing_card release];
 		
 		// if the card hid the mouse cursor while executing programs, we can now show it again
 		if (_did_hide_mouse) {
@@ -554,8 +556,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 
 	// retain the card while it executes programs
+	RXCard* executing_card = card;
 	if (_programExecutionDepth == 0) {
-		[self retain];
+		[executing_card retain];
 	}
 	
 	// execute leaving programs (index 7)
@@ -574,7 +577,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
-		[self release];
+		[executing_card release];
 		
 		// if the card hid the mouse cursor while executing programs, we can now show it again
 		if (_did_hide_mouse) {
@@ -610,8 +613,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	// retain the card while it executes programs
+	RXCard* executing_card = card;
 	if (_programExecutionDepth == 0) {
-		[self retain];
+		[executing_card retain];
 	}
 	
 	// execute mouse moved programs (index 4)
@@ -633,7 +637,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
-		[self release];
+		[executing_card release];
 		
 		// if the card hid the mouse cursor while executing programs, we can now show it again
 		if (_did_hide_mouse) {
@@ -653,8 +657,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	// retain the card while it executes programs
+	RXCard* executing_card = card;
 	if (_programExecutionDepth == 0) {
-		[self retain];
+		[executing_card retain];
 	}
 	
 	// execute mouse leave programs (index 5)
@@ -673,7 +678,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
-		[self release];
+		[executing_card release];
 		
 		// if the card hid the mouse cursor while executing programs, we can now show it again
 		if (_did_hide_mouse) {
@@ -693,8 +698,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	// retain the card while it executes programs
+	RXCard* executing_card = card;
 	if (_programExecutionDepth == 0) {
-		[self retain];
+		[executing_card retain];
 	}
 	
 	// execute mouse down programs (index 0)
@@ -713,7 +719,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
-		[self release];
+		[executing_card release];
 		
 		// if the card hid the mouse cursor while executing programs, we can now show it again
 		if (_did_hide_mouse) {
@@ -736,8 +742,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 
 	// retain the card while it executes programs
+	RXCard* executing_card = card;
 	if (_programExecutionDepth == 0) {
-		[self retain];
+		[executing_card retain];
 	}
 	
 	// execute mouse up programs (index 2)
@@ -756,7 +763,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
-		[self release];
+		[executing_card release];
 		
 		// if the card hid the mouse cursor while executing programs, we can now show it again
 		if (_did_hide_mouse) {
