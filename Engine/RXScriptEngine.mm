@@ -140,7 +140,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[38].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[39].sel = @selector(_opcode_activatePLST:arguments:);
 	_riven_command_dispatch_table[40].sel = @selector(_opcode_activateSLST:arguments:);
-	_riven_command_dispatch_table[41].sel = @selector(_opcode_prepareMLST:arguments:);
+	_riven_command_dispatch_table[41].sel = @selector(_opcode_activateAndPlayMLST:arguments:);
 	_riven_command_dispatch_table[42].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[43].sel = @selector(_opcode_activateBLST:arguments:);
 	_riven_command_dispatch_table[44].sel = @selector(_opcode_activateFLST:arguments:);
@@ -444,9 +444,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// disable automatic render state swaps by faking an execution of opcode 20
 	_riven_command_dispatch_table[20].imp(self, _riven_command_dispatch_table[20].sel, 0, NULL);
 	 
-	// stop all playing movies (this will probably only ever include looping movies or non-blocking movies)
+	// disable all movies (not sure this needs to be done here, but bad drawing glitches occur if this is not done, see bspit 163)
 	[(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
-//	NSResetMapTable(code2movieMap);
 	
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
@@ -1414,7 +1413,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 41
-- (void)_opcode_prepareMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
+- (void)_opcode_activateAndPlayMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 1)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	uintptr_t k = [card movieCodes][argv[0] - 1];
@@ -2176,6 +2175,14 @@ DEFINE_COMMAND(xbchipper) {
 }
 
 DEFINE_COMMAND(xbupdateboiler) {
+	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, 11);
+	
+	uint16_t heat = [[g_world gameState] unsignedShortForKey:@"bheat"];
+	if (!heat) {
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 7);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 8);
+	}
+	
 	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 11);
 }
 
@@ -2184,7 +2191,27 @@ DEFINE_COMMAND(xbchangeboiler) {
 	uint16_t water = [[g_world gameState] unsignedShortForKey:@"bblrwtr"];
 	uint16_t platform = [[g_world gameState] unsignedShortForKey:@"bblrgrt"];
 	
-	if (argv[0] == 2) {		
+	if (argv[0] == 1) {
+		if (!water) {
+			if (platform)
+				DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 12, 0);
+			else
+				DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 10, 0);
+			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 11);
+		} else {		
+			if (heat) {
+				if (platform)
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 22, 0);
+				else
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 19, 0);
+			} else {
+				if (platform)
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 16, 0);
+				else
+					DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 13, 0);
+			}
+		}
+	} else if (argv[0] == 2) {
 		if (heat) {
 			// we are turning off the heat
 			if (water) {
@@ -2223,10 +2250,23 @@ DEFINE_COMMAND(xbchangeboiler) {
 				DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 9, 11);
 		}
 	}
+	
+//	if (argc > 1)
+//		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, argv[1]);
+//	else
+//		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, argv[0]);
 }
 
 DEFINE_COMMAND(xsoundplug) {
-	// this needs to activate the correct SLST record based on the state of the boiler and the card
+	uint16_t heat = [[g_world gameState] unsignedShortForKey:@"bheat"];
+	uint16_t boiler_inactive = [[g_world gameState] unsignedShortForKey:@"bcratergg"];
+	
+	if (heat)
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 1);
+	else if (boiler_inactive)
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 2);
+	else
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 3);
 }
 
 @end

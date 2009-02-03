@@ -658,10 +658,14 @@ init_failure:
 	RXSound* sound;
 	
 	NSEnumerator* soundEnum = [_activeSounds objectEnumerator];
-	while ((sound = [soundEnum nextObject])) if (sound->detachTimestampValid && RXTimingTimestampDelta(now, sound->rampStartTimestamp) >= RX_AUDIO_FADE_DURATION_PLUS_POINT_FIVE) [soundsToRemove addObject:sound];
+	while ((sound = [soundEnum nextObject]))
+		if (sound->detachTimestampValid && RXTimingTimestampDelta(now, sound->rampStartTimestamp) >= RX_AUDIO_FADE_DURATION_PLUS_POINT_FIVE)
+			[soundsToRemove addObject:sound];
 	
 	soundEnum = [_activeDataSounds objectEnumerator];
-	while ((sound = [soundEnum nextObject])) if (sound->detachTimestampValid && RXTimingTimestampDelta(now, sound->rampStartTimestamp) >= sound->source->Duration() + 0.5) [soundsToRemove addObject:sound];
+	while ((sound = [soundEnum nextObject]))
+		if (sound->detachTimestampValid && RXTimingTimestampDelta(now, sound->rampStartTimestamp) >= sound->source->Duration() + 0.5)
+			[soundsToRemove addObject:sound];
 	
 	// remove expired sounds from the set of active sounds
 	[_activeSounds minusSet:soundsToRemove];
@@ -689,7 +693,8 @@ init_failure:
 #endif
 	
 	// remove the sources for all expired sounds from the sound to source map and prepare the detach and delete array
-	if (!_sourcesToDelete) _sourcesToDelete = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_deleteOnReleaseAudioSourceArrayCallbacks];
+	if (!_sourcesToDelete)
+		_sourcesToDelete = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_deleteOnReleaseAudioSourceArrayCallbacks];
 	
 	// detach the sources
 	RX::AudioRenderer* renderer = (reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer]));
@@ -730,6 +735,12 @@ init_failure:
 	NSMutableSet* soundsToRemove = [_activeSounds mutableCopy];
 	[soundsToRemove minusSet:soundGroupSounds];
 	
+#if defined(DEBUG) && DEBUG > 1
+	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    sounds to add: %@", newActiveSounds);
+	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    sounds to update: %@", oldActiveSounds);
+	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    sounds to remove: %@", soundsToRemove);
+#endif
+	
 	// process new and updated sounds
 	NSEnumerator* soundEnum = [soundGroupSounds objectEnumerator];
 	RXSound* sound;
@@ -757,6 +768,10 @@ init_failure:
 			
 			// prepare the sourcesToAdd array
 			CFArrayAppendValue(sourcesToAdd, sound->source);
+			
+#if defined(DEBUG) && DEBUG > 1
+			RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    added new sound %hu to the active mix (source: %p)", sound->ID, sound->source);
+#endif
 		} else {
 			// UPDATE SOUND
 			assert(oldSound->source);
@@ -777,8 +792,16 @@ init_failure:
 			// gain; always use a ramp to prevent disrupting an ongoing ramp up
 			renderer->RampSourceGain(*(oldSound->source), oldSound->gain * soundGroup->gain, RX_AUDIO_FADE_DURATION);
 			oldSound->source->SetNominalGain(oldSound->gain * soundGroup->gain);
+			
+#if defined(DEBUG) && DEBUG > 1
+			RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    updated sound %hu in the active mix (source: %p)", sound->ID, sound->source);
+#endif
 		}
 	}
+	
+#if defined(DEBUG) && DEBUG > 1
+	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    sounds to add: %@", newActiveSounds);
+#endif
 	
 	// one round of tasking for new sources so that there's data ready immediately
 	CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));

@@ -2041,7 +2041,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					CoreAudio_StopOnFailure,
-					"DEBUG=1",
+					"DEBUG=2",
 					"DEBUG_GL=1",
 				);
 				GCC_VERSION = 4.0;

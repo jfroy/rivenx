@@ -203,21 +203,25 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 			XThrowIf(source == NULL, paramErr, "AudioRenderer::AttachSources (source == NULL)");
 			
 			// if the source is already attached to this renderer, move on
-			if (source->rendererPtr == this) continue;
+			if (source->rendererPtr == this)
+				continue;
 			
 			// if the source is already attached to a different renderer, bail for this source
 			XThrowIf(source->rendererPtr != 0 && source->rendererPtr != this, paramErr, "AudioRenderer::AttachSources (source->rendererPtr != 0 && source->rendererPtr != this)");
 			
 			// if the mixer cannot accept more connections, bail
-			if (sourceCount >= sourceLimit) break;
+			if (sourceCount >= sourceLimit)
+				break;
 			
 			// find the next available bus, bail if there are no more busses
 			std::vector<bool>::iterator busIterator;
 			busIterator = find(busAllocationVector->begin(), busAllocationVector->end(), false);
-			if (busIterator == busAllocationVector->end() && busAllocationVector->size() == sourceLimit) break;
+			if (busIterator == busAllocationVector->end() && busAllocationVector->size() == sourceLimit)
+				break;
 			
 			// if the source format is invalid or not mixable, bail for this source
-			if (!CAStreamBasicDescription::IsMixable(source->Format())) continue;
+			if (!CAStreamBasicDescription::IsMixable(source->Format()))
+				continue;
 			
 			// compute and set the source's bus index
 			source->bus = static_cast<AudioUnitElement>(busIterator - busAllocationVector->begin());
@@ -254,10 +258,17 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 			// account for the new connection and return
 			sourceCount++;
 			(*busAllocationVector)[source->bus] = true;
+			
+#if defined(DEBUG) && DEBUG > 1
+			CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> attached source %p to bus %u"), this, source, source->bus);
+			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+			CFRelease(rxar_debug);
+#endif
 		}
 	} catch (CAXException c) {
 		// if the graph is running or initialized, we need to schedule a graph update
-		if (_must_update_graph_predicate()) XThrowIfError(AUGraphUpdate(graph, NULL), "AUGraphUpdate");
+		if (_must_update_graph_predicate())
+			XThrowIfError(AUGraphUpdate(graph, NULL), "AUGraphUpdate");
 		
 		// if a source was being processed when the exception was thrown...
 		if (source != NULL) {
@@ -267,7 +278,8 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 				UInt32 numConnections;
 				if (AUGraphCountNodeConnections(graph, (*busNodeVector)[source->bus], &numConnections) == noErr) {
 					AUGraphDisconnectNodeInput(graph, *mixer, source->bus);
-					if (_must_update_graph_predicate()) AUGraphUpdate(graph, NULL);
+					if (_must_update_graph_predicate())
+						AUGraphUpdate(graph, NULL);
 				}
 				
 				AUGraphRemoveNode(graph, (*busNodeVector)[source->bus]);
@@ -285,7 +297,8 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 	}
 	
 	// if the graph is running or initialized, we need to schedule a graph update
-	if (_must_update_graph_predicate()) XThrowIfError(AUGraphUpdate(graph, NULL), "AUGraphUpdate");
+	if (_must_update_graph_predicate())
+		XThrowIfError(AUGraphUpdate(graph, NULL), "AUGraphUpdate");
 	
 	return sourceIndex;
 }
