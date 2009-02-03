@@ -529,8 +529,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first slst record", logPrefix);
 #endif
 		[controller activateSoundGroup:[[card soundGroups] objectAtIndex:0]];
+		_didActivateSLST = YES;
 	}
-	_didActivateSLST = YES;
 	
 #if defined(DEBUG)
 	[logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
@@ -1001,6 +1001,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_synthesizedSoundGroup = [card createSoundGroupWithSLSTRecord:(argv + 1) soundCount:soundCount swapBytes:NO];
 	
 	[controller activateSoundGroup:_synthesizedSoundGroup];
+	_didActivateSLST = YES;
+	
 	[oldSoundGroup release];
 }
 
@@ -1399,8 +1401,6 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// the script handler is responsible for this
 	[controller activateSoundGroup:[[card soundGroups] objectAtIndex:argv[0] - 1]];
-	
-	// indicate that an SLST record has been activated (to manage the automatic activation of SLST record 1 if none has been)
 	_didActivateSLST = YES;
 }
 
@@ -1499,6 +1499,7 @@ DEFINE_COMMAND(xasetupcomplete) {
 	sgroup->fadeOutActiveGroupBeforeActivating = YES;
 	sgroup->fadeInOnActivation = NO;
 	[controller activateSoundGroup:sgroup];
+	_didActivateSLST = YES;
 	[sgroup release];
 	
 	// go to card 1
