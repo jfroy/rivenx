@@ -1320,13 +1320,16 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// get the movie object
 	uintptr_t k = argv[0];
 	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(code2movieMap, (const void*)k));
-	assert(movie);
+	
+	// it is legal to disable a code that has no movie associated with it
+	if (!movie)
+		return;
 	
 	// stop the movie on the main thread and block until done
 	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
 	
 	// remove the movie from the code-movie map
-//	NSMapRemove(code2movieMap, (const void*)k);
+	NSMapRemove(code2movieMap, (const void*)k);
 }
 
 // 32
@@ -1498,6 +1501,7 @@ DEFINE_COMMAND(xasetupcomplete) {
 	sgroup->loop = NO;
 	sgroup->fadeOutActiveGroupBeforeActivating = YES;
 	sgroup->fadeInOnActivation = NO;
+	
 	[controller activateSoundGroup:sgroup];
 	_didActivateSLST = YES;
 	[sgroup release];
