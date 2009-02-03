@@ -1344,7 +1344,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// get the movie object
 	uintptr_t k = argv[0];
 	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(code2movieMap, (const void*)k));
-	assert(movie);
+	
+	// it is legal to play a code that has no movie associated with it; it's a no-op
+	if (!movie)
+		return;
 	
 	// start the movie and register for rate change notifications
 	[self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:movie waitUntilDone:YES];
@@ -1365,7 +1368,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// get the movie object
 	uintptr_t k = argv[0];
 	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(code2movieMap, (const void*)k));
-	assert(movie);
+
+	// it is legal to play a code that has no movie associated with it; it's a no-op
+	if (!movie)
+		return;
 	
 	// start the movie
 	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
