@@ -876,7 +876,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uintptr_t dynamicPictureKey = ID;
 	struct rx_card_dynamic_picture* dynamicPicture = (struct rx_card_dynamic_picture*)NSMapGet(_dynamicPictureMap, (const void*)dynamicPictureKey);
 	if (dynamicPicture == NULL) {
-		dynamicPicture = reinterpret_cast<struct rx_card_dynamic_picture*>(malloc(sizeof(struct rx_card_dynamic_picture*)));
+		dynamicPicture = (struct rx_card_dynamic_picture*)malloc(sizeof(struct rx_card_dynamic_picture*));
 		
 		// get the load context
 		CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
