@@ -1420,7 +1420,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@activating and playing in background mlst record %hu, code %hu (u0=%hu)", logPrefix, argv[0], k, argv[1]);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@activating and playing in background mlst record %hu (code=%hu)", logPrefix, argv[0], k);
 #endif
 	
 	// update the code to movie map
@@ -1580,7 +1580,7 @@ DEFINE_COMMAND(xaatrusbookprevpage) {
 	[controller queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }
 
 DEFINE_COMMAND(xaatrusbooknextpage) {
@@ -1597,7 +1597,7 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 		[controller queueTransition:transition];
 		[transition release];
 		
-		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
+		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 	}
 }
 
@@ -1681,7 +1681,7 @@ DEFINE_COMMAND(xacathbookprevpage) {
 	[controller queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }
 
 DEFINE_COMMAND(xacathbooknextpage) {
@@ -1698,7 +1698,7 @@ DEFINE_COMMAND(xacathbooknextpage) {
 		[controller queueTransition:transition];
 		[transition release];
 		
-		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
+		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 	}
 }
 
@@ -1765,7 +1765,7 @@ DEFINE_COMMAND(xblabbookprevpage) {
 	[controller queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }
 
 DEFINE_COMMAND(xblabbooknextpage) {
@@ -1779,7 +1779,7 @@ DEFINE_COMMAND(xblabbooknextpage) {
 		[controller queueTransition:transition];
 		[transition release];
 		
-		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
+		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 	}
 }
 
@@ -1810,7 +1810,7 @@ DEFINE_COMMAND(xogehnbookprevpage) {
 	[controller queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }
 
 DEFINE_COMMAND(xogehnbooknextpage) {
@@ -1826,7 +1826,7 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 	[controller queueTransition:transition];
 	[transition release];
 	
-	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_AUTOMATIC_SWAPS);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }
 
 #pragma mark -
@@ -2175,18 +2175,26 @@ DEFINE_COMMAND(xbchipper) {
 }
 
 DEFINE_COMMAND(xbupdateboiler) {
-	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, 11);
-	
+	// when xbupdateboiler gets called, the boiler state variables will have been updated
 	uint16_t heat = [[g_world gameState] unsignedShortForKey:@"bheat"];
+	uint16_t platform = [[g_world gameState] unsignedShortForKey:@"bblrgrt"];
+	
 	if (!heat) {
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 7);
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 8);
+	} else {
+		if (platform)
+			DISPATCH_COMMAND1(RX_COMMAND_ACTIVE_PLAY_MLST, 7);
+		else
+			DISPATCH_COMMAND1(RX_COMMAND_ACTIVE_PLAY_MLST, 8);
 	}
 	
-	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 11);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }
 
 DEFINE_COMMAND(xbchangeboiler) {
+	// when xbchangeboiler gets called, the boiler state variables have not yet been updated
+	// the above therefore represent the *previous* state
 	uint16_t heat = [[g_world gameState] unsignedShortForKey:@"bheat"];
 	uint16_t water = [[g_world gameState] unsignedShortForKey:@"bblrwtr"];
 	uint16_t platform = [[g_world gameState] unsignedShortForKey:@"bblrgrt"];
@@ -2197,7 +2205,6 @@ DEFINE_COMMAND(xbchangeboiler) {
 				DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 12, 0);
 			else
 				DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, 10, 0);
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 11);
 		} else {		
 			if (heat) {
 				if (platform)
@@ -2251,10 +2258,12 @@ DEFINE_COMMAND(xbchangeboiler) {
 		}
 	}
 	
-//	if (argc > 1)
-//		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, argv[1]);
-//	else
-//		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, argv[0]);
+	if (argc > 1)
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, argv[1]);
+	else if (argv[0] == 2)
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 1);
+	
+	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 11);
 }
 
 DEFINE_COMMAND(xsoundplug) {

@@ -688,7 +688,7 @@ init_failure:
 		[soundsToRemove release];
 		return;
 	}
-#if defined(DEBUG)
+#if defined(DEBUG) && DEBUG > 1
 	else RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"updated active sources by removing %@", soundsToRemove);
 #endif
 	
@@ -727,26 +727,19 @@ init_failure:
 	// create an array of new sources
 	CFMutableArrayRef sourcesToAdd = CFArrayCreateMutable(NULL, 0, &g_weakAudioSourceArrayCallbacks);
 	
-	// compute a new active sound set
-	NSMutableSet* oldActiveSounds = _activeSounds;
+	// copy the active sound set to prepare the new active sound set
 	NSMutableSet* newActiveSounds = [_activeSounds mutableCopy];
 	
-	// compute the set of sounds to remove
+	// the set of sounds to remove is the set of active sounds minus the incoming sound group's set of sounds
 	NSMutableSet* soundsToRemove = [_activeSounds mutableCopy];
 	[soundsToRemove minusSet:soundGroupSounds];
-	
-#if defined(DEBUG) && DEBUG > 1
-	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    sounds to add: %@", newActiveSounds);
-	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    sounds to update: %@", oldActiveSounds);
-	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    sounds to remove: %@", soundsToRemove);
-#endif
 	
 	// process new and updated sounds
 	NSEnumerator* soundEnum = [soundGroupSounds objectEnumerator];
 	RXSound* sound;
 	while ((sound = [soundEnum nextObject])) {
-		RXSound* oldSound = [_activeSounds member:sound];
-		if (!oldSound) {
+		RXSound* active_sound = [_activeSounds member:sound];
+		if (!active_sound) {
 			// NEW SOUND
 		
 			// get a decompressor
@@ -774,34 +767,30 @@ init_failure:
 #endif
 		} else {
 			// UPDATE SOUND
-			assert(oldSound->source);
+			assert(active_sound->source);
 			
 			// update gain and pan
-			oldSound->gain = sound->gain;
-			oldSound->pan = sound->pan;
+			active_sound->gain = 1.0f;//sound->gain;
+			active_sound->pan = sound->pan;
 			
 			// make sure the sound doesn't have a valid detach timestamp
-			oldSound->detachTimestampValid = NO;
+			active_sound->detachTimestampValid = NO;
 			
 			// looping
-			oldSound->source->SetLooping(soundGroup->loop);
+			active_sound->source->SetLooping(soundGroup->loop);
 			
 			// FIXME: pan ramp
-			renderer->SetSourcePan(*(oldSound->source), sound->pan);
+			renderer->SetSourcePan(*(active_sound->source), sound->pan);
 			
 			// gain; always use a ramp to prevent disrupting an ongoing ramp up
-			renderer->RampSourceGain(*(oldSound->source), oldSound->gain * soundGroup->gain, RX_AUDIO_FADE_DURATION);
-			oldSound->source->SetNominalGain(oldSound->gain * soundGroup->gain);
+			renderer->RampSourceGain(*(active_sound->source), active_sound->gain * soundGroup->gain, RX_AUDIO_FADE_DURATION);
+			active_sound->source->SetNominalGain(active_sound->gain * soundGroup->gain);
 			
 #if defined(DEBUG) && DEBUG > 1
 			RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    updated sound %hu in the active mix (source: %p)", sound->ID, sound->source);
 #endif
 		}
 	}
-	
-#if defined(DEBUG) && DEBUG > 1
-	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    sounds to add: %@", newActiveSounds);
-#endif
 	
 	// one round of tasking for new sources so that there's data ready immediately
 	CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));
@@ -819,8 +808,9 @@ init_failure:
 	}
 	
 	// swap the set of active sounds (not atomic, but _activeSounds is only used on the stack thread)
+	NSMutableSet* old = _activeSounds;
 	_activeSounds = newActiveSounds;
-	[oldActiveSounds release];
+	[old release];
 	
 	// disable automatic graph updates on the audio renderer (e.g. begin a transaction)
 	renderer->SetAutomaticGraphUpdates(false);
@@ -874,8 +864,8 @@ init_failure:
 		}
 	}
 	
-#if defined(DEBUG)
-	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"activateSoundGroup: _activeSounds = %@", _activeSounds);
+#if defined(DEBUG) && DEBUG > 1
+	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"new active sound set: %@", newActiveSounds);
 #endif
 	
 	// reset the fade in override flag

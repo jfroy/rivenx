@@ -23,27 +23,18 @@
 	[cli notifyUser:@"Riven X debug shell v3. Type help for commands. Type a command for usage information."];
 }
 
-- (void)help:(NSArray*)commandComponents from:(CLIView*)sender {
-	if ([commandComponents count] == 1)
-		[sender putText:@"built-in commands:\n\n	help\n	  card\n	list\n	  load\n"];
-	else {
-		NSString* primaryCommandHelp = [[commandComponents objectAtIndex:1] stringByAppendingString:@"Help"];
-		SEL commandSel = NSSelectorFromString(primaryCommandHelp);
-		if ([self respondsToSelector:commandSel])
-			[self performSelector:commandSel];
-		else
-			[sender putText:[NSString stringWithFormat:@"no help is avaiable for command", [commandComponents objectAtIndex:1]]];
-	}
+- (void)help:(NSArray*)arguments from:(CLIView*)sender {
+	[sender putText:@"you're on your own, sorry"];
 }
 
-- (void)card:(NSArray*)commandComponents from:(CLIView*)sender {
-	if ([commandComponents count] < 3)
+- (void)cmd_card:(NSArray*)arguments from:(CLIView*)sender {
+	if ([arguments count] < 2)
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"card [stack] [ID]" userInfo:nil];
 
 	RXCardState* renderingState = (RXCardState*)[g_world cardRenderState];
 
-	NSString* stackKey = [commandComponents objectAtIndex:1];
-	NSString* cardStringID = [commandComponents objectAtIndex:2];
+	NSString* stackKey = [arguments objectAtIndex:0];
+	NSString* cardStringID = [arguments objectAtIndex:1];
 
 	int cardID;
 	BOOL foundID = [[NSScanner scannerWithString:cardStringID] scanInt:&cardID];
@@ -54,16 +45,28 @@
 	[renderingState setActiveCardWithStack:stackKey ID:cardID waitUntilDone:NO];
 }
 
-- (void)refresh:(NSArray*)commandComponents from:(CLIView*)sender {
+- (void)cmd_refresh:(NSArray*)arguments from:(CLIView*)sender {
 	RXSimpleCardDescriptor* current_card = [[g_world gameState] currentCard];
 	RXCardState* renderingState = (RXCardState*)[g_world cardRenderState];
 	[renderingState setActiveCardWithStack:current_card->parentName ID:current_card->cardID waitUntilDone:NO];
 }
 
-- (void)get:(NSArray*)commandComponents from:(CLIView*)sender {
-	if ([commandComponents count] < 2)
+- (void)_activateSLST:(NSNumber*)index {
+	RXCardState* renderingState = (RXCardState*)[g_world cardRenderState];
+	uint16_t args = (uint16_t)[index intValue];
+	[[renderingState valueForKey:@"sengine"] performSelector:@selector(_opcode_activateSLST:arguments:) withObject:(id)1 withObject:(id)&args];
+}
+
+- (void)cmd_slst:(NSArray*)arguments from:(CLIView*)sender {
+	if ([arguments count] < 1)
+		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"slst [1-based index]" userInfo:nil];
+	[self performSelector:@selector(_activateSLST:) withObject:[arguments objectAtIndex:0] inThread:[g_world scriptThread] waitUntilDone:YES];
+}
+
+- (void)cmd_get:(NSArray*)arguments from:(CLIView*)sender {
+	if ([arguments count] < 1)
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"get [variable]" userInfo:nil];
-	NSString* path = [commandComponents objectAtIndex:1];
+	NSString* path = [arguments objectAtIndex:1];
 	
 	if ([[g_world gameState] isKeySet:path])
 		[sender putText:[NSString stringWithFormat:@"%d\n", [[g_world gameState] signed32ForKey:path]]];
@@ -71,12 +74,12 @@
 		[sender putText:[NSString stringWithFormat:@"%@\n", [[g_world valueForKeyPath:path] stringValue]]];
 }
 
-- (void)set:(NSArray*)commandComponents from:(CLIView*)sender {
-	if ([commandComponents count] < 3)
+- (void)cmd_set:(NSArray*)arguments from:(CLIView*)sender {
+	if ([arguments count] < 2)
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"set [variable] [value]" userInfo:nil];
 	
-	NSString* path = [commandComponents objectAtIndex:1];
-	NSString* valueString = [commandComponents objectAtIndex:2];
+	NSString* path = [arguments objectAtIndex:0];
+	NSString* valueString = [arguments objectAtIndex:1];
 	NSScanner* valueScanner = [NSScanner scannerWithString:valueString];
 	id value;
 	
@@ -120,13 +123,13 @@
 		[g_world setValue:value forKeyPath:path];
 }
 
-- (void)dump:(NSArray*)commandComponents from:(CLIView*)sender {
-	if ([commandComponents count] < 2)
+- (void)cmd_dump:(NSArray*)arguments from:(CLIView*)sender {
+	if ([arguments count] < 1)
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"dump [game | engine]" userInfo:nil];
 	
-	if ([[commandComponents objectAtIndex:1] isEqualToString:@"game"])
+	if ([[arguments objectAtIndex:0] isEqualToString:@"game"])
 		[[g_world gameState] dump];
-	else if ([[commandComponents objectAtIndex:1] isEqualToString:@"engine"])
+	else if ([[arguments objectAtIndex:0] isEqualToString:@"engine"])
 		[g_world performSelector:@selector(_dumpEngineVariables)];
 	else
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"dump [game | engine]" userInfo:nil];
@@ -150,7 +153,7 @@
 	[renderingState setActiveCardWithStack:@"jspit" ID:_trip waitUntilDone:NO];
 }
 
-- (void)jtrip:(NSArray*)commandComponents from:(CLIView*)sender {
+- (void)cmd_jtrip:(NSArray*)arguments from:(CLIView*)sender {
 	RXCardState* renderingState = (RXCardState*)[g_world cardRenderState];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_nextJspitCard:) name:@"RXActiveCardDidChange" object:nil];
 	_trip = 1;
@@ -161,13 +164,14 @@
 	if ([command length] == 0)
 		return;
 	
-	NSArray* commandComponents = [command componentsSeparatedByString:@" "];
-	NSString* primaryCommand = [[commandComponents objectAtIndex:0] stringByAppendingString:@":from:"];
+	NSArray* components = [command componentsSeparatedByString:@" "];
+	NSString* command_name = [components objectAtIndex:0];
+	components = [components subarrayWithRange:NSMakeRange(1, [components count] - 1)];
 	
 	@try {
-		SEL commandSel = NSSelectorFromString(primaryCommand);
+		SEL commandSel = NSSelectorFromString([NSString stringWithFormat:@"cmd_%@:from:", command_name]);
 		if ([self respondsToSelector:commandSel])
-			[self performSelector:commandSel withObject:commandComponents withObject:sender];
+			[self performSelector:commandSel withObject:components withObject:sender];
 		else
 			@throw [NSException exceptionWithName:@"RXUnknownCommandException" reason:@"Command not found, type help for commands." userInfo:nil];
 	} @catch (NSException* e) {
@@ -175,7 +179,7 @@
 		if ([exceptionName isEqualToString:@"RXCommandArgumentsException"]) {
 			[sender putText:[NSString stringWithFormat:@"usage: %@\n", [e reason]]];
 		} else if ([exceptionName isEqualToString:@"RXUnknownCommandException"]) {
-			[sender putText:[NSString stringWithFormat:@"%@: command not found\n", [commandComponents objectAtIndex:0]]];
+			[sender putText:[NSString stringWithFormat:@"%@: command not found\n", command_name]];
 		} else if ([exceptionName isEqualToString:@"RXCommandError"]) {
 			[sender putText:[e reason]];
 			[sender putText:@"\n"];

@@ -93,7 +93,7 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 		for (UInt32 bufferIndex = 0; bufferIndex < ioData->mNumberBuffers; bufferIndex++)
 			bzero(ioData->mBuffers[bufferIndex].mData, ioData->mBuffers[bufferIndex].mDataByteSize);
 		*ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
-#if defined(DEBUG) && DEBUG > 1
+#if defined(DEBUG) && DEBUG > 2
 			CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because disabled, no renderer, no decompressor or not decompression buffer"), this);
 			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 			CFRelease(rxar_debug);
@@ -114,7 +114,7 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 			bzero(ioData->mBuffers[bufferIndex].mData, ioData->mBuffers[bufferIndex].mDataByteSize);
 		*ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
 		
-#if defined(DEBUG) && DEBUG > 1
+#if defined(DEBUG) && DEBUG > 2
 			CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of sample starvation"), this);
 			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 			CFRelease(rxar_debug);

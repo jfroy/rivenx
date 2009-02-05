@@ -69,6 +69,8 @@ void _RXOLog(id object, const char* facility, int level, NSString* format, ...) 
 void RXCFLog(const char* facility, int level, CFStringRef format, ...) {
 	va_list args;
 	va_start(args, format);
+	NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
 	RXLogv(facility, level, (NSString*)format, args);
+	[p release];
 	va_end(args);
 }
