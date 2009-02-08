@@ -12,8 +12,7 @@
 #endif
 
 uniform vec2 cardSize;
-
-uniform float margin;
+uniform vec2 margin;
 
 uniform sampler2DRect source;
 uniform sampler2DRect destination;
@@ -39,22 +38,25 @@ vec2 getDestinationSampleCoords() {
 void main() {
 	vec2 sourceSampleCoords = getSourceSampleCoords();
 	vec2 destinationSampleCoords = getDestinationSampleCoords();
+	vec2 card_coord = gl_FragCoord.xy - margin;
 	
-	vec4 fragmentColor;
+    vec4 fragmentColor;
 #if RX_DIRECTION == 0
-	if (gl_FragCoord.x - margin >= (1.0 - t) * cardSize.x)
+	if (card_coord.x >= (1.0 - t) * cardSize.x)
 		fragmentColor = texture2DRect(destination, destinationSampleCoords);
 #elif RX_DIRECTION == 1
-	if (gl_FragCoord.x - margin < t * cardSize.x)
+	if (card_coord.x < t * cardSize.x)
 		fragmentColor = texture2DRect(destination, destinationSampleCoords);
 #elif RX_DIRECTION == 2
-	if (gl_FragCoord.y - margin < t * cardSize.y)
-		fragmentColor = texture2DRect(destination, destinationSampleCoords);
+	if (card_coord.y < t * cardSize.y)
+		//fragmentColor = texture2DRect(destination, destinationSampleCoords);
+		fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
 #elif RX_DIRECTION == 3
-	if (gl_FragCoord.y - margin >= (1.0 - t) * cardSize.y)
+	if (card_coord.y >= (1.0 - t) * cardSize.y)
 		fragmentColor = texture2DRect(destination, destinationSampleCoords);
 #endif
-	else fragmentColor = texture2DRect(source, sourceSampleCoords);
+	else
+	    fragmentColor = texture2DRect(source, sourceSampleCoords);
 	
 	gl_FragColor = fragmentColor;
 }

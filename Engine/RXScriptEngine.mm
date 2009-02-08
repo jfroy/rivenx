@@ -462,7 +462,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_queuedAPushTransition = NO;
 	
 	// reset water animation
-	[controller queueSpecialEffect:NULL owner:self];
+	[controller queueSpecialEffect:NULL owner:card];
 	
 	// execute loading programs (index 6)
 	NSArray* programs = [[card events] objectForKey:RXCardPrepareScriptKey];
@@ -1472,7 +1472,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating flst record at index %hu", logPrefix, argv[0]);
 #endif
 
-	[controller queueSpecialEffect:[card sfxes] + (argv[0] - 1) owner:self];
+	[controller queueSpecialEffect:[card sfxes] + (argv[0] - 1) owner:card];
 }
 
 // 46

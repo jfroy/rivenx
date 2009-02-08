@@ -27,10 +27,10 @@ extern void glReportErrorWithFileLineCGLMacro(CGLContextObj cgl_ctx, const char*
 	GLenum err = glGetError();
 #if defined(RIVENX)
 	if (GL_NO_ERROR != err) {
-		RXCFLog(kRXLoggingGraphics, kRXLoggingLevelError, CFSTR("GL error at %s:%s:%d: %s (0x%x)"), file, function, line, gluErrorString(err), (unsigned int)err);
+		RXCFLog(kRXLoggingGraphics, kRXLoggingLevelError, CFSTR("GL error in %s at %s:%d: %s (0x%x)\n"), function, file, line, gluErrorString(err), (unsigned int)err);
 #else
 	if (GL_NO_ERROR != err) {
-		fprintf(stderr, "GL error at %s:%s:%d: %s (0x%x)\n", file, function, line, gluErrorString(err), (unsigned int)err);
+		fprintf(stderr, "GL error in %s at %s:%d: %s (0x%x)\n", function, file, line, gluErrorString(err), (unsigned int)err);
 #endif // RIVENX
 		abort();
 	}

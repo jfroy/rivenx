@@ -40,7 +40,7 @@ static void initialize_dynamic_picture_system() {
 	glBindBuffer(GL_ARRAY_BUFFER, dynamic_picture_vertex_bo); glReportError();
 	if (GLEE_APPLE_flush_buffer_range)
 		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
-	glBufferData(GL_ARRAY_BUFFER, dynamic_picture_vertex_bo_picture_capacity * 16 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); glReportError();
+	glBufferData(GL_ARRAY_BUFFER, dynamic_picture_vertex_bo_picture_capacity * 16 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW); glReportError();
 	
 	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
 	glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 0)); glReportError();
@@ -83,7 +83,7 @@ static void grow_dynamic_picture_vertex_bo() {
 	glBindBuffer(GL_ARRAY_BUFFER, alternate_bo); glReportError();
 	if (GLEE_APPLE_flush_buffer_range)
 		glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
-	glBufferData(GL_ARRAY_BUFFER, dynamic_picture_vertex_bo_picture_capacity * 16 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); glReportError();
+	glBufferData(GL_ARRAY_BUFFER, dynamic_picture_vertex_bo_picture_capacity * 16 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW); glReportError();
 	
 	glEnableClientState(GL_VERTEX_ARRAY); glReportError();
 	glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 0)); glReportError();
@@ -170,12 +170,8 @@ static void free_dynamic_picture_index(GLuint index) {
 
 + (GLuint)sharedDynamicPictureUnpackBuffer {
 	static GLuint dynamic_picture_unpack_buffer = 0;
-	OSSpinLockLock(&dynamic_picture_lock);
-	
-	if (dynamic_picture_unpack_buffer) {
-		OSSpinLockUnlock(&dynamic_picture_lock);
+	if (dynamic_picture_unpack_buffer)
 		return dynamic_picture_unpack_buffer;
-	}
 	
 	CGLContextObj cgl_ctx = [g_worldView loadContext];
 	CGLLockContext(cgl_ctx);
@@ -185,14 +181,13 @@ static void free_dynamic_picture_index(GLuint index) {
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dynamic_picture_unpack_buffer); glReportError();
 	if (GLEE_APPLE_flush_buffer_range)
 		glBufferParameteriAPPLE(GL_PIXEL_UNPACK_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, kRXCardViewportSize.width * kRXCardViewportSize.height * 4, NULL, GL_STREAM_DRAW); glReportError();
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, kRXCardViewportSize.width * kRXCardViewportSize.height * 4, NULL, GL_DYNAMIC_DRAW); glReportError();
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	
 	// we created a new buffer object, so flush
 	glFlush();
 	
 	CGLUnlockContext(cgl_ctx);
-	OSSpinLockUnlock(&dynamic_picture_lock);
 	
 	return dynamic_picture_unpack_buffer;
 }

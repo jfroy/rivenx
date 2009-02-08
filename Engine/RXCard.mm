@@ -468,7 +468,7 @@ struct rx_card_picture_record {
 	
 	glClientActiveTexture(GL_TEXTURE0);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
-	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+	glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), (void*)BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
 	
 	// bind 0 to the current VAO
 	[gl_state bindVertexArrayObject:0];
@@ -491,7 +491,7 @@ struct rx_card_picture_record {
 		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding FLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	_sfxeCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
-	_sfxes = new rx_card_sfxe[_sfxeCount];
+	_sfxes = (rx_card_sfxe*)malloc(sizeof(rx_card_sfxe) * _sfxeCount);
 	
 	struct rx_flst_record* flstRecordPointer = reinterpret_cast<struct rx_flst_record*>(BUFFER_OFFSET(listData, sizeof(uint16_t)));
 	for (currentListIndex = 0; currentListIndex < _sfxeCount; currentListIndex++) {
@@ -502,178 +502,74 @@ struct rx_card_picture_record {
 		record->sfxe_id = CFSwapInt16(record->sfxe_id);
 		record->u0 = CFSwapInt16(record->u0);
 #endif
-
+		
+		// open the corresponding SFXE resource
 		MHKFileHandle* sfxeHandle = [_archive openResourceWithResourceType:@"SFXE" ID:record->sfxe_id];
 		if (!sfxeHandle)
 			@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open a required SFXE resource." userInfo:nil];
 		
+		// get the size of the SFXE resource and allocate the sfxe's record buffer
 		size_t sfxeLength = (size_t)[sfxeHandle length];
-		assert(sfxeLength >= sizeof(struct rx_fsxe_record*));
-		void* sfxeData = malloc(sfxeLength);
+		assert(sfxeLength >= sizeof(struct rx_sfxe_record*));
+		
+		rx_card_sfxe* sfxe = _sfxes + currentListIndex;
+		sfxe->record = (struct rx_sfxe_record*)malloc(sfxeLength);
 		
 		// read the data from the archive
-		if ([sfxeHandle readDataToEndOfFileInBuffer:sfxeData error:&error] == -1)
+		if ([sfxeHandle readDataToEndOfFileInBuffer:(void*)sfxe->record error:&error] == -1)
 			@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read a required SFXE resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
-		struct rx_fsxe_record* sfxeRecord = reinterpret_cast<struct rx_fsxe_record*>(sfxeData);
 #if defined(__LITTLE_ENDIAN__)
-		sfxeRecord->magic = CFSwapInt16(sfxeRecord->magic);
-		sfxeRecord->frame_count = CFSwapInt16(sfxeRecord->frame_count);
-		sfxeRecord->offset_table = CFSwapInt32(sfxeRecord->offset_table);
-		sfxeRecord->left = CFSwapInt16(sfxeRecord->left);
-		sfxeRecord->top = CFSwapInt16(sfxeRecord->top);
-		sfxeRecord->right = CFSwapInt16(sfxeRecord->right);
-		sfxeRecord->bottom = CFSwapInt16(sfxeRecord->bottom);
-		sfxeRecord->fps = CFSwapInt16(sfxeRecord->fps);
-		sfxeRecord->u0 = CFSwapInt16(sfxeRecord->u0);
-		sfxeRecord->alt_top = CFSwapInt16(sfxeRecord->alt_top);
-		sfxeRecord->alt_left = CFSwapInt16(sfxeRecord->alt_left);
-		sfxeRecord->alt_bottom = CFSwapInt16(sfxeRecord->alt_bottom);
-		sfxeRecord->alt_right = CFSwapInt16(sfxeRecord->alt_right);
-		sfxeRecord->u1 = CFSwapInt16(sfxeRecord->u1);
-		sfxeRecord->alt_frame_count = CFSwapInt16(sfxeRecord->alt_frame_count);
-		sfxeRecord->u2 = CFSwapInt32(sfxeRecord->u2);
-		sfxeRecord->u3 = CFSwapInt32(sfxeRecord->u3);
-		sfxeRecord->u4 = CFSwapInt32(sfxeRecord->u4);
-		sfxeRecord->u5 = CFSwapInt32(sfxeRecord->u5);
-		sfxeRecord->u6 = CFSwapInt32(sfxeRecord->u6);
+		// byte swap on litle endian architectures
+		sfxe->record->magic = CFSwapInt16(sfxe->record->magic);
+		sfxe->record->frame_count = CFSwapInt16(sfxe->record->frame_count);
+		sfxe->record->offset_table = CFSwapInt32(sfxe->record->offset_table);
+		sfxe->record->left = CFSwapInt16(sfxe->record->left);
+		sfxe->record->top = CFSwapInt16(sfxe->record->top);
+		sfxe->record->right = CFSwapInt16(sfxe->record->right);
+		sfxe->record->bottom = CFSwapInt16(sfxe->record->bottom);
+		sfxe->record->fps = CFSwapInt16(sfxe->record->fps);
+		sfxe->record->u0 = CFSwapInt16(sfxe->record->u0);
+		sfxe->record->alt_top = CFSwapInt16(sfxe->record->alt_top);
+		sfxe->record->alt_left = CFSwapInt16(sfxe->record->alt_left);
+		sfxe->record->alt_bottom = CFSwapInt16(sfxe->record->alt_bottom);
+		sfxe->record->alt_right = CFSwapInt16(sfxe->record->alt_right);
+		sfxe->record->u1 = CFSwapInt16(sfxe->record->u1);
+		sfxe->record->alt_frame_count = CFSwapInt16(sfxe->record->alt_frame_count);
+		sfxe->record->u2 = CFSwapInt32(sfxe->record->u2);
+		sfxe->record->u3 = CFSwapInt32(sfxe->record->u3);
+		sfxe->record->u4 = CFSwapInt32(sfxe->record->u4);
+		sfxe->record->u5 = CFSwapInt32(sfxe->record->u5);
+		sfxe->record->u6 = CFSwapInt32(sfxe->record->u6);
 #endif
 		
-		// prepare the rx special effect structure
-		rx_card_sfxe* sfxe = _sfxes + currentListIndex;
-		
-		// fill in some general information
-		sfxe->nframes = sfxeRecord->frame_count;
-		sfxe->frames = new GLuint[sfxe->nframes];
-		sfxe->fps = static_cast<double>(sfxeRecord->fps);
-		sfxe->roi = RXMakeNSRect(sfxeRecord->left, sfxeRecord->top, sfxeRecord->right, sfxeRecord->bottom);
-		
-		// create a texture for each frame of animation
-		glGenTextures(sfxe->nframes, sfxe->frames);
-		
-		// allocate a single storage buffer for all the water displacement textures
-		size_t frame_size = kRXCardViewportSize.width * kRXCardViewportSize.height * sizeof(uint32_t);
-		sfxe->frame_storage = malloc(frame_size * sfxe->nframes);
-		
-		// generate the displacement textures by interpreting the water animation microcode
-		uint32_t* offset_table = reinterpret_cast<uint32_t*>(BUFFER_OFFSET(sfxeData, sfxeRecord->offset_table));
-		for (uint32_t frame = 0; frame < sfxeRecord->frame_count; frame++) {
-			uint16_t* sfxeProgram = reinterpret_cast<uint16_t*> (BUFFER_OFFSET(sfxeData, CFSwapInt32BigToHost(offset_table[frame])));
-			uint8_t* frame_texture = reinterpret_cast<uint8_t*> (BUFFER_OFFSET(sfxe->frame_storage, frame_size * frame));
-			
-			// BGRA
-			frame_texture[0] = 0;
-			frame_texture[1] = INT8_MAX;
-			frame_texture[2] = INT8_MAX;
-			frame_texture[3] = 0;
-			for (GLsizei i = 4; i < (kRXCardViewportSize.width << 2); i+=4) {
-				frame_texture[i] = frame_texture[0];
-				frame_texture[i + 1] = frame_texture[1];
-				frame_texture[i + 2] = frame_texture[2];
-				frame_texture[i + 3] = frame_texture[3];
-			}
-			
-			GLint currentRow = 1;
-			GLsizei rowsAvailable = 1;
-			GLsizei rowsToCopy = kRXCardViewportSize.height - 1;
-			while (rowsToCopy > 0) {
-				rowsAvailable = MIN(rowsAvailable, rowsToCopy);
-				memcpy(frame_texture + ((currentRow * kRXCardViewportSize.width) << 2), frame_texture, (rowsAvailable * kRXCardViewportSize.width) << 2);
-				rowsToCopy -= rowsAvailable;
-				currentRow += rowsAvailable;
-				rowsAvailable <<= 1;
-			}
-#if defined(DEBUG)
-			for (GLint y = 0; y < kRXCardViewportSize.height; y++) {
-				for (GLint x = 0; x < kRXCardViewportSize.width; x++) {
-					size_t p = (y*kRXCardViewportSize.width + x) << 2;
-					assert(frame_texture[p] == 0);
-					assert(frame_texture[p + 1] == INT8_MAX);
-					assert(frame_texture[p + 2] == INT8_MAX);
-					assert(frame_texture[p + 3] == 0);
-				}
-			}
-#endif
-			
-			int16_t dy = static_cast<int16_t>(kRXCardViewportSize.height - sfxeRecord->top - 1);
-			uint16_t command = CFSwapInt16BigToHost(*sfxeProgram);
-			while (command != 4) {
-				if (command == 1)
-					dy--;
-				else if (command == 3) {
-					int16_t dx = static_cast<int16_t>(CFSwapInt16BigToHost(*(sfxeProgram + 1)));
-					int16_t sx = static_cast<int16_t>(CFSwapInt16BigToHost(*(sfxeProgram + 2)));
-					int16_t sy = static_cast<int16_t>(kRXCardViewportSize.height - CFSwapInt16BigToHost(*(sfxeProgram + 3)) - 1);
-					int16_t rows = static_cast<int16_t>(CFSwapInt16BigToHost(*(sfxeProgram + 4)));
-					sfxeProgram += 4;
-					
-					assert(sx >= 0);
-					assert(sx < kRXCardViewportSize.width);
-					assert(sy >= 0);
-					assert(sy < kRXCardViewportSize.height);
-					
-					assert(dx >= 0);
-					assert(dx < kRXCardViewportSize.width);
-					assert(dy >= 0);
-					assert(dy < kRXCardViewportSize.height);
-					assert((dx + rows) <= kRXCardViewportSize.width);
-					
-					int16_t delta_y = sy - dy;
-					int16_t delta_x = sx - dx;
-					
-					assert(delta_x <= INT8_MAX);
-					assert(delta_x > INT8_MIN);
-					
-					assert(delta_y <= INT8_MAX);
-					assert(delta_y > INT8_MIN);
-					
-					size_t row_p = dy*kRXCardViewportSize.width;
-					for (int16_t r = dx; r < dx + rows; r++) {
-						size_t p = (row_p + r) << 2;
+		// alias the offset table for convenience
+		sfxe->offsets = (uint32_t*)BUFFER_OFFSET(sfxe->record, sfxe->record->offset_table);
+
 #if defined(__LITTLE_ENDIAN__)
-						assert(frame_texture[p + 3] == 0);
-						assert(frame_texture[p + 2] == INT8_MAX);
-						assert(frame_texture[p + 1] == INT8_MAX);
-						
-						frame_texture[p + 3] = UINT8_MAX;
-						frame_texture[p + 2] = static_cast<uint8_t>(delta_x + INT8_MAX);
-						frame_texture[p + 1] = static_cast<uint8_t>(delta_y + INT8_MAX);
-#else
-						assert(frame_texture[p] == 0);
-						assert(frame_texture[p + 1] == INT8_MAX);
-						assert(frame_texture[p + 2] == INT8_MAX);
-						
-						frame_texture[p] = UINT8_MAX;
-						frame_texture[p + 1] = static_cast<uint8_t>(delta_x + INT8_MAX);
-						frame_texture[p + 2] = static_cast<uint8_t>(delta_y + INT8_MAX);
-#endif
-					}
-				} else
+		// byte swap the offsets and the program
+		for (uint16_t fi = 0; fi < sfxe->record->frame_count; fi++) {
+			sfxe->offsets[fi] = CFSwapInt32(sfxe->offsets[fi]);
+			
+			uint16_t* mp = (uint16_t*)BUFFER_OFFSET(sfxe->record, sfxe->offsets[fi]);
+			*mp = CFSwapInt16(*mp);
+			while (*mp != 4) {
+				if (*mp == 3) {
+					mp[1] = CFSwapInt16(mp[1]);
+					mp[2] = CFSwapInt16(mp[2]);
+					mp[3] = CFSwapInt16(mp[3]);
+					mp[4] = CFSwapInt16(mp[4]);
+					mp += 4;
+				} else if (*mp != 1)
 					abort();
 				
-				sfxeProgram++;
-				command = CFSwapInt16BigToHost(*sfxeProgram);
+				mp++;
+				*mp = CFSwapInt16(*mp);
 			}
 			
-			// bind the corresponding texture object
-			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, sfxe->frames[frame]); glReportError();
-			
-			// texture parameters
-			glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
-			glReportError();
-			
-			// specify the texture storage buffer as a texture range to encourage the framework to make a single mapping for the entire buffer
-			glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, frame_size * sfxe->nframes, sfxe->frame_storage);
-			
-			// specify the texture's image
-			glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, frame_texture); glReportError();
+			assert(mp <= (uint16_t*)BUFFER_OFFSET(sfxe->record, sfxeLength));
 		}
-		
-		free(sfxeData);
+#endif
 	}
 	
 	// don't need the FLST data anymore
@@ -801,11 +697,6 @@ struct rx_card_picture_record {
 			glDeleteBuffers(1, &_pictureVertexArrayBuffer);
 		if (_pictureTextures)
 			glDeleteTextures(_pictureCount, _pictureTextures);
-		
-		if (_sfxes) {
-			for (uint16_t i = 0; i < _sfxeCount; i++)
-				glDeleteTextures(_sfxes[i].nframes, _sfxes[i].frames);
-		}
 
 		// objects have gone away, so we flush
 		glFlush();
@@ -834,10 +725,9 @@ struct rx_card_picture_record {
 	// sfxe
 	if (_sfxes) {
 		for (uint16_t i = 0; i < _sfxeCount; i++) {
-			delete[] _sfxes[i].frames;
-			free(_sfxes[i].frame_storage);
+			free(_sfxes[i].record);
 		}
-		delete[] _sfxes;
+		free(_sfxes);
 	}
 	
 	// misc resources

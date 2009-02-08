@@ -53,11 +53,8 @@ CF_INLINE rx_rect_t RXRectMake(GLint x, GLint y, GLsizei width, GLsizei height) 
 }
 
 struct rx_card_sfxe {
-	GLsizei nframes;
-	GLuint* frames;
-	void* frame_storage;
-	NSRect roi;
-	double fps;
+	struct rx_sfxe_record* record;
+	uint32_t* offsets;
 };
 typedef struct rx_card_sfxe rx_card_sfxe;
 

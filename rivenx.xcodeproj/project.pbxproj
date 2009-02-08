@@ -18,7 +18,6 @@
 		3114FE980D58C8AE0099AF69 /* Editions.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3114FE960D58C8AE0099AF69 /* Editions.strings */; };
 		3114FF3C0D58DF0A0099AF69 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		3114FFDB0D58ED280099AF69 /* ImagePreviewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FFDA0D58ED280099AF69 /* ImagePreviewCell.m */; };
-		31154B510B4990E9002FCEDD /* Shaders in Resources */ = {isa = PBXBuildFile; fileRef = 31154B4D0B4990E9002FCEDD /* Shaders */; };
 		311B7C840BCC4D0500653D2D /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
 		311EDC9A0EF59CCD002CAB47 /* RXDynamicPicture.m in Sources */ = {isa = PBXBuildFile; fileRef = 311EDC990EF59CCD002CAB47 /* RXDynamicPicture.m */; };
 		311FD39208C03AF20045BE11 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311FD39108C03AF20045BE11 /* Cocoa.framework */; };
@@ -92,6 +91,7 @@
 		31495A750E327EB100E49C83 /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31DCF73208CB855C00E351D9 /* QuickTime.framework */; };
 		315017990CC0533E001BA929 /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		315017FA0CC06872001BA929 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
+		31506B250F3E940800FAC3DB /* Shaders in Copy Shaders */ = {isa = PBXBuildFile; fileRef = 31154B4D0B4990E9002FCEDD /* Shaders */; };
 		315090200E035945004EE6F3 /* RXSimpleCardDescriptor_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 3150901F0E035945004EE6F3 /* RXSimpleCardDescriptor_test.m */; };
 		3153E7F40DE5ABC900DF63B8 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3153E7F30DE5ABC900DF63B8 /* Carbon.framework */; };
 		3153ED6409A3ED12002E1149 /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
@@ -278,6 +278,17 @@
 				31863BE009919B29001A4A42 /* FScript.framework in Copy Frameworks */,
 			);
 			name = "Copy Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		31506B2A0F3E941000FAC3DB /* Copy Shaders */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+				31506B250F3E940800FAC3DB /* Shaders in Copy Shaders */,
+			);
+			name = "Copy Shaders";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		31DBCAE40F2BEB77004B9277 /* CopyFiles */ = {
@@ -1280,6 +1291,7 @@
 				31F3093008BE43C100417394 /* Sources */,
 				31F3093108BE43C100417394 /* Frameworks */,
 				31F3092F08BE43C100417394 /* Resources */,
+				31506B2A0F3E941000FAC3DB /* Copy Shaders */,
 				314EF26409E45958002124D5 /* Copy Frameworks */,
 				314A02EE0B6E53D5003E92A1 /* bzrversion */,
 				31D109DE0E7C914100220991 /* set_appcast_url */,
@@ -1386,7 +1398,6 @@
 				3155481008C52A1400A2AA7A /* Extras.plist in Resources */,
 				313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */,
 				31EAC32B08FF38940018D8DA /* rivenx.icns in Resources */,
-				31154B510B4990E9002FCEDD /* Shaders in Resources */,
 				31B741C10B8414EA00D1A247 /* Cyan Worlds.mp4 in Resources */,
 				31F0DD4B0D3A7682000FBB5F /* EngineVariables.plist in Resources */,
 				31F1BEA60D3B03D000CFE301 /* about.png in Resources */,
