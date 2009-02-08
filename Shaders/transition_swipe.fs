@@ -32,7 +32,7 @@ void main() {
 	vec2 destinationSampleCoords = getDestinationSampleCoords();
 	vec2 card_coord = gl_FragCoord.xy - margin;
 	
-    vec4 fragmentColor;
+	vec4 fragmentColor;
 #if RX_DIRECTION == 0
 	if (card_coord.x >= (1.0 - t) * cardSize.x)
 		fragmentColor = texture2DRect(destination, destinationSampleCoords);
@@ -41,8 +41,7 @@ void main() {
 		fragmentColor = texture2DRect(destination, destinationSampleCoords);
 #elif RX_DIRECTION == 2
 	if (card_coord.y < t * cardSize.y)
-		//fragmentColor = texture2DRect(destination, destinationSampleCoords);
-		fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+		fragmentColor = texture2DRect(destination, destinationSampleCoords);
 #elif RX_DIRECTION == 3
 	if (card_coord.y >= (1.0 - t) * cardSize.y)
 		fragmentColor = texture2DRect(destination, destinationSampleCoords);
