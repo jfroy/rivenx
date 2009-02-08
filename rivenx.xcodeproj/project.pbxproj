@@ -22,6 +22,16 @@
 		311EDC9A0EF59CCD002CAB47 /* RXDynamicPicture.m in Sources */ = {isa = PBXBuildFile; fileRef = 311EDC990EF59CCD002CAB47 /* RXDynamicPicture.m */; };
 		311FD39208C03AF20045BE11 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311FD39108C03AF20045BE11 /* Cocoa.framework */; };
 		311FD3DB08C0426C0045BE11 /* cocoa_main.m in Sources */ = {isa = PBXBuildFile; fileRef = 311FD3DA08C0426C0045BE11 /* cocoa_main.m */; };
+		31200FB40F3F8443006E6EF7 /* AUOutputBL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B810F03F495006EFF93 /* AUOutputBL.cpp */; };
+		31200FB50F3F8443006E6EF7 /* CAAudioChannelLayout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B830F03F495006EFF93 /* CAAudioChannelLayout.cpp */; };
+		31200FB60F3F8444006E6EF7 /* CAAudioChannelLayoutObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B840F03F495006EFF93 /* CAAudioChannelLayoutObject.cpp */; };
+		31200FB70F3F8445006E6EF7 /* CAAudioUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14BD60F03F568006EFF93 /* CAAudioUnit.cpp */; };
+		31200FB80F3F8445006E6EF7 /* CAComponent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14BF20F03F7D3006EFF93 /* CAComponent.cpp */; };
+		31200FB90F3F8446006E6EF7 /* CAComponentDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C070F03F912006EFF93 /* CAComponentDescription.cpp */; };
+		31200FBA0F3F8447006E6EF7 /* CADebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C010F03F8EC006EFF93 /* CADebugger.cpp */; };
+		31200FBB0F3F8447006E6EF7 /* CAGuard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B960F03F527006EFF93 /* CAGuard.cpp */; };
+		31200FBC0F3F8448006E6EF7 /* CAXException.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B930F03F51E006EFF93 /* CAXException.cpp */; };
+		31200FC00F3F8495006E6EF7 /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31200FBF0F3F8495006E6EF7 /* CAStreamBasicDescription.cpp */; };
 		31225ABE08C4216D0055628F /* RXStack.m in Sources */ = {isa = PBXBuildFile; fileRef = 31225ABD08C4216D0055628F /* RXStack.m */; };
 		31225AC408C421790055628F /* RXCard.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31225AC308C421790055628F /* RXCard.mm */; };
 		3124F2A909C36792009BA3CF /* RXSoundGroup.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3124F2A609C36782009BA3CF /* RXSoundGroup.mm */; };
@@ -332,6 +342,7 @@
 		311EDC990EF59CCD002CAB47 /* RXDynamicPicture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXDynamicPicture.m; sourceTree = "<group>"; };
 		311FD39108C03AF20045BE11 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		311FD3DA08C0426C0045BE11 /* cocoa_main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = cocoa_main.m; sourceTree = "<group>"; };
+		31200FBF0F3F8495006E6EF7 /* CAStreamBasicDescription.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CAStreamBasicDescription.cpp; sourceTree = "<group>"; };
 		31225ABC08C4216D0055628F /* RXStack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXStack.h; sourceTree = "<group>"; };
 		31225ABD08C4216D0055628F /* RXStack.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXStack.m; sourceTree = "<group>"; };
 		31225AC208C421790055628F /* RXCard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCard.h; sourceTree = "<group>"; };
@@ -898,6 +909,7 @@
 				31A14C070F03F912006EFF93 /* CAComponentDescription.cpp */,
 				31A14C010F03F8EC006EFF93 /* CADebugger.cpp */,
 				31A14B960F03F527006EFF93 /* CAGuard.cpp */,
+				31200FBF0F3F8495006E6EF7 /* CAStreamBasicDescription.cpp */,
 				31A14B930F03F51E006EFF93 /* CAXException.cpp */,
 			);
 			path = PublicUtility;
@@ -1512,6 +1524,16 @@
 				3199275B0D96AE4D00ED1B47 /* RXLogCenter.m in Sources */,
 				3199276D0D96AFCE00ED1B47 /* BZFSUtilities.m in Sources */,
 				319927730D96B07200ED1B47 /* RXThreadUtilities.m in Sources */,
+				31200FB40F3F8443006E6EF7 /* AUOutputBL.cpp in Sources */,
+				31200FB50F3F8443006E6EF7 /* CAAudioChannelLayout.cpp in Sources */,
+				31200FB60F3F8444006E6EF7 /* CAAudioChannelLayoutObject.cpp in Sources */,
+				31200FB70F3F8445006E6EF7 /* CAAudioUnit.cpp in Sources */,
+				31200FB80F3F8445006E6EF7 /* CAComponent.cpp in Sources */,
+				31200FB90F3F8446006E6EF7 /* CAComponentDescription.cpp in Sources */,
+				31200FBA0F3F8447006E6EF7 /* CADebugger.cpp in Sources */,
+				31200FBB0F3F8447006E6EF7 /* CAGuard.cpp in Sources */,
+				31200FBC0F3F8448006E6EF7 /* CAXException.cpp in Sources */,
+				31200FC00F3F8495006E6EF7 /* CAStreamBasicDescription.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1769,23 +1791,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				GCC_ALTIVEC_EXTENSIONS = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					DEBUG,
-					VERBOSE,
-				);
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
 				PREBINDING = NO;
 				PRODUCT_NAME = rxaudio_test;
 				STRIP_INSTALLED_PRODUCT = NO;
-				WARNING_CFLAGS = "-Wall";
-				ZERO_LINK = NO;
 			};
 			name = Debug;
 		};
@@ -1795,11 +1808,10 @@
 				COPY_PHASE_STRIP = YES;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = "$(HOME)/bin";
+				MACH_O_TYPE = mh_execute;
 				PREBINDING = NO;
 				PRODUCT_NAME = rxaudio_test;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -2051,6 +2063,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
 					CoreAudio_StopOnFailure,
 					"DEBUG=2",
 					"DEBUG_GL=1",
@@ -2261,23 +2274,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				GCC_ALTIVEC_EXTENSIONS = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					DEBUG,
-					VERBOSE,
-				);
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
 				PREBINDING = NO;
 				PRODUCT_NAME = rxaudio_test;
 				STRIP_INSTALLED_PRODUCT = NO;
-				WARNING_CFLAGS = "-Wall";
-				ZERO_LINK = NO;
 			};
 			name = "Debug Release";
 		};
@@ -2348,6 +2352,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
 					CoreAudio_StopOnFailure,
 					"DEBUG=1",
 				);

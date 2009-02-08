@@ -9,6 +9,7 @@
 #if !defined(_RXAudioRenderer_)
 #define _RXAudioRenderer_
 
+#include <stdint.h>
 #include <vector>
 
 #include <CoreFoundation/CoreFoundation.h>
