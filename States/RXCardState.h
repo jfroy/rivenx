@@ -36,7 +36,6 @@ struct rx_card_state_render_state {
 	
 	BOOL refresh_static;
 	NSMutableArray* pictures;
-	NSMutableArray* volatile movies;
 	struct rx_sfxe_render_state water_fx;
 	
 	RXTransition* transition;
@@ -56,8 +55,9 @@ struct rx_transition_program {
 	void* _render_states_buffer;
 	struct rx_card_state_render_state* volatile _front_render_state;
 	struct rx_card_state_render_state* volatile _back_render_state;
-	OSSpinLock _renderLock;
-	OSSpinLock _state_swap_lock;
+	NSMutableArray* _active_movies;
+	OSSpinLock volatile _renderLock;
+	OSSpinLock volatile _state_swap_lock;
 	
 	// mouse and hotspots handling
 	NSRect _mouseVector;
@@ -92,14 +92,13 @@ struct rx_transition_program {
 	struct rx_transition_program _swipe[4];
 	
 	// rendering
-	GLuint _cardRenderVAO;
-	GLuint _cardRenderVBO;
-	
 	GLuint _cardCompositeVAO;
 	GLuint _cardCompositeVBO;
 	
-	GLuint _fbos[2];
-	GLuint _textures[3];
+	GLuint _fbos[1];
+	GLuint _textures[1];
+	GLuint _water_buffer;
+	void* _water_readback_buffer;
 	
 	GLuint _waterProgram;
 	GLuint _single_rect_texture_program;
@@ -114,7 +113,6 @@ struct rx_transition_program {
 	NSRect _inventoryHotspotRegions[3];
 	uint16_t _inventoryDestinationCardID[3];
 	GLuint _inventoryTextures[3];
-	GLuint _inventoryTextureBuffer;
 	
 	uint32_t _inventoryItemCount;
 	float _inventoryAlphaFactor;

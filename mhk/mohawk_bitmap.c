@@ -13,8 +13,6 @@
 
 #include "mohawk_bitmap.h"
 
-#define BUFFER_OFFSET(buffer, bytes) ((uint8_t *)buffer + (bytes))
-
 #define REFERENCE_CODE 0
 #define READ_BUFFER_SIZE 0x8000
 

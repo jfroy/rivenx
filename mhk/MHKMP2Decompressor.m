@@ -17,8 +17,6 @@
 #import "MHKErrors.h"
 #import "PHSErrorMacros.h"
 
-#define BUFFER_OFFSET(buffer, bytes) ((uint8_t *)buffer + (bytes))
-
 #define READ_BUFFER_SIZE 0x2000
 #define MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET 1152
 #define FRAME_SKIP_FUDGE 481
