@@ -1,5 +1,5 @@
 //
-//  RXCardExecutionProtocol.h
+//  RXScriptEngineProtocol.h
 //  rivenx
 //
 //  Created by Jean-Francois Roy on 05/05/2008.
@@ -9,10 +9,10 @@
 #import <Foundation/Foundation.h>
 
 #import "RXHotspot.h"
-#import "RXRivenScriptProtocol.h"
+#import "RXCardProtocols.h"
 
-@protocol RXCardExecutionProtocol
-- (void)setRivenScriptHandler:(id<RXRivenScriptProtocol>)handler;
+@protocol RXScriptEngineProtocol <NSObject>
+- (void)setCard:(RXCard*)c;
 
 - (void)prepareForRendering;
 - (void)startRendering;
@@ -23,4 +23,9 @@
 - (void)mouseExitedHotspot:(RXHotspot*)hotspot;
 - (void)mouseDownInHotspot:(RXHotspot*)hotspot;
 - (void)mouseUpInHotspot:(RXHotspot*)hotspot;
+@end
+
+
+@protocol RXScriptEngineControllerProtocol <RXCardEventsHandlerProtocol, RXCardRendererProtocol>
+- (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;
 @end

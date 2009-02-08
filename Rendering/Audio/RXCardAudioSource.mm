@@ -22,7 +22,7 @@ static OSStatus RXCardAudioSourceRenderCallback(void							*inRefCon,
 	return source->Render(ioActionFlags, inTimeStamp, inNumberFrames, ioData);
 }
 
-CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float gain, float pan, bool loop) throw(CAXException) : _decompressor(decompressor), _gain(gain), _pan(pan), _loop(loop)
+CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float gain, float pan, bool loop) throw(CAXException) : _decompressor(decompressor), _gain(1.0), _pan(pan), _loop(loop)
 {
 	pthread_mutex_init(&_taskMutex, NULL);
 	
@@ -69,7 +69,8 @@ CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float 
 		}
 		
 		_loopBufferReadPointer = _loopBuffer;
-	} else _loopBuffer = 0;
+	} else
+		_loopBuffer = 0;
 }
 
 CardAudioSource::~CardAudioSource() throw(CAXException) {
@@ -80,7 +81,8 @@ CardAudioSource::~CardAudioSource() throw(CAXException) {
 	[_decompressor release];
 	[_decompressionBuffer release];
 	
-	if (_loopBuffer) free(_loopBuffer);
+	if (_loopBuffer)
+		free(_loopBuffer);
 	
 	pthread_mutex_destroy(&_taskMutex);
 }
@@ -88,8 +90,14 @@ CardAudioSource::~CardAudioSource() throw(CAXException) {
 OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw() {	
 	// if there is no decompressor or decompression buffer, or we are disabled, render silence
 	if (!Enabled() || !rendererPtr || !_decompressor || !_decompressionBuffer) {
-		for (UInt32 bufferIndex = 0; bufferIndex < ioData->mNumberBuffers; bufferIndex++) bzero(ioData->mBuffers[bufferIndex].mData, ioData->mBuffers[bufferIndex].mDataByteSize);
+		for (UInt32 bufferIndex = 0; bufferIndex < ioData->mNumberBuffers; bufferIndex++)
+			bzero(ioData->mBuffers[bufferIndex].mData, ioData->mBuffers[bufferIndex].mDataByteSize);
 		*ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
+#if defined(DEBUG) && DEBUG > 2
+			CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because disabled, no renderer, no decompressor or not decompression buffer"), this);
+			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+			CFRelease(rxar_debug);
+#endif
 		return noErr;
 	}
 	
@@ -102,8 +110,15 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 	
 	// if there are no samples available, render silence
 	if (availableBytes == 0) {
-		for (UInt32 bufferIndex = 0; bufferIndex < ioData->mNumberBuffers; bufferIndex++) bzero(ioData->mBuffers[bufferIndex].mData, ioData->mBuffers[bufferIndex].mDataByteSize);
+		for (UInt32 bufferIndex = 0; bufferIndex < ioData->mNumberBuffers; bufferIndex++)
+			bzero(ioData->mBuffers[bufferIndex].mData, ioData->mBuffers[bufferIndex].mDataByteSize);
 		*ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
+		
+#if defined(DEBUG) && DEBUG > 2
+			CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of sample starvation"), this);
+			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+			CFRelease(rxar_debug);
+#endif
 		return noErr;
 	}
 	
@@ -121,7 +136,8 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 }
 
 void CardAudioSource::RenderTask() throw() {
-	if (!rendererPtr || !_decompressor || !_decompressionBuffer) return;
+	if (!rendererPtr || !_decompressor || !_decompressionBuffer)
+		return;
 	pthread_mutex_lock(&_taskMutex);
 	
 	/*	This function is tricky. It has to deal with two issues:
@@ -144,7 +160,8 @@ void CardAudioSource::RenderTask() throw() {
 		// stage 1
 		assert(_loopBufferEnd >= _loopBufferReadPointer);
 		UInt32 bytesToCopy = _loopBufferEnd - _loopBufferReadPointer;
-		if (bytesToCopy > bytesThisTask) bytesToCopy = bytesThisTask;
+		if (bytesToCopy > bytesThisTask)
+			bytesToCopy = bytesThisTask;
 		
 		if (bytesToCopy > 0) {
 			memcpy(writeBuffer, _loopBufferReadPointer, bytesToCopy);
@@ -154,7 +171,8 @@ void CardAudioSource::RenderTask() throw() {
 		
 		// stage 2
 		assert(_loopBufferReadPointer <= _loopBufferEnd);
-		if (_loopBufferReadPointer == _loopBufferEnd) _loopBufferReadPointer = _loopBuffer;
+		if (_loopBufferReadPointer == _loopBufferEnd)
+			_loopBufferReadPointer = _loopBuffer;
 		
 		// stage 3 (we didn't have enough bytes to fill the ring buffer)
 		if (bytesToCopy < bytesThisTask) {
@@ -251,8 +269,14 @@ void CardAudioSource::PopulateGraph() throw(CAXException) {
 	XThrowIfError(outputUnit.SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &input, sizeof(input)), "CAAudioUnit::SetProperty");
 	
 	// set the gain and pan
-	rendererPtr->SetSourceGain(*this, _gain);
+	rendererPtr->SetSourceGain(*this, 1.0);
 	rendererPtr->SetSourcePan(*this, _pan);
+	
+#if defined(DEBUG) && DEBUG > 1
+	CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> populated graph (gain: %f, pan: %f)"), this, 1.0, _pan);
+	RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+	CFRelease(rxar_debug);
+#endif
 }
 
 void CardAudioSource::HandleDetach() throw(CAXException) {

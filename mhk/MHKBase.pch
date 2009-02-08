@@ -7,6 +7,9 @@
  *
  */
 
+#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)buffer + (bytes))
+#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)buffer - (bytes))
+
 // FIXME: must include system's mach/machine.h because the 10.5 SDK has been seen with an empty version of that file
 #include </usr/include/mach/machine.h>
 

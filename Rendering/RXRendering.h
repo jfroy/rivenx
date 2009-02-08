@@ -53,11 +53,8 @@ CF_INLINE rx_rect_t RXRectMake(GLint x, GLint y, GLsizei width, GLsizei height) 
 }
 
 struct rx_card_sfxe {
-	GLsizei nframes;
-	GLuint* frames;
-	void* frame_storage;
-	NSRect roi;
-	double fps;
+	struct rx_sfxe_record* record;
+	uint32_t* offsets;
 };
 typedef struct rx_card_sfxe rx_card_sfxe;
 
@@ -67,6 +64,8 @@ extern const rx_size_t kRXCardViewportSize;
 extern const rx_point_t kRXCardViewportOriginOffset;
 
 extern const double kRXTransitionDuration;
+
+extern const float kRXSoundGainDivisor;
 
 __END_DECLS
 
@@ -134,6 +133,14 @@ CF_INLINE rx_rect_t RXEffectiveRendererFrame() {
 
 CF_INLINE id <RXWorldViewProtocol> RXGetWorldView() {
 	return g_worldView;
+}
+
+CF_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) {
+	return NSMakePoint((float)x, (float)y);
+}
+
+CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) {
+	return NSMakeRect((float)left, (float)(kRXCardViewportSize.height - bottom), (float)(right - left), (float)(bottom - top));
 }
 
 __END_DECLS

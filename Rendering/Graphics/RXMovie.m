@@ -402,10 +402,10 @@
 		}
 	} else if (_imageBuffer) {
 		// bind the correct texture object
-		// FIXME: ONLY TEXTURE_RECTANGLE_ARB WILL WORK WITH THE CARD SHADER
-		if (CFGetTypeID(_imageBuffer) == CVOpenGLTextureGetTypeID())
+		if (CFGetTypeID(_imageBuffer) == CVOpenGLTextureGetTypeID()) {
+			assert(CVOpenGLTextureGetTarget(_imageBuffer) == GL_TEXTURE_RECTANGLE_ARB);
 			glBindTexture(CVOpenGLTextureGetTarget(_imageBuffer), CVOpenGLTextureGetName(_imageBuffer));
-		else
+		} else
 			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture);
 		glReportError();
 	}

@@ -6,18 +6,16 @@
 //	Copyright 2005 MacStorm. All rights reserved.
 //
 
-#import "RXWorldView.h"
-#import "RXWorld.h"
+#import "Engine/RXWorld.h"
 
-#import "GLShaderProgramManager.h"
+#import "Rendering/Audio/RXAudioRenderer.h"
+#import "Rendering/Graphics/RXDynamicPicture.h"
+#import "Rendering/Graphics/RXWorldView.h"
+#import "Rendering/Graphics/GL/GLShaderProgramManager.h"
 
-#import "RXCardState.h"
-#import "RXCreditsState.h"
-#import "RXCyanMovieState.h"
-
-#import "NSFontAdditions.h"
-
-#import "RXAudioRenderer.h"
+#import "States/RXCardState.h"
+#import "States/RXCreditsState.h"
+#import "States/RXCyanMovieState.h"
 
 
 @implementation RXWorld (RXWorldRendering)
@@ -93,6 +91,9 @@
 	
 	// initialize the state compositor
 	_stateCompositor = [[RXStateCompositor alloc] init];
+	
+	// initialize the dynamic picture unpack buffer
+	[RXDynamicPicture sharedDynamicPictureUnpackBuffer];
 	
 	// if we're in fullscreen mode, hide the menu bar now
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"])

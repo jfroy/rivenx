@@ -14,30 +14,25 @@
 #import "Base/RXTiming.h"
 
 #import "RXCardDescriptor.h"
-#import "RXCardExecutionProtocol.h"
+#import "RXCoreStructures.h"
 #import "RXHotspot.h"
-#import "RXRivenScriptProtocol.h"
+#import "RXCardProtocols.h"
 
 #import "Rendering/RXRendering.h"
-#import "Rendering/Audio/RXSoundGroup.h"
 
 
-@interface RXCard : NSObject <RXCardExecutionProtocol> {
+@interface RXCard : NSObject {
 	RXCardDescriptor* _descriptor;
 	MHKArchive* _archive;
 	
-	id <RXRivenScriptProtocol> _scriptHandler;
-	
+	// scripts
 	NSDictionary* _cardEvents;
-	BOOL _disableScriptLogging;
 	
 	// hotspots
 	NSMutableArray* _hotspots;
 	NSMapTable* _hotspotsIDMap;
 	void* _blstData;
-	void* _hotspotControlRecords;
-	NSMutableArray* _activeHotspots;
-	OSSpinLock _activeHotspotsLock;
+	struct rx_blst_record* _hotspotControlRecords;
 	
 	// pictures
 	GLuint _pictureCount;
@@ -45,40 +40,39 @@
 	GLuint _pictureVAO;
 	GLuint* _pictureTextures;
 	void* _pictureTextureStorage;
-	NSMapTable* _dynamicPictureMap;
-	
-	// special effects
-	uint16_t _sfxeCount;
-	rx_card_sfxe* _sfxes;
 	
 	// movies
 	NSMutableArray* _movies;
 	uint16_t* _mlstCodes;
-	semaphore_t _movieLoadSemaphore;
-	semaphore_t _moviePlaybackSemaphore;
 	
-	// sounds
+	// sound groups
 	NSMutableArray* _soundGroups;
-	RXSoundGroup* _synthesizedSoundGroup;
 	
-	// rendering
-	BOOL _renderStateSwapsEnabled;
-	
-	BOOL _didActivatePLST;
-	BOOL _didActivateSLST;
-	
-	// program execution
-	uint32_t _programExecutionDepth;
-	uint16_t _lastExecutedProgramOpcode;
-	BOOL _queuedAPushTransition;
-	BOOL _did_hide_mouse;
-	
-	// external commands
-	NSMapTable* _externalCommandLookup;
+	// special effects
+	uint16_t _sfxeCount;
+	rx_card_sfxe* _sfxes;
 }
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;
 
 - (RXCardDescriptor*)descriptor;
+- (MHKArchive*)archive;
+
+- (NSDictionary*)events;
+- (NSArray*)hotspots;
+- (NSMapTable*)hotspotsIDMap;
+- (struct rx_blst_record*)hotspotControlRecords;
+
+- (GLuint)pictureCount;
+- (GLuint)pictureVAO;
+- (GLuint*)pictureTextures;
+
+- (NSArray*)movies;
+- (uint16_t*)movieCodes;
+- (NSArray*)soundGroups;
+
+- (rx_card_sfxe*)sfxes;
+
+- (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes;
 
 @end

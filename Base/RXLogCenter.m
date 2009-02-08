@@ -77,6 +77,14 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 	}
 	fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
 	[_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingBase encoding:NSASCIIStringEncoding]];
+	
+	fd = open([[_logsBase stringByAppendingPathComponent:@"Audio.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
+	if (fd == -1) {
+		error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
+		@throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	}
+	fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
+	[_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingAudio encoding:NSASCIIStringEncoding]];
 	 
 	// open a generic log file
 	_genericLogFD = open([[_logsBase stringByAppendingPathComponent:@"Riven X.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);

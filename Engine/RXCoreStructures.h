@@ -72,7 +72,7 @@ struct rx_flst_record {
 	uint16_t u0;
 };
 
-struct rx_fsxe_record {
+struct rx_sfxe_record {
 	uint16_t magic;
 	uint16_t frame_count;
 	uint32_t offset_table;
