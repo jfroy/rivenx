@@ -29,10 +29,6 @@ public:
 	CardAudioSource(id <MHKAudioDecompression> decompressor, float gain, float pan, bool loop) throw(CAXException);
 	virtual ~CardAudioSource() throw(CAXException);
 	
-	// looping
-	inline bool Looping() const throw() {return _loop;}
-	inline void SetLooping(bool loop) throw() {_loop = loop;}
-	
 	// rendering
 	OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw();
 	void RenderTask() throw();
@@ -44,6 +40,14 @@ public:
 	// nominal gain
 	inline float NominalGain() const throw() {return _gain;}
 	inline void SetNominalGain(float g) throw() {_gain = g;}
+	
+	// nominal pan
+	inline float NominalPan() const throw() {return _pan;}
+	inline void SetNominalPan(float p) throw() {_pan = p;}
+	
+	// looping
+	inline bool Looping() const throw() {return _loop;}
+	inline void SetLooping(bool loop) throw() {_loop = loop;}
 	
 protected:
 	virtual void PopulateGraph() throw(CAXException);

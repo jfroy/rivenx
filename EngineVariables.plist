@@ -10,7 +10,7 @@
 		<real>1</real>
 		<key>hotspots_info</key>
 		<integer>1</integer>
-		<key>audioRamps</key>
+		<key>audio_ramps</key>
 		<integer>1</integer>
 		<key>mouse_info</key>
 		<integer>1</integer>

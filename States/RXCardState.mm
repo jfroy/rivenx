@@ -44,8 +44,8 @@ static rx_post_flush_tasks_dispatch_t picture_flush_task_dispatch;
 static rx_render_dispatch_t _movieRenderDispatch;
 static rx_post_flush_tasks_dispatch_t _movieFlushTasksDispatch;
 
-static const double RX_AUDIO_FADE_DURATION = 2.0;
-static const double RX_AUDIO_FADE_DURATION_PLUS_POINT_FIVE = RX_AUDIO_FADE_DURATION + 0.5;
+static const double RX_AUDIO_RAMP_DURATION = 2.0;
+static const double RX_AUDIO_RAMP_DURATION__PLUS_POINT_FIVE = RX_AUDIO_RAMP_DURATION + 0.5;
 
 static const GLuint RX_CARD_DYNAMIC_RENDER_INDEX = 0;
 
@@ -95,7 +95,7 @@ static void RXCardAudioSourceFadeInApplier(const void* value, void* context) {
 	RX::AudioRenderer* renderer = reinterpret_cast<RX::AudioRenderer*>(context);
 	RX::CardAudioSource* source = const_cast<RX::CardAudioSource*>(reinterpret_cast<const RX::CardAudioSource*>(value));
 	renderer->SetSourceGain(*source, 0.0f);
-	renderer->RampSourceGain(*source, source->NominalGain(), RX_AUDIO_FADE_DURATION);
+	renderer->RampSourceGain(*source, source->NominalGain(), RX_AUDIO_RAMP_DURATION);
 }
 
 static void RXCardAudioSourceEnableApplier(const void* value, void* context) {
@@ -604,7 +604,7 @@ init_failure:
 	
 	NSEnumerator* soundEnum = [_activeSounds objectEnumerator];
 	while ((sound = [soundEnum nextObject]))
-		if (sound->detachTimestampValid && RXTimingTimestampDelta(now, sound->rampStartTimestamp) >= RX_AUDIO_FADE_DURATION_PLUS_POINT_FIVE)
+		if (sound->detachTimestampValid && RXTimingTimestampDelta(now, sound->rampStartTimestamp) >= RX_AUDIO_RAMP_DURATION__PLUS_POINT_FIVE)
 			[soundsToRemove addObject:sound];
 	
 	soundEnum = [_activeDataSounds objectEnumerator];
@@ -714,22 +714,23 @@ init_failure:
 			// UPDATE SOUND
 			assert(active_sound->source);
 			
-			// update gain and pan
+			// update the sound's gain and pan (this does not affect the source)
 			active_sound->gain = 1.0f;//sound->gain;
 			active_sound->pan = sound->pan;
 			
 			// make sure the sound doesn't have a valid detach timestamp
 			active_sound->detachTimestampValid = NO;
 			
-			// looping
+			// set source looping
 			active_sound->source->SetLooping(soundGroup->loop);
 			
-			// FIXME: pan ramp
-			renderer->SetSourcePan(*(active_sound->source), sound->pan);
-			
-			// gain; always use a ramp to prevent disrupting an ongoing ramp up
-			renderer->RampSourceGain(*(active_sound->source), active_sound->gain * soundGroup->gain, RX_AUDIO_FADE_DURATION);
+			// ramp the source's gain
+			renderer->RampSourceGain(*(active_sound->source), active_sound->gain * soundGroup->gain, RX_AUDIO_RAMP_DURATION);
 			active_sound->source->SetNominalGain(active_sound->gain * soundGroup->gain);
+			
+			// ramp the source's stereo panning
+			renderer->RampSourcePan(*(active_sound->source), active_sound->pan, RX_AUDIO_RAMP_DURATION);
+			active_sound->source->SetNominalPan(active_sound->pan);
 			
 #if defined(DEBUG) && DEBUG > 1
 			RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    updated sound %hu in the active mix (source: %p)", sound->ID, sound->source);
@@ -788,16 +789,16 @@ init_failure:
 		_sourcesToDelete = NULL;
 	}
 	
-	// ramps are go!
-	// FIXME: scheduling ramps in this manner is not atomic
+	// enable all the new audio sources
 	if (soundGroup->fadeInOnActivation || _forceFadeInOnNextSoundGroup) {
 		CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));
 		CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceEnableApplier, [g_world audioRenderer]);
 	}
 	
+	// schedule a fade out ramp for all to-be-removed sources if the fade out flag is on
 	if (soundGroup->fadeOutActiveGroupBeforeActivating) {
 		CFMutableArrayRef sourcesToRemove = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_weakAudioSourceArrayCallbacks];
-		renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_FADE_DURATION);
+		renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_RAMP_DURATION);
 		CFRelease(sourcesToRemove);
 		
 		uint64_t now = RXTimingNow();

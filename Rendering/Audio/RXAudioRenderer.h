@@ -104,13 +104,18 @@ private:
 		AudioUnitParameterEvent event;
 		AudioTimeStamp start;
 		AudioTimeStamp previous;
-		uint64_t batch;
 		
-		bool operator==(const ParameterRampDescriptor& other) const {return this->event.element == other.event.element;}
+		bool operator==(const ParameterRampDescriptor& other) const {
+			if (this->event.element != other.event.element)
+				return false;
+			if (this->event.parameter == UINT32_MAX || other.event.parameter == UINT32_MAX)
+				return true;
+			else
+				return this->event.parameter == other.event.parameter;
+		}
 	};
 	
 	TThreadSafeList<ParameterRampDescriptor> rampDescriptorList;
-	uint64_t _currentRampBatch;
 	bool _coarseRamps;
 	
 	AUGraph graph;
