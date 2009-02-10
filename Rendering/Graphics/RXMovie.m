@@ -302,14 +302,25 @@
 	[_movie setAttribute:[NSNumber numberWithBool:flag] forKey:QTMovieLoopsAttribute];
 	
 	if (flag) {
-		[_movie setAttribute:[NSNumber numberWithBool:YES] forKey:QTMovieEditableAttribute];
+		// ladies and gentlemen, because QuickTime fails at life, here is the seamless movie hack
+		
+		// 1. get the movie's duration
 		QTTime duration = [_movie duration];
-		QTTimeRange range = QTMakeTimeRange(QTZeroTime, duration);
-		while ((double)duration.timeValue / duration.timeScale < 60.0 * 15.0) {
-			[_movie insertSegmentOfMovie:_movie timeRange:range atTime:duration];
+		
+		// 2. get time position of the movie's last media sample
+		TimeValue last_sample_tv;
+		GetMovieNextInterestingTime([_movie quickTimeMovie], nextTimeMediaSample, 0, NULL, (TimeValue)duration.timeValue, -1, &last_sample_tv, NULL);
+		assert(GetMoviesError() == noErr);
+		QTTime last_sample_time = QTMakeTime(last_sample_tv, duration.timeScale);
+		
+		// 3. insert the movie's samples, from time 0 until the sample time of the movie's last sample, over and over and over again until the movie is 30 minutes long
+		QTTimeRange range = QTMakeTimeRange(QTZeroTime, last_sample_time);
+		
+		[_movie setAttribute:[NSNumber numberWithBool:YES] forKey:QTMovieEditableAttribute];
+		while ((double)duration.timeValue / duration.timeScale < 60.0 * 30.0) {
+			[_movie insertSegmentOfMovie:_movie timeRange:range atTime:last_sample_time];
 			duration = [_movie duration];
 		}
-		
 		[_movie setAttribute:[NSNumber numberWithBool:NO] forKey:QTMovieEditableAttribute];
 	}
 }
