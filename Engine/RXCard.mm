@@ -101,9 +101,13 @@ struct rx_card_picture_record {
 			mlstRecords[currentListIndex].volume);
 #endif
 		
+		// FIXME: sometimes volume > 256...
+		if (mlstRecords[currentListIndex].volume > 256)
+			mlstRecords[currentListIndex].volume = 256;
+		
 		// load the movie up
 		CGPoint origin = CGPointMake(mlstRecords[currentListIndex].left, kRXCardViewportSize.height - mlstRecords[currentListIndex].top);
-		RXMovieProxy* movieProxy = [[RXMovieProxy alloc] initWithArchive:_archive ID:mlstRecords[currentListIndex].movie_id origin:origin loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO) owner:self];
+		RXMovieProxy* movieProxy = [[RXMovieProxy alloc] initWithArchive:_archive ID:mlstRecords[currentListIndex].movie_id origin:origin volume:mlstRecords[currentListIndex].volume / 256.0f loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO) owner:self];
 		
 		// add the movie to the movies array
 		[_movies addObject:movieProxy];

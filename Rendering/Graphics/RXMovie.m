@@ -300,6 +300,31 @@
 
 - (void)setLooping:(BOOL)flag {
 	[_movie setAttribute:[NSNumber numberWithBool:flag] forKey:QTMovieLoopsAttribute];
+	
+	if (flag) {
+		[_movie setAttribute:[NSNumber numberWithBool:YES] forKey:QTMovieEditableAttribute];
+		QTTime duration = [_movie duration];
+		QTTimeRange range = QTMakeTimeRange(QTZeroTime, duration);
+		while ((double)duration.timeValue / duration.timeScale < 60.0 * 15.0) {
+			[_movie insertSegmentOfMovie:_movie timeRange:range atTime:duration];
+			duration = [_movie duration];
+		}
+		
+		[_movie setAttribute:[NSNumber numberWithBool:NO] forKey:QTMovieEditableAttribute];
+	}
+}
+
+- (float)volume {
+	return [_movie volume];
+}
+
+- (void)setVolume:(float)volume {
+	[_movie setVolume:volume];
+	
+	if (fabs(volume) <= 0.001f)
+		[_movie setMuted:YES];
+	else
+		[_movie setMuted:NO];
 }
 
 - (void)gotoBeginning {

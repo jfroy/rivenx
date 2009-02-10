@@ -20,7 +20,7 @@
 	return nil;
 }
 
-- (id)initWithArchive:(MHKArchive*)archive ID:(uint16_t)ID origin:(CGPoint)origin loop:(BOOL)loop owner:(id)owner {
+- (id)initWithArchive:(MHKArchive*)archive ID:(uint16_t)ID origin:(CGPoint)origin volume:(float)volume loop:(BOOL)loop owner:(id)owner {
 	self = [super init];
 	if (!self)
 		return nil;
@@ -30,6 +30,7 @@
 	_ID = ID;
 	_origin = origin;
 	_loop = loop;
+	_volume = volume;
 	
 	return self;
 }
@@ -56,6 +57,7 @@
 	[_movie setOutputColorSpace:[RXGetWorldView() displayColorSpace]];
 	[_movie setExpectedReadAheadFromDisplayLink:[RXGetWorldView() displayLink]];
 	[_movie setLooping:_loop];
+	[_movie setVolume:_volume];
 	
 	// set render rect
 	CGRect renderRect = [_movie renderRect];

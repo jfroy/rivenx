@@ -49,6 +49,9 @@
 - (BOOL)looping;
 - (void)setLooping:(BOOL)flag;
 
+- (float)volume;
+- (void)setVolume:(float)volume;
+
 - (void)gotoBeginning;
 
 - (CGSize)currentSize;
