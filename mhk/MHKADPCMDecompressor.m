@@ -114,6 +114,9 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
 }
 
 - (void)reset {
+#if defined(DEBUG) && DEBUG > 1
+	NSLog(@"%@: resetting", self);
+#endif
 	estimate_left = 0;
 	estimate_right = 0;
 	

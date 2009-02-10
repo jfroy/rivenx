@@ -22,17 +22,11 @@ struct rx_thread_storage {
 	NSString* name;
 	NSAutoreleasePool* pool;
 };
-
-static pthread_key_t rx_thread_storage_key = 0;
+typedef struct rx_thread_storage rx_thread_storage_t;
 
 extern void RXInitThreading();
-extern struct rx_thread_storage* _RXCreateThreadStorage();
 
-CF_INLINE struct rx_thread_storage* RXGetThreadStorage() {
-	struct rx_thread_storage* storage = (struct rx_thread_storage*)pthread_getspecific(rx_thread_storage_key);
-	if (storage == NULL) storage = _RXCreateThreadStorage();
-	return storage;
-}
+extern struct rx_thread_storage* RXGetThreadStorage();
 
 extern const char* RXGetThreadNameC(void);
 extern void RXSetThreadNameC(const char* name);

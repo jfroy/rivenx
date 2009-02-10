@@ -13,18 +13,28 @@
 #import "RXLogging.h"
 #import "InterThreadMessaging.h"
 
-static BOOL rx_threading_initialized = NO;
+static pthread_key_t rx_thread_storage_key = 0;
 
 static void _RXReleaseThreadStorage(void* p) {
 	struct rx_thread_storage* storage = (struct rx_thread_storage*)p;
-	if (storage->name) [storage->name release];
-	if (storage->pool) [storage->pool release];
+	if (storage->name)
+		[storage->name release];
+	if (storage->pool)
+		[storage->pool release];
 	free(storage);
 }
 
-struct rx_thread_storage* _RXCreateThreadStorage() {
+static struct rx_thread_storage* _RXCreateThreadStorage() {
 	struct rx_thread_storage* storage = calloc(1, sizeof(struct rx_thread_storage));
 	pthread_setspecific(rx_thread_storage_key, storage);
+	return storage;
+}
+
+struct rx_thread_storage* RXGetThreadStorage() {
+	assert(rx_thread_storage_key);
+	struct rx_thread_storage* storage = (struct rx_thread_storage*)pthread_getspecific(rx_thread_storage_key);
+	if (storage == NULL)
+		storage = _RXCreateThreadStorage();
 	return storage;
 }
 
@@ -33,8 +43,10 @@ void RXInitThreading() {
 		RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"RXInitThreading must be called on the main thread");
 		abort();
 	}
-	if (rx_threading_initialized == YES) return;
-	rx_threading_initialized = YES;
+	
+	// if the thread storage key is not 0, we've initialized threading
+	if (rx_thread_storage_key)
+		return;
 	
 	pthread_key_create(&rx_thread_storage_key, _RXReleaseThreadStorage);
 }
@@ -49,7 +61,8 @@ void RXSetThreadName(NSString* name) {
 
 const char* RXGetThreadNameC(void) {
 	NSString* name = RXGetThreadName();
-	if (name) return [name UTF8String];
+	if (name)
+		return [name UTF8String];
 	return NULL;
 }
 

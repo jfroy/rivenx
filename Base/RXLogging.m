@@ -44,7 +44,8 @@ void RXLogv(const char* facility, int level, NSString* format, va_list args) {
 	NSDate* now = [NSDate new];
 	
 	NSString* threadName = RXGetThreadName();
-	if (!threadName) threadName = @"unknown thread";
+	if (!threadName)
+		threadName = @"unknown thread";
 	
 	NSString* logString = [[NSString alloc] initWithFormat:RX_log_format, now, threadName, facilityString, userString];
 	[[RXLogCenter sharedLogCenter] log:logString facility:facilityString level:level];

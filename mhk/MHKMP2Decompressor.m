@@ -465,6 +465,10 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 - (void)reset {
 	pthread_mutex_lock(&_decompressor_lock);
 	
+#if defined(DEBUG) && DEBUG > 1
+	NSLog(@"%@: resetting", self);
+#endif
+	
 	// seek to the first audio data packet
 	[_data_source seekToFileOffset:_audio_packets_start_offset];
 	

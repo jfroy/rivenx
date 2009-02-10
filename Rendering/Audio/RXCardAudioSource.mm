@@ -222,7 +222,8 @@ void CardAudioSource::RenderTask() throw() {
 	if (_loop && _bufferedFrames == _frames) {
 		[_decompressor reset];
 		_bufferedFrames = 0;
-		// Explicit cast OK here, ABL structure takes UInt32
+		
+		// explicit cast OK here, ABL structure takes UInt32
 		bytesRemaining = (UInt32)(_frames * format.mBytesPerFrame);
 		
 		// do we need a second round of decompression?
