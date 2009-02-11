@@ -14,35 +14,40 @@
 
 namespace RX {
 
-AudioSourceBase::AudioSourceBase() throw(CAXException) : enabled(true), _didFinalize(false) {
-	enabled = true;
-	pthread_mutex_init(&transitionMutex, NULL);
+OSStatus AudioSourceBase::AudioSourceRenderCallback(void* inRefCon, AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList* ioData) {
+	AudioSourceBase* source = reinterpret_cast<AudioSourceBase*>(inRefCon);
+	return source->Render(ioActionFlags, inTimeStamp, inNumberFrames, ioData);
+}
 
-	rendererPtr = reinterpret_cast<AudioRenderer *>(NULL);
-	graph = reinterpret_cast<AUGraph>(NULL);
+AudioSourceBase::AudioSourceBase() throw(CAXException) : enabled(true), rendererPtr(0) {
+	pthread_mutex_init(&transitionMutex, NULL);
 }
 
 AudioSourceBase::~AudioSourceBase() throw (CAXException) {
-	assert(_didFinalize);
+	assert(!rendererPtr);
 	pthread_mutex_destroy(&transitionMutex);
 }
 
 void AudioSourceBase::Finalize() throw(CAXException) {
-	_didFinalize = true;
 	this->SetEnabled(false);
-	if (rendererPtr) rendererPtr->DetachSource(*this);
+	if (rendererPtr)
+		rendererPtr->DetachSource(*this);
 }
 
 void AudioSourceBase::SetEnabled(bool enable) throw(CAXException) {
-	if (enable == this->enabled) return;
+	if (enable == this->enabled)
+		return;
 	pthread_mutex_lock(&transitionMutex);
 	
 	// callback to the sub-class
 	bool success = false;
-	if (enable) success = this->Enable();
-	else success = this->Disable();
+	if (enable)
+		success = this->Enable();
+	else
+		success = this->Disable();
 	
-	if (success) this->enabled = enable;
+	if (success)
+		this->enabled = enable;
 	pthread_mutex_unlock(&transitionMutex);
 }
 

@@ -666,7 +666,7 @@ init_failure:
 	// cache the sound group's sound set
 	NSSet* soundGroupSounds = [soundGroup sounds];
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"activating sound group %@ with sounds: %@", soundGroup, soundGroupSounds);
+	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"*****************************\nactivating sound group %@ with sounds: %@", soundGroup, soundGroupSounds);
 #endif
 	
 	// create an array of new sources

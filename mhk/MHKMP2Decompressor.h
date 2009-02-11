@@ -17,7 +17,6 @@
 	MHKFileHandle* _data_source;
 	
 	UInt32 _channel_count;
-	AudioStreamBasicDescription _output_absd;
 	AudioStreamBasicDescription _decomp_absd;
 	
 	SInt64 _audio_packets_start_offset;
@@ -36,8 +35,6 @@
 	UInt32 _decompression_buffer_position;
 	UInt32 _decompression_buffer_length;
 	void* _decompression_buffer;
-	
-	AudioConverterRef _converter;
 	
 	void* _mp2_codec_context;
 	

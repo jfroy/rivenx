@@ -26,11 +26,12 @@ namespace RX {
 
 class CardAudioSource : public AudioSourceBase {
 public:
+	static OSStatus RXCardAudioSourceRenderCallback(void* inRefCon, AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList* ioData);
+
 	CardAudioSource(id <MHKAudioDecompression> decompressor, float gain, float pan, bool loop) throw(CAXException);
 	virtual ~CardAudioSource() throw(CAXException);
 	
 	// rendering
-	OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw();
 	void RenderTask() throw();
 	
 	// info 
@@ -50,11 +51,13 @@ public:
 	inline void SetLooping(bool loop) throw() {_loop = loop;}
 	
 protected:
-	virtual void PopulateGraph() throw(CAXException);
+	virtual void HandleAttach() throw(CAXException);
 	virtual void HandleDetach() throw(CAXException);
 	
 	virtual bool Enable() throw(CAXException);
 	virtual bool Disable() throw(CAXException);
+	
+	virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw();
 
 private:
 	id <MHKAudioDecompression> _decompressor;

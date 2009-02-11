@@ -320,16 +320,6 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	_frame_count = frames;
 	_data_source = [fh retain];
 	
-	// setup the output ABSD
-	_output_absd.mFormatID = kAudioFormatLinearPCM;
-	_output_absd.mFormatFlags = kAudioFormatFlagsNativeFloatPacked;
-	_output_absd.mSampleRate = sps;
-	_output_absd.mChannelsPerFrame = _channel_count;
-	_output_absd.mBitsPerChannel = 32;
-	_output_absd.mFramesPerPacket = 1;
-	_output_absd.mBytesPerFrame = _output_absd.mChannelsPerFrame * _output_absd.mBitsPerChannel / 8;
-	_output_absd.mBytesPerPacket = _output_absd.mFramesPerPacket * _output_absd.mBytesPerFrame;
-	
 	// setup the decompression ABSD
 	_decomp_absd.mFormatID = kAudioFormatLinearPCM;
 	_decomp_absd.mFormatFlags = kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
@@ -339,11 +329,6 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	_decomp_absd.mFramesPerPacket = 1;
 	_decomp_absd.mBytesPerFrame = _decomp_absd.mChannelsPerFrame * _decomp_absd.mBitsPerChannel / 8;
 	_decomp_absd.mBytesPerPacket = _decomp_absd.mFramesPerPacket * _decomp_absd.mBytesPerFrame;
-	
-	// using the input and output absds, setup an AudioConverter
-	OSStatus err = AudioConverterNew(&_decomp_absd, &_output_absd, &_converter);
-	if (err)
-		ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr);
 	
 	// allocate the codec context
 	pthread_mutex_lock(&ffmpeg_mutex);
@@ -433,10 +418,6 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		_ffmpeg_state.avcodec_close((AVCodecContext*)_mp2_codec_context);
 	pthread_mutex_unlock(&ffmpeg_mutex);
 	
-	// close the converter
-	if (_converter)
-		AudioConverterDispose(_converter);
-	
 	// free memory resources
 	if (_packet_buffer)
 		free(_packet_buffer);
@@ -455,7 +436,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 }
 
 - (AudioStreamBasicDescription)outputFormat {
-	return _output_absd;
+	return _decomp_absd;
 }
 
 - (SInt64)frameCount {
@@ -480,9 +461,6 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	_available_packets = 0;
 	_current_packet = _packet_buffer;
 	
-	// reset the audio converter
-	AudioConverterReset(_converter);
-	
 	// close and re-open the codec context
 	pthread_mutex_lock(&ffmpeg_mutex);
 	if (_mp2_codec_context)
@@ -494,42 +472,37 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	pthread_mutex_unlock(&_decompressor_lock);
 }
 
-- (void)fillAudioBufferList:(AudioBufferList *)abl {
+- (void)fillAudioBufferList:(AudioBufferList*)abl {
+	// we can't handle de-interleaved ABLs
+	assert(abl->mNumberBuffers == 1);
+	
+	// take the decompressor lock
 	pthread_mutex_lock(&_decompressor_lock);
 	
-	OSStatus err = noErr;
-	
-	// from the provided buffer length, compute how many frames we need to decompress
+	// bytes_to_decompress is a fixed quantity which is set to the total number of bytes to copy into the ABL
 	UInt32 bytes_to_decompress = abl->mBuffers[0].mDataByteSize;
+	
+	// decompressed_bytes tracks the number of bytes that have been copied into the ABL, and is essentially the ABL buffer offset
 	UInt32 decompressed_bytes = 0;
 	
-	// to be used with the converter
-	UInt32 converted_bytes = 0;
+	// available_bytes is a volatile quatity used to track available bytes to copy into the ABL buffer
+	UInt32 available_bytes = 0;
 	
-	// if we have frames left from the last fill, load them up
-	if (_decompression_buffer_position > 0) {
-		// compute how many bytes we need to convert
-		converted_bytes = ((_decompression_buffer_length - _decompression_buffer_position) / _decomp_absd.mBytesPerFrame) * _output_absd.mBytesPerFrame;
-		if (converted_bytes > bytes_to_decompress)
-			converted_bytes = bytes_to_decompress;
+	// if we have frames left from the last fill, copy them in
+	if (_decompression_buffer_position < _decompression_buffer_length) {
+		// compute how many bytes we can copy
+		available_bytes = _decompression_buffer_length - _decompression_buffer_position;
+		if (available_bytes > bytes_to_decompress - decompressed_bytes)
+			available_bytes = bytes_to_decompress - decompressed_bytes;
 		
-		// convert the bytes
-		err = AudioConverterConvertBuffer(_converter, 
-										  (converted_bytes / _output_absd.mBytesPerFrame) * _decomp_absd.mBytesPerFrame, 
-										  BUFFER_OFFSET(_decompression_buffer, _decompression_buffer_position), 
-										  &converted_bytes, 
-										  BUFFER_OFFSET(abl->mBuffers[0].mData, decompressed_bytes));
-		if (err)
-			goto AbortFill;
+		// copy the bytes
+		memcpy(BUFFER_OFFSET(abl->mBuffers[0].mData, decompressed_bytes), BUFFER_OFFSET(_decompression_buffer, _decompression_buffer_position), available_bytes);
+		decompressed_bytes += available_bytes;
+		_decompression_buffer_position += available_bytes;
 		
-		// update decompression state
-		decompressed_bytes += converted_bytes;
-		bytes_to_decompress -= converted_bytes;
-		
-		// update the decompression buffer state
-		_decompression_buffer_position += (converted_bytes / _output_absd.mBytesPerFrame) * _decomp_absd.mBytesPerFrame;
-		if (_decompression_buffer_position == _decompression_buffer_length)
-			_decompression_buffer_position = 0;
+		// fast return if we're all done
+		if (bytes_to_decompress == decompressed_bytes)
+			return;
 	}
 	
 	// did we already process every available packet?
@@ -537,8 +510,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		goto AbortFill;
 	
 	// compute how many packets we'll need to process
-	UInt32 packets_to_decompress = (bytes_to_decompress / _output_absd.mBytesPerFrame) / MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET;
-	if ((bytes_to_decompress / _output_absd.mBytesPerFrame) % MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET)
+	UInt32 packets_to_decompress = ((bytes_to_decompress - decompressed_bytes) / _decomp_absd.mBytesPerFrame) / MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET;
+	if (((bytes_to_decompress - decompressed_bytes) / _decomp_absd.mBytesPerFrame) % MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET)
 		packets_to_decompress++;
 	
 	// explicit cast OK here, can't really have more than 4 billion packets to decompress...
@@ -546,6 +519,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		packets_to_decompress = (UInt32)(_packet_count - _packet_index);
 	
 	while (packets_to_decompress > 0) {
+		// at this point, we've exhausted the decompression buffer and we have to decompress a new packet; hence, this loop body never offsets the decompression buffer by its position
+	
 		// if we ran out of packets in memory, read some more
 		if (_available_packets == 0) {
 			// did we process every available packet?
@@ -570,47 +545,36 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		}
 		
 		// decompress a packet
-		int libavcodec_frame_size = _decompression_buffer_length;
-		_ffmpeg_state.avcodec_decode_audio((AVCodecContext*)_mp2_codec_context, _decompression_buffer, &libavcodec_frame_size, _current_packet, _packet_table[_packet_index].mDataByteSize);
-		if (libavcodec_frame_size == 0)
+		available_bytes = _decompression_buffer_length;
+		_ffmpeg_state.avcodec_decode_audio((AVCodecContext*)_mp2_codec_context, _decompression_buffer, (int*)&available_bytes, _current_packet, _packet_table[_packet_index].mDataByteSize);
+		if (available_bytes == 0)
 			goto AbortFill;
 		
-		// apply the byte skip
+		// apply the frame skip hack on the first packet
 		if (_packet_index == 0) {
 			// temporarily advance the decompression buffer and update libavcodec_frame_size to match
 			_decompression_buffer = BUFFER_OFFSET(_decompression_buffer, _bytes_to_drop);
-			libavcodec_frame_size -= _bytes_to_drop;
+			available_bytes -= _bytes_to_drop;
 		}
 		
-		// compute how many bytes we need to convert
-		converted_bytes = (libavcodec_frame_size / _decomp_absd.mBytesPerFrame) * _output_absd.mBytesPerFrame;
-		if (converted_bytes > bytes_to_decompress) {
-			converted_bytes = bytes_to_decompress;
-			libavcodec_frame_size = (converted_bytes / _output_absd.mBytesPerFrame) * _decomp_absd.mBytesPerFrame;
-		}
+		// compute how many bytes we can copy
+		if (available_bytes > bytes_to_decompress - decompressed_bytes)
+			available_bytes = bytes_to_decompress - decompressed_bytes;
 		
-		// convert the bytes
-		err = AudioConverterConvertBuffer(_converter, 
-										  libavcodec_frame_size, 
-										  _decompression_buffer, 
-										  &converted_bytes, 
-										  BUFFER_OFFSET(abl->mBuffers[0].mData, decompressed_bytes));
+		// copy the bytes
+		memcpy(BUFFER_OFFSET(abl->mBuffers[0].mData, decompressed_bytes), _decompression_buffer, available_bytes);
+		decompressed_bytes += available_bytes;
+		_decompression_buffer_position += available_bytes;
 		
-		// undo the byte skip
-		if (_packet_index == 0)
-			_decompression_buffer = BUFFER_OFFSET(_decompression_buffer, -_bytes_to_drop);
-		
-		// handle a possible converter error
-		if (err)
-			goto AbortFill;
-		
-		// update decompression state
-		decompressed_bytes += converted_bytes;
-		bytes_to_decompress -= converted_bytes;
-		
-		// we might need to dynamically tack on an extra packet if we dropped bytes from the first packet
-		if (_packet_index == 0 && _packet_index < _packet_count && packets_to_decompress == 1 && bytes_to_decompress > 0)
+		// we may need to add an extra packet because of the first packet frame skip hack
+		if (_packet_index == 0 && packets_to_decompress == 1 && (bytes_to_decompress - decompressed_bytes) > 0)
 			packets_to_decompress++;
+		
+		// compensate and undo for the first packet frame skip hack
+		if (_packet_index == 0) {
+			_decompression_buffer = BUFFER_NOFFSET(_decompression_buffer, _bytes_to_drop);
+			_decompression_buffer_position += _bytes_to_drop;
+		}
 		
 		// one less packet to go
 		packets_to_decompress--;
@@ -618,16 +582,9 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		_available_packets--;
 		_packet_index++;
 	}
-	
-	// update the decompression buffer state
-	_decompression_buffer_position += (converted_bytes / _output_absd.mBytesPerFrame) * _decomp_absd.mBytesPerFrame;
-	if (_decompression_buffer_position == _decompression_buffer_length)
-		_decompression_buffer_position = 0;
 		
 AbortFill:
-	// recompute frames_to_decompress and zero undecompressed samples
-	bytes_to_decompress = abl->mBuffers[0].mDataByteSize;
-	
+	// zero left-over frames
 	if (decompressed_bytes < bytes_to_decompress)
 		bzero(BUFFER_OFFSET(abl->mBuffers[0].mData, decompressed_bytes), bytes_to_decompress - decompressed_bytes);
 

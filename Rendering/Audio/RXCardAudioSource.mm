@@ -11,17 +11,6 @@
 
 namespace RX {
 
-static OSStatus RXCardAudioSourceRenderCallback(void							*inRefCon, 
-												AudioUnitRenderActionFlags		*ioActionFlags, 
-												const AudioTimeStamp			*inTimeStamp, 
-												UInt32							inBusNumber, 
-												UInt32							inNumberFrames, 
-												AudioBufferList					*ioData)
-{
-	RX::CardAudioSource* source = (RX::CardAudioSource*)inRefCon;
-	return source->Render(ioActionFlags, inTimeStamp, inNumberFrames, ioData);
-}
-
 CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float gain, float pan, bool loop) throw(CAXException) : _decompressor(decompressor), _gain(1.0), _pan(pan), _loop(loop)
 {
 	pthread_mutex_init(&_taskMutex, NULL);
@@ -114,7 +103,7 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 			bzero(ioData->mBuffers[bufferIndex].mData, ioData->mBuffers[bufferIndex].mDataByteSize);
 		*ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
 		
-#if defined(DEBUG) && DEBUG > 2
+#if defined(DEBUG) && DEBUG > 1
 			CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of sample starvation"), this);
 			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 			CFRelease(rxar_debug);
@@ -127,6 +116,11 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 		memcpy(ioData->mBuffers[0].mData, readBuffer, optimalBytesToRead);
 		[_decompressionBuffer didReadLength:optimalBytesToRead];
 	} else {
+#if defined(DEBUG) && DEBUG > 1
+			CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of partial sample starvation"), this);
+			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+			CFRelease(rxar_debug);
+#endif
 		memcpy(ioData->mBuffers[0].mData, readBuffer, availableBytes);
 		[_decompressionBuffer didReadLength:availableBytes];
 		bzero(reinterpret_cast<unsigned char *>(ioData->mBuffers[0].mData) + availableBytes, optimalBytesToRead - availableBytes);
@@ -139,6 +133,8 @@ void CardAudioSource::RenderTask() throw() {
 	if (!rendererPtr || !_decompressor || !_decompressionBuffer)
 		return;
 	pthread_mutex_lock(&_taskMutex);
+	if (!rendererPtr || !_decompressor || !_decompressionBuffer)
+		return;
 	
 	/*	This function is tricky. It has to deal with two issues:
 		
@@ -253,9 +249,7 @@ void CardAudioSource::RenderTask() throw() {
 
 #pragma mark -
 
-void CardAudioSource::PopulateGraph() throw(CAXException) {
-	// set the output format on the output node
-	XThrowIfError(outputUnit.SetFormat(kAudioUnitScope_Input, 0, format), "CAAudioUnit::SetFormat");
+void CardAudioSource::HandleAttach() throw(CAXException) {
 	
 	// reset the decompressor
 	[_decompressor reset];
@@ -265,23 +259,13 @@ void CardAudioSource::PopulateGraph() throw(CAXException) {
 	_bufferedFrames = 0;
 	_loopBufferReadPointer = _loopBuffer;
 	
-	// set a render callback on the output node
-	AURenderCallbackStruct input = {RXCardAudioSourceRenderCallback, this};
-	XThrowIfError(outputUnit.SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &input, sizeof(input)), "CAAudioUnit::SetProperty");
-	
 	// set the gain and pan
-	rendererPtr->SetSourceGain(*this, 1.0);
+	rendererPtr->SetSourceGain(*this, _gain);
 	rendererPtr->SetSourcePan(*this, _pan);
-	
-#if defined(DEBUG) && DEBUG > 1
-	CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> populated graph (gain: %f, pan: %f)"), this, 1.0, _pan);
-	RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-	CFRelease(rxar_debug);
-#endif
 }
 
 void CardAudioSource::HandleDetach() throw(CAXException) {
-	// nothing to do
+
 }
 
 bool CardAudioSource::Enable() throw(CAXException) {

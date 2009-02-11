@@ -225,21 +225,21 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 			// compute and set the source's bus index
 			source->bus = static_cast<AudioUnitElement>(busIterator - busAllocationVector->begin());
 			
-			// make a new sub-graph node for the source
-			AUNode graphNode;
-			XThrowIfError(AUGraphNewNodeSubGraph(graph, &graphNode), "AUGraphNewNodeSubGraph");
-			(*busNodeVector)[source->bus] = graphNode;
-			
-			// set the source's graph and add a generic output AU
-			XThrowIfError(AUGraphGetNodeInfoSubGraph(graph, graphNode, &(source->graph)), "AUGraphGetNodeInfoSubGraph");
-			
-			AUNode ouputNode;
-			AudioUnit outputAU;
-			CAComponentDescription cd(kAudioUnitType_Output, kAudioUnitSubType_GenericOutput, kAudioUnitManufacturer_Apple);
-			
-			XThrowIfError(AUGraphNewNode(source->graph, &cd, 0, NULL, &ouputNode), "AUGraphNewNode");
-			XThrowIfError(AUGraphGetNodeInfo(source->graph, ouputNode, NULL, NULL, NULL, &outputAU), "AUGraphGetNodeInfo");
-			source->outputUnit = CAAudioUnit(ouputNode, outputAU);
+//			// make a new sub-graph node for the source
+//			AUNode graphNode;
+//			XThrowIfError(AUGraphNewNodeSubGraph(graph, &graphNode), "AUGraphNewNodeSubGraph");
+//			(*busNodeVector)[source->bus] = graphNode;
+//			
+//			// set the source's graph and add a generic output AU
+//			XThrowIfError(AUGraphGetNodeInfoSubGraph(graph, graphNode, &(source->graph)), "AUGraphGetNodeInfoSubGraph");
+//			
+//			AUNode ouputNode;
+//			AudioUnit outputAU;
+//			CAComponentDescription cd(kAudioUnitType_Output, kAudioUnitSubType_GenericOutput, kAudioUnitManufacturer_Apple);
+//			
+//			XThrowIfError(AUGraphNewNode(source->graph, &cd, 0, NULL, &ouputNode), "AUGraphNewNode");
+//			XThrowIfError(AUGraphGetNodeInfo(source->graph, ouputNode, NULL, NULL, NULL, &outputAU), "AUGraphGetNodeInfo");
+//			source->outputUnit = CAAudioUnit(ouputNode, outputAU);
 			
 			// a non-NULL renderer means the source has been attached properly
 			source->rendererPtr = this;
@@ -249,10 +249,48 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 			SetSourcePan(*source, 0.5f);
 			
 			// ask the source to populate the graph some more
-			source->PopulateGraph();
+			source->HandleAttach();
 			
-			// connect the souce graph to the mixer bus
-			XThrowIfError(AUGraphConnectNodeInput(graph, graphNode, 0, *mixer, source->bus), "AUGraphConnectNodeInput");
+			OSStatus oserr = mixer->SetFormat(kAudioUnitScope_Input, source->bus, source->Format());
+			if (oserr && oserr == kAudioUnitErr_FormatNotSupported) {
+#if defined(DEBUG) && DEBUG > 1
+				CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> creating ancillary converter for source %p on bus %u"), this, source, source->bus);
+				RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+				CFRelease(rxar_debug);
+#endif
+	
+				// create a new graph node with the converter AU
+				CAComponentDescription cd;
+				cd.componentType = kAudioUnitType_FormatConverter;
+				cd.componentSubType = kAudioUnitSubType_AUConverter;
+				cd.componentManufacturer = kAudioUnitManufacturer_Apple;
+				
+				AUNode converter_node;
+				AudioUnit converter_au;
+				XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &converter_node), "AUGraphNewNode kAudioUnitSubType_AUConverter");
+				XThrowIfError(AUGraphGetNodeInfo(graph, converter_node, NULL, NULL, NULL, &converter_au), "AUGraphGetNodeInfo");
+				CAAudioUnit converter = CAAudioUnit(converter_node, converter_au);
+				
+				// set the input and output formats of the converter
+				XThrowIfError(converter.SetFormat(kAudioUnitScope_Input, 0, source->Format()), "converter->SetFormat kAudioUnitScope_Input");
+				AudioStreamBasicDescription mixer_format;
+				XThrowIfError(mixer->GetFormat(kAudioUnitScope_Input, source->bus, mixer_format), "mixer->GetFormat kAudioUnitScope_Input");
+				XThrowIfError(converter.SetFormat(kAudioUnitScope_Output, 0, mixer_format), "converter->SetFormat kAudioUnitScope_Output");
+				
+				// set the render callback on the converter
+				AURenderCallbackStruct render_callbacks = {AudioSourceBase::AudioSourceRenderCallback, source};
+				XThrowIfError(converter.SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &render_callbacks, sizeof(AURenderCallbackStruct)), "converter->SetProperty kAudioUnitProperty_SetRenderCallback");
+				
+				// and finally plug the converter in
+				XThrowIfError(AUGraphConnectNodeInput(graph, converter_node, 0, *mixer, source->bus), "AUGraphConnectNodeInput");
+				(*busNodeVector)[source->bus] = converter_node;
+			} else {
+				XThrowIfError(oserr, "mixer->SetFormat");
+			
+				// connect the souce graph to the mixer bus
+				AURenderCallbackStruct input = {AudioSourceBase::AudioSourceRenderCallback, source};
+				XThrowIfError(mixer->SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, source->bus, &input, sizeof(AURenderCallbackStruct)), "CAAudioUnit::SetProperty kAudioUnitProperty_SetRenderCallback");
+			}
 			
 			// account for the new connection and return
 			sourceCount++;
@@ -287,8 +325,8 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 			
 			source->rendererPtr = 0;
 			source->bus = 0;
-			source->graph = reinterpret_cast<AUGraph>(NULL);
-			source->outputUnit = CAAudioUnit();
+//			source->graph = reinterpret_cast<AUGraph>(NULL);
+//			source->outputUnit = CAAudioUnit();
 		}
 		
 		// re-throw the exception at the caller
@@ -311,14 +349,17 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw (CAXException) {
 	XThrowIf(busToRecycle == 0, mFulErr, "AudioRenderer::DetachSources");
 	
 	for (; sourceIndex < count; sourceIndex++) {
-		AudioSourceBase* source = const_cast<AudioSourceBase *>(reinterpret_cast<const AudioSourceBase*>(CFArrayGetValueAtIndex(sources, sourceIndex)));
+		AudioSourceBase* source = const_cast<AudioSourceBase*>(reinterpret_cast<const AudioSourceBase*>(CFArrayGetValueAtIndex(sources, sourceIndex)));
 		XThrowIf(source->rendererPtr != this, paramErr, "AudioRenderer::DetachSources");
 		
 		// cache the source bus
 		busToRecycle[sourceIndex] = source->bus;
 		
 		// disconnect the sub-graph node
-		XThrowIfError(AUGraphDisconnectNodeInput(graph, *mixer, busToRecycle[sourceIndex]), "AUGraphDisconnectNodeInput");
+//		XThrowIfError(AUGraphDisconnectNodeInput(graph, *mixer, busToRecycle[sourceIndex]), "AUGraphDisconnectNodeInput");
+
+		AURenderCallbackStruct renderCallback = {RXAudioRendererSilenceRenderCallback, 0};
+		XThrowIfError(mixer->SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, busToRecycle[sourceIndex], &renderCallback, sizeof(AURenderCallbackStruct)), "CAAudioUnit::SetProperty kAudioUnitProperty_SetRenderCallback");
 		
 		// invalidate any ongoing ramps for this source; a parameter of UINTMAX is a special value which will match all parameters
 		ParameterRampDescriptor descriptor;
@@ -328,8 +369,8 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw (CAXException) {
 		
 		// invalidate the source's graph-related variables
 		source->bus = 0;
-		source->graph = reinterpret_cast<AUGraph>(0);
-		source->outputUnit = CAAudioUnit();
+//		source->graph = reinterpret_cast<AUGraph>(0);
+//		source->outputUnit = CAAudioUnit();
 		
 		// a 0 renderer means the source is not attached
 		source->rendererPtr = 0;
@@ -339,11 +380,13 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw (CAXException) {
 	}
 	
 	// if the graph is running or initialized, we need to schedule a graph update before we can remove the nodes
-	if (_must_update_graph_predicate()) XThrowIfError(AUGraphUpdate(graph, NULL), "AUGraphUpdate");
+	if (_must_update_graph_predicate())
+		XThrowIfError(AUGraphUpdate(graph, NULL), "AUGraphUpdate");
 	
 	for (sourceIndex = 0; sourceIndex < count; sourceIndex++) {
 		// remove the node from the graph
-		XThrowIfError(AUGraphRemoveNode(graph, (*busNodeVector)[busToRecycle[sourceIndex]]), "AUGraphRemoveNode");
+		if ((*busNodeVector)[busToRecycle[sourceIndex]])
+			XThrowIfError(AUGraphRemoveNode(graph, (*busNodeVector)[busToRecycle[sourceIndex]]), "AUGraphRemoveNode");
 		
 		// account for the lost connection
 		sourceCount--;
@@ -477,7 +520,7 @@ void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID 
 			descriptor.event.eventValues.ramp.startBufferOffset = 0;
 			descriptor.event.eventValues.ramp.endValue = value;
 			
-			// remove and add. I know, doesn't sound logical. Read the source code for TThreadSafeList.
+			// we first remove any existing ramp descriptor before adding the new descriptor in
 			rampDescriptorList.deferred_remove(descriptor);
 			rampDescriptorList.deferred_add(descriptor);
 #if defined(RIVENX)
@@ -498,13 +541,11 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 	// we can now iterate over it safely
 	TThreadSafeList<ParameterRampDescriptor>::iterator begin = rampDescriptorList.begin();
 	TThreadSafeList<ParameterRampDescriptor>::iterator end = rampDescriptorList.end();
-	
-	while (begin != end) {
+	for (; begin != end; begin++) {
 		OSStatus err = noErr;
-		ParameterRampDescriptor descriptor = *begin;
-		begin++;
+		ParameterRampDescriptor& descriptor = *begin;
 		
-		// if the associated source is no longer attached, remove the descriptor
+		// if the associated source is no longer attached to us, remove the descriptor and move on to the next
 		if (descriptor.source->rendererPtr != this) {
 			rampDescriptorList.deferred_remove(descriptor);
 			continue;
@@ -547,8 +588,8 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 				}
 			}
 			
-			rampDescriptorList.deferred_remove(descriptor);
-			rampDescriptorList.deferred_add(descriptor);
+//			rampDescriptorList.deferred_remove(descriptor);
+//			rampDescriptorList.deferred_add(descriptor);
 		} else {
 			if (!descriptor.source->enabled) {
 				// if the source is disabled, bump the start time so that the ramp will resume when the source is enabled
@@ -557,8 +598,8 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 				 // update the previous timestamp
 				descriptor.previous = *inTimeStamp;
 				
-				rampDescriptorList.deferred_remove(descriptor);
-				rampDescriptorList.deferred_add(descriptor);
+//				rampDescriptorList.deferred_remove(descriptor);
+//				rampDescriptorList.deferred_add(descriptor);
 				
 				continue;
 			}
@@ -605,8 +646,8 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 				// update the previous timestamp
 				descriptor.previous = *inTimeStamp;
 				
-				rampDescriptorList.deferred_remove(descriptor);
-				rampDescriptorList.deferred_add(descriptor);
+//				rampDescriptorList.deferred_remove(descriptor);
+//				rampDescriptorList.deferred_add(descriptor);
 			} else {
 				// this ramp is over
 #if defined(DEBUG) && DEBUG > 1
@@ -638,8 +679,6 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 }
 
 OSStatus AudioRenderer::MixerPostRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) throw() {
-	// last, update the list of ramp descriptors (again)
-	rampDescriptorList.update();
 	return noErr;
 }
 
@@ -686,9 +725,10 @@ void AudioRenderer::CreateGraph() {
 	// connect the output unit and the mixer
 	XThrowIfError(AUGraphConnectNodeInput(graph, *mixer, 0, outputNode, 0), "AUGraphConnectNodeInput");
 	
-	// cache the maximum number of inputs the mixer accepts
-	UInt32 limitSize = sizeof(UInt32);
-	XThrowIfError(AudioUnitGetProperty(*mixer, kAudioUnitProperty_BusCount, kAudioUnitScope_Input, 0, &sourceLimit, &limitSize), "AudioUnitGetProperty");
+	// set the maximum number of mixer inputs to 16
+	sourceLimit = 16;
+//	XThrowIfError(AudioUnitGetProperty(*mixer, kAudioUnitProperty_BusCount, kAudioUnitScope_Input, 0, &sourceLimit, &limitSize), "AudioUnitGetProperty");
+	XThrowIfError(mixer->SetProperty(kAudioUnitProperty_BusCount, kAudioUnitScope_Input, 0, &sourceLimit, sizeof(UInt32)), "mixer->SetProperty kAudioUnitProperty_BusCount");
 	sourceCount = 0;
 	
 	// create the bus node and allocation vectors

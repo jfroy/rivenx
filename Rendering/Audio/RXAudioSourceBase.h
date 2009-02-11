@@ -24,7 +24,6 @@ private:
 	// WARNING: sub-classes are responsible for checking this variable and should output silence without updating their rendering state if it is true
 	bool enabled;
 	pthread_mutex_t transitionMutex;
-	bool _didFinalize;
 
 public:
 	virtual ~AudioSourceBase() throw (CAXException);
@@ -32,29 +31,26 @@ public:
 	// format
 	inline CAStreamBasicDescription Format() const throw() {return format;}
 	
-	// graph
-	inline AUGraph Graph() const throw() {return graph;}
-	inline const CAAudioUnit& OutputUnit() const throw() {return outputUnit;}
-	
 	// enabling
 	inline bool Enabled() const throw() {return enabled;}
 	void SetEnabled(bool enable) throw(CAXException);
 	
 protected:
+	static OSStatus AudioSourceRenderCallback(void* inRefCon, AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList* ioData);
+
 	AudioSourceBase() throw(CAXException);
 	
 	void Finalize() throw(CAXException);
 	
-	virtual void PopulateGraph() throw(CAXException) = 0;
 	virtual void HandleDetach() throw(CAXException) = 0;
+	virtual void HandleAttach() throw(CAXException) = 0;
 	
 	virtual bool Enable() throw(CAXException) = 0;
 	virtual bool Disable() throw(CAXException) = 0;
 	
-	CAStreamBasicDescription format;
+	virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw() = 0;
 	
-	AUGraph graph;
-	CAAudioUnit outputUnit;
+	CAStreamBasicDescription format;
 	AudioUnitElement bus;
 	
 	// WARNING: a NULL renderer is the convention for indicating a source is not attached
