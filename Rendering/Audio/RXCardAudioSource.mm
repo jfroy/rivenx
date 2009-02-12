@@ -19,6 +19,7 @@ CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float 
 	[_decompressor reset];
 	
 	format = CAStreamBasicDescription([_decompressor outputFormat]);
+	assert(format.IsInterleaved());
 	
 	// cache some values from the decompressor
 	_frames = [_decompressor frameCount];
@@ -30,36 +31,7 @@ CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float 
 	_decompressionBuffer = [[VirtualRingBuffer alloc] initWithLength:_bytesPerTask];
 	_bufferedFrames = 0;
 	
-//	// if the source is looping and is very short, we'll use a loop buffer
-//	if (_frames < framesPerTask && loop) {
-//		_loopBufferLength = (_frames * (1 + (framesPerTask / _frames))) * format.mBytesPerFrame;
-//		_loopBuffer = (uint8_t*)malloc(_loopBufferLength);
-//		_loopBufferEnd = _loopBuffer + _loopBufferLength;
-//		
-//		// explicit cast is OK, ABL structure takes a 32-bit integer
-//		uint32_t sourceLength = (uint32_t)(_frames * format.mBytesPerFrame);
-//		
-//		// prepare a suitable ABL
-//		AudioBufferList abl;
-//		
-//		// FIXME: assumes interleaved samples
-//		abl.mNumberBuffers = 1;
-//		abl.mBuffers[0].mNumberChannels = format.mChannelsPerFrame;
-//		abl.mBuffers[0].mDataByteSize = sourceLength;
-//		abl.mBuffers[0].mData = _loopBuffer;
-//		
-//		// decompress all the frames into the loop buffer
-//		[_decompressor fillAudioBufferList:&abl];
-//		
-//		_loopBufferReadPointer = _loopBuffer + sourceLength;
-//		while (_loopBufferReadPointer < _loopBufferEnd) {
-//			memcpy(_loopBufferReadPointer, _loopBuffer, sourceLength);
-//			_loopBufferReadPointer += sourceLength;
-//		}
-//		
-//		_loopBufferReadPointer = _loopBuffer;
-//	} else
-		_loopBuffer = 0;
+	_loopBuffer = 0;
 }
 
 CardAudioSource::~CardAudioSource() throw(CAXException) {
@@ -82,10 +54,11 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 		for (UInt32 bufferIndex = 0; bufferIndex < ioData->mNumberBuffers; bufferIndex++)
 			bzero(ioData->mBuffers[bufferIndex].mData, ioData->mBuffers[bufferIndex].mDataByteSize);
 		*ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
+		
 #if defined(DEBUG) && DEBUG > 2
-			CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because disabled, no renderer, no decompressor or not decompression buffer"), this);
-			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-			CFRelease(rxar_debug);
+		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because disabled, no renderer, no decompressor or no decompression buffer"), this);
+		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+		CFRelease(rxar_debug);
 #endif
 		return noErr;
 	}
@@ -104,9 +77,9 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 		*ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
 		
 #if defined(DEBUG) && DEBUG > 1
-			CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of sample starvation"), this);
-			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-			CFRelease(rxar_debug);
+		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of sample starvation"), this);
+		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+		CFRelease(rxar_debug);
 #endif
 		return noErr;
 	}
@@ -117,13 +90,13 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 		[_decompressionBuffer didReadLength:optimalBytesToRead];
 	} else {
 #if defined(DEBUG) && DEBUG > 1
-			CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of partial sample starvation"), this);
-			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-			CFRelease(rxar_debug);
+		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of partial sample starvation"), this);
+		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+		CFRelease(rxar_debug);
 #endif
 		memcpy(ioData->mBuffers[0].mData, readBuffer, availableBytes);
 		[_decompressionBuffer didReadLength:availableBytes];
-		bzero(reinterpret_cast<unsigned char *>(ioData->mBuffers[0].mData) + availableBytes, optimalBytesToRead - availableBytes);
+		bzero(reinterpret_cast<unsigned char*>(ioData->mBuffers[0].mData) + availableBytes, optimalBytesToRead - availableBytes);
 	}
 	
 	return noErr;
@@ -136,112 +109,51 @@ void CardAudioSource::RenderTask() throw() {
 	if (!rendererPtr || !_decompressor || !_decompressionBuffer)
 		return;
 	
-	/*	This function is tricky. It has to deal with two issues:
-		
-		1. Looping or not looping
-		2. More frames in the source than frames per task, or less.
-	*/
-	
-	void* writeBuffer = NULL;
-	UInt32 availableBytes = [_decompressionBuffer lengthAvailableToWriteReturningPointer:&writeBuffer];
-	UInt32 bytesThisTask = (availableBytes < _bytesPerTask) ? availableBytes : _bytesPerTask;
-	
-	if (bytesThisTask == 0) {
+	void* write_ptr = NULL;
+	UInt32 available_bytes = [_decompressionBuffer lengthAvailableToWriteReturningPointer:&write_ptr];
+	UInt32 bytes_to_fill = (available_bytes < _bytesPerTask) ? available_bytes : _bytesPerTask;
+	if (bytes_to_fill == 0) {
 		pthread_mutex_unlock(&_taskMutex);
 		return;
 	}
-	
-	// loop buffer branch
-	if (_loopBuffer) {
-		// stage 1
-		assert(_loopBufferEnd >= _loopBufferReadPointer);
-		UInt32 bytesToCopy = _loopBufferEnd - _loopBufferReadPointer;
-		if (bytesToCopy > bytesThisTask)
-			bytesToCopy = bytesThisTask;
 		
-		if (bytesToCopy > 0) {
-			memcpy(writeBuffer, _loopBufferReadPointer, bytesToCopy);
-			[_decompressionBuffer didWriteLength:bytesToCopy];
-			_loopBufferReadPointer += bytesToCopy;
-		}
-		
-		// stage 2
-		assert(_loopBufferReadPointer <= _loopBufferEnd);
-		if (_loopBufferReadPointer == _loopBufferEnd)
-			_loopBufferReadPointer = _loopBuffer;
-		
-		// stage 3 (we didn't have enough bytes to fill the ring buffer)
-		if (bytesToCopy < bytesThisTask) {
-			// we can safely ignore the updated availableBytes, bytesThisTask should still be valid
-			availableBytes = [_decompressionBuffer lengthAvailableToWriteReturningPointer:&writeBuffer];
-			
-			// the math (see ctor) should make it so that we will have enough space in the loop buffer here
-			bytesToCopy = bytesThisTask - bytesToCopy;
-			
-			memcpy(writeBuffer, _loopBufferReadPointer, bytesToCopy);
-			[_decompressionBuffer didWriteLength:bytesToCopy];
-			_loopBufferReadPointer += bytesToCopy;
-		}
-		
-		pthread_mutex_unlock(&_taskMutex);
-		return;
-	}
-	
 	// buffer housekeeping
 	assert(_frames >= _bufferedFrames);
-	UInt32 bytesRemaining = (UInt32)((_frames - _bufferedFrames) * format.mBytesPerFrame);
 	
-	UInt32 optimalBytesToWrite = (bytesThisTask < bytesRemaining) ? bytesThisTask : bytesRemaining;
-	assert(optimalBytesToWrite <= bytesThisTask);
+	uint32_t available_frames = (uint32_t)(_frames - _bufferedFrames);
+	uint32_t frames_to_fill = format.BytesToFrames(bytes_to_fill);
+	if (available_frames > frames_to_fill)
+		available_frames = frames_to_fill;
 	
-	// bail out if there's nothing to be done
-	if (optimalBytesToWrite == 0) {
-		pthread_mutex_unlock(&_taskMutex);
-		return;
-	}
-	
-	// prepare a suitable ABL
-	AudioBufferList abl;
-	
-	// FIXME: assumes interleaved samples
-	abl.mNumberBuffers = 1;
-	abl.mBuffers[0].mNumberChannels = format.mChannelsPerFrame;
-	abl.mBuffers[0].mDataByteSize = optimalBytesToWrite;
-	abl.mBuffers[0].mData = writeBuffer;
-	
-	// and decompress
-	[_decompressor fillAudioBufferList:&abl];
-	[_decompressionBuffer didWriteLength:optimalBytesToWrite];
-	_bufferedFrames += (SInt64)(optimalBytesToWrite / format.mBytesPerFrame);
-	
-	// do we need to reset the decompressor?
-	if (_loop && _bufferedFrames == _frames) {
-		[_decompressor reset];
-		_bufferedFrames = 0;
+	while (frames_to_fill > 0) {
+		uint32_t bytes_to_fill = format.FramesToBytes(available_frames);
 		
-		// explicit cast OK here, ABL structure takes UInt32
-		bytesRemaining = (UInt32)(_frames * format.mBytesPerFrame);
+		// prepare a suitable ABL
+		AudioBufferList abl;
+		abl.mNumberBuffers = 1;
+		abl.mBuffers[0].mNumberChannels = format.mChannelsPerFrame;
+		abl.mBuffers[0].mDataByteSize = bytes_to_fill;
+		abl.mBuffers[0].mData = write_ptr;
 		
-		// do we need a second round of decompression?
-		if (optimalBytesToWrite < bytesThisTask) {
-			// we can safely ignore the updated availableBytes, bytesThisTask should still be valid
-			availableBytes = [_decompressionBuffer lengthAvailableToWriteReturningPointer:&writeBuffer];
-			assert(availableBytes > 0);
+		// fill in the ABL
+		[_decompressor fillAudioBufferList:&abl];
+		
+		// buffer accounting
+		[_decompressionBuffer didWriteLength:bytes_to_fill];
+		_bufferedFrames += available_frames;
+		frames_to_fill -= available_frames;
+		write_ptr = BUFFER_OFFSET(write_ptr, bytes_to_fill);
+		
+		// do we need to reset the decompressor?
+		if (_loop && frames_to_fill > 0) {
+			[_decompressor reset];
+			_bufferedFrames = 0;
 			
-			optimalBytesToWrite = bytesThisTask - optimalBytesToWrite;
-			assert(optimalBytesToWrite <= bytesThisTask);
-			
-			// FIXME: assumes interleaved samples
-			abl.mNumberBuffers = 1;
-			abl.mBuffers[0].mNumberChannels = format.mChannelsPerFrame;
-			abl.mBuffers[0].mDataByteSize = optimalBytesToWrite;
-			abl.mBuffers[0].mData = writeBuffer;
-			
-			// and decompress
-			[_decompressor fillAudioBufferList:&abl];
-			[_decompressionBuffer didWriteLength:optimalBytesToWrite];
-			_bufferedFrames += (SInt64)(optimalBytesToWrite / format.mBytesPerFrame);
-		}
+			available_frames = (uint32_t)_frames;
+			if (available_frames > frames_to_fill)
+				available_frames = frames_to_fill;
+		} else
+			break;
 	}
 	
 	pthread_mutex_unlock(&_taskMutex);
@@ -250,14 +162,12 @@ void CardAudioSource::RenderTask() throw() {
 #pragma mark -
 
 void CardAudioSource::HandleAttach() throw(CAXException) {
-	
 	// reset the decompressor
 	[_decompressor reset];
 	
 	// reset the decompression state
 	[_decompressionBuffer empty];
 	_bufferedFrames = 0;
-	_loopBufferReadPointer = _loopBuffer;
 	
 	// set the gain and pan
 	rendererPtr->SetSourceGain(*this, _gain);

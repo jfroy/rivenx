@@ -879,7 +879,8 @@ init_failure:
 
 - (void)_audioTaskThread:(id)object {
 	// WARNING: WILL BE RUNNING ON A DEDICATED THREAD
-	NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
+	NSAutoreleasePool* p = [NSAutoreleasePool new];
+	uint32_t cycles = 0;
 	
 	CFRange everything = CFRangeMake(0, 0);
 	void* renderer = [g_world audioRenderer];
@@ -900,6 +901,14 @@ init_failure:
 		CFArrayApplyFunction(_activeSources, everything, RXCardAudioSourceTaskApplier, renderer);
 		
 		OSSpinLockUnlock(&_audioTaskThreadStatusLock);
+		
+		// recycle the pool every 500 cycles
+		if (cycles > 500) {
+			cycles = 0;
+			
+			[p release];
+			p = [NSAutoreleasePool new];
+		}
 		
 		// sleep until the next task cycle
 		usleep(400000U);
