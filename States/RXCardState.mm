@@ -111,6 +111,7 @@ static void RXCardAudioSourceDisableApplier(const void* value, void* context) {
 static void RXCardAudioSourceTaskApplier(const void* value, void* context) {
 	RX::CardAudioSource* source = const_cast<RX::CardAudioSource*>(reinterpret_cast<const RX::CardAudioSource*>(value));
 	source->RenderTask();
+	source->RenderTask();
 }
 
 #pragma mark -
