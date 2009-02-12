@@ -144,7 +144,7 @@
 }
 
 - (NSString*)_waitForDisc:(NSString*)disc inModalSession:(NSModalSession)session error:(NSError**)error {
-	NSString* mountPath = [[RXEditionManager sharedEditionManager] mountPathForDisc:disc waitingInModalSession:session];
+	NSString* mountPath = [[RXEditionManager sharedEditionManager] mountPathForDisc:disc waitingInModalSession:nil];
 	while (!mountPath) {
 		// set the UI to indeterminate waiting for disc
 		[self _updateInstallerProgress:NO];

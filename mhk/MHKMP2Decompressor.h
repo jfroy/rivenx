@@ -33,6 +33,7 @@
 	void* _current_packet;
 	
 	UInt32 _decompression_buffer_position;
+	UInt32 _decompression_buffer_available;
 	UInt32 _decompression_buffer_length;
 	void* _decompression_buffer;
 	

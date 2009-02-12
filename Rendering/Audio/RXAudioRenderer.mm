@@ -399,13 +399,13 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw (CAXException) {
 
 Float32 AudioRenderer::SourceGain(AudioSourceBase& source) const throw(CAXException) {
 	Float32 value;
-	XThrowIfError(mixer->GetParameter(kStereoMixerParam_Volume, kAudioUnitScope_Input, source.bus, value), "CAAudioUnit::GetParameter");
+	XThrowIfError(mixer->GetParameter(kStereoMixerParam_Volume, kAudioUnitScope_Input, source.bus, value), "mixer->GetParameter kStereoMixerParam_Volume");
 	return value;
 }
 
 Float32 AudioRenderer::SourcePan(AudioSourceBase& source) const throw(CAXException) {
 	Float32 value;
-	XThrowIfError(mixer->GetParameter(kStereoMixerParam_Pan, kAudioUnitScope_Input, source.bus, value), "CAAudioUnit::GetParameter");
+	XThrowIfError(mixer->GetParameter(kStereoMixerParam_Pan, kAudioUnitScope_Input, source.bus, value), "mixer->GetParameter kStereoMixerParam_Pan");
 	return value;
 }
 
@@ -418,7 +418,7 @@ void AudioRenderer::SetSourceGain(AudioSourceBase& source, Float32 gain) throw(C
 	descriptor.event.parameter = kStereoMixerParam_Volume;
 	rampDescriptorList.deferred_remove(descriptor);
 	
-	XThrowIfError(mixer->SetParameter(kStereoMixerParam_Volume, kAudioUnitScope_Input, source.bus, gain), "CAAudioUnit::SetParameter");
+//	XThrowIfError(mixer->SetParameter(kStereoMixerParam_Volume, kAudioUnitScope_Input, source.bus, gain), "mixer->SetParameter kStereoMixerParam_Volume");
 }
 
 void AudioRenderer::SetSourcePan(AudioSourceBase& source, Float32 pan) throw(CAXException) {
@@ -430,7 +430,7 @@ void AudioRenderer::SetSourcePan(AudioSourceBase& source, Float32 pan) throw(CAX
 	descriptor.event.parameter = kStereoMixerParam_Pan;
 	rampDescriptorList.deferred_remove(descriptor);
 	
-	XThrowIfError(mixer->SetParameter(kStereoMixerParam_Pan, kAudioUnitScope_Input, source.bus, pan), "CAAudioUnit::SetParameter");
+//	XThrowIfError(mixer->SetParameter(kStereoMixerParam_Pan, kAudioUnitScope_Input, source.bus, pan), "mixer->SetParameter kStereoMixerParam_Pan");
 }
 
 void AudioRenderer::RampSourceGain(AudioSourceBase& source, Float32 value, Float64 duration) throw(CAXException) {
@@ -438,7 +438,7 @@ void AudioRenderer::RampSourceGain(AudioSourceBase& source, Float32 value, Float
 	CFArrayRef sources = CFArrayCreate(NULL, (const void**)&source_ptr, 1, &g_weakAudioSourceBaseArrayCallbacks);
 	std::vector<Float32>values = std::vector<Float32>(1, value);
 	std::vector<Float64>durations = std::vector<Float64>(1, duration);
-	RampMixerParameter(sources, kStereoMixerParam_Volume, values, durations);
+//	RampMixerParameter(sources, kStereoMixerParam_Volume, values, durations);
 	CFRelease(sources);
 }
 
@@ -447,28 +447,28 @@ void AudioRenderer::RampSourcePan(AudioSourceBase& source, Float32 value, Float6
 	CFArrayRef sources = CFArrayCreate(NULL, (const void**)&source_ptr, 1, &g_weakAudioSourceBaseArrayCallbacks);
 	std::vector<Float32>values = std::vector<Float32>(1, value);
 	std::vector<Float64>durations = std::vector<Float64>(1, duration);
-	RampMixerParameter(sources, kStereoMixerParam_Pan, values, durations);
+//	RampMixerParameter(sources, kStereoMixerParam_Pan, values, durations);
 	CFRelease(sources);
 }
 
 void AudioRenderer::RampSourcesGain(CFArrayRef sources, Float32 value, Float64 duration) throw(CAXException) {
 	std::vector<Float32>values = std::vector<Float32>(CFArrayGetCount(sources), value);
 	std::vector<Float64>durations = std::vector<Float64>(CFArrayGetCount(sources), duration);
-	RampMixerParameter(sources, kStereoMixerParam_Volume, values, durations);
+//	RampMixerParameter(sources, kStereoMixerParam_Volume, values, durations);
 }
 
 void AudioRenderer::RampSourcesPan(CFArrayRef sources, Float32 value, Float64 duration) throw(CAXException) {
 	std::vector<Float32>values = std::vector<Float32>(CFArrayGetCount(sources), value);
 	std::vector<Float64>durations = std::vector<Float64>(CFArrayGetCount(sources), duration);
-	RampMixerParameter(sources, kStereoMixerParam_Pan, values, durations);
+//	RampMixerParameter(sources, kStereoMixerParam_Pan, values, durations);
 }
 
 void AudioRenderer::RampSourcesGain(CFArrayRef sources, std::vector<Float32>values, std::vector<Float64>durations) throw(CAXException) {
-	RampMixerParameter(sources, kStereoMixerParam_Volume, values, durations);
+//	RampMixerParameter(sources, kStereoMixerParam_Volume, values, durations);
 }
 
 void AudioRenderer::RampSourcesPan(CFArrayRef sources, std::vector<Float32>values, std::vector<Float64>durations) throw(CAXException) {
-	RampMixerParameter(sources, kStereoMixerParam_Pan, values, durations);
+//	RampMixerParameter(sources, kStereoMixerParam_Pan, values, durations);
 }
 
 #pragma mark -
@@ -525,10 +525,10 @@ void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID 
 			rampDescriptorList.deferred_add(descriptor);
 #if defined(RIVENX)
 		} else {
-			if (parameter == kStereoMixerParam_Volume)
-				SetSourceGain(*source, value);
-			else if (parameter == kStereoMixerParam_Pan)
-				SetSourcePan(*source, value);
+//			if (parameter == kStereoMixerParam_Volume)
+//				SetSourceGain(*source, value);
+//			else if (parameter == kStereoMixerParam_Pan)
+//				SetSourcePan(*source, value);
 		}
 #endif
 	}

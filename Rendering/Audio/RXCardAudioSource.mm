@@ -11,7 +11,7 @@
 
 namespace RX {
 
-CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float gain, float pan, bool loop) throw(CAXException) : _decompressor(decompressor), _gain(1.0), _pan(pan), _loop(loop)
+CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float gain, float pan, bool loop) throw(CAXException) : _decompressor(decompressor), _gain(gain), _pan(pan), _loop(loop)
 {
 	pthread_mutex_init(&_taskMutex, NULL);
 	
@@ -23,42 +23,42 @@ CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float 
 	// cache some values from the decompressor
 	_frames = [_decompressor frameCount];
 	
-	// 0.5 seconds buffer
-	size_t framesPerTask = static_cast<size_t>(0.5 * format.mSampleRate);
+	// 5 seconds buffer
+	size_t framesPerTask = static_cast<size_t>(5.0 * format.mSampleRate);
 	_bytesPerTask = framesPerTask * format.mBytesPerFrame;
 	
 	_decompressionBuffer = [[VirtualRingBuffer alloc] initWithLength:_bytesPerTask];
 	_bufferedFrames = 0;
 	
-	// if the source is looping and is very short, we'll use a loop buffer
-	if (_frames < framesPerTask && loop) {
-		_loopBufferLength = (_frames * (1 + (framesPerTask / _frames))) * format.mBytesPerFrame;
-		_loopBuffer = (uint8_t*)malloc(_loopBufferLength);
-		_loopBufferEnd = _loopBuffer + _loopBufferLength;
-		
-		// Explicit cast is OK, ABL structure takes a 32-bit integer
-		uint32_t sourceLength = (uint32_t)(_frames * format.mBytesPerFrame);
-		
-		// prepare a suitable ABL
-		AudioBufferList abl;
-		
-		// FIXME: assumes interleaved samples
-		abl.mNumberBuffers = 1;
-		abl.mBuffers[0].mNumberChannels = format.mChannelsPerFrame;
-		abl.mBuffers[0].mDataByteSize = sourceLength;
-		abl.mBuffers[0].mData = _loopBuffer;
-		
-		// decompress all the frames into the loop buffer
-		[_decompressor fillAudioBufferList:&abl];
-		
-		_loopBufferReadPointer = _loopBuffer + sourceLength;
-		while (_loopBufferReadPointer < _loopBufferEnd) {
-			memcpy(_loopBufferReadPointer, _loopBuffer, sourceLength);
-			_loopBufferReadPointer += sourceLength;
-		}
-		
-		_loopBufferReadPointer = _loopBuffer;
-	} else
+//	// if the source is looping and is very short, we'll use a loop buffer
+//	if (_frames < framesPerTask && loop) {
+//		_loopBufferLength = (_frames * (1 + (framesPerTask / _frames))) * format.mBytesPerFrame;
+//		_loopBuffer = (uint8_t*)malloc(_loopBufferLength);
+//		_loopBufferEnd = _loopBuffer + _loopBufferLength;
+//		
+//		// explicit cast is OK, ABL structure takes a 32-bit integer
+//		uint32_t sourceLength = (uint32_t)(_frames * format.mBytesPerFrame);
+//		
+//		// prepare a suitable ABL
+//		AudioBufferList abl;
+//		
+//		// FIXME: assumes interleaved samples
+//		abl.mNumberBuffers = 1;
+//		abl.mBuffers[0].mNumberChannels = format.mChannelsPerFrame;
+//		abl.mBuffers[0].mDataByteSize = sourceLength;
+//		abl.mBuffers[0].mData = _loopBuffer;
+//		
+//		// decompress all the frames into the loop buffer
+//		[_decompressor fillAudioBufferList:&abl];
+//		
+//		_loopBufferReadPointer = _loopBuffer + sourceLength;
+//		while (_loopBufferReadPointer < _loopBufferEnd) {
+//			memcpy(_loopBufferReadPointer, _loopBuffer, sourceLength);
+//			_loopBufferReadPointer += sourceLength;
+//		}
+//		
+//		_loopBufferReadPointer = _loopBuffer;
+//	} else
 		_loopBuffer = 0;
 }
 
