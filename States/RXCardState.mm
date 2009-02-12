@@ -903,6 +903,7 @@ init_failure:
 		OSSpinLockUnlock(&_audioTaskThreadStatusLock);
 		
 		// recycle the pool every 500 cycles
+		cycles++;
 		if (cycles > 500) {
 			cycles = 0;
 			
