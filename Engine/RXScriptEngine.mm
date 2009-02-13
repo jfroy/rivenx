@@ -445,7 +445,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[20].imp(self, _riven_command_dispatch_table[20].sel, 0, NULL);
 	 
 	// disable all movies (not sure this needs to be done here, but bad drawing glitches occur if this is not done, see bspit 163)
-	[(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
+	[(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:NO];
 	
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
@@ -804,7 +804,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if ([[movie movie] rate] > 0.001f)
 		return;
 	
-	// put the movie at its beginning if it is not a looping movie
+	// put the movie at its beginning if it's not a looping movie
 	if (![movie looping])
 		[movie gotoBeginning];
 	
@@ -1325,7 +1325,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		return;
 	
 	// stop the movie on the main thread and block until done
-	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
+	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:NO];
 	
 	// remove the movie from the code-movie map
 	NSMapRemove(code2movieMap, (const void*)k);
@@ -1349,7 +1349,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		return;
 	
 	// start the movie and register for rate change notifications
-	[self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:movie waitUntilDone:YES];
+	[self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:movie waitUntilDone:NO];
 	
 	// wait until the movie is done playing
 	semaphore_wait(_moviePlaybackSemaphore);
@@ -1373,7 +1373,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		return;
 	
 	// start the movie
-	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
+	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:NO];
 }
 
 // 39
@@ -1428,7 +1428,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	NSMapInsert(code2movieMap, (const void*)k, movie);
 	
 	// start the movie
-	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
+	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:NO];
 }
 
 // 43
