@@ -35,8 +35,8 @@ public:
 	void RenderTask() throw();
 	
 	// info 
-	inline int64_t FrameCount() const throw() {return _frames;}
-	inline double Duration() const throw() {return _frames / format.mSampleRate;}
+	inline int64_t FrameCount() const throw() {return [_decompressor frameCount];}
+	inline double Duration() const throw() {return [_decompressor frameCount] / format.mSampleRate;}
 	
 	// nominal gain
 	inline float NominalGain() const throw() {return _gain;}
@@ -60,12 +60,12 @@ protected:
 	virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw();
 
 private:
+	void task(uint32_t byte_limit) throw();
+
 	id <MHKAudioDecompression> _decompressor;
 	float _gain;
 	float _pan;
 	bool _loop;
-	
-	int64_t _frames;
 	
 	int64_t _bufferedFrames;
 	VirtualRingBuffer* _decompressionBuffer;

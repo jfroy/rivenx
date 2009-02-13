@@ -15,20 +15,23 @@ CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float 
 {
 	pthread_mutex_init(&_taskMutex, NULL);
 	
+	// keep our decompressor around
 	[_decompressor retain];
-	[_decompressor reset];
 	
+	// we don't have to reset the decompressor here -- we can do it in HandleAttach
+	
+	// set our format to the decompressor's format
 	format = CAStreamBasicDescription([_decompressor outputFormat]);
+	
+	// CardAudioSource only handles interleaved formats
 	assert(format.IsInterleaved());
 	
-	// cache some values from the decompressor
-	_frames = [_decompressor frameCount];
-	
-	// 5 seconds buffer
-	size_t framesPerTask = static_cast<size_t>(5.0 * format.mSampleRate);
+	// 2 seconds per tasking round
+	size_t framesPerTask = static_cast<size_t>(2.0 * format.mSampleRate);
 	_bytesPerTask = framesPerTask * format.mBytesPerFrame;
 	
-	_decompressionBuffer = [[VirtualRingBuffer alloc] initWithLength:_bytesPerTask];
+	// 10 second buffer
+	_decompressionBuffer = [[VirtualRingBuffer alloc] initWithLength:_bytesPerTask * 10];
 	_bufferedFrames = 0;
 	
 	_loopBuffer = 0;
@@ -103,60 +106,85 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 }
 
 void CardAudioSource::RenderTask() throw() {
-	if (!rendererPtr || !_decompressor || !_decompressionBuffer)
+	if (!_decompressor || !_decompressionBuffer)
 		return;
 	pthread_mutex_lock(&_taskMutex);
-	if (!rendererPtr || !_decompressor || !_decompressionBuffer)
+	if (!_decompressor || !_decompressionBuffer)
 		return;
+
+	task(_bytesPerTask);
 	
+	pthread_mutex_unlock(&_taskMutex);
+}
+
+void CardAudioSource::task(uint32_t byte_limit) throw() {
+#if defined(DEBUG) && DEBUG > 2
+		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> tasking"), this);
+		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+		CFRelease(rxar_debug);
+#endif
+	
+	// get how many bytes are available in the decompression ring buffer and a suitable write pointer
 	void* write_ptr = NULL;
 	UInt32 available_bytes = [_decompressionBuffer lengthAvailableToWriteReturningPointer:&write_ptr];
-	UInt32 bytes_to_fill = (available_bytes < _bytesPerTask) ? available_bytes : _bytesPerTask;
+	
+	// we want to fill as many bytes as are available in the decompression buffer up to the specified byte limit
+	UInt32 bytes_to_fill = (available_bytes < byte_limit) ? available_bytes : byte_limit;
 	if (bytes_to_fill == 0) {
-		pthread_mutex_unlock(&_taskMutex);
+#if defined(DEBUG) && DEBUG > 2
+		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> no space for tasking, bailing"), this);
+		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+		CFRelease(rxar_debug);
+#endif
 		return;
 	}
 		
-	// buffer housekeeping
-	assert(_frames >= _bufferedFrames);
+	// assert that we cannot have more buffered frames than the total number of frames in our decompressor
+	assert(_bufferedFrames <= [_decompressor frameCount]);
 	
-	uint32_t available_frames = (uint32_t)(_frames - _bufferedFrames);
+	// derive how many frames we ideally want to fill from the number of bytes to fill
 	uint32_t frames_to_fill = format.BytesToFrames(bytes_to_fill);
+	if (frames_to_fill == 0) {
+#if defined(DEBUG) && DEBUG > 2
+		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> no space for tasking at least one frame, bailing"), this);
+		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
+		CFRelease(rxar_debug);
+#endif
+		return;
+	}
+	
+	// derive how many frames can be written in the decompression buffer; if we can fill in more than what we ideally want, clamp to the ideal number
+	uint32_t available_frames = (uint32_t)([_decompressor frameCount] - _bufferedFrames);
 	if (available_frames > frames_to_fill)
 		available_frames = frames_to_fill;
 	
-	while (frames_to_fill > 0) {
-		uint32_t bytes_to_fill = format.FramesToBytes(available_frames);
-		
-		// prepare a suitable ABL
-		AudioBufferList abl;
-		abl.mNumberBuffers = 1;
-		abl.mBuffers[0].mNumberChannels = format.mChannelsPerFrame;
-		abl.mBuffers[0].mDataByteSize = bytes_to_fill;
-		abl.mBuffers[0].mData = write_ptr;
-		
-		// fill in the ABL
-		[_decompressor fillAudioBufferList:&abl];
-		
-		// buffer accounting
-		[_decompressionBuffer didWriteLength:bytes_to_fill];
-		_bufferedFrames += available_frames;
-		frames_to_fill -= available_frames;
-		write_ptr = BUFFER_OFFSET(write_ptr, bytes_to_fill);
-		
-		// do we need to reset the decompressor?
-		if (_loop && frames_to_fill > 0) {
-			[_decompressor reset];
-			_bufferedFrames = 0;
-			
-			available_frames = (uint32_t)_frames;
-			if (available_frames > frames_to_fill)
-				available_frames = frames_to_fill;
-		} else
-			break;
-	}
+	// we fill as many bytes as the number of available frames (clamped to the ideal number of frames)
+	bytes_to_fill = format.FramesToBytes(available_frames);
 	
-	pthread_mutex_unlock(&_taskMutex);
+	// prepare a suitable ABL
+	AudioBufferList abl;
+	abl.mNumberBuffers = 1;
+	abl.mBuffers[0].mNumberChannels = format.mChannelsPerFrame;
+	abl.mBuffers[0].mDataByteSize = bytes_to_fill;
+	abl.mBuffers[0].mData = write_ptr;
+	
+	// fill in the ABL
+	[_decompressor fillAudioBufferList:&abl];
+	
+	// buffer accounting
+	_bufferedFrames += available_frames;
+	frames_to_fill -= available_frames;
+	
+	// update the ring buffer
+	[_decompressionBuffer didWriteLength:bytes_to_fill];
+	
+	// if we're looping and we're missing frames from the ideal number, reset the decompressor and go for another round
+	if (_loop && frames_to_fill > 0) {
+		[_decompressor reset];
+		_bufferedFrames = 0;
+		
+		task(format.FramesToBytes(frames_to_fill));
+	}
 }
 
 #pragma mark -
@@ -172,6 +200,9 @@ void CardAudioSource::HandleAttach() throw(CAXException) {
 	// set the gain and pan
 	rendererPtr->SetSourceGain(*this, _gain);
 	rendererPtr->SetSourcePan(*this, _pan);
+	
+	// go for 1 round of tasking so we don't starve the first few callbacks
+	RenderTask();
 }
 
 void CardAudioSource::HandleDetach() throw(CAXException) {

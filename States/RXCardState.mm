@@ -111,7 +111,6 @@ static void RXCardAudioSourceDisableApplier(const void* value, void* context) {
 static void RXCardAudioSourceTaskApplier(const void* value, void* context) {
 	RX::CardAudioSource* source = const_cast<RX::CardAudioSource*>(reinterpret_cast<const RX::CardAudioSource*>(value));
 	source->RenderTask();
-	source->RenderTask();
 }
 
 #pragma mark -
@@ -739,10 +738,6 @@ init_failure:
 		}
 	}
 	
-	// one round of tasking for new sources so that there's data ready immediately
-	CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));
-	CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceTaskApplier, renderer);
-	
 	// if no fade out is requested, mark every sound not already scheduled for detach as needing detach yesterday
 	if (!soundGroup->fadeOutActiveGroupBeforeActivating) {
 		soundEnum = [soundsToRemove objectEnumerator];
@@ -845,9 +840,6 @@ init_failure:
 	sound->source = new RX::CardAudioSource(decompressor, sound->gain, sound->pan, false);
 	assert(sound->source);
 	
-	// one round of tasking so that there's data ready immediately
-	sound->source->RenderTask();
-	
 	// disable automatic graph updates on the audio renderer (e.g. begin a transaction)
 	renderer->SetAutomaticGraphUpdates(false);
 	
@@ -912,8 +904,8 @@ init_failure:
 			p = [NSAutoreleasePool new];
 		}
 		
-		// sleep until the next task cycle
-		usleep(400000U);
+		// sleep 1 second until the next cycle
+		sleep(1);
 	}
 	
 	// pop the autorelease pool

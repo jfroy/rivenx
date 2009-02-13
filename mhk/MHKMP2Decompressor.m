@@ -504,7 +504,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		
 		// fast return if we're all done
 		if (bytes_to_decompress == decompressed_bytes)
-			return;
+			goto AbortFill;
 	}
 	
 	// at this point the decompression buffer must be empty
