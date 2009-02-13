@@ -31,7 +31,7 @@ CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float 
 	_bytesPerTask = framesPerTask * format.mBytesPerFrame;
 	
 	// 10 second buffer
-	_decompressionBuffer = [[VirtualRingBuffer alloc] initWithLength:_bytesPerTask * 10];
+	_decompressionBuffer = [[VirtualRingBuffer alloc] initWithLength:_bytesPerTask * 5];
 	_bufferedFrames = 0;
 	
 	_loopBuffer = 0;
