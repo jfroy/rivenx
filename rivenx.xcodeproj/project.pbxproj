@@ -126,6 +126,14 @@
 		316721AF0D27F63000FB2C0E /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 316721D90D27FB3200FB2C0E /* integer_pair_hash.c */; };
 		316C37B40987227800AC2C8E /* RXCardState.mm in Sources */ = {isa = PBXBuildFile; fileRef = 316C37B20987227800AC2C8E /* RXCardState.mm */; };
+		316C389E0F469F7200EFB7FB /* CAAudioUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14BD60F03F568006EFF93 /* CAAudioUnit.cpp */; };
+		316C38A00F469F8000EFB7FB /* CAGuard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B960F03F527006EFF93 /* CAGuard.cpp */; };
+		316C38A40F469F8E00EFB7FB /* CAAudioChannelLayoutObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B840F03F495006EFF93 /* CAAudioChannelLayoutObject.cpp */; };
+		316C38A70F469FA800EFB7FB /* CAMutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38A60F469FA800EFB7FB /* CAMutex.cpp */; };
+		316C38AC0F469FC700EFB7FB /* CAHostTimeBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38AB0F469FC700EFB7FB /* CAHostTimeBase.cpp */; };
+		316C38AE0F469FD100EFB7FB /* CAComponent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14BF20F03F7D3006EFF93 /* CAComponent.cpp */; };
+		316C38B10F469FDE00EFB7FB /* CAPThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38B00F469FDE00EFB7FB /* CAPThread.cpp */; };
+		316C38B30F469FE800EFB7FB /* CADebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C010F03F8EC006EFF93 /* CADebugger.cpp */; };
 		316E1F2A0E77806100F28E2A /* mhk_dump.m in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F270E77806100F28E2A /* mhk_dump.m */; };
 		316E1F2B0E77806100F28E2A /* mhk_dump_cmd.c in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F280E77806100F28E2A /* mhk_dump_cmd.c */; };
 		316E1F300E77809400F28E2A /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3158857A0C8729D800204DDD /* MHKKit.framework */; };
@@ -458,6 +466,9 @@
 		316721D90D27FB3200FB2C0E /* integer_pair_hash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = integer_pair_hash.c; path = Additions/integer_pair_hash.c; sourceTree = "<group>"; };
 		316C37B10987227800AC2C8E /* RXCardState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXCardState.h; path = States/RXCardState.h; sourceTree = "<group>"; };
 		316C37B20987227800AC2C8E /* RXCardState.mm */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RXCardState.mm; path = States/RXCardState.mm; sourceTree = "<group>"; tabWidth = 4; usesTabs = 1; };
+		316C38A60F469FA800EFB7FB /* CAMutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CAMutex.cpp; sourceTree = "<group>"; };
+		316C38AB0F469FC700EFB7FB /* CAHostTimeBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CAHostTimeBase.cpp; sourceTree = "<group>"; };
+		316C38B00F469FDE00EFB7FB /* CAPThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CAPThread.cpp; sourceTree = "<group>"; };
 		316E1EE80E77803100F28E2A /* mhkdump */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mhkdump; sourceTree = BUILT_PRODUCTS_DIR; };
 		316E1F270E77806100F28E2A /* mhk_dump.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = mhk_dump.m; path = mhk/mhk_dump.m; sourceTree = "<group>"; };
 		316E1F280E77806100F28E2A /* mhk_dump_cmd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mhk_dump_cmd.c; path = mhk/mhk_dump_cmd.c; sourceTree = "<group>"; };
@@ -901,6 +912,8 @@
 		3153EDA309A3EDAF002E1149 /* PublicUtility */ = {
 			isa = PBXGroup;
 			children = (
+				316C38B00F469FDE00EFB7FB /* CAPThread.cpp */,
+				316C38AB0F469FC700EFB7FB /* CAHostTimeBase.cpp */,
 				31A14B810F03F495006EFF93 /* AUOutputBL.cpp */,
 				31A14B830F03F495006EFF93 /* CAAudioChannelLayout.cpp */,
 				31A14B840F03F495006EFF93 /* CAAudioChannelLayoutObject.cpp */,
@@ -909,6 +922,7 @@
 				31A14C070F03F912006EFF93 /* CAComponentDescription.cpp */,
 				31A14C010F03F8EC006EFF93 /* CADebugger.cpp */,
 				31A14B960F03F527006EFF93 /* CAGuard.cpp */,
+				316C38A60F469FA800EFB7FB /* CAMutex.cpp */,
 				31200FBF0F3F8495006E6EF7 /* CAStreamBasicDescription.cpp */,
 				31A14B930F03F51E006EFF93 /* CAXException.cpp */,
 			);
@@ -1608,6 +1622,14 @@
 				315BD3D00D85AF97007A3BFA /* RXLogging.m in Sources */,
 				315BD3F90D85B3FC007A3BFA /* InterThreadMessaging.m in Sources */,
 				315BD41C0D85B64D007A3BFA /* BZFSUtilities.m in Sources */,
+				316C389E0F469F7200EFB7FB /* CAAudioUnit.cpp in Sources */,
+				316C38A00F469F8000EFB7FB /* CAGuard.cpp in Sources */,
+				316C38A40F469F8E00EFB7FB /* CAAudioChannelLayoutObject.cpp in Sources */,
+				316C38A70F469FA800EFB7FB /* CAMutex.cpp in Sources */,
+				316C38AC0F469FC700EFB7FB /* CAHostTimeBase.cpp in Sources */,
+				316C38AE0F469FD100EFB7FB /* CAComponent.cpp in Sources */,
+				316C38B10F469FDE00EFB7FB /* CAPThread.cpp in Sources */,
+				316C38B30F469FE800EFB7FB /* CADebugger.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2154,50 +2176,23 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				GCC_ALTIVEC_EXTENSIONS = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_ENABLE_SSE3_EXTENSIONS = YES;
-				GCC_FAST_OBJC_DISPATCH = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREFIX_HEADER = RXBase.pch;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					DEBUG,
-					VERBOSE,
-				);
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				PREBINDING = NO;
 				PRODUCT_NAME = RXCardAudioSource_test;
-				ZERO_LINK = NO;
 			};
 			name = Debug;
 		};
 		31DAA10D09D888FA00F63F20 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				GCC_ALTIVEC_EXTENSIONS = YES;
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_ENABLE_SSE3_EXTENSIONS = YES;
-				GCC_FAST_OBJC_DISPATCH = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_MODEL_TUNING = G5;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					DEBUG,
-					VERBOSE,
-				);
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				PREBINDING = NO;
 				PRODUCT_NAME = RXCardAudioSource_test;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -2314,25 +2309,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
-				GCC_ALTIVEC_EXTENSIONS = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_ENABLE_SSE3_EXTENSIONS = YES;
-				GCC_FAST_OBJC_DISPATCH = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					DEBUG,
-					VERBOSE,
-				);
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				PREBINDING = NO;
 				PRODUCT_NAME = RXCardAudioSource_test;
-				ZERO_LINK = NO;
 			};
 			name = "Debug Release";
 		};

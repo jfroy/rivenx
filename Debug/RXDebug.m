@@ -7,6 +7,11 @@
  *
  */
 
+#import <Foundation/Foundation.h>
+
+#import "Base/RXLogging.h"
+#import "RXDebug.h"
+
 void rx_print_exception_backtrace(NSException* e) {
 	NSArray* stack = [[[e userInfo] objectForKey:NSStackTraceKey] componentsSeparatedByString:@"  "];
 	if (!stack && [e respondsToSelector:@selector(callStackReturnAddresses)])

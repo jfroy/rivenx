@@ -143,7 +143,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 	
 #if defined(DEBUG)
 	// echo to stderr everything but SCRIPT
-	if ([facility isEqualToString:[NSString stringWithCString:kRXLoggingAudio encoding:NSASCIIStringEncoding]])
+	if (![facility isEqualToString:[NSString stringWithCString:kRXLoggingScript encoding:NSASCIIStringEncoding]])
 		write(STDERR_FILENO, [messageData bytes], [messageData length]);
 #endif
 }

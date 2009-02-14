@@ -15,13 +15,15 @@
 
 #import <MHKKit/MHKAudioDecompression.h>
 
-#import "CAAudioFile.h"
-#import "CAPThread.h"
-#import "CAGuard.h"
+#import "Base/RXThreadUtilities.h"
+#import "Base/RXLogging.h"
 
-#import "RXLogging.h"
-#import "RXAudioRenderer.h"
-#import "RXCardAudioSource.h"
+#import "Rendering/Audio/PublicUtility/CAAudioFile.h"
+#import "Rendering/Audio/PublicUtility/CAPThread.h"
+#import "Rendering/Audio/PublicUtility/CAGuard.h"
+
+#import "Rendering/Audio/RXAudioRenderer.h"
+#import "Rendering/Audio/RXCardAudioSource.h"
 
 using namespace RX;
 
@@ -88,7 +90,7 @@ using namespace RX;
 @end
 
 
-void * source_task_thread(void* context) {
+void* source_task_thread(void* context) {
 	CardAudioSource* source = reinterpret_cast<CardAudioSource *>(context);
 	CAGuard taskGuard("task guard");
 	
@@ -102,7 +104,7 @@ void * source_task_thread(void* context) {
 	return NULL;
 }
 
-int main (int argc, char * const argv[]) {
+int main (int argc, char* const argv[]) {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 	
 	if (argc < 2) {
@@ -110,6 +112,8 @@ int main (int argc, char * const argv[]) {
 		[pool release];
 		exit(EX_USAGE);
 	}
+	
+	RXInitThreading();
 	
 	RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Allocating decompressor");
 	EAFDecompressor* decompressor = [[[EAFDecompressor alloc] initWithSystemPath:argv[1]] autorelease];
@@ -135,8 +139,6 @@ int main (int argc, char * const argv[]) {
 		
 		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Running...");
 		renderer.Start();
-		
-		renderer.PrintGraph(renderer.Graph());
 		
 		// task loop
 		CAPThread taskThread(&source_task_thread, &source, CAPThread::kMaxThreadPriority, true);
@@ -179,9 +181,6 @@ int main (int argc, char * const argv[]) {
 		
 		// And log a nice little message about the rest of the program
 		sleep(4); // 40
-		
-		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Rendering source until the end and a little bit longer to test looping...");
-		sleep(static_cast<unsigned int>(duration - 40));
 	} catch (CAXException c) {
 		char errorString[256];
 		printf("error %s in %s\n", c.FormatError(errorString), c.mOperation);
