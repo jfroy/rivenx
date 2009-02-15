@@ -5,15 +5,15 @@
 	<key>rendering</key>
 	<dict>
 		<key>card_info</key>
-		<integer>1</integer>
+		<integer>0</integer>
 		<key>volume</key>
 		<real>1</real>
 		<key>hotspots_info</key>
-		<integer>1</integer>
+		<integer>0</integer>
 		<key>audio_ramps</key>
 		<integer>1</integer>
 		<key>mouse_info</key>
-		<integer>1</integer>
+		<integer>0</integer>
 	</dict>
 </dict>
 </plist>
