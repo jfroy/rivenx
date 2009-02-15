@@ -134,6 +134,8 @@
 		316C38AE0F469FD100EFB7FB /* CAComponent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14BF20F03F7D3006EFF93 /* CAComponent.cpp */; };
 		316C38B10F469FDE00EFB7FB /* CAPThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38B00F469FDE00EFB7FB /* CAPThread.cpp */; };
 		316C38B30F469FE800EFB7FB /* CADebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C010F03F8EC006EFF93 /* CADebugger.cpp */; };
+		316C38D70F46B22300EFB7FB /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */; };
+		316C38DE0F46B53900EFB7FB /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */; };
 		316E1F2A0E77806100F28E2A /* mhk_dump.m in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F270E77806100F28E2A /* mhk_dump.m */; };
 		316E1F2B0E77806100F28E2A /* mhk_dump_cmd.c in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F280E77806100F28E2A /* mhk_dump_cmd.c */; };
 		316E1F300E77809400F28E2A /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3158857A0C8729D800204DDD /* MHKKit.framework */; };
@@ -469,6 +471,7 @@
 		316C38A60F469FA800EFB7FB /* CAMutex.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CAMutex.cpp; sourceTree = "<group>"; };
 		316C38AB0F469FC700EFB7FB /* CAHostTimeBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CAHostTimeBase.cpp; sourceTree = "<group>"; };
 		316C38B00F469FDE00EFB7FB /* CAPThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CAPThread.cpp; sourceTree = "<group>"; };
+		316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CAAUParameter.cpp; sourceTree = "<group>"; };
 		316E1EE80E77803100F28E2A /* mhkdump */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mhkdump; sourceTree = BUILT_PRODUCTS_DIR; };
 		316E1F270E77806100F28E2A /* mhk_dump.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = mhk_dump.m; path = mhk/mhk_dump.m; sourceTree = "<group>"; };
 		316E1F280E77806100F28E2A /* mhk_dump_cmd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mhk_dump_cmd.c; path = mhk/mhk_dump_cmd.c; sourceTree = "<group>"; };
@@ -912,8 +915,7 @@
 		3153EDA309A3EDAF002E1149 /* PublicUtility */ = {
 			isa = PBXGroup;
 			children = (
-				316C38B00F469FDE00EFB7FB /* CAPThread.cpp */,
-				316C38AB0F469FC700EFB7FB /* CAHostTimeBase.cpp */,
+				316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */,
 				31A14B810F03F495006EFF93 /* AUOutputBL.cpp */,
 				31A14B830F03F495006EFF93 /* CAAudioChannelLayout.cpp */,
 				31A14B840F03F495006EFF93 /* CAAudioChannelLayoutObject.cpp */,
@@ -922,7 +924,9 @@
 				31A14C070F03F912006EFF93 /* CAComponentDescription.cpp */,
 				31A14C010F03F8EC006EFF93 /* CADebugger.cpp */,
 				31A14B960F03F527006EFF93 /* CAGuard.cpp */,
+				316C38AB0F469FC700EFB7FB /* CAHostTimeBase.cpp */,
 				316C38A60F469FA800EFB7FB /* CAMutex.cpp */,
+				316C38B00F469FDE00EFB7FB /* CAPThread.cpp */,
 				31200FBF0F3F8495006E6EF7 /* CAStreamBasicDescription.cpp */,
 				31A14B930F03F51E006EFF93 /* CAXException.cpp */,
 			);
@@ -1630,6 +1634,7 @@
 				316C38AE0F469FD100EFB7FB /* CAComponent.cpp in Sources */,
 				316C38B10F469FDE00EFB7FB /* CAPThread.cpp in Sources */,
 				316C38B30F469FE800EFB7FB /* CADebugger.cpp in Sources */,
+				316C38DE0F46B53900EFB7FB /* CAAUParameter.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1716,6 +1721,7 @@
 				31F4EFEA0F35312700A68652 /* RXScriptEngine.mm in Sources */,
 				31F4F0020F3533EF00A68652 /* RXScriptDecoding.m in Sources */,
 				31F4F03C0F35461C00A68652 /* RXMovieProxy.mm in Sources */,
+				316C38D70F46B22300EFB7FB /* CAAUParameter.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

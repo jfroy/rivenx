@@ -107,6 +107,8 @@ void* source_task_thread(void* context) {
 int main (int argc, char* const argv[]) {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 	
+	srandom(time(NULL));
+	
 	if (argc < 2) {
 		printf("usage: %s [audio file]\n", argv[0]);
 		[pool release];
@@ -147,40 +149,114 @@ int main (int argc, char* const argv[]) {
 		// wait 10 seconds
 		sleep(10); // 10
 		
-		// disable the source for 5 seconds
-		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Disabling source for 5 seconds...");
-		source.SetEnabled(false);
+/******/
 		
-		sleep(5); // 15
-		source.SetEnabled(true);
+//		// disable the source for 5 seconds
+//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Disabling source for 5 seconds...");
+//		source.SetEnabled(false);
+//		
+//		sleep(5); // 15
+//		source.SetEnabled(true);
+//		
+//		// take 5
+//		sleep(5); // 20
+
+/******/
+
+//		// schedule a 10 seconds fade out
+//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Scheduling a 10 seconds fade out");
+//		renderer.RampSourceGain(source, 0.0f, 10.0);
+//		
+//		sleep(11);
+//		
+//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Fade out should now be complete, fading in over 3 seconds...");
+//		renderer.RampSourceGain(source, 1.0f, 3.0);
+//		
+//		sleep(5);
+
+/******/
+
+		// schedule a 10 seconds L/R pan
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Scheduling a 10 second L/R pan");
+		renderer.RampSourcePan(source, 0.0f, 10.0 / 3.0);
+		usleep(10.0 / 3.0 * 1.0e6);
 		
-		// take 5
-		sleep(5); // 20
+		renderer.RampSourcePan(source, 1.0f, 2.0 * 10.0 / 3.0);
+		usleep(2.0 * 10.0 / 3.0 * 1.0e6);
 		
-		// schedule a 10 seconds fade out
-		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Scheduling a 10 seconds fade out");
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Panning should now be complete, centering in over 3 seconds...");
+		renderer.RampSourcePan(source, 0.5f, 3.0);
+		
+		sleep(5);
+		
+/******/
+		
+//		// schedule a 10 seconds fade out
+//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Scheduling a 10 seconds fade out");
+//		renderer.RampSourceGain(source, 0.0f, 10.0);
+//		
+//		// disbable the source 5 seconds after the beginning of the ramp for 5 seconds
+//		sleep(5);
+//		
+//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Disabling source for 5 seconds...");
+//		source.SetEnabled(false);
+//		
+//		// the ramp should resume where it left off when we enable the source
+//		sleep(5);
+//		
+//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Enabling source");
+//		source.SetEnabled(true);
+//		
+//		// wait for the rest of the fade out, plus a second
+//		sleep(6);
+//		
+//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Fade out should now be complete, fading in over 3 seconds...");
+//		renderer.RampSourceGain(source, 1.0f, 3.0);
+//		
+//		// And log a nice little message about the rest of the program
+//		sleep(5);
+		
+/******/
+		
+		// schedule a 10 seconds fade out with quick panning
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Scheduling a 10 seconds fade out with rapid panning");
 		renderer.RampSourceGain(source, 0.0f, 10.0);
 		
-		// disbable the source 5 seconds after the beginning of the ramp for 5 seconds
-		sleep(5); // 25
+		for (int i = 0; i < 10; i++) {
+			renderer.RampSourcePan(source, 0.0f, 0.5);
+			usleep(500000);
+			
+			renderer.RampSourcePan(source, 1.0f, 0.5);
+			usleep(500000);
+		}
 		
-		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Disabling source for 5 seconds...");
-		source.SetEnabled(false);
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Fade out should now be complete, fading in and centering over 3 seconds...");
+		renderer.RampSourceGain(source, 1.0f, 3.0);
+		renderer.RampSourcePan(source, 0.5f, 3.0);
 		
-		// the ramp should resume where it left off when we enable the source
-		sleep(5); // 30
+		sleep(5);
 		
-		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Enabling source");
-		source.SetEnabled(true);
+/******/
 		
-		// wait for the rest of the fade out, plus a second
-		sleep(6); // 36
+		// schedule a flurry of ramps
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Applyig a flurry of ramps");
 		
-		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Fade out should now be complete, fading in over 3 seconds...");
+		for (int i = 0; i < 1000; i++) {
+			renderer.RampSourceGain(source, (float)random() / INT32_MAX, 1.0);
+			renderer.RampSourcePan(source, (float)random() / INT32_MAX, 1.0);
+			usleep(10000);
+		}
+		
+		// apply a final ramp to 0.0 over 2.0 seconds
+		renderer.RampSourceGain(source, 0.0f, 2.0);
+		renderer.RampSourcePan(source, 0.5f, 2.0);
+		sleep(2);
+		
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Flurry should now be complete, fading in over 3 seconds...");
 		renderer.RampSourceGain(source, 1.0f, 3.0);
 		
 		// And log a nice little message about the rest of the program
-		sleep(4); // 40
+		sleep(5);
 	} catch (CAXException c) {
 		char errorString[256];
 		printf("error %s in %s\n", c.FormatError(errorString), c.mOperation);

@@ -33,4 +33,4 @@ MACOSX_DEPLOYMENT_TARGET = 10.4;
 PREBINDING = NO;
 SEPARATE_STRIP = YES;
 USER_HEADER_SEARCH_PATHS = $(USER_HEADER_SEARCH_PATHS) "$(SRCROOT)"
-WARNING_CFLAGS = -Wall -Wcast-align -Wchar-subscripts -Wformat -Wformat-security -Wmissing-format-attribute -Wpointer-arith -Wwrite-strings -Wno-format-y2k -Wno-unused-parameter;
+WARNING_CFLAGS = -Wall -Wcast-align -Wchar-subscripts -Wformat -Wformat-security -Wmissing-format-attribute -Wpointer-arith -Wno-format-y2k -Wno-unused-parameter;

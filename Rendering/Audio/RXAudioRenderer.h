@@ -99,25 +99,23 @@ private:
 	void TeardownGraph();
 	bool _must_update_graph_predicate() throw(CAXException);
 	
-	class ParameterRampDescriptor {
-	public:
+	struct ParameterRampDescriptor {
 		const AudioSourceBase* source;
 		AudioUnitParameterEvent event;
 		AudioTimeStamp start;
 		AudioTimeStamp previous;
+		uint64_t generation;
 		
 		bool operator==(const ParameterRampDescriptor& other) const {
-			if (this->event.element != other.event.element)
-				return false;
-			if (this->event.parameter == UINT32_MAX || other.event.parameter == UINT32_MAX)
-				return true;
-			else
-				return this->event.parameter == other.event.parameter;
+			return this->event.element == other.event.element && 
+				this->event.parameter == other.event.parameter && 
+				this->generation == other.generation;
 		}
 	};
 	
-	TThreadSafeList<ParameterRampDescriptor> rampDescriptorList;
-	bool _coarseRamps;
+	uint64_t pending_ramp_generation;
+	TThreadSafeList<ParameterRampDescriptor> pending_ramps;
+	TThreadSafeList<ParameterRampDescriptor> active_ramps;
 	
 	AUGraph graph;
 	CAAudioUnit* mixer;
