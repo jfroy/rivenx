@@ -119,13 +119,13 @@ int main (int argc, char* const argv[]) {
 	
 	RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Allocating decompressor");
 	EAFDecompressor* decompressor = [[[EAFDecompressor alloc] initWithSystemPath:argv[1]] autorelease];
-	Float64 duration = [decompressor frameCount] / [decompressor outputFormat].mSampleRate * 1.2;
-	
-	if (duration < 60.0 * 3.0) {
-		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Source is less than 3 minutes in length (with looping), cannot run test.");
-		[pool release];
-		exit(EX_DATAERR);
-	}
+//	Float64 duration = [decompressor frameCount] / [decompressor outputFormat].mSampleRate * 1.2;
+//	
+//	if (duration < 60.0 * 3.0) {
+//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Source is less than 3 minutes in length (with looping), cannot run test.");
+//		[pool release];
+//		exit(EX_DATAERR);
+//	}
 	
 	try {
 		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Allocating and initializing renderer");

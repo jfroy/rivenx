@@ -118,6 +118,7 @@ private:
 	TThreadSafeList<ParameterRampDescriptor> active_ramps;
 	
 	AUGraph graph;
+	CAAudioUnit* output;
 	CAAudioUnit* mixer;
 	bool _automaticGraphUpdates;
 	bool _graphUpdateNeeded;

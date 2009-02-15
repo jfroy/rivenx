@@ -81,6 +81,7 @@ OSStatus AudioRenderer::MixerRenderNotifyCallback(void							 *inRefCon,
 
 AudioRenderer::AudioRenderer() throw(CAXException) :
 graph(0),
+output(0),
 mixer(0),
 _automaticGraphUpdates(true),
 _graphUpdateNeeded(false),
@@ -230,8 +231,9 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 		source->HandleAttach();
 		
 		// try to set the format of the source as the mixer's input bus format; this will more often than not fail
+		CAStreamBasicDescription source_format = source->Format();
 		OSStatus oserr = mixer->SetFormat(kAudioUnitScope_Input, source->bus, source->Format());
-		if (oserr && oserr == kAudioUnitErr_FormatNotSupported) {
+		if (oserr && oserr == kAudioUnitErr_FormatNotSupported || source_format.NumberChannels() == 1) {
 			// we need to create a converter AU and connect it to the mixer, plugging the source as the converter's render callback
 			
 #if defined(DEBUG) && DEBUG > 1
@@ -239,7 +241,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 			CFRelease(rxar_debug);
 #endif
-
+			
 			// create a new graph node with the converter AU
 			CAComponentDescription cd;
 			cd.componentType = kAudioUnitType_FormatConverter;
@@ -254,10 +256,17 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 			CAAudioUnit converter = CAAudioUnit(converter_node, converter_au);
 			
 			// set the input and output formats of the converter
-			XThrowIfError(converter.SetFormat(kAudioUnitScope_Input, 0, source->Format()), "converter->SetFormat kAudioUnitScope_Input");
-			AudioStreamBasicDescription mixer_format;
+			XThrowIfError(converter.SetFormat(kAudioUnitScope_Input, 0, source_format), "converter->SetFormat kAudioUnitScope_Input");
+			CAStreamBasicDescription mixer_format;
 			XThrowIfError(mixer->GetFormat(kAudioUnitScope_Input, source->bus, mixer_format), "mixer->GetFormat kAudioUnitScope_Input");
 			XThrowIfError(converter.SetFormat(kAudioUnitScope_Output, 0, mixer_format), "converter->SetFormat kAudioUnitScope_Output");
+			
+			// set the channel map of the converter if the source format is mono (we need to replicate the mono channel)
+			assert(mixer_format.NumberChannels() == 2);
+			if (source_format.NumberChannels() == 1) {
+				SInt32 channel_map[2] = {0, 0};
+				XThrowIfError(converter.SetProperty(kAudioOutputUnitProperty_ChannelMap, kAudioUnitScope_Global, 0, channel_map, sizeof(SInt32) * 2), "converter.SetProperty kAudioOutputUnitProperty_ChannelMap");
+			}
 			
 			// set the render callback on the converter
 			AURenderCallbackStruct render_callbacks = {AudioSourceBase::AudioSourceRenderCallback, source};
@@ -639,35 +648,50 @@ OSStatus AudioRenderer::MixerPostRenderNotify(const AudioTimeStamp* inTimeStamp,
 }
 
 void AudioRenderer::CreateGraph() {
+	CAComponentDescription cd;
+	AudioUnit au;
+
 	// main processing graph
 	XThrowIfError(NewAUGraph(&graph), "NewAUGraph");
 	
 	// add the default output AU to the graph
-	CAComponentDescription cd;
+	AUNode output_node;
 	cd.componentType = kAudioUnitType_Output;
 	cd.componentSubType = kAudioUnitSubType_DefaultOutput;
 	cd.componentManufacturer = kAudioUnitManufacturer_Apple;
-	
-	AUNode outputNode;
-	XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &outputNode), "AUGraphNewNode");
+	XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &output_node), "AUGraphNewNode");
 	
 	// add in the stereo mixer
+	AUNode mixer_node;
 	cd.componentType = kAudioUnitType_Mixer;
 	cd.componentSubType = kAudioUnitSubType_StereoMixer;
 	cd.componentManufacturer = kAudioUnitManufacturer_Apple;
-	
-	AUNode mixerNode;
-	XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &mixerNode), "AUGraphNewNode");
+	XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &mixer_node), "AUGraphNewNode");
 	
 	// open the graph so that the mixer and AUHAL units are instanciated
 	XThrowIfError(AUGraphOpen(graph), "AUGraphOpen");
 	
-	// get the mixer AU
-	AudioUnit mixerAU;
-	XThrowIfError(AUGraphGetNodeInfo(graph, mixerNode, NULL, NULL, NULL, &mixerAU), "AUGraphGetNodeInfo");
+	// het the output unit
+	XThrowIfError(AUGraphGetNodeInfo(graph, output_node, NULL, NULL, NULL, &au), "AUGraphGetNodeInfo");
+	output = new CAAudioUnit(output_node, au);
 	
-	// make the CAAudioUnit for the mixer
-	mixer = new CAAudioUnit(mixerNode, mixerAU);
+	// get the mixer unit
+	XThrowIfError(AUGraphGetNodeInfo(graph, mixer_node, NULL, NULL, NULL, &au), "AUGraphGetNodeInfo");
+	mixer = new CAAudioUnit(mixer_node, au);
+	
+	// configure the format and channel layout of the output and mixer units
+	
+	// get the output format of the output unit (e.g. the hardware output format)
+	CAStreamBasicDescription format;
+	XThrowIfError(output->GetFormat(kAudioUnitScope_Output, 0, format), "output->GetFormat");
+	
+	// make the format canonical, with 2 non-interleaved channels (Riven X is a stereo application) at a sampling rate of 44100 Hz
+    format.SetCanonical(2, false);
+    format.mSampleRate = 44100;
+	
+	// set the format as the output unit's input format and th mixer unit's output format
+	XThrowIfError(output->SetFormat(kAudioUnitScope_Input, 0, format), "output->SetFormat");
+	XThrowIfError(mixer->SetFormat(kAudioUnitScope_Output, 0, format), "mixer->SetFormat");
 	
 	// set a silence render callback on mixer bus 0 to allow starting without any sources
 	AURenderCallbackStruct render_callbacks = {RXAudioRendererSilenceRenderCallback, 0};
@@ -677,11 +701,10 @@ void AudioRenderer::CreateGraph() {
 	XThrowIfError(mixer->AddRenderNotify(AudioRenderer::MixerRenderNotifyCallback, this), "CAAudioUnit::AddRenderNotify");
 	
 	// connect the output unit and the mixer
-	XThrowIfError(AUGraphConnectNodeInput(graph, *mixer, 0, outputNode, 0), "AUGraphConnectNodeInput");
+	XThrowIfError(AUGraphConnectNodeInput(graph, *mixer, 0, output_node, 0), "AUGraphConnectNodeInput");
 	
 	// set the maximum number of mixer inputs to 16
 	sourceLimit = 16;
-//	XThrowIfError(AudioUnitGetProperty(*mixer, kAudioUnitProperty_BusCount, kAudioUnitScope_Input, 0, &sourceLimit, &limitSize), "AudioUnitGetProperty");
 	XThrowIfError(mixer->SetProperty(kAudioUnitProperty_BusCount, kAudioUnitScope_Input, 0, &sourceLimit, sizeof(UInt32)), "mixer->SetProperty kAudioUnitProperty_BusCount");
 	sourceCount = 0;
 	
@@ -697,6 +720,7 @@ void AudioRenderer::TeardownGraph() {
 	XThrowIfError(DisposeAUGraph(graph), "DisposeAUGraph");
 	
 	// clean up
+	delete output; output = 0;
 	delete mixer; mixer = 0;
 	graph = 0;
 	
