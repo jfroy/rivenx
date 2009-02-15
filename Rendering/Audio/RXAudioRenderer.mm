@@ -362,10 +362,11 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw (CAXException) {
 Float32 AudioRenderer::SourceGain(AudioSourceBase& source) const throw(CAXException) {
 	Float32 value;
 	XThrowIfError(mixer->GetParameter(kStereoMixerParam_Volume, kAudioUnitScope_Input, source.bus, value), "mixer->GetParameter kStereoMixerParam_Volume");
-	return value;
+	return powf(value, 3.0f);
 }
 
 Float32 AudioRenderer::SourcePan(AudioSourceBase& source) const throw(CAXException) {
+	// get the raw value
 	Float32 value;
 	XThrowIfError(mixer->GetParameter(kStereoMixerParam_Pan, kAudioUnitScope_Input, source.bus, value), "mixer->GetParameter kStereoMixerParam_Pan");
 	return value;
@@ -455,6 +456,10 @@ void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID 
 		descriptor.event.parameter = parameter;
 		descriptor.event.eventType = (fabs(duration) < 1.0e-3 || !ramps_are_enabled) ? kParameterEvent_Immediate : kParameterEvent_Ramped;
 		
+		// we need to take the cube root of the value if the parameter is volume
+		if (parameter == kStereoMixerParam_Volume)
+			value = cbrt(value);
+		
 		if (descriptor.event.eventType == kParameterEvent_Ramped) {
 			// we need to use the mixer output element's sampling rate to compute the duration (since the pre-render callback is on that unit)
 			Float64 sr;
@@ -476,6 +481,8 @@ void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID 
 }
 
 OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) throw() {
+	OSStatus err = noErr;
+	
 	// first, update the list of pending ramp descriptors
 	pending_ramps.update();
 	
@@ -500,9 +507,20 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("%f - removed all ramps for element %lu"), CFAbsoluteTimeGetCurrent(), descriptor.event.element);
 #endif
 		} else {
-			// otherwise remove-add the descriptor from-to the active list
-			active_ramps.deferred_remove(descriptor);
-			active_ramps.deferred_add(descriptor);
+			// if the descriptor indicates an immediate change, apply it now and move on to the next descriptor
+			if (descriptor.event.eventType == kParameterEvent_Immediate) {
+				err = mixer->SetParameter(descriptor.event.parameter, descriptor.event.scope, descriptor.event.element, descriptor.event.eventValues.immediate.value);
+				if (err != noErr) {
+#if defined(DEBUG)
+					RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("mixer->SetParameter failed with error %ld"), err);
+#endif
+					return err;
+				}
+			} else {
+				// otherwise remove-add the descriptor from-to the active list
+				active_ramps.deferred_remove(descriptor);
+				active_ramps.deferred_add(descriptor);
+			}
 		}
 	}
 	
@@ -512,7 +530,6 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 	// finally iterate over the active ramps
 	TThreadSafeList<ParameterRampDescriptor>::iterator active;
 	for (active = active_ramps.begin(); active != active_ramps.end(); ++active) {
-		OSStatus err = noErr;
 		ParameterRampDescriptor& descriptor_ref = *active;
 		
 		// if the associated source is no longer attached to us, remove the descriptor and move on to the next
@@ -525,20 +542,6 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 			// if the source is disabled, just slip over the descriptor and leave it as-is
 			if (!descriptor_ref.source->enabled)
 				continue;
-			
-			// if the descriptor indicates an immediate change, apply it now and move on to the next descriptor
-			if (descriptor_ref.event.eventType == kParameterEvent_Immediate) {
-				err = mixer->SetParameter(descriptor_ref.event.parameter, descriptor_ref.event.scope, descriptor_ref.event.element, descriptor_ref.event.eventValues.immediate.value);
-				if (err != noErr) {
-#if defined(DEBUG)
-					RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("mixer->SetParameter failed with error %ld"), err);
-#endif
-					return err;
-				}
-				
-				active_ramps.deferred_remove(descriptor_ref);
-				continue;
-			}
 			
 			// this is a new ramp parameter descriptor
 			

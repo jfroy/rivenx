@@ -713,7 +713,7 @@ init_failure:
 			assert(active_sound->source);
 			
 			// update the sound's gain and pan (this does not affect the source)
-			active_sound->gain = 1.0f;//sound->gain;
+			active_sound->gain = sound->gain;
 			active_sound->pan = sound->pan;
 			
 			// make sure the sound doesn't have a valid detach timestamp

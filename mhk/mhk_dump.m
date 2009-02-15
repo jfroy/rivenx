@@ -116,10 +116,6 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
 		
 		NSString *sound_path_base = [dump_folder stringByAppendingPathComponent:[sound_id stringValue]];
 		
-		// samples buffer
-		UInt32 samples_length = [[soundDescriptor objectForKey:@"Samples Length"] unsignedLongValue];
-		UInt8 *samples = NULL;
-		
 		// get a decompressor object for the sound
 		id <MHKAudioDecompression> decomp = [archive decompressorWithSoundID:[sound_id unsignedShortValue] error:&error];
 		if (!decomp) {
@@ -137,15 +133,15 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
 		}
 		
 		// allocate samples buffer
-		samples_length = sizeof(float) * frame_count * absd.mChannelsPerFrame;
-		samples = malloc(samples_length * 2);
+		size_t samples_size = frame_count * absd.mBytesPerFrame;
+		UInt8 *samples = (UInt8*)malloc(samples_size);
 		
 		// setup a buffer list structure
 		AudioBufferList abl;
 		abl.mNumberBuffers = 1;
 		abl.mBuffers[0].mData = samples;
 		abl.mBuffers[0].mNumberChannels = absd.mChannelsPerFrame;
-		abl.mBuffers[0].mDataByteSize = samples_length;
+		abl.mBuffers[0].mDataByteSize = samples_size;
 		
 		// decompress all the samples
 		[decomp fillAudioBufferList:&abl];
@@ -172,10 +168,13 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
 		CFSwappedFloat64 swapped_sr = CFConvertFloat64HostToSwapped(absd.mSampleRate);
 		cad.mSampleRate = *((Float64 *)(&swapped_sr.v));
 		cad.mFormatID = CFSwapInt32HostToBig(absd.mFormatID);
+		cad.mFormatFlags = 0;
+		if (absd.mFormatFlags & kAudioFormatFlagIsFloat)
+			cad.mFormatFlags |= kCAFLinearPCMFormatFlagIsFloat;
+		if (!(absd.mFormatFlags & kAudioFormatFlagIsBigEndian))
+			cad.mFormatFlags |= kCAFLinearPCMFormatFlagIsLittleEndian;
 #if defined(__LITTLE_ENDIAN__)
-		cad.mFormatFlags = CFSwapInt32HostToBig(kCAFLinearPCMFormatFlagIsFloat | kCAFLinearPCMFormatFlagIsLittleEndian);
-#else
-		cad.mFormatFlags = kCAFLinearPCMFormatFlagIsFloat;
+		cad.mFormatFlags = CFSwapInt32HostToBig(cad.mFormatFlags);
 #endif
 		cad.mBytesPerPacket = CFSwapInt32HostToBig(absd.mBytesPerPacket);
 		cad.mFramesPerPacket = CFSwapInt32HostToBig(absd.mFramesPerPacket);
@@ -185,14 +184,14 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
 		
 		// audio data chunk
 		cch.mChunkType = CFSwapInt32HostToBig(kCAF_AudioDataChunkID);
-		cch.mChunkSize = (SInt64)CFSwapInt64HostToBig(samples_length);
+		cch.mChunkSize = (SInt64)CFSwapInt64HostToBig(samples_size);
 		write(fd, &cch.mChunkType, sizeof(cch.mChunkType));
 		write(fd, &cch.mChunkSize, sizeof(cch.mChunkSize));
 		
 		// audio data
 		UInt32 edit_count = 0;
 		write(fd, &edit_count, sizeof(UInt32));
-		write(fd, samples, samples_length);
+		write(fd, samples, samples_size);
 		
 		// flush to disk
 		close(fd);
