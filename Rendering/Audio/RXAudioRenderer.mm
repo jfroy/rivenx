@@ -495,6 +495,10 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 				if ((*active).event.element == descriptor.event.element)
 					active_ramps.deferred_remove(*active);
 			}
+			
+#if defined(DEBUG) && DEBUG > 1
+			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("%f - removed all ramps for element %lu"), CFAbsoluteTimeGetCurrent(), descriptor.event.element);
+#endif
 		} else {
 			// otherwise remove-add the descriptor from-to the active list
 			active_ramps.deferred_remove(descriptor);

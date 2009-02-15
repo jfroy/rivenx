@@ -121,8 +121,8 @@ int main (int argc, char* const argv[]) {
 	EAFDecompressor* decompressor = [[[EAFDecompressor alloc] initWithSystemPath:argv[1]] autorelease];
 	Float64 duration = [decompressor frameCount] / [decompressor outputFormat].mSampleRate * 1.2;
 	
-	if (duration < 60.0) {
-		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Source is less than 60 seconds in length (with looping), cannot run test.");
+	if (duration < 60.0 * 3.0) {
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Source is less than 3 minutes in length (with looping), cannot run test.");
 		[pool release];
 		exit(EX_DATAERR);
 	}
@@ -147,32 +147,32 @@ int main (int argc, char* const argv[]) {
 		taskThread.Start();
 		
 		// wait 10 seconds
-		sleep(10); // 10
+		sleep(10);
 		
 /******/
 		
-//		// disable the source for 5 seconds
-//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Disabling source for 5 seconds...");
-//		source.SetEnabled(false);
-//		
-//		sleep(5); // 15
-//		source.SetEnabled(true);
-//		
-//		// take 5
-//		sleep(5); // 20
+		// disable the source for 5 seconds
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Disabling source for 5 seconds...");
+		source.SetEnabled(false);
+		
+		sleep(5);
+		source.SetEnabled(true);
+		
+		// take 5
+		sleep(5);
 
 /******/
 
-//		// schedule a 10 seconds fade out
-//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Scheduling a 10 seconds fade out");
-//		renderer.RampSourceGain(source, 0.0f, 10.0);
-//		
-//		sleep(11);
-//		
-//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Fade out should now be complete, fading in over 3 seconds...");
-//		renderer.RampSourceGain(source, 1.0f, 3.0);
-//		
-//		sleep(5);
+		// schedule a 10 seconds fade out
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Scheduling a 10 seconds fade out");
+		renderer.RampSourceGain(source, 0.0f, 10.0);
+		
+		sleep(11);
+		
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Fade out should now be complete, fading in over 3 seconds...");
+		renderer.RampSourceGain(source, 1.0f, 3.0);
+		
+		sleep(5);
 
 /******/
 
@@ -191,30 +191,30 @@ int main (int argc, char* const argv[]) {
 		
 /******/
 		
-//		// schedule a 10 seconds fade out
-//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Scheduling a 10 seconds fade out");
-//		renderer.RampSourceGain(source, 0.0f, 10.0);
-//		
-//		// disbable the source 5 seconds after the beginning of the ramp for 5 seconds
-//		sleep(5);
-//		
-//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Disabling source for 5 seconds...");
-//		source.SetEnabled(false);
-//		
-//		// the ramp should resume where it left off when we enable the source
-//		sleep(5);
-//		
-//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Enabling source");
-//		source.SetEnabled(true);
-//		
-//		// wait for the rest of the fade out, plus a second
-//		sleep(6);
-//		
-//		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Fade out should now be complete, fading in over 3 seconds...");
-//		renderer.RampSourceGain(source, 1.0f, 3.0);
-//		
-//		// And log a nice little message about the rest of the program
-//		sleep(5);
+		// schedule a 10 seconds fade out
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Scheduling a 10 seconds fade out");
+		renderer.RampSourceGain(source, 0.0f, 10.0);
+		
+		// disbable the source 5 seconds after the beginning of the ramp for 5 seconds
+		sleep(5);
+		
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Disabling source for 5 seconds...");
+		source.SetEnabled(false);
+		
+		// the ramp should resume where it left off when we enable the source
+		sleep(5);
+		
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Enabling source");
+		source.SetEnabled(true);
+		
+		// wait for the rest of the fade out, plus a second
+		sleep(6);
+		
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Fade out should now be complete, fading in over 3 seconds...");
+		renderer.RampSourceGain(source, 1.0f, 3.0);
+		
+		// And log a nice little message about the rest of the program
+		sleep(5);
 		
 /******/
 		
@@ -256,6 +256,19 @@ int main (int argc, char* const argv[]) {
 		renderer.RampSourceGain(source, 1.0f, 3.0);
 		
 		// And log a nice little message about the rest of the program
+		sleep(5);
+		
+/******/
+		
+		// schedule a flurry of ramps
+		RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Applying volume and pan ramps then detaching source");
+		
+		// apply a final ramp to 0.0 over 2.0 seconds
+		renderer.RampSourceGain(source, 0.0f, 5.0);
+		renderer.RampSourcePan(source, 0.0f, 5.0);
+		sleep(2);
+		
+		renderer.DetachSource(source);
 		sleep(5);
 	} catch (CAXException c) {
 		char errorString[256];
