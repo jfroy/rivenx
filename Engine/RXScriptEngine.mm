@@ -90,6 +90,10 @@ static rx_command_dispatch_entry_t _riven_command_dispatch_table[47];
 static NSMapTable* _riven_external_command_dispatch_map;
 
 
+@interface RXScriptEngine (RXScriptOpcodes)
+- (void)_opcode_activateSLST:(const uint16_t)argc arguments:(const uint16_t*)argv;
+@end
+
 @implementation RXScriptEngine
 
 + (void)initialize {
@@ -137,7 +141,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[35].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[37].sel = @selector(_opcode_noop:arguments:);
-	_riven_command_dispatch_table[38].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[38].sel = @selector(_opcode_complexPlayMovie:arguments:);
 	_riven_command_dispatch_table[39].sel = @selector(_opcode_activatePLST:arguments:);
 	_riven_command_dispatch_table[40].sel = @selector(_opcode_activateSLST:arguments:);
 	_riven_command_dispatch_table[41].sel = @selector(_opcode_activateAndPlayMLST:arguments:);
@@ -1134,12 +1138,17 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@pausing for %d msec", logPrefix, argv[0]);
 #endif
 	
+	// in case the pause delay is 0, just return immediatly
+	if (argv[0] == 0)
+		return;
+	
 	// hide the mouse cursor
 	if (!_did_hide_mouse) {
 		_did_hide_mouse = YES;
 		[controller hideMouseCursor];
 	}
 	
+	// sleep for the specified amount of ms
 	usleep(argv[0] * 1000);
 }
 
@@ -1374,6 +1383,50 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// start the movie
 	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:NO];
+}
+
+// 38
+- (void)_opcode_complexPlayMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
+	if (argc < 5)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	
+	uint32_t delay = (argv[1] << 16) | argv[2];
+	uint16_t movie_code = argv[0];
+	uint16_t flags = argv[3];
+	uint16_t delayed_record = argv[4];
+	
+#if defined(DEBUG)
+	char* record_type;
+	if (flags == 40)
+		record_type = "slst";
+	else if (flags == 0)
+		record_type = "plst";
+	else
+		record_type = "unknown";
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing movie with code %hu and activating %s record %hu after %u ms", logPrefix, movie_code, record_type, delayed_record, delay);
+#endif
+	
+	// play the movie
+	[self _opcode_startMovie:1 arguments:&movie_code];
+	
+	// wait the specified delay
+	if (delay > 0) {
+		// hide the mouse cursor
+		if (!_did_hide_mouse) {
+			_did_hide_mouse = YES;
+			[controller hideMouseCursor];
+		}
+		
+		// sleep for the specified amount of ms
+		usleep(delay * 1000);
+	}
+	
+	// activate the delayed record
+	if (flags == 40)
+		[self _opcode_activateSLST:1 arguments:&delayed_record];
+	else
+		abort();
 }
 
 // 39
@@ -2276,6 +2329,15 @@ DEFINE_COMMAND(xsoundplug) {
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 2);
 	else
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 3);
+}
+
+#pragma mark -
+#pragma mark tspit dome
+
+DEFINE_COMMAND(xtisland5056_opencard) {
+	// HACK
+	DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 49);
+	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 50);
 }
 
 @end

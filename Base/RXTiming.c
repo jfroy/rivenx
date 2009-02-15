@@ -10,11 +10,16 @@
 #include "RXTiming.h"
 
 double g_RXTimebase = 0.0;
+double g_RX1_Timebase = 0.0;
 
 extern void RXTimingUpdateTimebase() {
 	mach_timebase_info_data_t info;
-	kern_return_t err = mach_timebase_info( &info );
+	kern_return_t err = mach_timebase_info(&info);
+	assert(err == KERN_SUCCESS);
 
-	// convert the timebase into seconds
-	if (err == KERN_SUCCESS) g_RXTimebase = 1e-9 * (double) info.numer / (double) info.denom;
+	// compute the timebase to seconds scale factor
+	g_RXTimebase = 1e-9 * (double)info.numer / (double)info.denom;
+	
+	// compute its inverse to convert from seconds to timebase
+	g_RX1_Timebase = 1.0 / g_RXTimebase;
 }

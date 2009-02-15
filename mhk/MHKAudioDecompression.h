@@ -15,5 +15,5 @@
 - (SInt64)frameCount;
 
 - (void)reset;
-- (void)fillAudioBufferList:(AudioBufferList *)abl;
+- (void)fillAudioBufferList:(AudioBufferList*)abl;
 @end

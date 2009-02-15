@@ -290,7 +290,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 		sourceCount++;
 		(*busAllocationVector)[source->bus] = true;
 		
-#if defined(DEBUG) && DEBUG > 1
+#if defined(DEBUG)
 		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> attached source %p to bus %u"), this, source, source->bus);
 		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 		CFRelease(rxar_debug);
@@ -316,7 +316,7 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw (CAXException) {
 		AudioSourceBase* source = const_cast<AudioSourceBase*>(reinterpret_cast<const AudioSourceBase*>(CFArrayGetValueAtIndex(sources, sourceIndex)));
 		XThrowIf(source->rendererPtr != this, paramErr, "AudioRenderer::DetachSources");
 		
-#if defined(DEBUG) && DEBUG > 1
+#if defined(DEBUG)
 		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> detaching source %p from bus %u"), this, source, source->bus);
 		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 		CFRelease(rxar_debug);

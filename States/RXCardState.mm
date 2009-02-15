@@ -42,8 +42,8 @@ static rx_post_flush_tasks_dispatch_t picture_flush_task_dispatch;
 static rx_render_dispatch_t _movieRenderDispatch;
 static rx_post_flush_tasks_dispatch_t _movieFlushTasksDispatch;
 
-static const double RX_AUDIO_RAMP_DURATION = 2.0;
-static const double RX_AUDIO_RAMP_DURATION__PLUS_POINT_FIVE = RX_AUDIO_RAMP_DURATION + 0.5;
+static const double RX_AUDIO_FADE_DURATION = 2.0;
+static const double RX_AUDIO_UPDATE_DURATION = 0.5;
 
 static const GLuint RX_CARD_DYNAMIC_RENDER_INDEX = 0;
 
@@ -93,7 +93,7 @@ static void RXCardAudioSourceFadeInApplier(const void* value, void* context) {
 	RX::AudioRenderer* renderer = reinterpret_cast<RX::AudioRenderer*>(context);
 	RX::CardAudioSource* source = const_cast<RX::CardAudioSource*>(reinterpret_cast<const RX::CardAudioSource*>(value));
 	renderer->SetSourceGain(*source, 0.0f);
-	renderer->RampSourceGain(*source, source->NominalGain(), RX_AUDIO_RAMP_DURATION);
+	renderer->RampSourceGain(*source, source->NominalGain(), RX_AUDIO_FADE_DURATION);
 }
 
 static void RXCardAudioSourceEnableApplier(const void* value, void* context) {
@@ -602,12 +602,12 @@ init_failure:
 	
 	NSEnumerator* soundEnum = [_activeSounds objectEnumerator];
 	while ((sound = [soundEnum nextObject]))
-		if (sound->detachTimestampValid && RXTimingTimestampDelta(now, sound->rampStartTimestamp) >= RX_AUDIO_RAMP_DURATION__PLUS_POINT_FIVE)
+		if (sound->detach_timestamp && sound->detach_timestamp <= now)
 			[soundsToRemove addObject:sound];
 	
 	soundEnum = [_activeDataSounds objectEnumerator];
 	while ((sound = [soundEnum nextObject]))
-		if (sound->detachTimestampValid && RXTimingTimestampDelta(now, sound->rampStartTimestamp) >= sound->source->Duration() + 0.5)
+		if (sound->detach_timestamp && sound->detach_timestamp <= now)
 			[soundsToRemove addObject:sound];
 	
 	// remove expired sounds from the set of active sounds
@@ -657,14 +657,15 @@ init_failure:
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
 	if ([NSThread currentThread] != [g_world scriptThread])
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activateSoundGroup: MUST RUN ON SCRIPT THREAD" userInfo:nil];
-
+	
 	// cache a pointer to the audio renderer
 	RX::AudioRenderer* renderer = (reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer]));
 	
 	// cache the sound group's sound set
 	NSSet* soundGroupSounds = [soundGroup sounds];
+	
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"*****************************\nactivating sound group %@ with sounds: %@", soundGroup, soundGroupSounds);
+	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"activating sound group %@ with sounds: %@", soundGroup, soundGroupSounds);
 #endif
 	
 	// create an array of new sources
@@ -697,7 +698,7 @@ init_failure:
 			assert(sound->source);
 			
 			// make sure the sound doesn't have a valid detach timestamp
-			sound->detachTimestampValid = NO;
+			sound->detach_timestamp = 0;
 			
 			// add the sound to the new set of active sounds
 			[newActiveSounds addObject:sound];
@@ -717,17 +718,17 @@ init_failure:
 			active_sound->pan = sound->pan;
 			
 			// make sure the sound doesn't have a valid detach timestamp
-			active_sound->detachTimestampValid = NO;
+			active_sound->detach_timestamp = 0;
 			
 			// set source looping
 			active_sound->source->SetLooping(soundGroup->loop);
 			
-			// ramp the source's gain
-			renderer->RampSourceGain(*(active_sound->source), active_sound->gain * soundGroup->gain, RX_AUDIO_RAMP_DURATION);
+			// update the source's gain smoothly
+			renderer->RampSourceGain(*(active_sound->source), active_sound->gain * soundGroup->gain, RX_AUDIO_UPDATE_DURATION);
 			active_sound->source->SetNominalGain(active_sound->gain * soundGroup->gain);
 			
-			// ramp the source's stereo panning
-			renderer->RampSourcePan(*(active_sound->source), active_sound->pan, RX_AUDIO_RAMP_DURATION);
+			// update the source's stereo panning smoothly
+			renderer->RampSourcePan(*(active_sound->source), active_sound->pan, RX_AUDIO_UPDATE_DURATION);
 			active_sound->source->SetNominalPan(active_sound->pan);
 			
 #if defined(DEBUG) && DEBUG > 1
@@ -736,13 +737,12 @@ init_failure:
 		}
 	}
 	
-	// if no fade out is requested, mark every sound not already scheduled for detach as needing detach yesterday
+	// if no fade out is requested, set the detach timestamp of sounds not already scheduled for detach to now
 	if (!soundGroup->fadeOutActiveGroupBeforeActivating) {
 		soundEnum = [soundsToRemove objectEnumerator];
 		while ((sound = [soundEnum nextObject])) {
-			if (sound->detachTimestampValid == NO) {
-				sound->detachTimestampValid = YES;
-				sound->rampStartTimestamp = 0;
+			if (sound->detach_timestamp == 0) {
+				sound->detach_timestamp = RXTimingNow();
 			}
 		}
 	}
@@ -792,15 +792,16 @@ init_failure:
 	// schedule a fade out ramp for all to-be-removed sources if the fade out flag is on
 	if (soundGroup->fadeOutActiveGroupBeforeActivating) {
 		CFMutableArrayRef sourcesToRemove = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_weakAudioSourceArrayCallbacks];
-		renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_RAMP_DURATION);
+		renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_FADE_DURATION);
 		CFRelease(sourcesToRemove);
 		
-		uint64_t now = RXTimingNow();
+		// the detach timestamp for those sources is now + the ramp duration + some comfort offset
+		uint64_t detach_timestamp = RXTimingOffsetTimestamp(RXTimingNow(), RX_AUDIO_FADE_DURATION + 0.5);
+		
 		NSEnumerator* soundEnum = [soundsToRemove objectEnumerator];
 		RXSound* sound;
 		while ((sound = [soundEnum nextObject])) {
-			sound->rampStartTimestamp = now;
-			sound->detachTimestampValid = YES;
+			sound->detach_timestamp = detach_timestamp;
 		}
 	}
 	
@@ -844,15 +845,14 @@ init_failure:
 	// add the sound to the set of active data sounds
 	[_activeDataSounds addObject:sound];
 	
-	// set the sound's ramp start timestamp
-	sound->rampStartTimestamp = RXTimingNow();
-	sound->detachTimestampValid = YES;
-	
 	// update active sources immediately
 	[self _updateActiveSources];
 	
 	// now that any sources bound to be detached has been, go ahead and attach the new source
 	renderer->AttachSource(*(sound->source));
+	
+	// set the sound's detatch timestamp to the sound's duration plus some comfort offset
+	sound->detach_timestamp = RXTimingOffsetTimestamp(RXTimingNow(), sound->source->Duration() + 0.5);
 	
 	// re-enable automatic updates. this will automatically do an update if one is needed
 	renderer->SetAutomaticGraphUpdates(true);

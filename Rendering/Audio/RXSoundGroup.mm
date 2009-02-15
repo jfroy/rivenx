@@ -31,7 +31,7 @@
 }
 
 - (NSString *)description {
-	return [NSString stringWithFormat:@"%@ {parent=%@, ID=%hu, gain=%f, pan=%f, rampStartTimestamp=%qu, detachTimestampValid=%d, source=%p}", [super description], parent, ID, gain, pan, rampStartTimestamp, detachTimestampValid, source];
+	return [NSString stringWithFormat:@"%@ {parent=%@, ID=%hu, gain=%f, pan=%f, detach_timestamp=%qu, source=%p}", [super description], parent, ID, gain, pan, detach_timestamp, source];
 }
 
 @end

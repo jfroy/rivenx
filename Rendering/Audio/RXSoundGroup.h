@@ -20,12 +20,7 @@
 	float gain;
 	float pan;
 	
-	// RXTiming timestamp
-	uint64_t rampStartTimestamp;
-	
-	// flags below are mutually exclusive
-	BOOL fadeInTimestampValid;
-	BOOL detachTimestampValid;
+	uint64_t detach_timestamp;
 	
 	RX::CardAudioSource* source;
 }
