@@ -328,12 +328,11 @@
 }
 
 - (void)setVolume:(float)volume {
-	[_movie setVolume:volume];
+#if defined(DEBUG) && DEBUG > 1
+	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"setting volume to %f", volume);
+#endif
 	
-	if (fabs(volume) <= 0.001f)
-		[_movie setMuted:YES];
-	else
-		[_movie setMuted:NO];
+	[_movie setVolume:volume];
 }
 
 - (void)gotoBeginning {

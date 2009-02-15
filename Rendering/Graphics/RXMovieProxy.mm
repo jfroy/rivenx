@@ -57,7 +57,6 @@
 	[_movie setOutputColorSpace:[RXGetWorldView() displayColorSpace]];
 	[_movie setExpectedReadAheadFromDisplayLink:[RXGetWorldView() displayLink]];
 	[_movie setLooping:_loop];
-	[_movie setVolume:_volume];
 	
 	// set render rect
 	CGRect renderRect = [_movie renderRect];
@@ -65,8 +64,8 @@
 	renderRect.origin.y = _origin.y - renderRect.size.height;
 	[_movie setRenderRect:renderRect];
 	
-	// scale the movie's volume by the audio engine's gain
-	[[_movie movie] setVolume:reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer])->Gain()];
+	// set the movie's volume scaled by the audio renderer's output gain
+	[[_movie movie] setVolume:_volume * reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer])->Gain()];
 }
 
 + (BOOL)instancesRespondToSelector:(SEL)aSelector {
