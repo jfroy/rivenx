@@ -17,7 +17,7 @@
 @implementation RXCardCollectionView
 
 - (NSCollectionViewItem*)newItemForRepresentedObject:(id)object {
-	NSView* view;
+	NSView* view = nil;
 	if ([object isMemberOfClass:[RXMovie class]] || [object isMemberOfClass:[RXMovieProxy class]]) {
 		view = [[QTMovieView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
 		[(QTMovieView*)view setPreservesAspectRatio:YES];
