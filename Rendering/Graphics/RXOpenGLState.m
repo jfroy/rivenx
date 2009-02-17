@@ -32,6 +32,8 @@
 	if (!self)
 		return nil;
 	
+	cgl_ctx = context;
+	
 	return self;
 }
 

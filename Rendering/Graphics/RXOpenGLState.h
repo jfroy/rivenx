@@ -12,7 +12,7 @@
 
 
 @interface RXOpenGLState : NSObject <RXOpenGLStateProtocol> {
-	CGLContextObj cgl_ctx;
+	__weak CGLContextObj cgl_ctx;
 	
 	GLuint _vao_binding;
 }
