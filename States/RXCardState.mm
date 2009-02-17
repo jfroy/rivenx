@@ -8,7 +8,7 @@
 
 #import <OpenGL/CGLMacro.h>
 
-#import <GLUT/GLUT.h>
+#import <GLUT/glut.h>
 
 #import <mach/mach.h>
 #import <mach/mach_time.h>

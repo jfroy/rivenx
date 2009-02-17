@@ -32,14 +32,10 @@
 	if (!self)
 		return nil;
 	
-	cgl_ctx = CGLRetainContext(context);
-	
 	return self;
 }
 
 - (void)dealloc {
-	CGLReleaseContext(cgl_ctx);
-	
 	[super dealloc];
 }
 

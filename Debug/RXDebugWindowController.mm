@@ -23,6 +23,10 @@
 	[cli notifyUser:@"Riven X debug shell v3. Type help for commands. Type a command for usage information."];
 }
 
+- (NSString*)windowFrameAutosaveName {
+	return @"DebugWindowFrame";
+}
+
 - (void)help:(NSArray*)arguments from:(CLIView*)sender {
 	[sender putText:@"you're on your own, sorry"];
 }

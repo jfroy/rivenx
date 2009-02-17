@@ -16,6 +16,10 @@
 	[super dealloc];
 }
 
+- (NSString*)windowFrameAutosaveName {
+	return @"card inspector";
+}
+
 - (IBAction)showWindow:(id)sender {
 	if ([self isWindowLoaded])
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];

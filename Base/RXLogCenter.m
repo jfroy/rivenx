@@ -140,12 +140,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 	
 	// always write to the generic log
 	write(_genericLogFD, [messageData bytes], [messageData length]);
-	
-#if defined(DEBUG)
-	// echo to stderr everything but SCRIPT
-	if (![facility isEqualToString:[NSString stringWithCString:kRXLoggingScript encoding:NSASCIIStringEncoding]])
-		write(STDERR_FILENO, [messageData bytes], [messageData length]);
-#endif
 }
 
 @end

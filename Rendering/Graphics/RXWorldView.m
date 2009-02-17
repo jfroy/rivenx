@@ -128,6 +128,7 @@ static NSOpenGLPixelFormatAttribute windowed_no_fsaa_attribs[] = {
 	
 	// cache the underlying CGL context
 	_renderCGLContext = [_renderContext CGLContextObj];
+	assert(_renderCGLContext);
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"render context: %p", _renderCGLContext);
 	
 	// create the state object for the rendering context
