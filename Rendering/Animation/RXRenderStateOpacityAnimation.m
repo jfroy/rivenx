@@ -3,7 +3,7 @@
 //  rivenx
 //
 //  Created by Jean-Francois Roy on 2008-06-20.
-//  Copyright 2008 Apple Inc.. All rights reserved.
+//  Copyright 2008 MacStorm. All rights reserved.
 //
 
 #import "RXRenderStateOpacityAnimation.h"

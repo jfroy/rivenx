@@ -67,7 +67,7 @@
 }
 #endif
 
-- (id <SUVersionComparison>)versionComparatorForHostBundle:(NSBundle*)hb {
+- (id <SUVersionComparison>)versionComparatorForUpdater:(SUUpdater*)updater {
 	return versionComparator;
 }
 

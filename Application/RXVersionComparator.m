@@ -3,7 +3,7 @@
 //  rivenx
 //
 //  Created by Jean-Francois Roy on 15/06/08.
-//  Copyright 2008 Apple Inc.. All rights reserved.
+//  Copyright 2008 MacStorm. All rights reserved.
 //
 
 #import "RXVersionComparator.h"
@@ -22,14 +22,19 @@
 	BOOL isVersionBBZR = [versionB hasPrefix:@"bzr "];
 	
 	// easy cases: if B is bzr and A is not, b > a; if B is not bzr and A is, b < a; else we need to compare the versions (either both are bzr or both are not)
-	if (isVersionBBZR && !isVersionABZR) return NSOrderedAscending;
-	else if (!isVersionBBZR && isVersionABZR) return NSOrderedDescending;
+	if (isVersionBBZR && !isVersionABZR)
+		return NSOrderedAscending;
+	else if (!isVersionBBZR && isVersionABZR)
+		return NSOrderedDescending;
 	else {
-		NSInteger a = [[versionA substringFromIndex:4] integerValue];
-		NSInteger b = [[versionB substringFromIndex:4] integerValue];
-		if (b > a) return NSOrderedAscending;
-		else if (b == a) return NSOrderedSame;
-		else return NSOrderedDescending;
+		int a = [[versionA substringFromIndex:4] intValue];
+		int b = [[versionB substringFromIndex:4] intValue];
+		if (b > a)
+			return NSOrderedAscending;
+		else if (b == a)
+			return NSOrderedSame;
+		else
+			return NSOrderedDescending;
 	}
 }
 
