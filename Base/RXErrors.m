@@ -8,6 +8,7 @@
 
 #import "RXErrors.h"
 
+NSString* const RXErrorDomain = @"RXErrorDomain";
 
 NSException* RXArchiveManagerArchiveNotFoundExceptionWithArchiveName(NSString* name) {
 	return [NSException exceptionWithName:@"RXArchiveManagerArchiveNotFoundException" reason:[NSString stringWithFormat:@"RXArchiveManager could not find \"%@\".", name] userInfo:nil];

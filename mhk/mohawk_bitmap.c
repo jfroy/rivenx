@@ -372,7 +372,7 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 	uint8_t operand = 0;
 	register uint32_t pixel_index = 0;
 	uint32_t pixel_count = header->bytes_per_row * header->height;
-	Pixel_8 *file_pixels = file_buffer.data;
+	Pixel_8* file_pixels = file_buffer.data;
 	
 	// file IO buffer
 	MHK_fork_io_buffer ioBuffer;

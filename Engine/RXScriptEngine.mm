@@ -1547,7 +1547,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #define DEFINE_COMMAND(NAME) - (void)_external_ ## NAME:(const uint16_t)argc arguments:(const uint16_t*)argv
 
 #pragma mark -
-#pragma mark setup
+#pragma mark main menu
+
+DEFINE_COMMAND(xarestoregame) {
+	
+}
 
 DEFINE_COMMAND(xasetupcomplete) {
 	// schedule a fade transition

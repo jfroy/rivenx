@@ -216,7 +216,7 @@
 - (BOOL)writeUserData:(NSError**)error {
 	NSString* userDataPath = [userBase stringByAppendingPathComponent:@"User Data.plist"];
 	NSData* userRawData = [NSPropertyListSerialization dataFromPropertyList:_userData format:NSPropertyListBinaryFormat_v1_0 errorDescription:NULL];
-	if (!userRawData) ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+	if (!userRawData) ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
 	return [userRawData writeToFile:userDataPath options:NSAtomicWrite error:error];
 }
 

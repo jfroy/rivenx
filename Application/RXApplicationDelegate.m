@@ -180,13 +180,15 @@
 		return;
 	}
 	
-	if (![[RXWorld sharedWorld] loadGameState:gameState error:&error]) [NSApp presentError:error];
+	if (![[RXWorld sharedWorld] loadGameState:gameState error:&error])
+		[NSApp presentError:error];
 }
 
 - (IBAction)saveGame:(id)sender {
 	NSError* error;
 	RXGameState* gameState = [g_world gameState];
-	if (![gameState writeToURL:[gameState URL] error:&error]) [NSApp presentError:error];
+	if (![gameState writeToURL:[gameState URL] error:&error])
+		[NSApp presentError:error];
 }
 
 - (void)_saveAsPanelDidEnd:(NSSavePanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
@@ -194,8 +196,10 @@
 	
 	NSError* error = nil;
 	RXGameState* gameState = [g_world gameState];
-	if (![gameState writeToURL:[panel URL] error:&error]) [NSApp presentError:error];
-	else [self _updateCanSave];
+	if (![gameState writeToURL:[panel URL] error:&error])
+		[NSApp presentError:error];
+	else
+		[self _updateCanSave];
 }
 
 - (IBAction)saveGameAs:(id)sender {

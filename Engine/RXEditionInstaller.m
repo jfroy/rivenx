@@ -49,7 +49,7 @@
 - (BOOL)_performInstallSystemWide:(BOOL)systemWide fullInstall:(BOOL)full session:(NSModalSession)session error:(NSError**)error {
 	// we're one-shot
 	if (_didRun)
-		ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+		ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
 	_didRun = YES;
 	
 	// destination depends on the install's scope
@@ -70,7 +70,7 @@
 		SEL directiveSelector = NSSelectorFromString([NSString stringWithFormat:@"_perform%@:destination:modalSession:error:", [directive objectForKey:@"Directive"]]);
 		if (![self respondsToSelector:directiveSelector]) {
 			RXOLog(@"ERROR: unknown installation directive: %@", [directive objectForKey:@"Directive"]);
-			ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+			ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
 		}
 		
 		_directiveCount++;
@@ -152,7 +152,7 @@
 		
 		mountPath = [[RXEditionManager sharedEditionManager] mountPathForDisc:disc waitingInModalSession:session];
 		if (session && [NSApp runModalSession:session] != NSRunContinuesResponse)
-			ReturnValueWithError(nil, @"RXErrorDomain", 0, nil, error);
+			ReturnValueWithError(nil, RXErrorDomain, 0, nil, error);
 		if (!mountPath)
 			continue;
 	}
@@ -278,7 +278,7 @@
 			[self _updateInstallerProgress:NO];
 			[self setValue:NSLocalizedStringFromTable(@"INSTALLER_CHECKING_DISC", @"Editions", NULL) forKey:@"stage"];
 			if (session && [NSApp runModalSession:session] != NSRunContinuesResponse)
-				ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+				ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
 			
 			NSEnumerator* fileEnum = [files objectEnumerator];
 			NSString* filename;

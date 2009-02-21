@@ -218,11 +218,11 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 - (BOOL)makeEditionCurrent:(RXEdition*)edition rememberChoice:(BOOL)remember error:(NSError**)error {
 	// check that this edition is actually known to us
 	if ([editions objectForKey:[edition valueForKey:@"key"]] == nil)
-		ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+		ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
 	
 	// check that this edition can become current
 	if (![edition canBecomeCurrent])
-		ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+		ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
 	
 	// if we're told to remember thise choice, write the setting
 	if (remember)
@@ -298,7 +298,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	
 	// if there is no current edition, bail out
 	if (!currentEdition)
-		ReturnValueWithError(nil, @"RXErrorDomain", 0, nil, error);
+		ReturnValueWithError(nil, RXErrorDomain, 0, nil, error);
 	
 	// first look in the local data store
 	if (_localDataStore) {
@@ -330,13 +330,13 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	// FIXME: need to setup waiting for the disc
 	if (!mountPath) {
 		RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"[WARNING] waiting for discs is not implemented yet, please do full installs or put the proper disc before choosing an edition");
-		ReturnValueWithError(nil, @"RXErrorDomain", 0, nil, error);
+		ReturnValueWithError(nil, RXErrorDomain, 0, nil, error);
 	}
 	
 	// get the directory for the requested type of archive
 	NSString* directory = [[currentEdition valueForKey:@"directories"] objectForKey:dirKey];
 	if (!directory)
-		ReturnValueWithError(nil, @"RXErrorDomain", 0, nil, error);
+		ReturnValueWithError(nil, RXErrorDomain, 0, nil, error);
 	
 	// compute the final on-disc archive path
 	archivePath = [[mountPath stringByAppendingPathComponent:directory] stringByAppendingPathComponent:filename];
@@ -348,7 +348,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 			return archive;
 	}
 	
-	ReturnValueWithError(nil, @"RXErrorDomain", 0, nil, error);
+	ReturnValueWithError(nil, RXErrorDomain, 0, nil, error);
 }
 
 - (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackID:(NSString*)stackID error:(NSError**)error {

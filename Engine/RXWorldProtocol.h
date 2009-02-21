@@ -16,10 +16,10 @@
 #import <Foundation/Foundation.h>
 #import <MHKKit/MHKKit.h>
 
-#import "RXStack.h"
-#import "RXRendering.h"
-#import "RXStateCompositor.h"
-#import "RXGameState.h"
+#import "Engine/RXStack.h"
+#import "Rendering/RXRendering.h"
+#import "Rendering/Graphics/RXStateCompositor.h"
+#import "Engine/RXGameState.h"
 
 
 @protocol RXWorldProtocol <NSObject>

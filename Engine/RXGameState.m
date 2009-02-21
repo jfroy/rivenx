@@ -28,11 +28,25 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	}
 	
 	// use a keyed unarchiver to unfreeze a new game state object
-	RXGameState* gameState =  [NSKeyedUnarchiver unarchiveObjectWithData:archive];
-	
-	// set the write URL on the game state to indicate it has an existing location on the file system
-	if (gameState)
+	RXGameState* gameState = nil;
+	@try {
+		gameState = [NSKeyedUnarchiver unarchiveObjectWithData:archive];
+		if (!gameState)
+			ReturnNILWithError(RXErrorDomain, 0, ([NSDictionary dictionaryWithObject:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." forKey:NSLocalizedDescriptionKey]), error);
+		
+		// set the write URL on the game state to indicate it has an existing location on the file system
 		gameState->_URL = [url retain];
+	} @catch (NSException* e) {
+		if (error) {
+			if ([[e userInfo] objectForKey:NSUnderlyingErrorKey])
+				*error = [[[[e userInfo] objectForKey:NSUnderlyingErrorKey] retain] autorelease];
+			else if ([[e userInfo] objectForKey:@"RXErrorString"])
+				*error = [NSError errorWithDomain:RXErrorDomain code:0 userInfo:[NSDictionary dictionaryWithObject:[[e userInfo] objectForKey:@"RXErrorString"] forKey:NSLocalizedDescriptionKey]];
+			else
+				*error = [NSError errorWithDomain:RXErrorDomain code:0 userInfo:[NSDictionary dictionaryWithObject:[e reason] forKey:NSLocalizedDescriptionKey]];
+		}
+	}
+	
 	return gameState;
 }
 
@@ -66,7 +80,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	NSData* defaultVarData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"GameVariables" ofType:@"plist"] options:0 error:&error];
 	if (!defaultVarData) {
 		[self release];
-		@throw [NSException exceptionWithName:@"RXMissingDefaultEngineVariablesException" reason:@"Unable to find GameVariables.plist." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+		@throw [NSException exceptionWithName:@"RXMissingDefaultEngineVariablesException" reason:@"Unable to find the default engine variables file." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 	}
 	
 	NSString* errorString = nil;
@@ -104,38 +118,38 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 		case 1:
 			if (![decoder containsValueForKey:@"returnCard"]) {
 				[self release];
-				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand this save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
+				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
 			}
 			_returnCard = [[decoder decodeObjectForKey:@"returnCard"] retain];
 		
 		case 0:
 			if (![decoder containsValueForKey:@"editionKey"]) {
 				[self release];
-				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand this save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
+				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
 			}
 			NSString* editionKey = [decoder decodeObjectForKey:@"editionKey"];
 			_edition = [[[RXEditionManager sharedEditionManager] editionForKey:editionKey] retain];
 			if (!_edition) {
 				[self release];
-				@throw [NSException exceptionWithName:@"RXUnknownEditionKeyException" reason:@"Riven X was unable to find the edition for this save file." userInfo:nil];
+				@throw [NSException exceptionWithName:@"RXUnknownEditionKeyException" reason:@"Riven X was unable to find the edition for the save file. It may have been created with a more recent version of Riven X than you are using." userInfo:nil];
 			}
 			
 			if (![decoder containsValueForKey:@"currentCard"]) {
 				[self release];
-				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand this save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
+				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
 			}
 			_currentCard = [[decoder decodeObjectForKey:@"currentCard"] retain];
 
 			if (![decoder containsValueForKey:@"variables"]) {
 				[self release];
-				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand this save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
+				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
 			}
 			_variables = [[decoder decodeObjectForKey:@"variables"] retain];
 			
 			break;
 		
 		default:
-			@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand this save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
+			@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
 	}
 	
 	return self;
@@ -182,7 +196,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	// serialize ourselves as data
 	NSData* gameStateData = [NSKeyedArchiver archivedDataWithRootObject:self];
 	if (!gameStateData)
-		ReturnValueWithError(NO, @"RXErrorDomain", 0, nil, error);
+		ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
 	
 	// write the data
 	BOOL success = [gameStateData writeToURL:url options:NSAtomicWrite error:error];

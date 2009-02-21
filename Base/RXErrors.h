@@ -18,6 +18,8 @@ __BEGIN_DECLS
 #import <Foundation/Foundation.h>
 #import "PHSErrorMacros.h"
 
+extern NSString* const RXErrorDomain;
+
 extern NSException* RXArchiveManagerArchiveNotFoundExceptionWithArchiveName(NSString* name);
 
 #endif // __OBJC__

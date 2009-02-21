@@ -15,11 +15,13 @@
 
 #import <MHKKit/MHKAudioDecompression.h>
 
-#import "Base/RXTiming.h"
-#import "Engine/RXWorldProtocol.h"
-
 #import "States/RXCardState.h"
 
+#import "Base/RXTiming.h"
+
+#import "Application/RXApplicationDelegate.h"
+
+#import "Engine/RXWorldProtocol.h"
 #import "Engine/RXHardwareProfiler.h"
 #import "Engine/RXHotspot.h"
 #import "Engine/RXEditionManager.h"
@@ -1887,6 +1889,12 @@ exit_flush_tasks:
 		[self performSelectorOnMainThread:@selector(updateHotspotState) withObject:nil waitUntilDone:NO];
 		return;
 	}
+	
+	// when we're on edge values of the hotspot handling disable counter, we need to update the load / save UI
+	if (_hotspot_handling_disable_counter == 0)
+		[(RXApplicationDelegate*)[NSApp delegate] setSavingEnabled:YES];
+	else if (_hotspot_handling_disable_counter == 1)
+		[(RXApplicationDelegate*)[NSApp delegate] setSavingEnabled:NO];
 	
 	// if hotspot handling is disabled, simply return
 	if (_hotspot_handling_disable_counter > 0) {
