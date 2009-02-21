@@ -29,7 +29,8 @@ typedef struct {
 
 		
 static void _allocate_fork_io_buffer(const SInt16 fork_ref, const uint64_t offset, const uint32_t max_size, MHK_fork_io_buffer* io_buffer) {
-	if (!io_buffer) return;
+	if (!io_buffer)
+		return;
 	memset(io_buffer, 0, sizeof(MHK_fork_io_buffer));
 	
 	io_buffer->fork = fork_ref;
@@ -42,8 +43,10 @@ static void _allocate_fork_io_buffer(const SInt16 fork_ref, const uint64_t offse
 }
 
 static void _free_fork_io_buffer(MHK_fork_io_buffer* io_buffer) {
-	if (!io_buffer) return;
-	if (io_buffer->data_base) free(io_buffer->data_base);
+	if (!io_buffer)
+		return;
+	if (io_buffer->data_base)
+		free(io_buffer->data_base);
 	io_buffer->data_base = NULL;
 	io_buffer->data = NULL;
 }
@@ -61,8 +64,10 @@ static OSStatus _buffered_linear_read_fork(MHK_fork_io_buffer* io_buffer, const 
 		// if the IO buffer is empty, attempt to fill it
 		if (io_buffer->data_size == 0) {
 			err = FSReadFork(io_buffer->fork, fsFromStart, io_buffer->fork_offset, io_buffer->data_base_size, io_buffer->data_base, &available_from_buffer);
-			if (err && err != eofErr) return err;
-			if (available_from_buffer == 0) return err;
+			if (err && err != eofErr)
+				return err;
+			if (available_from_buffer == 0)
+				return err;
 		
 			// update the IO buffer's state
 			io_buffer->fork_offset += available_from_buffer;
@@ -84,12 +89,14 @@ static OSStatus _buffered_linear_read_fork(MHK_fork_io_buffer* io_buffer, const 
 		io_buffer->data = BUFFER_OFFSET(io_buffer->data, available_from_buffer);
 	}
 	
-	if (actual) *actual = local_actual;
+	if (actual)
+		*actual = local_actual;
 	return noErr;
 }
 
 static __inline__ void _free_vImage_Buffer(vImage_Buffer *buffer) {
-	if (buffer && buffer->data) free(buffer->data);
+	if (buffer && buffer->data)
+		free(buffer->data);
 }
 
 OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header *header, void *pixels, MHK_BITMAP_FORMAT format) {
@@ -108,7 +115,8 @@ OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header *
 	
 	// read the pixels
 	err = FSReadFork(fork_ref, fsFromStart, offset, file_buffer.rowBytes * file_buffer.height, file_buffer.data, NULL);
-	if (err) goto AbortReadBGRPixels;
+	if (err)
+		goto AbortReadBGRPixels;
 	
 	// storage for the final ARGB8888 image
 	vImage_Buffer client_buffer;
@@ -119,7 +127,8 @@ OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header *
 	
 	// convert the image to ARGB8888
 	err = vImageConvert_RGB888toARGB8888(&file_buffer, NULL, 0xff, &client_buffer, false, kvImageNoFlags);
-	if (err != kvImageNoError) goto AbortReadBGRPixels;
+	if (err != kvImageNoError)
+		goto AbortReadBGRPixels;
 	
 	// process the ARGB8888 image to match the client format
 	switch (format) {
@@ -127,14 +136,16 @@ OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header *
 			// ABGR -> RGBA
 			const uint8_t permute_vector[4] = {3, 2, 1, 0};
 			err = vImagePermuteChannels_ARGB8888(&client_buffer, &client_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadBGRPixels;
+			if (err != kvImageNoError)
+				goto AbortReadBGRPixels;
 			break;
 		}
 		case MHK_ARGB_UNSIGNED_BYTE_PACKED: {
 			// ABGR -> ARGB
 			const uint8_t permute_vector[4] = {0, 3, 2, 1};
 			err = vImagePermuteChannels_ARGB8888(&client_buffer, &client_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadBGRPixels;
+			if (err != kvImageNoError)
+				goto AbortReadBGRPixels;
 			break;
 		}
 		case MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED: {
@@ -142,12 +153,14 @@ OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header *
 			// ABGR -> ARGB
 			const uint8_t permute_vector[4] = {0, 3, 2, 1};
 			err = vImagePermuteChannels_ARGB8888(&client_buffer, &client_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadBGRPixels;
+			if (err != kvImageNoError)
+				goto AbortReadBGRPixels;
 #else
 			// ABGR -> BGRA
 			const uint8_t permute_vector[4] = {1, 2, 3, 0};
 			err = vImagePermuteChannels_ARGB8888(&client_buffer, &client_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadBGRPixels;
+			if (err != kvImageNoError)
+				goto AbortReadBGRPixels;
 #endif
 			break;
 		}
@@ -180,7 +193,8 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
 	// read the color table
 	ByteCount bytes_read;
 	err = FSReadFork(fork_ref, fsFromStart, offset, fct_buffer.rowBytes, fct_buffer.data, &bytes_read);
-	if (err) goto AbortReadIndexedPixels;
+	if (err)
+		goto AbortReadIndexedPixels;
 	
 	// color table
 	vImage_Buffer ct_buffer;
@@ -191,7 +205,8 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
 	
 	// create the ARGB8888 color table
 	err = vImageConvert_RGB888toARGB8888(&fct_buffer, NULL, 0xff, &ct_buffer, false, kvImageNoFlags);
-	if(err != kvImageNoError) goto AbortReadIndexedPixels;
+	if (err != kvImageNoError)
+		goto AbortReadIndexedPixels;
 	
 	// process the ARGB8888 color table to match the client format
 	switch (format) {
@@ -199,14 +214,16 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
 			// ABGR -> RGBA
 			const uint8_t permute_vector[4] = {3, 2, 1, 0};
 			err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadIndexedPixels;
+			if (err != kvImageNoError)
+				goto AbortReadIndexedPixels;
 			break;
 		}
 		case MHK_ARGB_UNSIGNED_BYTE_PACKED: {
 			// ABGR -> ARGB
 			const uint8_t permute_vector[4] = {0, 3, 2, 1};
 			err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadIndexedPixels;
+			if (err != kvImageNoError)
+				goto AbortReadIndexedPixels;
 			break;
 		}
 		case MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED: {
@@ -214,12 +231,14 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
 			// ABGR -> ARGB
 			const uint8_t permute_vector[4] = {0, 3, 2, 1};
 			err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadIndexedPixels;
+			if (err != kvImageNoError)
+				goto AbortReadIndexedPixels;
 #else
 			// ABGR -> BGRA
 			const uint8_t permute_vector[4] = {1, 2, 3, 0};
 			err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadIndexedPixels;
+			if (err != kvImageNoError)
+				goto AbortReadIndexedPixels;
 #endif
 			break;
 		}
@@ -241,7 +260,8 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
 	
 	// read the pixels
 	err = FSReadFork(fork_ref, fsFromStart, offset, file_buffer.rowBytes * file_buffer.height, file_buffer.data, &bytes_read);
-	if (err) goto AbortReadIndexedPixels;
+	if (err)
+		goto AbortReadIndexedPixels;
 	
 	// storage for the final ARGB8888 image
 	vImage_Buffer client_buffer;
@@ -252,7 +272,8 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
 	
 	// do the entire color lookup operation in one sweet function call
 	err = vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, (Pixel_F *)color_table_storage, kvImageNoFlags);
-	if (err) goto AbortReadIndexedPixels;
+	if (err)
+		goto AbortReadIndexedPixels;
 	
 	// we're done
 	err = noErr;
@@ -281,7 +302,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 	// read the color table
 	ByteCount bytes_read;
 	err = FSReadFork(fork_ref, fsFromStart, offset, fct_buffer.rowBytes, fct_buffer.data, &bytes_read);
-	if (err) goto AbortReadCompressedIndexedPixels;
+	if (err)
+		goto AbortReadCompressedIndexedPixels;
 	
 	// color table
 	vImage_Buffer ct_buffer;
@@ -292,7 +314,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 	
 	// create the ARGB8888 color table
 	err = vImageConvert_RGB888toARGB8888(&fct_buffer, NULL, 0xff, &ct_buffer, false, kvImageNoFlags);
-	if (err != kvImageNoError) goto AbortReadCompressedIndexedPixels;
+	if (err != kvImageNoError)
+		goto AbortReadCompressedIndexedPixels;
 	
 	// process the ARGB8888 color table to match the client format
 	switch (format) {
@@ -300,14 +323,16 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 			// ABGR -> RGBA
 			const uint8_t permute_vector[4] = {3, 2, 1, 0};
 			err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadCompressedIndexedPixels;
+			if (err != kvImageNoError)
+				goto AbortReadCompressedIndexedPixels;
 			break;
 		}
 		case MHK_ARGB_UNSIGNED_BYTE_PACKED: {
 			// ABGR -> ARGB
 			const uint8_t permute_vector[4] = {0, 3, 2, 1};
 			err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadCompressedIndexedPixels;
+			if (err != kvImageNoError)
+				goto AbortReadCompressedIndexedPixels;
 			break;
 		}
 		case MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED: {
@@ -315,12 +340,14 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 			// ABGR -> ARGB
 			const uint8_t permute_vector[4] = {0, 3, 2, 1};
 			err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadCompressedIndexedPixels;
+			if (err != kvImageNoError)
+				goto AbortReadCompressedIndexedPixels;
 #else
 			// ABGR -> BGRA
 			const uint8_t permute_vector[4] = {1, 2, 3, 0};
 			err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
-			if (err != kvImageNoError) goto AbortReadCompressedIndexedPixels;
+			if (err != kvImageNoError)
+				goto AbortReadCompressedIndexedPixels;
 #endif
 			break;
 		}
@@ -355,10 +382,12 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 	while (pixel_index < pixel_count) {
 		// read an instruction
 		err = _buffered_linear_read_fork(&ioBuffer, 1, &instruction, NULL);
-		if (err) goto AbortReadCompressedIndexedPixels;
+		if (err)
+			goto AbortReadCompressedIndexedPixels;
 		
 		// instruction 0 indicates end of instruction stream
-		if (instruction == 0) break;
+		if (instruction == 0)
+			break;
 		
 		// separate the operand from the instruction
 		operand = instruction & 0x3f;
@@ -367,7 +396,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 		// execute the instruction
 		if (instruction == 0) {
 			err = _buffered_linear_read_fork(&ioBuffer, operand * 2, file_pixels + pixel_index, &bytes_read);
-			if (err) goto AbortReadCompressedIndexedPixels;
+			if (err)
+				goto AbortReadCompressedIndexedPixels;
 			pixel_index += bytes_read;
 		} else if (instruction == 0x40) {
 			Pixel_8 x[2] = {file_pixels[pixel_index - 2], file_pixels[pixel_index - 1]};
@@ -401,7 +431,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 			for (; i < n; i++) {
 				// read an instruction
 				err = _buffered_linear_read_fork(&ioBuffer, 1, &instruction, NULL);
-				if (err) goto AbortReadCompressedIndexedPixels;
+				if (err)
+					goto AbortReadCompressedIndexedPixels;
 				
 				// separate the operand from the instruction
 				operand = instruction & 0x0f;
@@ -417,7 +448,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 					// repeat last duplet then change second pixel to pixel from stream
 					file_pixels[pixel_index] = file_pixels[pixel_index - 2];
 					err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + 1, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 				} else if (instruction == 0x10) {
 					// output first pixel of last duplet then pixel at offset operand
 					file_pixels[pixel_index] = file_pixels[pixel_index - 2];
@@ -433,7 +465,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 				} else if (instruction == 0x40 && operand == 0) {
 					// repeat last duplet then change first pixel to pixel from stream
 					err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					file_pixels[pixel_index + 1] = file_pixels[pixel_index - 1];
 				} else if (instruction == 0x40) {
 					// output pixel at offset operand then second pixel of last duplet
@@ -442,13 +475,15 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 				} else if (instruction == 0x50 && operand == 0) {
 					// output 2 pixels from stream
 					err = _buffered_linear_read_fork(&ioBuffer, 2, file_pixels + pixel_index, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 				} else if (instruction == 0x50 && operand < 8) {
 					// output pixel at offset operand then pixel from stream
 					operand &= 0x07;
 					file_pixels[pixel_index] = file_pixels[pixel_index - operand];
 					err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + 1, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 				} else if (instruction == 0x50) {
 					// output pixel from stream then pixel at offset operand
 					operand &= 0x07;
@@ -458,12 +493,14 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 				} else if (instruction == 0x60) {
 					// output pixel from stream then second pixel of last duplet + operand
 					err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					file_pixels[pixel_index + 1] = file_pixels[pixel_index - 1] + operand;
 				} else if (instruction == 0x70) {
 					// output pixel from stream then second pixel of last duplet - operand
 					err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					file_pixels[pixel_index + 1] = file_pixels[pixel_index - 1] - operand;
 				} else if (instruction == 0x80) {
 					// repeat last duplet then add operand to first pixel
@@ -473,18 +510,21 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 					// output first pixel of last duplet + operand then pixel from stream
 					file_pixels[pixel_index] = file_pixels[pixel_index - 2] + operand;
 					err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + 1, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 				} else if (instruction == 0xa0 && operand == 0) {
 					// repeat last duplet then add next nibble to first pixel and next nibble to second pixel
 					err = _buffered_linear_read_fork(&ioBuffer, 1, &operand, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					file_pixels[pixel_index] = file_pixels[pixel_index - 2] + ((operand >> 4) & 0x0f);
 					file_pixels[pixel_index + 1] = file_pixels[pixel_index - 1] + (operand & 0x0f);
 				} else if (instruction == 0xa0) {
 					// copy n bytes from large offset + extra optional pixel instruction
 					uint8_t pixel_offset_low = 0;
 					err = _buffered_linear_read_fork(&ioBuffer, 1, &pixel_offset_low, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					
 					// compute the final offset
 					uint16_t pixel_offset = (operand & 0x03) << 8;
@@ -499,7 +539,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 						file_pixels[pixel_index + 2] = file_pixels[pixel_index - pixel_offset + 2];
 						
 						err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + 3, NULL);
-						if (err) goto AbortReadCompressedIndexedPixels;
+						if (err)
+							goto AbortReadCompressedIndexedPixels;
 						
 						pixel_index += 2;
 					} else if (operand == 0x08) {
@@ -519,21 +560,24 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 						file_pixels[pixel_index + 4] = file_pixels[pixel_index - pixel_offset + 4];
 						
 						err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + 5, NULL);
-						if (err) goto AbortReadCompressedIndexedPixels;
+						if (err)
+							goto AbortReadCompressedIndexedPixels;
 						
 						pixel_index += 4;
 					}
 				} else if (instruction == 0xb0 && operand == 0) {
 					// repeat last duplet then add next nibble to first pixel then subtract next nibble from second pixel
 					err = _buffered_linear_read_fork(&ioBuffer, 1, &operand, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					file_pixels[pixel_index] = file_pixels[pixel_index - 2] + ((operand >> 4) & 0x0f);
 					file_pixels[pixel_index + 1] = file_pixels[pixel_index - 1] - (operand & 0x0f);
 				} else if (instruction == 0xb0) {
 					// copy n bytes from large offset + extra optional pixel instruction
 					uint8_t pixel_offset_low = 0;
 					err = _buffered_linear_read_fork(&ioBuffer, 1, &pixel_offset_low, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					
 					// compute the final offset
 					uint16_t pixel_offset = (operand & 0x03) << 8;
@@ -559,7 +603,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 						}
 						
 						err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + 7, NULL);
-						if (err) goto AbortReadCompressedIndexedPixels;
+						if (err)
+							goto AbortReadCompressedIndexedPixels;
 						
 						pixel_index += 6;
 					} else {
@@ -578,18 +623,21 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 					// output first pixel of last duplet - operand then pixel from stream
 					file_pixels[pixel_index] = file_pixels[pixel_index - 2] - operand;
 					err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + 1, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 				} else if (instruction == 0xe0 && operand == 0) {
 					// repeat last duplet then subtract next nibble from first pixel then add next nibble to second pixel
 					err = _buffered_linear_read_fork(&ioBuffer, 1, &operand, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					file_pixels[pixel_index] = file_pixels[pixel_index - 2] - ((operand >> 4) & 0x0f);
 					file_pixels[pixel_index + 1] = file_pixels[pixel_index - 1] + (operand & 0x0f);
 				} else if (instruction == 0xe0) {
 					// copy n bytes from large offset + extra optional pixel instruction
 					uint8_t pixel_offset_low = 0;
 					err = _buffered_linear_read_fork(&ioBuffer, 1, &pixel_offset_low, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					
 					// compute the final offset
 					uint16_t pixel_offset = (operand & 0x03) << 8;
@@ -608,7 +656,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 						}
 						
 						err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + 9, NULL);
-						if (err) goto AbortReadCompressedIndexedPixels;
+						if (err)
+							goto AbortReadCompressedIndexedPixels;
 						
 						pixel_index += 8;
 					} else if (operand == 0x08) {
@@ -625,21 +674,24 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 						}
 						
 						err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + 11, NULL);
-						if (err) goto AbortReadCompressedIndexedPixels;
+						if (err)
+							goto AbortReadCompressedIndexedPixels;
 						
 						pixel_index += 10;
 					}
 				} else if (instruction == 0xf0 && operand == 0) {
 					// repeat last duplet then subtract next nibble from first pixel and next nibble from second pixel
 					err = _buffered_linear_read_fork(&ioBuffer, 1, &operand, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					file_pixels[pixel_index] = file_pixels[pixel_index - 2] - ((operand >> 4) & 0x0f);
 					file_pixels[pixel_index + 1] = file_pixels[pixel_index - 1] - (operand & 0x0f);
 				} else if (instruction == 0xf0 && operand < 0x0c) {
 					// copy n bytes from large offset + extra optional pixel instruction
 					uint8_t pixel_offset_low = 0;
 					err = _buffered_linear_read_fork(&ioBuffer, 1, &pixel_offset_low, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					
 					// compute the final offset
 					uint16_t pixel_offset = (operand & 0x03) << 8;
@@ -665,7 +717,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 						}
 						
 						err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + 13, NULL);
-						if (err) goto AbortReadCompressedIndexedPixels;
+						if (err)
+							goto AbortReadCompressedIndexedPixels;
 						
 						pixel_index += 12;
 					}
@@ -673,7 +726,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 					// fancy copy n bytes from large offset + extra optional pixel instruction
 					uint16_t pixel_offset = 0;
 					err = _buffered_linear_read_fork(&ioBuffer, 2, &pixel_offset, NULL);
-					if (err) goto AbortReadCompressedIndexedPixels;
+					if (err)
+						goto AbortReadCompressedIndexedPixels;
 					
 					// byte swap to big endian if needed
 					pixel_offset = CFSwapInt16BigToHost(pixel_offset);
@@ -687,7 +741,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 					// pixel counter
 					uint8_t i_pixel = 0;
 					uint8_t n_pixel = 2 * (flubber >> 3) + 3;
-					if (flubber & 0x04) n_pixel++;
+					if (flubber & 0x04)
+						n_pixel++;
 					
 					// copy some pixels around
 					for (; i_pixel < n_pixel; i_pixel++) {
@@ -697,7 +752,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 					// check if we need to read an extra pixel from stream
 					if (!(flubber & 0x04)) {
 						err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + i_pixel, NULL);
-						if (err) goto AbortReadCompressedIndexedPixels;
+						if (err)
+							goto AbortReadCompressedIndexedPixels;
 						pixel_index++;
 					}
 					
@@ -722,7 +778,8 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 	
 	// do the entire color lookup operation in one sweet function call
 	err = vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, (Pixel_F *)color_table_storage, kvImageNoFlags);
-	if (err) goto AbortReadCompressedIndexedPixels;
+	if (err)
+		goto AbortReadCompressedIndexedPixels;
 	
 	// we're done
 	err = noErr;

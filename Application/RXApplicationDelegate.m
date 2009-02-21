@@ -6,9 +6,11 @@
 //	Copyright 2005 MacStorm. All rights reserved.
 //
 
+#import "RXApplicationDelegate.h"
+
 #import <ExceptionHandling/NSExceptionHandler.h>
 
-#import "RXApplicationDelegate.h"
+#import <Sparkle/SUUpdater.h>
 
 #import "RXWorld.h"
 #import "RXWorldView.h"
