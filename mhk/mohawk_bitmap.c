@@ -99,7 +99,7 @@ static __inline__ void _free_vImage_Buffer(vImage_Buffer *buffer) {
 		free(buffer->data);
 }
 
-OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header *header, void *pixels, MHK_BITMAP_FORMAT format) {
+OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* header, void* pixels, MHK_BITMAP_FORMAT format) {
 	OSStatus err = noErr;
 	
 	// prepare a vImage_Buffer that will contain the file's RGB888 pixels
@@ -174,7 +174,7 @@ AbortReadBGRPixels:
 	return err;
 }
 
-OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header *header, void *pixels, MHK_BITMAP_FORMAT format) {
+OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* header, void* pixels, MHK_BITMAP_FORMAT format) {
 	OSStatus err = noErr;
 	
 	// storage for the file color table
@@ -271,7 +271,7 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
 	client_buffer.data = pixels;
 	
 	// do the entire color lookup operation in one sweet function call
-	err = vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, (Pixel_F *)color_table_storage, kvImageNoFlags);
+	err = vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, (Pixel_F*)color_table_storage, kvImageNoFlags);
 	if (err)
 		goto AbortReadIndexedPixels;
 	
@@ -283,7 +283,7 @@ AbortReadIndexedPixels:
 	return err;
 }
 
-OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header *header, void *pixels, MHK_BITMAP_FORMAT format) {
+OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* header, void* pixels, MHK_BITMAP_FORMAT format) {
 	OSStatus err = noErr;
 	
 	// storage for the file color table

@@ -45,8 +45,8 @@ MHK_INLINE void MHK_BITMAP_header_fton(MHK_BITMAP_header *s) {
 }
 
 // decompression functions
-OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header *header, void *pixels, MHK_BITMAP_FORMAT format);
-OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header *header, void *pixels, MHK_BITMAP_FORMAT format);
-OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header *header, void *pixels, MHK_BITMAP_FORMAT format);
+OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* header, void* pixels, MHK_BITMAP_FORMAT format);
+OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* header, void* pixels, MHK_BITMAP_FORMAT format);
+OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* header, void* pixels, MHK_BITMAP_FORMAT format);
 
 #endif // mohawk_bitmap_h
