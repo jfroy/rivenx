@@ -103,6 +103,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	initialized = YES;
 	
 	// build the principal command dispatch table
+#pragma mark opcode dispatch table
 	_riven_command_dispatch_table[0].sel = @selector(_invalid_opcode:arguments:);
 	_riven_command_dispatch_table[1].sel = @selector(_opcode_drawDynamicPicture:arguments:);
 	_riven_command_dispatch_table[2].sel = @selector(_opcode_goToCard:arguments:);
@@ -115,7 +116,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[9].sel = @selector(_opcode_enableHotspot:arguments:);
 	_riven_command_dispatch_table[10].sel = @selector(_opcode_disableHotspot:arguments:);
 	_riven_command_dispatch_table[11].sel = @selector(_opcode_noop:arguments:);
-	_riven_command_dispatch_table[12].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[12].sel = @selector(_opcode_clearSLST:arguments:);
 	_riven_command_dispatch_table[13].sel = @selector(_opcode_setCursor:arguments:);
 	_riven_command_dispatch_table[14].sel = @selector(_opcode_pause:arguments:);
 	_riven_command_dispatch_table[15].sel = @selector(_opcode_noop:arguments:);
@@ -1117,6 +1118,29 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 }
 
+// 12
+- (void)_opcode_clearSLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@clearing ambient sounds with fade flags %hu", logPrefix, argv[0]);
+#endif
+	
+	// synthesize and activate an empty sound group
+	RXSoundGroup* sgroup = [RXSoundGroup new];
+	sgroup->gain = 1.0f;
+	sgroup->loop = NO;
+	sgroup->fadeOutActiveGroupBeforeActivating = (argv[0] & 0x0001) ? YES : NO;
+	sgroup->fadeInOnActivation = (argv[0] & 0x0002) ? YES : NO;
+	
+	[controller activateSoundGroup:sgroup];
+	_didActivateSLST = YES;
+	
+	[sgroup release];
+}
+
 // 13
 - (void)_opcode_setCursor:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 1)
@@ -1550,26 +1574,18 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #pragma mark main menu
 
 DEFINE_COMMAND(xarestoregame) {
-	
+	[[NSApp delegate] performSelectorOnMainThread:@selector(openDocument:) withObject:self waitUntilDone:NO];
 }
 
 DEFINE_COMMAND(xasetupcomplete) {
 	// schedule a fade transition
-	DISPATCH_COMMAND1(18, 16);
+	DISPATCH_COMMAND1(RX_COMMAND_SCHEDULE_TRANSITION, 16);
 	
-	// activate an empty sound group with fade out to clear any playing sound from the sound setup card
-	RXSoundGroup* sgroup = [RXSoundGroup new];
-	sgroup->gain = 1.0f;
-	sgroup->loop = NO;
-	sgroup->fadeOutActiveGroupBeforeActivating = YES;
-	sgroup->fadeInOnActivation = NO;
-	
-	[controller activateSoundGroup:sgroup];
-	_didActivateSLST = YES;
-	[sgroup release];
+	// clear the ambiant sound
+	DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 0);
 	
 	// go to card 1
-	DISPATCH_COMMAND1(2, 1);
+	DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, 1);
 }
 
 #pragma mark -
