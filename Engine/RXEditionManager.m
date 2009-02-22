@@ -29,7 +29,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	RXEdition* ed;
 	while ((ed = [e nextObject])) {
 		if ([ed isValidMountPath:mp]) {
-			[_validMountPaths addObject:mp];
+			if (![_validMountPaths containsObject:mp])
+				[_validMountPaths addObject:mp];
 			return;
 		}
 	}
@@ -89,7 +90,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	editions = [NSMutableDictionary new];
 	editionProxies = [NSMutableArray new];
 	
-	_validMountPaths = [NSMutableSet new];
+	_validMountPaths = [NSMutableArray new];
 	_waitingForThisDisc = nil;
 	
 	// find the Editions directory
@@ -289,6 +290,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 #if defined(DEBUG)
 	RXOLog(@"waiting for disc %@", disc);
 #endif
+	
+	// as a convenience, try to eject the last known valid mount path we know about
+	if ([_validMountPaths count])
+		[self ejectMountPath:[_validMountPaths lastObject]];
 	
 	_waitingForThisDisc = [disc retain];
 	while (_waitingForThisDisc) {

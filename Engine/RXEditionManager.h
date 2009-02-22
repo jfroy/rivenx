@@ -23,7 +23,7 @@
 	RXEditionManagerWindowController* _windowController;
 	BOOL _tornDown;
 	
-	NSMutableSet* _validMountPaths;
+	NSMutableArray* _validMountPaths;
 	NSString* _waitingForThisDisc;
 	
 	NSString* _localDataStore;
