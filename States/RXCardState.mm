@@ -1350,6 +1350,7 @@ init_failure:
 	
 	// if the engine says the inventory should not be shown, set the number of inventory items to 0 and return
 	if (![game_state unsigned32ForKey:@"ainventory"]) {
+		// FIXME: we want to add fade-in and fade-out animation for the inventory art, while immediately disabling the hotspots
 		_inventoryItemCount = 0;
 		return;
 	}
@@ -1375,7 +1376,7 @@ init_failure:
 	// compute the position of any additional item based on the position of the previous item
 	for (GLuint inventory_i = 1; inventory_i < _inventoryItemCount; inventory_i++) {
 		_inventoryRegions[inventory_i].origin.x = _inventoryRegions[inventory_i - 1].origin.x + _inventoryRegions[inventory_i - 1].size.width + RX_INVENTORY_MARGIN;
-		_inventoryRegions[inventory_i].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[1].size.height / 2.0f);
+		_inventoryRegions[inventory_i].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[inventory_i].size.height / 2.0f);
 	}
 	
 	// compute vertex positions and texture coordinates for the items
@@ -1761,11 +1762,11 @@ exit_render:
 		OSSpinLockUnlock(&_state_swap_lock);
 		
 		if (hotspot >= (RXHotspot*)0x1000)
-			snprintf(debug_buffer, 100, "current hotspot: %s", [[hotspot description] cStringUsingEncoding:NSASCIIStringEncoding]);
+			snprintf(debug_buffer, 100, "hotspot: %s", [[hotspot description] cStringUsingEncoding:NSASCIIStringEncoding]);
 		else if (hotspot)
-			snprintf(debug_buffer, 100, "current hotspot: inventory %d", (int)hotspot);
+			snprintf(debug_buffer, 100, "hotspot: inventory %d", (int)hotspot);
 		else
-			snprintf(debug_buffer, 100, "current hotspot: none");
+			snprintf(debug_buffer, 100, "hotspot: none");
 		
 		background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
 		background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
@@ -1997,6 +1998,9 @@ exit_flush_tasks:
 	NSNumber* journalCardIDNumber = [[edition valueForKey:@"journalCardIDMap"] objectForKey:RX_INVENTORY_KEYS[index]];
 	if (!journalCardIDNumber)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO CARD ID FOR GIVEN INVENTORY KEY IN JOURNAL CARD ID MAP" userInfo:nil];
+	
+	// disable the inventory
+	[[g_world gameState] setUnsigned32:0 forKey:@"ainventory"];
 	
 	// set the return card in the game state to the current card; need to take the render lock to avoid a race condition with the script thread executing a card swap
 	[[g_world gameState] setReturnCard:[[_front_render_state->card descriptor] simpleDescriptor]];

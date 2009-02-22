@@ -36,10 +36,11 @@
 	
 	_index = index;
 	_ID = ID;
-	_name = nil;
 	_cardFrame = frame;
 	_cursorID = cursorID;
 	_script = [script retain];
+	
+	_description = [[NSString alloc] initWithFormat: @"{ID=%hu, frame=%@}", _ID, NSStringFromRect(_cardFrame)];
 	
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_updateGlobalFrame:) name:@"RXOpenGLDidReshapeNotification" object:nil];
 	[self _updateGlobalFrame:nil];
@@ -61,7 +62,7 @@
 - (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
-	[_name release];
+	[_description release];
 	[_script release];
 	
 	[super dealloc];
@@ -81,6 +82,16 @@
 		return NSOrderedDescending;
 }
 
+- (NSString*)description {
+	return _description;
+}
+
+- (void)setName:(NSString*)name {
+	NSString* old = _description;
+	_description = [[NSString alloc] initWithFormat: @"%@ {ID=%hu, frame=%@}", name, _ID, NSStringFromRect(_cardFrame)];
+	[old release];
+}
+
 - (NSRect)worldViewFrame {
 	return _globalFrame;
 }
@@ -91,10 +102,6 @@
 
 - (NSDictionary*)script {
 	return _script;
-}
-
-- (NSString*)description {
-	return [NSString stringWithFormat: @"{ID=%hu, frame=%@}", _ID, NSStringFromRect(_cardFrame)];
 }
 
 - (void)enable {

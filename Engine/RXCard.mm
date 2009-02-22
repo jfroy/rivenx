@@ -328,6 +328,8 @@ struct rx_card_picture_record {
 		
 		// allocate the hotspot object
 		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id frame:RXMakeNSRect(hspt_record->left, hspt_record->top, hspt_record->right, hspt_record->bottom) cursorID:hspt_record->mouse_cursor script:hotspot_scripts];
+		if (hspt_record->name_rec >= 0)
+			[hs setName:[[_descriptor parent] hotspotNameAtIndex:hspt_record->name_rec]];
 		
 		uintptr_t key = hspt_record->blst_id;
 		NSMapInsert(_hotspotsIDMap, (void*)key, hs);

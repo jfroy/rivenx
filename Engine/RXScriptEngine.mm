@@ -1610,6 +1610,9 @@ DEFINE_COMMAND(xthideinventory) {
 	
 	// reset the return card
 	[[g_world gameState] setReturnCard:nil];
+	
+	// enable the inventory
+	[[g_world gameState] setUnsigned32:1 forKey:@"ainventory"];
 }
 
 #pragma mark -

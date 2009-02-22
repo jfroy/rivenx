@@ -10,21 +10,22 @@
 
 
 @interface RXHotspot : NSObject {
-@private
 	uint16_t _index;
 	uint16_t _ID;
-	NSString* _name;
 	NSRect _cardFrame;
 	uint16_t _cursorID;
 	NSDictionary* _script;
 	
+	NSString* _description;
 	NSRect _globalFrame;
+
 @public
-	// ONLY FOR RXCard
 	BOOL enabled;
 }
 
 - (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID frame:(NSRect)frame cursorID:(uint16_t)cursorID script:(NSDictionary*)script;
+
+- (void)setName:(NSString*)name;
 
 - (NSRect)worldViewFrame;
 - (uint16_t)cursorID;
