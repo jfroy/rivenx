@@ -2,6 +2,15 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>Card LUT</key>
+	<dict>
+		<key>jungle elevator top</key>
+		<string>jspit 361</string>
+		<key>jungle elevator bottom</key>
+		<string>jspit 395</string>
+		<key>jungle elevator middle</key>
+		<string>jspit 392</string>
+	</dict>
 	<key>Stack switch table</key>
 	<dict>
 		<key>bspit 447</key>

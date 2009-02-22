@@ -23,6 +23,7 @@
 	
 	NSDictionary* stackSwitchTables;
 	NSDictionary* journalCardIDMap;
+	NSDictionary* cardLUT;
 	
 	NSString* userBase;
 	NSString* userDataBase;

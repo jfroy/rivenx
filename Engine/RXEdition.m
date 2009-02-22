@@ -16,7 +16,7 @@
 @implementation RXEdition
 
 + (BOOL)_saneDescriptor:(NSDictionary*)descriptor {
-	// a valid edition descriptor must have 3 root keys, "Edition", "Stacks" and "Stack switch table"
+	// a valid edition descriptor must have 4 root keys, "Edition", "Stacks", "Stack switch table" and "Card LUT"
 	if (![descriptor objectForKey:@"Edition"])
 		return NO;
 	if (![descriptor objectForKey:@"Stacks"])
@@ -24,6 +24,8 @@
 	if (![descriptor objectForKey:@"Stack switch table"])
 		return NO;
 	if (![descriptor objectForKey:@"Journals"])
+		return NO;
+	if (![descriptor objectForKey:@"Card LUT"])
 		return NO;
 	
 	// the Edtion sub-directionary must have a Key, a Discs and a Install Directives key
@@ -46,7 +48,7 @@
 	if ([discs count] == 0)
 		return NO;
 	
-	// Directories must be a dictionary and contain at least Data, Sound and All keys
+	// directories must be a dictionary and contain at least Data, Sound and All keys
 	id directories = [edition objectForKey:@"Directories"];
 	if (![directories isKindOfClass:[NSDictionary class]])
 		return NO;
@@ -57,11 +59,17 @@
 	if (![directories objectForKey:@"All"])
 		return NO;
 	
-	// Journals must be a dictionary and contain at least a "Card ID Map" key
+	// journals must be a dictionary and contain at least a "Card ID Map" key
 	id journals = [descriptor objectForKey:@"Journals"];
 	if (![journals isKindOfClass:[NSDictionary class]])
 		return NO;
 	if (![journals objectForKey:@"Card ID Map"])
+		return NO;
+	
+	// "Stack switch table" and "Card LUT" must be dictionaries
+	if (![[descriptor objectForKey:@"Stack switch table"] isKindOfClass:[NSDictionary class]])
+		return NO;
+	if (![[descriptor objectForKey:@"Card LUT"] isKindOfClass:[NSDictionary class]])
 		return NO;
 	
 	// good enough
@@ -129,22 +137,33 @@
 	directories = [edition objectForKey:@"Directories"];
 	installDirectives = [edition objectForKey:@"Install Directives"];
 	
+	// process the stack switch table to store simple card descriptors instead of strings as the keys and values
 	NSDictionary* textSwitchTable = [_descriptor objectForKey:@"Stack switch table"];
-	NSMutableDictionary* finalSwitchTable = [NSMutableDictionary new];
+	stackSwitchTables = [NSMutableDictionary new];
 	
-	NSEnumerator* keyEnum = [textSwitchTable keyEnumerator];
-	NSString* switchKey;
-	while ((switchKey = [keyEnum nextObject])) {
-		RXSimpleCardDescriptor* fromDescriptor = [[RXSimpleCardDescriptor alloc] initWithString:switchKey];
-		RXSimpleCardDescriptor* toDescriptor = [[RXSimpleCardDescriptor alloc] initWithString:[textSwitchTable objectForKey:switchKey]];
-		[finalSwitchTable setObject:toDescriptor forKey:fromDescriptor];
-		[toDescriptor release];
-		[fromDescriptor release];
+	NSEnumerator* key_enum = [textSwitchTable keyEnumerator];
+	NSString* k;
+	while ((k = [key_enum nextObject])) {
+		RXSimpleCardDescriptor* from = [[RXSimpleCardDescriptor alloc] initWithString:k];
+		RXSimpleCardDescriptor* to = [[RXSimpleCardDescriptor alloc] initWithString:[textSwitchTable objectForKey:k]];
+		[(NSMutableDictionary*)stackSwitchTables setObject:to forKey:from];
+		[to release];
+		[from release];
 	}
 	
-	stackSwitchTables = finalSwitchTable;
-	
+	// the journal card ID map
 	journalCardIDMap = [[[_descriptor objectForKey:@"Journals"] objectForKey:@"Card ID Map"] retain];
+	
+	// process the card LUT to store simple card descriptors instead of strings as the values
+	NSDictionary* text_lut = [_descriptor objectForKey:@"Stack switch table"];
+	cardLUT = [NSMutableDictionary new];
+	
+	key_enum = [text_lut keyEnumerator];
+	while ((k = [key_enum nextObject])) {
+		RXSimpleCardDescriptor* to = [[RXSimpleCardDescriptor alloc] initWithString:[text_lut objectForKey:k]];
+		[(NSMutableDictionary*)cardLUT setObject:to forKey:k];
+		[to release];
+	}
 	
 	// create the support directory for the edition
 	// FIXME: we should offer system-wide editions as well
@@ -199,6 +218,7 @@
 	
 	[stackSwitchTables release];
 	[journalCardIDMap release];
+	[cardLUT release];
 	
 	[super dealloc];
 }
