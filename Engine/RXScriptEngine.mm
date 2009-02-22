@@ -1589,6 +1589,13 @@ DEFINE_COMMAND(xasetupcomplete) {
 }
 
 #pragma mark -
+#pragma mark inventory
+
+DEFINE_COMMAND(xthideinventory) {
+	// nothing to do in Riven X for this really
+}
+
+#pragma mark -
 #pragma mark shared journal support
 
 - (void)_returnFromJournal {
@@ -1780,6 +1787,20 @@ DEFINE_COMMAND(xacathbooknextpage) {
 
 DEFINE_COMMAND(xtrapbookback) {	
 	[self _returnFromJournal];
+}
+
+#pragma mark -
+#pragma mark introduction sequence
+
+DEFINE_COMMAND(xtatrusgivesbooks) {
+	// FIXME: implement xtatrusgivesbooks
+}
+
+DEFINE_COMMAND(xtchotakesbook) {
+	// FIXME: implement xtchotakesbook
+
+	// WORKAROUND as a side-effect of this command, we'll silence the ambient sound before the last introduction movie plays; a active SLST command comes after the movie
+	DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 1);
 }
 
 #pragma mark -
