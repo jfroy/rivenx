@@ -103,7 +103,21 @@
 	// FIXME: handle errors
 	if (!remember)
 		[[RXEditionManager sharedEditionManager] resetDefaultEdition];
-	[[RXEditionManager sharedEditionManager] makeEditionCurrent:_pickedEdition rememberChoice:remember error:NULL];
+	
+	NSError* error;
+	if (![[RXEditionManager sharedEditionManager] makeEditionCurrent:_pickedEdition rememberChoice:remember error:&error]) {
+		if ([error code] == kRXErrEditionCantBecomeCurrent && [error domain] == RXErrorDomain) {
+			error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+				[NSString stringWithFormat:@"Riven X cannot make \"%@\" the current edition because it is not installed.", [_pickedEdition valueForKey:@"name"]], NSLocalizedDescriptionKey,
+				@"You need to install this edition by using the Edition Manager.", NSLocalizedRecoverySuggestionErrorKey,
+				[NSArray arrayWithObjects:@"Install", @"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
+				[NSApp delegate], NSRecoveryAttempterErrorKey,
+				error, NSUnderlyingErrorKey,
+			nil]];
+		}
+		
+		[NSApp presentError:error];
+	}
 }
 
 - (void)_makeEditionCurrent:(RXEdition*)ed {	

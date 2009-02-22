@@ -169,9 +169,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	
 	// if we have an edition selection saved in the settings, try to use it; otherwise, display the edition manager; 
 	// we use a performSelector because the world is not done initializing when the edition manager is initialized and we must defer the edition changed notification until the next run loop cycle
-	NSString* defaultEdition = [self defaultEdition];
+	RXEdition* defaultEdition = [self defaultEdition];
 	BOOL optKeyDown = ((GetCurrentKeyModifiers() & (optionKey | rightOptionKey)) != 0) ? YES : NO;
-	if (defaultEdition && [editions objectForKey:defaultEdition] && !optKeyDown)
+	if (defaultEdition && !optKeyDown)
 		[self performSelectorOnMainThread:@selector(_makeEditionChoiceMemoryCurrent) withObject:nil waitUntilDone:NO];
 	else
 		[self showEditionManagerWindow];
@@ -220,8 +220,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	[_windowController showWindow:self];
 }
 
-- (NSString*)defaultEdition {
-	return [_editionManagerSettings objectForKey:@"RXEditionChoiceMemory"];
+- (RXEdition*)defaultEdition {
+	return [editions objectForKey:[_editionManagerSettings objectForKey:@"RXEditionChoiceMemory"]];
 }
 
 - (void)setDefaultEdition:(RXEdition*)edition {
@@ -236,12 +236,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	[self setDefaultEdition:nil];
 }
 
-- (BOOL)attemptRecoveryFromError:(NSError *)error optionIndex:(NSUInteger)recoveryOptionIndex {
-	if (recoveryOptionIndex == 0)
-		[self showEditionManagerWindow];
-	return YES;
-}
-
 - (BOOL)makeEditionCurrent:(RXEdition*)edition rememberChoice:(BOOL)remember error:(NSError**)error {
 	if ([edition isEqual:currentEdition]) {
 		// if we're told to remember this choice, do so
@@ -252,12 +246,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
 	// check that this edition can become current
 	if (![edition canBecomeCurrent])
-		ReturnValueWithError(NO, RXErrorDomain, 0, ([NSDictionary dictionaryWithObjectsAndKeys:
-			[NSString stringWithFormat:@"Riven X cannot make \"%@\" the current edition because it is not installed.", [edition valueForKey:@"name"]], NSLocalizedDescriptionKey,
-			@"You may install this edition by using the Edition Manager, or cancel and resume the current game.", NSLocalizedRecoverySuggestionErrorKey,
-			[NSArray arrayWithObjects:@"Install", @"Cancel", nil], NSLocalizedRecoveryOptionsErrorKey,
-			self, NSRecoveryAttempterErrorKey,
-			nil]), error);
+		ReturnValueWithError(NO, RXErrorDomain, kRXErrEditionCantBecomeCurrent, nil, error);
 	
 	// if we're told to remember this choice, do so
 	if (remember)
@@ -272,9 +261,25 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
 - (void)_makeEditionChoiceMemoryCurrent {
 	NSError* error;
-	if (![self makeEditionCurrent:[editions objectForKey:[_editionManagerSettings objectForKey:@"RXEditionChoiceMemory"]] rememberChoice:YES error:&error]) {
-		[[NSApplication sharedApplication] presentError:error];
-		[NSApp terminate:self];
+	
+	RXEdition* defaultEdition = [self defaultEdition];
+	if (!defaultEdition)
+		[self showEditionManagerWindow];
+	
+	if (![self makeEditionCurrent:defaultEdition rememberChoice:YES error:&error]) {
+		if ([error code] == kRXErrEditionCantBecomeCurrent && [error domain] == RXErrorDomain) {
+			[self resetDefaultEdition];
+			
+			error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+				[NSString stringWithFormat:@"Riven X cannot make \"%@\" the current edition because it is not installed.", [defaultEdition valueForKey:@"name"]], NSLocalizedDescriptionKey,
+				@"You need to install this edition by using the Edition Manager.", NSLocalizedRecoverySuggestionErrorKey,
+				[NSArray arrayWithObjects:@"Install", @"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
+				[NSApp delegate], NSRecoveryAttempterErrorKey,
+				error, NSUnderlyingErrorKey,
+				nil]];
+		}
+		
+		[NSApp presentError:error];
 	}
 }
 

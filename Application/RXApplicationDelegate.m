@@ -125,6 +125,28 @@
 		[_preferences setLevel:NSTornOffMenuWindowLevel];
 }
 
+#pragma mark error recovery
+
+- (BOOL)attemptRecoveryFromError:(NSError*)error optionIndex:(NSUInteger)recoveryOptionIndex {
+	if ([error domain] == RXErrorDomain) {
+		switch ([error code]) {
+			case kRXErrEditionCantBecomeCurrent:
+				if (recoveryOptionIndex == 0)
+					[[RXEditionManager sharedEditionManager] showEditionManagerWindow];
+				else
+					[NSApp terminate:self];
+				break;
+			case kRXErrSaveCantBeLoaded:
+				if (recoveryOptionIndex == 0)
+					[[RXEditionManager sharedEditionManager] showEditionManagerWindow];
+				break;
+		}
+		return YES;
+	}
+	
+	return NO;
+}
+
 #pragma mark open and save menu UI
 
 - (void)_updateCanSave {
@@ -187,13 +209,14 @@
 	if (![[gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]) {
 		// check if the game's edition can be made current; if not, present an error to the user
 		if (![[gameState edition] canBecomeCurrent]) {
-			error = [NSError errorWithDomain:RXErrorDomain code:0 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-				[NSString stringWithFormat:@"Riven X cannot make \"%@\" the current edition because it is not installed.", [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
-				@"You may install this edition by using the Edition Manager, or cancel and resume the current game.", NSLocalizedRecoverySuggestionErrorKey,
+			error = [NSError errorWithDomain:RXErrorDomain code:kRXErrSaveCantBeLoaded userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+				[NSString stringWithFormat:@"Riven X cannot load the saved game because \"%@\" is not installed.", [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
+				@"You may install this edition by using the Edition Manager, or cancel and resume your current game.", NSLocalizedRecoverySuggestionErrorKey,
 				[NSArray arrayWithObjects:@"Install", @"Cancel", nil], NSLocalizedRecoveryOptionsErrorKey,
-				[RXEditionManager sharedEditionManager], NSRecoveryAttempterErrorKey,
+				self, NSRecoveryAttempterErrorKey,
 				nil]];
 			[NSApp presentError:error];
+			return;
 		}
 	}
 	

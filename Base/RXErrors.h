@@ -18,6 +18,12 @@ __BEGIN_DECLS
 #import <Foundation/Foundation.h>
 #import "PHSErrorMacros.h"
 
+
+enum {
+	kRXErrEditionCantBecomeCurrent = 1,
+	kRXErrSaveCantBeLoaded,
+};
+
 extern NSString* const RXErrorDomain;
 
 extern NSException* RXArchiveManagerArchiveNotFoundExceptionWithArchiveName(NSString* name);

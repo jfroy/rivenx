@@ -42,7 +42,7 @@
 
 - (void)showEditionManagerWindow;
 
-- (NSString*)defaultEdition;
+- (RXEdition*)defaultEdition;
 - (void)setDefaultEdition:(RXEdition*)edition;
 - (void)resetDefaultEdition;
 
