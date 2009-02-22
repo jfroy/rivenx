@@ -247,7 +247,7 @@
 }
 
 - (BOOL)canBecomeCurrent {
-	if ([self mustBeInstalled] && ![self isInstalled])
+	if ([self mustBeInstalled] && ![self isFullInstalled])
 		return NO;
 	return YES;
 }
