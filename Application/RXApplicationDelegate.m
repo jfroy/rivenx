@@ -92,7 +92,7 @@
 	return NO;
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification*)aNotification {
+- (void)applicationWillFinishLaunching:(NSNotification*)notification {
 #if defined(DEBUG)
 	[[NSExceptionHandler defaultExceptionHandler] setDelegate:self];
 	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:NSLogAndHandleEveryExceptionMask];
@@ -103,12 +103,6 @@
 		[self _initDebugUI];
 		[self _showDebugConsole:self];
 #endif
-	
-//	int openDocumentMenuItemIndex = [fileMenu indexOfItemWithTarget:nil andAction:@selector(openDocument:)];
-//	if (openDocumentMenuItemIndex >= 0 && [[fileMenu itemAtIndex:openDocumentMenuItemIndex+1] hasSubmenu]) {
-//		// We'll presume it's the Open Recent menu item, because this is the heuristic that NSDocumentController uses to add it to the File menu
-//		[fileMenu removeItemAtIndex:openDocumentMenuItemIndex+1];
-//	}
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {
@@ -134,8 +128,6 @@
 		[_preferences setLevel:NSTornOffMenuWindowLevel];
 }
 
-#pragma mark error recovery
-
 - (BOOL)attemptRecoveryFromError:(NSError*)error optionIndex:(NSUInteger)recoveryOptionIndex {
 	if ([error domain] == RXErrorDomain) {
 		switch ([error code]) {
@@ -156,7 +148,46 @@
 	return NO;
 }
 
-#pragma mark open and save menu UI
+- (BOOL)_openGameWithURL:(NSURL*)url {
+	NSError* error;
+	
+	// load the save file, and present any error to the user if one occurs
+	RXGameState* gameState = [RXGameState gameStateWithURL:url error:&error];
+	if (!gameState) {
+		[NSApp presentError:error];
+		return NO;
+	}
+	
+	// the save game may be using a different edition than the active edition
+	if (![[gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]) {
+		// check if the game's edition can be made current; if not, present an error to the user
+		if (![[gameState edition] canBecomeCurrent]) {
+			error = [NSError errorWithDomain:RXErrorDomain code:kRXErrSaveCantBeLoaded userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+				[NSString stringWithFormat:@"Riven X cannot load the saved game because \"%@\" is not installed.", [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
+				@"You may install this edition by using the Edition Manager, or cancel and resume your current game.", NSLocalizedRecoverySuggestionErrorKey,
+				[NSArray arrayWithObjects:@"Install", @"Cancel", nil], NSLocalizedRecoveryOptionsErrorKey,
+				self, NSRecoveryAttempterErrorKey,
+				nil]];
+			[NSApp presentError:error];
+			return NO;
+		}
+	}
+	
+	// try to load the game, and present any error to the user if one occurs
+	if (![[RXWorld sharedWorld] loadGameState:gameState error:&error]) {
+		[NSApp presentError:error];
+		return NO;
+	}
+	
+	// add the save file to the recents
+	[[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]];
+	
+	return YES;
+}
+
+- (BOOL)application:(NSApplication*)theApplication openFile:(NSString*)filename {
+	return [self _openGameWithURL:[NSURL fileURLWithPath:filename isDirectory:NO]];
+}
 
 - (void)_updateCanSave {
 	[self willChangeValueForKey:@"canSave"];
@@ -205,38 +236,7 @@
 	if (result == NSCancelButton)
 		return;
 	
-	NSError* error;
-	
-	// load the save file, and present any error to the user if one occurs
-	RXGameState* gameState = [RXGameState gameStateWithURL:[panel URL] error:&error];
-	if (!gameState) {
-		[NSApp presentError:error];
-		return;
-	}
-	
-	// the save game may be using a different edition than the active edition
-	if (![[gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]) {
-		// check if the game's edition can be made current; if not, present an error to the user
-		if (![[gameState edition] canBecomeCurrent]) {
-			error = [NSError errorWithDomain:RXErrorDomain code:kRXErrSaveCantBeLoaded userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-				[NSString stringWithFormat:@"Riven X cannot load the saved game because \"%@\" is not installed.", [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
-				@"You may install this edition by using the Edition Manager, or cancel and resume your current game.", NSLocalizedRecoverySuggestionErrorKey,
-				[NSArray arrayWithObjects:@"Install", @"Cancel", nil], NSLocalizedRecoveryOptionsErrorKey,
-				self, NSRecoveryAttempterErrorKey,
-				nil]];
-			[NSApp presentError:error];
-			return;
-		}
-	}
-	
-	// try to load the game, and present any error to the user if one occurs
-	if (![[RXWorld sharedWorld] loadGameState:gameState error:&error]) {
-		[NSApp presentError:error];
-		return;
-	}
-	
-	// add the save file to the recents
-	[[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]];
+	[self _openGameWithURL:[panel URL]];
 }
 
 - (IBAction)saveGame:(id)sender {
