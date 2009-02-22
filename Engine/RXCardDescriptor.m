@@ -168,7 +168,8 @@ struct _RXCardDescriptorPrimer {
 	_data = [primer.data retain];
 	
 	// get the card's name
-	_name = [_parent cardNameAtIndex:_ID];
+	int16_t name_id = (int16_t)CFSwapInt16BigToHost(*(int16_t*)[_data bytes]);
+	_name = (name_id >= 0) ? [_parent cardNameAtIndex:name_id] : nil;
 	if (!_name)
 		_name = [[NSString alloc] initWithFormat: @"%@ %03hu", [_parent key], _ID];
 	else
