@@ -8,8 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "RXHotspot.h"
-#import "RXCardProtocols.h"
+#import "Engine/RXHotspot.h"
+#import "Engine/RXCardProtocols.h"
 
 @protocol RXScriptEngineProtocol <NSObject>
 - (void)setCard:(RXCard*)c;
@@ -27,5 +27,6 @@
 
 
 @protocol RXScriptEngineControllerProtocol <RXCardEventsHandlerProtocol, RXCardRendererProtocol>
+- (void)setActiveCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)scd waitUntilDone:(BOOL)wait;
 - (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;
 @end

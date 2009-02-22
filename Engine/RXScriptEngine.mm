@@ -19,10 +19,11 @@
 
 #import <objc/runtime.h>
 
-#import "RXScriptDecoding.h"
-#import "RXScriptEngine.h"
-#import "RXScriptCommandAliases.h"
-#import "RXWorldProtocol.h"
+#import "Engine/RXScriptDecoding.h"
+#import "Engine/RXScriptEngine.h"
+#import "Engine/RXScriptCommandAliases.h"
+#import "Engine/RXWorldProtocol.h"
+#import "Engine/RXEditionManager.h"
 
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXPicture.h"
@@ -2129,8 +2130,8 @@ DEFINE_COMMAND(xhandlecontrolup) {
 			// play the going down movie
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
 			
-			// go to card jspit 392
-			DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, 392);
+			// go to the middle jungle elevator card
+			[controller setActiveCardWithSimpleDescriptor:[[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"cardLUT"] objectForKey:@"jungle elevator middle"] waitUntilDone:YES];
 			
 			// we're all done
 			break;
@@ -2155,13 +2156,13 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 			// play the going up movie
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 5);
 			
-			// go to card jspit 361
-			DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, 361);
+			// go to the top jungle elevator card
+			[controller setActiveCardWithSimpleDescriptor:[[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"cardLUT"] objectForKey:@"jungle elevator top"] waitUntilDone:YES];
 			
 			// we're all done
 			break;
 		} else if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
-			// play the switch up movie
+			// play the switch down movie
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 6);
 			
 			[self _handleJungleElevatorMouth];
@@ -2169,8 +2170,8 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 			// play the going down movie
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 4);
 			
-			// go to card jspit 395
-			DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, 395);
+			// go to the bottom jungle elevator card
+			[controller setActiveCardWithSimpleDescriptor:[[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"cardLUT"] objectForKey:@"jungle elevator bottom"] waitUntilDone:YES];
 			
 			// we're all done
 			break;
@@ -2193,8 +2194,8 @@ DEFINE_COMMAND(xhandlecontroldown) {
 			// play the going up movie
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
 			
-			// go to card jspit 392
-			DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, 392);
+			// go to the middle jungle elevator card
+			[controller setActiveCardWithSimpleDescriptor:[[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"cardLUT"] objectForKey:@"jungle elevator middle"] waitUntilDone:YES];
 			
 			// we're all done
 			break;

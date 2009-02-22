@@ -1192,6 +1192,10 @@ init_failure:
 }
 
 - (void)setActiveCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)scd waitUntilDone:(BOOL)wait {
+	// NOTE: CAN RUN ON ANY THREAD
+	if (!scd)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"STACK DESCRIPTOR CANNOT BE NIL" userInfo:nil];
+	
 	// FIXME: we need to be smarter about stack management; right now, we load a stack when it is first needed and keep it in memory forever
 	// make sure the requested stack has been loaded
 	RXStack* stack = [g_world activeStackWithKey:scd->stackKey];
@@ -1214,9 +1218,9 @@ init_failure:
 }
 
 - (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {
-	// WARNING: CAN RUN ON ANY THREAD
+	// NOTE: CAN RUN ON ANY THREAD
 	if (!stackKey)
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"stackKey CANNOT BE NIL" userInfo:nil];
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"STACK KEY CANNOT BE NIL" userInfo:nil];
 	
 	RXSimpleCardDescriptor* des = [[RXSimpleCardDescriptor alloc] initWithStackKey:stackKey ID:cardID];
 	[self setActiveCardWithSimpleDescriptor:des waitUntilDone:wait];

@@ -155,7 +155,7 @@
 	journalCardIDMap = [[[_descriptor objectForKey:@"Journals"] objectForKey:@"Card ID Map"] retain];
 	
 	// process the card LUT to store simple card descriptors instead of strings as the values
-	NSDictionary* text_lut = [_descriptor objectForKey:@"Stack switch table"];
+	NSDictionary* text_lut = [_descriptor objectForKey:@"Card LUT"];
 	cardLUT = [NSMutableDictionary new];
 	
 	key_enum = [text_lut keyEnumerator];
