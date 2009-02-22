@@ -6,6 +6,7 @@
 //	Copyright 2007 MacStorm. All rights reserved.
 //
 
+#import "Rendering/RXRendering.h"
 #import <AppKit/NSAnimation.h>
 
 

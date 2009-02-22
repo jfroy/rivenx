@@ -177,7 +177,6 @@
 		31A14C020F03F8EC006EFF93 /* CADebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C010F03F8EC006EFF93 /* CADebugger.cpp */; };
 		31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C070F03F912006EFF93 /* CAComponentDescription.cpp */; };
 		31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */; };
-		31A1FA370E0B772100B2437A /* RXAnimation_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FA270E0B761500B2437A /* RXAnimation_test.m */; };
 		31A1FB210E0CA95200B2437A /* RXRenderStateOpacityAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FB200E0CA95200B2437A /* RXRenderStateOpacityAnimation.m */; };
 		31A9EC23094D242600C6A0AB /* RXCyanMovieState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A9EC21094D242600C6A0AB /* RXCyanMovieState.m */; };
 		31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A9F027094D2D0300C6A0AB /* RXRenderState.m */; };
@@ -1511,6 +1510,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# Run the unit tests in this test bundle.\n\"${SYSTEM_DEVELOPER_DIR}/Tools/RunUnitTests\"\n";
+			showEnvVarsInLog = 0;
 		};
 		31D109DE0E7C914100220991 /* set_appcast_url */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1598,7 +1598,6 @@
 				315090200E035945004EE6F3 /* RXSimpleCardDescriptor_test.m in Sources */,
 				318CB4640E04917A00BD2C38 /* RXGameState_test.m in Sources */,
 				318CB4FD0E05C60C00BD2C38 /* BZFSUtilities.m in Sources */,
-				31A1FA370E0B772100B2437A /* RXAnimation_test.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
