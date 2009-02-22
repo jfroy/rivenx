@@ -440,7 +440,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		stack = [[RXStack alloc] initWithStackDescriptor:stackDescriptor key:stackKey];
 		if (stack) {
 #if defined(DEBUG)
-			RXOLog(@"new stack initialized: %@", stack);
+			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"new stack initialized: %@", stack);
 #endif			
 			
 			// store the new stack in the active stacks dictionary

@@ -196,7 +196,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	_rmapData = [[masterDataArchive dataWithResourceType:@"RMAP" ID:remapID] retain];
 	
 #if defined(DEBUG)
-	RXOLog(@"stack entry card is %d", _entryCardID);
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"stack entry card is %d", _entryCardID);
 #endif
 }
 

@@ -1142,7 +1142,7 @@ init_failure:
 		[newCardDescriptor release];
 		
 #if (DEBUG)
-		RXOLog(@"switch card: {from=%@, to=%@}", _front_render_state->card, new_card);
+		RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"switch card: {from=%@, to=%@}", _front_render_state->card, new_card);
 #endif
 	}
 	

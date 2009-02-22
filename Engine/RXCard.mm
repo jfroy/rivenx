@@ -192,7 +192,7 @@ struct rx_card_picture_record {
 	_descriptor = [cardDescriptor retain];
 	
 #if defined(DEBUG)
-	RXOLog(@"initializing card");
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"initializing card");
 #endif
 	NSError* error;
 	
@@ -628,7 +628,7 @@ struct rx_card_picture_record {
 	
 	// we're done preparing the card
 #if defined(DEBUG)
-	RXOLog(@"initialized card");
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"initialized card");
 #endif
 	return self;
 }

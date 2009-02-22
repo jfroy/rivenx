@@ -74,12 +74,21 @@
 }
 
 - (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException*)e mask:(NSUInteger)aMask {
+#if defined(DEBUG)
+	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:0];
+#endif
+
 	NSError* error = [[e userInfo] objectForKey:NSUnderlyingErrorKey];
 	if (error)
 		RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: \"%@\", ERROR: \"%@\"", e, error);
 	else
 		RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: %@", e);
 	rx_print_exception_backtrace(e);
+	
+#if defined(DEBUG)
+	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:NSLogAndHandleEveryExceptionMask];
+#endif
+	
 	return NO;
 }
 

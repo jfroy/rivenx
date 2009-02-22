@@ -174,7 +174,7 @@
 	
 	openArchives = [NSMutableArray new];
 	
-	RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"loaded with local base %@", userDataBase);
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"loaded (base=%@, installed=%d, full install=%d, must install=%d", userDataBase, [self isInstalled], [self isFullInstalled], [self mustBeInstalled]);
 	return self;
 }
 
