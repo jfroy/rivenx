@@ -146,7 +146,7 @@ NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length
 	return scriptDictionary;
 }
 
-uint16_t rx_get_riven_script_opcode(const void* script, uint16_t command_count, uint16_t opcode_index) {
+uint16_t rx_get_riven_script_opcode(const void* script, uint16_t command_count, uint16_t opcode_index, uint32_t* opcode_offset) {
 	assert(opcode_index < command_count);
 	
 	size_t offset = 0;
@@ -156,8 +156,11 @@ uint16_t rx_get_riven_script_opcode(const void* script, uint16_t command_count, 
 		offset += 2;
 		
 		// is this the one?
-		if (index == opcode_index)
+		if (index == opcode_index) {
+			if (opcode_offset)
+				*opcode_offset = offset - 2;
 			return opcode;
+		}
 		
 		uint16_t argc = *(const uint16_t*)BUFFER_OFFSET(script, offset);
 		size_t arg_offset = 2 * (argc + 1);
@@ -180,6 +183,35 @@ uint16_t rx_get_riven_script_opcode(const void* script, uint16_t command_count, 
 				offset += case_size;
 			}
 		}
+	}
+	
+	// should never reach this line
+	return 0;
+}
+
+uint16_t rx_get_riven_script_case_opcode_count(const void* switch_opcode, uint16_t case_index, uint32_t* case_program_offset) {
+	assert(*(uint16_t*)switch_opcode == 8);
+	
+	uint16_t case_count = *(uint16_t*)BUFFER_OFFSET(switch_opcode, 6);
+	assert(case_index < case_count);
+	
+	size_t offset = 8;
+	for (uint16_t current_case = 0; current_case < case_count; current_case++) {
+		// case variable value
+		offset += 2;
+		
+		uint16_t case_command_count = *(const uint16_t*)BUFFER_OFFSET(switch_opcode, offset);
+		offset += 2;
+		
+		// is this the one?
+		if (current_case == case_index) {
+			if (case_program_offset)
+				*case_program_offset = offset;
+			return case_command_count;
+		}
+		
+		size_t case_size = rx_compute_riven_script_length(BUFFER_OFFSET(switch_opcode, offset), case_command_count, false);
+		offset += case_size;
 	}
 	
 	// should never reach this line

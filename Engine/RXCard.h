@@ -26,7 +26,7 @@
 	MHKArchive* _archive;
 	
 	// scripts
-	NSDictionary* _cardEvents;
+	NSDictionary* _card_scripts;
 	
 	// hotspots
 	NSMutableArray* _hotspots;

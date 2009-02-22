@@ -22,6 +22,7 @@
 #import "Engine/RXCard.h"
 #import "Engine/RXScriptDecoding.h"
 #import "Engine/RXScriptCommandAliases.h"
+#import "Engine/RXEditionManager.h"
 
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXPicture.h"
@@ -209,7 +210,39 @@ struct rx_card_picture_record {
 	NSNumber* zipCardNumber = [NSNumber numberWithBool:(zipCard) ? YES : NO];*/
 	
 	// card events
-	_cardEvents = rx_decode_riven_script(BUFFER_OFFSET([cardData bytes], 4), NULL);
+	_card_scripts = rx_decode_riven_script(BUFFER_OFFSET([cardData bytes], 4), NULL);
+	
+	// WORKAROUND: there is a legitimate bug in the CD edition's tspit 155 open card program; it executes activate SLST record 2 command after the introduction sequence, which is the mute SLST; patch it up to activate SLST 1
+	if ([_descriptor ID] == 155 && [[[_descriptor parent] key] isEqualToString:@"tspit"] && [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
+		NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndex:0];
+		
+		const uint16_t* base_program = (const uint16_t*)[[start_rendering_program objectForKey:RXScriptProgramKey] bytes];
+		uint16_t opcode_count = [[start_rendering_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
+		uint32_t switch_opcode_offset;
+		if (opcode_count > 0 && rx_get_riven_script_opcode(base_program, opcode_count, 0, &switch_opcode_offset) == 8) {
+			uint32_t case_program_offset = 0;
+			uint16_t case_opcode_count = rx_get_riven_script_case_opcode_count(BUFFER_OFFSET(base_program, switch_opcode_offset), 0, &case_program_offset);
+			
+			uint32_t slst_opcode_offset;
+			if (case_program_offset > 0 && rx_get_riven_script_opcode(BUFFER_OFFSET(base_program, switch_opcode_offset + case_program_offset), case_opcode_count, case_opcode_count - 3, &slst_opcode_offset) == RX_COMMAND_ACTIVATE_SLST) {
+				NSMutableData* program = [[start_rendering_program objectForKey:RXScriptProgramKey] mutableCopy];
+				uint16_t* slst_index = BUFFER_OFFSET((uint16_t*)[program mutableBytes], switch_opcode_offset + case_program_offset + slst_opcode_offset + 4);
+				if (*slst_index == 2) {
+					*slst_index = 1;
+					start_rendering_program = [[NSDictionary alloc] initWithObjectsAndKeys:program, RXScriptProgramKey, [start_rendering_program objectForKey:RXScriptOpcodeCountKey], RXScriptOpcodeCountKey, nil];
+					
+					NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
+					[mutable_script setObject:[NSArray arrayWithObject:start_rendering_program] forKey:RXStartRenderingScriptKey];
+					[start_rendering_program release];
+					
+					[_card_scripts release];
+					_card_scripts = mutable_script;
+				}
+				
+				[program release];
+			}
+		}
+	}
 	
 	// list resources
 	MHKFileHandle* fh = nil;
@@ -268,7 +301,7 @@ struct rx_card_picture_record {
 		
 		// decode the hotspot's script
 		uint32_t script_size = 0;
-		NSDictionary* hotspot_script = rx_decode_riven_script(hsptRecordPointer, &script_size);
+		NSDictionary* hotspot_scripts = rx_decode_riven_script(hsptRecordPointer, &script_size);
 		hsptRecordPointer += script_size;
 		
 		// if this is a zip hotspot, skip it if Zip mode is disabled
@@ -278,31 +311,30 @@ struct rx_card_picture_record {
 		
 		// WORKAROUND: there is a legitimate bug in aspit's "start new game" hotspot; it executes a command 12 at the very end, which kills ambient sound after the introduction sequence; we remove that command here
 		if ([_descriptor ID] == 1 && [[[_descriptor parent] key] isEqualToString:@"aspit"] && hspt_record->blst_id == 16) {
-			NSDictionary* mouse_down_program = [[hotspot_script objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
+			NSDictionary* mouse_down_program = [[hotspot_scripts objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
 			
 			uint16_t opcode_count = [[mouse_down_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
-			if (opcode_count > 0 && rx_get_riven_script_opcode([[mouse_down_program objectForKey:RXScriptProgramKey] bytes] , opcode_count, opcode_count - 1) == RX_COMMAND_CLEAR_SLST) {
-				NSDictionary* original_script = mouse_down_program;
-				mouse_down_program = [[NSDictionary alloc] initWithObjectsAndKeys:[original_script objectForKey:RXScriptProgramKey], RXScriptProgramKey, [NSNumber numberWithUnsignedShort:opcode_count - 1], RXScriptOpcodeCountKey, nil];
+			if (opcode_count > 0 && rx_get_riven_script_opcode([[mouse_down_program objectForKey:RXScriptProgramKey] bytes] , opcode_count, opcode_count - 1, NULL) == RX_COMMAND_CLEAR_SLST) {
+				mouse_down_program = [[NSDictionary alloc] initWithObjectsAndKeys:[mouse_down_program objectForKey:RXScriptProgramKey], RXScriptProgramKey, [NSNumber numberWithUnsignedShort:opcode_count - 1], RXScriptOpcodeCountKey, nil];
 				
-				NSMutableDictionary* mutable_script = [hotspot_script mutableCopy];
+				NSMutableDictionary* mutable_script = [hotspot_scripts mutableCopy];
 				[mutable_script setObject:[NSArray arrayWithObject:mouse_down_program] forKey:RXMouseDownScriptKey];
 				[mouse_down_program release];
 				
-				[hotspot_script release];
-				hotspot_script = mutable_script;
+				[hotspot_scripts release];
+				hotspot_scripts = mutable_script;
 			}
 		}
 		
 		// allocate the hotspot object
-		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id frame:RXMakeNSRect(hspt_record->left, hspt_record->top, hspt_record->right, hspt_record->bottom) cursorID:hspt_record->mouse_cursor script:hotspot_script];
+		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id frame:RXMakeNSRect(hspt_record->left, hspt_record->top, hspt_record->right, hspt_record->bottom) cursorID:hspt_record->mouse_cursor script:hotspot_scripts];
 		
 		uintptr_t key = hspt_record->blst_id;
 		NSMapInsert(_hotspotsIDMap, (void*)key, hs);
 		[_hotspots addObject:hs];
 		
 		[hs release];
-		[hotspot_script release];
+		[hotspot_scripts release];
 	}
 	
 	// don't need the HSPT data anymore
@@ -673,7 +705,7 @@ struct rx_card_picture_record {
 }
 
 - (NSDictionary*)events {
-	return _cardEvents;
+	return _card_scripts;
 }
 
 - (NSArray*)hotspots {
@@ -756,7 +788,7 @@ struct rx_card_picture_record {
 	// misc resources
 	if (_blstData)
 		free(_blstData);
-	[_cardEvents release];
+	[_card_scripts release];
 	[_descriptor release];
 	
 	[super dealloc];
