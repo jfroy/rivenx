@@ -40,6 +40,12 @@
 - (RXEdition*)currentEdition;
 - (BOOL)makeEditionCurrent:(RXEdition*)edition rememberChoice:(BOOL)remember error:(NSError**)error;
 
+- (void)showEditionManagerWindow;
+
+- (NSString*)defaultEdition;
+- (void)setDefaultEdition:(RXEdition*)edition;
+- (void)resetDefaultEdition;
+
 - (NSString*)mountPathForDisc:(NSString*)disc;
 - (NSString*)mountPathForDisc:(NSString*)disc waitingInModalSession:(NSModalSession)session;
 

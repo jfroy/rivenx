@@ -46,9 +46,12 @@
 	
 	[cell setTitle:[value valueForKey:@"name"]];
 	if ([[value valueForKey:@"isInstalled"] boolValue]) {
-		if ([[value valueForKey:@"isFullInstalled"] boolValue]) [cell setSubTitle:NSLocalizedStringFromTable(@"FULL_INSTALLED", @"Editions", NULL)];
-		else [cell setSubTitle:NSLocalizedStringFromTable(@"INSTALLED", @"Editions", NULL)];
-	} else if ([[value valueForKey:@"mustBeInstalled"] boolValue]) [cell setSubTitle:NSLocalizedStringFromTable(@"MUST_INSTALL", @"Editions", NULL)];
+		if ([[value valueForKey:@"isFullInstalled"] boolValue])
+			[cell setSubTitle:NSLocalizedStringFromTable(@"FULL_INSTALLED", @"Editions", NULL)];
+		else
+			[cell setSubTitle:NSLocalizedStringFromTable(@"INSTALLED", @"Editions", NULL)];
+	} else if ([[value valueForKey:@"mustBeInstalled"] boolValue])
+		[cell setSubTitle:NSLocalizedStringFromTable(@"MUST_INSTALL", @"Editions", NULL)];
 	else [cell setSubTitle:NSLocalizedStringFromTable(@"NOT_INSTALLED", @"Editions", NULL)];
 	[cell setImage:icon];
 }
@@ -62,7 +65,8 @@
 }
 
 - (void)windowWillClose:(NSNotification *)notification {
-	if (_pickedEdition == nil) [NSApp terminate:self];
+	if (_pickedEdition == nil)
+		[NSApp terminate:self];
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
@@ -80,7 +84,8 @@
 		}
 		
 		// update the progress
-		if (newp >= 0.0) [_installingProgress setDoubleValue:newp];
+		if (newp >= 0.0)
+			[_installingProgress setDoubleValue:newp];
 	}
 }
 
@@ -96,6 +101,8 @@
 	
 	// set the gears into motion
 	// FIXME: handle errors
+	if (!remember)
+		[[RXEditionManager sharedEditionManager] resetDefaultEdition];
 	[[RXEditionManager sharedEditionManager] makeEditionCurrent:_pickedEdition rememberChoice:remember error:NULL];
 }
 
@@ -157,7 +164,8 @@
 	[installer release];
 	
 	// if the edition was installed, make it current
-	if (didInstall) [self _makeEditionCurrent:ed];
+	if (didInstall)
+		[self _makeEditionCurrent:ed];
 }
 
 - (void)_fullInstallForUser:(RXEdition*)ed {
@@ -192,14 +200,17 @@
 	[installer release];
 	
 	// if the edition was installed, make it current
-	if (didInstall) [self _makeEditionCurrent:ed];
+	if (didInstall)
+		[self _makeEditionCurrent:ed];
 }
 
 - (void)_mustInstallAlertDidEnd:(NSAlert *)alert returnCode:(int)returnCode contextInfo:(void *)contextInfo {
 	[[alert window] orderOut:self];
 	
-	if (returnCode == NSAlertAlternateReturn) return;
-	else if (returnCode == NSAlertDefaultReturn) [self _minimumInstallForUser:contextInfo];
+	if (returnCode == NSAlertAlternateReturn)
+		return;
+	else if (returnCode == NSAlertDefaultReturn)
+		[self _minimumInstallForUser:contextInfo];
 }
 
 - (void)_displayMustInstallSheet:(RXEdition*)ed {
@@ -213,10 +224,13 @@
 
 - (IBAction)choose:(id)sender {
 	RXEdition* ed = [[_editionsArrayController selection] valueForKey:@"edition"];
-	if (ed == NSNoSelectionMarker) return;
+	if (ed == NSNoSelectionMarker)
+		return;
 	
-	if (![ed canBecomeCurrent] && [ed mustBeInstalled]) [self _displayMustInstallSheet:ed];
-	else if ([ed canBecomeCurrent]) [self _makeEditionCurrent:ed];
+	if (![ed canBecomeCurrent] && [ed mustBeInstalled])
+		[self _displayMustInstallSheet:ed];
+	else if ([ed canBecomeCurrent])
+		[self _makeEditionCurrent:ed];
 }
 
 - (IBAction)install:(id)sender {

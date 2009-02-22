@@ -140,6 +140,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 	
 	// always write to the generic log
 	write(_genericLogFD, [messageData bytes], [messageData length]);
+	
+	// echo base message and error or more serious messages to stderr
+	if ([[NSString stringWithCString:kRXLoggingBase encoding:NSASCIIStringEncoding] isEqualToString:facility] || level <= kRXLoggingLevelError)
+		write(STDERR_FILENO, [messageData bytes], [messageData length]);
 }
 
 @end

@@ -144,7 +144,7 @@
 - (void)_reshapeGL:(NSNotification *)notification {
 	// WARNING: IT IS ASSUMED THE CURRENT CONTEXT HAS BEEN LOCKED BY THE CALLER
 #if defined(DEBUG)
-	RXOLog(@"reshaping OpenGL");
+	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"reshaping OpenGL");
 #endif
 	
 	rx_size_t viewportSize = RXGetGLViewportSize();

@@ -6,12 +6,11 @@
 //	Copyright 2008 MacStorm. All rights reserved.
 //
 
-#import "RXEdition.h"
+#import "Engine/RXEdition.h"
+#import "Engine/RXWorld.h"
+#import "Engine/RXEditionProxy.h"
 
-#import "RXWorld.h"
-#import "BZFSUtilities.h"
-
-#import "RXEditionProxy.h"
+#import "Additions/BZFSUtilities.h"
 
 
 @implementation RXEdition
@@ -108,7 +107,8 @@
 
 - (id)initWithDescriptor:(NSDictionary*)descriptor {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	if (!descriptor || ![[self class] _saneDescriptor:descriptor]) {
 		[self release];
@@ -174,9 +174,7 @@
 	
 	openArchives = [NSMutableArray new];
 	
-#if defined(DEBUG)
-	RXOLog(@"loaded");
-#endif
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"loaded with local base %@", userDataBase);
 	return self;
 }
 
@@ -205,6 +203,16 @@
 	[super dealloc];
 }
 
+- (NSUInteger)hash {
+	return [key hash];
+}
+
+- (BOOL)isEqual:(id)object {
+	if ([self class] != [object class])
+		return NO;
+	return [key isEqualToString:[(RXEdition*)object valueForKey:@"key"]];
+}
+
 - (RXEditionProxy*)proxy {
 	return [[[RXEditionProxy alloc] initWithEdition:self] autorelease];
 }
@@ -216,7 +224,8 @@
 - (BOOL)writeUserData:(NSError**)error {
 	NSString* userDataPath = [userBase stringByAppendingPathComponent:@"User Data.plist"];
 	NSData* userRawData = [NSPropertyListSerialization dataFromPropertyList:_userData format:NSPropertyListBinaryFormat_v1_0 errorDescription:NULL];
-	if (!userRawData) ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
+	if (!userRawData)
+		ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
 	return [userRawData writeToFile:userDataPath options:NSAtomicWrite error:error];
 }
 
@@ -229,20 +238,25 @@
 }
 
 - (BOOL)isFullInstalled {
-	if (![self isInstalled]) return NO;
+	if (![self isInstalled])
+		return NO;
 	NSString* type = [_userData objectForKey:@"Installation Type"];
-	if (!type) return NO;
+	if (!type)
+		return NO;
 	return ([type isEqualToString:@"Full"]) ? YES : NO;
 }
 
 - (BOOL)canBecomeCurrent {
-	if ([self mustBeInstalled] && ![self isInstalled]) return NO;
+	if ([self mustBeInstalled] && ![self isInstalled])
+		return NO;
 	return YES;
 }
 
 - (BOOL)isValidMountPath:(NSString*)path {
-	if ([discs containsObject:[path lastPathComponent]] == NO) return NO;
-	if (BZFSDirectoryExists([path stringByAppendingPathComponent:@"Data"]) == NO) return NO;
+	if ([discs containsObject:[path lastPathComponent]] == NO)
+		return NO;
+	if (BZFSDirectoryExists([path stringByAppendingPathComponent:@"Data"]) == NO)
+		return NO;
 	return YES;
 }
 

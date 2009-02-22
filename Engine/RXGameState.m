@@ -196,18 +196,22 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	// serialize ourselves as data
 	NSData* gameStateData = [NSKeyedArchiver archivedDataWithRootObject:self];
 	if (!gameStateData)
-		ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
+		ReturnValueWithError(NO, RXErrorDomain, 0, ([NSDictionary dictionaryWithObject:@"Riven X was unable to prepare the game to be saved." forKey:NSLocalizedDescriptionKey]), error);
 	
 	// write the data
 	BOOL success = [gameStateData writeToURL:url options:NSAtomicWrite error:error];
 	
-	// if we were successful, keep the URL around
+	// if we were successful, update our internal URL
 	if (success) {
 		[_URL release];
 		_URL = [url retain];
 	}
 	
 	return success;
+}
+
+- (RXEdition*)edition {
+	return _edition;
 }
 
 - (uint16_t)unsignedShortForKey:(NSString*)key {
@@ -243,7 +247,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 - (void)setUnsignedShort:(uint16_t)value forKey:(NSString*)key {
 	key = [key lowercaseString];
 #if defined(DEBUG)
-	RXOLog(@"setting variable %@ to %hu", key, value);
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"setting variable %@ to %hu", key, value);
 #endif
 	[self willChangeValueForKey:key];
 	[_accessLock lock];
@@ -255,7 +259,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 - (void)setShort:(int16_t)value forKey:(NSString*)key {
 	key = [key lowercaseString];
 #if defined(DEBUG)
-	RXOLog(@"setting variable %@ to %hd", key, value);
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"setting variable %@ to %hd", key, value);
 #endif
 	[self willChangeValueForKey:key];
 	[_accessLock lock];
@@ -297,7 +301,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 - (void)setUnsigned32:(uint32_t)value forKey:(NSString*)key {
 	key = [key lowercaseString];
 #if defined(DEBUG)
-	RXOLog(@"setting variable %@ to %u", key, value);
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"setting variable %@ to %u", key, value);
 #endif
 	[self willChangeValueForKey:key];
 	[_accessLock lock];
@@ -309,7 +313,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 - (void)setSigned32:(int32_t)value forKey:(NSString*)key {
 	key = [key lowercaseString];
 #if defined(DEBUG)
-	RXOLog(@"setting variable %@ to %d", key, value);
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"setting variable %@ to %d", key, value);
 #endif
 	[self willChangeValueForKey:key];
 	[_accessLock lock];

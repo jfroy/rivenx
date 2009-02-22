@@ -99,10 +99,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		// initialize logging
 		[RXLogCenter sharedLogCenter];
 		
-#if defined(DEBUG)
-		RXOLog(@"I am the first and the last, the alpha and the omega, the beginning and the end.");
-		RXOLog(@"Riven X version %@ (%@)", [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"], [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
-#endif
+		RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"I am the first and the last, the alpha and the omega, the beginning and the end.");
+		RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"Riven X version %@ (%@)", [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"], [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
 		
 		// set the global to ourselves
 		g_world = self;
@@ -155,7 +153,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		
 		// load Extras.plist
 		_extrasDescriptor = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"plist"]];
-		if (!_extrasDescriptor) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Extras.plist." userInfo:nil];
+		if (!_extrasDescriptor)
+			@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Extras.plist." userInfo:nil];
 		
 		/*	Notes on Extras.MHK
 			*
@@ -166,7 +165,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		
 		// load cursors metadata
 		NSDictionary* cursorMetadata = [NSDictionary dictionaryWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Cursors" ofType:@"plist"]];
-		if (!cursorMetadata) @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Cursors.plist." userInfo:nil];
+		if (!cursorMetadata)
+			@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Cursors.plist." userInfo:nil];
 		
 		// load cursors
 		_cursors = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 20);
@@ -189,18 +189,23 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		pthread_rwlock_init(&_stackCreationLock, NULL);
 		pthread_rwlock_init(&_activeStacksLock, NULL);
 		kern_return_t kerr = semaphore_create(mach_task_self(), &_stackInitSemaphore, SYNC_POLICY_FIFO, 0);
-		if (kerr != 0) @throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack init semaphore." userInfo:nil];
+		if (kerr != 0)
+			@throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack init semaphore." userInfo:nil];
 		_activeStacks = [[NSMutableDictionary alloc] init];
 		
 		// the semaphore will be signaled when a thread has setup inter-thread messaging
 		kerr = semaphore_create(mach_task_self(), &_threadInitSemaphore, SYNC_POLICY_FIFO, 0);
-		if (kerr != 0) @throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack thread init semaphore." userInfo:nil];
+		if (kerr != 0)
+			@throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack thread init semaphore." userInfo:nil];
 	} @catch (NSException* e) {
 		[self notifyUserOfFatalException:e];
 	}
 }
 
 - (void)initializeRendering {
+	if (_rendering_initialized)
+		return;
+	
 	@try {
 		// initialize rendering
 		[self _initializeRendering];
@@ -216,23 +221,33 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		
 		// initialize the render states
 		[self _initializeRenderStates];
+		
+		_rendering_initialized = YES;
 	} @catch (NSException* e) {
 		[self notifyUserOfFatalException:e];
 	}
 }
 
 - (void)_currentEditionChanged:(NSNotification*)notification {
-	// create a new game state for the new current edition
-	_gameState = [[RXGameState alloc] initWithEdition:[[RXEditionManager sharedEditionManager] currentEdition]];
+	// create a new game state for the new current edition (if there isn't one yet); if there is, it is assumed to be for the new current edition
+	if (!_gameState) {
+		_gameState = [[RXGameState alloc] initWithEdition:[[RXEditionManager sharedEditionManager] currentEdition]];
+		
+		// register for card changed notifications
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
+	} else
+		assert([[_gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]);
 	
 	// initialize rendering
 	[self initializeRendering];
 	
-	// register for card changed notifications
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
+	// unload any loaded stacks
+	pthread_rwlock_rdlock(&_activeStacksLock);
+	[_activeStacks removeAllObjects];
+	pthread_rwlock_unlock(&_activeStacksLock);
 	
 	// load the aspit stack
-	[self loadStackWithKey:@"aspit" waitUntilDone:NO];
+	[self loadStackWithKey:@"aspit" waitUntilDone:YES];
 }
 
 - (void)dealloc {
@@ -412,10 +427,12 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	
 	NSString* stackKey = [stackInitDictionary objectForKey:@"stackKey"];
 	BOOL signal = [[stackInitDictionary objectForKey:@"waitFlag"] boolValue];
-	RXStack* stack = nil;
 	
 	@try {
-		// FIXME: change this to use the current edition
+		RXStack* stack = [self activeStackWithKey:stackKey];
+		if (stack)
+			return;
+		
 		NSDictionary* stackDescriptor = [[[RXEditionManager sharedEditionManager] currentEdition] valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@", stackKey]];
 		if (!stackDescriptor || ![stackDescriptor isKindOfClass:[NSDictionary class]])
 			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Stack descriptor object is nil or of the wrong type." userInfo:stackDescriptor];
@@ -462,8 +479,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)loadStackWithKey:(NSString*)stackKey waitUntilDone:(BOOL)waitFlag {
-	// WARNING: this method can run on any thread
-	// WARNING: this method allows for duplicate instances of the same stack to be loaded, always use activeStackWithKey first to check if the stack is available
+	// NOTE: this method can run on any thread
 	if (_tornDown)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"loadStackWithKey: RXWorld IS TORN DOWN" userInfo:nil];
 	
@@ -570,6 +586,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (void)_activeCardDidChange:(NSNotification*)notification {
 	// WARNING: WILL RUN ON THE MAIN THREAD
+	NSError* error;
 	
 	// if we have a new game state to load and we just cleared the active card, do the swap
 	if (![notification object] && _gameStateToLoad) {	
@@ -577,6 +594,12 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		[_gameState release];
 		_gameState = _gameStateToLoad;
 		_gameStateToLoad = nil;
+		
+		// make the new game's edition current
+		if (![[RXEditionManager sharedEditionManager] makeEditionCurrent:[_gameState edition] rememberChoice:NO error:&error]) {
+			[NSApp presentError:error];
+			return;
+		}
 		
 		// set the active card to that of the new game state
 		RXSimpleCardDescriptor* scd = [_gameState currentCard];

@@ -27,10 +27,10 @@
 @end
 
 @interface RXCardDescriptor : NSObject {
-	RXStack* _parent;
+	__weak MHKArchive* _archive;
+	__weak RXStack* _parent;
 	uint16_t _ID;
 	
-	MHKArchive* _archive;
 	NSData* _data;
 	NSString* _name;
 	

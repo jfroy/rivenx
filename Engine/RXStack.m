@@ -268,11 +268,11 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 #pragma mark -
 
 - (NSString*)cardNameAtIndex:(uint32_t)index {
-	return (_cardNames) ? [_cardNames objectAtIndex:index] : nil;
+	return (_cardNames) ? [_cardNames objectAtIndex:index - 1] : nil;
 }
 
 - (NSString*)hotspotNameAtIndex:(uint32_t)index {
-	return (_hotspotNames) ? [_hotspotNames objectAtIndex:index] : nil;
+	return (_hotspotNames) ? [_hotspotNames objectAtIndex:index - 1] : nil;
 }
 
 - (NSString*)externalNameAtIndex:(uint32_t)index {
@@ -280,11 +280,11 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 }
 
 - (NSString*)varNameAtIndex:(uint32_t)index {
-	return (_varNames) ? [_varNames objectAtIndex:index] : nil;
+	return (_varNames) ? [_varNames objectAtIndex:index - 1] : nil;
 }
 
 - (NSString*)stackNameAtIndex:(uint32_t)index {
-	return (_stackNames) ? [_stackNames objectAtIndex:index] : nil;
+	return (_stackNames) ? [_stackNames objectAtIndex:index - 1] : nil;
 }
 
 - (uint16_t)cardIDFromRMAPCode:(uint32_t)code {

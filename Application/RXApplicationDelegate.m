@@ -171,17 +171,40 @@
 	[panel setRequiredFileType:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
 	
 	NSInteger result = [panel runModalForDirectory:nil file:nil types:[NSArray arrayWithObject:@"org.macstorm.rivenx.game"]];
-	if (result == NSCancelButton) return;
+	if (result == NSCancelButton)
+		return;
 	
 	NSError* error;
+	
+	// load the save file, and present any error to the user if one occurs
 	RXGameState* gameState = [RXGameState gameStateWithURL:[panel URL] error:&error];
 	if (!gameState) {
 		[NSApp presentError:error];
 		return;
 	}
 	
-	if (![[RXWorld sharedWorld] loadGameState:gameState error:&error])
+	// the save game may be using a different edition than the active edition
+	if (![[gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]) {
+		// check if the game's edition can be made current; if not, present an error to the user
+		if (![[gameState edition] canBecomeCurrent]) {
+			error = [NSError errorWithDomain:RXErrorDomain code:0 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+				[NSString stringWithFormat:@"Riven X cannot make \"%@\" the current edition because it is not installed.", [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
+				@"You may install this edition by using the Edition Manager, or cancel and resume the current game.", NSLocalizedRecoverySuggestionErrorKey,
+				[NSArray arrayWithObjects:@"Install", @"Cancel", nil], NSLocalizedRecoveryOptionsErrorKey,
+				[RXEditionManager sharedEditionManager], NSRecoveryAttempterErrorKey,
+				nil]];
+			[NSApp presentError:error];
+		}
+	}
+	
+	// try to load the game, and present any error to the user if one occurs
+	if (![[RXWorld sharedWorld] loadGameState:gameState error:&error]) {
 		[NSApp presentError:error];
+		return;
+	}
+	
+	// add the save file to the recents
+	[[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]];
 }
 
 - (IBAction)saveGame:(id)sender {
@@ -192,14 +215,24 @@
 }
 
 - (void)_saveAsPanelDidEnd:(NSSavePanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
-	if (returnCode == NSCancelButton) return;
+	if (returnCode == NSCancelButton)
+		return;
+	
+	// dismiss the panel now
+	[panel orderOut:self];
 	
 	NSError* error = nil;
 	RXGameState* gameState = [g_world gameState];
-	if (![gameState writeToURL:[panel URL] error:&error])
+	if (![gameState writeToURL:[panel URL] error:&error]) {
 		[NSApp presentError:error];
-	else
-		[self _updateCanSave];
+		return;
+	}
+	
+	// we need to update the can-save state now, since we may not have had a save file before we saved as
+	[self _updateCanSave];
+	
+	// add the new save file to the recents
+	[[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]];	
 }
 
 - (IBAction)saveGameAs:(id)sender {

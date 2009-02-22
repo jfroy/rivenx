@@ -57,6 +57,7 @@
 	NSThread* _animationThread;
 	
 	// rendering
+	BOOL _rendering_initialized;
 	NSView <RXWorldViewProtocol>* _worldView;
 	void* _audioRenderer;
 	RXStateCompositor* _stateCompositor;

@@ -13,7 +13,8 @@
 
 - (id)initWithEdition:(RXEdition*)e {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	edition = [e retain];
 	return self;
@@ -30,8 +31,9 @@
 }
 
 - (BOOL)isEqual:(id)object {
-	if ([self class] != [object class]) return NO;
-	return [edition isEqual:((RXEditionProxy *)object)->edition];
+	if ([self class] != [object class])
+		return NO;
+	return [edition isEqual:((RXEditionProxy*)object)->edition];
 }
 
 - (NSUInteger)hash {
@@ -43,7 +45,8 @@
 }
 
 - (id)valueForKey:(NSString*)key {
-	if ([key isEqualToString:@"edition"]) return edition;
+	if ([key isEqualToString:@"edition"])
+		return edition;
 	return [edition valueForKey:key];
 }
 

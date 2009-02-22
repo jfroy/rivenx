@@ -8,8 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "RXEdition.h"
-#import "RXCardDescriptor.h"
+#import "Engine/RXEdition.h"
+#import "Engine/RXCardDescriptor.h"
 
 
 @interface RXGameState : NSObject <NSCoding> {
@@ -29,6 +29,8 @@
 
 - (NSURL*)URL;
 - (BOOL)writeToURL:(NSURL*)url error:(NSError**)error;
+
+- (RXEdition*)edition;
 
 - (uint16_t)unsignedShortForKey:(NSString*)key;
 - (int16_t)shortForKey:(NSString*)key;
