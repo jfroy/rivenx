@@ -21,6 +21,9 @@ NSString* const RXUnknown8ScriptKey = @"unknown 8";
 NSString* const RXStartRenderingScriptKey = @"start rendering";
 NSString* const RXScreenUpdateScriptKey = @"screen update";
 
+NSString* const RXScriptProgramKey = @"program";
+NSString* const RXScriptOpcodeCountKey = @"opcode count";
+
 static NSString* const script_keys_array[11] = {
 	@"mouse down",
 	@"unknown 1",
@@ -117,8 +120,8 @@ NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length
 		scriptOffset += programLength;
 		
 		// program descriptor
-		NSDictionary* programDescriptor = [[NSDictionary alloc] initWithObjectsAndKeys:program, @"program", 
-			[NSNumber numberWithUnsignedShort:commandCount], @"opcodeCount", 
+		NSDictionary* programDescriptor = [[NSDictionary alloc] initWithObjectsAndKeys:program, RXScriptProgramKey,
+			[NSNumber numberWithUnsignedShort:commandCount], RXScriptOpcodeCountKey,
 			nil];
 		assert(eventCode < eventTypeCount);
 		[eventProgramsPerType[eventCode] addObject:programDescriptor];
@@ -141,4 +144,44 @@ NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length
 	if (script_length)
 		*script_length = scriptOffset;
 	return scriptDictionary;
+}
+
+uint16_t rx_get_riven_script_opcode(const void* script, uint16_t command_count, uint16_t opcode_index) {
+	assert(opcode_index < command_count);
+	
+	size_t offset = 0;
+	for (uint16_t index = 0; index < command_count; index++) {
+		// command, argument count, arguments (all shorts)
+		uint16_t opcode = *(const uint16_t*)BUFFER_OFFSET(script, offset);
+		offset += 2;
+		
+		// is this the one?
+		if (index == opcode_index)
+			return opcode;
+		
+		uint16_t argc = *(const uint16_t*)BUFFER_OFFSET(script, offset);
+		size_t arg_offset = 2 * (argc + 1);
+		offset += arg_offset;
+		
+		// need to do extra processing for command 8
+		if (opcode == 8) {
+			// arg 0 is the variable, arg 1 is the number of cases
+			uint16_t case_count = *(const uint16_t*)BUFFER_OFFSET(script, offset - arg_offset + 4);
+			
+			uint16_t case_index = 0;
+			for (; case_index < case_count; case_index++) {
+				// case variable value
+				offset += 2;
+				
+				uint16_t case_command_count = *(const uint16_t*)BUFFER_OFFSET(script, offset);
+				offset += 2;
+				
+				size_t case_size = rx_compute_riven_script_length(BUFFER_OFFSET(script, offset), case_command_count, false);
+				offset += case_size;
+			}
+		}
+	}
+	
+	// should never reach this line
+	return 0;
 }

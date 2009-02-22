@@ -399,7 +399,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
 		NSDictionary* program = [programs objectAtIndex:programIndex];
-		[self _executeRivenProgram:[[program objectForKey:@"program"] bytes] count:[[program objectForKey:@"opcodeCount"] unsignedShortValue]];
+		[self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
 	}
 	
 	// re-enable render state swaps (they must be enabled if we just ran screen update programs)
@@ -475,7 +475,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uint32_t programIndex = 0;
 	for(; programIndex < programCount; programIndex++) {
 		NSDictionary* program = [programs objectAtIndex:programIndex];
-		[self _executeRivenProgram:[[program objectForKey:@"program"] bytes] count:[[program objectForKey:@"opcodeCount"] unsignedShortValue]];
+		[self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
 	}
 	
 	// activate the first picture if none has been enabled already
@@ -524,7 +524,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
 		NSDictionary* program = [programs objectAtIndex:programIndex];
-		[self _executeRivenProgram:[[program objectForKey:@"program"] bytes] count:[[program objectForKey:@"opcodeCount"] unsignedShortValue]];
+		[self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
 	}
 	
 	// activate the first sound group if none has been enabled already
@@ -571,7 +571,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
 		NSDictionary* program = [programs objectAtIndex:programIndex];
-		[self _executeRivenProgram:[[program objectForKey:@"program"] bytes] count:[[program objectForKey:@"opcodeCount"] unsignedShortValue]];
+		[self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
 	}
 	
 #if defined(DEBUG)
@@ -628,7 +628,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
 		NSDictionary* program = [programs objectAtIndex:programIndex];
-		[self _executeRivenProgram:[[program objectForKey:@"program"] bytes] count:[[program objectForKey:@"opcodeCount"] unsignedShortValue]];
+		[self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
 	}
 	
 #if defined(DEBUG)
@@ -672,7 +672,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
 		NSDictionary* program = [programs objectAtIndex:programIndex];
-		[self _executeRivenProgram:[[program objectForKey:@"program"] bytes] count:[[program objectForKey:@"opcodeCount"] unsignedShortValue]];
+		[self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
 	}
 	
 #if defined(DEBUG)
@@ -713,7 +713,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
 		NSDictionary* program = [programs objectAtIndex:programIndex];
-		[self _executeRivenProgram:[[program objectForKey:@"program"] bytes] count:[[program objectForKey:@"opcodeCount"] unsignedShortValue]];
+		[self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
 	}
 	
 #if defined(DEBUG)
@@ -757,7 +757,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
 		NSDictionary* program = [programs objectAtIndex:programIndex];
-		[self _executeRivenProgram:[[program objectForKey:@"program"] bytes] count:[[program objectForKey:@"opcodeCount"] unsignedShortValue]];
+		[self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
 	}
 	
 #if defined(DEBUG)

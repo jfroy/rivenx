@@ -257,6 +257,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	currentEdition = edition;
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"RXCurrentEditionChangedNotification" object:edition];
 	
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"made %@ the current edition", edition);
+#endif
 	return YES;
 }
 

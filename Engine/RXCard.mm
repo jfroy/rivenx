@@ -19,8 +19,9 @@
 
 #import "Base/RXAtomic.h"
 
-#import "RXCard.h"
-#import "RXScriptDecoding.h"
+#import "Engine/RXCard.h"
+#import "Engine/RXScriptDecoding.h"
+#import "Engine/RXScriptCommandAliases.h"
 
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXPicture.h"
@@ -266,24 +267,42 @@ struct rx_card_picture_record {
 #endif
 		
 		// decode the hotspot's script
-		uint32_t scriptLength = 0;
-		NSDictionary* hotspotScript = rx_decode_riven_script(hsptRecordPointer, &scriptLength);
-		hsptRecordPointer += scriptLength;
+		uint32_t script_size = 0;
+		NSDictionary* hotspot_script = rx_decode_riven_script(hsptRecordPointer, &script_size);
+		hsptRecordPointer += script_size;
 		
 		// if this is a zip hotspot, skip it if Zip mode is disabled
 		// FIXME: Zip mode is always disabled currently
 		if (hspt_record->zip == 1)
 			continue;
 		
+		// WORKAROUND: there is a legitimate bug in aspit's "start new game" hotspot; it executes a command 12 at the very end, which kills ambient sound after the introduction sequence; we remove that command here
+		if ([_descriptor ID] == 1 && [[[_descriptor parent] key] isEqualToString:@"aspit"] && hspt_record->blst_id == 16) {
+			NSDictionary* mouse_down_program = [[hotspot_script objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
+			
+			uint16_t opcode_count = [[mouse_down_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
+			if (opcode_count > 0 && rx_get_riven_script_opcode([[mouse_down_program objectForKey:RXScriptProgramKey] bytes] , opcode_count, opcode_count - 1) == RX_COMMAND_CLEAR_SLST) {
+				NSDictionary* original_script = mouse_down_program;
+				mouse_down_program = [[NSDictionary alloc] initWithObjectsAndKeys:[original_script objectForKey:RXScriptProgramKey], RXScriptProgramKey, [NSNumber numberWithUnsignedShort:opcode_count - 1], RXScriptOpcodeCountKey, nil];
+				
+				NSMutableDictionary* mutable_script = [hotspot_script mutableCopy];
+				[mutable_script setObject:[NSArray arrayWithObject:mouse_down_program] forKey:RXMouseDownScriptKey];
+				[mouse_down_program release];
+				
+				[hotspot_script release];
+				hotspot_script = mutable_script;
+			}
+		}
+		
 		// allocate the hotspot object
-		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id frame:RXMakeNSRect(hspt_record->left, hspt_record->top, hspt_record->right, hspt_record->bottom) cursorID:hspt_record->mouse_cursor script:hotspotScript];
+		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id frame:RXMakeNSRect(hspt_record->left, hspt_record->top, hspt_record->right, hspt_record->bottom) cursorID:hspt_record->mouse_cursor script:hotspot_script];
 		
 		uintptr_t key = hspt_record->blst_id;
 		NSMapInsert(_hotspotsIDMap, (void*)key, hs);
 		[_hotspots addObject:hs];
 		
 		[hs release];
-		[hotspotScript release];
+		[hotspot_script release];
 	}
 	
 	// don't need the HSPT data anymore

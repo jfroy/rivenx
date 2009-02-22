@@ -37,7 +37,12 @@ extern NSString* const RXUnknown8ScriptKey;
 extern NSString* const RXStartRenderingScriptKey;
 extern NSString* const RXScreenUpdateScriptKey;
 
+extern NSString* const RXScriptProgramKey;
+extern NSString* const RXScriptOpcodeCountKey;
+
 size_t rx_compute_riven_script_length(const void* script, uint16_t command_count, bool byte_swap);
 NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length);
+
+uint16_t rx_get_riven_script_opcode(const void* script, uint16_t command_count, uint16_t opcode_index);
 
 __END_DECLS
