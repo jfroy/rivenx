@@ -19,12 +19,12 @@ struct _RXCardDescriptorPrimer {
 
 @implementation RXSimpleCardDescriptor
 
-- (id)initWithStackName:(NSString*)name ID:(uint16_t)ID {
+- (id)initWithStackKey:(NSString*)name ID:(uint16_t)ID {
 	self = [super init];
 	if (!self)
 		return nil;
 	
-	parentName = [name copy];
+	stackKey = [name copy];
 	cardID = ID;
 	
 	return self;
@@ -36,18 +36,20 @@ struct _RXCardDescriptorPrimer {
 		return nil;
 	
 	NSArray* components = [stringRepresentation componentsSeparatedByString:@" "];
-	parentName = [[components objectAtIndex:0] retain];
+	stackKey = [[components objectAtIndex:0] retain];
 	cardID = [[components objectAtIndex:1] intValue];
 	
 	return self;
 }
 
 - (id)initWithCoder:(NSCoder*)decoder {
-	if (![decoder containsValueForKey:@"parent"]) {
+	stackKey = [[decoder decodeObjectForKey:@"stack"] retain];
+	if (!stackKey)
+		stackKey = [[decoder decodeObjectForKey:@"parent"] retain];
+	if (!stackKey) {
 		[self release];
 		return nil;
 	}
-	parentName = [[decoder decodeObjectForKey:@"parent"] retain];
 
 	if (![decoder containsValueForKey:@"ID"]) {
 		[self release];
@@ -62,33 +64,33 @@ struct _RXCardDescriptorPrimer {
 	if (![encoder allowsKeyedCoding])
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"RXCardDescriptor only supports keyed archiving." userInfo:nil];
 	
-	[encoder encodeObject:parentName forKey:@"parent"];
+	[encoder encodeObject:stackKey forKey:@"stack"];
 	[encoder encodeInt32:cardID forKey:@"ID"];
 }
 
 - (id)copyWithZone:(NSZone*)zone {
-	RXSimpleCardDescriptor* new = [[RXSimpleCardDescriptor allocWithZone:zone] initWithStackName:parentName ID:cardID];
+	RXSimpleCardDescriptor* new = [[RXSimpleCardDescriptor allocWithZone:zone] initWithStackKey:stackKey ID:cardID];
 	return new;
 }
 
 - (void)dealloc {
-	[parentName release];
+	[stackKey release];
 	[super dealloc];
 }
 
 - (NSUInteger)hash {
 	// WARNING: WILL BREAK ON 64-BIT
-	return integer_pair_hash((int)[parentName hash], (int)cardID);
+	return integer_pair_hash((int)[stackKey hash], (int)cardID);
 }
 
 - (BOOL)isEqual:(id)object {
 	if ([self class] != [object class])
 		return NO;
-	return ([parentName isEqual:((RXSimpleCardDescriptor*)object)->parentName] && cardID == ((RXSimpleCardDescriptor*)object)->cardID) ? YES : NO;
+	return ([stackKey isEqual:((RXSimpleCardDescriptor*)object)->stackKey] && cardID == ((RXSimpleCardDescriptor*)object)->cardID) ? YES : NO;
 }
 
-- (NSString*)parentName {
-	return parentName;
+- (NSString*)stackKey {
+	return stackKey;
 }
 
 - (uint16_t)cardID {
@@ -176,7 +178,7 @@ struct _RXCardDescriptorPrimer {
 		_name = [[NSString alloc] initWithFormat: @"%@ (%@ %03hu)", _name, [_parent key], _ID];
 	
 	// create the simple descriptor for the card now
-	_simpleDescriptor = [[RXSimpleCardDescriptor alloc] initWithStackName:[_parent key] ID:_ID];
+	_simpleDescriptor = [[RXSimpleCardDescriptor alloc] initWithStackKey:[_parent key] ID:_ID];
 	
 	return self;
 }

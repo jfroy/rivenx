@@ -14,14 +14,14 @@
 
 @interface RXSimpleCardDescriptor : NSObject <NSCoding, NSCopying> {
 @public
-	NSString* parentName;
+	NSString* stackKey;
 	uint16_t cardID;
 }
 
-- (id)initWithStackName:(NSString*)name ID:(uint16_t)ID;
+- (id)initWithStackKey:(NSString*)name ID:(uint16_t)ID;
 - (id)initWithString:(NSString*)stringRepresentation;
 
-- (NSString*)parentName;
+- (NSString*)stackKey;
 - (uint16_t)cardID;
 
 @end
@@ -37,8 +37,8 @@
 	RXSimpleCardDescriptor* _simpleDescriptor;
 }
 
-+ (id)descriptorWithStack:(RXStack *)stack ID:(uint16_t)ID;
-- (id)initWithStack:(RXStack *)stack ID:(uint16_t)ID;
++ (id)descriptorWithStack:(RXStack*)stack ID:(uint16_t)ID;
+- (id)initWithStack:(RXStack*)stack ID:(uint16_t)ID;
 
 - (RXStack*)parent;
 - (uint16_t)ID;

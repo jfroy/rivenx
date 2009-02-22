@@ -1268,7 +1268,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// this command reloads whatever is the current card
 	RXSimpleCardDescriptor* current_card = [[g_world gameState] currentCard];
-	[controller setActiveCardWithStack:current_card->parentName ID:current_card->cardID waitUntilDone:YES];
+	[controller setActiveCardWithStack:current_card->stackKey ID:current_card->cardID waitUntilDone:YES];
 }
 
 // 20
@@ -1606,7 +1606,7 @@ DEFINE_COMMAND(xthideinventory) {
 	
 	// change the active card to the saved return card
 	RXSimpleCardDescriptor* returnCard = [[g_world gameState] returnCard];
-	[controller setActiveCardWithStack:returnCard->parentName ID:returnCard->cardID waitUntilDone:YES];
+	[controller setActiveCardWithStack:returnCard->stackKey ID:returnCard->cardID waitUntilDone:YES];
 	
 	// reset the return card
 	[[g_world gameState] setReturnCard:nil];

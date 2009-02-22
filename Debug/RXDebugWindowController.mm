@@ -52,7 +52,7 @@
 - (void)cmd_refresh:(NSArray*)arguments from:(CLIView*)sender {
 	RXSimpleCardDescriptor* current_card = [[g_world gameState] currentCard];
 	RXCardState* renderingState = (RXCardState*)[g_world cardRenderState];
-	[renderingState setActiveCardWithStack:current_card->parentName ID:current_card->cardID waitUntilDone:NO];
+	[renderingState setActiveCardWithStack:current_card->stackKey ID:current_card->cardID waitUntilDone:NO];
 }
 
 - (void)_activateSLST:(NSNumber*)index {

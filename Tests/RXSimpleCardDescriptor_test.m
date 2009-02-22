@@ -12,7 +12,7 @@
 @implementation RXSimpleCardDescriptor_test
 
 - (void)setUp {
-	_descriptor = [[RXSimpleCardDescriptor alloc] initWithStackName:@"foo" ID:123];
+	_descriptor = [[RXSimpleCardDescriptor alloc] initWithStackKey:@"foo" ID:123];
 }
 
 - (void)testArchiving {
@@ -21,7 +21,7 @@
 	
 	RXSimpleCardDescriptor* clonedDescriptor = [NSKeyedUnarchiver unarchiveObjectWithData:archive];
 	STAssertEquals(_descriptor->cardID, clonedDescriptor->cardID, @"card ID should match");
-	STAssertEqualObjects(_descriptor->parentName, clonedDescriptor->parentName, @"stack name should match");
+	STAssertEqualObjects(_descriptor->stackKey, clonedDescriptor->stackKey, @"stack name should match");
 }
 
 - (void)testStringInit {
@@ -31,16 +31,16 @@
 }
 
 - (void)testEqualityAndHash {
-	RXSimpleCardDescriptor* descriptor2 = [[RXSimpleCardDescriptor alloc] initWithStackName:@"foo" ID:123];
+	RXSimpleCardDescriptor* descriptor2 = [[RXSimpleCardDescriptor alloc] initWithStackKey:@"foo" ID:123];
 	STAssertEqualObjects(_descriptor, descriptor2, @"descriptors should be equal");
 	STAssertEquals([_descriptor hash], [descriptor2 hash], @"descriptor hashes should be equal");
 	[descriptor2 release];
 	
-	descriptor2 = [[RXSimpleCardDescriptor alloc] initWithStackName:@"oo" ID:123];
+	descriptor2 = [[RXSimpleCardDescriptor alloc] initWithStackKey:@"oo" ID:123];
 	STAssertFalse([_descriptor isEqual:descriptor2], @"descriptors should not be equal");
 	[descriptor2 release];
 	
-	descriptor2 = [[RXSimpleCardDescriptor alloc] initWithStackName:@"foo" ID:1];
+	descriptor2 = [[RXSimpleCardDescriptor alloc] initWithStackKey:@"foo" ID:1];
 	STAssertFalse([_descriptor isEqual:descriptor2], @"descriptors should not be equal");
 	[descriptor2 release];
 	

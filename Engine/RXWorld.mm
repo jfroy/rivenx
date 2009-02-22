@@ -603,7 +603,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		
 		// set the active card to that of the new game state
 		RXSimpleCardDescriptor* scd = [_gameState currentCard];
-		[(RXCardState*)_cardState setActiveCardWithStack:scd->parentName ID:scd->cardID waitUntilDone:NO];
+		[(RXCardState*)_cardState setActiveCardWithStack:scd->stackKey ID:scd->cardID waitUntilDone:NO];
 		
 		// fade the card state back in
 		[_stateCompositor fadeInState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedIn:)];

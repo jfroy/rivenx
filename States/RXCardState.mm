@@ -1113,7 +1113,7 @@ init_failure:
 		RXCardDescriptor* activeDescriptor = [front_card descriptor];
 		RXStack* activeStack = [activeDescriptor valueForKey:@"parent"];
 		NSNumber* activeID = [activeDescriptor valueForKey:@"ID"];
-		if ([[activeStack key] isEqualToString:simpleDescriptor->parentName] && simpleDescriptor->cardID == [activeID unsignedShortValue]) {
+		if ([[activeStack key] isEqualToString:simpleDescriptor->stackKey] && simpleDescriptor->cardID == [activeID unsignedShortValue]) {
 			new_card = [front_card retain];
 #if (DEBUG)
 			RXOLog(@"reloading front card: %@", front_card);
@@ -1124,10 +1124,10 @@ init_failure:
 	// if we're switching to a different card, create it
 	if (new_card == nil) {
 		// if we don't have the stack, bail
-		RXStack* newStack = [g_world activeStackWithKey:simpleDescriptor->parentName];
+		RXStack* newStack = [g_world activeStackWithKey:simpleDescriptor->stackKey];
 		if (!newStack) {
 #if defined(DEBUG)
-			RXOLog(@"aborting _switchCardWithSimpleDescriptor because stack %@ could not be loaded", simpleDescriptor->parentName);
+			RXOLog(@"aborting _switchCardWithSimpleDescriptor because stack %@ could not be loaded", simpleDescriptor->stackKey);
 #endif
 			return;
 		}
@@ -1191,33 +1191,35 @@ init_failure:
 	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:nil waitUntilDone:NO];
 }
 
-- (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {
-	// WARNING: CAN RUN ON ANY THREAD
-	if (!stackKey)
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"stackKey CANNOT BE NIL" userInfo:nil];
-	
-	RXSimpleCardDescriptor* des = [[RXSimpleCardDescriptor alloc] initWithStackName:stackKey ID:cardID];
-	
+- (void)setActiveCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)scd waitUntilDone:(BOOL)wait {
 	// FIXME: we need to be smarter about stack management; right now, we load a stack when it is first needed and keep it in memory forever
 	// make sure the requested stack has been loaded
-	RXStack* stack = [g_world activeStackWithKey:des->parentName];
+	RXStack* stack = [g_world activeStackWithKey:scd->stackKey];
 	if (!stack)
-		[g_world loadStackWithKey:des->parentName waitUntilDone:YES];
+		[g_world loadStackWithKey:scd->stackKey waitUntilDone:YES];
 	
 	// hide the mouse cursor and switch card on the script thread
 	[self hideMouseCursor];
-	[self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:des inThread:[g_world scriptThread] waitUntilDone:wait];
+	[self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:scd inThread:[g_world scriptThread] waitUntilDone:wait];
 	
 	// if we have a card redirect entry, queue the final destination card switch
-	RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:des];
+	RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:scd];
 	if (switchTableDestination) {		
 		RXTransition* transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0.f, 0.f, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[self performSelector:@selector(queueTransition:) withObject:transition inThread:[g_world scriptThread] waitUntilDone:wait];
 		[transition release];
 		
-		[self setActiveCardWithStack:switchTableDestination->parentName ID:switchTableDestination->cardID waitUntilDone:wait];
+		[self setActiveCardWithStack:switchTableDestination->stackKey ID:switchTableDestination->cardID waitUntilDone:wait];
 	}
+}
+
+- (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {
+	// WARNING: CAN RUN ON ANY THREAD
+	if (!stackKey)
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"stackKey CANNOT BE NIL" userInfo:nil];
 	
+	RXSimpleCardDescriptor* des = [[RXSimpleCardDescriptor alloc] initWithStackKey:stackKey ID:cardID];
+	[self setActiveCardWithSimpleDescriptor:des waitUntilDone:wait];
 	[des release];
 }
 
@@ -1703,7 +1705,7 @@ exit_render:
 		
 		if (front_card) {		
 			RXSimpleCardDescriptor* scd = [[front_card descriptor] simpleDescriptor];
-			snprintf(debug_buffer, 100, "card: %s %d", [scd->parentName cStringUsingEncoding:NSASCIIStringEncoding], scd->cardID);
+			snprintf(debug_buffer, 100, "card: %s %d", [scd->stackKey cStringUsingEncoding:NSASCIIStringEncoding], scd->cardID);
 			
 			background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
 			background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);

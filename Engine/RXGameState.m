@@ -346,7 +346,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	[old release];
 	
 	[self setUnsignedShort:descriptor->cardID forKey:@"currentcardid"];
-	[self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->parentName] objectForKey:@"ID"] unsignedShortValue] forKey:@"currentstackid"];
+	[self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->stackKey] objectForKey:@"ID"] unsignedShortValue] forKey:@"currentstackid"];
 	
 	[_accessLock unlock];
 }
@@ -368,7 +368,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	
 	if (descriptor) {
 		[self setUnsignedShort:descriptor->cardID forKey:@"returncardid"];
-		[self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->parentName] objectForKey:@"ID"] unsignedShortValue] forKey:@"returnstackid"];
+		[self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->stackKey] objectForKey:@"ID"] unsignedShortValue] forKey:@"returnstackid"];
 	} else {
 		[self setUnsignedShort:0 forKey:@"returncardid"];
 		[self setUnsignedShort:0 forKey:@"returnstackid"];
