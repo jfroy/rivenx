@@ -93,7 +93,7 @@ struct rx_card_picture_record {
 #endif
 	
 	for (currentListIndex = 0; currentListIndex < movieCount; currentListIndex++) {
-#if defined(DEBUG)
+#if defined(DEBUG) && DEBUG > 1
 		RXOLog(@"loading mlst entry: {movie ID: %hu, code: %hu, left: %hu, top: %hu, loop: %hu, volume: %hu}",
 			mlstRecords[currentListIndex].movie_id,
 			mlstRecords[currentListIndex].code,
@@ -739,7 +739,7 @@ struct rx_card_picture_record {
 }
 
 - (void)dealloc {
-#if defined(DEBUG)
+#if defined(DEBUG) && DEBUG > 1
 	RXOLog(@"deallocating");
 #endif
 
