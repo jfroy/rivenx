@@ -41,10 +41,6 @@
 	// threading
 	semaphore_t _threadInitSemaphore;
 	
-	// stacks
-	NSThread* _stackThread;
-	
-	semaphore_t _stackInitSemaphore;
 	pthread_rwlock_t _stackCreationLock;
 	
 	NSMutableDictionary* _activeStacks;

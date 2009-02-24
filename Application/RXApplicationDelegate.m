@@ -149,6 +149,13 @@
 }
 
 - (void)notifyUserOfFatalException:(NSException*)e {
+	NSError* error = [[e userInfo] objectForKey:NSUnderlyingErrorKey];
+	if (error)
+		RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: \"%@\", ERROR: \"%@\"", e, error);
+	else
+		RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: %@", e);
+	rx_print_exception_backtrace(e);
+
 	NSAlert* failureAlert = [NSAlert new];
 	[failureAlert setMessageText:[e reason]];
 	[failureAlert setAlertStyle:NSWarningAlertStyle];

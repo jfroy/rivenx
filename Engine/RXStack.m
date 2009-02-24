@@ -91,9 +91,6 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	}
 	_key = [key copy];
 	
-	// subscribe for notifications that the stack thread has died
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_runThreadWillDie:) name:NSThreadWillExitNotification object:nil];
-	
 	// allocate the archives arrays
 	_dataArchives = [[NSMutableArray alloc] initWithCapacity:2];
 	_soundArchives = [[NSMutableArray alloc] initWithCapacity:1];
@@ -205,9 +202,6 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	RXOLog(@"tearing down");
 #endif
 	
-	// no more thread or port notification, and no more run loop observers (causing the run loop to stop)
-	[[NSNotificationCenter defaultCenter] removeObserver:self];
-	
 	// release a bunch of objects
 	[_cardNames release]; _cardNames = nil;
 	[_hotspotNames release]; _hotspotNames = nil;
@@ -241,18 +235,6 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 
 - (NSString*)debugName {
 	return _key;
-}
-
-#pragma mark -
-
-- (void)_runThreadWillDie:(NSNotification*)notification {
-	if ([notification object] == [g_world stackThread]) {
-#if defined(DEBUG)
-		RXOLog(@"stack thread has exited while I still exist");
-#endif
-		// tear the stack down
-		[self _tearDown];
-	}
 }
 
 #pragma mark -

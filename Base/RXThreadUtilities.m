@@ -19,8 +19,6 @@ static void _RXReleaseThreadStorage(void* p) {
 	struct rx_thread_storage* storage = (struct rx_thread_storage*)p;
 	if (storage->name)
 		[storage->name release];
-	if (storage->pool)
-		[storage->pool release];
 	free(storage);
 }
 
@@ -72,12 +70,6 @@ void RXSetThreadNameC(const char* name) {
 	[obj_name release];
 }
 
-static void _rx_thread_pool_drain(CFRunLoopObserverRef observer, CFRunLoopActivity activity, void* info) {
-	NSAutoreleasePool* p = RXGetThreadStorage()->pool;
-	RXGetThreadStorage()->pool = [NSAutoreleasePool new];
-	[p release];
-}
-
 void RXThreadRunLoopRun(semaphore_t ready_semaphore, NSString* name) {
 	NSAutoreleasePool* p = [NSAutoreleasePool new];
 	
@@ -91,13 +83,6 @@ void RXThreadRunLoopRun(semaphore_t ready_semaphore, NSString* name) {
 	// init QuickTime on this thread (as a precaution)
 	EnterMoviesOnThread(kCSAcceptAllComponentsMode);
 	
-	// install per-cycle pool recycling
-	RXGetThreadStorage()->pool = [NSAutoreleasePool new];
-	CFRunLoopObserverContext context = {0, NULL, NULL, NULL, NULL};
-	CFRunLoopObserverRef poolObserver = CFRunLoopObserverCreate(NULL, kCFRunLoopBeforeWaiting, true, 0, _rx_thread_pool_drain, &context);
-	CFRunLoopAddObserver([[NSRunLoop currentRunLoop] getCFRunLoop], poolObserver, kCFRunLoopCommonModes);
-	CFRelease(poolObserver);
-	
 	// add a dummy port on the thread so the run loop doesn't exit
 	NSPort* dummy = [NSPort new];
 	[dummy scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
@@ -107,21 +92,8 @@ void RXThreadRunLoopRun(semaphore_t ready_semaphore, NSString* name) {
 	@try {
 		[[NSRunLoop currentRunLoop] run];
 	} @catch (NSException* e) {
-		NSError* error = [[e userInfo] objectForKey:NSUnderlyingErrorKey];
-		if (error)
-			RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: \"%@\", ERROR: \"%@\"", e, error);
-		else
-			RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: %@", e);
-		rx_print_exception_backtrace(e);
-		abort();
+		[[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
 	}
-	
-	[RXGetThreadStorage()->pool release];
-	
-	// WARNING: this may be a bug, but apparently sometimes here the thread pool stack has gone bad, so allocate a new pool just to be on the safe side
-	//NSAutoreleasePool* p = RXGetThreadStorage()->pool;
-	//RXGetThreadStorage()->pool = [[NSAutoreleasePool alloc] init];
-	//[p release];
 	
 #if defined(DEBUG)
 	RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"thread is terminating");

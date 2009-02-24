@@ -1200,7 +1200,7 @@ init_failure:
 	// make sure the requested stack has been loaded
 	RXStack* stack = [g_world activeStackWithKey:scd->stackKey];
 	if (!stack)
-		[g_world loadStackWithKey:scd->stackKey waitUntilDone:YES];
+		[g_world loadStackWithKey:scd->stackKey];
 	
 	// hide the mouse cursor and switch card on the script thread
 	[self hideMouseCursor];

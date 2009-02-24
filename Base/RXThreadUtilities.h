@@ -20,7 +20,6 @@ __BEGIN_DECLS
 
 struct rx_thread_storage {
 	NSString* name;
-	NSAutoreleasePool* pool;
 };
 typedef struct rx_thread_storage rx_thread_storage_t;
 

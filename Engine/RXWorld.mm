@@ -117,7 +117,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)_secondStageInit {
-	NSError* error = nil;
+	NSError* error;
+	kern_return_t kerr;
 	
 	@try {
 		// new engine variables
@@ -188,9 +189,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		// things used to load and keep track of stacks
 		pthread_rwlock_init(&_stackCreationLock, NULL);
 		pthread_rwlock_init(&_activeStacksLock, NULL);
-		kern_return_t kerr = semaphore_create(mach_task_self(), &_stackInitSemaphore, SYNC_POLICY_FIFO, 0);
-		if (kerr != 0)
-			@throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack init semaphore." userInfo:nil];
+		
 		_activeStacks = [[NSMutableDictionary alloc] init];
 		
 		// the semaphore will be signaled when a thread has setup inter-thread messaging
@@ -211,11 +210,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		[self _initializeRendering];
 		
 		// start threads
-		[NSThread detachNewThreadSelector:@selector(_RXStackThreadEntry:) toTarget:self withObject:nil];
 		[NSThread detachNewThreadSelector:@selector(_RXScriptThreadEntry:) toTarget:self withObject:nil];
 		[NSThread detachNewThreadSelector:@selector(_RXAnimationThreadEntry:) toTarget:self withObject:nil];
 		
-		semaphore_wait(_threadInitSemaphore);
 		semaphore_wait(_threadInitSemaphore);
 		semaphore_wait(_threadInitSemaphore);
 		
@@ -247,7 +244,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	pthread_rwlock_unlock(&_activeStacksLock);
 	
 	// load the aspit stack
-	[self loadStackWithKey:@"aspit" waitUntilDone:YES];
+	[self loadStackWithKey:@"aspit"];
 }
 
 - (void)dealloc {
@@ -297,7 +294,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	// stacks
 	[_activeStacks release]; _activeStacks = nil;
 	pthread_rwlock_destroy(&_activeStacksLock);
-	semaphore_destroy(mach_task_self(), _stackInitSemaphore);
 	
 	// give up the stack creation write lock and destroy it
 	// NOTE: no other thread will be waiting on this rwlock by now, since _tornDown is YES and tearDown is running in the main thread
@@ -305,10 +301,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	pthread_rwlock_destroy(&_stackCreationLock);
 	
 	// terminate threads
-	if (_stackThread)
-		[self performSelector:@selector(_stopThreadRunloop) inThread:_stackThread];
 	if (_scriptThread)
 		[self performSelector:@selector(_stopThreadRunloop) inThread:_scriptThread];
+	if (_animationThread)
+		[self performSelector:@selector(_stopThreadRunloop) inThread:_animationThread];
 	
 	// stack thread creation cond / mutex
 	semaphore_destroy(mach_task_self(), _threadInitSemaphore);
@@ -349,17 +345,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	RXThreadRunLoopRun(_threadInitSemaphore, @"Animation");
 }
 
-- (void)_RXStackThreadEntry:(id)object {
-	// reference to the thread
-	_stackThread = [NSThread currentThread];
-	
-	// make the load CGL context default for the stack thread
-	CGLSetCurrentContext([_worldView loadContext]);
-	
-	// run the thread
-	RXThreadRunLoopRun(_threadInitSemaphore, @"Stack");
-}
-
 - (void)_RXScriptThreadEntry:(id)object {
 	// reference to the thread
 	_scriptThread = [NSThread currentThread];
@@ -373,10 +358,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (void)_stopThreadRunloop {
 	CFRunLoopStop(CFRunLoopGetCurrent());
-}
-
-- (NSThread *)stackThread {
-	return _stackThread;
 }
 
 - (NSThread*)scriptThread {
@@ -399,23 +380,22 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"RXStackDidLoadNotification" object:stackKey userInfo:nil];
 }
 
-- (void)_initializeStackWithInitializationDictionary:(NSDictionary*)stackInitDictionary {
+- (void)_initializeStackWithKey:(NSString*)stackKey {
 	// take the read (yes, read) lock for stack creation
-	// WARNING: there is still a small window for creating a race condition between tearDown and an async create request, but it's tiny
 	pthread_rwlock_rdlock(&_stackCreationLock);
 	
-	NSString* stackKey = [stackInitDictionary objectForKey:@"stackKey"];
-	BOOL signal = [[stackInitDictionary objectForKey:@"waitFlag"] boolValue];
-	
-	@try {
-		RXStack* stack = [self activeStackWithKey:stackKey];
-		if (stack)
-			return;
+	// if a stack already exists for the given key, we're done
+	RXStack* stack = [self activeStackWithKey:stackKey];
+	if (stack)
+		return;
 		
+	@try {
+		// get the stack descriptor from the current edition
 		NSDictionary* stackDescriptor = [[[RXEditionManager sharedEditionManager] currentEdition] valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@", stackKey]];
 		if (!stackDescriptor || ![stackDescriptor isKindOfClass:[NSDictionary class]])
 			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Stack descriptor object is nil or of the wrong type." userInfo:stackDescriptor];
 		
+		// initialize the stack
 		stack = [[RXStack alloc] initWithStackDescriptor:stackDescriptor key:stackKey];
 		if (stack) {
 #if defined(DEBUG)
@@ -434,12 +414,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 			pthread_rwlock_unlock(&_stackCreationLock);
 			[self postStackLoadedNotification_:stackKey];
 		} else {
-			@throw [NSException exceptionWithName:@"RXStackCreationFailureException" reason:@"Stack creation failed." userInfo:stackDescriptor];
+			@throw [NSException exceptionWithName:@"RXStackCreationFailureException" reason:@"Stack initialization has failed for an unknown reason." userInfo:stackDescriptor];
 		}
 	} @catch (NSException* e) {
-#if defined(DEBUG)
-		RXOLog(@"stack creation failed: %@", e);
-#endif
 		// make sure there is no stack for the stack key
 		pthread_rwlock_wrlock(&_activeStacksLock);
 		[_activeStacks removeObjectForKey:stackKey];
@@ -450,25 +427,16 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		
 		// notify the user through the GUI
 		[[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
-	} @finally {
-		// signal if we were asked to
-		if (signal)
-			semaphore_signal(_stackInitSemaphore);
 	}
 }
 
-- (void)loadStackWithKey:(NSString*)stackKey waitUntilDone:(BOOL)waitFlag {
+- (void)loadStackWithKey:(NSString*)stackKey {
 	// NOTE: this method can run on any thread
 	if (_tornDown)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"loadStackWithKey: RXWorld IS TORN DOWN" userInfo:nil];
 	
 	// fire the stack on a new thread
-	NSDictionary* initStackDict = [NSDictionary dictionaryWithObjectsAndKeys:stackKey, @"stackKey", [NSNumber numberWithBool:waitFlag], @"waitFlag", nil];
-	[self performSelector:@selector(_initializeStackWithInitializationDictionary:) withObject:initStackDict inThread:_stackThread];
-	
-	// if the request is synchronous, wait until we get signaled
-	if (waitFlag)
-		semaphore_wait(_stackInitSemaphore);
+	[self performSelector:@selector(_initializeStackWithKey:) withObject:stackKey inThread:_scriptThread waitUntilDone:YES];
 }
 
 - (RXStack*)activeStackWithKey:(NSString*)key {
