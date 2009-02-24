@@ -239,7 +239,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	[self initializeRendering];
 	
 	// unload any loaded stacks
-	pthread_rwlock_rdlock(&_activeStacksLock);
+	pthread_rwlock_wrlock(&_activeStacksLock);
 	[_activeStacks removeAllObjects];
 	pthread_rwlock_unlock(&_activeStacksLock);
 	
@@ -381,53 +381,42 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)_initializeStackWithKey:(NSString*)stackKey {
-	// take the read (yes, read) lock for stack creation
-	pthread_rwlock_rdlock(&_stackCreationLock);
+	NSError* error;
 	
 	// if a stack already exists for the given key, we're done
 	RXStack* stack = [self activeStackWithKey:stackKey];
 	if (stack)
 		return;
 		
-	@try {
-		// get the stack descriptor from the current edition
-		NSDictionary* stackDescriptor = [[[RXEditionManager sharedEditionManager] currentEdition] valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@", stackKey]];
-		if (!stackDescriptor || ![stackDescriptor isKindOfClass:[NSDictionary class]])
-			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Stack descriptor object is nil or of the wrong type." userInfo:stackDescriptor];
-		
-		// initialize the stack
-		stack = [[RXStack alloc] initWithStackDescriptor:stackDescriptor key:stackKey];
-		if (stack) {
-#if defined(DEBUG)
-			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"new stack initialized: %@", stack);
-#endif			
-			
-			// store the new stack in the active stacks dictionary
-			pthread_rwlock_wrlock(&_activeStacksLock);
-			[_activeStacks setObject:stack forKey:stackKey];
-			pthread_rwlock_unlock(&_activeStacksLock);
-			
-			// give up ownership of the new stack
-			[stack release];
-			
-			// give up the read lock
-			pthread_rwlock_unlock(&_stackCreationLock);
-			[self postStackLoadedNotification_:stackKey];
-		} else {
-			@throw [NSException exceptionWithName:@"RXStackCreationFailureException" reason:@"Stack initialization has failed for an unknown reason." userInfo:stackDescriptor];
-		}
-	} @catch (NSException* e) {
-		// make sure there is no stack for the stack key
-		pthread_rwlock_wrlock(&_activeStacksLock);
-		[_activeStacks removeObjectForKey:stackKey];
-		pthread_rwlock_unlock(&_activeStacksLock);
-		
-		// give up the read lock
-		pthread_rwlock_unlock(&_stackCreationLock);
-		
-		// notify the user through the GUI
-		[[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
+	// get the stack descriptor from the current edition
+	NSDictionary* stackDescriptor = [[[RXEditionManager sharedEditionManager] currentEdition] valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@", stackKey]];
+	if (!stackDescriptor || ![stackDescriptor isKindOfClass:[NSDictionary class]])
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Stack descriptor object is nil or of the wrong type." userInfo:stackDescriptor];
+	
+	// initialize the stack
+	stack = [[RXStack alloc] initWithStackDescriptor:stackDescriptor key:stackKey error:&error];
+	if (!stack) {
+		error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+			[error localizedDescription], NSLocalizedDescriptionKey,
+			@"If you did not do a full install of your Riven edition, then your installation may be corrupted and you should restart Riven X while holding down the Option key to re-install it. Otherwise, please insert your Riven disc and relaunch Riven X.", NSLocalizedRecoverySuggestionErrorKey,
+			[NSArray arrayWithObjects:@"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
+			[NSApp delegate], NSRecoveryAttempterErrorKey,
+			error, NSUnderlyingErrorKey,
+			nil]];
+		[NSApp performSelectorOnMainThread:@selector(presentError:) withObject:error waitUntilDone:NO];
+		return;
 	}
+		
+	// store the new stack in the active stacks dictionary
+	pthread_rwlock_wrlock(&_activeStacksLock);
+	[_activeStacks setObject:stack forKey:stackKey];
+	pthread_rwlock_unlock(&_activeStacksLock);
+	
+	// give up ownership of the new stack
+	[stack release];
+	
+	// give up the read lock
+	[self postStackLoadedNotification_:stackKey];
 }
 
 - (void)loadStackWithKey:(NSString*)stackKey {
@@ -532,7 +521,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)_activeCardDidChange:(NSNotification*)notification {
-	// WARNING: WILL RUN ON THE MAIN THREAD
+	// NOTE: WILL RUN ON THE MAIN THREAD
 	NSError* error;
 	
 	// if we have a new game state to load and we just cleared the active card, do the swap
