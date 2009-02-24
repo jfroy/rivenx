@@ -148,6 +148,27 @@
 	return NO;
 }
 
+- (void)notifyUserOfFatalException:(NSException*)e {
+	NSAlert* failureAlert = [NSAlert new];
+	[failureAlert setMessageText:[e reason]];
+	[failureAlert setAlertStyle:NSWarningAlertStyle];
+	[failureAlert addButtonWithTitle:NSLocalizedString(@"Quit", @"quit button")];
+	
+	NSDictionary* userInfo = [e userInfo];
+	if (userInfo) {
+		if ([userInfo objectForKey:NSUnderlyingErrorKey])
+			[failureAlert setInformativeText:[[userInfo objectForKey:NSUnderlyingErrorKey] description]];
+		else
+			[failureAlert setInformativeText:[e name]];
+	} else
+		[failureAlert setInformativeText:[e name]];
+	
+	[failureAlert runModal];
+	[failureAlert release];
+	
+	[NSApp terminate:nil];
+}
+
 - (BOOL)_openGameWithURL:(NSURL*)url {
 	NSError* error;
 	

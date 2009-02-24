@@ -108,7 +108,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		// second stage initialization
 		[self _secondStageInit];
 	} @catch (NSException* e) {
-		[self notifyUserOfFatalException:e];
+		[[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
 		[self release];
 		self = nil;
 	}
@@ -198,7 +198,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		if (kerr != 0)
 			@throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack thread init semaphore." userInfo:nil];
 	} @catch (NSException* e) {
-		[self notifyUserOfFatalException:e];
+		[[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
 	}
 }
 
@@ -224,7 +224,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		
 		_rendering_initialized = YES;
 	} @catch (NSException* e) {
-		[self notifyUserOfFatalException:e];
+		[[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
 	}
 }
 
@@ -334,27 +334,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	// engine variables
 	[_engineVariables release]; _engineVariables = nil;
 	pthread_mutex_destroy(&_engineVariablesMutex);
-}
-
-- (void)notifyUserOfFatalException:(NSException*)e {
-	NSAlert* failureAlert = [NSAlert new];
-	[failureAlert setMessageText:[e reason]];
-	[failureAlert setAlertStyle:NSWarningAlertStyle];
-	[failureAlert addButtonWithTitle:NSLocalizedString(@"Quit", @"quit button")];
-	
-	NSDictionary* userInfo = [e userInfo];
-	if (userInfo) {
-		if ([userInfo objectForKey:NSUnderlyingErrorKey])
-			[failureAlert setInformativeText:[[userInfo objectForKey:NSUnderlyingErrorKey] description]];
-		else
-			[failureAlert setInformativeText:[e name]];
-	} else
-		[failureAlert setInformativeText:[e name]];
-	
-	[failureAlert runModal];
-	[failureAlert release];
-	
-	[NSApp terminate:nil];
 }
 
 #pragma mark -
@@ -470,7 +449,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		pthread_rwlock_unlock(&_stackCreationLock);
 		
 		// notify the user through the GUI
-		[self performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
+		[[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
 	} @finally {
 		// signal if we were asked to
 		if (signal)
