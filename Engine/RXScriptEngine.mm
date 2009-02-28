@@ -1326,7 +1326,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// make sure the requested stack has been loaded
 	RXStack* stack = [g_world activeStackWithKey:stackKey];
 	if (!stack)
-		[g_world loadStackWithKey:stackKey waitUntilDone:YES];
+		[g_world loadStackWithKey:stackKey];
 	stack = [g_world activeStackWithKey:stackKey];
 	
 	uint32_t card_rmap = (argv[1] << 16) | argv[2];

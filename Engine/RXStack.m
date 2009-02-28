@@ -66,33 +66,24 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	return nil;
 }
 
-- (id)initWithStackDescriptor:(NSDictionary*)descriptor key:(NSString*)key {
+- (id)initWithStackDescriptor:(NSDictionary*)descriptor key:(NSString*)key error:(NSError**)error {
 	self = [super init];
 	if (!self)
 		return nil;
 	
-	if (pthread_main_np()) {
-		[self release];
+	if (pthread_main_np())
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"DO NOT INITIALIZE STACK ON MAIN THREAD" userInfo:nil];
-	}
 	
 	// check that we have a descriptor object
-	if (!descriptor) {
-		[self release];
+	if (!descriptor)
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Descriptor dictionary cannot be nil." userInfo:nil];
-	}
 	
 	_entryCardID = [[descriptor objectForKey:@"Entry"] unsignedShortValue];
 	
 	// check that we have a key object
-	if (!key) {
-		[self release];
+	if (!key)
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Key string cannot be nil." userInfo:nil];
-	}
 	_key = [key copy];
-	
-	// subscribe for notifications that the stack thread has died
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_runThreadWillDie:) name:NSThreadWillExitNotification object:nil];
 	
 	// allocate the archives arrays
 	_dataArchives = [[NSMutableArray alloc] initWithCapacity:2];
@@ -100,17 +91,13 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	
 	// get the data archives list
 	id dataArchives = [descriptor objectForKey:@"Data Archives"];
-	if (!dataArchives) {
-		[self release];
+	if (!dataArchives)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Descriptor dictionary does not contain data archives information." userInfo:nil];
-	}
 	
 	// get the sound archives list
 	id soundArchives = [descriptor objectForKey:@"Sound Archives"];
-	if (!soundArchives) {
-		[self release];
+	if (!soundArchives)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Descriptor dictionary does not contain sound archives information." userInfo:nil];
-	}
 	
 	// initialize descritors
 	_cardCount = 0;
@@ -120,59 +107,59 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	// get the edition manager
 	RXEditionManager* sem = [RXEditionManager sharedEditionManager];
 	
-	// load all the archives in a try block to release and re-throw
-	NSError* error;
-	@try {
-		// load the data archives
-		if ([dataArchives isKindOfClass:[NSString class]]) {
-			// only one archive
-			MHKArchive* anArchive = [sem dataArchiveWithFilename:dataArchives stackID:_key error:&error];
-			if (!anArchive)
-				@throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", dataArchives] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+	// load the data archives
+	if ([dataArchives isKindOfClass:[NSString class]]) {
+		// only one archive
+		MHKArchive* anArchive = [sem dataArchiveWithFilename:dataArchives stackID:_key error:error];
+		if (!anArchive) {
+			[self release];
+			return nil;
+		}
+		[_dataArchives addObject:anArchive];
+		
+		// card descriptors
+		NSArray* resourceDescriptors = [anArchive valueForKey:@"CARD"];
+		_cardCount = [resourceDescriptors count];
+	} else if ([dataArchives isKindOfClass:[NSArray class]]) {
+		// enumerate the archives
+		NSEnumerator* archivesEnum = [dataArchives objectEnumerator];
+		NSString* anArchiveName = nil;
+		while ((anArchiveName = [archivesEnum nextObject])) {
+			MHKArchive* anArchive = [sem dataArchiveWithFilename:anArchiveName stackID:_key error:error];
+			if (!anArchive) {
+				[self release];
+				return nil;
+			}
 			[_dataArchives addObject:anArchive];
 			
 			// card descriptors
 			NSArray* resourceDescriptors = [anArchive valueForKey:@"CARD"];
-			_cardCount = [resourceDescriptors count];
-		} else if ([dataArchives isKindOfClass:[NSArray class]]) {
-			// enumerate the archives
-			NSEnumerator* archivesEnum = [dataArchives objectEnumerator];
-			NSString* anArchiveName = nil;
-			while ((anArchiveName = [archivesEnum nextObject])) {
-				MHKArchive* anArchive = [sem dataArchiveWithFilename:anArchiveName stackID:_key error:&error];
-				if (!anArchive)
-					@throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", anArchiveName] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
-				[_dataArchives addObject:anArchive];
-				
-				// card descriptors
-				NSArray* resourceDescriptors = [anArchive valueForKey:@"CARD"];
-				_cardCount += [resourceDescriptors count];
+			_cardCount += [resourceDescriptors count];
+		}
+	} else
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Data Archives object has an invalid type." userInfo:nil];
+	
+	// load the sound archives
+	if ([soundArchives isKindOfClass:[NSString class]]) {
+		MHKArchive* anArchive = [sem soundArchiveWithFilename:soundArchives stackID:_key error:error];
+		if (!anArchive) {
+			[self release];
+			return nil;
+		}
+		[_soundArchives addObject:anArchive];
+	} else if ([soundArchives isKindOfClass:[NSArray class]]) {
+		NSEnumerator* archivesEnum = [soundArchives objectEnumerator];
+		NSString* anArchiveName = nil;
+		while ((anArchiveName = [archivesEnum nextObject])) {
+			MHKArchive* anArchive = [sem soundArchiveWithFilename:anArchiveName stackID:_key error:error];
+			if (!anArchive) {
+				[self release];
+				return nil;
 			}
-		} else
-			@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Data Archives object has an invalid type." userInfo:nil];
-		
-		// load the sound archives
-		if ([soundArchives isKindOfClass:[NSString class]]) {
-			MHKArchive* anArchive = [sem soundArchiveWithFilename:soundArchives stackID:_key error:&error];
-			if (!anArchive)
-				@throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", soundArchives] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 			[_soundArchives addObject:anArchive];
-		} else if ([soundArchives isKindOfClass:[NSArray class]]) {
-			NSEnumerator* archivesEnum = [soundArchives objectEnumerator];
-			NSString* anArchiveName = nil;
-			while ((anArchiveName = [archivesEnum nextObject])) {
-				MHKArchive* anArchive = [sem soundArchiveWithFilename:anArchiveName stackID:_key error:&error];
-				if (!anArchive)
-					@throw [NSException exceptionWithName:@"RXMissingArchiveException" reason:[NSString stringWithFormat:@"Failed to open the archive \"%@\".", anArchiveName] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
-				[_soundArchives addObject:anArchive];
-			}
-		} else
-			@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Sound Archives object has an invalid type." userInfo:nil];
-	} @catch (NSException* e) {
-		RXOLog(@"exception thrown during initialization: %@", e);
-		[self release];
-		@throw e;
-	}
+		}
+	} else
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Sound Archives object has an invalid type." userInfo:nil];
 	
 	// load me up, baby
 	[self _load];
@@ -204,9 +191,6 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 #if defined(DEBUG)
 	RXOLog(@"tearing down");
 #endif
-	
-	// no more thread or port notification, and no more run loop observers (causing the run loop to stop)
-	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
 	// release a bunch of objects
 	[_cardNames release]; _cardNames = nil;
@@ -241,18 +225,6 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 
 - (NSString*)debugName {
 	return _key;
-}
-
-#pragma mark -
-
-- (void)_runThreadWillDie:(NSNotification*)notification {
-	if ([notification object] == [g_world stackThread]) {
-#if defined(DEBUG)
-		RXOLog(@"stack thread has exited while I still exist");
-#endif
-		// tear the stack down
-		[self _tearDown];
-	}
 }
 
 #pragma mark -

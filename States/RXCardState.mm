@@ -1116,7 +1116,7 @@ init_failure:
 		if ([[activeStack key] isEqualToString:simpleDescriptor->stackKey] && simpleDescriptor->cardID == [activeID unsignedShortValue]) {
 			new_card = [front_card retain];
 #if (DEBUG)
-			RXOLog(@"reloading front card: %@", front_card);
+			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"reloading front card: %@", front_card);
 #endif
 		}
 	}
@@ -1200,7 +1200,7 @@ init_failure:
 	// make sure the requested stack has been loaded
 	RXStack* stack = [g_world activeStackWithKey:scd->stackKey];
 	if (!stack)
-		[g_world loadStackWithKey:scd->stackKey waitUntilDone:YES];
+		[g_world loadStackWithKey:scd->stackKey];
 	
 	// hide the mouse cursor and switch card on the script thread
 	[self hideMouseCursor];

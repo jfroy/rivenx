@@ -41,10 +41,6 @@
 	// threading
 	semaphore_t _threadInitSemaphore;
 	
-	// stacks
-	NSThread* _stackThread;
-	
-	semaphore_t _stackInitSemaphore;
 	pthread_rwlock_t _stackCreationLock;
 	
 	NSMutableDictionary* _activeStacks;
@@ -85,7 +81,5 @@
 
 - (RXGameState*)gameState;
 - (BOOL)loadGameState:(RXGameState*)gameState error:(NSError**)error;
-
-- (void)notifyUserOfFatalException:(NSException*)e;
 
 @end

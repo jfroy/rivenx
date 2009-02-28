@@ -65,7 +65,7 @@
 }
 
 - (void)dealloc {
-#if defined(DEBUG)
+#if defined(DEBUG) && DEBUG > 1
 	RXOLog(@"deallocating");
 #endif
 	

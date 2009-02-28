@@ -19,6 +19,11 @@
 #import "Debug/RXDebugWindowController.h"
 #import "Debug/RXCardInspectorController.h"
 
+
+@interface RXApplicationDelegate (RXApplicationDelegate_Private)
+- (BOOL)_openGameWithURL:(NSURL*)url;
+@end
+
 @implementation RXApplicationDelegate
 
 + (void)initialize {
@@ -41,6 +46,9 @@
 - (void)dealloc {
 	[super dealloc];
 }
+
+#pragma mark -
+#pragma mark debug UI
 
 #if defined(DEBUG)
 - (void)_showDebugConsole:(id)sender {
@@ -69,48 +77,95 @@
 }
 #endif
 
-- (id <SUVersionComparison>)versionComparatorForUpdater:(SUUpdater*)updater {
-	return versionComparator;
-}
+#pragma mark -
+#pragma mark error handling
 
-- (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException*)e mask:(NSUInteger)aMask {
-#if defined(DEBUG)
-	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:0];
-#endif
-
-	NSError* error = [[e userInfo] objectForKey:NSUnderlyingErrorKey];
-	if (error)
-		RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: \"%@\", ERROR: \"%@\"", e, error);
-	else
-		RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"EXCEPTION THROWN: %@", e);
-	rx_print_exception_backtrace(e);
-	
-#if defined(DEBUG)
-	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:NSLogAndHandleEveryExceptionMask];
-#endif
+- (BOOL)attemptRecoveryFromError:(NSError*)error optionIndex:(NSUInteger)recoveryOptionIndex {
+	if ([error domain] == RXErrorDomain) {
+		switch ([error code]) {
+			case kRXErrEditionCantBecomeCurrent:
+				if (recoveryOptionIndex == 0)
+					[[RXEditionManager sharedEditionManager] showEditionManagerWindow];
+				else
+					[NSApp terminate:self];
+				break;
+			case kRXErrSavedGameCantBeLoaded:
+				if (recoveryOptionIndex == 0)
+					[[RXEditionManager sharedEditionManager] showEditionManagerWindow];
+				break;
+			case kRXErrArchiveUnavailable:
+				// this is fatal right now
+				[NSApp terminate:self];
+				break;
+		}
+		return YES;
+	}
 	
 	return NO;
 }
 
+- (void)notifyUserOfFatalException:(NSException*)e {
+	NSError* error = [[e userInfo] objectForKey:NSUnderlyingErrorKey];
+	
+	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:0];
+	rx_print_exception_backtrace(e);
+	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:NSLogAndHandleEveryExceptionMask];
+
+	NSAlert* failureAlert = [NSAlert new];
+	[failureAlert setMessageText:[e reason]];
+	[failureAlert setAlertStyle:NSWarningAlertStyle];
+	[failureAlert addButtonWithTitle:NSLocalizedString(@"Quit", @"quit button")];
+	
+	NSDictionary* userInfo = [e userInfo];
+	if (userInfo) {
+		if (error)
+			[failureAlert setInformativeText:[error localizedDescription]];
+		else
+			[failureAlert setInformativeText:[e name]];
+	} else
+		[failureAlert setInformativeText:[e name]];
+	
+	[failureAlert runModal];
+	[failureAlert release];
+	
+	[NSApp terminate:nil];
+}
+
+- (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException*)e mask:(NSUInteger)aMask {
+	[self notifyUserOfFatalException:e];
+	return NO;
+}
+
+#pragma mark -
+#pragma mark delegation and UI
+
 - (void)applicationWillFinishLaunching:(NSNotification*)notification {
-#if defined(DEBUG)
 	[[NSExceptionHandler defaultExceptionHandler] setDelegate:self];
 	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:NSLogAndHandleEveryExceptionMask];
-#endif
 	
+	// and a flower shall blossom
 	[RXWorld sharedWorld];
+	
 #if defined(DEBUG)
-		[self _initDebugUI];
-		[self _showDebugConsole:self];
+	[self _initDebugUI];
+	[self _showDebugConsole:self];
 #endif
+}
+
+- (void)applicationWillTerminate:(NSNotification *)notification {
+	
+}
+
+- (BOOL)application:(NSApplication*)theApplication openFile:(NSString*)filename {
+	return [self _openGameWithURL:[NSURL fileURLWithPath:filename isDirectory:NO]];
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {
 	[NSApp terminate:self];
 }
 
-- (void)applicationWillTerminate:(NSNotification *)notification {
-	
+- (id <SUVersionComparison>)versionComparatorForUpdater:(SUUpdater*)updater {
+	return versionComparator;
 }
 
 - (IBAction)orderFrontAboutWindow:(id)sender {
@@ -128,82 +183,6 @@
 		[_preferences setLevel:NSTornOffMenuWindowLevel];
 }
 
-- (BOOL)attemptRecoveryFromError:(NSError*)error optionIndex:(NSUInteger)recoveryOptionIndex {
-	if ([error domain] == RXErrorDomain) {
-		switch ([error code]) {
-			case kRXErrEditionCantBecomeCurrent:
-				if (recoveryOptionIndex == 0)
-					[[RXEditionManager sharedEditionManager] showEditionManagerWindow];
-				else
-					[NSApp terminate:self];
-				break;
-			case kRXErrSaveCantBeLoaded:
-				if (recoveryOptionIndex == 0)
-					[[RXEditionManager sharedEditionManager] showEditionManagerWindow];
-				break;
-		}
-		return YES;
-	}
-	
-	return NO;
-}
-
-- (BOOL)_openGameWithURL:(NSURL*)url {
-	NSError* error;
-	
-	// load the save file, and present any error to the user if one occurs
-	RXGameState* gameState = [RXGameState gameStateWithURL:url error:&error];
-	if (!gameState) {
-		[NSApp presentError:error];
-		return NO;
-	}
-	
-	// the save game may be using a different edition than the active edition
-	if (![[gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]) {
-		// check if the game's edition can be made current; if not, present an error to the user
-		if (![[gameState edition] canBecomeCurrent]) {
-			error = [NSError errorWithDomain:RXErrorDomain code:kRXErrSaveCantBeLoaded userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-				[NSString stringWithFormat:@"Riven X cannot load the saved game because \"%@\" is not installed.", [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
-				@"You may install this edition by using the Edition Manager, or cancel and resume your current game.", NSLocalizedRecoverySuggestionErrorKey,
-				[NSArray arrayWithObjects:@"Install", @"Cancel", nil], NSLocalizedRecoveryOptionsErrorKey,
-				self, NSRecoveryAttempterErrorKey,
-				nil]];
-			[NSApp presentError:error];
-			return NO;
-		}
-	}
-	
-	// try to load the game, and present any error to the user if one occurs
-	if (![[RXWorld sharedWorld] loadGameState:gameState error:&error]) {
-		[NSApp presentError:error];
-		return NO;
-	}
-	
-	// add the save file to the recents
-	[[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]];
-	
-	return YES;
-}
-
-- (BOOL)application:(NSApplication*)theApplication openFile:(NSString*)filename {
-	return [self _openGameWithURL:[NSURL fileURLWithPath:filename isDirectory:NO]];
-}
-
-- (void)_updateCanSave {
-	[self willChangeValueForKey:@"canSave"];
-	_canSave = (([[g_world gameState] URL])) ? YES : NO;
-	[self didChangeValueForKey:@"canSave"];
-}
-
-- (BOOL)isSavingEnabled {
-	return _saveFlag;
-}
-
-- (void)setSavingEnabled:(BOOL)flag {
-	_saveFlag = flag;
-	[self _updateCanSave];
-}
-
 - (IBAction)toggleFullscreen:(id)sender {
 	// FIXME: implement method in RXRendering or RXWorld (in RXWorldRendering.mm) to do this
 }
@@ -213,10 +192,6 @@
 	[[NSUserDefaults standardUserDefaults] setBool:!stretchToFit forKey:@"StretchToFit"];
 	
 	[[NSNotificationCenter defaultCenter] postNotificationName:@"RXOpenGLDidReshapeNotification" object:self];
-}
-
-- (BOOL)isFullscreen {
-	return _fullscreen;
 }
 
 - (IBAction)openDocument:(id)sender {
@@ -246,6 +221,77 @@
 		[NSApp presentError:error];
 }
 
+- (IBAction)saveGameAs:(id)sender {
+	NSSavePanel* panel = [NSSavePanel savePanel];
+	[panel setCanCreateDirectories:YES];
+	[panel setAllowsOtherFileTypes:NO];
+	[panel setCanSelectHiddenExtension:YES];
+	[panel setTreatsFilePackagesAsDirectories:NO];
+	
+	[panel setRequiredFileType:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
+	
+	[panel beginSheetForDirectory:nil file:@"untitled" modalForWindow:[g_worldView window] modalDelegate:self didEndSelector:@selector(_saveAsPanelDidEnd:returnCode:contextInfo:) contextInfo:nil];
+}
+
+#pragma mark -
+#pragma mark game opening and saving
+
+- (BOOL)_openGameWithURL:(NSURL*)url {
+	NSError* error;
+	
+	// load the save file, and present any error to the user if one occurs
+	RXGameState* gameState = [RXGameState gameStateWithURL:url error:&error];
+	if (!gameState) {
+		[NSApp presentError:error];
+		return NO;
+	}
+	
+	// the save game may be using a different edition than the active edition
+	if (![[gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]) {
+		// check if the game's edition can be made current; if not, present an error to the user
+		if (![[gameState edition] canBecomeCurrent]) {
+			error = [NSError errorWithDomain:RXErrorDomain code:kRXErrSavedGameCantBeLoaded userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+				[NSString stringWithFormat:@"Riven X cannot load the saved game because \"%@\" is not installed.", [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
+				@"You may install this edition by using the Edition Manager, or cancel and resume your current game.", NSLocalizedRecoverySuggestionErrorKey,
+				[NSArray arrayWithObjects:@"Install", @"Cancel", nil], NSLocalizedRecoveryOptionsErrorKey,
+				self, NSRecoveryAttempterErrorKey,
+				nil]];
+			[NSApp presentError:error];
+			return NO;
+		}
+	}
+	
+	// try to load the game, and present any error to the user if one occurs
+	if (![[RXWorld sharedWorld] loadGameState:gameState error:&error]) {
+		[NSApp presentError:error];
+		return NO;
+	}
+	
+	// add the save file to the recents
+	[[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]];
+	
+	return YES;
+}
+
+- (void)_updateCanSave {
+	[self willChangeValueForKey:@"canSave"];
+	_canSave = (([[g_world gameState] URL])) ? YES : NO;
+	[self didChangeValueForKey:@"canSave"];
+}
+
+- (BOOL)isSavingEnabled {
+	return _saveFlag;
+}
+
+- (void)setSavingEnabled:(BOOL)flag {
+	_saveFlag = flag;
+	[self _updateCanSave];
+}
+
+- (BOOL)isFullscreen {
+	return _fullscreen;
+}
+
 - (void)_saveAsPanelDidEnd:(NSSavePanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
 	if (returnCode == NSCancelButton)
 		return;
@@ -265,18 +311,6 @@
 	
 	// add the new save file to the recents
 	[[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]];	
-}
-
-- (IBAction)saveGameAs:(id)sender {
-	NSSavePanel* panel = [NSSavePanel savePanel];
-	[panel setCanCreateDirectories:YES];
-	[panel setAllowsOtherFileTypes:NO];
-	[panel setCanSelectHiddenExtension:YES];
-	[panel setTreatsFilePackagesAsDirectories:NO];
-	
-	[panel setRequiredFileType:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
-	
-	[panel beginSheetForDirectory:nil file:@"untitled" modalForWindow:[g_worldView window] modalDelegate:self didEndSelector:@selector(_saveAsPanelDidEnd:returnCode:contextInfo:) contextInfo:nil];
 }
 
 @end
