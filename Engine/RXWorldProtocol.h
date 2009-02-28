@@ -23,7 +23,6 @@
 
 
 @protocol RXWorldProtocol <NSObject>
-- (NSThread*)stackThread;
 - (NSThread*)scriptThread;
 - (NSThread*)animationThread;
 
@@ -33,7 +32,7 @@
 - (NSArray*)activeStacks;
 - (RXStack*)activeStackWithKey:(NSString*)key;
 
-- (void)loadStackWithKey:(NSString*)stackKey waitUntilDone:(BOOL)waitFlag;
+- (void)loadStackWithKey:(NSString*)stackKey;
 
 - (RXStateCompositor*)stateCompositor;
 - (void*)audioRenderer;

@@ -264,6 +264,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 }
 
 - (void)_makeEditionChoiceMemoryCurrent {
+	// NOTE: WILL RUN ON THE MAIN THREAD
 	NSError* error;
 	
 	RXEdition* defaultEdition = [self defaultEdition];
@@ -336,15 +337,15 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	[[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:mountPath];
 }
 
-- (MHKArchive*)_archiveWithFilename:(NSString *)filename directoryKey:(NSString*)dirKey stackID:(NSString*)stackID error:(NSError**)error {
+- (MHKArchive*)_archiveWithFilename:(NSString*)filename directoryKey:(NSString*)dirKey stackID:(NSString*)stackID error:(NSError**)error {
 	NSString* archivePath;
 	MHKArchive* archive = nil;
 	
 	// FIXME: this method needs to track opened archives when the time comes to eject a disc
 	
-	// if there is no current edition, bail out
+	// if there is no current edition, throw a tantrum
 	if (!currentEdition)
-		ReturnValueWithError(nil, RXErrorDomain, 0, nil, error);
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Riven X tried to load an archive without having made an edition current first." userInfo:nil];
 	
 	// first look in the local data store
 	if (_localDataStore) {
@@ -376,13 +377,19 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	// FIXME: need to setup waiting for the disc
 	if (!mountPath) {
 		RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"[WARNING] waiting for discs is not implemented yet, please do full installs or put the proper disc before choosing an edition");
-		ReturnValueWithError(nil, RXErrorDomain, 0, nil, error);
+		ReturnValueWithError(nil, 
+			RXErrorDomain, kRXErrArchiveUnavailable,
+			([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The archive file \"%@\" is unavailable on the hard drive or any mounted disc.", filename] forKey:NSLocalizedDescriptionKey]),
+			error);
 	}
 	
 	// get the directory for the requested type of archive
 	NSString* directory = [[currentEdition valueForKey:@"directories"] objectForKey:dirKey];
 	if (!directory)
-		ReturnValueWithError(nil, RXErrorDomain, 0, nil, error);
+		ReturnValueWithError(nil,
+			RXErrorDomain, kRXErrArchiveUnavailable,
+			([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The archive file \"%@\" is unavailable on the hard drive or any mounted disc.", filename] forKey:NSLocalizedDescriptionKey]),
+			error);
 	
 	// compute the final on-disc archive path
 	archivePath = [[mountPath stringByAppendingPathComponent:directory] stringByAppendingPathComponent:filename];
@@ -394,7 +401,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 			return archive;
 	}
 	
-	ReturnValueWithError(nil, RXErrorDomain, 0, nil, error);
+	ReturnValueWithError(nil, 
+		RXErrorDomain, kRXErrArchiveUnavailable,
+		([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The archive file \"%@\" is unavailable on the hard drive or any mounted disc.", filename] forKey:NSLocalizedDescriptionKey]),
+		error);
 }
 
 - (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackID:(NSString*)stackID error:(NSError**)error {

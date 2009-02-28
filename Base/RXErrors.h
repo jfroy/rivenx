@@ -21,7 +21,9 @@ __BEGIN_DECLS
 
 enum {
 	kRXErrEditionCantBecomeCurrent = 1,
-	kRXErrSaveCantBeLoaded,
+	kRXErrSavedGameCantBeLoaded,
+	kRXErrArchiveUnavailable,
+	kRXErrNoCurrentEdition,
 };
 
 extern NSString* const RXErrorDomain;
