@@ -134,7 +134,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[26].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[27].sel = @selector(_opcode_goToStack:arguments:);
 	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMovie:arguments:);
-	_riven_command_dispatch_table[29].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[29].sel = @selector(_opcode_disableAllMovies:arguments:);
 	_riven_command_dispatch_table[30].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[31].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[32].sel = @selector(_opcode_startMovieAndWaitUntilDone:arguments:);
@@ -1359,10 +1359,27 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		return;
 	
 	// stop the movie on the main thread and block until done
-	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:NO];
+	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
 	
 	// remove the movie from the code-movie map
 	NSMapRemove(code2movieMap, (const void*)k);
+}
+
+// 29
+- (void)_opcode_disableAllMovies:(const uint16_t)argc arguments:(const uint16_t*) argv {
+	if (argc)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling all movies", logPrefix);
+#endif
+	
+	// stop all movies on the main thread and block until done
+	[(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
+	
+	// remove all movies from the code-movie map
+	NSResetMapTable(code2movieMap);
 }
 
 // 32
