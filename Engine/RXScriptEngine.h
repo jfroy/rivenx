@@ -22,7 +22,7 @@
 	
 	// program execution
 	uint32_t _programExecutionDepth;
-	uint16_t _lastExecutedProgramOpcode;
+	uint16_t _previousOpcode;
 	BOOL _queuedAPushTransition;
 
 	NSMutableString* logPrefix;

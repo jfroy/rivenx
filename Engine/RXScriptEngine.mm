@@ -369,7 +369,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		} else {
 			// execute the command
 			_riven_command_dispatch_table[*shortedProgram].imp(self, _riven_command_dispatch_table[*shortedProgram].sel, *(shortedProgram + 1), shortedProgram + 2);
-			_lastExecutedProgramOpcode = *shortedProgram;
+			_previousOpcode = *shortedProgram;
 			
 			// adjust the shorted program
 			programOffset += 4 + (*(shortedProgram + 1) * sizeof(uint16_t));
@@ -1245,8 +1245,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	// queue the transition
-	if (transition->type == RXTransitionDissolve && _lastExecutedProgramOpcode == 18 && _queuedAPushTransition)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because last command queued a push transition");
+	if (transition->type == RXTransitionDissolve && _previousOpcode == 18 && _queuedAPushTransition)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because previous command queued a push transition");
 	else
 		[controller queueTransition:transition];
 	
