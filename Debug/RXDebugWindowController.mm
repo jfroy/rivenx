@@ -27,8 +27,8 @@
 	return @"DebugWindowFrame";
 }
 
-- (void)help:(NSArray*)arguments from:(CLIView*)sender {
-	[sender putText:@"you're on your own, sorry"];
+- (void)cmd_help:(NSArray*)arguments from:(CLIView*)sender {
+	[sender putText:@"you're on your own, sorry\n"];
 }
 
 - (void)cmd_card:(NSArray*)arguments from:(CLIView*)sender {
