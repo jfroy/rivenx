@@ -9,7 +9,7 @@
 #import "RXCardDescriptor.h"
 #import "RXStack.h"
 
-#import "Additions/integer_pair_hash.h"
+#import "Utilities/integer_pair_hash.h"
 
 struct _RXCardDescriptorPrimer {
 	MHKArchive* archive;

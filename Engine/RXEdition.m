@@ -10,7 +10,7 @@
 #import "Engine/RXWorld.h"
 #import "Engine/RXEditionProxy.h"
 
-#import "Additions/BZFSUtilities.h"
+#import "Utilities/BZFSUtilities.h"
 
 
 @implementation RXEdition
