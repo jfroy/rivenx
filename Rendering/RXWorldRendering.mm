@@ -20,12 +20,12 @@
 
 @implementation RXWorld (RXWorldRendering)
 
-- (void)setInitialCard_:(NSNotification *)notification {
+- (void)setInitialCard_:(NSNotification*)notification {
 	[[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXStackDidLoadNotification" object:nil];
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
 #endif
-	[(RXCardState*)_cardState setActiveCardWithStack:@"aspit" ID:[[self activeStackWithKey:@"aspit"] entryCardID] waitUntilDone:NO];
+	[(RXCardState*)_cardState setActiveCardWithStack:@"aspit" ID:[[[RXEditionManager sharedEditionManager] activeStackWithKey:@"aspit"] entryCardID] waitUntilDone:NO];
 	[_stateCompositor setOpacity:1.0f ofState:_cardState];
 }
 

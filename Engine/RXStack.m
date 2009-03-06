@@ -110,7 +110,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	// load the data archives
 	if ([dataArchives isKindOfClass:[NSString class]]) {
 		// only one archive
-		MHKArchive* anArchive = [sem dataArchiveWithFilename:dataArchives stackID:_key error:error];
+		MHKArchive* anArchive = [sem dataArchiveWithFilename:dataArchives stackKey:_key error:error];
 		if (!anArchive) {
 			[self release];
 			return nil;
@@ -125,7 +125,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 		NSEnumerator* archivesEnum = [dataArchives objectEnumerator];
 		NSString* anArchiveName = nil;
 		while ((anArchiveName = [archivesEnum nextObject])) {
-			MHKArchive* anArchive = [sem dataArchiveWithFilename:anArchiveName stackID:_key error:error];
+			MHKArchive* anArchive = [sem dataArchiveWithFilename:anArchiveName stackKey:_key error:error];
 			if (!anArchive) {
 				[self release];
 				return nil;
@@ -141,7 +141,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	
 	// load the sound archives
 	if ([soundArchives isKindOfClass:[NSString class]]) {
-		MHKArchive* anArchive = [sem soundArchiveWithFilename:soundArchives stackID:_key error:error];
+		MHKArchive* anArchive = [sem soundArchiveWithFilename:soundArchives stackKey:_key error:error];
 		if (!anArchive) {
 			[self release];
 			return nil;
@@ -151,7 +151,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 		NSEnumerator* archivesEnum = [soundArchives objectEnumerator];
 		NSString* anArchiveName = nil;
 		while ((anArchiveName = [archivesEnum nextObject])) {
-			MHKArchive* anArchive = [sem soundArchiveWithFilename:anArchiveName stackID:_key error:error];
+			MHKArchive* anArchive = [sem soundArchiveWithFilename:anArchiveName stackKey:_key error:error];
 			if (!anArchive) {
 				[self release];
 				return nil;

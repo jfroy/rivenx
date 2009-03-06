@@ -1321,13 +1321,12 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (argc < 3)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
-	NSString* stackKey = [[[card descriptor] parent] stackNameAtIndex:argv[0]];
 	// FIXME: we need to be smarter about stack management. For now, we try to load the stack once. And it stays loaded. Forver
-	// make sure the requested stack has been loaded
-	RXStack* stack = [g_world activeStackWithKey:stackKey];
+	// get the stack for the given stack key
+	NSString* stackKey = [[[card descriptor] parent] stackNameAtIndex:argv[0]];
+	RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:stackKey];
 	if (!stack)
-		[g_world loadStackWithKey:stackKey];
-	stack = [g_world activeStackWithKey:stackKey];
+		return;
 	
 	uint32_t card_rmap = (argv[1] << 16) | argv[2];
 	uint16_t card_id = [stack cardIDFromRMAPCode:card_rmap];

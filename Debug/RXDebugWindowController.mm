@@ -7,9 +7,11 @@
 //
 
 #import "RXDebugWindowController.h"
-#import "RXWorldProtocol.h"
 
-#import "RXCardState.h"
+#import "Engine/RXWorldProtocol.h"
+#import "Engine/RXEditionManager.h"
+
+#import "States/RXCardState.h"
 
 @interface NSObject (CLIViewPrivate)
 - (void)notifyUser:(NSString *)message;
@@ -146,7 +148,7 @@
 		return;
 	}
 	
-	RXStack* jspit = [g_world activeStackWithKey:@"jspit"];
+	RXStack* jspit = [[RXEditionManager sharedEditionManager] activeStackWithKey:@"jspit"];
 	RXCardDescriptor* d = [RXCardDescriptor descriptorWithStack:jspit ID:_trip];
 	while (!d) {
 		_trip++;
