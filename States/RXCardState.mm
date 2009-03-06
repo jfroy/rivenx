@@ -726,7 +726,7 @@ init_failure:
 			active_sound->source->SetLooping(soundGroup->loop);
 			
 			// update the source's gain smoothly
-			renderer->RampSourceGain(*(active_sound->source), active_sound->gain * soundGroup->gain, RX_AUDIO_UPDATE_DURATION);
+			renderer->RampSourceGain(*(active_sound->source), active_sound->gain * soundGroup->gain, RX_AUDIO_FADE_DURATION);
 			active_sound->source->SetNominalGain(active_sound->gain * soundGroup->gain);
 			
 			// update the source's stereo panning smoothly
