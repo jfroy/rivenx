@@ -552,7 +552,7 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	if (!binary_tree_data)
 		return nil;
 	
-	uint16_t n = [[file_descriptor_arrays objectForKey:type] count];
+	uint16_t n = (uint16_t)[[file_descriptor_arrays objectForKey:type] count];
 	const struct descriptor_binary_tree* binary_tree = [binary_tree_data bytes];
 	
 	if (n == 0)
@@ -607,6 +607,7 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	
 	if ([fh readDataToEndOfFileInBuffer:buffer error:NULL] == -1) {
 		free(buffer);
+		[fh release];
 		return nil;
 	}
 	

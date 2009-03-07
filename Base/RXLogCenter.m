@@ -26,7 +26,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
 	if (!self)
 		return nil;
 	
-	NSError* error;
+	NSError* error = nil;
 	
 	// logs are put in the user's Logs folder
 	FSRef logsFolder;

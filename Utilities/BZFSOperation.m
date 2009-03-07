@@ -6,8 +6,13 @@
 //  Copyright 2008 MacStorm. All rights reserved.
 //
 
+#import "Base/PHSErrorMacros.h"
 #import "BZFSOperation.h"
-#import "PHSErrorMacros.h"
+
+
+@interface BZFSOperation(BZFSOperationPrivate)
+- (void)_updateStatus:(NSString*)item stage:(FSFileOperationStage)stage error:(NSError*)error status:(NSDictionary*)status;
+@end
 
 static const void* _BZFSOperationRetainObjCObject(const void* info) {
 	return [(id)info retain];
@@ -20,10 +25,6 @@ static void _BZFSOperationReleaseObjCObject(const void* info) {
 static CFStringRef _BZFSOperationDescribeObjCObject(const void* info) {
 	return CFStringCreateCopy(NULL, (CFStringRef)[(id)info description]);
 }
-
-@interface BZFSOperation(BZFSOperationPrivate)
-- (void)_updateStatus:(NSString*)item stage:(FSFileOperationStage)stage error:(NSError*)error status:(NSDictionary*)status;
-@end
 
 static void _BZFSOperationStatusCallback(FSFileOperationRef fileOp, const char* currentItem, FSFileOperationStage stage, OSStatus error, CFDictionaryRef statusDictionary, void* info) {
 	[(BZFSOperation*)info _updateStatus:[NSString stringWithUTF8String:currentItem] stage:stage error:[NSError errorWithDomain:NSOSStatusErrorDomain code:error userInfo:nil] status:(NSDictionary*)statusDictionary];
@@ -41,12 +42,14 @@ static void _BZFSOperationStatusCallback(FSFileOperationRef fileOp, const char* 
 	
 	_type = BZFSOperationCopyOperation;
 	
-	if (!source || !destination) goto BailOut;
+	if (!source || !destination)
+		goto BailOut;
 	_source = [source copy];
 	_destination = [destination copy];
 	
 	_op = FSFileOperationCreate(NULL);
-	if (_op == NULL) goto BailOut;
+	if (_op == NULL)
+		goto BailOut;
 	_options = kFSFileOperationDefaultOptions;
 	
 	_item = nil;
@@ -96,10 +99,10 @@ BailOut:
 	_error = [error copy];
 	[old release];
 	
-	[self didChangeValueForKey:@"item"];
-	[self didChangeValueForKey:@"stage"];
-	[self didChangeValueForKey:@"status"];
 	[self didChangeValueForKey:@"error"];
+	[self didChangeValueForKey:@"status"];
+	[self didChangeValueForKey:@"stage"];
+	[self didChangeValueForKey:@"item"];
 }
 
 - (BOOL)allowOverwriting {
@@ -108,32 +111,34 @@ BailOut:
 
 - (void)setAllowOverwriting:(BOOL)allow {
 	[self willChangeValueForKey:@"allowOverwriting"];
-	if (allow) _options |= kFSFileOperationOverwrite;
-	else _options &= ~kFSFileOperationOverwrite;
+	if (allow)
+		_options |= kFSFileOperationOverwrite;
+	else
+		_options &= ~kFSFileOperationOverwrite;
 	[self didChangeValueForKey:@"allowOverwriting"];
 }
 
-- (void)scheduleInRunLoop:(NSRunLoop *)aRunLoop forMode:(NSString *)mode error:(NSError**)error {
+- (BOOL)scheduleInRunLoop:(NSRunLoop *)aRunLoop forMode:(NSString *)mode error:(NSError**)error {
 	OSStatus err = FSFileOperationScheduleWithRunLoop(_op, [aRunLoop getCFRunLoop], (CFStringRef)mode);
-	if (err == noErr) return;
-	if (_error) [_error release];
-	_error = [[NSError alloc] initWithDomain:NSOSStatusErrorDomain code:err userInfo:nil];
-	ReturnWithError(NSOSStatusErrorDomain, err, nil, error);
+	if (err != noErr)
+		ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, error);
+	return YES;
 }
 
 - (BOOL)start:(NSError**)error {
 	FSFileOperationClientContext cc = {0, self, _BZFSOperationRetainObjCObject, _BZFSOperationReleaseObjCObject, _BZFSOperationDescribeObjCObject};
 	OSStatus err = paramErr;
-	if (_type == BZFSOperationCopyOperation) err = FSPathCopyObjectAsync(_op, [_source UTF8String], [_destination UTF8String], NULL, _options, _BZFSOperationStatusCallback, 1.0, &cc);
-	if (err == noErr) return YES;
-	if (_error) [_error release];
-	_error = [[NSError alloc] initWithDomain:NSOSStatusErrorDomain code:err userInfo:nil];
-	ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, error);
+	if (_type == BZFSOperationCopyOperation)
+		err = FSPathCopyObjectAsync(_op, [_source UTF8String], [_destination UTF8String], NULL, _options, _BZFSOperationStatusCallback, 1.0, &cc);
+	if (err != noErr)
+		ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, error);
+	return YES;
 }
 
 - (BOOL)cancel:(NSError**)error {
 	OSStatus err = FSFileOperationCancel(_op);
-	if (err != noErr) ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, error);
+	if (err != noErr)
+		ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, error);
 	_cancelled = YES;
 	return YES;
 }

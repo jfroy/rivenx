@@ -186,7 +186,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	}
 }
 
-- (void)_build_packet_description_table_and_count_frames:(NSError**)errorPtr {
+- (BOOL)_build_packet_description_table_and_count_frames:(NSError**)errorPtr {
 	UInt8* read_buffer = malloc(READ_BUFFER_SIZE);
 	ssize_t size_left_in_buffer = 0;
 	UInt32 buffer_position = 0;
@@ -202,7 +202,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	_packet_table = calloc(packet_table_length, sizeof(AudioStreamPacketDescription));
 	if (!_packet_table) {
 		free(read_buffer);
-		ReturnWithError(NSPOSIXErrorDomain, errno, nil, errorPtr);
+		ReturnValueWithPOSIXError(NO, nil, errorPtr);
 	}
 	
 	// loop while we still have data left to process
@@ -212,7 +212,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 			size_left_in_buffer = [_data_source readDataOfLength:READ_BUFFER_SIZE inBuffer:read_buffer error:errorPtr];
 			if (size_left_in_buffer == -1) {
 				free(read_buffer);
-				return;
+				return NO;
 			}
 			
 			if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
@@ -235,7 +235,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 					_packet_table = reallocf(_packet_table, packet_table_length * sizeof(AudioStreamPacketDescription));
 					if (!_packet_table) {
 						free(read_buffer);
-						ReturnWithError(NSPOSIXErrorDomain, errno, nil, errorPtr);
+						ReturnValueWithPOSIXError(NO, nil, errorPtr);
 					}
 				}
 				
@@ -258,7 +258,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 					size_left_in_buffer += [_data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:errorPtr];
 					if (size_left_in_buffer == -1) {
 						free(read_buffer);
-						return;
+						return NO;
 					}
 					
 					if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
@@ -283,7 +283,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 			size_left_in_buffer += [_data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:errorPtr];
 			if (size_left_in_buffer == -1) {
 				free(read_buffer);
-				return;
+				return NO;
 			}
 			
 			if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
@@ -295,6 +295,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	}
 	
 	free(read_buffer);
+	return YES;
 }
 
 - (id)init {
@@ -372,8 +373,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	
 	// build the packet description table
 	_max_packet_size = 0;
-	[self _build_packet_description_table_and_count_frames:&local_error];
-	if (local_error) {
+	if (![self _build_packet_description_table_and_count_frames:&local_error]) {
 		if (errorPtr)
 			*errorPtr = local_error;
 		[self release];
