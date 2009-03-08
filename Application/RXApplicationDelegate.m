@@ -18,7 +18,7 @@
 #import "Rendering/Graphics/RXWorldView.h"
 
 #import "Debug/RXDebugWindowController.h"
-#import "Debug/RXCardInspectorController.h"
+//#import "Debug/RXCardInspectorController.h"
 
 #import "Utilities/GTMSystemVersion.h"
 
@@ -59,9 +59,9 @@
 }
 
 - (void)_showCardInspector:(id)sender {
-	if (!_card_inspector_controller)
-		_card_inspector_controller = [[RXCardInspectorController alloc] initWithWindowNibName:@"CardInspector"];
-	[_card_inspector_controller showWindow:sender];
+//	if (!_card_inspector_controller)
+//		_card_inspector_controller = [[RXCardInspectorController alloc] initWithWindowNibName:@"CardInspector"];
+//	[_card_inspector_controller showWindow:sender];
 }
 
 - (void)_initDebugUI {
@@ -69,7 +69,7 @@
 	
 	NSMenu* debugMenu = [[NSMenu alloc] initWithTitle:@"Debug"];
 	[debugMenu addItemWithTitle:@"Console" action:@selector(_showDebugConsole:) keyEquivalent:@""];
-	[debugMenu addItemWithTitle:@"Card Inspector" action:@selector(_showCardInspector:) keyEquivalent:@""];
+//	[debugMenu addItemWithTitle:@"Card Inspector" action:@selector(_showCardInspector:) keyEquivalent:@""];
 	
 	NSMenuItem* debugMenuItem = [[NSMenuItem alloc] initWithTitle:@"Debug" action:NULL keyEquivalent:@""];
 	[debugMenuItem setSubmenu:debugMenu];

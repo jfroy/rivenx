@@ -35,8 +35,6 @@
 		31225ABE08C4216D0055628F /* RXStack.m in Sources */ = {isa = PBXBuildFile; fileRef = 31225ABD08C4216D0055628F /* RXStack.m */; };
 		31225AC408C421790055628F /* RXCard.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31225AC308C421790055628F /* RXCard.mm */; };
 		3124F2A909C36792009BA3CF /* RXSoundGroup.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3124F2A609C36782009BA3CF /* RXSoundGroup.mm */; };
-		312876F90F2972E900A114FF /* CardInspector.xib in Resources */ = {isa = PBXBuildFile; fileRef = 312876F80F2972E900A114FF /* CardInspector.xib */; };
-		312877240F2985DE00A114FF /* RXCardCollectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 312877230F2985DE00A114FF /* RXCardCollectionView.m */; };
 		312A89650D57B25600FCDF91 /* RXEdition.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A895F0D57B25600FCDF91 /* RXEdition.m */; };
 		312A89660D57B25600FCDF91 /* RXEditionManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89610D57B25600FCDF91 /* RXEditionManager.m */; };
 		312A89670D57B25600FCDF91 /* RXEditionManagerWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89630D57B25600FCDF91 /* RXEditionManagerWindowController.m */; };
@@ -200,7 +198,6 @@
 		31DAAF0B0DDE21BB00D06D0C /* Cursors.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */; };
 		31DAAF260DDE21EF00D06D0C /* cursors in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF0C0DDE21EF00D06D0C /* cursors */; };
 		31DAAF270DDE21EF00D06D0C /* sounds in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF210DDE21EF00D06D0C /* sounds */; };
-		31DBC9660F2AE1DB004B9277 /* RXCardInspectorController.m in Sources */ = {isa = PBXBuildFile; fileRef = 31DBC9650F2AE1DB004B9277 /* RXCardInspectorController.m */; };
 		31DBCAD40F2BEB6A004B9277 /* MHKKit.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
 		31DC682909CB880A00BFF447 /* VirtualRingBuffer_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */; };
 		31DC684209CB8E6B00BFF447 /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
@@ -1445,7 +1442,6 @@
 				31DAAF260DDE21EF00D06D0C /* cursors in Resources */,
 				31DAAF270DDE21EF00D06D0C /* sounds in Resources */,
 				3185C43B0E06027800528220 /* sparkle.pem in Resources */,
-				312876F90F2972E900A114FF /* CardInspector.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1715,8 +1711,6 @@
 				31A14BF50F03F7D3006EFF93 /* CAComponent.cpp in Sources */,
 				31A14C020F03F8EC006EFF93 /* CADebugger.cpp in Sources */,
 				31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */,
-				312877240F2985DE00A114FF /* RXCardCollectionView.m in Sources */,
-				31DBC9660F2AE1DB004B9277 /* RXCardInspectorController.m in Sources */,
 				31F4EFEA0F35312700A68652 /* RXScriptEngine.mm in Sources */,
 				31F4F0020F3533EF00A68652 /* RXScriptDecoding.m in Sources */,
 				31F4F03C0F35461C00A68652 /* RXMovieProxy.mm in Sources */,
