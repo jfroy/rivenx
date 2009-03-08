@@ -386,7 +386,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 		RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"[WARNING] waiting for discs is not implemented yet, please do full installs or put the proper disc before choosing an edition");
 		ReturnValueWithError(nil, 
 			RXErrorDomain, kRXErrArchiveUnavailable,
-			([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The archive file \"%@\" is unavailable on the hard drive or any mounted disc.", filename] forKey:NSLocalizedDescriptionKey]),
+			([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data file \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
 			error);
 	}
 	
@@ -395,7 +395,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	if (!directory)
 		ReturnValueWithError(nil,
 			RXErrorDomain, kRXErrArchiveUnavailable,
-			([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The archive file \"%@\" is unavailable on the hard drive or any mounted disc.", filename] forKey:NSLocalizedDescriptionKey]),
+			([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data file \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
 			error);
 	
 	// compute the final on-disc archive path
@@ -410,7 +410,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	
 	ReturnValueWithError(nil, 
 		RXErrorDomain, kRXErrArchiveUnavailable,
-		([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The archive file \"%@\" is unavailable on the hard drive or any mounted disc.", filename] forKey:NSLocalizedDescriptionKey]),
+		([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data file \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
 		error);
 }
 
@@ -455,7 +455,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	if (!stack) {
 		error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
 			[error localizedDescription], NSLocalizedDescriptionKey,
-			@"If you did not do a full install of your Riven edition, then your installation may be corrupted and you should restart Riven X while holding down the Option key to re-install it. Otherwise, please insert your Riven disc and relaunch Riven X.", NSLocalizedRecoverySuggestionErrorKey,
+			@"To re-install your Riven edition, relaunch Riven X while holding down the Option key. If you have a Riven DVD edition, you may instead insert your disc and relaunch Riven X.", NSLocalizedRecoverySuggestionErrorKey,
 			[NSArray arrayWithObjects:@"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
 			[NSApp delegate], NSRecoveryAttempterErrorKey,
 			error, NSUnderlyingErrorKey,
