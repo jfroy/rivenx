@@ -24,6 +24,7 @@
 	uint32_t _programExecutionDepth;
 	uint16_t _lastExecutedProgramOpcode;
 	BOOL _queuedAPushTransition;
+	BOOL _abortProgramExecution;
 
 	NSMutableString* logPrefix;
 	BOOL _disableScriptLogging;

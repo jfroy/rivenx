@@ -40,16 +40,7 @@
 	
 	// threading
 	semaphore_t _threadInitSemaphore;
-	
-	pthread_rwlock_t _stackCreationLock;
-	
-	NSMutableDictionary* _activeStacks;
-	pthread_rwlock_t _activeStacksLock;
-	
-	// riven script
 	NSThread* _scriptThread;
-	
-	// animation
 	NSThread* _animationThread;
 	
 	// rendering

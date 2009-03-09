@@ -9,8 +9,9 @@
 #import <Cocoa/Cocoa.h>
 #import <MHKKit/MHKKit.h>
 
-#import "RXEdition.h"
-#import "RXEditionManagerWindowController.h"
+#import "Engine/RXEdition.h"
+#import "Engine/RXEditionManagerWindowController.h"
+#import "Engine/RXStack.h"
 
 
 @interface RXEditionManager : NSObject {
@@ -18,8 +19,8 @@
 	NSMutableArray* editionProxies;
 	
 	RXEdition* currentEdition;
+	NSMutableDictionary* activeStacks;
 	
-@private
 	RXEditionManagerWindowController* _windowController;
 	BOOL _tornDown;
 	
@@ -35,12 +36,12 @@
 
 - (void)tearDown;
 
+- (void)showEditionManagerWindow;
+
 - (RXEdition*)editionForKey:(NSString*)editionKey;
 
 - (RXEdition*)currentEdition;
 - (BOOL)makeEditionCurrent:(RXEdition*)edition rememberChoice:(BOOL)remember error:(NSError**)error;
-
-- (void)showEditionManagerWindow;
 
 - (RXEdition*)defaultEdition;
 - (void)setDefaultEdition:(RXEdition*)edition;
@@ -51,7 +52,10 @@
 
 - (void)ejectMountPath:(NSString*)mountPath;
 
-- (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackID:(NSString*)stackID error:(NSError**)error;
-- (MHKArchive*)soundArchiveWithFilename:(NSString*)filename stackID:(NSString*)stackID error:(NSError**)error;
+- (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error;
+- (MHKArchive*)soundArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error;
+
+- (RXStack*)activeStackWithKey:(NSString*)stackKey;
+- (RXStack*)loadStackWithKey:(NSString*)stackKey;
 
 @end

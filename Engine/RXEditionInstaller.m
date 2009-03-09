@@ -54,8 +54,10 @@
 	
 	// destination depends on the install's scope
 	NSString* destination;
-	if (!systemWide) destination = [edition valueForKey:@"userDataBase"];
-	else destination = nil;
+	if (!systemWide)
+		destination = [edition valueForKey:@"userDataBase"];
+	else
+		destination = nil;
 	
 	// first pass to count the number of directives we have to execute and compute progress-tracking numbers
 	_directiveCount = 0;
@@ -64,7 +66,8 @@
 	NSDictionary* directive;
 	while ((directive = [directives nextObject])) {
 		// a minimal install is only concerned with required directives
-		if (!full && [[directive objectForKey:@"Required"] boolValue] == NO) continue;
+		if (!full && [[directive objectForKey:@"Required"] boolValue] == NO)
+			continue;
 		
 		// check that we can execute this directive
 		SEL directiveSelector = NSSelectorFromString([NSString stringWithFormat:@"_perform%@:destination:modalSession:error:", [directive objectForKey:@"Directive"]]);
@@ -81,7 +84,8 @@
 	directives = [[edition valueForKeyPath:@"installDirectives"] objectEnumerator];
 	while ((directive = [directives nextObject])) {
 		// a minimal install is only concerned with required directives
-		if (!full && [[directive objectForKey:@"Required"] boolValue] == NO) continue;
+		if (!full && [[directive objectForKey:@"Required"] boolValue] == NO)
+			continue;
 		
 		SEL directiveSelector = NSSelectorFromString([NSString stringWithFormat:@"_perform%@:destination:modalSession:error:", [directive objectForKey:@"Directive"]]);
 		NSInvocation* directiveInv = [NSInvocation invocationWithMethodSignature:[self methodSignatureForSelector:directiveSelector]];
@@ -106,7 +110,8 @@
 
 - (BOOL)minimalUserInstallInModalSession:(NSModalSession)session error:(NSError**)error {
 	BOOL success = [self _performInstallSystemWide:NO fullInstall:NO session:session error:error];
-	if (!success) return NO;
+	if (!success)
+		return NO;
 	
 	// all done, mark the edition as installed
 	[[edition userData] setValue:@"User" forKey:@"Installation Domain"];
@@ -120,7 +125,8 @@
 
 - (BOOL)fullUserInstallInModalSession:(NSModalSession)session error:(NSError**)error {
 	BOOL success = [self _performInstallSystemWide:NO fullInstall:YES session:session error:error];
-	if (!success) return NO;
+	if (!success)
+		return NO;
 	
 	// all done, mark the edition as installed
 	[[edition userData] setValue:@"User" forKey:@"Installation Domain"];
@@ -315,7 +321,10 @@
 			
 			BZFSOperation* copyOp = [[BZFSOperation alloc] initCopyOperationWithSource:filePath destination:destination];
 			[copyOp setAllowOverwriting:YES];
-			[copyOp scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode error:error];
+			if (![copyOp scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode error:error]) {
+				[copyOp release];
+				return NO;
+			}
 			
 			[copyOp addObserver:self forKeyPath:@"status" options:0 context:NULL];
 			
@@ -327,7 +336,8 @@
 			}
 			
 			while ([copyOp stage] != kFSOperationStageComplete) {
-				if (session && [NSApp runModalSession:session] != NSRunContinuesResponse) [copyOp cancel:error];
+				if (session && [NSApp runModalSession:session] != NSRunContinuesResponse)
+					[copyOp cancel:error];
 				[[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
 			}
 			
@@ -337,7 +347,8 @@
 			[copyOp removeObserver:self forKeyPath:@"status"];
 			[copyOp release];
 			
-			if (session && [NSApp runModalSession:session] != NSRunContinuesResponse) return NO;
+			if (session && [NSApp runModalSession:session] != NSRunContinuesResponse)
+				return NO;
 		}
 		
 		discIndex++;

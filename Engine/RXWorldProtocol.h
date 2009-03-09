@@ -29,11 +29,6 @@
 - (MHKArchive*)extraBitmapsArchive;
 - (NSDictionary*)extraBitmapsDescriptor;
 
-- (NSArray*)activeStacks;
-- (RXStack*)activeStackWithKey:(NSString*)key;
-
-- (void)loadStackWithKey:(NSString*)stackKey;
-
 - (RXStateCompositor*)stateCompositor;
 - (void*)audioRenderer;
 

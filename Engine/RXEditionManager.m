@@ -11,8 +11,8 @@
 #import "RXEditionManager.h"
 #import "RXWorld.h"
 
-#import "Additions/BZFSUtilities.h"
-#import "Additions/GTMObjectSingleton.h"
+#import "Utilities/BZFSUtilities.h"
+#import "Utilities/GTMObjectSingleton.h"
 
 
 @implementation RXEditionManager
@@ -89,6 +89,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	
 	editions = [NSMutableDictionary new];
 	editionProxies = [NSMutableArray new];
+	
+	activeStacks = [NSMutableDictionary new];
 	
 	_validMountPaths = [NSMutableArray new];
 	_waitingForThisDisc = nil;
@@ -202,6 +204,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	[editions release];
 	[editionProxies release];
 	
+	[activeStacks release];
+	
 	[super dealloc];
 }
 
@@ -252,6 +256,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	// if we're told to remember this choice, do so
 	if (remember)
 		[self setDefaultEdition:edition];
+	
+	// unload all stacks since they are associated to the current edition
+	[activeStacks removeAllObjects];
 	
 	// change the current edition ivar and post the current edition changed notification
 	currentEdition = edition;
@@ -337,7 +344,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	[[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:mountPath];
 }
 
-- (MHKArchive*)_archiveWithFilename:(NSString*)filename directoryKey:(NSString*)dirKey stackID:(NSString*)stackID error:(NSError**)error {
+- (MHKArchive*)_archiveWithFilename:(NSString*)filename directoryKey:(NSString*)dirKey stackKey:(NSString*)stackKey error:(NSError**)error {
 	NSString* archivePath;
 	MHKArchive* archive = nil;
 	
@@ -370,7 +377,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	}
 	
 	// then look on the proper optical media
-	NSNumber* discIndex = [currentEdition valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@.Disc", stackID]];
+	NSNumber* discIndex = [currentEdition valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@.Disc", stackKey]];
 	NSString* disc = [[currentEdition valueForKey:@"discs"] objectAtIndex:(discIndex) ? [discIndex unsignedIntValue] : 0];
 	NSString* mountPath = [self mountPathForDisc:disc];
 	
@@ -379,7 +386,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 		RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"[WARNING] waiting for discs is not implemented yet, please do full installs or put the proper disc before choosing an edition");
 		ReturnValueWithError(nil, 
 			RXErrorDomain, kRXErrArchiveUnavailable,
-			([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The archive file \"%@\" is unavailable on the hard drive or any mounted disc.", filename] forKey:NSLocalizedDescriptionKey]),
+			([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data file \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
 			error);
 	}
 	
@@ -388,7 +395,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	if (!directory)
 		ReturnValueWithError(nil,
 			RXErrorDomain, kRXErrArchiveUnavailable,
-			([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The archive file \"%@\" is unavailable on the hard drive or any mounted disc.", filename] forKey:NSLocalizedDescriptionKey]),
+			([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data file \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
 			error);
 	
 	// compute the final on-disc archive path
@@ -403,18 +410,71 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	
 	ReturnValueWithError(nil, 
 		RXErrorDomain, kRXErrArchiveUnavailable,
-		([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The archive file \"%@\" is unavailable on the hard drive or any mounted disc.", filename] forKey:NSLocalizedDescriptionKey]),
+		([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data file \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
 		error);
 }
 
-- (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackID:(NSString*)stackID error:(NSError**)error {
-	if ([stackID isEqualToString:@"aspit"])
-		return [self _archiveWithFilename:filename directoryKey:@"All" stackID:stackID error:error];
-	return [self _archiveWithFilename:filename directoryKey:@"Data" stackID:stackID error:error];
+- (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error {
+	if ([stackKey isEqualToString:@"aspit"])
+		return [self _archiveWithFilename:filename directoryKey:@"All" stackKey:stackKey error:error];
+	return [self _archiveWithFilename:filename directoryKey:@"Data" stackKey:stackKey error:error];
 }
 
-- (MHKArchive*)soundArchiveWithFilename:(NSString*)filename stackID:(NSString*)stackID error:(NSError**)error {
-	return [self _archiveWithFilename:filename directoryKey:@"Sound" stackID:stackID error:error];
+- (MHKArchive*)soundArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error {
+	return [self _archiveWithFilename:filename directoryKey:@"Sound" stackKey:stackKey error:error];
+}
+
+- (RXStack*)activeStackWithKey:(NSString*)stackKey {
+	return [activeStacks objectForKey:stackKey];
+}
+
+- (void)_postStackLoadedNotification:(NSString*)stackKey {
+	// WARNING: MUST RUN ON THE MAIN THREAD
+	if (!pthread_main_np()) {
+		[self performSelectorOnMainThread:@selector(_postStackLoadedNotification:) withObject:stackKey waitUntilDone:NO];
+		return;
+	}
+	
+	[[NSNotificationCenter defaultCenter] postNotificationName:@"RXStackDidLoadNotification" object:stackKey userInfo:nil];
+}
+
+- (RXStack*)loadStackWithKey:(NSString*)stackKey {
+	RXStack* stack = [self activeStackWithKey:stackKey];
+	if (stack)
+		return stack;
+	
+	NSError* error;
+		
+	// get the stack descriptor from the current edition
+	NSDictionary* stackDescriptor = [[[RXEditionManager sharedEditionManager] currentEdition] valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@", stackKey]];
+	if (!stackDescriptor || ![stackDescriptor isKindOfClass:[NSDictionary class]])
+		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Stack descriptor object is nil or of the wrong type." userInfo:stackDescriptor];
+	
+	// initialize the stack
+	stack = [[RXStack alloc] initWithStackDescriptor:stackDescriptor key:stackKey error:&error];
+	if (!stack) {
+		error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+			[error localizedDescription], NSLocalizedDescriptionKey,
+			@"To re-install your Riven edition, relaunch Riven X while holding down the Option key. If you have a Riven DVD edition, you may instead insert your disc and relaunch Riven X.", NSLocalizedRecoverySuggestionErrorKey,
+			[NSArray arrayWithObjects:@"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
+			[NSApp delegate], NSRecoveryAttempterErrorKey,
+			error, NSUnderlyingErrorKey,
+			nil]];
+		[NSApp performSelectorOnMainThread:@selector(presentError:) withObject:error waitUntilDone:NO];
+		return nil;
+	}
+		
+	// store the new stack in the active stacks dictionary
+	[activeStacks setObject:stack forKey:stackKey];
+	
+	// give up ownership of the new stack
+	[stack release];
+	
+	// post the stack loaded notification on the main thread
+	[self _postStackLoadedNotification:stackKey];
+	
+	// return the stack
+	return stack;
 }
 
 @end

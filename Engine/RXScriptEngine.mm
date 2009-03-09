@@ -282,6 +282,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	uint16_t pc = 0;
 	for (; pc < opcodeCount; pc++) {
+		if (_abortProgramExecution)
+			break;
+		
 		if (*shortedProgram == 8) {
 			// parameters for the conditional branch opcode
 			uint16_t argc = *(shortedProgram + 1);
@@ -373,7 +376,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 			
 			// adjust the shorted program
 			programOffset += 4 + (*(shortedProgram + 1) * sizeof(uint16_t));
-			shortedProgram = (uint16_t*)BUFFER_OFFSET(program, programOffset);
+			shortedProgram = (uint16_t*)BUFFER_OFFSET(program, programOffset);			
 		}
 	}
 	
@@ -382,6 +385,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	assert(_programExecutionDepth > 0);
 #endif
 	_programExecutionDepth--;
+	if (_programExecutionDepth == 0)
+		_abortProgramExecution = NO;
 	
 	return programOffset;
 }
@@ -1321,13 +1326,13 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (argc < 3)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
+	// get the stack for the given stack key
 	NSString* stackKey = [[[card descriptor] parent] stackNameAtIndex:argv[0]];
-	// FIXME: we need to be smarter about stack management. For now, we try to load the stack once. And it stays loaded. Forver
-	// make sure the requested stack has been loaded
-	RXStack* stack = [g_world activeStackWithKey:stackKey];
-	if (!stack)
-		[g_world loadStackWithKey:stackKey];
-	stack = [g_world activeStackWithKey:stackKey];
+	RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:stackKey];
+	if (!stack) {
+		_abortProgramExecution = YES;
+		return;
+	}
 	
 	uint32_t card_rmap = (argv[1] << 16) | argv[2];
 	uint16_t card_id = [stack cardIDFromRMAPCode:card_rmap];

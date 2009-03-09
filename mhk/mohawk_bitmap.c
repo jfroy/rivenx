@@ -527,7 +527,7 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 						goto AbortReadCompressedIndexedPixels;
 					
 					// compute the final offset
-					uint16_t pixel_offset = (operand & 0x03) << 8;
+					uint16_t pixel_offset = (uint16_t)(operand & 0x03) << 8;
 					pixel_offset |= pixel_offset_low;
 					
 					// top 2 bits of operand determine the mode
@@ -640,7 +640,7 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 						goto AbortReadCompressedIndexedPixels;
 					
 					// compute the final offset
-					uint16_t pixel_offset = (operand & 0x03) << 8;
+					uint16_t pixel_offset = (uint16_t)(operand & 0x03) << 8;
 					pixel_offset |= pixel_offset_low;
 					
 					// pixel counter

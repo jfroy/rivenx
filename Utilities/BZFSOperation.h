@@ -38,7 +38,7 @@ typedef uint32_t BZFSOperationType;
 - (BOOL)allowOverwriting;
 - (void)setAllowOverwriting:(BOOL)allow;
 
-- (void)scheduleInRunLoop:(NSRunLoop *)aRunLoop forMode:(NSString *)mode error:(NSError**)error;
+- (BOOL)scheduleInRunLoop:(NSRunLoop *)aRunLoop forMode:(NSString *)mode error:(NSError**)error;
 - (BOOL)start:(NSError**)error;
 - (BOOL)cancel:(NSError**)error;
 

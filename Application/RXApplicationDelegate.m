@@ -12,12 +12,15 @@
 
 #import <Sparkle/SUUpdater.h>
 
-#import "RXWorld.h"
-#import "RXWorldView.h"
-#import "RXEditionManagerWindowController.h"
+#import "Engine/RXWorld.h"
+#import "Engine/RXEditionManagerWindowController.h"
+
+#import "Rendering/Graphics/RXWorldView.h"
 
 #import "Debug/RXDebugWindowController.h"
-#import "Debug/RXCardInspectorController.h"
+//#import "Debug/RXCardInspectorController.h"
+
+#import "Utilities/GTMSystemVersion.h"
 
 
 @interface RXApplicationDelegate (RXApplicationDelegate_Private)
@@ -56,9 +59,9 @@
 }
 
 - (void)_showCardInspector:(id)sender {
-	if (!_card_inspector_controller)
-		_card_inspector_controller = [[RXCardInspectorController alloc] initWithWindowNibName:@"CardInspector"];
-	[_card_inspector_controller showWindow:sender];
+//	if (!_card_inspector_controller)
+//		_card_inspector_controller = [[RXCardInspectorController alloc] initWithWindowNibName:@"CardInspector"];
+//	[_card_inspector_controller showWindow:sender];
 }
 
 - (void)_initDebugUI {
@@ -66,7 +69,7 @@
 	
 	NSMenu* debugMenu = [[NSMenu alloc] initWithTitle:@"Debug"];
 	[debugMenu addItemWithTitle:@"Console" action:@selector(_showDebugConsole:) keyEquivalent:@""];
-	[debugMenu addItemWithTitle:@"Card Inspector" action:@selector(_showCardInspector:) keyEquivalent:@""];
+//	[debugMenu addItemWithTitle:@"Card Inspector" action:@selector(_showCardInspector:) keyEquivalent:@""];
 	
 	NSMenuItem* debugMenuItem = [[NSMenuItem alloc] initWithTitle:@"Debug" action:NULL keyEquivalent:@""];
 	[debugMenuItem setSubmenu:debugMenu];
@@ -205,9 +208,12 @@
 	[panel setCanSelectHiddenExtension:YES];
 	[panel setTreatsFilePackagesAsDirectories:NO];
 	
-	[panel setRequiredFileType:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
-	
-	NSInteger result = [panel runModalForDirectory:nil file:nil types:[NSArray arrayWithObject:@"org.macstorm.rivenx.game"]];
+	NSArray* types;
+	if ([GTMSystemVersion isLeopardOrGreater])
+		types = [NSArray arrayWithObject:@"org.macstorm.rivenx.game"];
+	else
+		types = [NSArray arrayWithObject:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
+	NSInteger result = [panel runModalForDirectory:nil file:nil types:types];
 	if (result == NSCancelButton)
 		return;
 	
@@ -228,7 +234,12 @@
 	[panel setCanSelectHiddenExtension:YES];
 	[panel setTreatsFilePackagesAsDirectories:NO];
 	
-	[panel setRequiredFileType:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
+	NSArray* types;
+	if ([GTMSystemVersion isLeopardOrGreater])
+		types = [NSArray arrayWithObject:@"org.macstorm.rivenx.game"];
+	else
+		types = [NSArray arrayWithObject:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
+	[panel setAllowedFileTypes:types];
 	
 	[panel beginSheetForDirectory:nil file:@"untitled" modalForWindow:[g_worldView window] modalDelegate:self didEndSelector:@selector(_saveAsPanelDidEnd:returnCode:contextInfo:) contextInfo:nil];
 }

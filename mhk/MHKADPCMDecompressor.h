@@ -27,7 +27,7 @@
 	int32_t step_index_left;
 	int32_t step_index_right;
 	
-	int8_t* adpcm_buffer;
+	uint8_t* adpcm_buffer;
 }
 
 - (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle*)fh error:(NSError**)errorPtr;

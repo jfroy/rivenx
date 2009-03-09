@@ -185,13 +185,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 			NSMapInsert(_cursors, (const void*)key, (const void*)cursor);
 			[cursor release];
 		}
-		
-		// things used to load and keep track of stacks
-		pthread_rwlock_init(&_stackCreationLock, NULL);
-		pthread_rwlock_init(&_activeStacksLock, NULL);
-		
-		_activeStacks = [[NSMutableDictionary alloc] init];
-		
+				
 		// the semaphore will be signaled when a thread has setup inter-thread messaging
 		kerr = semaphore_create(mach_task_self(), &_threadInitSemaphore, SYNC_POLICY_FIFO, 0);
 		if (kerr != 0)
@@ -238,13 +232,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	// initialize rendering
 	[self initializeRendering];
 	
-	// unload any loaded stacks
-	pthread_rwlock_wrlock(&_activeStacksLock);
-	[_activeStacks removeAllObjects];
-	pthread_rwlock_unlock(&_activeStacksLock);
-	
-	// load the aspit stack
-	[self loadStackWithKey:@"aspit"];
+	// load the aspit stack on the script thread asynchronously
+	[[RXEditionManager sharedEditionManager] performSelector:@selector(loadStackWithKey:) withObject:@"aspit" inThread:_scriptThread waitUntilDone:NO];
 }
 
 - (void)dealloc {
@@ -287,18 +276,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	
 	// audio renderer
 	delete reinterpret_cast<RX::AudioRenderer*>(_audioRenderer);
-	
-	// take the stack creation write lock
-	pthread_rwlock_wrlock(&_stackCreationLock);
-	
-	// stacks
-	[_activeStacks release]; _activeStacks = nil;
-	pthread_rwlock_destroy(&_activeStacksLock);
-	
-	// give up the stack creation write lock and destroy it
-	// NOTE: no other thread will be waiting on this rwlock by now, since _tornDown is YES and tearDown is running in the main thread
-	pthread_rwlock_unlock(&_stackCreationLock);
-	pthread_rwlock_destroy(&_stackCreationLock);
 	
 	// terminate threads
 	if (_scriptThread)
@@ -366,88 +343,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (NSThread*)animationThread {
 	return _animationThread;
-}
-
-#pragma mark -
-
-- (void)postStackLoadedNotification_:(NSString*)stackKey {
-	// WARNING: MUST RUN ON THE MAIN THREAD
-	if (!pthread_main_np()) {
-		[self performSelectorOnMainThread:@selector(postStackLoadedNotification_:) withObject:stackKey waitUntilDone:NO];
-		return;
-	}
-	
-	[[NSNotificationCenter defaultCenter] postNotificationName:@"RXStackDidLoadNotification" object:stackKey userInfo:nil];
-}
-
-- (void)_initializeStackWithKey:(NSString*)stackKey {
-	NSError* error;
-	
-	// if a stack already exists for the given key, we're done
-	RXStack* stack = [self activeStackWithKey:stackKey];
-	if (stack)
-		return;
-		
-	// get the stack descriptor from the current edition
-	NSDictionary* stackDescriptor = [[[RXEditionManager sharedEditionManager] currentEdition] valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@", stackKey]];
-	if (!stackDescriptor || ![stackDescriptor isKindOfClass:[NSDictionary class]])
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Stack descriptor object is nil or of the wrong type." userInfo:stackDescriptor];
-	
-	// initialize the stack
-	stack = [[RXStack alloc] initWithStackDescriptor:stackDescriptor key:stackKey error:&error];
-	if (!stack) {
-		error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-			[error localizedDescription], NSLocalizedDescriptionKey,
-			@"If you did not do a full install of your Riven edition, then your installation may be corrupted and you should restart Riven X while holding down the Option key to re-install it. Otherwise, please insert your Riven disc and relaunch Riven X.", NSLocalizedRecoverySuggestionErrorKey,
-			[NSArray arrayWithObjects:@"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
-			[NSApp delegate], NSRecoveryAttempterErrorKey,
-			error, NSUnderlyingErrorKey,
-			nil]];
-		[NSApp performSelectorOnMainThread:@selector(presentError:) withObject:error waitUntilDone:NO];
-		return;
-	}
-		
-	// store the new stack in the active stacks dictionary
-	pthread_rwlock_wrlock(&_activeStacksLock);
-	[_activeStacks setObject:stack forKey:stackKey];
-	pthread_rwlock_unlock(&_activeStacksLock);
-	
-	// give up ownership of the new stack
-	[stack release];
-	
-	// give up the read lock
-	[self postStackLoadedNotification_:stackKey];
-}
-
-- (void)loadStackWithKey:(NSString*)stackKey {
-	// NOTE: this method can run on any thread
-	if (_tornDown)
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"loadStackWithKey: RXWorld IS TORN DOWN" userInfo:nil];
-	
-	// fire the stack on a new thread
-	[self performSelector:@selector(_initializeStackWithKey:) withObject:stackKey inThread:_scriptThread waitUntilDone:YES];
-}
-
-- (RXStack*)activeStackWithKey:(NSString*)key {
-	if (_tornDown)
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
-	
-	pthread_rwlock_rdlock(&_activeStacksLock);
-	RXStack* stack = [_activeStacks objectForKey:key];
-	pthread_rwlock_unlock(&_activeStacksLock);
-	
-	return stack;
-}
-
-- (NSArray*)activeStacks {
-	if (_tornDown)
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activeStacks: RXWorld IS TORN DOWN" userInfo:nil];
-	
-	pthread_rwlock_rdlock(&_activeStacksLock);
-	NSArray* stacks = [_activeStacks allValues];
-	pthread_rwlock_unlock(&_activeStacksLock);
-	
-	return stacks;
 }
 
 #pragma mark -

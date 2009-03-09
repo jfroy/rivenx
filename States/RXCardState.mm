@@ -726,7 +726,7 @@ init_failure:
 			active_sound->source->SetLooping(soundGroup->loop);
 			
 			// update the source's gain smoothly
-			renderer->RampSourceGain(*(active_sound->source), active_sound->gain * soundGroup->gain, RX_AUDIO_UPDATE_DURATION);
+			renderer->RampSourceGain(*(active_sound->source), active_sound->gain * soundGroup->gain, RX_AUDIO_FADE_DURATION);
 			active_sound->source->SetNominalGain(active_sound->gain * soundGroup->gain);
 			
 			// update the source's stereo panning smoothly
@@ -1098,7 +1098,7 @@ init_failure:
 	OSSpinLockUnlock(&_state_swap_lock);
 }
 
-- (void)_switchCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)simpleDescriptor {
+- (void)_switchCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)scd {
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
 	if ([NSThread currentThread] != [g_world scriptThread])
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_switchCardWithSimpleDescriptor: MUST RUN ON SCRIPT THREAD" userInfo:nil];
@@ -1113,7 +1113,7 @@ init_failure:
 		RXCardDescriptor* activeDescriptor = [front_card descriptor];
 		RXStack* activeStack = [activeDescriptor valueForKey:@"parent"];
 		NSNumber* activeID = [activeDescriptor valueForKey:@"ID"];
-		if ([[activeStack key] isEqualToString:simpleDescriptor->stackKey] && simpleDescriptor->cardID == [activeID unsignedShortValue]) {
+		if ([[activeStack key] isEqualToString:scd->stackKey] && scd->cardID == [activeID unsignedShortValue]) {
 			new_card = [front_card retain];
 #if (DEBUG)
 			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"reloading front card: %@", front_card);
@@ -1124,22 +1124,22 @@ init_failure:
 	// if we're switching to a different card, create it
 	if (new_card == nil) {
 		// if we don't have the stack, bail
-		RXStack* newStack = [g_world activeStackWithKey:simpleDescriptor->stackKey];
-		if (!newStack) {
+		RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:scd->stackKey];
+		if (!stack) {
 #if defined(DEBUG)
-			RXOLog(@"aborting _switchCardWithSimpleDescriptor because stack %@ could not be loaded", simpleDescriptor->stackKey);
+			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"aborting _switchCardWithSimpleDescriptor because stack %@ could not be loaded", scd->stackKey);
 #endif
 			return;
 		}
 		
 		// FIXME: need to be smarter about card loading (cache, locality, etc)
 		// load the new card in
-		RXCardDescriptor* newCardDescriptor = [[RXCardDescriptor alloc] initWithStack:newStack ID:simpleDescriptor->cardID];
-		if (!newCardDescriptor)
+		RXCardDescriptor* cd = [[RXCardDescriptor alloc] initWithStack:stack ID:scd->cardID];
+		if (!cd)
 			@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"COULD NOT FIND CARD IN STACK" userInfo:nil]; 
 		
-		new_card = [[RXCard alloc] initWithCardDescriptor:newCardDescriptor];
-		[newCardDescriptor release];
+		new_card = [[RXCard alloc] initWithCardDescriptor:cd];
+		[cd release];
 		
 #if (DEBUG)
 		RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"switch card: {from=%@, to=%@}", _front_render_state->card, new_card);
@@ -1195,12 +1195,6 @@ init_failure:
 	// NOTE: CAN RUN ON ANY THREAD
 	if (!scd)
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"STACK DESCRIPTOR CANNOT BE NIL" userInfo:nil];
-	
-	// FIXME: we need to be smarter about stack management; right now, we load a stack when it is first needed and keep it in memory forever
-	// make sure the requested stack has been loaded
-	RXStack* stack = [g_world activeStackWithKey:scd->stackKey];
-	if (!stack)
-		[g_world loadStackWithKey:scd->stackKey];
 	
 	// hide the mouse cursor and switch card on the script thread
 	[self hideMouseCursor];
