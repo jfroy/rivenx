@@ -134,7 +134,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[26].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[27].sel = @selector(_opcode_goToStack:arguments:);
 	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMovie:arguments:);
-	_riven_command_dispatch_table[29].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[29].sel = @selector(_opcode_disableAllMovies:arguments:);
 	_riven_command_dispatch_table[30].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[31].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[32].sel = @selector(_opcode_startMovieAndWaitUntilDone:arguments:);
@@ -372,7 +372,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		} else {
 			// execute the command
 			_riven_command_dispatch_table[*shortedProgram].imp(self, _riven_command_dispatch_table[*shortedProgram].sel, *(shortedProgram + 1), shortedProgram + 2);
-			_lastExecutedProgramOpcode = *shortedProgram;
+			_previousOpcode = *shortedProgram;
 			
 			// adjust the shorted program
 			programOffset += 4 + (*(shortedProgram + 1) * sizeof(uint16_t));
@@ -1250,8 +1250,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	// queue the transition
-	if (transition->type == RXTransitionDissolve && _lastExecutedProgramOpcode == 18 && _queuedAPushTransition)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because last command queued a push transition");
+	if (transition->type == RXTransitionDissolve && _previousOpcode == 18 && _queuedAPushTransition)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because previous command queued a push transition");
 	else
 		[controller queueTransition:transition];
 	
@@ -1364,10 +1364,27 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		return;
 	
 	// stop the movie on the main thread and block until done
-	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:NO];
+	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
 	
 	// remove the movie from the code-movie map
 	NSMapRemove(code2movieMap, (const void*)k);
+}
+
+// 29
+- (void)_opcode_disableAllMovies:(const uint16_t)argc arguments:(const uint16_t*) argv {
+	if (argc)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling all movies", logPrefix);
+#endif
+	
+	// stop all movies on the main thread and block until done
+	[(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
+	
+	// remove all movies from the code-movie map
+	NSResetMapTable(code2movieMap);
 }
 
 // 32
