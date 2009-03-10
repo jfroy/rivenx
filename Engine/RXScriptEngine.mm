@@ -2276,6 +2276,32 @@ DEFINE_COMMAND(xvalvecontrol) {
 		[controller setMouseCursor:2004];
 		mouse_vector = [controller mouseVector];
 	}
+	
+	// if we set the valve to position 1 (power to the boiler), we need to update the boiler state
+	if (valve_state == 1) {
+		if ([[g_world gameState] unsignedShortForKey:@"bidvlv"]) {
+			// power is going to the water pump
+			
+			// adjust the water's state to match the water pump's flex pipe state
+			uint16_t flex_pipe = [[g_world gameState] unsignedShortForKey:@"bblrarm"];
+			if (flex_pipe) {
+				// flex pipe is disconnected
+				[[g_world gameState] setUnsignedShort:0 forKey:@"bheat"];
+				[[g_world gameState] setUnsignedShort:0 forKey:@"bblrwtr"];
+			} else {
+				// flex pipe is connected
+				if ([[g_world gameState] unsignedShortForKey:@"bblrvalve"])
+					[[g_world gameState] setUnsignedShort:1 forKey:@"bheat"];
+				[[g_world gameState] setUnsignedShort:1 forKey:@"bblrwtr"];
+			}
+		} else {
+			// power is going to the platform
+			
+			// adjust the platform's state to match the platform control switch's state
+			uint16_t platform_switch = [[g_world gameState] unsignedShortForKey:@"bblrsw"];
+			[[g_world gameState] setUnsignedShort:(platform_switch) ? 0 : 1 forKey:@"bblrgrt"];
+		}
+	}
 }
 
 DEFINE_COMMAND(xbchipper) {
