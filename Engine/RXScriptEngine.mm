@@ -980,7 +980,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@drawing dynamic picture ID %hu in rect {{%f, %f}, {%f, %f}}", logPrefix, argv[0], field_display_rect.origin.x, field_display_rect.origin.y, field_display_rect.size.width, field_display_rect.size.height);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@drawing dynamic picture ID %hu in rect {{%f, %f}, {%f, %f}}", 
+			logPrefix, argv[0], field_display_rect.origin.x, field_display_rect.origin.y, field_display_rect.size.width, field_display_rect.size.height);
 #endif
 	
 	[self _drawPictureWithID:argv[0] archive:[card archive] displayRect:field_display_rect samplingRect:sampling_rect];
@@ -1322,7 +1323,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 27
-- (void)_opcode_goToStack:(const uint16_t)argc arguments:(const uint16_t*) argv {
+- (void)_opcode_goToStack:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 3)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
@@ -1346,7 +1347,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 28
-- (void)_opcode_disableMovie:(const uint16_t)argc arguments:(const uint16_t*) argv {
+- (void)_opcode_disableMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 1)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
@@ -1357,7 +1358,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// get the movie object
 	uintptr_t k = argv[0];
-	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(code2movieMap, (const void*)k));
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
 	
 	// it is legal to disable a code that has no movie associated with it
 	if (!movie)
@@ -1365,13 +1366,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// stop the movie on the main thread and block until done
 	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
-	
-	// remove the movie from the code-movie map
-	NSMapRemove(code2movieMap, (const void*)k);
 }
 
 // 29
-- (void)_opcode_disableAllMovies:(const uint16_t)argc arguments:(const uint16_t*) argv {
+- (void)_opcode_disableAllMovies:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
@@ -1382,9 +1380,6 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// stop all movies on the main thread and block until done
 	[(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
-	
-	// remove all movies from the code-movie map
-	NSResetMapTable(code2movieMap);
 }
 
 // 32
@@ -1398,7 +1393,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// get the movie object
 	uintptr_t k = argv[0];
-	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(code2movieMap, (const void*)k));
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
 	
 	// it is legal to play a code that has no movie associated with it; it's a no-op
 	if (!movie)
@@ -1422,7 +1417,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// get the movie object
 	uintptr_t k = argv[0];
-	RXMovie* movie = reinterpret_cast<RXMovie*>(NSMapGet(code2movieMap, (const void*)k));
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
 
 	// it is legal to play a code that has no movie associated with it; it's a no-op
 	if (!movie)
