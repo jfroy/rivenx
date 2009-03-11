@@ -2325,9 +2325,9 @@ DEFINE_COMMAND(xbupdateboiler) {
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 8);
 	} else {
 		if (platform)
-			DISPATCH_COMMAND1(RX_COMMAND_ACTIVE_PLAY_MLST, 7);
+			DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLAY_MLST, 7);
 		else
-			DISPATCH_COMMAND1(RX_COMMAND_ACTIVE_PLAY_MLST, 8);
+			DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLAY_MLST, 8);
 	}
 	
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
@@ -2417,6 +2417,36 @@ DEFINE_COMMAND(xsoundplug) {
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 2);
 	else
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 3);
+}
+
+#pragma mark -
+#pragma mark village school
+
+DEFINE_COMMAND(xjschool280_resetleft) {
+	[[g_world gameState] setUnsignedShort:0 forKey:@"jleftpos"];
+}
+
+DEFINE_COMMAND(xjschool280_resetright) {
+	[[g_world gameState] setUnsignedShort:0 forKey:@"jrightpos"];
+}
+
+DEFINE_COMMAND(xschool280_playwhark) {
+	uint16_t whark_pos = [[g_world gameState] unsignedShortForKey:@"jwharkpos"];
+	if (whark_pos == 1) {
+		// to the left
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
+		
+		// disable rotateleft and enable rotateright
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, 2);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, 4);
+	} else {
+		// to the right
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+		
+		// enable rotateleft and disable rotateright
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, 1);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, 3);
+	}
 }
 
 #pragma mark -
