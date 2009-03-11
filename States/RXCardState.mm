@@ -1277,10 +1277,6 @@ init_failure:
 			water_draw_ptr = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_WRITE); glReportError();
 			memcpy(_water_readback_buffer, water_draw_ptr, kRXCardViewportSize.width * kRXCardViewportSize.height << 2);
 			
-//			int fd = open("frame_dump", O_TRUNC | O_CREAT | O_RDWR, 0600);
-//			write(fd, water_draw_ptr, kRXCardViewportSize.width * kRXCardViewportSize.height << 2);
-//			close(fd);
-			
 			glBindBuffer(GL_PIXEL_PACK_BUFFER, 0); glReportError();
 		}
 		
