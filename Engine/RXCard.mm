@@ -108,7 +108,7 @@ struct rx_card_picture_record {
 			mlstRecords[currentListIndex].volume = 256;
 		
 		// load the movie up
-		CGPoint origin = CGPointMake(mlstRecords[currentListIndex].left + 0.5f, kRXCardViewportSize.height - mlstRecords[currentListIndex].top + 0.5f);
+		CGPoint origin = CGPointMake(mlstRecords[currentListIndex].left, kRXCardViewportSize.height - mlstRecords[currentListIndex].top);
 		RXMovieProxy* movieProxy = [[RXMovieProxy alloc] initWithArchive:_archive ID:mlstRecords[currentListIndex].movie_id origin:origin volume:mlstRecords[currentListIndex].volume / 256.0f loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO) owner:self];
 		
 		// add the movie to the movies array
@@ -476,9 +476,9 @@ struct rx_card_picture_record {
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, pictureRecords[currentListIndex].width, pictureRecords[currentListIndex].height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)); glReportError();
 		
 		// compute common vertex values
-		float vertex_left_x = field_display_rect.origin.x + 0.5f;
+		float vertex_left_x = field_display_rect.origin.x;
 		float vertex_right_x = vertex_left_x + field_display_rect.size.width;
-		float vertex_bottom_y = field_display_rect.origin.y + 0.5f;
+		float vertex_bottom_y = field_display_rect.origin.y;
 		float vertex_top_y = field_display_rect.origin.y + field_display_rect.size.height;
 		
 		// vertex 1
