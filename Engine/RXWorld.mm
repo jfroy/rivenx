@@ -121,7 +121,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	kern_return_t kerr;
 	
 	@try {
-		// new engine variables
+		// seed random
+		srandom(time(NULL));
+	
+		// initialize the engine variables
 		pthread_mutex_init(&_engineVariablesMutex, NULL);
 		[self _initEngineVariables];
 		
