@@ -454,7 +454,6 @@ struct rx_card_picture_record {
 	// for each PLST entry, load and upload the picture, compute needed coords
 	size_t textureStorageOffset = 0;
 	for (currentListIndex = 0; currentListIndex < _pictureCount; currentListIndex++) {
-		NSRect field_display_rect = RXMakeNSRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
 		if (![_archive loadBitmapWithID:plstRecords[currentListIndex].bitmap_id buffer:BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset) format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
 			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
@@ -476,10 +475,15 @@ struct rx_card_picture_record {
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, pictureRecords[currentListIndex].width, pictureRecords[currentListIndex].height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)); glReportError();
 		
 		// compute common vertex values
+		NSRect field_display_rect = RXMakeNSRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
 		float vertex_left_x = field_display_rect.origin.x;
 		float vertex_right_x = vertex_left_x + field_display_rect.size.width;
 		float vertex_bottom_y = field_display_rect.origin.y;
 		float vertex_top_y = field_display_rect.origin.y + field_display_rect.size.height;
+		
+		if ((int)pictureRecords[currentListIndex].width != (int)field_display_rect.size.width || (int)pictureRecords[currentListIndex].height != (int)field_display_rect.size.height)
+			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"PLST record %hu has display rect size different than tBMP resource %hu: %dx%d vs. %dx%d", 
+				plstRecords[currentListIndex].index, plstRecords[currentListIndex].bitmap_id, (int)field_display_rect.size.width, (int)field_display_rect.size.height, (int)pictureRecords[currentListIndex].width, (int)pictureRecords[currentListIndex].height);
 		
 		// vertex 1
 		vertex_attributes[0] = vertex_left_x;
