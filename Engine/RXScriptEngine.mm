@@ -815,8 +815,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if ([[movie movie] rate] > 0.001f)
 		return;
 	
-	// put the movie at its beginning if it's not a looping movie
-	if (![movie looping])
+	// put the movie at its beginning if it's not looping or playing a selection
+	if (![movie looping] && ![movie isPlayingSelection])
 		[movie gotoBeginning];
 	
 	// queue the movie for rendering
@@ -2444,21 +2444,50 @@ DEFINE_COMMAND(xjschool280_resetright) {
 	[[g_world gameState] setUnsignedShort:0 forKey:@"jrightpos"];
 }
 
+- (void)_configureLeftSnackVillagerMovie:(NSNumber*)stepsNumber {
+	uint16_t level_of_doom = [[g_world gameState] unsignedShortForKey:@"jleftpos"];
+	uintptr_t k = 3;
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+	
+	QTTimeRange movie_range = QTMakeTimeRange(QTMakeTimeWithTimeInterval(1.0 * level_of_doom), QTMakeTimeWithTimeInterval(1.0 * [stepsNumber unsignedShortValue]));
+	[movie setPlaybackSelection:movie_range];
+}
+
+- (void)_configureRightSnackVillagerMovie:(NSNumber*)stepsNumber {
+	uint16_t level_of_doom = [[g_world gameState] unsignedShortForKey:@"jrightpos"];
+	uintptr_t k = 5;
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+	
+	QTTimeRange movie_range = QTMakeTimeRange(QTMakeTimeWithTimeInterval(1.0 * level_of_doom), QTMakeTimeWithTimeInterval(1.0 * [stepsNumber unsignedShortValue]));
+	[movie setPlaybackSelection:movie_range];
+}
+
 DEFINE_COMMAND(xschool280_playwhark) {
+	// cache the game state object
+	RXGameState* state = [g_world gameState];
+
 	// generate a random number between 0 and 9
 	uint16_t the_number = 1;//random() % 9;
 
-	uint16_t whark_pos = [[g_world gameState] unsignedShortForKey:@"jwharkpos"];
+	uint16_t whark_pos = [state unsignedShortForKey:@"jwharkpos"];
 	if (whark_pos == 1) {
 		// to the left
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
 		
+		// in a transaction, re-blit the base picture, blit the on-the-left overlay, blit the number picture and disable the spin movie
 		DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 12);
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 2 + the_number);
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 1);
 		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+		
+		// configure the left villager movie and play it back
+		[self performSelectorOnMainThread:@selector(_configureLeftSnackVillagerMovie:) withObject:[NSNumber numberWithUnsignedShort:the_number] waitUntilDone:YES];
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 3);
+		
+		// update the left villager's doom level
+		[state setUnsignedShort:[state unsignedShortForKey:@"jleftpos"] + the_number forKey:@"jleftpos"];
 		
 		// disable rotateleft and enable rotateright
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, 2);
@@ -2467,12 +2496,20 @@ DEFINE_COMMAND(xschool280_playwhark) {
 		// to the right
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
 		
+		// in a transaction, re-blit the base picture, blit the on-the-right overlay, blit the number picture and disable the spin movie
 		DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 13);
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 2 + the_number);
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 2);
 		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+		
+		// configure the right villager movie and play it back
+		[self performSelectorOnMainThread:@selector(_configureRightSnackVillagerMovie:) withObject:[NSNumber numberWithUnsignedShort:the_number] waitUntilDone:YES];
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 5);
+		
+		// update the right villager's doom level
+		[state setUnsignedShort:[state unsignedShortForKey:@"jrightpos"] + the_number forKey:@"jrightpos"];
 		
 		// enable rotateleft and disable rotateright
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, 1);

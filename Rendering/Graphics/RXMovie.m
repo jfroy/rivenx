@@ -80,6 +80,9 @@
 	// no particular movie hints initially
 	_movieHints = 0;
 	
+	// we do not restrict playback to the selection initially
+	[_movie setAttribute:[NSNumber numberWithBool:NO] forKey:QTMoviePlaysSelectionOnlyAttribute];
+	
 	// cache the movie's current size
 	[[_movie attributeForKey:QTMovieCurrentSizeAttribute] getValue:&_currentSize];
 	
@@ -336,8 +339,21 @@
 }
 
 - (void)gotoBeginning {
-	[_movie gotoBeginning];
 	_invalidImage = YES;
+	[_movie gotoBeginning];
+}
+
+- (BOOL)isPlayingSelection {
+	return [[_movie attributeForKey:QTMoviePlaysSelectionOnlyAttribute] boolValue];
+}
+
+- (void)setPlaybackSelection:(QTTimeRange)selection {
+	[_movie setSelection:selection];
+	[_movie setAttribute:[NSNumber numberWithBool:YES] forKey:QTMoviePlaysSelectionOnlyAttribute];
+}
+
+- (void)clearPlaybackSelection {
+	[_movie setAttribute:[NSNumber numberWithBool:NO] forKey:QTMoviePlaysSelectionOnlyAttribute];
 }
 
 - (CGSize)currentSize {

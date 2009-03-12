@@ -54,6 +54,10 @@
 
 - (void)gotoBeginning;
 
+- (BOOL)isPlayingSelection;
+- (void)setPlaybackSelection:(QTTimeRange)selection;
+- (void)clearPlaybackSelection;
+
 - (CGSize)currentSize;
 
 - (CGRect)renderRect;

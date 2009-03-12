@@ -7,7 +7,7 @@
 		<key>card_info</key>
 		<integer>1</integer>
 		<key>volume</key>
-		<integer>0</integer>
+		<integer>1</integer>
 		<key>hotspots_info</key>
 		<integer>1</integer>
 		<key>audio_ramps</key>
