@@ -474,43 +474,48 @@ struct rx_card_picture_record {
 		// upload the texture
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, pictureRecords[currentListIndex].width, pictureRecords[currentListIndex].height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)); glReportError();
 		
-		// compute common vertex values
-		NSRect field_display_rect = RXMakeNSRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
-		float vertex_left_x = field_display_rect.origin.x;
-		float vertex_right_x = vertex_left_x + field_display_rect.size.width;
-		float vertex_bottom_y = field_display_rect.origin.y;
-		float vertex_top_y = field_display_rect.origin.y + field_display_rect.size.height;
-		
-		if ((int)pictureRecords[currentListIndex].width != (int)field_display_rect.size.width || (int)pictureRecords[currentListIndex].height != (int)field_display_rect.size.height)
+#if defined(DEBUG) && DEBUG > 1
+		NSRect original_rect = RXMakeNSRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
+		if ((int)pictureRecords[currentListIndex].width != (int)original_rect.size.width || (int)pictureRecords[currentListIndex].height != (int)original_rect.size.height)
 			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"PLST record %hu has display rect size different than tBMP resource %hu: %dx%d vs. %dx%d", 
-				plstRecords[currentListIndex].index, plstRecords[currentListIndex].bitmap_id, (int)field_display_rect.size.width, (int)field_display_rect.size.height, (int)pictureRecords[currentListIndex].width, (int)pictureRecords[currentListIndex].height);
+				plstRecords[currentListIndex].index, plstRecords[currentListIndex].bitmap_id, (int)original_rect.size.width, (int)original_rect.size.height, (int)pictureRecords[currentListIndex].width, (int)pictureRecords[currentListIndex].height);
+#endif
+		
+		// adjust the display rect to anchor the picture to the top-left corner while clipping the picture to its size (and never scaling the picture either)
+		if (plstRecords[currentListIndex].right - plstRecords[currentListIndex].left > pictureRecords[currentListIndex].width)
+			plstRecords[currentListIndex].right = plstRecords[currentListIndex].left + (uint16_t)pictureRecords[currentListIndex].width;
+		if (plstRecords[currentListIndex].bottom - plstRecords[currentListIndex].top > pictureRecords[currentListIndex].height)
+			plstRecords[currentListIndex].bottom = plstRecords[currentListIndex].top + (uint16_t)pictureRecords[currentListIndex].height;
+		
+		// compute the picture's world composite rect, and from it the vertices
+		NSRect composite_rect = RXMakeNSRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
 		
 		// vertex 1
-		vertex_attributes[0] = vertex_left_x;
-		vertex_attributes[1] = vertex_bottom_y;
+		vertex_attributes[0] = composite_rect.origin.x;
+		vertex_attributes[1] = composite_rect.origin.y;
 		
 		vertex_attributes[2] = 0.0f;
-		vertex_attributes[3] = pictureRecords[currentListIndex].height;
+		vertex_attributes[3] = composite_rect.size.height;
 		
 		// vertex 2
-		vertex_attributes[4] = vertex_right_x;
-		vertex_attributes[5] = vertex_bottom_y;
+		vertex_attributes[4] = composite_rect.origin.x + composite_rect.size.width;
+		vertex_attributes[5] = composite_rect.origin.y;
 		
-		vertex_attributes[6] = pictureRecords[currentListIndex].width;
-		vertex_attributes[7] = pictureRecords[currentListIndex].height;
+		vertex_attributes[6] = composite_rect.size.width;
+		vertex_attributes[7] = composite_rect.size.height;
 		
 		// vertex 3
-		vertex_attributes[8] = vertex_left_x;
-		vertex_attributes[9] = vertex_top_y;
+		vertex_attributes[8] = composite_rect.origin.x;
+		vertex_attributes[9] = composite_rect.origin.y + composite_rect.size.height;
 		
 		vertex_attributes[10] = 0.0f;
 		vertex_attributes[11] = 0.0f;
 		
 		// vertex 4
-		vertex_attributes[12] = vertex_right_x;
-		vertex_attributes[13] = vertex_top_y;
+		vertex_attributes[12] = composite_rect.origin.x + composite_rect.size.width;
+		vertex_attributes[13] = composite_rect.origin.y + composite_rect.size.height;
 		
-		vertex_attributes[14] = pictureRecords[currentListIndex].width;
+		vertex_attributes[14] = composite_rect.size.width;
 		vertex_attributes[15] = 0.0f;
 		
 		// move along
