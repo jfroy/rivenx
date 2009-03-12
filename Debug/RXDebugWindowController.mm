@@ -72,7 +72,7 @@
 - (void)cmd_get:(NSArray*)arguments from:(CLIView*)sender {
 	if ([arguments count] < 1)
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"get [variable]" userInfo:nil];
-	NSString* path = [arguments objectAtIndex:1];
+	NSString* path = [arguments objectAtIndex:0];
 	
 	if ([[g_world gameState] isKeySet:path])
 		[sender putText:[NSString stringWithFormat:@"%d\n", [[g_world gameState] signed32ForKey:path]]];
