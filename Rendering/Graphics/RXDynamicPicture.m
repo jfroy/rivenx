@@ -192,13 +192,7 @@ static void free_dynamic_picture_index(GLuint index) {
 	return dynamic_picture_unpack_buffer;
 }
 
-- (id)initWithTexture:(GLuint)texid samplingRect:(NSRect)samplingRect renderRect:(NSRect)renderRect owner:(id)owner {	
-	// compute common vertex values
-	float vertex_left_x = renderRect.origin.x;
-	float vertex_right_x = vertex_left_x + renderRect.size.width;
-	float vertex_bottom_y = renderRect.origin.y;
-	float vertex_top_y = renderRect.origin.y + renderRect.size.height;
-	
+- (id)initWithTexture:(GLuint)texid samplingRect:(NSRect)sampling_rect renderRect:(NSRect)render_rect owner:(id)owner {
 	CGLContextObj cgl_ctx = [g_worldView loadContext];
 	CGLLockContext(cgl_ctx);
 	
@@ -213,32 +207,32 @@ static void free_dynamic_picture_index(GLuint index) {
 	
 	// 4 vertices per picture [<position.x position.y> <texcoord0.s texcoord0.t>], floats, triangle strip primitives
 	// vertex 1
-	vertex_attributes[0] = vertex_left_x;
-	vertex_attributes[1] = vertex_bottom_y;
+	vertex_attributes[0] = render_rect.origin.x;
+	vertex_attributes[1] = render_rect.origin.y;
 	
-	vertex_attributes[2] = samplingRect.origin.x;
-	vertex_attributes[3] = samplingRect.origin.y + samplingRect.size.height;
+	vertex_attributes[2] = sampling_rect.origin.x;
+	vertex_attributes[3] = sampling_rect.origin.y + sampling_rect.size.height;
 	
 	// vertex 2
-	vertex_attributes[4] = vertex_right_x;
-	vertex_attributes[5] = vertex_bottom_y;
+	vertex_attributes[4] = render_rect.origin.x + render_rect.size.width;
+	vertex_attributes[5] = render_rect.origin.y;
 	
-	vertex_attributes[6] = samplingRect.origin.x + samplingRect.size.width;
-	vertex_attributes[7] = samplingRect.origin.y + samplingRect.size.height;
+	vertex_attributes[6] = sampling_rect.origin.x + sampling_rect.size.width;
+	vertex_attributes[7] = sampling_rect.origin.y + sampling_rect.size.height;
 	
 	// vertex 3
-	vertex_attributes[8] = vertex_left_x;
-	vertex_attributes[9] = vertex_top_y;
+	vertex_attributes[8] = render_rect.origin.x;
+	vertex_attributes[9] = render_rect.origin.y + render_rect.size.height;
 	
-	vertex_attributes[10] = samplingRect.origin.x;
-	vertex_attributes[11] = samplingRect.origin.y;
+	vertex_attributes[10] = sampling_rect.origin.x;
+	vertex_attributes[11] = sampling_rect.origin.y;
 	
 	// vertex 4
-	vertex_attributes[12] = vertex_right_x;
-	vertex_attributes[13] = vertex_top_y;
+	vertex_attributes[12] = render_rect.origin.x + render_rect.size.width;
+	vertex_attributes[13] = render_rect.origin.y + render_rect.size.height;
 	
-	vertex_attributes[14] = samplingRect.origin.x + samplingRect.size.width;
-	vertex_attributes[15] = samplingRect.origin.y;
+	vertex_attributes[14] = sampling_rect.origin.x + sampling_rect.size.width;
+	vertex_attributes[15] = sampling_rect.origin.y;
 	
 	if (GLEE_APPLE_flush_buffer_range)
 		glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, index * 16 * sizeof(GLfloat), 16);

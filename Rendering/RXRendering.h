@@ -139,7 +139,7 @@ CF_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) {
 	return NSMakePoint((float)x, (float)y);
 }
 
-CF_INLINE NSRect RXMakeNSRect(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) {
+CF_INLINE NSRect RXMakeCompositeDisplayRect(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) {
 	return NSMakeRect((float)left, (float)(kRXCardViewportSize.height - bottom), (float)(right - left), (float)(bottom - top));
 }
 

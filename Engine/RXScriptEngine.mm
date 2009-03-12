@@ -864,49 +864,63 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #pragma mark -
 #pragma mark dynamic pictures
 
-- (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive displayRect:(NSRect)displayRect samplingRect:(NSRect)samplingRect {
+- (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive displayRect:(NSRect)display_rect samplingRect:(NSRect)sampling_rect {
 	// get the resource descriptor for the tBMP resource
 	NSError* error;
-	NSDictionary* pictureDescriptor = [archive bitmapDescriptorWithID:ID error:&error];
-	if (!pictureDescriptor)
+	NSDictionary* picture_descriptor = [archive bitmapDescriptorWithID:ID error:&error];
+	if (!picture_descriptor)
 		@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not get a picture resource's picture descriptor." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+	GLsizei picture_width = [[picture_descriptor objectForKey:@"Width"] intValue];
+	GLsizei picture_height = [[picture_descriptor objectForKey:@"Height"] intValue];
 	
-	// if the samplingRect is empty, use the picture's full resolution
-	if (NSIsEmptyRect(samplingRect))
-		samplingRect.size = NSMakeSize([[pictureDescriptor objectForKey:@"Width"] floatValue], [[pictureDescriptor objectForKey:@"Height"] floatValue]);
-	if (displayRect.size.width > samplingRect.size.width)
-		displayRect.size.width = samplingRect.size.width;
-	if (displayRect.size.height > samplingRect.size.height)
-		displayRect.size.height = samplingRect.size.height;
+	// if the sampling rect is empty, use the picture's full resolution
+	if (NSIsEmptyRect(sampling_rect))
+		sampling_rect.size = NSMakeSize(picture_width, picture_height);
+	
+	// clamp the size of the sampling rect to the picture's resolution
+	if (sampling_rect.size.width > picture_width)
+		sampling_rect.size.width = picture_width;
+	if (sampling_rect.size.height > picture_height) {
+		sampling_rect.origin.y += sampling_rect.size.height - picture_height;
+		sampling_rect.size.height = picture_height;
+	}
+	
+	// make sure the display rect is not larger than the picture -- pictures are clipped to the top-left corner of their display rects, they're never scaled
+	if (display_rect.size.width > sampling_rect.size.width)
+		display_rect.size.width = sampling_rect.size.width;
+	if (display_rect.size.height > sampling_rect.size.height) {
+		display_rect.origin.y += display_rect.size.height - sampling_rect.size.height;
+		display_rect.size.height = sampling_rect.size.height;
+	}
 	
 	// compute the size of the buffer needed to store the texture; we'll be using MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED as the texture format, which is 4 bytes per pixel
-	GLsizeiptr pictureSize = [[pictureDescriptor objectForKey:@"Width"] intValue] * [[pictureDescriptor objectForKey:@"Height"] intValue] * 4;
+	GLsizeiptr picture_size = picture_width * picture_height * 4;
 	
 	// check if we have a cache for the tBMP ID; create a dynamic picture structure otherwise and map it to the tBMP ID
-	uintptr_t dynamicPictureKey = ID;
-	struct rx_card_dynamic_picture* dynamicPicture = (struct rx_card_dynamic_picture*)NSMapGet(_dynamicPictureMap, (const void*)dynamicPictureKey);
-	if (dynamicPicture == NULL) {
-		dynamicPicture = (struct rx_card_dynamic_picture*)malloc(sizeof(struct rx_card_dynamic_picture*));
+	uintptr_t dynamic_picture_key = ID;
+	struct rx_card_dynamic_picture* dynamic_picture = (struct rx_card_dynamic_picture*)NSMapGet(_dynamicPictureMap, (const void*)dynamic_picture_key);
+	if (dynamic_picture == NULL) {
+		dynamic_picture = (struct rx_card_dynamic_picture*)malloc(sizeof(struct rx_card_dynamic_picture*));
 		
 		// get the load context
 		CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 		CGLLockContext(cgl_ctx);
 		
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, [RXDynamicPicture sharedDynamicPictureUnpackBuffer]); glReportError();
-		GLvoid* pictureBuffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
+		GLvoid* picture_buffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
 		
 		// load the picture in the mapped picture buffer
-		if (![archive loadBitmapWithID:ID buffer:pictureBuffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
+		if (![archive loadBitmapWithID:ID buffer:picture_buffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
 			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 		// unmap the unpack buffer
 		if (GLEE_APPLE_flush_buffer_range)
-			glFlushMappedBufferRangeAPPLE(GL_PIXEL_UNPACK_BUFFER, 0, pictureSize);
+			glFlushMappedBufferRangeAPPLE(GL_PIXEL_UNPACK_BUFFER, 0, picture_size);
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
 		
 		// create a texture object and bind it
-		glGenTextures(1, &dynamicPicture->texture); glReportError();
-		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, dynamicPicture->texture); glReportError();
+		glGenTextures(1, &dynamic_picture->texture); glReportError();
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, dynamic_picture->texture); glReportError();
 		
 		// texture parameters
 		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -919,7 +933,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
 		
 		// unpack the texture
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, [[pictureDescriptor objectForKey:@"Width"] intValue], [[pictureDescriptor objectForKey:@"Height"] intValue], 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(NULL, 0)); glReportError();
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, picture_width, picture_height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(NULL, 0)); glReportError();
 		
 		// reset the unpack buffer state and re-enable client storage
 		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
@@ -932,11 +946,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		CGLUnlockContext(cgl_ctx);
 		
 		// map the tBMP ID to the dynamic picture
-		NSMapInsert(_dynamicPictureMap, (void*)dynamicPictureKey, dynamicPicture);
+		NSMapInsert(_dynamicPictureMap, (void*)dynamic_picture_key, dynamic_picture);
 	}
 	
 	// create a RXDynamicPicture object and queue it for rendering
-	RXDynamicPicture* picture = [[RXDynamicPicture alloc] initWithTexture:dynamicPicture->texture samplingRect:samplingRect renderRect:displayRect owner:self];
+	RXDynamicPicture* picture = [[RXDynamicPicture alloc] initWithTexture:dynamic_picture->texture samplingRect:sampling_rect renderRect:display_rect owner:self];
 	[controller queuePicture:picture];
 	[picture release];
 	
@@ -975,16 +989,16 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (argc < 9)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
-	NSRect field_display_rect = RXMakeNSRect(argv[1], argv[2], argv[3], argv[4] - 1);
+	NSRect display_rect = RXMakeCompositeDisplayRect(argv[1], argv[2], argv[3], argv[4]);
 	NSRect sampling_rect = NSMakeRect(argv[5], argv[6], argv[7] - argv[5], argv[8] - argv[6]);
 	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@drawing dynamic picture ID %hu in rect {{%f, %f}, {%f, %f}}", 
-			logPrefix, argv[0], field_display_rect.origin.x, field_display_rect.origin.y, field_display_rect.size.width, field_display_rect.size.height);
+			logPrefix, argv[0], display_rect.origin.x, display_rect.origin.y, display_rect.size.width, display_rect.size.height);
 #endif
 	
-	[self _drawPictureWithID:argv[0] archive:[card archive] displayRect:field_display_rect samplingRect:sampling_rect];
+	[self _drawPictureWithID:argv[0] archive:[card archive] displayRect:display_rect samplingRect:sampling_rect];
 }
 
 // 2
@@ -1239,7 +1253,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	NSRect rect;
 	if (argc > 1)
-		rect = RXMakeNSRect(argv[1], argv[2], argv[3], argv[4]);
+		rect = RXMakeCompositeDisplayRect(argv[1], argv[2], argv[3], argv[4]);
 	else
 		rect = NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height);
 	

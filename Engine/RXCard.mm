@@ -327,7 +327,7 @@ struct rx_card_picture_record {
 		}
 		
 		// allocate the hotspot object
-		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id frame:RXMakeNSRect(hspt_record->left, hspt_record->top, hspt_record->right, hspt_record->bottom) cursorID:hspt_record->mouse_cursor script:hotspot_scripts];
+		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id frame:RXMakeCompositeDisplayRect(hspt_record->left, hspt_record->top, hspt_record->right, hspt_record->bottom) cursorID:hspt_record->mouse_cursor script:hotspot_scripts];
 		if (hspt_record->name_rec >= 0)
 			[hs setName:[[_descriptor parent] hotspotNameAtIndex:hspt_record->name_rec]];
 		
@@ -475,7 +475,7 @@ struct rx_card_picture_record {
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, pictureRecords[currentListIndex].width, pictureRecords[currentListIndex].height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)); glReportError();
 		
 #if defined(DEBUG) && DEBUG > 1
-		NSRect original_rect = RXMakeNSRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
+		NSRect original_rect = RXMakeCompositeDisplayRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
 		if ((int)pictureRecords[currentListIndex].width != (int)original_rect.size.width || (int)pictureRecords[currentListIndex].height != (int)original_rect.size.height)
 			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"PLST record %hu has display rect size different than tBMP resource %hu: %dx%d vs. %dx%d", 
 				plstRecords[currentListIndex].index, plstRecords[currentListIndex].bitmap_id, (int)original_rect.size.width, (int)original_rect.size.height, (int)pictureRecords[currentListIndex].width, (int)pictureRecords[currentListIndex].height);
@@ -488,7 +488,7 @@ struct rx_card_picture_record {
 			plstRecords[currentListIndex].bottom = plstRecords[currentListIndex].top + (uint16_t)pictureRecords[currentListIndex].height;
 		
 		// compute the picture's world composite rect, and from it the vertices
-		NSRect composite_rect = RXMakeNSRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
+		NSRect composite_rect = RXMakeCompositeDisplayRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
 		
 		// vertex 1
 		vertex_attributes[0] = composite_rect.origin.x;
