@@ -47,7 +47,7 @@
 	if (!foundID)
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"card [stack] [ID]" userInfo:nil];
 
-	RXOLog2(kRXLoggingBase, kRXLoggingLevelDebug, @"changing active card to %@:%d", stackKey, cardID);
+	RXOLog2(kRXLoggingBase, kRXLoggingLevelDebug, @"changing active card to %@ %d", stackKey, cardID);
 	[renderingState setActiveCardWithStack:stackKey ID:cardID waitUntilDone:NO];
 }
 
