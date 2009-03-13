@@ -41,10 +41,7 @@
 
 - (QTMovie*)movie;
 
-- (void)setExpectedReadAheadFromDisplayLink:(CVDisplayLinkRef)displayLink;
-
-- (void)setWorkingColorSpace:(CGColorSpaceRef)colorspace;
-- (void)setOutputColorSpace:(CGColorSpaceRef)colorspace;
+- (CGSize)currentSize;
 
 - (BOOL)looping;
 - (void)setLooping:(BOOL)flag;
@@ -58,9 +55,12 @@
 - (void)setPlaybackSelection:(QTTimeRange)selection;
 - (void)clearPlaybackSelection;
 
-- (CGSize)currentSize;
-
 - (CGRect)renderRect;
 - (void)setRenderRect:(CGRect)rect;
+
+- (void)setExpectedReadAheadFromDisplayLink:(CVDisplayLinkRef)displayLink;
+
+- (void)setWorkingColorSpace:(CGColorSpaceRef)colorspace;
+- (void)setOutputColorSpace:(CGColorSpaceRef)colorspace;
 
 @end

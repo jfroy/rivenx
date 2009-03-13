@@ -273,26 +273,8 @@
 	return _movie;
 }
 
-- (void)setExpectedReadAheadFromDisplayLink:(CVDisplayLinkRef)displayLink {
-	CVTime rawOVL = CVDisplayLinkGetOutputVideoLatency(displayLink);
-	
-	// if the OVL is indefinite, exit
-	if (rawOVL.flags | kCVTimeIsIndefinite)
-		return;
-	
-	// set the expected read ahead
-	SInt64 ovl = rawOVL.timeValue / rawOVL.timeScale;
-	CFNumberRef ovlNumber = CFNumberCreate(NULL, kCFNumberSInt64Type, &ovl);
-	QTVisualContextSetAttribute(_visualContext, kQTVisualContextExpectedReadAheadKey, ovlNumber);
-	CFRelease(ovlNumber);
-}
-
-- (void)setWorkingColorSpace:(CGColorSpaceRef)colorspace {
-	QTVisualContextSetAttribute(_visualContext, kQTVisualContextWorkingColorSpaceKey, colorspace);
-}
-
-- (void)setOutputColorSpace:(CGColorSpaceRef)colorspace {
-	QTVisualContextSetAttribute(_visualContext, kQTVisualContextOutputColorSpaceKey, colorspace);
+- (CGSize)currentSize {
+	return _currentSize;
 }
 
 - (BOOL)looping {
@@ -301,6 +283,7 @@
 
 - (void)setLooping:(BOOL)flag {
 	[_movie setAttribute:[NSNumber numberWithBool:flag] forKey:QTMovieLoopsAttribute];
+	[self clearPlaybackSelection];
 	
 	if (flag) {
 		// ladies and gentlemen, because QuickTime fails at life, here is the seamless movie hack
@@ -349,15 +332,12 @@
 
 - (void)setPlaybackSelection:(QTTimeRange)selection {
 	[_movie setSelection:selection];
+	[self setLooping:NO];
 	[_movie setAttribute:[NSNumber numberWithBool:YES] forKey:QTMoviePlaysSelectionOnlyAttribute];
 }
 
 - (void)clearPlaybackSelection {
 	[_movie setAttribute:[NSNumber numberWithBool:NO] forKey:QTMoviePlaysSelectionOnlyAttribute];
-}
-
-- (CGSize)currentSize {
-	return _currentSize;
 }
 
 - (CGRect)renderRect {
@@ -383,6 +363,28 @@
 	
 	_coordinates[6] = _renderRect.origin.x;
 	_coordinates[7] = _renderRect.origin.y + _renderRect.size.height;
+}
+
+- (void)setExpectedReadAheadFromDisplayLink:(CVDisplayLinkRef)displayLink {
+	CVTime rawOVL = CVDisplayLinkGetOutputVideoLatency(displayLink);
+	
+	// if the OVL is indefinite, exit
+	if (rawOVL.flags | kCVTimeIsIndefinite)
+		return;
+	
+	// set the expected read ahead
+	SInt64 ovl = rawOVL.timeValue / rawOVL.timeScale;
+	CFNumberRef ovlNumber = CFNumberCreate(NULL, kCFNumberSInt64Type, &ovl);
+	QTVisualContextSetAttribute(_visualContext, kQTVisualContextExpectedReadAheadKey, ovlNumber);
+	CFRelease(ovlNumber);
+}
+
+- (void)setWorkingColorSpace:(CGColorSpaceRef)colorspace {
+	QTVisualContextSetAttribute(_visualContext, kQTVisualContextWorkingColorSpaceKey, colorspace);
+}
+
+- (void)setOutputColorSpace:(CGColorSpaceRef)colorspace {
+	QTVisualContextSetAttribute(_visualContext, kQTVisualContextOutputColorSpaceKey, colorspace);
 }
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
