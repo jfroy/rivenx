@@ -2444,9 +2444,17 @@ DEFINE_COMMAND(xjschool280_resetright) {
 	[[g_world gameState] setUnsignedShort:0 forKey:@"jrightpos"];
 }
 
-- (void)_configureLeftSnackVillagerMovie:(NSNumber*)stepsNumber {
-	uint16_t level_of_doom = [[g_world gameState] unsignedShortForKey:@"jleftpos"];
-	uintptr_t k = 3;
+- (void)_configureDoomedVillagerMovie:(NSNumber*)stepsNumber {
+	uint16_t level_of_doom;
+	uintptr_t k;
+	if ([[g_world gameState] unsignedShortForKey:@"jwharkpos"] == 1) {
+		level_of_doom = [[g_world gameState] unsignedShortForKey:@"jleftpos"];
+		k = 3;
+	} else {
+		level_of_doom = [[g_world gameState] unsignedShortForKey:@"jrightpos"];
+		k = 5;
+	}
+	
 	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
 	
 	// compute the duration per tick
@@ -2458,9 +2466,17 @@ DEFINE_COMMAND(xjschool280_resetright) {
 	[movie setPlaybackSelection:movie_range];
 }
 
-- (void)_configureForResetLeftVillagerMovie {
-	uint16_t level_of_doom = [[g_world gameState] unsignedShortForKey:@"jleftpos"];
-	uintptr_t k = 3;
+- (void)_configureForResetDoomedVillagerMovie {
+	uint16_t level_of_doom;
+	uintptr_t k;
+	if ([[g_world gameState] unsignedShortForKey:@"jwharkpos"] == 0) {
+		level_of_doom = [[g_world gameState] unsignedShortForKey:@"jleftpos"];
+		k = 3;
+	} else {
+		level_of_doom = [[g_world gameState] unsignedShortForKey:@"jrightpos"];
+		k = 5;
+	}
+	
 	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
 	
 	// compute the duration per tick
@@ -2468,48 +2484,15 @@ DEFINE_COMMAND(xjschool280_resetright) {
 	duration.timeValue /= 19;
 	
 	// set the movie's playback range
-	QTTimeRange movie_range = QTMakeTimeRange(QTMakeTime(0, duration.timeScale), QTMakeTime(duration.timeValue * level_of_doom, duration.timeScale));
-	[movie setPlaybackSelection:movie_range];
+//	QTTimeRange movie_range = QTMakeTimeRange(QTMakeTime(0, duration.timeScale), QTMakeTime(duration.timeValue * level_of_doom, duration.timeScale));
+//	[movie setPlaybackSelection:movie_range];
+	[movie clearPlaybackSelection];
 	
 	// play the movie backwards
 	[[movie movie] setMuted:YES];
 	[self _stopMovie:movie];
-	[[movie movie] setRate:-1.0f];
 	[self _playMovie:movie];
-}
-
-- (void)_configureRightSnackVillagerMovie:(NSNumber*)stepsNumber {
-	uint16_t level_of_doom = [[g_world gameState] unsignedShortForKey:@"jrightpos"];
-	uintptr_t k = 5;
-	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
-	
-	// compute the duration per tick
-	QTTime duration = [[movie movie] duration];
-	duration.timeValue /= 19;
-	
-	// set the movie's playback range
-	QTTimeRange movie_range = QTMakeTimeRange(QTMakeTime(duration.timeValue * level_of_doom, duration.timeScale), QTMakeTime(duration.timeValue * [stepsNumber unsignedShortValue], duration.timeScale));
-	[movie setPlaybackSelection:movie_range];
-}
-
-- (void)_configureForResetRightVillagerMovie {
-	uint16_t level_of_doom = [[g_world gameState] unsignedShortForKey:@"jrightpos"];
-	uintptr_t k = 5;
-	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
-	
-	// compute the duration per tick
-	QTTime duration = [[movie movie] duration];
-	duration.timeValue /= 19;
-	
-	// set the movie's playback range
-	QTTimeRange movie_range = QTMakeTimeRange(QTMakeTime(0, duration.timeScale), QTMakeTime(duration.timeValue * level_of_doom, duration.timeScale));
-	[movie setPlaybackSelection:movie_range];
-	
-	// play the movie backwards
-	[[movie movie] setMuted:YES];
-	[self _stopMovie:movie];
-	[[movie movie] setRate:-1.0f];
-	[self _playMovie:movie];
+	[[movie movie] setRate:-2.0f];
 }
 
 - (void)_resetVillagerDoomMovies {
@@ -2537,82 +2520,74 @@ DEFINE_COMMAND(xschool280_playwhark) {
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@rolled a %hu", logPrefix, the_number);
 #endif
 
-	uint16_t whark_pos = [state unsignedShortForKey:@"jwharkpos"];
-	uint16_t level_of_doom;
-	if (whark_pos == 1) {
+	NSString* villager_position_variable;
+	uint16_t spin_mlst;
+	uint16_t overlay_plst;
+	uint16_t doom_mlst;
+	uint16_t snak_mlst;
+	uint16_t blsts_to_activate[2];
+	if ([state unsignedShortForKey:@"jwharkpos"] == 1) {
 		// to the left
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
-		
-		// in a transaction, re-blit the base picture, blit the on-the-left overlay, blit the number picture and disable the spin movie
-		DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
-		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
-		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 12);
-		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1 + the_number);
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 1);
-		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
-		
-		// get the current level of the villager
-		level_of_doom = [state unsignedShortForKey:@"jleftpos"];
-		
-		// configure the left villager movie and play it
-		[self performSelectorOnMainThread:@selector(_configureLeftSnackVillagerMovie:) withObject:[NSNumber numberWithUnsignedShort:the_number] waitUntilDone:YES];
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 3);
-		
-		// update the left villager's doom level
-		[state setUnsignedShort:level_of_doom + the_number forKey:@"jleftpos"];
-		
-		// is it time for a snack?
-		if (level_of_doom + the_number > 19) {
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, 4);
-			sleep(6);
-			[self performSelectorOnMainThread:@selector(_configureForResetLeftVillagerMovie) withObject:nil waitUntilDone:YES];
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 4);
-			
-			[self performSelectorOnMainThread:@selector(_resetVillagerDoomMovies) withObject:nil waitUntilDone:YES];
-			[state setUnsignedShort:0 forKey:@"jleftpos"];
-			[state setUnsignedShort:0 forKey:@"jrightpos"];
-		}
-		
-		// disable rotateleft and enable rotateright
-		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, 2);
-		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, 4);
+		villager_position_variable = @"jleftpos";
+		spin_mlst = 1;
+		overlay_plst = 12;
+		doom_mlst = 3;
+		snak_mlst = 4;
+		blsts_to_activate[0] = 2;
+		blsts_to_activate[1] = 4;
 	} else {
 		// to the right
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+		villager_position_variable = @"jrightpos";
+		spin_mlst = 2;
+		overlay_plst = 13;
+		doom_mlst = 5;
+		snak_mlst = 6;
+		blsts_to_activate[0] = 1;
+		blsts_to_activate[1] = 3;
+	}
+	
+	// to the left
+	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, spin_mlst);
+	
+	// in a transaction, re-blit the base picture, blit the overlay picture, blit the number picture and disable the spin movie
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, overlay_plst);
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1 + the_number);
+	DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, spin_mlst);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+	
+	// get the villager's position
+	uint16_t level_of_doom = [state unsignedShortForKey:villager_position_variable];
+	
+	// configure the doomed villager movie and play it
+	[self performSelectorOnMainThread:@selector(_configureDoomedVillagerMovie:) withObject:[NSNumber numberWithUnsignedShort:the_number] waitUntilDone:YES];
+	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, doom_mlst);
+	
+	// update the villager's doom level
+	[state setUnsignedShort:level_of_doom + the_number forKey:villager_position_variable];
+	
+	// is it time for a snack?
+	if (level_of_doom + the_number > 19) {
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, snak_mlst);
+		sleep(6);
+		[self performSelectorOnMainThread:@selector(_configureForResetDoomedVillagerMovie) withObject:nil waitUntilDone:YES];
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, snak_mlst);
 		
-		// in a transaction, re-blit the base picture, blit the on-the-right overlay, blit the number picture and disable the spin movie
 		DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
+		[self performSelectorOnMainThread:@selector(_resetVillagerDoomMovies) withObject:nil waitUntilDone:YES];
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, snak_mlst);
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
-		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 13);
-		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1 + the_number);
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 2);
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, overlay_plst);
 		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 		
-		level_of_doom = [state unsignedShortForKey:@"jrightpos"];
-		
-		// configure the right villager movie and play it
-		[self performSelectorOnMainThread:@selector(_configureRightSnackVillagerMovie:) withObject:[NSNumber numberWithUnsignedShort:the_number] waitUntilDone:YES];
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 5);
-		
-		// update the right villager's doom level
-		[state setUnsignedShort:level_of_doom + the_number forKey:@"jrightpos"];
-		
-		// is it time for a snack?
-		if (level_of_doom + the_number > 19) {
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, 6);
-			sleep(6);
-			[self performSelectorOnMainThread:@selector(_configureForResetRightVillagerMovie) withObject:nil waitUntilDone:YES];
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 6);
-			
-			[self performSelectorOnMainThread:@selector(_resetVillagerDoomMovies) withObject:nil waitUntilDone:YES];
-			[state setUnsignedShort:0 forKey:@"jleftpos"];
-			[state setUnsignedShort:0 forKey:@"jrightpos"];
-		}
-		
-		// enable rotateleft and disable rotateright
-		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, 1);
-		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, 3);
+		[state setUnsignedShort:0 forKey:@"jleftpos"];
+		[state setUnsignedShort:0 forKey:@"jrightpos"];
 	}
+	
+	// disable rotateleft and enable rotateright
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, blsts_to_activate[0]);
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_BLST, blsts_to_activate[1]);
 }
 
 #pragma mark -
