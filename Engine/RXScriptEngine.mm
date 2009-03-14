@@ -2466,49 +2466,6 @@ DEFINE_COMMAND(xjschool280_resetright) {
 	[movie setPlaybackSelection:movie_range];
 }
 
-- (void)_configureForResetDoomedVillagerMovie {
-	uint16_t level_of_doom;
-	uintptr_t k;
-	if ([[g_world gameState] unsignedShortForKey:@"jwharkpos"] == 0) {
-		level_of_doom = [[g_world gameState] unsignedShortForKey:@"jleftpos"];
-		k = 3;
-	} else {
-		level_of_doom = [[g_world gameState] unsignedShortForKey:@"jrightpos"];
-		k = 5;
-	}
-	
-	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
-	
-	// compute the duration per tick
-	QTTime duration = [[movie movie] duration];
-	duration.timeValue /= 19;
-	
-	// set the movie's playback range
-//	QTTimeRange movie_range = QTMakeTimeRange(QTMakeTime(0, duration.timeScale), QTMakeTime(duration.timeValue * level_of_doom, duration.timeScale));
-//	[movie setPlaybackSelection:movie_range];
-	[movie clearPlaybackSelection];
-	
-	// play the movie backwards
-	[[movie movie] setMuted:YES];
-	[self _stopMovie:movie];
-	[self _playMovie:movie];
-	[[movie movie] setRate:-2.0f];
-}
-
-- (void)_resetVillagerDoomMovies {
-	uintptr_t k = 3;
-	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
-	[self _stopMovie:movie];
-	[[movie movie] setMuted:NO];
-	[movie clearPlaybackSelection];
-	
-	k = 5;
-	movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
-	[self _stopMovie:movie];
-	[[movie movie] setMuted:NO];
-	[movie clearPlaybackSelection];
-}
-
 DEFINE_COMMAND(xschool280_playwhark) {
 	// cache the game state object
 	RXGameState* state = [g_world gameState];
@@ -2569,13 +2526,11 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	
 	// is it time for a snack?
 	if (level_of_doom + the_number > 19) {
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, snak_mlst);
-		sleep(6);
-		[self performSelectorOnMainThread:@selector(_configureForResetDoomedVillagerMovie) withObject:nil waitUntilDone:YES];
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, snak_mlst);
 		
 		DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
-		[self performSelectorOnMainThread:@selector(_resetVillagerDoomMovies) withObject:nil waitUntilDone:YES];
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 3);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 5);
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, snak_mlst);
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, overlay_plst);
