@@ -811,19 +811,20 @@ static NSMapTable* _riven_external_command_dispatch_map;
 - (void)_reallyDoPlayMovie:(RXMovie*)movie {
 	// WARNING: MUST RUN ON MAIN THREAD
 	
-	// do nothing if the movie is already playing
-	if (fabsf([[movie movie] rate]) > 0.001f)
-		return;
-	
-	// put the movie at its beginning if it's not looping or playing a selection
-	if (![movie looping] && ![movie isPlayingSelection])
-		[movie gotoBeginning];
+	// make sure the movie is playing (which is different than being rendered)
+	if (fabsf([[movie movie] rate]) < 0.001f) {	
+		// put the movie at its beginning if it's not looping or playing a selection
+		if (![movie looping] && ![movie isPlayingSelection]) {
+			[[movie movie] gotoBeginning];
+			[movie reset];
+		}
+		
+		// begin playback
+		[[movie movie] play];
+	}
 	
 	// queue the movie for rendering
 	[controller enableMovie:movie];
-	
-	// begin playback
-	[[movie movie] play];
 }
 
 - (void)_playMovie:(RXMovie*)movie {
@@ -859,6 +860,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// stop playback
 	[[movie movie] stop];
+	[movie reset];
 }
 
 #pragma mark -

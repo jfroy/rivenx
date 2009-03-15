@@ -184,9 +184,6 @@
 		@throw [NSException exceptionWithName:@"RXMovieException" reason:@"SetMovieVisualContext failed." userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
 	}
 	
-	// no valid movie texture right now
-	_invalidImage = YES;
-	
 	return self;
 }
 
@@ -247,8 +244,8 @@
 		glDeleteTextures(1, &_glTexture);
 	if (_textureStorage)
 		free(_textureStorage);
-	if (_imageBuffer)
-		CFRelease(_imageBuffer);
+	if (_image_buffer)
+		CFRelease(_image_buffer);
 	
 	CGLUnlockContext(cgl_ctx);
 	
@@ -367,11 +364,6 @@
 	[_movie setVolume:volume];
 }
 
-- (void)gotoBeginning {
-	_invalidImage = YES;
-	[_movie gotoBeginning];
-}
-
 - (BOOL)isPlayingSelection {
 	return [[_movie attributeForKey:QTMoviePlaysSelectionOnlyAttribute] boolValue];
 }
@@ -384,6 +376,28 @@
 
 - (void)clearPlaybackSelection {
 	[_movie setAttribute:[NSNumber numberWithBool:NO] forKey:QTMoviePlaysSelectionOnlyAttribute];
+}
+
+- (void)setExpectedReadAheadFromDisplayLink:(CVDisplayLinkRef)displayLink {
+	CVTime rawOVL = CVDisplayLinkGetOutputVideoLatency(displayLink);
+	
+	// if the OVL is indefinite, exit
+	if (rawOVL.flags | kCVTimeIsIndefinite)
+		return;
+	
+	// set the expected read ahead
+	SInt64 ovl = rawOVL.timeValue / rawOVL.timeScale;
+	CFNumberRef ovlNumber = CFNumberCreate(NULL, kCFNumberSInt64Type, &ovl);
+	QTVisualContextSetAttribute(_visualContext, kQTVisualContextExpectedReadAheadKey, ovlNumber);
+	CFRelease(ovlNumber);
+}
+
+- (void)setWorkingColorSpace:(CGColorSpaceRef)colorspace {
+	QTVisualContextSetAttribute(_visualContext, kQTVisualContextWorkingColorSpaceKey, colorspace);
+}
+
+- (void)setOutputColorSpace:(CGColorSpaceRef)colorspace {
+	QTVisualContextSetAttribute(_visualContext, kQTVisualContextOutputColorSpaceKey, colorspace);
 }
 
 - (CGRect)renderRect {
@@ -411,26 +425,11 @@
 	_coordinates[7] = _renderRect.origin.y + _renderRect.size.height;
 }
 
-- (void)setExpectedReadAheadFromDisplayLink:(CVDisplayLinkRef)displayLink {
-	CVTime rawOVL = CVDisplayLinkGetOutputVideoLatency(displayLink);
+- (void)reset {
+	CVPixelBufferRelease(_image_buffer);
+	_image_buffer = NULL;
 	
-	// if the OVL is indefinite, exit
-	if (rawOVL.flags | kCVTimeIsIndefinite)
-		return;
-	
-	// set the expected read ahead
-	SInt64 ovl = rawOVL.timeValue / rawOVL.timeScale;
-	CFNumberRef ovlNumber = CFNumberCreate(NULL, kCFNumberSInt64Type, &ovl);
-	QTVisualContextSetAttribute(_visualContext, kQTVisualContextExpectedReadAheadKey, ovlNumber);
-	CFRelease(ovlNumber);
-}
-
-- (void)setWorkingColorSpace:(CGColorSpaceRef)colorspace {
-	QTVisualContextSetAttribute(_visualContext, kQTVisualContextWorkingColorSpaceKey, colorspace);
-}
-
-- (void)setOutputColorSpace:(CGColorSpaceRef)colorspace {
-	QTVisualContextSetAttribute(_visualContext, kQTVisualContextOutputColorSpaceKey, colorspace);
+	QTVisualContextTask(_visualContext);
 }
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
@@ -444,25 +443,25 @@
 	// does the visual context have a new image?
 	if (QTVisualContextIsNewImageAvailable(_visualContext, outputTime)) {
 		// release the old image
-		if (_imageBuffer)
-			CVPixelBufferRelease(_imageBuffer);
+		if (_image_buffer)
+			CVPixelBufferRelease(_image_buffer);
 		
 		// get the new image
-		QTVisualContextCopyImageForTime(_visualContext, kCFAllocatorDefault, outputTime, &_imageBuffer);
+		QTVisualContextCopyImageForTime(_visualContext, kCFAllocatorDefault, outputTime, &_image_buffer);
 		
 		// get the current texture's coordinates
 		GLfloat* texCoords = _coordinates + 8;
 		
 		// we may not have copied a valid image (for example, a movie with no video track)
-		if (_imageBuffer) {
-			if (CFGetTypeID(_imageBuffer) == CVOpenGLTextureGetTypeID()) {
+		if (_image_buffer) {
+			if (CFGetTypeID(_image_buffer) == CVOpenGLTextureGetTypeID()) {
 				// get the texture coordinates from the CVOpenGLTexture object and bind its texture object
-				CVOpenGLTextureGetCleanTexCoords(_imageBuffer, texCoords, texCoords + 2, texCoords + 4, texCoords + 6);
-				glBindTexture(CVOpenGLTextureGetTarget(_imageBuffer), CVOpenGLTextureGetName(_imageBuffer)); glReportError();
+				CVOpenGLTextureGetCleanTexCoords(_image_buffer, texCoords, texCoords + 2, texCoords + 4, texCoords + 6);
+				glBindTexture(CVOpenGLTextureGetTarget(_image_buffer), CVOpenGLTextureGetName(_image_buffer)); glReportError();
 			} else {
-				GLsizei width = CVPixelBufferGetWidth(_imageBuffer);
-				GLsizei height = CVPixelBufferGetHeight(_imageBuffer);
-				GLsizei bytesPerRow = CVPixelBufferGetBytesPerRow(_imageBuffer);
+				GLsizei width = CVPixelBufferGetWidth(_image_buffer);
+				GLsizei height = CVPixelBufferGetHeight(_image_buffer);
+				GLsizei bytesPerRow = CVPixelBufferGetBytesPerRow(_image_buffer);
 				
 				// compute texture coordinates
 				texCoords[0] = 0.0f;
@@ -478,11 +477,11 @@
 				texCoords[7] = 0.0f;
 				
 				// marshall the image data into the texture
-				CVPixelBufferLockBaseAddress(_imageBuffer, 0);
-				void* baseAddress = CVPixelBufferGetBaseAddress(_imageBuffer);
+				CVPixelBufferLockBaseAddress(_image_buffer, 0);
+				void* baseAddress = CVPixelBufferGetBaseAddress(_image_buffer);
 				for (GLuint row = 0; row < height; row++)
 					memcpy(BUFFER_OFFSET(_textureStorage, (row * MAX((int)_currentSize.width, 128)) << 1), BUFFER_OFFSET(baseAddress, row * bytesPerRow), width << 1);
-				CVPixelBufferUnlockBaseAddress(_imageBuffer, 0);
+				CVPixelBufferUnlockBaseAddress(_image_buffer, 0);
 				
 				// bind the texture object and update the texture data
 				glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();
@@ -493,22 +492,19 @@
 				glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, MAX(_currentSize.width, 128), height, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, _textureStorage); glReportError();
 #endif
 			}
-			
-			// mark the texture as valid
-			_invalidImage = NO;
 		}
-	} else if (_imageBuffer) {
+	} else if (_image_buffer) {
 		// bind the correct texture object
-		if (CFGetTypeID(_imageBuffer) == CVOpenGLTextureGetTypeID()) {
-			assert(CVOpenGLTextureGetTarget(_imageBuffer) == GL_TEXTURE_RECTANGLE_ARB);
-			glBindTexture(CVOpenGLTextureGetTarget(_imageBuffer), CVOpenGLTextureGetName(_imageBuffer));
+		if (CFGetTypeID(_image_buffer) == CVOpenGLTextureGetTypeID()) {
+			assert(CVOpenGLTextureGetTarget(_image_buffer) == GL_TEXTURE_RECTANGLE_ARB);
+			glBindTexture(CVOpenGLTextureGetTarget(_image_buffer), CVOpenGLTextureGetName(_image_buffer));
 		} else
 			glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture);
 		glReportError();
 	}
 	
 	// do we have an image to render?
-	if (_imageBuffer && !_invalidImage) {
+	if (_image_buffer) {
 		[gl_state bindVertexArrayObject:_vao];
 		glDrawArrays(GL_QUADS, 0, 4); glReportError();
 	}

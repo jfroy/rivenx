@@ -31,8 +31,7 @@
 	GLuint _glTexture;
 	void* _textureStorage;
 	
-	CVImageBufferRef _imageBuffer;
-	BOOL _invalidImage;
+	CVImageBufferRef _image_buffer;
 }
 
 - (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone owner:(id)owner;
@@ -50,18 +49,18 @@
 - (float)volume;
 - (void)setVolume:(float)volume;
 
-- (void)gotoBeginning;
-
 - (BOOL)isPlayingSelection;
 - (void)setPlaybackSelection:(QTTimeRange)selection;
 - (void)clearPlaybackSelection;
-
-- (CGRect)renderRect;
-- (void)setRenderRect:(CGRect)rect;
 
 - (void)setExpectedReadAheadFromDisplayLink:(CVDisplayLinkRef)displayLink;
 
 - (void)setWorkingColorSpace:(CGColorSpaceRef)colorspace;
 - (void)setOutputColorSpace:(CGColorSpaceRef)colorspace;
+
+- (CGRect)renderRect;
+- (void)setRenderRect:(CGRect)rect;
+
+- (void)reset;
 
 @end
