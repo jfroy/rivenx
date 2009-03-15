@@ -2529,15 +2529,13 @@ DEFINE_COMMAND(xschool280_playwhark) {
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, snak_mlst);
 		
 		DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 3);
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 5);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, doom_mlst);
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, snak_mlst);
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, overlay_plst);
 		DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 		
-		[state setUnsignedShort:0 forKey:@"jleftpos"];
-		[state setUnsignedShort:0 forKey:@"jrightpos"];
+		[state setUnsignedShort:0 forKey:villager_position_variable];
 	}
 	
 	// disable rotateleft and enable rotateright
@@ -2549,6 +2547,21 @@ DEFINE_COMMAND(xschool280_playwhark) {
 #pragma mark tspit dome
 
 DEFINE_COMMAND(xtisland5056_opencard) {
+
+}
+
+#pragma mark -
+#pragma mark jspit dome
+
+DEFINE_COMMAND(xjscpbtn) {
+	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+	
+	uint16_t dome_state = [[g_world gameState] unsignedShortForKey:@"jdome"];
+	if (dome_state == 1)
+		[[g_world gameState] setUnsignedShort:3 forKey:@"jdome"];
+}
+
+DEFINE_COMMAND(xjisland3500_domecheck) {
 
 }
 
