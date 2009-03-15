@@ -7,6 +7,7 @@
 //
 
 #import <pthread.h>
+#import <limits.h>
 
 #import <OpenGL/CGLMacro.h>
 
@@ -285,27 +286,72 @@
 	[_movie setAttribute:[NSNumber numberWithBool:flag] forKey:QTMovieLoopsAttribute];
 	[self clearPlaybackSelection];
 	
-	if (flag) {
+	if (flag && !_seamless_looping_hacked) {
 		// ladies and gentlemen, because QuickTime fails at life, here is the seamless movie hack
 		
-		// 1. get the movie's duration
+		// get the movie's duration
 		QTTime duration = [_movie duration];
 		
-		// 2. get time position of the movie's last media sample
-		TimeValue last_sample_tv;
-		GetMovieNextInterestingTime([_movie quickTimeMovie], nextTimeMediaSample, 0, NULL, (TimeValue)duration.timeValue, -1, &last_sample_tv, NULL);
+		// find the video and audio tracks; bail out if the movie doesn't have exactly one of each or only one video track
+		NSArray* tracks = [_movie tracksOfMediaType:QTMediaTypeVideo];
+		if ([tracks count] != 1)
+			return;
+		QTTrack* video_track = [tracks objectAtIndex:0];
+		
+		tracks = [_movie tracksOfMediaType:QTMediaTypeSound];
+		if ([tracks count] > 1)
+			return;
+		QTTrack* audio_track = ([tracks count]) ? [tracks objectAtIndex:0] : nil;
+		
+#if defined(DEBUG)
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"using smooth movie looping hack for %@", self);
+#endif
+		
+		TimeValue tv;
+		
+		// find the movie's last sample time
+		GetMovieNextInterestingTime([_movie quickTimeMovie], nextTimeStep | nextTimeEdgeOK, 0, NULL, (TimeValue)duration.timeValue, -1, &tv, NULL);
 		assert(GetMoviesError() == noErr);
-		QTTime last_sample_time = QTMakeTime(last_sample_tv, duration.timeScale);
+		__attribute__((unused)) QTTime last_sample_time = QTMakeTime(tv, duration.timeScale);
 		
-		// 3. insert the movie's samples, from time 0 until the sample time of the movie's last sample, over and over and over again until the movie is 30 minutes long
-		QTTimeRange range = QTMakeTimeRange(QTZeroTime, last_sample_time);
+		// find the beginning time of the video track's last sample
+		QTTimeRange track_range = [[video_track attributeForKey:QTTrackRangeAttribute] QTTimeRangeValue];
+		GetTrackNextInterestingTime([video_track quickTimeTrack], nextTimeStep | nextTimeEdgeOK, (TimeValue)track_range.duration.timeValue, -1, &tv, NULL);
+		assert(GetMoviesError() == noErr);
+		QTTime video_last_sample_time = QTMakeTime(tv, duration.timeScale);
 		
+		GetTrackNextInterestingTime([video_track quickTimeTrack], nextTimeStep, tv, -1, &tv, NULL);
+		assert(GetMoviesError() == noErr);
+		QTTime video_second_last_sample_time = QTMakeTime(tv, duration.timeScale);
+		
+		// make the movie editable
 		[_movie setAttribute:[NSNumber numberWithBool:YES] forKey:QTMovieEditableAttribute];
-		while ((double)duration.timeValue / duration.timeScale < 60.0 * 30.0) {
-			[_movie insertSegmentOfMovie:_movie timeRange:range atTime:last_sample_time];
-			duration = [_movie duration];
+		
+		QTTime last_sample_duration = QTTimeDecrement(duration, video_last_sample_time);
+		QTTime second_last_sample_duration = QTTimeDecrement(video_last_sample_time, video_second_last_sample_time);
+		
+		// loop the video samples using the *last video sample time plus half the last video sample duration* as the duration
+		if (QTTimeCompare(last_sample_duration, second_last_sample_duration) == NSOrderedDescending)
+			track_range = QTMakeTimeRange(QTZeroTime, QTTimeIncrement(video_last_sample_time, QTMakeTime((duration.timeValue - video_last_sample_time.timeValue) / 2, duration.timeScale)));
+		for (int i = 0; i < 300; i++)
+			[video_track insertSegmentOfTrack:video_track timeRange:track_range atTime:track_range.duration];
+		
+		// loop the audio samples using the *last video sample time* as the duration
+		if (audio_track) {
+			track_range = QTMakeTimeRange(QTZeroTime, video_last_sample_time);
+			for (int i = 0; i < 300; i++)
+				[audio_track insertSegmentOfTrack:audio_track timeRange:track_range atTime:track_range.duration];
 		}
+		
+		// we're done editing the movie
 		[_movie setAttribute:[NSNumber numberWithBool:NO] forKey:QTMovieEditableAttribute];
+		
+		// flag the movie as being hacked for looping
+		_seamless_looping_hacked = YES;
+		
+#if defined(DEBUG) && DEBUG > 1
+		[_movie writeToFile:[[NSString stringWithFormat:@"~/Desktop/looping %p.mov", self] stringByExpandingTildeInPath] withAttributes:nil];
+#endif
 	}
 }
 

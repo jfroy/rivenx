@@ -660,6 +660,9 @@ init_failure:
 	if ([NSThread currentThread] != [g_world scriptThread])
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activateSoundGroup: MUST RUN ON SCRIPT THREAD" userInfo:nil];
 	
+	if (!RXEngineGetBool(@"rendering.ambient"))
+		return;
+	
 	// cache a pointer to the audio renderer
 	RX::AudioRenderer* renderer = (reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer]));
 	

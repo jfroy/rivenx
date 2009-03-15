@@ -22,6 +22,7 @@
 	CGSize _currentSize;
 	
 	BOOL loop;
+	BOOL _seamless_looping_hacked;
 	
 	GLuint _vao;
 	GLfloat _coordinates[16];
