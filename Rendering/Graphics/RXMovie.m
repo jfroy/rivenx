@@ -429,7 +429,12 @@
 	CVPixelBufferRelease(_image_buffer);
 	_image_buffer = NULL;
 	
+	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+	CGLLockContext(cgl_ctx);
+	
 	QTVisualContextTask(_visualContext);
+	
+	CGLUnlockContext(cgl_ctx);
 }
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
@@ -447,7 +452,10 @@
 			CVPixelBufferRelease(_image_buffer);
 		
 		// get the new image
+		CGLContextObj load_ctx = [RXGetWorldView() loadContext];
+		CGLLockContext(load_ctx);
 		QTVisualContextCopyImageForTime(_visualContext, kCFAllocatorDefault, outputTime, &_image_buffer);
+		CGLUnlockContext(load_ctx);
 		
 		// get the current texture's coordinates
 		GLfloat* texCoords = _coordinates + 8;
