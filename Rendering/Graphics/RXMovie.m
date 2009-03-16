@@ -30,7 +30,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingRendering, kRXLoggingLevelDebug, @"deallocating");
 #endif
-
+	
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	
@@ -452,7 +454,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	// WARNING: MUST RUN ON MAIN THREAD
 	float rate = [[[notification userInfo] objectForKey:QTMovieRateDidChangeNotificationParameter] floatValue];
 	if (fabsf(rate) < 0.001f)
-		[[NSNotificationCenter defaultCenter] postNotificationName:RXMoviePlaybackDidEndNotification object:self userInfo:nil];
+		[[NSNotificationCenter defaultCenter] postNotificationName:RXMoviePlaybackDidEndNotification object:self];
 }
 
 - (void)reset {

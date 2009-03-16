@@ -822,7 +822,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// WARNING: MUST RUN ON MAIN THREAD
 	
 	// register for rate notifications on the blocking movie handler
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieFinishedPlaying:) name:RXMoviePlaybackDidEndNotification object:movie];
+	if ([movie isKindOfClass:[RXMovieProxy class]])
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieFinishedPlaying:) name:RXMoviePlaybackDidEndNotification object:[(RXMovieProxy*)movie proxiedMovie]];
+	else
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieFinishedPlaying:) name:RXMoviePlaybackDidEndNotification object:movie];
 	
 	// hide the mouse cursor
 	if (!_did_hide_mouse) {
