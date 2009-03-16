@@ -14,6 +14,9 @@
 #import "RXMovie.h"
 
 
+NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotification";
+
+
 @interface RXMovieReaper : NSObject {
 @public
 	QTMovie* movie;
@@ -79,18 +82,21 @@
 	}
 	
 	// no particular movie hints initially
-	_movieHints = 0;
+	_hints = 0;
 	
 	// we do not restrict playback to the selection initially
 	[_movie setAttribute:[NSNumber numberWithBool:NO] forKey:QTMoviePlaysSelectionOnlyAttribute];
 	
 	// cache the movie's current size
-	[[_movie attributeForKey:QTMovieCurrentSizeAttribute] getValue:&_currentSize];
+	[[_movie attributeForKey:QTMovieCurrentSizeAttribute] getValue:&_current_size];
+	
+	// register for rate change notifications
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleRateChange:) name:QTMovieRateDidChangeNotification object:_movie];
 	
 	// pixel buffer attributes
 	NSMutableDictionary* pixelBufferAttributes = [NSMutableDictionary new];
-	[pixelBufferAttributes setObject:[NSNumber numberWithInt:_currentSize.width] forKey:(NSString*)kCVPixelBufferWidthKey];
-	[pixelBufferAttributes setObject:[NSNumber numberWithInt:_currentSize.height] forKey:(NSString*)kCVPixelBufferHeightKey];
+	[pixelBufferAttributes setObject:[NSNumber numberWithInt:_current_size.width] forKey:(NSString*)kCVPixelBufferWidthKey];
+	[pixelBufferAttributes setObject:[NSNumber numberWithInt:_current_size.height] forKey:(NSString*)kCVPixelBufferHeightKey];
 	[pixelBufferAttributes setObject:[NSNumber numberWithInt:4] forKey:(NSString*)kCVPixelBufferBytesPerRowAlignmentKey];
 	[pixelBufferAttributes setObject:[NSNumber numberWithBool:YES] forKey:(NSString*)kCVPixelBufferOpenGLCompatibilityKey];
 #if defined(__LITTLE_ENDIAN__)
@@ -114,12 +120,12 @@
 	NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
 	
 	// if the movie is smaller than 128 bytes in width, using a main-memory pixel buffer visual context and override the width to 128 bytes
-	if (_currentSize.width < 32) {
+	if (_current_size.width < 32) {
 #if defined(DEBUG)
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"using main memory pixel buffer path");
 #endif
 		
-		err = QTPixelBufferContextCreate(NULL, visualContextOptions, &_visualContext);
+		err = QTPixelBufferContextCreate(NULL, visualContextOptions, &_vc);
 		CFRelease(visualContextOptions);
 		if (err != noErr) {
 			[self release];
@@ -127,8 +133,8 @@
 		}
 		
 		// allocate a texture storage buffer and setup a texture object
-		_textureStorage = malloc(MAX((int)_currentSize.width, 128) * (int)_currentSize.height * 2);
-		bzero(_textureStorage, MAX((int)_currentSize.width, 128) * (int)_currentSize.height * 2);
+		_texture_storage = malloc(MAX((int)_current_size.width, 128) * (int)_current_size.height * 2);
+		bzero(_texture_storage, MAX((int)_current_size.width, 128) * (int)_current_size.height * 2);
 		
 		glGenTextures(1, &_glTexture); glReportError();
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();
@@ -141,12 +147,12 @@
 		glReportError();
 		
 #if defined(__LITTLE_ENDIAN__)
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB8, MAX(_currentSize.width, 128), _currentSize.height, 0, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, _textureStorage); glReportError();
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB8, MAX(_current_size.width, 128), _current_size.height, 0, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, _texture_storage); glReportError();
 #else
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB8, MAX(_currentSize.width, 128), _currentSize.height, 0, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, _textureStorage); glReportError();
 #endif
 	} else {
-		err = QTOpenGLTextureContextCreate(NULL, cgl_ctx, pixel_format, visualContextOptions, &_visualContext);
+		err = QTOpenGLTextureContextCreate(NULL, cgl_ctx, pixel_format, visualContextOptions, &_vc);
 		CFRelease(visualContextOptions);
 		if (err != noErr) {
 			[self release];
@@ -172,13 +178,13 @@
 	CGLUnlockContext(cgl_ctx);
 	
 	// render at (0, 0), natural size; this will update certain attributes in the visual context
-	_renderRect.origin.x = 0.0f;
-	_renderRect.origin.y = 0.0f;
-	_renderRect.size = _currentSize;
-	[self setRenderRect:_renderRect];
+	_render_rect.origin.x = 0.0f;
+	_render_rect.origin.y = 0.0f;
+	_render_rect.size = _current_size;
+	[self setRenderRect:_render_rect];
 	
 	// set the movie's visual context
-	err = SetMovieVisualContext(movie, _visualContext);
+	err = SetMovieVisualContext(movie, _vc);
 	if (err != noErr) {
 		[self release];
 		@throw [NSException exceptionWithName:@"RXMovieException" reason:@"SetMovieVisualContext failed." userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
@@ -200,10 +206,11 @@
 	Boolean async = true;
 	Boolean idleImport = true;
 //	Boolean optimizations = true;
-	_visualContext = NULL;
+	
+	_vc = NULL;
 	QTNewMoviePropertyElement newMovieProperties[] = {
 		{kQTPropertyClass_DataLocation, kQTDataLocationPropertyID_CFURL, sizeof(NSURL *), &movieURL, 0},
-		{kQTPropertyClass_Context, kQTContextPropertyID_VisualContext, sizeof(QTVisualContextRef), &_visualContext, 0},
+		{kQTPropertyClass_Context, kQTContextPropertyID_VisualContext, sizeof(QTVisualContextRef), &_vc, 0},
 		{kQTPropertyClass_NewMovieProperty, kQTNewMoviePropertyID_Active, sizeof(Boolean), &active, 0}, 
 		{kQTPropertyClass_NewMovieProperty, kQTNewMoviePropertyID_DontInteractWithUser, sizeof(Boolean), &dontInteract, 0}, 
 		{kQTPropertyClass_MovieInstantiation, kQTMovieInstantiationPropertyID_DontAskUnresolvedDataRefs, sizeof(Boolean), &dontAskUnresolved, 0},
@@ -242,17 +249,17 @@
 		glDeleteVertexArraysAPPLE(1, &_vao);
 	if (_glTexture)
 		glDeleteTextures(1, &_glTexture);
-	if (_textureStorage)
-		free(_textureStorage);
+	if (_texture_storage)
+		free(_texture_storage);
 	if (_image_buffer)
 		CFRelease(_image_buffer);
 	
 	CGLUnlockContext(cgl_ctx);
 	
-	if (_movie || _visualContext) {
+	if (_movie || _vc) {
 		RXMovieReaper* reaper = [RXMovieReaper new];
 		reaper->movie = _movie;
-		reaper->vc = _visualContext;
+		reaper->vc = _vc;
 		
 		if (!pthread_main_np())
 			[reaper performSelectorOnMainThread:@selector(release) withObject:nil waitUntilDone:NO];
@@ -267,12 +274,12 @@
 	return _owner;
 }
 
-- (QTMovie*)movie {
-	return _movie;
+- (CGSize)currentSize {
+	return _current_size;
 }
 
-- (CGSize)currentSize {
-	return _currentSize;
+- (QTTime)duration {
+	return [_movie duration];
 }
 
 - (BOOL)looping {
@@ -388,51 +395,73 @@
 	// set the expected read ahead
 	SInt64 ovl = rawOVL.timeValue / rawOVL.timeScale;
 	CFNumberRef ovlNumber = CFNumberCreate(NULL, kCFNumberSInt64Type, &ovl);
-	QTVisualContextSetAttribute(_visualContext, kQTVisualContextExpectedReadAheadKey, ovlNumber);
+	QTVisualContextSetAttribute(_vc, kQTVisualContextExpectedReadAheadKey, ovlNumber);
 	CFRelease(ovlNumber);
 }
 
 - (void)setWorkingColorSpace:(CGColorSpaceRef)colorspace {
-	QTVisualContextSetAttribute(_visualContext, kQTVisualContextWorkingColorSpaceKey, colorspace);
+	QTVisualContextSetAttribute(_vc, kQTVisualContextWorkingColorSpaceKey, colorspace);
 }
 
 - (void)setOutputColorSpace:(CGColorSpaceRef)colorspace {
-	QTVisualContextSetAttribute(_visualContext, kQTVisualContextOutputColorSpaceKey, colorspace);
+	QTVisualContextSetAttribute(_vc, kQTVisualContextOutputColorSpaceKey, colorspace);
 }
 
 - (CGRect)renderRect {
-	return _renderRect;
+	return _render_rect;
 }
 
 - (void)setRenderRect:(CGRect)rect {
-	_renderRect = rect;
+	_render_rect = rect;
 	
 	// update certain visual context attributes
-	NSDictionary* attribDict = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithFloat:_renderRect.size.width], kQTVisualContextTargetDimensions_WidthKey, [NSNumber numberWithFloat:_renderRect.size.height], kQTVisualContextTargetDimensions_HeightKey, nil];
-	QTVisualContextSetAttribute(_visualContext, kQTVisualContextTargetDimensionsKey, attribDict);
+	NSDictionary* attribDict = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithFloat:_render_rect.size.width], kQTVisualContextTargetDimensions_WidthKey, [NSNumber numberWithFloat:_render_rect.size.height], kQTVisualContextTargetDimensions_HeightKey, nil];
+	QTVisualContextSetAttribute(_vc, kQTVisualContextTargetDimensionsKey, attribDict);
 	
 	// specify video rectangle vertices counter-clockwise from (0, 0)
-	_coordinates[0] = _renderRect.origin.x;
-	_coordinates[1] = _renderRect.origin.y;
+	_coordinates[0] = _render_rect.origin.x;
+	_coordinates[1] = _render_rect.origin.y;
 	
-	_coordinates[2] = _renderRect.origin.x + _renderRect.size.width;
-	_coordinates[3] = _renderRect.origin.y;
+	_coordinates[2] = _render_rect.origin.x + _render_rect.size.width;
+	_coordinates[3] = _render_rect.origin.y;
 	
-	_coordinates[4] = _renderRect.origin.x + _renderRect.size.width;
-	_coordinates[5] = _renderRect.origin.y + _renderRect.size.height;
+	_coordinates[4] = _render_rect.origin.x + _render_rect.size.width;
+	_coordinates[5] = _render_rect.origin.y + _render_rect.size.height;
 	
-	_coordinates[6] = _renderRect.origin.x;
-	_coordinates[7] = _renderRect.origin.y + _renderRect.size.height;
+	_coordinates[6] = _render_rect.origin.x;
+	_coordinates[7] = _render_rect.origin.y + _render_rect.size.height;
+}
+
+- (void)play {
+	[_movie play];
+}
+
+- (void)stop {
+	[_movie stop];
+	[self reset];
+}
+
+- (float)rate {
+	return [_movie rate];
+}
+
+- (void)_handleRateChange:(NSNotification*)notification {
+	// WARNING: MUST RUN ON MAIN THREAD
+	float rate = [[[notification userInfo] objectForKey:QTMovieRateDidChangeNotificationParameter] floatValue];
+	if (fabsf(rate) < 0.001f)
+		[[NSNotificationCenter defaultCenter] postNotificationName:RXMoviePlaybackDidEndNotification object:self userInfo:nil];
 }
 
 - (void)reset {
+	[_movie gotoBeginning];
+	
 	CVPixelBufferRelease(_image_buffer);
 	_image_buffer = NULL;
 	
 	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 	CGLLockContext(cgl_ctx);
 	
-	QTVisualContextTask(_visualContext);
+	QTVisualContextTask(_vc);
 	
 	CGLUnlockContext(cgl_ctx);
 }
@@ -446,7 +475,7 @@
 	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
 	
 	// does the visual context have a new image?
-	if (QTVisualContextIsNewImageAvailable(_visualContext, outputTime)) {
+	if (QTVisualContextIsNewImageAvailable(_vc, outputTime)) {
 		// release the old image
 		if (_image_buffer)
 			CVPixelBufferRelease(_image_buffer);
@@ -454,7 +483,7 @@
 		// get the new image
 		CGLContextObj load_ctx = [RXGetWorldView() loadContext];
 		CGLLockContext(load_ctx);
-		QTVisualContextCopyImageForTime(_visualContext, kCFAllocatorDefault, outputTime, &_image_buffer);
+		QTVisualContextCopyImageForTime(_vc, kCFAllocatorDefault, outputTime, &_image_buffer);
 		CGLUnlockContext(load_ctx);
 		
 		// get the current texture's coordinates
@@ -488,14 +517,14 @@
 				CVPixelBufferLockBaseAddress(_image_buffer, 0);
 				void* baseAddress = CVPixelBufferGetBaseAddress(_image_buffer);
 				for (GLuint row = 0; row < height; row++)
-					memcpy(BUFFER_OFFSET(_textureStorage, (row * MAX((int)_currentSize.width, 128)) << 1), BUFFER_OFFSET(baseAddress, row * bytesPerRow), width << 1);
+					memcpy(BUFFER_OFFSET(_texture_storage, (row * MAX((int)_current_size.width, 128)) << 1), BUFFER_OFFSET(baseAddress, row * bytesPerRow), width << 1);
 				CVPixelBufferUnlockBaseAddress(_image_buffer, 0);
 				
 				// bind the texture object and update the texture data
 				glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();
 				
 #if defined(__LITTLE_ENDIAN__)
-				glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, MAX(_currentSize.width, 128), height, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, _textureStorage); glReportError();
+				glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, MAX(_current_size.width, 128), height, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, _texture_storage); glReportError();
 #else
 				glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, MAX(_currentSize.width, 128), height, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, _textureStorage); glReportError();
 #endif
@@ -520,7 +549,7 @@
 
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
-	QTVisualContextTask(_visualContext);
+	QTVisualContextTask(_vc);
 }
 
 @end

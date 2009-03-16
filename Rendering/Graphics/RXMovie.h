@@ -12,24 +12,26 @@
 #import "Rendering/RXRendering.h"
 
 
+extern NSString* const RXMoviePlaybackDidEndNotification;
+
 @interface RXMovie : NSObject <RXRenderingProtocol> {
 	__weak id _owner;
 	
 	QTMovie* _movie;
-	QTVisualContextRef _visualContext;
+	QTVisualContextRef _vc;
 	
-	long _movieHints;
-	CGSize _currentSize;
+	long _hints;
+	CGSize _current_size;
 	
 	BOOL loop;
 	BOOL _seamless_looping_hacked;
 	
 	GLuint _vao;
 	GLfloat _coordinates[16];
-	CGRect _renderRect;
+	CGRect _render_rect;
 	
 	GLuint _glTexture;
-	void* _textureStorage;
+	void* _texture_storage;
 	
 	CVImageBufferRef _image_buffer;
 }
@@ -39,9 +41,8 @@
 
 - (id)owner;
 
-- (QTMovie*)movie;
-
 - (CGSize)currentSize;
+- (QTTime)duration;
 
 - (BOOL)looping;
 - (void)setLooping:(BOOL)flag;
@@ -60,6 +61,10 @@
 
 - (CGRect)renderRect;
 - (void)setRenderRect:(CGRect)rect;
+
+- (void)play;
+- (void)stop;
+- (float)rate;
 
 - (void)reset;
 

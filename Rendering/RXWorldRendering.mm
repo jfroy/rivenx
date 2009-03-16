@@ -111,8 +111,8 @@
 
 - (void)_initializeRenderStates {
 	// prep the cyan movie state
-	_cyanMovieState = [[RXCyanMovieState alloc] init];
-	[_cyanMovieState setDelegate:_stateCompositor];
+//	_cyanMovieState = [[RXCyanMovieState alloc] init];
+//	[_cyanMovieState setDelegate:_stateCompositor];
 	
 	// prep the credits state
 	//_creditsState = [[RXCreditsState alloc] init];

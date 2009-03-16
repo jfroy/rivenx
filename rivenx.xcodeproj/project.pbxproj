@@ -110,7 +110,6 @@
 		3155481008C52A1400A2AA7A /* Extras.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3155480F08C52A1400A2AA7A /* Extras.plist */; };
 		3156F2610B83F07400462C8E /* NSData+RSHexDump.m in Sources */ = {isa = PBXBuildFile; fileRef = 3156F25F0B83F07400462C8E /* NSData+RSHexDump.m */; };
 		31588874098D7A120090A6B6 /* RXCardDescriptor.m in Sources */ = {isa = PBXBuildFile; fileRef = 31588872098D7A120090A6B6 /* RXCardDescriptor.m */; };
-		3158CD18094F7BEB004D5D00 /* RXCreditsState.m in Sources */ = {isa = PBXBuildFile; fileRef = 3158CD16094F7BEB004D5D00 /* RXCreditsState.m */; };
 		315A129808F1C3E500566B20 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 315A129708F1C3E500566B20 /* Accelerate.framework */; };
 		315BD3CE0D85AF94007A3BFA /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
 		315BD3CF0D85AF95007A3BFA /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
@@ -176,7 +175,6 @@
 		31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C070F03F912006EFF93 /* CAComponentDescription.cpp */; };
 		31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */; };
 		31A1FB210E0CA95200B2437A /* RXRenderStateOpacityAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FB200E0CA95200B2437A /* RXRenderStateOpacityAnimation.m */; };
-		31A9EC23094D242600C6A0AB /* RXCyanMovieState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A9EC21094D242600C6A0AB /* RXCyanMovieState.m */; };
 		31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A9F027094D2D0300C6A0AB /* RXRenderState.m */; };
 		31AE54570DE0ADD6000E71CF /* ExceptionHandling.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31AE54560DE0ADD6000E71CF /* ExceptionHandling.framework */; };
 		31B741C10B8414EA00D1A247 /* Cyan Worlds.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 31B741C00B8414EA00D1A247 /* Cyan Worlds.mp4 */; };
@@ -1652,9 +1650,7 @@
 				31225AC408C421790055628F /* RXCard.mm in Sources */,
 				315547E208C4C44F00A2AA7A /* RXApplicationDelegate.m in Sources */,
 				313C7DE708CCFA4600950A70 /* NSFontAdditions.m in Sources */,
-				31A9EC23094D242600C6A0AB /* RXCyanMovieState.m in Sources */,
 				31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */,
-				3158CD18094F7BEB004D5D00 /* RXCreditsState.m in Sources */,
 				316C37B40987227800AC2C8E /* RXCardState.mm in Sources */,
 				93FDAD3B098A789100D94CD0 /* BDAlias.m in Sources */,
 				93FDAD47098A78DE00D94CD0 /* RXDebugWindowController.mm in Sources */,

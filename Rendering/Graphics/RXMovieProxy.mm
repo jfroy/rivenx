@@ -65,7 +65,7 @@
 	[_movie setRenderRect:renderRect];
 	
 	// set the movie's volume scaled by the audio renderer's output gain
-	[[_movie movie] setVolume:_volume * reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer])->Gain()];
+	[_movie setVolume:_volume * reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer])->Gain()];
 }
 
 + (BOOL)instancesRespondToSelector:(SEL)aSelector {
@@ -115,14 +115,6 @@
 - (id)owner {
 	// we don't need to allocate the movie to respond to this method
 	return _owner;
-}
-
-- (QTMovie*)movie {
-	// if the movie has not been loaded yet, do that on the main thread
-	if (!_movie)
-		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
-	
-	return [_movie movie];
 }
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {

@@ -951,7 +951,7 @@ init_failure:
 	
 	uint32_t index = [_active_movies indexOfObject:movie];
 	if (index != NSNotFound) {
-		[[movie movie] stop];
+		[movie stop];
 		[[movie owner] release];
 		[_active_movies removeObjectAtIndex:index];
 	}
@@ -969,7 +969,7 @@ init_failure:
 	NSEnumerator* movie_enum = [_active_movies objectEnumerator];
 	RXMovie* movie;
 	while ((movie = [movie_enum nextObject]))
-		[[movie movie] stop];
+		[movie stop];
 	CFArrayApplyFunction((CFArrayRef)_active_movies, CFRangeMake(0, [_active_movies count]), rx_release_owner_applier, self);
 	[_active_movies removeAllObjects];
 	

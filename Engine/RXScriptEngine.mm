@@ -789,38 +789,25 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #pragma mark -
 #pragma mark movie playback
 
-- (void)_handleMovieRateChange:(NSNotification*)notification {
+- (void)_handleBlockingMovieFinishedPlaying:(NSNotification*)notification {
 	// WARNING: MUST RUN ON MAIN THREAD
-	float rate = [[[notification userInfo] objectForKey:QTMovieRateDidChangeNotificationParameter] floatValue];
-	if (fabsf(rate) < 0.001f) {
-		[[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieRateDidChangeNotification object:[notification object]];
-	}
-}
-
-- (void)_handleBlockingMovieRateChange:(NSNotification*)notification {
-	// WARNING: MUST RUN ON MAIN THREAD
-	float rate = [[[notification userInfo] objectForKey:QTMovieRateDidChangeNotificationParameter] floatValue];
-	if (fabsf(rate) < 0.001f) {
-		[self _handleMovieRateChange:notification];
+	[[NSNotificationCenter defaultCenter] removeObserver:self name:RXMoviePlaybackDidEndNotification object:[notification object]];
 		
-		// signal the movie playback semaphore to unblock the script thread
-		semaphore_signal(_moviePlaybackSemaphore);
-	}
+	// signal the movie playback semaphore to unblock the script thread
+	semaphore_signal(_moviePlaybackSemaphore);
 }
 
 - (void)_reallyDoPlayMovie:(RXMovie*)movie {
 	// WARNING: MUST RUN ON MAIN THREAD
 	
 	// make sure the movie is playing (which is different than being rendered)
-	if (fabsf([[movie movie] rate]) < 0.001f) {	
-		// put the movie at its beginning if it's not looping or playing a selection
-		if (![movie looping] && ![movie isPlayingSelection]) {
-			[[movie movie] gotoBeginning];
+	if (fabsf([movie rate]) < 0.001f) {	
+		// reset the movie at its beginning if it's not looping or playing a selection
+		if (![movie looping] && ![movie isPlayingSelection])
 			[movie reset];
-		}
 		
 		// begin playback
-		[[movie movie] play];
+		[movie play];
 	}
 	
 	// queue the movie for rendering
@@ -828,12 +815,6 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 - (void)_playMovie:(RXMovie*)movie {
-	// WARNING: MUST RUN ON MAIN THREAD
-	
-	// register for rate notifications on the non-blocking movie handler
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleMovieRateChange:) name:QTMovieRateDidChangeNotification object:[movie movie]];
-	
-	// play
 	[self _reallyDoPlayMovie:movie];
 }
 
@@ -841,8 +822,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// WARNING: MUST RUN ON MAIN THREAD
 	
 	// register for rate notifications on the blocking movie handler
-	[[NSNotificationCenter defaultCenter] removeObserver:self name:QTMovieRateDidChangeNotification object:[movie movie]];
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieRateChange:) name:QTMovieRateDidChangeNotification object:[movie movie]];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieFinishedPlaying:) name:RXMoviePlaybackDidEndNotification object:movie];
 	
 	// hide the mouse cursor
 	if (!_did_hide_mouse) {
@@ -857,10 +837,6 @@ static NSMapTable* _riven_external_command_dispatch_map;
 - (void)_stopMovie:(RXMovie*)movie {
 	// disable the movie in the card renderer
 	[controller disableMovie:movie];
-	
-	// stop playback
-	[[movie movie] stop];
-	[movie reset];
 }
 
 #pragma mark -
@@ -2460,7 +2436,7 @@ DEFINE_COMMAND(xjschool280_resetright) {
 	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
 	
 	// compute the duration per tick
-	QTTime duration = [[movie movie] duration];
+	QTTime duration = [movie duration];
 	duration.timeValue /= 19;
 	
 	// set the movie's playback range
