@@ -90,6 +90,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	// cache the movie's current size
 	[[_movie attributeForKey:QTMovieCurrentSizeAttribute] getValue:&_current_size];
 	
+	// cache the movie's original duration
+	_original_duration = [_movie duration];
+	
 	// register for rate change notifications
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleRateChange:) name:QTMovieRateDidChangeNotification object:_movie];
 	
@@ -279,7 +282,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 }
 
 - (QTTime)duration {
-	return [_movie duration];
+	return _original_duration;
 }
 
 - (BOOL)looping {

@@ -22,8 +22,8 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
 	
 	long _hints;
 	CGSize _current_size;
+	QTTime _original_duration;
 	
-	BOOL loop;
 	BOOL _seamless_looping_hacked;
 	
 	GLuint _vao;
