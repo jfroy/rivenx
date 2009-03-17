@@ -952,6 +952,7 @@ init_failure:
 	uint32_t index = [_active_movies indexOfObject:movie];
 	if (index != NSNotFound) {
 		[movie stop];
+		[movie reset];
 		[[movie owner] release];
 		[_active_movies removeObjectAtIndex:index];
 	}
@@ -968,8 +969,10 @@ init_failure:
 	
 	NSEnumerator* movie_enum = [_active_movies objectEnumerator];
 	RXMovie* movie;
-	while ((movie = [movie_enum nextObject]))
+	while ((movie = [movie_enum nextObject])) {
 		[movie stop];
+		[movie reset];
+	}
 	CFArrayApplyFunction((CFArrayRef)_active_movies, CFRangeMake(0, [_active_movies count]), rx_release_owner_applier, self);
 	[_active_movies removeAllObjects];
 	
@@ -1781,6 +1784,42 @@ exit_render:
 		
 		if (hotspot >= (RXHotspot*)0x1000)
 			[hotspot release];
+		
+		// go up to the next debug line
+		background_origin.y += 13.0;
+		background_strip[1] = background_strip[7];
+		background_strip[4] = background_strip[7];
+		background_strip[7] = background_strip[7] + 13.0f;
+		background_strip[10] = background_strip[7];
+	}
+	
+	// movie info
+	if (RXEngineGetBool(@"rendering.movie_info")) {
+		if ([_active_movies count]) {
+			RXMovie* movie = [_active_movies objectAtIndex:0];
+			snprintf(debug_buffer, 100, "movie display position: %f", [movie displayPosition]);
+		} else {
+			snprintf(debug_buffer, 100, "no active movie");
+		}
+		
+		background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
+		background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
+		
+		glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		glRasterPos3d(10.5f, background_origin.y + 1.0, 0.0f);
+		size_t l = strlen(debug_buffer);
+		for (size_t i = 0; i < l; i++)
+			glutBitmapCharacter(GLUT_BITMAP_8_BY_13, debug_buffer[i]);
+		
+		// go up to the next debug line
+		background_origin.y += 13.0;
+		background_strip[1] = background_strip[7];
+		background_strip[4] = background_strip[7];
+		background_strip[7] = background_strip[7] + 13.0f;
+		background_strip[10] = background_strip[7];
 	}
 	
 	// re-disable the VA in VAO 0

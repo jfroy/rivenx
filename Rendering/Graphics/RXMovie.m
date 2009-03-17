@@ -195,6 +195,8 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 		@throw [NSException exceptionWithName:@"RXMovieException" reason:@"SetMovieVisualContext failed." userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
 	}
 	
+	_display_ts_lock = OS_SPINLOCK_INIT;
+	
 	return self;
 }
 
@@ -288,7 +290,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 }
 
 - (BOOL)looping {
-	return [[_movie attributeForKey:QTMovieLoopsAttribute] boolValue];
+	return _looping;
 }
 
 - (void)setLooping:(BOOL)flag {
@@ -362,6 +364,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 		[_movie writeToFile:[[NSString stringWithFormat:@"~/Desktop/looping %p.mov", self] stringByExpandingTildeInPath] withAttributes:nil];
 #endif
 	}
+	
+	// update the looping flag
+	_looping = flag;
 }
 
 - (float)volume {
@@ -437,13 +442,22 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	_coordinates[7] = _render_rect.origin.y + _render_rect.size.height;
 }
 
-- (void)play {
+- (void)play {	
+	// play the movie
 	[_movie play];
+	
+	// set the display timestamp to now
+	OSSpinLockLock(&_display_ts_lock);
+	CVDisplayLinkGetCurrentTime([g_worldView displayLink], &_display_ts);
+	OSSpinLockUnlock(&_display_ts_lock);
+	
+	// set the play timestamp to the current timestamp
+	// FIXME: assumes the movie is at the beginning
+	_play_ts = _display_ts;
 }
 
 - (void)stop {
 	[_movie stop];
-	[self reset];
 }
 
 - (float)rate {
@@ -458,17 +472,57 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 }
 
 - (void)reset {
-	[_movie gotoBeginning];
-	
+	// release and clear the current image buffer
 	CVPixelBufferRelease(_image_buffer);
 	_image_buffer = NULL;
 	
-	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
-	CGLLockContext(cgl_ctx);
+	// zero the current timestamp
+	OSSpinLockLock(&_display_ts_lock);
+	memset((void*)&_display_ts, 0, sizeof(CVTimeStamp));
+	OSSpinLockUnlock(&_display_ts_lock);
 	
+	// reset the movie to the beginning
+	[_movie gotoBeginning];
+	
+	// task the VC
+	CGLContextObj load_ctx = [RXGetWorldView() loadContext];
+	CGLLockContext(load_ctx);
 	QTVisualContextTask(_vc);
+	CGLUnlockContext(load_ctx);
+}
+
+- (CVTimeStamp)displayTimestamp {
+	OSSpinLockLock(&_display_ts_lock);
+	CVTimeStamp t = _display_ts;
+	OSSpinLockUnlock(&_display_ts_lock);
 	
-	CGLUnlockContext(cgl_ctx);
+	return t;
+}
+
+- (double)displayPosition {
+	CVTimeStamp t = [self displayTimestamp];
+	if (!(t.flags & kCVTimeStampVideoHostTimeValid))
+		return INFINITY;
+	if (!(_play_ts.flags & kCVTimeStampVideoHostTimeValid))
+		return INFINITY;
+	
+	// enforce a common time scal
+	if (t.videoTimeScale != _play_ts.videoTimeScale)
+		t.videoTime = t.videoTime * _play_ts.videoTimeScale / t.videoTimeScale;
+	
+	// compute the difference between the display TS and the play TS
+	t.videoTime = t.videoTime - _play_ts.videoTime;
+	
+	// need to handle wrap-around for looping movies
+	if (_looping) {
+		QTTime duration = _original_duration;
+		if (duration.timeScale != t.videoTimeScale)
+			duration.timeValue = duration.timeValue * t.videoTimeScale / duration.timeScale;
+		t.videoTime = t.videoTime % duration.timeValue;
+	}
+	
+	// compute the current display position based on the delta between the play ts and the display ts
+	return (double)t.videoTime / t.videoTimeScale;
 }
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
@@ -549,12 +603,20 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	if (_image_buffer) {
 		[gl_state bindVertexArrayObject:_vao];
 		glDrawArrays(GL_QUADS, 0, 4); glReportError();
+		
+		// update the display timestamp
+		OSSpinLockLock(&_display_ts_lock);
+		_display_ts = *outputTime;
+		OSSpinLockUnlock(&_display_ts_lock);
 	}
 }
 
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
+	CGLContextObj load_ctx = [RXGetWorldView() loadContext];
+	CGLLockContext(load_ctx);
 	QTVisualContextTask(_vc);
+	CGLUnlockContext(load_ctx);
 }
 
 @end

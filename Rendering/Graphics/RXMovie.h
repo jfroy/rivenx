@@ -6,6 +6,8 @@
 //	Copyright 2005 MacStorm. All rights reserved.
 //
 
+#import <libkern/OSAtomic.h>
+
 #import <QuickTime/QuickTime.h>
 #import <QTKit/QTKit.h>
 
@@ -24,6 +26,7 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
 	CGSize _current_size;
 	QTTime _original_duration;
 	
+	BOOL _looping;
 	BOOL _seamless_looping_hacked;
 	
 	GLuint _vao;
@@ -34,6 +37,10 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
 	void* _texture_storage;
 	
 	CVImageBufferRef _image_buffer;
+	
+	CVTimeStamp _play_ts;
+	CVTimeStamp _display_ts;
+	OSSpinLock _display_ts_lock;
 }
 
 - (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone owner:(id)owner;
@@ -65,6 +72,9 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
 - (void)play;
 - (void)stop;
 - (float)rate;
+
+- (CVTimeStamp)displayTimestamp;
+- (double)displayPosition;
 
 - (void)reset;
 
