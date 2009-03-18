@@ -124,6 +124,38 @@
 	return _owner;
 }
 
+- (void)play {
+	// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	[_movie play];
+}
+
+- (void)stop {
+	// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	[_movie stop];
+}
+
+- (CVTimeStamp)displayTimestamp {
+	// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	return [_movie displayTimestamp];
+}
+
+- (double)positionAtDisplayTimestamp:(CVTimeStamp*)ts {
+	// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	return [_movie positionAtDisplayTimestamp:ts];
+}
+
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// if the movie has not been loaded yet, do that on the main thread
 	if (!_movie)

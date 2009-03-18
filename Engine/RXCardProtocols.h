@@ -34,6 +34,7 @@
 
 
 @protocol RXCardEventsHandlerProtocol <NSObject>
+- (double)mouseTimetamp;
 - (NSRect)mouseVector;
 - (void)resetMouseVector;
 

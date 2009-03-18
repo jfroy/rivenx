@@ -74,7 +74,7 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
 - (float)rate;
 
 - (CVTimeStamp)displayTimestamp;
-- (double)displayPosition;
+- (double)positionAtDisplayTimestamp:(CVTimeStamp*)ts;
 
 - (void)reset;
 

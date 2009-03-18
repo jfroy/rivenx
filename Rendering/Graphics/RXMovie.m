@@ -449,8 +449,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	[_movie play];
 	
 	// set the display timestamp to now
+	CVTimeStamp ts;
+	CVDisplayLinkGetCurrentTime([g_worldView displayLink], &ts);
 	OSSpinLockLock(&_display_ts_lock);
-	CVDisplayLinkGetCurrentTime([g_worldView displayLink], &_display_ts);
+	_display_ts = ts;
 	OSSpinLockUnlock(&_display_ts_lock);
 	
 	// set the play timestamp to the current timestamp
@@ -513,14 +515,16 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	return t;
 }
 
-- (double)displayPosition {
-	CVTimeStamp t = [self displayTimestamp];
-	if (!(t.flags & kCVTimeStampVideoHostTimeValid))
+- (double)positionAtDisplayTimestamp:(CVTimeStamp*)ts {
+	CVTimeStamp t = *ts;
+	
+	// we need valid video time fields
+	if (!(t.flags & kCVTimeStampVideoTimeValid))
 		return INFINITY;
-	if (!(_play_ts.flags & kCVTimeStampVideoHostTimeValid))
+	if (!(_play_ts.flags & kCVTimeStampVideoTimeValid))
 		return INFINITY;
 	
-	// enforce a common time scal
+	// enforce a common time scale
 	if (t.videoTimeScale != _play_ts.videoTimeScale)
 		t.videoTime = t.videoTime * _play_ts.videoTimeScale / t.videoTimeScale;
 	
@@ -530,12 +534,16 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	// need to handle wrap-around for looping movies
 	if (_looping) {
 		QTTime duration = _original_duration;
+		
+		// enforce a common time scale
 		if (duration.timeScale != t.videoTimeScale)
 			duration.timeValue = duration.timeValue * t.videoTimeScale / duration.timeScale;
+		
+		// wrap to the movie's original duration
 		t.videoTime = t.videoTime % duration.timeValue;
 	}
 	
-	// compute the current display position based on the delta between the play ts and the display ts
+	// return a position in seconds by scaling the video time by the video time scale
 	return (double)t.videoTime / t.videoTimeScale;
 }
 

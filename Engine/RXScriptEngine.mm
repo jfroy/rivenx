@@ -2543,7 +2543,26 @@ DEFINE_COMMAND(xjscpbtn) {
 }
 
 DEFINE_COMMAND(xjisland3500_domecheck) {
-
+	// when was the mouse pressed?
+	double mouse_ts_s = [controller mouseTimetamp];
+	CVTimeStamp mouse_ts;
+	mouse_ts.hostTime = RXTimingOffsetTimestamp(0, mouse_ts_s);
+	mouse_ts.flags = kCVTimeStampHostTimeValid;
+	
+	CVTimeStamp mouse_ts2;
+	mouse_ts2.version = 0;
+	mouse_ts2.flags = (kCVTimeStampVideoTimeValid | kCVTimeStampHostTimeValid);
+	CVDisplayLinkTranslateTime([g_worldView displayLink], &mouse_ts, &mouse_ts2);
+	
+	// when was the movie at the time?
+	uintptr_t k = 1;
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+	double movie_position = [movie positionAtDisplayTimestamp:&mouse_ts2];
+	
+	// did we hit the roughtly the last frame?
+	if (movie_position < 0.2 || movie_position >= 3.8) {
+		[[g_world gameState] setUnsignedShort:1 forKey:@"domecheck"];
+	}
 }
 
 @end

@@ -61,7 +61,8 @@ struct rx_transition_program {
 	
 	// mouse and hotspots handling
 	NSRect _mouseVector;
-	OSSpinLock _mouseVectorLock;
+	double _mouse_timestamp;
+	OSSpinLock _mouse_state_lock;
 	RXHotspot* _currentHotspot;
 	RXHotspot* _mouse_down_hotspot;
 	int32_t volatile _hotspot_handling_disable_counter;

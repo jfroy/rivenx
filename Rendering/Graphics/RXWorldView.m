@@ -420,8 +420,9 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
 
 - (void)viewDidMoveToWindow {
 	[self setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-
-	[self _handleScreenChange:nil];
+	
+	if ([self window])
+		[self _handleScreenChange:nil];
 	[super viewDidMoveToWindow];
 }
 
