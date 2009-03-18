@@ -442,7 +442,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	_coordinates[7] = _render_rect.origin.y + _render_rect.size.height;
 }
 
-- (void)play {	
+- (void)play {
+	QTTime current_time = [_movie currentTime];
+
 	// play the movie
 	[_movie play];
 	
@@ -452,8 +454,20 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	OSSpinLockUnlock(&_display_ts_lock);
 	
 	// set the play timestamp to the current timestamp
-	// FIXME: assumes the movie is at the beginning
 	_play_ts = _display_ts;
+	
+	// adjust it by the movie time when playback was initiated
+	if (current_time.timeScale != _play_ts.videoTimeScale)
+		current_time.timeValue = current_time.timeValue * _play_ts.videoTimeScale / current_time.timeScale;
+	_play_ts.videoTime = _play_ts.videoTime + current_time.timeValue;
+	
+	// need to handle wrap-around for looping movies
+	if (_looping) {
+		QTTime duration = _original_duration;
+		if (duration.timeScale != _play_ts.videoTimeScale)
+			duration.timeValue = duration.timeValue * _play_ts.videoTimeScale / duration.timeScale;
+		_play_ts.videoTime = _play_ts.videoTime % duration.timeValue;
+	}
 }
 
 - (void)stop {
