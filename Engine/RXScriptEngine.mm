@@ -139,7 +139,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[31].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[32].sel = @selector(_opcode_startMovieAndWaitUntilDone:arguments:);
 	_riven_command_dispatch_table[33].sel = @selector(_opcode_startMovie:arguments:);
-	_riven_command_dispatch_table[34].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[34].sel = @selector(_opcode_stopMovie:arguments:);
 	_riven_command_dispatch_table[35].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[37].sel = @selector(_opcode_noop:arguments:);
@@ -1422,6 +1422,27 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:NO];
 }
 
+// 34
+- (void)_opcode_stopMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
+	if (argc < 1)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@stopping movie with code %hu", logPrefix, argv[0]);
+#endif
+	
+	// get the movie object
+	uintptr_t k = argv[0];
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+
+	// it is legal to stop a code that has no movie associated with it; it's a no-op
+	if (!movie)
+		return;
+	
+	// stop the movie
+	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:NO];
+}
+
 // 38
 - (void)_opcode_complexPlayMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 5)
@@ -2535,11 +2556,11 @@ DEFINE_COMMAND(xtisland5056_opencard) {
 #pragma mark jspit dome
 
 DEFINE_COMMAND(xjscpbtn) {
-	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, 2);
 	
 	uint16_t dome_state = [[g_world gameState] unsignedShortForKey:@"jdome"];
-	if (dome_state == 1)
-		[[g_world gameState] setUnsignedShort:3 forKey:@"jdome"];
+	if (dome_state == 3)
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
 }
 
 DEFINE_COMMAND(xjisland3500_domecheck) {
@@ -2558,9 +2579,11 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 	uintptr_t k = 1;
 	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
 	double movie_position = [movie positionAtDisplayTimestamp:&mouse_ts2];
+	NSTimeInterval duration;
+	QTGetTimeInterval([movie duration], &duration);
 	
 	// did we hit the roughtly the last frame?
-	if (movie_position < 0.2 || movie_position >= 3.8) {
+	if (movie_position < 0.1 || duration - movie_position <= 0.5) {
 		[[g_world gameState] setUnsignedShort:1 forKey:@"domecheck"];
 	}
 }
