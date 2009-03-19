@@ -842,6 +842,14 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[controller disableMovie:movie];
 }
 
+- (void)_muteMovie:(RXMovie*)movie {
+	[movie setVolume:0.0f];
+}
+
+- (void)_unmuteMovie:(RXMovie*)movie {
+	[(RXMovieProxy*)movie restoreMovieVolume];
+}
+
 #pragma mark -
 #pragma mark dynamic pictures
 
@@ -2556,11 +2564,13 @@ DEFINE_COMMAND(xtisland5056_opencard) {
 #pragma mark jspit dome
 
 DEFINE_COMMAND(xjscpbtn) {
-	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, 2);
-	
 	uint16_t dome_state = [[g_world gameState] unsignedShortForKey:@"jdome"];
-	if (dome_state == 3)
+	if (dome_state == 3) {
+		uintptr_t k = 2;
+		RXMovie* button_movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+		[self performSelectorOnMainThread:@selector(_unmuteMovie:) withObject:button_movie waitUntilDone:NO];
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+	}
 }
 
 DEFINE_COMMAND(xjisland3500_domecheck) {
@@ -2582,10 +2592,19 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 	NSTimeInterval duration;
 	QTGetTimeInterval([movie duration], &duration);
 	
+	// get the button movie
+	k = 2;
+	RXMovie* button_movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+	
 	// did we hit the roughtly the last frame?
 	if (movie_position < 0.1 || duration - movie_position <= 0.5) {
 		[[g_world gameState] setUnsignedShort:1 forKey:@"domecheck"];
-	}
+		
+		// mute button movie and start playback
+		[self performSelectorOnMainThread:@selector(_muteMovie:) withObject:button_movie waitUntilDone:NO];
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, 2);
+	} else
+		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
 }
 
 @end

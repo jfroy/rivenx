@@ -11,7 +11,10 @@
 
 #import <OpenGL/CGLMacro.h>
 
+#import "Engine/RXWorldProtocol.h"
+
 #import "RXMovie.h"
+#import "Rendering/Audio/RXAudioRenderer.h"
 
 
 NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotification";
@@ -380,7 +383,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"setting volume to %f", volume);
 #endif
 	
-	[_movie setVolume:volume];
+	[_movie setVolume:volume * reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer])->Gain()];
 }
 
 - (BOOL)isPlayingSelection {
@@ -599,7 +602,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 				// marshall the image data into the texture
 				CVPixelBufferLockBaseAddress(_image_buffer, 0);
 				void* baseAddress = CVPixelBufferGetBaseAddress(_image_buffer);
-				for (GLuint row = 0; row < height; row++)
+				for (GLint row = 0; row < height; row++)
 					memcpy(BUFFER_OFFSET(_texture_storage, (row * MAX((int)_current_size.width, 128)) << 1), BUFFER_OFFSET(baseAddress, row * bytesPerRow), width << 1);
 				CVPixelBufferUnlockBaseAddress(_image_buffer, 0);
 				

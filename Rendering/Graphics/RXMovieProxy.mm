@@ -64,8 +64,8 @@
 	renderRect.origin.y = _origin.y - renderRect.size.height;
 	[_movie setRenderRect:renderRect];
 	
-	// set the movie's volume scaled by the audio renderer's output gain
-	[_movie setVolume:_volume * reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer])->Gain()];
+	// set the movie's volume
+	[_movie setVolume:_volume];
 }
 
 + (BOOL)instancesRespondToSelector:(SEL)aSelector {
@@ -113,7 +113,16 @@
 	// if the movie has not been loaded yet, do that on the main thread
 	if (!_movie)
 		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
 	return _movie;
+}
+
+- (void)restoreMovieVolume {
+// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	[_movie setVolume:_volume];
 }
 
 #pragma mark -
@@ -122,6 +131,14 @@
 - (id)owner {
 	// we don't need to allocate the movie to respond to this method
 	return _owner;
+}
+
+- (void)setVolume:(float)volume {
+	// if the movie has not been loaded yet, do that on the main thread
+	if (!_movie)
+		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+	
+	[_movie setVolume:volume];
 }
 
 - (void)play {
