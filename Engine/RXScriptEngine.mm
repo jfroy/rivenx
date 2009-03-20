@@ -2605,8 +2605,18 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, 2);
 	} else
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
-	
-	fprintf(stderr, "movie position=%f, event delay=%f, position at event=%f\n", movie_position, event_delay, movie_position - event_delay);
+}
+
+DEFINE_COMMAND(xjdome25_resetsliders) {
+	// FIXME: implement
+}
+
+DEFINE(xjdome25_slidermd) {
+	// FIXME: implement
+}
+
+DEFINE(xjdome25_slidermw) {
+	// FIXME: implement
 }
 
 @end
