@@ -40,6 +40,7 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
 	
 	CVTimeStamp _play_ts;
 	CVTimeStamp _display_ts;
+	QTTime _current_time;
 	OSSpinLock _display_ts_lock;
 }
 
@@ -73,8 +74,7 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
 - (void)stop;
 - (float)rate;
 
-- (CVTimeStamp)displayTimestamp;
-- (double)positionAtDisplayTimestamp:(CVTimeStamp*)ts;
+- (QTTime)_noLockCurrentTime;
 
 - (void)reset;
 

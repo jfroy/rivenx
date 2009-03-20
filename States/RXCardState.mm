@@ -1798,8 +1798,13 @@ exit_render:
 	if (RXEngineGetBool(@"rendering.movie_info")) {
 		if ([_active_movies count]) {
 			RXMovie* movie = [_active_movies objectAtIndex:0];
-			CVTimeStamp movie_ts = [movie displayTimestamp];
-			snprintf(debug_buffer, 100, "movie display position: %f", [movie positionAtDisplayTimestamp:&movie_ts]);
+			NSTimeInterval ct;
+			QTGetTimeInterval([movie _noLockCurrentTime], &ct);
+			
+			NSTimeInterval duration;
+			QTGetTimeInterval([movie duration], &duration);
+			
+			snprintf(debug_buffer, 100, "movie display position: %f/%f", ct, duration);
 		} else {
 			snprintf(debug_buffer, 100, "no active movie");
 		}

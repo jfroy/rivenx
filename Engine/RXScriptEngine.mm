@@ -2576,19 +2576,15 @@ DEFINE_COMMAND(xjscpbtn) {
 DEFINE_COMMAND(xjisland3500_domecheck) {
 	// when was the mouse pressed?
 	double mouse_ts_s = [controller mouseTimetamp];
-	CVTimeStamp mouse_ts;
-	mouse_ts.hostTime = RXTimingOffsetTimestamp(0, mouse_ts_s);
-	mouse_ts.flags = kCVTimeStampHostTimeValid;
-	
-	CVTimeStamp mouse_ts2;
-	mouse_ts2.version = 0;
-	mouse_ts2.flags = (kCVTimeStampVideoTimeValid | kCVTimeStampHostTimeValid);
-	CVDisplayLinkTranslateTime([g_worldView displayLink], &mouse_ts, &mouse_ts2);
 	
 	// when was the movie at the time?
 	uintptr_t k = 1;
 	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
-	double movie_position = [movie positionAtDisplayTimestamp:&mouse_ts2];
+	
+	NSTimeInterval movie_position;
+	QTGetTimeInterval([movie _noLockCurrentTime], &movie_position);
+	double event_delay = RXTimingTimestampDelta(RXTimingNow(), RXTimingOffsetTimestamp(0, mouse_ts_s));
+	
 	NSTimeInterval duration;
 	QTGetTimeInterval([movie duration], &duration);
 	
@@ -2596,8 +2592,12 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 	k = 2;
 	RXMovie* button_movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
 	
+	// wrap around if needed
+	if (movie_position - event_delay < 0.0f)
+		movie_position += duration * ceilf(event_delay / movie_position);
+	
 	// did we hit the roughtly the last frame?
-	if (movie_position < 0.1 || duration - movie_position <= 0.5) {
+	if (movie_position - event_delay >= 4.60) {
 		[[g_world gameState] setUnsignedShort:1 forKey:@"domecheck"];
 		
 		// mute button movie and start playback
@@ -2605,6 +2605,8 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, 2);
 	} else
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+	
+	fprintf(stderr, "movie position=%f, event delay=%f, position at event=%f\n", movie_position, event_delay, movie_position - event_delay);
 }
 
 @end

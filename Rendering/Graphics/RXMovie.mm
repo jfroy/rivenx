@@ -352,6 +352,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 		for (int i = 0; i < 300; i++)
 			[video_track insertSegmentOfTrack:video_track timeRange:track_range atTime:track_range.duration];
 		
+		// adjust the original duration to match track_range's duration
+		_original_duration = track_range.duration;
+		
 		// loop the audio samples using the *last video sample time* as the duration
 		if (audio_track) {
 			track_range = QTMakeTimeRange(QTZeroTime, video_last_sample_time);
@@ -512,44 +515,13 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	CGLUnlockContext(load_ctx);
 }
 
-- (CVTimeStamp)displayTimestamp {
+- (QTTime)_noLockCurrentTime {
 	OSSpinLockLock(&_display_ts_lock);
-	CVTimeStamp t = _display_ts;
+	QTTime t = _current_time;
 	OSSpinLockUnlock(&_display_ts_lock);
 	
+	t.timeValue = t.timeValue % _original_duration.timeValue;
 	return t;
-}
-
-- (double)positionAtDisplayTimestamp:(CVTimeStamp*)ts {
-	CVTimeStamp t = *ts;
-	
-	// we need valid video time fields
-	if (!(t.flags & kCVTimeStampVideoTimeValid))
-		return INFINITY;
-	if (!(_play_ts.flags & kCVTimeStampVideoTimeValid))
-		return INFINITY;
-	
-	// enforce a common time scale
-	if (t.videoTimeScale != _play_ts.videoTimeScale)
-		t.videoTime = t.videoTime * _play_ts.videoTimeScale / t.videoTimeScale;
-	
-	// compute the difference between the display TS and the play TS
-	t.videoTime = t.videoTime - _play_ts.videoTime;
-	
-	// need to handle wrap-around for looping movies
-	if (_looping) {
-		QTTime duration = _original_duration;
-		
-		// enforce a common time scale
-		if (duration.timeScale != t.videoTimeScale)
-			duration.timeValue = duration.timeValue * t.videoTimeScale / duration.timeScale;
-		
-		// wrap to the movie's original duration
-		t.videoTime = t.videoTime % duration.timeValue;
-	}
-	
-	// return a position in seconds by scaling the video time by the video time scale
-	return (double)t.videoTime / t.videoTimeScale;
 }
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
@@ -569,7 +541,14 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 		// get the new image
 		CGLContextObj load_ctx = [RXGetWorldView() loadContext];
 		CGLLockContext(load_ctx);
+		
 		QTVisualContextCopyImageForTime(_vc, kCFAllocatorDefault, outputTime, &_image_buffer);
+		
+		// update the display timestamp
+		OSSpinLockLock(&_display_ts_lock);
+		_current_time = [_movie currentTime];
+		OSSpinLockUnlock(&_display_ts_lock);
+		
 		CGLUnlockContext(load_ctx);
 		
 		// get the current texture's coordinates
@@ -630,11 +609,6 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	if (_image_buffer) {
 		[gl_state bindVertexArrayObject:_vao];
 		glDrawArrays(GL_QUADS, 0, 4); glReportError();
-		
-		// update the display timestamp
-		OSSpinLockLock(&_display_ts_lock);
-		_display_ts = *outputTime;
-		OSSpinLockUnlock(&_display_ts_lock);
 	}
 }
 
