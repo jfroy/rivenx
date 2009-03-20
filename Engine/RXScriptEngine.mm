@@ -2611,11 +2611,11 @@ DEFINE_COMMAND(xjdome25_resetsliders) {
 	// FIXME: implement
 }
 
-DEFINE(xjdome25_slidermd) {
+DEFINE_COMMAND(xjdome25_slidermd) {
 	// FIXME: implement
 }
 
-DEFINE(xjdome25_slidermw) {
+DEFINE_COMMAND(xjdome25_slidermw) {
 	// FIXME: implement
 }
 
