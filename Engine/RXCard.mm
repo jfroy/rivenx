@@ -439,7 +439,7 @@ struct rx_card_picture_record {
 	glBufferData(GL_ARRAY_BUFFER, _pictureCount * 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
 	
 	// VM map the buffer object and cache some useful pointers
-	GLfloat* vertex_attributes = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
+	GLfloat* vertex_attributes = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY); glReportError();
 	
 	// allocate the texture object ID array
 	_pictureTextures = new GLuint[_pictureCount];
@@ -553,7 +553,7 @@ struct rx_card_picture_record {
 	_sfxeCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
 	_sfxes = (rx_card_sfxe*)malloc(sizeof(rx_card_sfxe) * _sfxeCount);
 	
-	struct rx_flst_record* flstRecordPointer = reinterpret_cast<struct rx_flst_record*>(BUFFER_OFFSET(listData, sizeof(uint16_t)));
+	struct rx_flst_record* flstRecordPointer = (struct rx_flst_record*)BUFFER_OFFSET(listData, sizeof(uint16_t));
 	for (currentListIndex = 0; currentListIndex < _sfxeCount; currentListIndex++) {
 		struct rx_flst_record* record = flstRecordPointer + currentListIndex;
 		
