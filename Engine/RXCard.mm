@@ -284,10 +284,7 @@ struct rx_card_picture_record {
 #if defined(__LITTLE_ENDIAN__)
 		hspt_record->blst_id = CFSwapInt16(hspt_record->blst_id);
 		hspt_record->name_rec = (int16_t)CFSwapInt16(hspt_record->name_rec);
-		hspt_record->left = (int16_t)CFSwapInt16(hspt_record->left);
-		hspt_record->top = (int16_t)CFSwapInt16(hspt_record->top);
-		hspt_record->right = (int16_t)CFSwapInt16(hspt_record->right);
-		hspt_record->bottom = (int16_t)CFSwapInt16(hspt_record->bottom);
+		hspt_record->rect = rx_swap_core_rect(hspt_record->rect);
 		hspt_record->u0 = CFSwapInt16(hspt_record->u0);
 		hspt_record->mouse_cursor = CFSwapInt16(hspt_record->mouse_cursor);
 		hspt_record->index = CFSwapInt16(hspt_record->index);
@@ -327,7 +324,7 @@ struct rx_card_picture_record {
 		}
 		
 		// allocate the hotspot object
-		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id frame:RXMakeCompositeDisplayRect(hspt_record->left, hspt_record->top, hspt_record->right, hspt_record->bottom) cursorID:hspt_record->mouse_cursor script:hotspot_scripts];
+		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id rect:hspt_record->rect cursorID:hspt_record->mouse_cursor script:hotspot_scripts];
 		if (hspt_record->name_rec >= 0)
 			[hs setName:[[_descriptor parent] hotspotNameAtIndex:hspt_record->name_rec]];
 		
@@ -397,10 +394,7 @@ struct rx_card_picture_record {
 	for (currentListIndex = 0; currentListIndex < _pictureCount; currentListIndex++) {
 		plstRecords[currentListIndex].index = CFSwapInt16(plstRecords[currentListIndex].index);
 		plstRecords[currentListIndex].bitmap_id = CFSwapInt16(plstRecords[currentListIndex].bitmap_id);
-		plstRecords[currentListIndex].left = CFSwapInt16(plstRecords[currentListIndex].left);
-		plstRecords[currentListIndex].top = CFSwapInt16(plstRecords[currentListIndex].top);
-		plstRecords[currentListIndex].right = CFSwapInt16(plstRecords[currentListIndex].right);
-		plstRecords[currentListIndex].bottom = CFSwapInt16(plstRecords[currentListIndex].bottom);
+		plstRecords[currentListIndex].rect = rx_swap_core_rect(plstRecords[currentListIndex].rect);
 	}
 #endif
 	
@@ -482,13 +476,13 @@ struct rx_card_picture_record {
 #endif
 		
 		// adjust the display rect to anchor the picture to the top-left corner while clipping the picture to its size (and never scaling the picture either)
-		if (plstRecords[currentListIndex].right - plstRecords[currentListIndex].left > pictureRecords[currentListIndex].width)
-			plstRecords[currentListIndex].right = plstRecords[currentListIndex].left + (uint16_t)pictureRecords[currentListIndex].width;
-		if (plstRecords[currentListIndex].bottom - plstRecords[currentListIndex].top > pictureRecords[currentListIndex].height)
-			plstRecords[currentListIndex].bottom = plstRecords[currentListIndex].top + (uint16_t)pictureRecords[currentListIndex].height;
+		if (plstRecords[currentListIndex].rect.right - plstRecords[currentListIndex].rect.left > pictureRecords[currentListIndex].width)
+			plstRecords[currentListIndex].rect.right = plstRecords[currentListIndex].rect.left + (uint16_t)pictureRecords[currentListIndex].width;
+		if (plstRecords[currentListIndex].rect.bottom - plstRecords[currentListIndex].rect.top > pictureRecords[currentListIndex].height)
+			plstRecords[currentListIndex].rect.bottom = plstRecords[currentListIndex].rect.top + (uint16_t)pictureRecords[currentListIndex].height;
 		
 		// compute the picture's world composite rect, and from it the vertices
-		NSRect composite_rect = RXMakeCompositeDisplayRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
+		NSRect composite_rect = RXMakeCompositeDisplayRectFromCoreRect(plstRecords[currentListIndex].rect);
 		
 		// vertex 1
 		vertex_attributes[0] = composite_rect.origin.x;
@@ -590,16 +584,10 @@ struct rx_card_picture_record {
 		sfxe->record->magic = CFSwapInt16(sfxe->record->magic);
 		sfxe->record->frame_count = CFSwapInt16(sfxe->record->frame_count);
 		sfxe->record->offset_table = CFSwapInt32(sfxe->record->offset_table);
-		sfxe->record->left = CFSwapInt16(sfxe->record->left);
-		sfxe->record->top = CFSwapInt16(sfxe->record->top);
-		sfxe->record->right = CFSwapInt16(sfxe->record->right);
-		sfxe->record->bottom = CFSwapInt16(sfxe->record->bottom);
+		sfxe->record->rect = rx_swap_core_rect(sfxe->record->rect);
 		sfxe->record->fps = CFSwapInt16(sfxe->record->fps);
 		sfxe->record->u0 = CFSwapInt16(sfxe->record->u0);
-		sfxe->record->alt_top = CFSwapInt16(sfxe->record->alt_top);
-		sfxe->record->alt_left = CFSwapInt16(sfxe->record->alt_left);
-		sfxe->record->alt_bottom = CFSwapInt16(sfxe->record->alt_bottom);
-		sfxe->record->alt_right = CFSwapInt16(sfxe->record->alt_right);
+		sfxe->record->alt_rect = rx_swap_core_rect(sfxe->record->alt_rect);
 		sfxe->record->u1 = CFSwapInt16(sfxe->record->u1);
 		sfxe->record->alt_frame_count = CFSwapInt16(sfxe->record->alt_frame_count);
 		sfxe->record->u2 = CFSwapInt32(sfxe->record->u2);

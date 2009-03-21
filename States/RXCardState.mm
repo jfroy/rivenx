@@ -1300,7 +1300,7 @@ init_failure:
 			
 			// run the water microprogram for the current sfxe frame
 			uint16_t* mp = (uint16_t*)BUFFER_OFFSET(r->water_fx.sfxe->record, r->water_fx.sfxe->offsets[r->water_fx.current_frame]);
-			uint16_t draw_row = r->water_fx.sfxe->record->top;
+			uint16_t draw_row = r->water_fx.sfxe->record->rect.top;
 			while (*mp != 4) {
 				if (*mp == 1) {
 					draw_row++;
@@ -1589,7 +1589,7 @@ exit_render:
 			_hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
 			_hotspotDebugRenderElementCountArray[primitive_index] = 4;
 			
-			NSRect frame = [hotspot worldViewFrame];
+			NSRect frame = [hotspot worldFrame];
 			
 			attribs[0] = frame.origin.x;
 			attribs[1] = frame.origin.y;
@@ -1979,7 +1979,7 @@ exit_flush_tasks:
 	NSEnumerator* hotspots_enum = [active_hotspots objectEnumerator];
 	RXHotspot* hotspot;
 	while ((hotspot = [hotspots_enum nextObject])) {
-		if (NSPointInRect(mouse_vector.origin, [hotspot worldViewFrame]))
+		if (NSPointInRect(mouse_vector.origin, [hotspot worldFrame]))
 			break;
 	}
 	

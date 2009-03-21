@@ -51,7 +51,8 @@ CF_INLINE void rx_dispatch_commandv(id target, rx_command_dispatch_entry_t* comm
 }
 
 CF_INLINE void rx_dispatch_command0(id target, rx_command_dispatch_entry_t* command) {
-	rx_dispatch_commandv(target, command, 0, NULL);
+	uint16_t args;
+	rx_dispatch_commandv(target, command, 0, &args);
 }
 
 CF_INLINE void rx_dispatch_command1(id target, rx_command_dispatch_entry_t* command, uint16_t a1) {
@@ -1085,8 +1086,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling hotspot %hu", logPrefix, argv[0]);
 #endif
 	
-	uint32_t key = argv[0];
-	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet([card hotspotsIDMap], (void*)key));
+	uintptr_t k = argv[0];
+	RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
 	assert(hotspot);
 	
 	if (!hotspot->enabled) {
@@ -1111,8 +1112,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling hotspot %hu", logPrefix, argv[0]);
 #endif
 	
-	uint32_t key = argv[0];
-	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet([card hotspotsIDMap], (void *)key));
+	uintptr_t k = argv[0];
+	RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
 	assert(hotspot);
 	
 	if (hotspot->enabled) {
@@ -1284,10 +1285,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 // 20
 - (void)_opcode_disableAutomaticSwaps:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
-	if (argv != NULL)
+	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling render state swaps", logPrefix);
-	else
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling render state swaps before prepareForRendering execution", logPrefix);
 #endif
 	_renderStateSwapsEnabled = NO;
 }
@@ -1295,12 +1294,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 // 21
 - (void)_opcode_enableAutomaticSwaps:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
-	if (!_disableScriptLogging) {
-		if (argv != NULL)
-			RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps", logPrefix);
-		else
-			RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps after prepareForRendering execution", logPrefix);
-	}
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps", logPrefix);
 #endif
 	
 	// swap
@@ -1560,9 +1555,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	struct rx_blst_record* record = [card hotspotControlRecords] + (argv[0] - 1);
-	uint32_t key = record->hotspot_id;
-	
-	RXHotspot* hotspot = reinterpret_cast<RXHotspot*>(NSMapGet([card hotspotsIDMap], (void *)key));
+	uintptr_t k =  record->hotspot_id;
+	RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
 	assert(hotspot);
 	
 	OSSpinLockLock(&_activeHotspotsLock);
@@ -2608,7 +2602,10 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 }
 
 DEFINE_COMMAND(xjdome25_resetsliders) {
-	// FIXME: implement
+	for (uint16_t h = 16; h < 35; h++)
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, h);
+	for (uint16_t h = 10; h < 16; h++)
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, h);
 }
 
 DEFINE_COMMAND(xjdome25_slidermd) {
@@ -2616,7 +2613,22 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 }
 
 DEFINE_COMMAND(xjdome25_slidermw) {
-	// FIXME: implement
+	for (uint16_t h = 15; h < 35; h++)
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, h);
+	for (uint16_t h = 10; h < 15; h++)
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, h);
+	
+	uintptr_t k = 10;
+	RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
+	
+	rx_core_rect_t hotspot_rect = [hotspot rect];
+	NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
+	NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
+	
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
+	[self _drawPictureWithID:548 archive:[card archive] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
+	[self _drawPictureWithID:547 archive:[card archive] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }
 
 @end

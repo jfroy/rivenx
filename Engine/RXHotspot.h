@@ -8,28 +8,32 @@
 
 #import <Foundation/Foundation.h>
 
+#import "Engine/RXCoreStructures.h"
+
 
 @interface RXHotspot : NSObject {
 	uint16_t _index;
 	uint16_t _ID;
-	NSRect _cardFrame;
-	uint16_t _cursorID;
+	rx_core_rect_t _rect;
+	uint16_t _cursor_id;
 	NSDictionary* _script;
 	
 	NSString* _description;
-	NSRect _globalFrame;
+	NSRect _world_frame;
 
 @public
 	BOOL enabled;
 }
 
-- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID frame:(NSRect)frame cursorID:(uint16_t)cursorID script:(NSDictionary*)script;
+- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID rect:(rx_core_rect_t)rect cursorID:(uint16_t)cursorID script:(NSDictionary*)script;
 
 - (void)setName:(NSString*)name;
 
-- (NSRect)worldViewFrame;
+- (rx_core_rect_t)rect;
 - (uint16_t)cursorID;
 - (NSDictionary*)script;
+
+- (NSRect)worldFrame;
 
 - (void)enable;
 

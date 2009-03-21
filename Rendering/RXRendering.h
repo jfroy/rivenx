@@ -20,6 +20,8 @@
 #import <Cocoa/Cocoa.h>
 #import <QuartzCore/CoreVideo.h>
 
+#import "Engine/RXCoreStructures.h"
+
 __BEGIN_DECLS
 
 struct rx_point {
@@ -52,11 +54,8 @@ CF_INLINE rx_rect_t RXRectMake(GLint x, GLint y, GLsizei width, GLsizei height) 
 	rx_rect_t rect; rect.origin = RXPointMake(x, y); rect.size = RXSizeMake(width, height); return rect;
 }
 
-struct rx_card_sfxe {
-	struct rx_sfxe_record* record;
-	uint32_t* offsets;
-};
-typedef struct rx_card_sfxe rx_card_sfxe;
+#pragma mark -
+#pragma mark rendering constants
 
 extern const rx_size_t kRXRendererViewportSize;
 
@@ -66,6 +65,16 @@ extern const rx_point_t kRXCardViewportOriginOffset;
 extern const double kRXTransitionDuration;
 
 extern const float kRXSoundGainDivisor;
+
+#pragma mark -
+
+struct rx_card_sfxe {
+	struct rx_sfxe_record* record;
+	uint32_t* offsets;
+};
+typedef struct rx_card_sfxe rx_card_sfxe;
+
+#pragma mark -
 
 __END_DECLS
 
@@ -98,12 +107,17 @@ __END_DECLS
 
 __BEGIN_DECLS
 
+#pragma mark -
+#pragma mark rendering globals
+
 // the world view
 extern NSObject<RXWorldViewProtocol>* g_worldView;
 
 // the context state objects
 extern NSObject<RXOpenGLStateProtocol>* g_renderContextState;
 extern NSObject<RXOpenGLStateProtocol>* g_loadContextState;
+
+#pragma mark -
 
 // convenience functions related to the world view
 CF_INLINE rx_size_t RXGetGLViewportSize() {
@@ -135,6 +149,8 @@ CF_INLINE id <RXWorldViewProtocol> RXGetWorldView() {
 	return g_worldView;
 }
 
+#pragma mark -
+
 CF_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) {
 	return NSMakePoint((float)x, (float)y);
 }
@@ -142,6 +158,12 @@ CF_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) {
 CF_INLINE NSRect RXMakeCompositeDisplayRect(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) {
 	return NSMakeRect((float)left, (float)(kRXCardViewportSize.height - bottom), (float)(right - left), (float)(bottom - top));
 }
+
+CF_INLINE NSRect RXMakeCompositeDisplayRectFromCoreRect(rx_core_rect_t rect) {
+	return NSMakeRect((float)rect.left, (float)(kRXCardViewportSize.height - rect.bottom), (float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
+}
+
+#pragma mark -
 
 __END_DECLS
 

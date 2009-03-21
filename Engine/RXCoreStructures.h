@@ -13,13 +13,18 @@
 #include <stdint.h>
 
 #pragma options align=packed
-struct rx_plst_record {
-	uint16_t index;
-	uint16_t bitmap_id;
+struct rx_core_rect {
 	uint16_t left;
 	uint16_t top;
 	uint16_t right;
 	uint16_t bottom;
+};
+typedef struct rx_core_rect rx_core_rect_t;
+
+struct rx_plst_record {
+	uint16_t index;
+	uint16_t bitmap_id;
+	rx_core_rect_t rect;
 };
 
 struct rx_mlst_record {
@@ -49,10 +54,7 @@ struct rx_slst_record2 {
 struct rx_hspt_record {
 	uint16_t blst_id;
 	int16_t name_rec;
-	int16_t left;
-	int16_t top;
-	int16_t right;
-	int16_t bottom;
+	rx_core_rect_t rect;
 	uint16_t u0;
 	uint16_t mouse_cursor;
 	uint16_t index;
@@ -76,16 +78,10 @@ struct rx_sfxe_record {
 	uint16_t magic;
 	uint16_t frame_count;
 	uint32_t offset_table;
-	uint16_t left;
-	uint16_t top;
-	uint16_t right;
-	uint16_t bottom;
+	rx_core_rect_t rect;
 	uint16_t fps;
 	uint16_t u0;
-	uint16_t alt_top;
-	uint16_t alt_left;
-	uint16_t alt_bottom;
-	uint16_t alt_right;
+	rx_core_rect_t alt_rect;
 	uint16_t u1;
 	uint16_t alt_frame_count;
 	uint32_t u2;
@@ -97,3 +93,11 @@ struct rx_sfxe_record {
 #pragma options align=reset
 
 #endif // RX_CORE_STRUCTURES_H
+
+CF_INLINE rx_core_rect_t rx_swap_core_rect(rx_core_rect_t r) {
+	r.left = CFSwapInt16(r.left);
+	r.top = CFSwapInt16(r.top);
+	r.right = CFSwapInt16(r.right);
+	r.bottom = CFSwapInt16(r.bottom);
+	return r;
+}

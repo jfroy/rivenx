@@ -19,31 +19,34 @@
 	return nil;
 }
 
-- (void)_updateGlobalFrame:(NSNotification*)notification {
-	rx_rect_t contentRect = RXEffectiveRendererFrame();
-	float scale_x = (float)contentRect.size.width / (float)kRXRendererViewportSize.width;
-	float scale_y = (float)contentRect.size.height / (float)kRXRendererViewportSize.height;
+- (void)_updateWorldFrame:(NSNotification*)notification {
+	rx_rect_t render_frame = RXEffectiveRendererFrame();
+	float scale_x = (float)render_frame.size.width / (float)kRXRendererViewportSize.width;
+	float scale_y = (float)render_frame.size.height / (float)kRXRendererViewportSize.height;
 	
-	_globalFrame.origin.x = contentRect.origin.x + (_cardFrame.origin.x + kRXCardViewportOriginOffset.x) * scale_x;
-	_globalFrame.origin.y = contentRect.origin.y + (_cardFrame.origin.y + kRXCardViewportOriginOffset.y) * scale_y;
-	_globalFrame.size.width = _cardFrame.size.width * scale_x;
-	_globalFrame.size.height = _cardFrame.size.height * scale_y;
+	NSRect composite_rect = RXMakeCompositeDisplayRectFromCoreRect(_rect);
+	
+	_world_frame.origin.x = render_frame.origin.x + (composite_rect.origin.x + kRXCardViewportOriginOffset.x) * scale_x;
+	_world_frame.origin.y = render_frame.origin.y + (composite_rect.origin.y + kRXCardViewportOriginOffset.y) * scale_y;
+	_world_frame.size.width = composite_rect.size.width * scale_x;
+	_world_frame.size.height = composite_rect.size.height * scale_y;
 }
 
-- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID frame:(NSRect)frame cursorID:(uint16_t)cursorID script:(NSDictionary*)script {
+- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID rect:(rx_core_rect_t)rect cursorID:(uint16_t)cursorID script:(NSDictionary*)script {
 	self = [super init];
-	if (!self) return nil;
+	if (!self)
+		return nil;
 	
 	_index = index;
 	_ID = ID;
-	_cardFrame = frame;
-	_cursorID = cursorID;
+	_rect = rect;
+	_cursor_id = cursorID;
 	_script = [script retain];
 	
-	_description = [[NSString alloc] initWithFormat: @"{ID=%hu, frame=%@}", _ID, NSStringFromRect(_cardFrame)];
+	_description = [[NSString alloc] initWithFormat: @"{ID=%hu, rect=<%hu, %hu, %hu, %hu>}", _ID, _rect.left, _rect.top, _rect.right, _rect.bottom];
 	
-	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_updateGlobalFrame:) name:@"RXOpenGLDidReshapeNotification" object:nil];
-	[self _updateGlobalFrame:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_updateWorldFrame:) name:@"RXOpenGLDidReshapeNotification" object:nil];
+	[self _updateWorldFrame:nil];
 	
 #if defined(DEBUG) && DEBUG > 1
 	NSMutableString* hotspot_handlers = [NSMutableString new];
@@ -88,20 +91,24 @@
 
 - (void)setName:(NSString*)name {
 	NSString* old = _description;
-	_description = [[NSString alloc] initWithFormat: @"%@ {ID=%hu, frame=%@}", name, _ID, NSStringFromRect(_cardFrame)];
+	_description = [[NSString alloc] initWithFormat: @"%@ {ID=%hu, rect=<%hu, %hu, %hu, %hu>}", name, _ID, _rect.left, _rect.top, _rect.right, _rect.bottom];
 	[old release];
 }
 
-- (NSRect)worldViewFrame {
-	return _globalFrame;
+- (NSRect)worldFrame {
+	return _world_frame;
 }
 
 - (uint16_t)cursorID {
-	return _cursorID;
+	return _cursor_id;
 }
 
 - (NSDictionary*)script {
 	return _script;
+}
+
+- (rx_core_rect_t)rect {
+	return _rect;
 }
 
 - (void)enable {
