@@ -2602,23 +2602,26 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 }
 
 DEFINE_COMMAND(xjdome25_resetsliders) {
-	for (uint16_t h = 16; h < 35; h++)
+	// FIXME: implement
+	
+	for (uint16_t h = 15; h < 35; h++)
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, h);
-	for (uint16_t h = 10; h < 16; h++)
+	for (uint16_t h = 10; h < 15; h++)
 		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, h);
 }
 
 DEFINE_COMMAND(xjdome25_slidermd) {
 	// FIXME: implement
-}
-
-DEFINE_COMMAND(xjdome25_slidermw) {
+	
 	for (uint16_t h = 15; h < 35; h++)
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, h);
 	for (uint16_t h = 10; h < 15; h++)
 		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, h);
 	
-	uintptr_t k = 10;
+	static uintptr_t k = 9;
+	k = k + 1;
+	if (k == 35)
+		k = 10;
 	RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
 	
 	rx_core_rect_t hotspot_rect = [hotspot rect];
@@ -2629,6 +2632,10 @@ DEFINE_COMMAND(xjdome25_slidermw) {
 	[self _drawPictureWithID:548 archive:[card archive] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 	[self _drawPictureWithID:547 archive:[card archive] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+}
+
+DEFINE_COMMAND(xjdome25_slidermw) {
+	// FIXME: implement
 }
 
 @end
