@@ -6,6 +6,7 @@
 //	Copyright 2007 MacStorm. All rights reserved.
 //
 
+#import <Cocoa/Cocoa.h>
 #import <QuickTime/QuickTime.h>
 
 #import "RXDebug.h"

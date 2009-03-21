@@ -15,17 +15,17 @@
 #include <unistd.h>
 #include <limits.h>
 
-#include "RXThreadUtilities.h"
-#include "RXAudioRenderer.h"
-#include "RXAudioSourceBase.h"
+#include "Base/RXThreadUtilities.h"
+#include "Rendering/Audio/RXAudioRenderer.h"
+#include "Rendering/Audio/RXAudioSourceBase.h"
 
 const int PLAYBACK_SECONDS = 5;
 const int RAMP_DURATION = 10;
 
 const int VERSION = 2;
 
-#define BASE_TESTS 0
-#define RAMP_TESTS 1
+#define BASE_TESTS 1
+#define RAMP_TESTS 0
 #define ENABLED_TESTS 0
 
 using namespace RX;
@@ -40,7 +40,10 @@ public:
 	inline Float64 GetDuration() const throw() { return fileDuration; }
 	
 protected:
-	virtual void PopulateGraph() throw(CAXException);
+	
+	virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw();
+	
+	virtual void HandleAttach() throw(CAXException);
 	virtual void HandleDetach() throw(CAXException);
 	
 	virtual bool Enable() throw(CAXException);
@@ -50,6 +53,7 @@ private:
 	AudioFileID audioFile;
 	CAStreamBasicDescription fileFormat;
 	Float64 fileDuration;
+	CAAudioUnit file_player_au;
 };
 
 AudioFileSource::AudioFileSource(const char* path) throw(CAXException) {
@@ -74,7 +78,7 @@ AudioFileSource::AudioFileSource(const char* path) throw(CAXException) {
 	
 	// set our output format as canonical
 	format.mSampleRate = 44100.0;
-	format.SetCanonical(fileFormat.NumberChannels(), true);
+	format.SetCanonical(fileFormat.NumberChannels(), false);
 }
 
 AudioFileSource::~AudioFileSource() throw(CAXException) {
@@ -82,24 +86,31 @@ AudioFileSource::~AudioFileSource() throw(CAXException) {
 	Finalize();
 }
 
-void AudioFileSource::PopulateGraph() throw(CAXException) {
+OSStatus AudioFileSource::Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw() {
+	if (!Enabled()) {
+		for (UInt32 bufferIndex = 0; bufferIndex < ioData->mNumberBuffers; bufferIndex++)
+			bzero(ioData->mBuffers[bufferIndex].mData, ioData->mBuffers[bufferIndex].mDataByteSize);
+		*ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
+		return noErr;
+	}
+	
+	return file_player_au.Render(ioActionFlags, inTimeStamp, 0, inNumberFrames, ioData);
+}
+
+void AudioFileSource::HandleAttach() throw(CAXException) {
+	printf("<AudioFileSource: 0x%p>: HandleAttach()\n", this);
+	
 	CAComponentDescription cd;
 	cd.componentType = kAudioUnitType_Generator;
 	cd.componentSubType = kAudioUnitSubType_AudioFilePlayer;
 	cd.componentManufacturer = kAudioUnitManufacturer_Apple;
 	
-	AUNode fileNode;
-	XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &fileNode), "AUGraphNewNode");
+	CAAudioUnit::Open(cd, file_player_au);
+	file_player_au.Initialize();
 	
-	AudioUnit anAU;
-	XThrowIfError(AUGraphGetNodeInfo(graph, fileNode, NULL, NULL, NULL, &anAU), "AUGraphGetNodeInfo");
-	CAAudioUnit fileAU = CAAudioUnit(fileNode, anAU);
-	
-	XThrowIfError(fileAU.SetNumberChannels(kAudioUnitScope_Output, 0, fileFormat.NumberChannels()), "SetNumberChannels");
-	XThrowIfError(fileAU.SetProperty(kAudioUnitProperty_ScheduledFileIDs, kAudioUnitScope_Global, 0, &audioFile, sizeof(audioFile)), "SetScheduleFile");
-	
-	XThrowIfError(AUGraphConnectNodeInput(graph, fileNode, 0, outputUnit, 0), "AUGraphConnectNodeInput");
-	XThrowIfError(AUGraphInitialize(graph), "AUGraphInitialize");
+	XThrowIfError(file_player_au.SetFormat(kAudioUnitScope_Output, 0, format), "SetFormat");
+	XThrowIfError(file_player_au.SetNumberChannels(kAudioUnitScope_Output, 0, fileFormat.NumberChannels()), "SetNumberChannels");
+	XThrowIfError(file_player_au.SetProperty(kAudioUnitProperty_ScheduledFileIDs, kAudioUnitScope_Global, 0, &audioFile, sizeof(audioFile)), "SetScheduleFile");
 	
 	// workaround a race condition in the file player AU
 	usleep (10 * 1000);
@@ -107,7 +118,7 @@ void AudioFileSource::PopulateGraph() throw(CAXException) {
 	UInt64 nPackets;
 	UInt32 propsize = sizeof(nPackets);
 	XThrowIfError(AudioFileGetProperty(audioFile, kAudioFilePropertyAudioDataPacketCount, &propsize, &nPackets), "kAudioFilePropertyAudioDataPacketCount");
-
+	
 	ScheduledAudioFileRegion rgn;
 	memset (&rgn.mTimeStamp, 0, sizeof(rgn.mTimeStamp));
 	rgn.mTimeStamp.mFlags = kAudioTimeStampSampleTimeValid;
@@ -120,36 +131,36 @@ void AudioFileSource::PopulateGraph() throw(CAXException) {
 	rgn.mFramesToPlay = UInt32(nPackets * fileFormat.mFramesPerPacket);
 		
 	// tell the file player AU to play all of the file
-	XThrowIfError(fileAU.SetProperty(kAudioUnitProperty_ScheduledFileRegion, kAudioUnitScope_Global, 0, &rgn, sizeof(rgn)), "kAudioUnitProperty_ScheduledFileRegion");
+	XThrowIfError(file_player_au.SetProperty(kAudioUnitProperty_ScheduledFileRegion, kAudioUnitScope_Global, 0, &rgn, sizeof(rgn)), "kAudioUnitProperty_ScheduledFileRegion");
 	
 	// prime the fp AU with default values
 	UInt32 defaultVal = 0;
-	XThrowIfError(fileAU.SetProperty(kAudioUnitProperty_ScheduledFilePrime, kAudioUnitScope_Global, 0, &defaultVal, sizeof(defaultVal)), "kAudioUnitProperty_ScheduledFilePrime");
+	XThrowIfError(file_player_au.SetProperty(kAudioUnitProperty_ScheduledFilePrime, kAudioUnitScope_Global, 0, &defaultVal, sizeof(defaultVal)), "kAudioUnitProperty_ScheduledFilePrime");
 
 	// tell the fp AU when to start playing (this ts is in the AU's render time stamps; -1 means next render cycle)
 	AudioTimeStamp startTime;
 	memset(&startTime, 0, sizeof(startTime));
 	startTime.mFlags = kAudioTimeStampSampleTimeValid;
 	startTime.mSampleTime = -1;
-	XThrowIfError(fileAU.SetProperty(kAudioUnitProperty_ScheduleStartTimeStamp, kAudioUnitScope_Global, 0, &startTime, sizeof(startTime)), "kAudioUnitProperty_ScheduleStartTimeStamp");
+	XThrowIfError(file_player_au.SetProperty(kAudioUnitProperty_ScheduleStartTimeStamp, kAudioUnitScope_Global, 0, &startTime, sizeof(startTime)), "kAudioUnitProperty_ScheduleStartTimeStamp");
 }
 
 void AudioFileSource::HandleDetach() throw(CAXException) {
 	printf("<AudioFileSource: 0x%p>: HandleDetach()\n", this);
+	file_player_au.Uninitialize();
 }
 
 bool AudioFileSource::Enable() throw(CAXException) {
-	printf("<AudioFileSource: 0x%p>: Enable() not implemented\n", this);
 	return true;
 }
 
 bool AudioFileSource::Disable() throw(CAXException) {
-	printf("<AudioFileSource: 0x%p>: Disable() not implemented\n", this);
 	return true;
 }
 
 }
 
+#if RAMP_TESTS
 static const void* AudioFileSourceArrayRetain(CFAllocatorRef allocator, const void* value) {
 	return value;
 }
@@ -167,6 +178,7 @@ static Boolean AudioFileSourceArrayEqual(const void* value1, const void* value2)
 }
 
 static CFArrayCallBacks g_weakAudioFileSourceArrayCallbacks = {0, AudioFileSourceArrayRetain, AudioFileSourceArrayRelease, AudioFileSourceArrayDescription, AudioFileSourceArrayEqual};
+#endif
 
 #pragma mark -
 

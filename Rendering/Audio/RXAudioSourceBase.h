@@ -42,13 +42,13 @@ protected:
 	
 	void Finalize() throw(CAXException);
 	
-	virtual void HandleDetach() throw(CAXException) = 0;
 	virtual void HandleAttach() throw(CAXException) = 0;
+	virtual void HandleDetach() throw(CAXException) = 0;
 	
 	virtual bool Enable() throw(CAXException) = 0;
 	virtual bool Disable() throw(CAXException) = 0;
 	
-	virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw() = 0;
+	virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw();
 	
 	CAStreamBasicDescription format;
 	AudioUnitElement bus;

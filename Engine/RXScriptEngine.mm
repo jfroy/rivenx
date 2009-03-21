@@ -2632,6 +2632,8 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 	[self _drawPictureWithID:548 archive:[card archive] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 	[self _drawPictureWithID:547 archive:[card archive] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+	
+	// if (NSPointInRect(mouse_vector.origin, [hotspot worldFrame]))
 }
 
 DEFINE_COMMAND(xjdome25_slidermw) {

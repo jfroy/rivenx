@@ -1999,8 +1999,11 @@ exit_flush_tasks:
 		// reset the mouse down hotspot
 		[_mouse_down_hotspot release];
 		_mouse_down_hotspot = nil;
-	
+		
+		// disable hotspot handling; the script engine is responsible for re-enabling it
 		[self disableHotspotHandling];
+		
+		// let the script engine run mouse up scripts
 		[sengine performSelector:@selector(mouseUpInHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
 	}
 	
@@ -2087,7 +2090,7 @@ exit_flush_tasks:
 	_mouse_timestamp = [event timestamp];
 	OSSpinLockUnlock(&_mouse_state_lock);
 	
-	// finally we need to update the hotspot state
+	// update the hotspot state
 	[self updateHotspotState];
 }
 
@@ -2101,7 +2104,7 @@ exit_flush_tasks:
 	_mouse_timestamp = [event timestamp];
 	OSSpinLockUnlock(&_mouse_state_lock);
 	
-	// finally we need to update the hotspot state
+	// update the hotspot state
 	[self updateHotspotState];
 }
 
@@ -2126,14 +2129,17 @@ exit_flush_tasks:
 		// remember the last hotspot for which we've sent a "mouse down" message
 		_mouse_down_hotspot = [_currentHotspot retain];
 		
+		// disable hotspot handling; the script engine is responsible for re-enabling it
 		[self disableHotspotHandling];
+		
+		// let the script engine run mouse down scripts
 		[sengine performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 	} else if (_currentHotspot)
 		[self _handleInventoryMouseDown:event inventoryIndex:(uint32_t)_currentHotspot - 1];
 	
 	OSSpinLockUnlock(&_state_swap_lock);
 	
-	// we do not need to call updateHotspotState from mouse down, since handling the inventory condition would be difficult there 
+	// we do not need to call updateHotspotState from mouse down, since handling inventory hotspots would be difficult there 
 	// (can't retain a non-valid pointer value, e.g. can't store the dummy _currentHotspot value into _mouse_down_hotspot
 }
 
@@ -2151,7 +2157,7 @@ exit_flush_tasks:
 		return;
 	}
 	
-	// finally we need to update the hotspot state; updateHotspotState will take care of sending the mouse up even if it sees a mouse down hotspot and the mouse is still over the hotspot
+	// finally we need to update the hotspot state; updateHotspotState will take care of sending the mouse up event if there is a mouse down hotspot and the mouse is still over that hotspot
 	[self updateHotspotState];
 }
 

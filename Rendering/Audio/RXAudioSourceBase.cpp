@@ -51,4 +51,12 @@ void AudioSourceBase::SetEnabled(bool enable) throw(CAXException) {
 	pthread_mutex_unlock(&transitionMutex);
 }
 
+OSStatus AudioSourceBase::Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw() {
+	UInt32 buffer_index = 0;
+	for (; buffer_index < ioData->mNumberBuffers; buffer_index++)
+		bzero(ioData->mBuffers[buffer_index].mData, ioData->mBuffers[buffer_index].mDataByteSize);
+	*ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
+	return noErr;
+}
+
 }
