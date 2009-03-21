@@ -518,6 +518,7 @@
 		31A9EF94094D285400C6A0AB /* RXBase.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXBase.pch; sourceTree = "<group>"; };
 		31A9F027094D2D0300C6A0AB /* RXRenderState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXRenderState.m; path = States/RXRenderState.m; sourceTree = "<group>"; };
 		31A9F03A094D2E2600C6A0AB /* RXRenderState.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = RXRenderState.h; path = States/RXRenderState.h; sourceTree = "<group>"; };
+		31AA79800F75AACC006F06AC /* RXCursors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCursors.h; sourceTree = "<group>"; };
 		31AE54560DE0ADD6000E71CF /* ExceptionHandling.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExceptionHandling.framework; path = /System/Library/Frameworks/ExceptionHandling.framework; sourceTree = "<absolute>"; };
 		31B741C00B8414EA00D1A247 /* Cyan Worlds.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Cyan Worlds.mp4"; sourceTree = "<group>"; };
 		31B78EC50C88F25F00227E0F /* Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
@@ -1113,6 +1114,7 @@
 				31588872098D7A120090A6B6 /* RXCardDescriptor.m */,
 				31863C0509919F87001A4A42 /* RXCardProtocols.h */,
 				319288DB0EF43C630043B15A /* RXCoreStructures.h */,
+				31AA79800F75AACC006F06AC /* RXCursors.h */,
 				312A895E0D57B25600FCDF91 /* RXEdition.h */,
 				312A895F0D57B25600FCDF91 /* RXEdition.m */,
 				31C545510D5D50620024B486 /* RXEditionInstaller.h */,

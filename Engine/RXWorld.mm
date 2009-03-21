@@ -13,19 +13,19 @@
 #import <sys/param.h>
 #import <sys/mount.h>
 
-#import "RXWorld.h"
+#import "Base/RXThreadUtilities.h"
+#import "Base/RXTiming.h"
+#import "Base/RXLogCenter.h"
 
-#import "GTMObjectSingleton.h"
+#import "Engine/RXWorld.h"
+#import "Engine/RXCursors.h"
 
-#import "BZFSUtilities.h"
-#import "RXThreadUtilities.h"
-#import "RXTiming.h"
+#import "Utilities/GTMObjectSingleton.h"
+#import "Utilities/BZFSUtilities.h"
 
-#import "RXLogCenter.h"
+#import "Rendering/Audio/RXAudioRenderer.h"
 
-#import "RXAudioRenderer.h"
-
-#import "RXCardState.h"
+#import "States/RXCardState.h"
 
 NSObject* g_world = nil;
 
@@ -372,15 +372,15 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (NSCursor*)defaultCursor {
-	return [self cursorForID:3000];
+	return [self cursorForID:RX_CURSOR_FORWARD];
 }
 
 - (NSCursor*)openHandCursor {
-	return [self cursorForID:2003];
+	return [self cursorForID:RX_CURSOR_OPEN_HAND];
 }
 
 - (NSCursor*)invisibleCursor {
-	return [self cursorForID:9000];
+	return [self cursorForID:RX_CURSOR_INVISIBLE];
 }
 
 - (NSCursor*)cursorForID:(uint16_t)ID {

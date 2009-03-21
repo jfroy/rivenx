@@ -24,6 +24,7 @@
 #import "Engine/RXScriptCommandAliases.h"
 #import "Engine/RXWorldProtocol.h"
 #import "Engine/RXEditionManager.h"
+#import "Engine/RXCursors.h"
 
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXPicture.h"
@@ -2155,7 +2156,7 @@ static const float k_jungle_elevator_trigger_magnitude = 16.0f;
 
 DEFINE_COMMAND(xhandlecontrolup) {
 	NSRect mouse_vector = [controller mouseVector];
-	[controller setMouseCursor:2004];
+	[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
@@ -2172,14 +2173,14 @@ DEFINE_COMMAND(xhandlecontrolup) {
 			break;
 		}
 		
-		[controller setMouseCursor:2004];
+		[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 		mouse_vector = [controller mouseVector];
 	}
 }
 
 DEFINE_COMMAND(xhandlecontrolmid) {
 	NSRect mouse_vector = [controller mouseVector];
-	[controller setMouseCursor:2004];
+	[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 	
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
@@ -2212,14 +2213,14 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 			break;
 		}
 		
-		[controller setMouseCursor:2004];
+		[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 		mouse_vector = [controller mouseVector];
 	}
 }
 
 DEFINE_COMMAND(xhandlecontroldown) {
 	NSRect mouse_vector = [controller mouseVector];
-	[controller setMouseCursor:2004];
+	[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
@@ -2236,7 +2237,7 @@ DEFINE_COMMAND(xhandlecontroldown) {
 			break;
 		}
 		
-		[controller setMouseCursor:2004];
+		[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 		mouse_vector = [controller mouseVector];
 	}
 }
@@ -2248,7 +2249,7 @@ DEFINE_COMMAND(xvalvecontrol) {
 	uint16_t valve_state = [[g_world gameState] unsignedShortForKey:@"bvalve"];
 	
 	NSRect mouse_vector = [controller mouseVector];
-	[controller setMouseCursor:2004];
+	[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 	
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		float theta = 180.0f * atan2f(mouse_vector.size.height, mouse_vector.size.width) * M_1_PI;
@@ -2291,7 +2292,7 @@ DEFINE_COMMAND(xvalvecontrol) {
 			break;
 		}		
 		
-		[controller setMouseCursor:2004];
+		[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 		mouse_vector = [controller mouseVector];
 	}
 	
@@ -2323,7 +2324,7 @@ DEFINE_COMMAND(xvalvecontrol) {
 }
 
 DEFINE_COMMAND(xbchipper) {
-	[controller setMouseCursor:2004];
+	[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 
 	uint16_t valve_state = [[g_world gameState] unsignedShortForKey:@"bvalve"];
 	if (valve_state != 2)
@@ -2613,27 +2614,77 @@ DEFINE_COMMAND(xjdome25_resetsliders) {
 DEFINE_COMMAND(xjdome25_slidermd) {
 	// FIXME: implement
 	
-	for (uint16_t h = 15; h < 35; h++)
+	NSRect mouse_vector = [controller mouseVector];
+	
+	// HACK: set some hotspot states
+	for (uint16_t h = 11; h < 35; h++)
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, h);
-	for (uint16_t h = 10; h < 15; h++)
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, h);
+	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 10);
 	
-	static uintptr_t k = 9;
-	k = k + 1;
-	if (k == 35)
-		k = 10;
-	RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
+	// determine if the mouse was on one of the active slider hotspots when it was pressed; if not, we're done
+	// HACK: we only look at the left-most slider
+	uintptr_t k = 10;
+	RXHotspot* current_hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
+	if (!NSPointInRect(mouse_vector.origin, [current_hotspot worldFrame]))
+		return;
 	
-	rx_core_rect_t hotspot_rect = [hotspot rect];
-	NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
-	NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
+	// cache the slider hotspot on the left and right of the current hotspot
+	// FIXME: we only look at the left-most slider
+	RXHotspot* left_hotspot = nil;
+	RXHotspot* right_hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)(k + 1));
 	
-	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
-	[self _drawPictureWithID:548 archive:[card archive] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
-	[self _drawPictureWithID:547 archive:[card archive] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
-	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+	// set the cursor to the closed hand cursor
+	[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 	
-	// if (NSPointInRect(mouse_vector.origin, [hotspot worldFrame]))
+	// track the mouse, updating the position of the slider as appropriate
+	BOOL slider_update = NO;
+	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
+		// did we move to the left hotspot?
+		if (left_hotspot && NSPointInRect(NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin, [left_hotspot worldFrame])) {
+			k--;
+			right_hotspot = current_hotspot;
+			current_hotspot = left_hotspot;
+			if (k > 10)
+				left_hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)(k - 1));
+			else
+				left_hotspot = nil;
+			
+			slider_update = YES;
+		} 
+		// or to the right?
+		else if (right_hotspot && NSPointInRect(NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin, [right_hotspot worldFrame])) {
+			k++;
+			left_hotspot = current_hotspot;
+			current_hotspot = right_hotspot;
+			if (k < 34)
+				right_hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)(k + 1));
+			else
+				right_hotspot = nil;
+			
+			slider_update = YES;
+		}
+		
+		if (slider_update) {
+			// FIXME: play the tick sound
+			
+			// draw the new slider state
+			fprintf(stderr, "drawing slider for hotspot %s\n", [[current_hotspot description] UTF8String]);
+			rx_core_rect_t hotspot_rect = [current_hotspot rect];
+			NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
+			NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
+			
+			DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
+			[self _drawPictureWithID:548 archive:[card archive] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
+			[self _drawPictureWithID:547 archive:[card archive] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
+			DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+			
+			slider_update = NO;
+		}
+		
+		// update the mouse cursor and vector
+		[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
+		mouse_vector = [controller mouseVector];
+	}
 }
 
 DEFINE_COMMAND(xjdome25_slidermw) {
