@@ -13,13 +13,13 @@
 @interface RXWorldView : NSOpenGLView <RXWorldViewProtocol> {
 	BOOL _tornDown;
 	
-	NSOpenGLContext* _renderContext;
-	NSOpenGLContext* _loadContext;
+	NSOpenGLContext* _render_context;
+	NSOpenGLContext* _load_context;
 	
 	CGLPixelFormatObj _cglPixelFormat;
 	
-	CGLContextObj _renderCGLContext;
-	CGLContextObj _loadCGLContext;
+	CGLContextObj _render_context_cgl;
+	CGLContextObj _load_context_cgl;
 	
 	GLuint _glMajorVersion;
 	GLuint _glMinorVersion;

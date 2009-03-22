@@ -32,7 +32,7 @@
 #import "Rendering/Graphics/RXMovieProxy.h"
 
 
-static const NSTimeInterval k_mouse_tracking_loop_period = 0.05;
+static const NSTimeInterval k_mouse_tracking_loop_period = 0.001;
 
 
 struct rx_card_dynamic_picture {
@@ -2611,10 +2611,17 @@ DEFINE_COMMAND(xjdome25_resetsliders) {
 		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, h);
 }
 
+- (RXHotspot*)_jdomeSliderHotspotForMousePosition:(NSPoint)mouse_position {
+	for (uintptr_t k = 10; k < 35; k++) {
+		RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
+		if (NSPointInRect(mouse_position, [hotspot worldFrame]))
+			return hotspot;
+	}
+	return nil;
+}
+
 DEFINE_COMMAND(xjdome25_slidermd) {
 	// FIXME: implement
-	
-	NSRect mouse_vector = [controller mouseVector];
 	
 	// HACK: set some hotspot states
 	for (uint16_t h = 11; h < 35; h++)
@@ -2629,54 +2636,24 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 	tick_sound->pan = 0.5f;
 	
 	// determine if the mouse was on one of the active slider hotspots when it was pressed; if not, we're done
-	// HACK: we only look at the left-most slider
-	uintptr_t k = 10;
-	RXHotspot* current_hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
-	if (!NSPointInRect(mouse_vector.origin, [current_hotspot worldFrame]))
+	NSRect mouse_vector = [controller mouseVector];
+	RXHotspot* current_hotspot = [self _jdomeSliderHotspotForMousePosition:mouse_vector.origin];
+	if (!current_hotspot || !current_hotspot->enabled)
 		return;
-	
-	// cache the slider hotspot on the left and right of the current hotspot
-	// FIXME: we only look at the left-most slider
-	RXHotspot* left_hotspot = nil;
-	RXHotspot* right_hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)(k + 1));
 	
 	// set the cursor to the closed hand cursor
 	[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 	
 	// track the mouse, updating the position of the slider as appropriate
-	BOOL slider_update = NO;
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
-		// did we move to the left hotspot?
-		if (left_hotspot && NSPointInRect(NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin, [left_hotspot worldFrame])) {
-			k--;
-			right_hotspot = current_hotspot;
-			current_hotspot = left_hotspot;
-			if (k > 10)
-				left_hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)(k - 1));
-			else
-				left_hotspot = nil;
-			
-			slider_update = YES;
-		} 
-		// or to the right?
-		else if (right_hotspot && NSPointInRect(NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin, [right_hotspot worldFrame])) {
-			k++;
-			left_hotspot = current_hotspot;
-			current_hotspot = right_hotspot;
-			if (k < 34)
-				right_hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)(k + 1));
-			else
-				right_hotspot = nil;
-			
-			slider_update = YES;
-		}
-		
-		if (slider_update) {
+		// where are we now?
+		RXHotspot* hotspot = [self _jdomeSliderHotspotForMousePosition:NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin];
+		if (hotspot && hotspot != current_hotspot) {
 			// play the tick sound
 			[controller playDataSound:tick_sound];
 			
 			// draw the new slider state
-			rx_core_rect_t hotspot_rect = [current_hotspot rect];
+			rx_core_rect_t hotspot_rect = [hotspot rect];
 			NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
 			NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
 			
@@ -2685,7 +2662,7 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 			[self _drawPictureWithID:547 archive:[card archive] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
 			DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 			
-			slider_update = NO;
+			current_hotspot = hotspot;
 		}
 		
 		// update the mouse cursor and vector
