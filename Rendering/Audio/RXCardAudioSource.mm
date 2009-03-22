@@ -34,6 +34,8 @@ CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float 
 	
 	_render_buffer = nil;
 	_decompressionBuffer = nil;
+	_buffer_swap_lock = OS_SPINLOCK_INIT;
+	
 	_bufferedFrames = 0;
 	
 	_loopBuffer = 0;
