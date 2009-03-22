@@ -833,40 +833,74 @@ init_failure:
 	// cache a pointer to the audio renderer
 	RX::AudioRenderer* renderer = (reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer]));
 	
-	// get a decompressor
-	// FIXME: better error handling
-	id <MHKAudioDecompression> decompressor = [sound audioDecompressor];
-	if (!decompressor) {
-		RXOLog2(kRXLoggingAudio, kRXLoggingLevelError, @"[ERROR] failed to get audio decompressor for sound ID %hu", sound->ID);
-		return;
-	}
+	RXSound* active_sound = [_activeDataSounds member:sound];
+	if (!active_sound) {
+		// NEW SOUND
 	
-	// make a source with the decompressor
-	sound->source = new RX::CardAudioSource(decompressor, sound->gain, sound->pan, false);
-	assert(sound->source);
-	
-	// disable automatic graph updates on the audio renderer (e.g. begin a transaction)
-	renderer->SetAutomaticGraphUpdates(false);
-	
-	// add the sound to the set of active data sounds
-	[_activeDataSounds addObject:sound];
-	
-	// update active sources immediately
-	[self _updateActiveSources];
-	
-	// now that any sources bound to be detached has been, go ahead and attach the new source
-	renderer->AttachSource(*(sound->source));
-	
-	// set the sound's detatch timestamp to the sound's duration plus some comfort offset
-	sound->detach_timestamp = RXTimingOffsetTimestamp(RXTimingNow(), sound->source->Duration() + 0.5);
-	
-	// re-enable automatic updates. this will automatically do an update if one is needed
-	renderer->SetAutomaticGraphUpdates(true);
-	
-	// delete any sources that were detached
-	if (_sourcesToDelete) {
-		CFRelease(_sourcesToDelete);
-		_sourcesToDelete = NULL;
+		// get a decompressor
+		id <MHKAudioDecompression> decompressor = [sound audioDecompressor];
+		if (!decompressor) {
+			RXOLog2(kRXLoggingAudio, kRXLoggingLevelError, @"failed to get audio decompressor for sound ID %hu", sound->ID);
+			return;
+		}
+		
+		// create an audio source with the decompressor
+		sound->source = new RX::CardAudioSource(decompressor, sound->gain, sound->pan, false);
+		assert(sound->source);
+		
+		// make sure the sound doesn't have a valid detach timestamp
+		sound->detach_timestamp = 0;
+		
+		// disable automatic graph updates on the audio renderer (e.g. begin a transaction)
+		renderer->SetAutomaticGraphUpdates(false);
+		
+		// add the sound to the set of active data sounds
+		[_activeDataSounds addObject:sound];
+		
+		// update active sources immediately
+		[self _updateActiveSources];
+		
+		// now that any sources bound to be detached has been, go ahead and attach the new source
+		renderer->AttachSource(*(sound->source));
+		
+		// set the sound's detatch timestamp to the sound's duration plus some comfort offset
+		sound->detach_timestamp = RXTimingOffsetTimestamp(RXTimingNow(), sound->source->Duration() + 0.5);
+		
+		// re-enable automatic updates. this will automatically do an update if one is needed
+		renderer->SetAutomaticGraphUpdates(true);
+		
+		// delete any sources that were detached
+		if (_sourcesToDelete) {
+			CFRelease(_sourcesToDelete);
+			_sourcesToDelete = NULL;
+		}
+	} else {
+		// UPDATE SOUND
+		assert(active_sound->source);
+		
+		// update the sound's gain and pan (this does not affect the source)
+		active_sound->gain = sound->gain;
+		active_sound->pan = sound->pan;
+		
+		// update the source's gain smoothly
+		renderer->SetSourceGain(*(active_sound->source), active_sound->gain);
+		active_sound->source->SetNominalGain(active_sound->gain);
+		
+		// update the source's stereo panning smoothly
+		renderer->SetSourceGain(*(active_sound->source), active_sound->pan);
+		active_sound->source->SetNominalPan(active_sound->pan);
+		
+		// reset the sound's source
+		active_sound->source->Reset();
+		
+		// make sure the sound doesn't have a valid detach timestamp
+		active_sound->detach_timestamp = 0;
+		
+		// update active sources immediately
+		[self _updateActiveSources];
+		
+		// set the sound's detatch timestamp to the sound's duration plus some comfort offset
+		active_sound->detach_timestamp = RXTimingOffsetTimestamp(RXTimingNow(), sound->source->Duration() + 0.5);
 	}
 	
 #if defined(DEBUG)

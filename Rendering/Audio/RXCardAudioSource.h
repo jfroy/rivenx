@@ -33,6 +33,7 @@ public:
 	
 	// rendering
 	void RenderTask() throw();
+	void Reset() throw();
 	
 	// info 
 	inline int64_t FrameCount() const throw() {return [_decompressor frameCount];}
@@ -67,8 +68,11 @@ private:
 	float _pan;
 	bool _loop;
 	
-	int64_t _bufferedFrames;
 	VirtualRingBuffer* _decompressionBuffer;
+	VirtualRingBuffer* volatile _render_buffer;
+	OSSpinLock _buffer_swap_lock;
+	
+	int64_t _bufferedFrames;
 	uint32_t _bytesPerTask;
 	
 	uint8_t* _loopBuffer;

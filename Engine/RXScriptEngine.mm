@@ -1028,7 +1028,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource with id %hu, volume %hu", logPrefix, argv[0], argv[1]);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource id=%hu, volume=%hu, blocking=%hu", logPrefix, argv[0], argv[1], argv[2]);
 #endif
 	
 	RXDataSound* sound = [RXDataSound new];
@@ -2621,6 +2621,13 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, h);
 	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 10);
 	
+	// cache the tick sound
+	RXDataSound* tick_sound = [RXDataSound new];
+	tick_sound->parent = [[card descriptor] parent];
+	tick_sound->ID = 81;
+	tick_sound->gain = 1.0f;
+	tick_sound->pan = 0.5f;
+	
 	// determine if the mouse was on one of the active slider hotspots when it was pressed; if not, we're done
 	// HACK: we only look at the left-most slider
 	uintptr_t k = 10;
@@ -2665,10 +2672,10 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 		}
 		
 		if (slider_update) {
-			// FIXME: play the tick sound
+			// play the tick sound
+			[controller playDataSound:tick_sound];
 			
 			// draw the new slider state
-			fprintf(stderr, "drawing slider for hotspot %s\n", [[current_hotspot description] UTF8String]);
 			rx_core_rect_t hotspot_rect = [current_hotspot rect];
 			NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
 			NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
@@ -2685,6 +2692,8 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 		[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 		mouse_vector = [controller mouseVector];
 	}
+	
+	[tick_sound release];
 }
 
 DEFINE_COMMAND(xjdome25_slidermw) {

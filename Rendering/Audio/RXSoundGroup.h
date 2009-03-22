@@ -13,6 +13,8 @@
 
 
 @interface RXSound : NSObject {
+	id <MHKAudioDecompression> _decompressor;
+
 @public
 	RXStack* parent;
 	uint16_t ID;

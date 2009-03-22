@@ -13,7 +13,9 @@
 @implementation RXSound
 
 - (id <MHKAudioDecompression>)audioDecompressor {
-	return [parent audioDecompressorWithID:ID];
+	if (!_decompressor)
+		_decompressor = [parent audioDecompressorWithID:ID];
+	return _decompressor;
 }
 
 - (BOOL)isEqual:(id)anObject {
@@ -30,7 +32,7 @@
 	return integer_pair_hash((int)parent, (int)ID);
 }
 
-- (NSString *)description {
+- (NSString*)description {
 	return [NSString stringWithFormat:@"%@ {parent=%@, ID=%hu, gain=%f, pan=%f, detach_timestamp=%qu, source=%p}", [super description], parent, ID, gain, pan, detach_timestamp, source];
 }
 
