@@ -232,8 +232,8 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 		
 		// try to set the format of the source as the mixer's input bus format; this will more often than not fail
 		CAStreamBasicDescription source_format = source->Format();
-		OSStatus oserr = mixer->SetFormat(kAudioUnitScope_Input, source->bus, source->Format());
-		if (oserr && oserr == kAudioUnitErr_FormatNotSupported || source_format.NumberChannels() == 1) {
+		OSStatus oserr = (source_format.NumberChannels() == 1) ? kAudioUnitErr_FormatNotSupported : mixer->SetFormat(kAudioUnitScope_Input, source->bus, source->Format());
+		if (oserr == kAudioUnitErr_FormatNotSupported) {
 			// we need to create a converter AU and connect it to the mixer, plugging the source as the converter's render callback
 			
 #if defined(DEBUG) && DEBUG > 1
