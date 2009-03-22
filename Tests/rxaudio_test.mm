@@ -79,6 +79,7 @@ AudioFileSource::AudioFileSource(const char* path) throw(CAXException) {
 	// set our output format as canonical
 	format.mSampleRate = 44100.0;
 	format.SetCanonical(fileFormat.NumberChannels(), false);
+	printf("<AudioFileSource: 0x%p>: output format: ", this); format.Print(); printf("\n");
 }
 
 AudioFileSource::~AudioFileSource() throw(CAXException) {
@@ -106,18 +107,23 @@ void AudioFileSource::HandleAttach() throw(CAXException) {
 	cd.componentManufacturer = kAudioUnitManufacturer_Apple;
 	
 	CAAudioUnit::Open(cd, file_player_au);
-	file_player_au.Initialize();
 	
-	XThrowIfError(file_player_au.SetFormat(kAudioUnitScope_Output, 0, format), "SetFormat");
-	XThrowIfError(file_player_au.SetNumberChannels(kAudioUnitScope_Output, 0, fileFormat.NumberChannels()), "SetNumberChannels");
-	XThrowIfError(file_player_au.SetProperty(kAudioUnitProperty_ScheduledFileIDs, kAudioUnitScope_Global, 0, &audioFile, sizeof(audioFile)), "SetScheduleFile");
+	// set the output format before we initialize the AU
+	XThrowIfError(file_player_au.SetFormat(kAudioUnitScope_Output, 0, format), "file_player_au.SetFormat");
+	
+	// initialize
+	XThrowIfError(file_player_au.Initialize(), "file_player_au.Initialize");
+	
+	// set the scheduled file IDs
+	XThrowIfError(file_player_au.SetProperty(kAudioUnitProperty_ScheduledFileIDs, kAudioUnitScope_Global, 0, &audioFile, sizeof(audioFile)), "file_player_au.SetScheduleFile");
 	
 	// workaround a race condition in the file player AU
 	usleep (10 * 1000);
 	
+	// schedule a file region covering the entire file
 	UInt64 nPackets;
 	UInt32 propsize = sizeof(nPackets);
-	XThrowIfError(AudioFileGetProperty(audioFile, kAudioFilePropertyAudioDataPacketCount, &propsize, &nPackets), "kAudioFilePropertyAudioDataPacketCount");
+	XThrowIfError(AudioFileGetProperty(audioFile, kAudioFilePropertyAudioDataPacketCount, &propsize, &nPackets), "AudioFileGetProperty(audioFile, ...) for kAudioFilePropertyAudioDataPacketCount");
 	
 	ScheduledAudioFileRegion rgn;
 	memset (&rgn.mTimeStamp, 0, sizeof(rgn.mTimeStamp));
@@ -129,20 +135,19 @@ void AudioFileSource::HandleAttach() throw(CAXException) {
 	rgn.mLoopCount = 1;
 	rgn.mStartFrame = 0;
 	rgn.mFramesToPlay = UInt32(nPackets * fileFormat.mFramesPerPacket);
-		
-	// tell the file player AU to play all of the file
-	XThrowIfError(file_player_au.SetProperty(kAudioUnitProperty_ScheduledFileRegion, kAudioUnitScope_Global, 0, &rgn, sizeof(rgn)), "kAudioUnitProperty_ScheduledFileRegion");
 	
-	// prime the fp AU with default values
+	XThrowIfError(file_player_au.SetProperty(kAudioUnitProperty_ScheduledFileRegion, kAudioUnitScope_Global, 0, &rgn, sizeof(rgn)), "file_player_au.SetProperty for kAudioUnitProperty_ScheduledFileRegion");
+	
+	// prime the AU
 	UInt32 defaultVal = 0;
 	XThrowIfError(file_player_au.SetProperty(kAudioUnitProperty_ScheduledFilePrime, kAudioUnitScope_Global, 0, &defaultVal, sizeof(defaultVal)), "kAudioUnitProperty_ScheduledFilePrime");
 
-	// tell the fp AU when to start playing (this ts is in the AU's render time stamps; -1 means next render cycle)
+	// set the start time to the next render cycle (sample time = -1)
 	AudioTimeStamp startTime;
 	memset(&startTime, 0, sizeof(startTime));
 	startTime.mFlags = kAudioTimeStampSampleTimeValid;
 	startTime.mSampleTime = -1;
-	XThrowIfError(file_player_au.SetProperty(kAudioUnitProperty_ScheduleStartTimeStamp, kAudioUnitScope_Global, 0, &startTime, sizeof(startTime)), "kAudioUnitProperty_ScheduleStartTimeStamp");
+	XThrowIfError(file_player_au.SetProperty(kAudioUnitProperty_ScheduleStartTimeStamp, kAudioUnitScope_Global, 0, &startTime, sizeof(startTime)), "file_player_au.SetProperty for kAudioUnitProperty_ScheduleStartTimeStamp");
 }
 
 void AudioFileSource::HandleDetach() throw(CAXException) {
