@@ -22,7 +22,7 @@
 const int PLAYBACK_SECONDS = 5;
 const int RAMP_DURATION = 10;
 
-const int VERSION = 2;
+const int VERSION = 3;
 
 #define BASE_TESTS 1
 #define RAMP_TESTS 0
@@ -193,7 +193,7 @@ int main (int argc, char * const argv[]) {
 	RXInitThreading();
 	
 	pid_t pid = getpid();
-	fprintf(stderr, "pid: %d\nstarting in 5 seconds...\n", pid);
+	printf("pid: %d\nstarting in 5 seconds...\n", pid);
 	sleep(5);
 	
 #if BASE_TESTS
