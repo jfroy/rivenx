@@ -95,8 +95,12 @@
 	[old release];
 }
 
-- (NSRect)worldFrame {
-	return _world_frame;
+- (uint16_t)ID {
+	return _ID;
+}
+
+- (rx_core_rect_t)rect {
+	return _rect;
 }
 
 - (uint16_t)cursorID {
@@ -107,8 +111,8 @@
 	return _script;
 }
 
-- (rx_core_rect_t)rect {
-	return _rect;
+- (NSRect)worldFrame {
+	return _world_frame;
 }
 
 - (void)enable {

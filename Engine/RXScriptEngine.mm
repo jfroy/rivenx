@@ -221,6 +221,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	_renderStateSwapsEnabled = YES;
 	
+	sliders_state = 0x1F;
+	
 	return self;
 }
 
@@ -460,6 +462,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// disable all movies (not sure this needs to be done here, but bad drawing glitches occur if this is not done, see bspit 163)
 	[(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:NO];
 	
+	// clear all active hotspots and replace them with the new card's hotspots
 	OSSpinLockLock(&_activeHotspotsLock);
 	[_activeHotspots removeAllObjects];
 	[_activeHotspots addObjectsFromArray:[card hotspots]];
@@ -2603,31 +2606,56 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 }
 
 DEFINE_COMMAND(xjdome25_resetsliders) {
-	// FIXME: implement
-	
 	for (uint16_t h = 15; h < 35; h++)
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, h);
 	for (uint16_t h = 10; h < 15; h++)
 		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, h);
+	
+	// FIXME: need to play a purdy animation and update the graphics
+	
+	// reset the sliders state
+	sliders_state = 0x1F;
 }
 
-- (RXHotspot*)_jdomeSliderHotspotForMousePosition:(NSPoint)mouse_position {
+- (RXHotspot*)_jdomeSliderHotspotForMousePosition:(NSPoint)mouse_position currentHotspot:(RXHotspot*)current {
+	// cache the hotspots ID map
+	NSMapTable* hotspots_map = [card hotspotsIDMap];
+	
+	RXHotspot* first_forward_scan = nil;
 	for (uintptr_t k = 10; k < 35; k++) {
-		RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
-		if (NSPointInRect(mouse_position, [hotspot worldFrame]))
+		RXHotspot* hotspot = (RXHotspot*)NSMapGet(hotspots_map, (void*)k);
+		
+		if (current && !first_forward_scan && k > [current ID] && (sliders_state & (1 << (k - 10))))
+			first_forward_scan = hotspot;
+		
+		if (NSPointInRect(mouse_position, [hotspot worldFrame])) {
+			if (!current) {
+				if (!(sliders_state & (1 << (k - 10))))
+					hotspot = nil;
+			} else {
+				// we only need to do boundary checking if the hotspot under the mouse is not the current hotspot
+				if (hotspot != current) {
+					if ([hotspot ID] > [current ID]) {
+						// moving to the right; need to find the right boundary
+						if ([first_forward_scan ID] > [current ID]) {
+							k = [first_forward_scan ID] - 1;
+							hotspot = (RXHotspot*)NSMapGet(hotspots_map, (void*)k);
+						}
+					} else {
+						// moving to the left; need to find the left boundary
+						hotspot = nil;
+					}
+				}
+			}
+			
 			return hotspot;
+		}
 	}
+	
 	return nil;
 }
 
-DEFINE_COMMAND(xjdome25_slidermd) {
-	// FIXME: implement
-	
-	// HACK: set some hotspot states
-	for (uint16_t h = 11; h < 35; h++)
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, h);
-	DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 10);
-	
+DEFINE_COMMAND(xjdome25_slidermd) {	
 	// cache the tick sound
 	RXDataSound* tick_sound = [RXDataSound new];
 	tick_sound->parent = [[card descriptor] parent];
@@ -2635,9 +2663,12 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 	tick_sound->gain = 1.0f;
 	tick_sound->pan = 0.5f;
 	
+	// cache the hotspots ID map
+	NSMapTable* hotspots_map = [card hotspotsIDMap];
+	
 	// determine if the mouse was on one of the active slider hotspots when it was pressed; if not, we're done
 	NSRect mouse_vector = [controller mouseVector];
-	RXHotspot* current_hotspot = [self _jdomeSliderHotspotForMousePosition:mouse_vector.origin];
+	RXHotspot* current_hotspot = [self _jdomeSliderHotspotForMousePosition:mouse_vector.origin currentHotspot:nil];
 	if (!current_hotspot || !current_hotspot->enabled)
 		return;
 	
@@ -2647,22 +2678,31 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 	// track the mouse, updating the position of the slider as appropriate
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		// where are we now?
-		RXHotspot* hotspot = [self _jdomeSliderHotspotForMousePosition:NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin];
+		RXHotspot* hotspot = [self _jdomeSliderHotspotForMousePosition:NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin currentHotspot:current_hotspot];
 		if (hotspot && hotspot != current_hotspot) {
 			// play the tick sound
 			[controller playDataSound:tick_sound];
 			
-			// draw the new slider state
-			rx_core_rect_t hotspot_rect = [hotspot rect];
-			NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
-			NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
+			// disable the old and enable the new
+			sliders_state = (sliders_state & ~(1 << ([current_hotspot ID] - 10))) | (1 << ([hotspot ID] - 10));
+			current_hotspot = hotspot;
 			
+			// draw the new slider state
 			DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
 			[self _drawPictureWithID:548 archive:[card archive] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
-			[self _drawPictureWithID:547 archive:[card archive] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
-			DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 			
-			current_hotspot = hotspot;
+			uintptr_t k = 10;
+			for (int i = 0; i < 5; i++) {
+				while (k < 35 && !(sliders_state & (1 << (k - 10))))
+					k++;
+				
+				RXHotspot* h = (RXHotspot*)NSMapGet(hotspots_map, (void*)k++);
+				rx_core_rect_t hotspot_rect = [h rect];
+				NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
+				NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
+				[self _drawPictureWithID:547 archive:[card archive] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
+			}
+			DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 		}
 		
 		// update the mouse cursor and vector

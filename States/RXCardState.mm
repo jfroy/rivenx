@@ -49,7 +49,7 @@ static const double RX_AUDIO_UPDATE_DURATION = 0.5;
 
 static const GLuint RX_CARD_DYNAMIC_RENDER_INDEX = 0;
 
-static const GLuint RX_MAX_RENDER_HOTSPOT = 20;
+static const GLuint RX_MAX_RENDER_HOTSPOT = 30;
 
 static const GLuint RX_MAX_INVENTORY_ITEMS = 3;
 static const NSString* RX_INVENTORY_KEYS[3] = {

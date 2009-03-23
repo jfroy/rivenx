@@ -42,6 +42,9 @@
 	BOOL _renderStateSwapsEnabled;
 	BOOL _didActivatePLST;
 	BOOL _didActivateSLST;
+	
+	// gameplay support
+	uint32_t sliders_state;
 }
 
 - (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr;
