@@ -2621,12 +2621,13 @@ DEFINE_COMMAND(xjdome25_resetsliders) {
 	// cache the hotspots ID map
 	NSMapTable* hotspots_map = [card hotspotsIDMap];
 	
-	RXHotspot* first_forward_scan = nil;
+	uintptr_t boundary_hotspot_id = 0;
 	for (uintptr_t k = 10; k < 35; k++) {
 		RXHotspot* hotspot = (RXHotspot*)NSMapGet(hotspots_map, (void*)k);
 		
-		if (current && !first_forward_scan && k > [current ID] && (sliders_state & (1 << (k - 10))))
-			first_forward_scan = hotspot;
+		// look for the boundary hotspot for a move-to-right update here since we are doing a forward scan already
+		if (current && !boundary_hotspot_id && k > [current ID] && (sliders_state & (1 << (k - 10))))
+			boundary_hotspot_id = [hotspot ID];
 		
 		if (NSPointInRect(mouse_position, [hotspot worldFrame])) {
 			if (!current) {
@@ -2637,13 +2638,21 @@ DEFINE_COMMAND(xjdome25_resetsliders) {
 				if (hotspot != current) {
 					if ([hotspot ID] > [current ID]) {
 						// moving to the right; need to find the right boundary
-						if ([first_forward_scan ID] > [current ID]) {
-							k = [first_forward_scan ID] - 1;
-							hotspot = (RXHotspot*)NSMapGet(hotspots_map, (void*)k);
-						}
+						if (boundary_hotspot_id > [current ID])
+							hotspot = (RXHotspot*)NSMapGet(hotspots_map, (void*)(boundary_hotspot_id - 1));
 					} else {
-						// moving to the left; need to find the left boundary
-						hotspot = nil;
+						// moving to the left; need to find the left boundary by doing a backward scan from current to hotspot
+						boundary_hotspot_id = 0;
+						uintptr_t reverse_scan_limit = [hotspot ID];
+						for (uintptr_t k2 = [current ID] - 1; k2 >= reverse_scan_limit; k2--) {
+							if ((sliders_state & (1 << (k2 - 10)))) {
+								boundary_hotspot_id = k2;
+								break;
+							}
+						}
+						
+						if (boundary_hotspot_id)
+							hotspot = (RXHotspot*)NSMapGet(hotspots_map, (void*)(boundary_hotspot_id + 1));
 					}
 				}
 			}

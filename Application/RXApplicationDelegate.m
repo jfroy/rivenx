@@ -135,6 +135,9 @@
 }
 
 - (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException*)e mask:(NSUInteger)aMask {
+	if ([[e name] isEqualToString:@"RXCommandArgumentsException"] || [[e name] isEqualToString:@"RXUnknownCommandException"] || [[e name] isEqualToString:@"RXCommandError"])
+		return NO;
+	
 	[self notifyUserOfFatalException:e];
 	return NO;
 }
