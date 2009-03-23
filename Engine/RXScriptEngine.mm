@@ -2723,7 +2723,11 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 }
 
 DEFINE_COMMAND(xjdome25_slidermw) {
-	// FIXME: implement
+	RXHotspot* current_hotspot = [self _jdomeSliderHotspotForMousePosition:[controller mouseVector].origin currentHotspot:nil];
+	if (current_hotspot)
+		[controller setMouseCursor:RX_CURSOR_OPEN_HAND];
+	else
+		[controller setMouseCursor:RX_CURSOR_FORWARD];
 }
 
 @end
