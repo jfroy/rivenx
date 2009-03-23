@@ -444,9 +444,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 #pragma mark -
 
-- (void)prepareForRendering {
+- (void)openCard {
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@preparing for rendering {", logPrefix);
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@opening card {", logPrefix);
 	[logPrefix appendString:@"    "];
 #endif
 
@@ -481,7 +481,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[controller queueSpecialEffect:NULL owner:card];
 	
 	// execute loading programs (index 6)
-	NSArray* programs = [[card events] objectForKey:RXCardPrepareScriptKey];
+	NSArray* programs = [[card events] objectForKey:RXCardOpenScriptKey];
+	assert(programs);
+	
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for(; programIndex < programCount; programIndex++) {
@@ -531,6 +533,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// execute rendering programs (index 9)
 	NSArray* programs = [[card events] objectForKey:RXStartRenderingScriptKey];
+	assert(programs);
+	
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -564,12 +568,16 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 }
 
-- (void)stopRendering {
+- (void)closeCard {
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@stopping rendering {", logPrefix);
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing card {", logPrefix);
 	[logPrefix appendString:@"    "];
 #endif
-
+	
+	// we may be switching from the NULL card, so check for that and return immediately if that's the case
+	if (!card)
+		return;
+	
 	// retain the card while it executes programs
 	RXCard* executing_card = card;
 	if (_programExecutionDepth == 0) {
@@ -577,7 +585,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// execute leaving programs (index 7)
-	NSArray* programs = [[card events] objectForKey:RXCardStopRenderingScriptKey];
+	NSArray* programs = [[card events] objectForKey:RXCardCloseScriptKey];
+	assert(programs);
+	
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -635,6 +645,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// execute mouse moved programs (index 4)
 	NSArray* programs = [[hotspot script] objectForKey:RXMouseInsideScriptKey];
+	assert(programs);
+	
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -679,6 +691,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// execute mouse leave programs (index 5)
 	NSArray* programs = [[hotspot script] objectForKey:RXMouseExitedScriptKey];
+	assert(programs);
+	
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -720,6 +734,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// execute mouse down programs (index 0)
 	NSArray* programs = [[hotspot script] objectForKey:RXMouseDownScriptKey];
+	assert(programs);
+	
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {
@@ -764,6 +780,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// execute mouse up programs (index 2)
 	NSArray* programs = [[hotspot script] objectForKey:RXMouseUpScriptKey];
+	assert(programs);
+	
 	uint32_t programCount = [programs count];
 	uint32_t programIndex = 0;
 	for (; programIndex < programCount; programIndex++) {

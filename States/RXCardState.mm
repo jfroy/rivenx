@@ -1185,6 +1185,9 @@ init_failure:
 #if (DEBUG)
 		RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"switch card: {from=%@, to=%@}", _front_render_state->card, new_card);
 #endif
+
+		// run the close card script on the old card
+		[sengine closeCard];
 	}
 	
 	// setup the back render state; notice that the ownership of new_card is transferred to the back render state and thus we will not need a release elsewhere to match the card's allocation
@@ -1192,15 +1195,12 @@ init_failure:
 	_back_render_state->new_card = YES;
 	_back_render_state->transition = nil;
 	
-	// run the stop rendering script on the old card
-	[sengine stopRendering];
-	
 	// we have to update the current card in the game state now, otherwise refresh card commands in the prepare for rendering script will jump back to the old card
 	[[g_world gameState] setCurrentCard:[[new_card descriptor] simpleDescriptor]];
 	[sengine setCard:new_card];
 	
 	// run the prepare for rendering script on the new card
-	[sengine prepareForRendering];
+	[sengine openCard];
 	
 	// notify that the front card has changed
 	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:new_card waitUntilDone:NO];
@@ -1216,8 +1216,8 @@ init_failure:
 	_back_render_state->new_card = YES;
 	_back_render_state->transition = nil;
 	
-	// run the stop rendering script on the old card; note that we do not need to protect access to the front card since this method will always execute on the script thread
-	[sengine stopRendering];
+	// run the close card script on the old card; note that we do not need to protect access to the front card since this method will always execute on the script thread
+	[sengine closeCard];
 	
 	// wipe out the transition queue
 	[_transitionQueue removeAllObjects];

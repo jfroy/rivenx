@@ -18,8 +18,8 @@ enum {
 	kScriptTypeUnknown3,
 	kScriptTypeMouseInside,
 	kScriptTypeMouseExited,
-	kScriptTypeCardPrepare,
-	kScriptTypeCardStopRendering,
+	kScriptTypeCardOpen,
+	kScriptTypeCardClose,
 	kScriptTypeUnknown8,
 	kScriptTypeStartRendering,
 	kScriptTypeScreenUpdate,
@@ -31,8 +31,8 @@ extern NSString* const RXMouseUpScriptKey;
 extern NSString* const RXUnknown3ScriptKey;
 extern NSString* const RXMouseInsideScriptKey;
 extern NSString* const RXMouseExitedScriptKey;
-extern NSString* const RXCardPrepareScriptKey;
-extern NSString* const RXCardStopRenderingScriptKey;
+extern NSString* const RXCardOpenScriptKey;
+extern NSString* const RXCardCloseScriptKey;
 extern NSString* const RXUnknown8ScriptKey;
 extern NSString* const RXStartRenderingScriptKey;
 extern NSString* const RXScreenUpdateScriptKey;
