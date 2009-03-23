@@ -51,10 +51,33 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 }
 
 - (void)_initializeState {
-	[self setShort:-2 forKey:@"aDomeCombo"];
+	// generate a dome combination
+	uint8_t domecombo1 = random() % 25;
+	
+	uint8_t domecombo2 = random() % 25;
+	while (domecombo2 == domecombo1)
+		domecombo2 = random() % 25;
+	
+	uint8_t domecombo3 = random() % 25;
+	while (domecombo3 == domecombo1 || domecombo3 == domecombo2)
+		domecombo3 = random() % 25;
+	
+	uint8_t domecombo4 = random() % 25;
+	while (domecombo4 == domecombo1 || domecombo4 == domecombo2 || domecombo4 == domecombo3)
+		domecombo4 = random() % 25;
+	
+	uint8_t domecombo5 = random() % 25;
+	while (domecombo5 == domecombo1 || domecombo5 == domecombo2 || domecombo5 == domecombo3 || domecombo5 == domecombo4)
+		domecombo5 = random() % 25;
+	
+	uint32_t domecombo = (1 << domecombo1) | (1 << domecombo2) | (1 << domecombo3) | (1 << domecombo4) | (1 << domecombo5);
+	[self setUnsigned32:domecombo forKey:@"aDomeCombo"];
+	
+	// set the rebel icon order variable (always the same value)
+	[self setUnsigned32:12068577 forKey:@"jIconCorrectOrder"];
+	
 	[self setShort:-2 forKey:@"pCorrectOrder"];
 	[self setShort:-2 forKey:@"tCorrectOrder"];
-	[self setUnsigned32:12068577 forKey:@"jIconCorrectOrder"];
 	[self setShort:-2 forKey:@"pCorrectOrder"];
 }
 

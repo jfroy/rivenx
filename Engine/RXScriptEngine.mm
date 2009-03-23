@@ -1864,25 +1864,46 @@ DEFINE_COMMAND(xtchotakesbook) {
 	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, page);
 	
 	// draw the dome combination
-	// FIXME: actually generate a combination per game...
 	if (page == 14) {
+		uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
+		uint32_t combo_bit = 0;
+		NSPoint combination_sampling_origin = NSMakePoint(32.0f, 0.0f);
+		
 		// GO MAGIC NUMBERS!
 		NSPoint combination_display_origin = NSMakePoint(240.0f, 285.0f);
-		NSPoint combination_sampling_origin = NSMakePoint(32.0f * 4, 0.0f);
 		NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 24.0f);
 		
+		while (!(domecombo & (1 << combo_bit)))
+			combo_bit++;
+		combination_sampling_origin.x = 32.0f * combo_bit;
 		[self _drawPictureWithID:364 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
-		
+		combo_bit++;
+
+		while (!(domecombo & (1 << combo_bit)))
+			combo_bit++;
+		combination_sampling_origin.x = 32.0f * combo_bit;		
 		[self _drawPictureWithID:365 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
+		combo_bit++;
 		
+		while (!(domecombo & (1 << combo_bit)))
+			combo_bit++;
+		combination_sampling_origin.x = 32.0f * combo_bit;
 		[self _drawPictureWithID:366 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
+		combo_bit++;
 		
+		while (!(domecombo & (1 << combo_bit)))
+			combo_bit++;
+		combination_sampling_origin.x = 32.0f * combo_bit;
 		[self _drawPictureWithID:367 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
+		combo_bit++;
 		
+		while (!(domecombo & (1 << combo_bit)))
+			combo_bit++;
+		combination_sampling_origin.x = 32.0f * combo_bit;
 		[self _drawPictureWithID:368 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 	}
 }
@@ -2605,16 +2626,26 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
 }
 
-DEFINE_COMMAND(xjdome25_resetsliders) {
-	for (uint16_t h = 15; h < 35; h++)
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, h);
-	for (uint16_t h = 10; h < 15; h++)
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, h);
+
+- (void)_jdomeDrawSliders {
+	// cache the hotspots ID map
+	NSMapTable* hotspots_map = [card hotspotsIDMap];
+
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
+	[self _drawPictureWithID:548 archive:[card archive] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 	
-	// FIXME: need to play a purdy animation and update the graphics
-	
-	// reset the sliders state
-	sliders_state = 0x1F;
+	uintptr_t k = 10;
+	for (int i = 0; i < 5; i++) {
+		while (k < 35 && !(sliders_state & (1 << (k - 10))))
+			k++;
+		
+		RXHotspot* h = (RXHotspot*)NSMapGet(hotspots_map, (void*)k++);
+		rx_core_rect_t hotspot_rect = [h rect];
+		NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
+		NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
+		[self _drawPictureWithID:547 archive:[card archive] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
+	}
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }
 
 - (RXHotspot*)_jdomeSliderHotspotForMousePosition:(NSPoint)mouse_position currentHotspot:(RXHotspot*)current {
@@ -2664,6 +2695,15 @@ DEFINE_COMMAND(xjdome25_resetsliders) {
 	return nil;
 }
 
+DEFINE_COMMAND(xjdome25_resetsliders) {
+	// FIXME: need to play a purdy animation and update the graphics
+	
+	// reset the sliders state
+	sliders_state = 0x1F;
+	
+	[self _jdomeDrawSliders];
+}
+
 DEFINE_COMMAND(xjdome25_slidermd) {	
 	// cache the tick sound
 	RXDataSound* tick_sound = [RXDataSound new];
@@ -2671,9 +2711,6 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 	tick_sound->ID = 81;
 	tick_sound->gain = 1.0f;
 	tick_sound->pan = 0.5f;
-	
-	// cache the hotspots ID map
-	NSMapTable* hotspots_map = [card hotspotsIDMap];
 	
 	// determine if the mouse was on one of the active slider hotspots when it was pressed; if not, we're done
 	NSRect mouse_vector = [controller mouseVector];
@@ -2697,26 +2734,22 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 			current_hotspot = hotspot;
 			
 			// draw the new slider state
-			DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
-			[self _drawPictureWithID:548 archive:[card archive] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
-			
-			uintptr_t k = 10;
-			for (int i = 0; i < 5; i++) {
-				while (k < 35 && !(sliders_state & (1 << (k - 10))))
-					k++;
-				
-				RXHotspot* h = (RXHotspot*)NSMapGet(hotspots_map, (void*)k++);
-				rx_core_rect_t hotspot_rect = [h rect];
-				NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
-				NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
-				[self _drawPictureWithID:547 archive:[card archive] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
-			}
-			DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+			[self _jdomeDrawSliders];
 		}
 		
 		// update the mouse cursor and vector
 		[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 		mouse_vector = [controller mouseVector];
+	}
+	
+	// check if the sliders match the dome configuration
+	uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
+	if (sliders_state == domecombo) {
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 37);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 36);
+	} else {
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 37);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 36);
 	}
 	
 	[tick_sound release];
