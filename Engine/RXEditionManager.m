@@ -113,15 +113,19 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	
 	// iterate over its content
 	NSEnumerator* e = [editionPlists objectEnumerator];
-	NSString* editionPlist;
-	while ((editionPlist = [e nextObject])) {
+	NSString* item;
+	while ((item = [e nextObject])) {
+		// is it a plist?
+		if (![[item pathExtension] isEqualToString:@"plist"])
+			continue;
+		
 		// cache the full path
-		NSString* editionPlistPath = [editionsDirectory stringByAppendingPathComponent:editionPlist];
+		NSString* editionPlistPath = [editionsDirectory stringByAppendingPathComponent:item];
 		
 		// try to allocate an edition object
 		RXEdition* ed = [[RXEdition alloc] initWithDescriptor:[NSDictionary dictionaryWithContentsOfFile:editionPlistPath]];
 		if (!ed)
-			RXOLog(@"failed to load edition %@", editionPlist);
+			RXOLog(@"failed to load edition %@", item);
 		else {
 			[editions setObject:ed forKey:[ed valueForKey:@"key"]];
 			[editionProxies addObject:[ed proxy]];
