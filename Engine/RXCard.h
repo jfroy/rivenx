@@ -23,7 +23,7 @@
 
 @interface RXCard : NSObject {
 	RXCardDescriptor* _descriptor;
-	MHKArchive* _archive;
+	RXStack* _parent;
 	
 	// scripts
 	NSDictionary* _card_scripts;
@@ -56,7 +56,7 @@
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;
 
 - (RXCardDescriptor*)descriptor;
-- (MHKArchive*)archive;
+- (RXStack*)parent;
 
 - (NSDictionary*)events;
 - (NSArray*)hotspots;

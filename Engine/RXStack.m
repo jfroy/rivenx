@@ -86,7 +86,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	_key = [key copy];
 	
 	// allocate the archives arrays
-	_dataArchives = [[NSMutableArray alloc] initWithCapacity:2];
+	_dataArchives = [[NSMutableArray alloc] initWithCapacity:3];
 	_soundArchives = [[NSMutableArray alloc] initWithCapacity:1];
 	
 	// get the data archives list
@@ -106,6 +106,14 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	
 	// get the edition manager
 	RXEditionManager* sem = [RXEditionManager sharedEditionManager];
+	
+	// load up any patch archives first
+	NSArray* patch_archives = [sem dataPatchArchivesForStackKey:_key error:error];
+	if (!patch_archives) {
+		[self release];
+		return nil;
+	}
+	[_dataArchives addObjectsFromArray:patch_archives];
 	
 	// load the data archives
 	if ([dataArchives isKindOfClass:[NSString class]]) {
@@ -296,6 +304,35 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 			break;
 	}
 	return decompressor;
+}
+
+- (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)ID {
+	NSEnumerator* archive_enumerator = [_dataArchives objectEnumerator];
+	MHKArchive* archive = nil;
+	
+	NSData* data = nil;
+	while ((archive = [archive_enumerator nextObject])) {
+		MHKFileHandle* fh = [archive openResourceWithResourceType:type ID:ID];
+		if (!fh)
+			continue;
+		
+		// FIXME: check that file size doesn't overflow size_t
+		size_t length = (size_t)[fh length];
+		void* buffer = malloc(length);
+		if (!buffer)
+			continue;
+		
+		// read the data from the archive
+		NSError* error;
+		if ([fh readDataToEndOfFileInBuffer:buffer error:&error] == -1)
+			continue;
+		
+		data = [NSData dataWithBytesNoCopy:buffer length:length freeWhenDone:YES];
+		if (data)
+			break;
+	}
+	
+	return data;
 }
 
 @end

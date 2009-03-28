@@ -100,6 +100,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	if (!editionsDirectory)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Riven X could not find the Editions bundle resource directory." userInfo:nil];
 	
+	// cache the path to the Patches directory
+	_patches_directory = [[editionsDirectory stringByAppendingPathComponent:@"Patches"] retain];
+	
 	// get its content
 	NSFileManager* fm = [NSFileManager defaultManager];
 	NSArray* editionPlists;
@@ -204,6 +207,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
 - (void)dealloc {
 	[self tearDown];
+	
+	[_patches_directory release];
 	
 	[editions release];
 	[editionProxies release];
@@ -418,10 +423,56 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 		error);
 }
 
+- (NSArray*)dataPatchArchivesForStackKey:(NSString*)stackKey error:(NSError**)error {
+	// if there is no current edition, throw a tantrum
+	if (!currentEdition)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Riven X tried to load a patch archive without having made an edition current first." userInfo:nil];
+	
+	NSString* edition_patches_directory = [_patches_directory stringByAppendingPathComponent:[currentEdition valueForKey:@"key"]];
+	NSDictionary* patch_archives = [currentEdition valueForKey:@"patchArchives"];
+	
+	// if the edition has no patch archives, return an empty array
+	if (!patch_archives)
+		return [NSArray array];
+	
+	// get the patch archives for the requested stack; if there are none, return an empty array
+	NSDictionary* stack_patch_archives = [patch_archives objectForKey:stackKey];
+	if (!stack_patch_archives)
+		return [NSArray array];
+	
+	// get the data patch archives; if there are none, return an empty array
+	NSArray* data_patch_archives = [stack_patch_archives objectForKey:@"Data Archives"];
+	if (!data_patch_archives)
+		return [NSArray array];
+	
+	// load the data archives
+	NSMutableArray* data_archives = [NSMutableArray array];
+	
+	NSEnumerator* archive_enumerator = [data_patch_archives objectEnumerator];
+	NSString* archive_name;
+	while ((archive_name = [archive_enumerator nextObject])) {
+		NSString* archive_path = [edition_patches_directory stringByAppendingPathComponent:archive_name];
+		if (!BZFSFileExists(archive_path))
+			continue;
+		
+		MHKArchive* archive = [[MHKArchive alloc] initWithPath:archive_path error:error];
+		if (!archive)
+			return nil;
+		
+		[data_archives addObject:archive];
+		[archive release];
+	}
+	
+	return data_archives;
+}
+
 - (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error {
+	MHKArchive* archive = nil;
 	if ([stackKey isEqualToString:@"aspit"])
-		return [self _archiveWithFilename:filename directoryKey:@"All" stackKey:stackKey error:error];
-	return [self _archiveWithFilename:filename directoryKey:@"Data" stackKey:stackKey error:error];
+		archive = [self _archiveWithFilename:filename directoryKey:@"All" stackKey:stackKey error:error];
+	if (!archive)
+		archive = [self _archiveWithFilename:filename directoryKey:@"Data" stackKey:stackKey error:error];
+	return archive;
 }
 
 - (MHKArchive*)soundArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error {

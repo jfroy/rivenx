@@ -2,6 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>Patch Archives</key>
+	<dict>
+		<key>jspit</key>
+		<dict>
+			<key>Data Archives</key>
+			<array>
+				<string>j_Data3.MHK</string>
+			</array>
+		</dict>
+		<key>bspit</key>
+		<dict>
+			<key>Data Archives</key>
+			<array>
+				<string>b_Data1.MHK</string>
+			</array>
+		</dict>
+	</dict>
 	<key>Card LUT</key>
 	<dict>
 		<key>jungle elevator top</key>

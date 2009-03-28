@@ -125,7 +125,6 @@ struct rx_card_picture_record {
 
 - (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes {
 	RXSoundGroup* group = [RXSoundGroup new];
-	RXStack* parent = [_descriptor parent];
 	
 	// some useful pointers
 	const uint16_t* groupParameters = slstRecord + soundCount;
@@ -188,8 +187,9 @@ struct rx_card_picture_record {
 		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Card descriptor object is nil or of the wrong type." userInfo:nil];
 	}
 	
-	// WARNING: Stack descriptors belong to cards initialized with them, and to the object that initialized the descriptor.
-	// WARNING: Consequently, if the object that initialized the descriptor owns the corresponding card, it can release the descriptor.
+	// NOTE: Stack descriptors belong to cards initialized with them, and to the object that initialized the descriptor.
+	//       Consequently, if the object that initialized the descriptor owns the corresponding card, it can release the descriptor.
+	
 	// keep the descriptor around
 	_descriptor = [cardDescriptor retain];
 	
@@ -687,8 +687,8 @@ struct rx_card_picture_record {
 	return _descriptor;
 }
 
-- (MHKArchive*)archive {
-	return _archive;
+- (RXStack*)parent {
+	return [_descriptor parent];
 }
 
 - (GLuint)pictureCount {

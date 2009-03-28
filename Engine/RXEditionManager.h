@@ -17,6 +17,7 @@
 @interface RXEditionManager : NSObject {
 	NSMutableDictionary* editions;
 	NSMutableArray* editionProxies;
+	NSString* _patches_directory;
 	
 	RXEdition* currentEdition;
 	NSMutableDictionary* activeStacks;
@@ -51,6 +52,8 @@
 - (NSString*)mountPathForDisc:(NSString*)disc waitingInModalSession:(NSModalSession)session;
 
 - (void)ejectMountPath:(NSString*)mountPath;
+
+- (NSArray*)dataPatchArchivesForStackKey:(NSString*)stackKey error:(NSError**)error;
 
 - (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error;
 - (MHKArchive*)soundArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error;

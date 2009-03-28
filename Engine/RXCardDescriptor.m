@@ -99,44 +99,6 @@ struct _RXCardDescriptorPrimer {
 
 @end
 
-@interface RXStack (RXCardDescriptor)
-- (struct _RXCardDescriptorPrimer)_cardPrimerWithID:(uint16_t)cardResourceID;
-@end
-
-@implementation RXStack (RXCardDescriptor)
-
-- (struct _RXCardDescriptorPrimer)_cardPrimerWithID:(uint16_t)cardResourceID {
-	NSEnumerator* dataArchivesEnum = [_dataArchives objectEnumerator];
-	MHKArchive* archive = nil;
-	
-	NSData* data = nil;
-	while ((archive = [dataArchivesEnum nextObject])) {
-		MHKFileHandle* fh = [archive openResourceWithResourceType:@"CARD" ID:cardResourceID];
-		if (!fh)
-			continue;
-		
-		// FIXME: check that file size doesn't overflow size_t
-		size_t bufferLength = (size_t)[fh length];
-		void* buffer = malloc(bufferLength);
-		if (!buffer)
-			continue;
-		
-		// read the data from the archive
-		NSError* error;
-		if ([fh readDataToEndOfFileInBuffer:buffer error:&error] == -1)
-			continue;
-		
-		data = [NSData dataWithBytesNoCopy:buffer length:bufferLength freeWhenDone:YES];
-		if (data)
-			break;
-	}
-	
-	struct _RXCardDescriptorPrimer primer = {archive, data};
-	return primer;
-}
-
-@end
-
 
 @implementation RXCardDescriptor
 
@@ -155,19 +117,15 @@ struct _RXCardDescriptorPrimer {
 	if (!self)
 		return nil;
 	
-	// try to get a primer
-	struct _RXCardDescriptorPrimer primer = [stack _cardPrimerWithID:cardID];
-	if (primer.data == nil) {
-		[self release];
-		return nil;
-	}
-	
-	// WARNING: weak reference to the stack and archive
+	// WARNING: weak reference to the stack
 	_parent = stack;
 	_ID = cardID;
 	
-	_archive = primer.archive;
-	_data = [primer.data retain];
+	_data = [[_parent dataWithResourceType:@"CARD" ID:_ID] retain];
+	if (!_data) {
+		[self release];
+		return nil;
+	}
 	
 	// get the card's name
 	int16_t name_id = (int16_t)CFSwapInt16BigToHost(*(int16_t*)[_data bytes]);

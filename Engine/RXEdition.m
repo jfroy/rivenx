@@ -165,6 +165,9 @@
 		[to release];
 	}
 	
+	// patch archives directory
+	patchArchives = [_descriptor objectForKey:@"Patch Archives"];
+	
 	// create the support directory for the edition
 	// FIXME: we should offer system-wide editions as well
 	userBase = [[[[[RXWorld sharedWorld] worldUserBase] path] stringByAppendingPathComponent:key] retain];

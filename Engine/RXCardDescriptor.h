@@ -27,7 +27,6 @@
 @end
 
 @interface RXCardDescriptor : NSObject {
-	__weak MHKArchive* _archive;
 	__weak RXStack* _parent;
 	uint16_t _ID;
 	
