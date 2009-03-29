@@ -372,20 +372,6 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	_decomp_absd.mBytesPerFrame = _decomp_absd.mChannelsPerFrame * _decomp_absd.mBitsPerChannel / 8;
 	_decomp_absd.mBytesPerPacket = _decomp_absd.mFramesPerPacket * _decomp_absd.mBytesPerFrame;
 	
-	// allocate the codec context
-	pthread_mutex_lock(&ffmpeg_mutex);
-	_mp2_codec_context = _ffmpeg_state.avcodec_alloc_context();
-	if (!_mp2_codec_context) {
-		pthread_mutex_unlock(&ffmpeg_mutex);
-		ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr);
-	}
-	
-	// open the codec
-	int result = _ffmpeg_state.avcodec_open((AVCodecContext*)_mp2_codec_context, _ffmpeg_state.mp2_codec);
-	pthread_mutex_unlock(&ffmpeg_mutex);
-	if (result < 0)
-		ReturnFromInitWithError(MHKffmpegErrorDomain, result, nil, errorPtr);
-	
 	NSError* local_error = nil;
 	
 	// read 10 bytes to check for ID3 meta-data
@@ -446,7 +432,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	// create the decompressor lock
 	pthread_mutex_init(&_decompressor_lock, NULL);
 	
-	// initialize the decompressor
+	// finish initialization by resetting the decompressor (which will create the FFMPEG context and open the FFMPEG codec)
 	[self reset];
 	
 	return self;
@@ -455,8 +441,10 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 - (void)dealloc {
 	// close the decoder
 	pthread_mutex_lock(&ffmpeg_mutex);
-	if (_mp2_codec_context)
+	if (_mp2_codec_context) {
 		_ffmpeg_state.avcodec_close((AVCodecContext*)_mp2_codec_context);
+		_ffmpeg_state.av_freep(&_mp2_codec_context);
+	}
 	pthread_mutex_unlock(&ffmpeg_mutex);
 	
 	// free memory resources
@@ -464,8 +452,6 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		free(_packet_buffer);
 	if (_decompression_buffer)
 		free(_decompression_buffer);
-	if (_mp2_codec_context)
-		_ffmpeg_state.av_freep(&_mp2_codec_context);
 	if (_packet_table)
 		free(_packet_table);
 	
@@ -504,15 +490,26 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	
 	// close and re-open the codec context
 	pthread_mutex_lock(&ffmpeg_mutex);
+	
 	if (_mp2_codec_context) {
 		_ffmpeg_state.avcodec_close((AVCodecContext*)_mp2_codec_context);
 		_ffmpeg_state.av_freep(&_mp2_codec_context);
 	}
 	
+	// allocate the codec context
 	_mp2_codec_context = _ffmpeg_state.avcodec_alloc_context();
-	_ffmpeg_state.avcodec_open((AVCodecContext*)_mp2_codec_context, _ffmpeg_state.mp2_codec);
-	pthread_mutex_unlock(&ffmpeg_mutex);
+	if (!_mp2_codec_context) {
+		pthread_mutex_unlock(&ffmpeg_mutex);
+		fprintf(stderr, "<MHKMP2Decompressor %p>: avcodec_alloc_context failed\n", self);
+		return;
+	}
 	
+	// open the codec
+	int result = _ffmpeg_state.avcodec_open((AVCodecContext*)_mp2_codec_context, _ffmpeg_state.mp2_codec);
+	if (result < 0)
+		fprintf(stderr, "<MHKMP2Decompressor %p>: avcodec_open failed: %d\n", self, result);
+	
+	pthread_mutex_unlock(&ffmpeg_mutex);
 	pthread_mutex_unlock(&_decompressor_lock);
 }
 
@@ -558,6 +555,10 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	if (_packet_index == _packet_count)
 		goto AbortFill;
 	
+	// if we don't have a valid FFMPEG context, abort out
+	if (!_mp2_codec_context)
+		goto AbortFill;
+	
 	// decompress until we have filled the ABL or ran out of packets
 	while (bytes_to_decompress > decompressed_bytes && _packet_index < _packet_count) {
 		// at this point, we've exhausted the decompression buffer and we have to decompress a new packet; hence, this loop body never offsets the decompression buffer by its position
@@ -590,7 +591,9 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 		
 		// decompress a packet
 		_decompression_buffer_available = _decompression_buffer_length;
+		pthread_mutex_lock(&ffmpeg_mutex);
 		int used_bytes = _ffmpeg_state.avcodec_decode_audio2((AVCodecContext*)_mp2_codec_context, _decompression_buffer, (int*)&_decompression_buffer_available, _current_packet, _packet_table[_packet_index].mDataByteSize);
+		pthread_mutex_unlock(&ffmpeg_mutex);
 		assert(used_bytes > 0);
 		
 		// the output buffer size is the initial number of bytes to copy
