@@ -31,11 +31,12 @@ struct ffmpeg_state {
 	
 	void (*avcodec_init)(void);
 	void (*avcodec_register_all)(void);
-	AVCodec *(*avcodec_find_decoder)(enum CodecID codecID);
+	void (*av_freep)(void*);
+	AVCodec *(*avcodec_find_decoder)(enum CodecID);
 	AVCodecContext *(*avcodec_alloc_context)(void);
-	int (*avcodec_open)(AVCodecContext* avctx, AVCodec* codec);
-	int (*avcodec_close)(AVCodecContext* avctx);
-	int (*avcodec_decode_audio2)(AVCodecContext* avctx, int16_t* samples, int* frame_size_ptr, uint8_t* buf, int buf_size);
+	int (*avcodec_open)(AVCodecContext*, AVCodec*);
+	int (*avcodec_close)(AVCodecContext*);
+	int (*avcodec_decode_audio2)(AVCodecContext*, int16_t*, int*, uint8_t*, int);
 	
 	AVCodec* mp2_codec;
 };
@@ -134,18 +135,58 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 @implementation MHKMP2Decompressor
 
 + (void)loadFFMPEG {
-#if defined(DEBUG) && DEBUG > 2
+#if defined(DEBUG) && DEBUG > 1
 	NSLog(@"initializing FFmpeg...");
 #endif
 	
 	// load the function pointers we need
 	_ffmpeg_state.avcodec_init = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_init");
+	if (!_ffmpeg_state.avcodec_init) {
+		NSLog(@"unable to bind symbol \"avcodec_init\": %s", dlerror());
+		abort();
+	}
+	
 	_ffmpeg_state.avcodec_register_all = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_register_all");
+	if (!_ffmpeg_state.avcodec_init) {
+		NSLog(@"unable to bind symbol \"avcodec_register_all\": %s", dlerror());
+		abort();
+	}
+	
+	_ffmpeg_state.av_freep = dlsym(_ffmpeg_state.avcodec_handle, "av_freep");
+	if (!_ffmpeg_state.avcodec_init) {
+		NSLog(@"unable to bind symbol \"av_freep\": %s", dlerror());
+		abort();
+	}
+	
 	_ffmpeg_state.avcodec_find_decoder = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_find_decoder");
+	if (!_ffmpeg_state.avcodec_init) {
+		NSLog(@"unable to bind symbol \"avcodec_find_decoder\": %s", dlerror());
+		abort();
+	}
+	
 	_ffmpeg_state.avcodec_alloc_context = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_alloc_context");
+	if (!_ffmpeg_state.avcodec_init) {
+		NSLog(@"unable to bind symbol \"avcodec_alloc_context\": %s", dlerror());
+		abort();
+	}
+	
 	_ffmpeg_state.avcodec_open = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_open");
+	if (!_ffmpeg_state.avcodec_init) {
+		NSLog(@"unable to bind symbol \"avcodec_open\": %s", dlerror());
+		abort();
+	}
+	
 	_ffmpeg_state.avcodec_close = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_close");
+	if (!_ffmpeg_state.avcodec_init) {
+		NSLog(@"unable to bind symbol \"avcodec_close\": %s", dlerror());
+		abort();
+	}
+	
 	_ffmpeg_state.avcodec_decode_audio2 = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_decode_audio2");
+	if (!_ffmpeg_state.avcodec_init) {
+		NSLog(@"unable to bind symbol \"avcodec_decode_audio2\": %s", dlerror());
+		abort();
+	}
 	
 	// initialize libavcodec and the MPEG 1/2 audio layer decoder
 	_ffmpeg_state.avcodec_init();
@@ -424,7 +465,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	if (_decompression_buffer)
 		free(_decompression_buffer);
 	if (_mp2_codec_context)
-		free(_mp2_codec_context);
+		_ffmpeg_state.av_freep(&_mp2_codec_context);
 	if (_packet_table)
 		free(_packet_table);
 	
@@ -463,8 +504,11 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	
 	// close and re-open the codec context
 	pthread_mutex_lock(&ffmpeg_mutex);
-	if (_mp2_codec_context)
+	if (_mp2_codec_context) {
 		_ffmpeg_state.avcodec_close((AVCodecContext*)_mp2_codec_context);
+		_ffmpeg_state.av_freep(&_mp2_codec_context);
+	}
+	
 	_mp2_codec_context = _ffmpeg_state.avcodec_alloc_context();
 	_ffmpeg_state.avcodec_open((AVCodecContext*)_mp2_codec_context, _ffmpeg_state.mp2_codec);
 	pthread_mutex_unlock(&ffmpeg_mutex);
