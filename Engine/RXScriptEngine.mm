@@ -221,7 +221,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	_renderStateSwapsEnabled = YES;
 	
-	sliders_state = 0x1F;
+	sliders_state = 0x1F00000;
 	
 	return self;
 }
@@ -1887,44 +1887,44 @@ DEFINE_COMMAND(xtchotakesbook) {
 	// draw the dome combination
 	if (page == 14) {
 		uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
-		uint32_t combo_bit = 0;
+		uint32_t combo_bit = 24;
 		NSPoint combination_sampling_origin = NSMakePoint(32.0f, 0.0f);
 		
-		// GO MAGIC NUMBERS!
+		// the display origin was determined empirically; the base rect is based on the size of the number overlay pictures
 		NSPoint combination_display_origin = NSMakePoint(240.0f, 285.0f);
 		NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 24.0f);
 		
 		while (!(domecombo & (1 << combo_bit)))
-			combo_bit++;
-		combination_sampling_origin.x = 32.0f * combo_bit;
+			combo_bit--;
+		combination_sampling_origin.x = 32.0f * (24 - combo_bit);
 		[self _drawPictureWithID:364 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
-		combo_bit++;
+		combo_bit--;
 
 		while (!(domecombo & (1 << combo_bit)))
-			combo_bit++;
-		combination_sampling_origin.x = 32.0f * combo_bit;		
+			combo_bit--;
+		combination_sampling_origin.x = 32.0f * (24 - combo_bit);		
 		[self _drawPictureWithID:365 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
-		combo_bit++;
+		combo_bit--;
 		
 		while (!(domecombo & (1 << combo_bit)))
-			combo_bit++;
-		combination_sampling_origin.x = 32.0f * combo_bit;
+			combo_bit--;
+		combination_sampling_origin.x = 32.0f * (24 - combo_bit);
 		[self _drawPictureWithID:366 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
-		combo_bit++;
+		combo_bit--;
 		
 		while (!(domecombo & (1 << combo_bit)))
-			combo_bit++;
-		combination_sampling_origin.x = 32.0f * combo_bit;
+			combo_bit--;
+		combination_sampling_origin.x = 32.0f * (24 - combo_bit);
 		[self _drawPictureWithID:367 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
-		combo_bit++;
+		combo_bit--;
 		
 		while (!(domecombo & (1 << combo_bit)))
-			combo_bit++;
-		combination_sampling_origin.x = 32.0f * combo_bit;
+			combo_bit--;
+		combination_sampling_origin.x = 32.0f * (24 - combo_bit);
 		[self _drawPictureWithID:368 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 	}
 }
@@ -2657,7 +2657,7 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 	
 	uintptr_t k = 10;
 	for (int i = 0; i < 5; i++) {
-		while (k < 35 && !(sliders_state & (1 << (k - 10))))
+		while (k < 35 && !(sliders_state & (1 << (24 - (k - 10)))))
 			k++;
 		
 		RXHotspot* h = (RXHotspot*)NSMapGet(hotspots_map, (void*)k++);
@@ -2678,12 +2678,12 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 		RXHotspot* hotspot = (RXHotspot*)NSMapGet(hotspots_map, (void*)k);
 		
 		// look for the boundary hotspot for a move-to-right update here since we are doing a forward scan already
-		if (current && !boundary_hotspot_id && k > [current ID] && (sliders_state & (1 << (k - 10))))
+		if (current && !boundary_hotspot_id && k > [current ID] && (sliders_state & (1 << (24 - (k - 10)))))
 			boundary_hotspot_id = [hotspot ID];
 		
 		if (NSPointInRect(mouse_position, [hotspot worldFrame])) {
 			if (!current) {
-				if (!(sliders_state & (1 << (k - 10))))
+				if (!(sliders_state & (1 << (24 - (k - 10)))))
 					hotspot = nil;
 			} else {
 				// we only need to do boundary checking if the hotspot under the mouse is not the current hotspot
@@ -2697,7 +2697,7 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 						boundary_hotspot_id = 0;
 						uintptr_t reverse_scan_limit = [hotspot ID];
 						for (uintptr_t k2 = [current ID] - 1; k2 >= reverse_scan_limit; k2--) {
-							if ((sliders_state & (1 << (k2 - 10)))) {
+							if ((sliders_state & (1 << (24 - (k2 - 10))))) {
 								boundary_hotspot_id = k2;
 								break;
 							}
@@ -2720,7 +2720,7 @@ DEFINE_COMMAND(xjdome25_resetsliders) {
 	// FIXME: need to play a purdy animation and update the graphics
 	
 	// reset the sliders state
-	sliders_state = 0x1F;
+	sliders_state = 0x1F00000;
 	
 	[self _jdomeDrawSliders];
 }
@@ -2751,7 +2751,7 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 			[controller playDataSound:tick_sound];
 			
 			// disable the old and enable the new
-			sliders_state = (sliders_state & ~(1 << ([current_hotspot ID] - 10))) | (1 << ([hotspot ID] - 10));
+			sliders_state = (sliders_state & ~(1 << (24 - ([current_hotspot ID] - 10)))) | (1 << (24 - ([hotspot ID] - 10)));
 			current_hotspot = hotspot;
 			
 			// draw the new slider state

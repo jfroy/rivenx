@@ -70,7 +70,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	while (domecombo5 == domecombo1 || domecombo5 == domecombo2 || domecombo5 == domecombo3 || domecombo5 == domecombo4)
 		domecombo5 = random() % 25;
 	
-	uint32_t domecombo = (1 << domecombo1) | (1 << domecombo2) | (1 << domecombo3) | (1 << domecombo4) | (1 << domecombo5);
+	uint32_t domecombo = (1 << (24 - domecombo1)) | (1 << (24 - domecombo2)) | (1 << (24 - domecombo3)) | (1 << (24 - domecombo4)) | (1 << (24 - domecombo5));
 	[self setUnsigned32:domecombo forKey:@"aDomeCombo"];
 	
 	// set the rebel icon order variable (always the same value)
