@@ -56,7 +56,7 @@ struct rx_card_picture_record {
 	
 	uint16_t resourceID = [_descriptor ID];
 	
-	fh = [_archive openResourceWithResourceType:@"MLST" ID:resourceID];
+	fh = [_parent fileWithResourceType:@"MLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding MLST resource." userInfo:nil];
 	
@@ -109,7 +109,8 @@ struct rx_card_picture_record {
 		
 		// load the movie up
 		CGPoint origin = CGPointMake(mlstRecords[currentListIndex].left, kRXCardViewportSize.height - mlstRecords[currentListIndex].top);
-		RXMovieProxy* movieProxy = [[RXMovieProxy alloc] initWithArchive:_archive ID:mlstRecords[currentListIndex].movie_id origin:origin volume:mlstRecords[currentListIndex].volume / 256.0f loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO) owner:self];
+		MHKArchive* archive = [[_parent fileWithResourceType:@"tMOV" ID:mlstRecords[currentListIndex].movie_id] archive];
+		RXMovieProxy* movieProxy = [[RXMovieProxy alloc] initWithArchive:archive ID:mlstRecords[currentListIndex].movie_id origin:origin volume:mlstRecords[currentListIndex].volume / 256.0f loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO) owner:self];
 		
 		// add the movie to the movies array
 		[_movies addObject:movieProxy];
@@ -167,7 +168,7 @@ struct rx_card_picture_record {
 			sourceIntegerPan = (int16_t)CFSwapInt16BigToHost(sourceIntegerPan);
 		float sourcePan = 0.5f + ((float)sourceIntegerPan / 127.0f);
 		
-		[group addSoundWithStack:parent ID:soundID gain:sourceGain pan:sourcePan];
+		[group addSoundWithStack:_parent ID:soundID gain:sourceGain pan:sourcePan];
 	}
 	
 #if defined(DEBUG) && DEBUG > 1
@@ -193,13 +194,15 @@ struct rx_card_picture_record {
 	// keep the descriptor around
 	_descriptor = [cardDescriptor retain];
 	
+	// retain our parent stack, since RXCardDescriptor only keeps a weak reference to it
+	_parent = [[cardDescriptor parent] retain];
+	
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"initializing card");
 #endif
 	NSError* error;
 	
-	NSData* cardData = [cardDescriptor valueForKey:@"data"];
-	_archive = [cardDescriptor valueForKey:@"archive"];
+	NSData* cardData = [cardDescriptor data];
 	uint16_t resourceID = [cardDescriptor ID];
 	
 	// basic CARD information
@@ -257,7 +260,7 @@ struct rx_card_picture_record {
 	
 #pragma mark HSPT
 	
-	fh = [_archive openResourceWithResourceType:@"HSPT" ID:resourceID];
+	fh = [_parent fileWithResourceType:@"HSPT" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding HSPT resource." userInfo:nil];
 	
@@ -341,7 +344,7 @@ struct rx_card_picture_record {
 	
 #pragma mark BLST
 	
-	fh = [_archive openResourceWithResourceType:@"BLST" ID:resourceID];
+	fh = [_parent fileWithResourceType:@"BLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding BLST resource." userInfo:nil];
 	
@@ -374,7 +377,7 @@ struct rx_card_picture_record {
 	
 #pragma mark PLST
 	
-	fh = [_archive openResourceWithResourceType:@"PLST" ID:resourceID];
+	fh = [_parent fileWithResourceType:@"PLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding PLST resource." userInfo:nil];
 	
@@ -404,7 +407,8 @@ struct rx_card_picture_record {
 	// precompute the total texture storage to hint OpenGL
 	size_t textureStorageSize = 0;
 	for (currentListIndex = 0; currentListIndex < _pictureCount; currentListIndex++) {
-		NSDictionary* pictureDescriptor = [_archive bitmapDescriptorWithID:plstRecords[currentListIndex].bitmap_id error:&error];
+		MHKArchive* archive = [[_parent fileWithResourceType:@"tBMP" ID:plstRecords[currentListIndex].bitmap_id] archive];
+		NSDictionary* pictureDescriptor = [archive bitmapDescriptorWithID:plstRecords[currentListIndex].bitmap_id error:&error];
 		if (!pictureDescriptor)
 			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not get a picture resource's picture descriptor." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
@@ -448,7 +452,8 @@ struct rx_card_picture_record {
 	// for each PLST entry, load and upload the picture, compute needed coords
 	size_t textureStorageOffset = 0;
 	for (currentListIndex = 0; currentListIndex < _pictureCount; currentListIndex++) {
-		if (![_archive loadBitmapWithID:plstRecords[currentListIndex].bitmap_id buffer:BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset) format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
+		MHKArchive* archive = [[_parent fileWithResourceType:@"tBMP" ID:plstRecords[currentListIndex].bitmap_id] archive];
+		if (![archive loadBitmapWithID:plstRecords[currentListIndex].bitmap_id buffer:BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset) format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
 			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 		// bind the corresponding texture object, configure it and upload the picture
@@ -539,7 +544,7 @@ struct rx_card_picture_record {
 	
 #pragma mark FLST
 	
-	fh = [_archive openResourceWithResourceType:@"FLST" ID:resourceID];
+	fh = [_parent fileWithResourceType:@"FLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding FLST resource." userInfo:nil];
 	
@@ -564,7 +569,7 @@ struct rx_card_picture_record {
 #endif
 		
 		// open the corresponding SFXE resource
-		MHKFileHandle* sfxeHandle = [_archive openResourceWithResourceType:@"SFXE" ID:record->sfxe_id];
+		MHKFileHandle* sfxeHandle = [_parent fileWithResourceType:@"SFXE" ID:record->sfxe_id];
 		if (!sfxeHandle)
 			@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open a required SFXE resource." userInfo:nil];
 		
@@ -637,7 +642,7 @@ struct rx_card_picture_record {
 	
 #pragma mark SLST
 	
-	fh = [_archive openResourceWithResourceType:@"SLST" ID:resourceID];
+	fh = [_parent fileWithResourceType:@"SLST" ID:resourceID];
 	if (!fh)
 		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding SLST resource." userInfo:nil];
 	
@@ -788,6 +793,8 @@ struct rx_card_picture_record {
 	if (_blstData)
 		free(_blstData);
 	[_card_scripts release];
+	
+	[_parent release];
 	[_descriptor release];
 	
 	[super dealloc];

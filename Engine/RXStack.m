@@ -99,11 +99,6 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	if (!soundArchives)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Descriptor dictionary does not contain sound archives information." userInfo:nil];
 	
-	// initialize descritors
-	_cardCount = 0;
-	unsigned int cardDescriptorAlignedSize = 0;
-	NSGetSizeAndAlignment(@encode(RXCardDescriptor), NULL, &cardDescriptorAlignedSize);
-	
 	// get the edition manager
 	RXEditionManager* sem = [RXEditionManager sharedEditionManager];
 	
@@ -124,10 +119,6 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 			return nil;
 		}
 		[_dataArchives addObject:anArchive];
-		
-		// card descriptors
-		NSArray* resourceDescriptors = [anArchive valueForKey:@"CARD"];
-		_cardCount = [resourceDescriptors count];
 	} else if ([dataArchives isKindOfClass:[NSArray class]]) {
 		// enumerate the archives
 		NSEnumerator* archivesEnum = [dataArchives objectEnumerator];
@@ -139,10 +130,6 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 				return nil;
 			}
 			[_dataArchives addObject:anArchive];
-			
-			// card descriptors
-			NSArray* resourceDescriptors = [anArchive valueForKey:@"CARD"];
-			_cardCount += [resourceDescriptors count];
 		}
 	} else
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Data Archives object has an invalid type." userInfo:nil];
@@ -210,8 +197,6 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	
 	[_soundArchives release]; _soundArchives = nil;
 	[_dataArchives release]; _dataArchives = nil;
-	
-	_cardCount = 0;
 }
 
 - (void)dealloc {
@@ -306,33 +291,23 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	return decompressor;
 }
 
-- (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)ID {
+- (MHKFileHandle*)fileWithResourceType:(NSString*)type ID:(uint16_t)ID {
 	NSEnumerator* archive_enumerator = [_dataArchives objectEnumerator];
 	MHKArchive* archive = nil;
-	
-	NSData* data = nil;
 	while ((archive = [archive_enumerator nextObject])) {
-		MHKFileHandle* fh = [archive openResourceWithResourceType:type ID:ID];
-		if (!fh)
-			continue;
-		
-		// FIXME: check that file size doesn't overflow size_t
-		size_t length = (size_t)[fh length];
-		void* buffer = malloc(length);
-		if (!buffer)
-			continue;
-		
-		// read the data from the archive
-		NSError* error;
-		if ([fh readDataToEndOfFileInBuffer:buffer error:&error] == -1)
-			continue;
-		
-		data = [NSData dataWithBytesNoCopy:buffer length:length freeWhenDone:YES];
-		if (data)
-			break;
+		MHKFileHandle* file = [archive openResourceWithResourceType:type ID:ID];
+		if (file)
+			return file;
 	}
 	
-	return data;
+	return nil;
+}
+
+- (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)ID {
+	MHKFileHandle* file = [self fileWithResourceType:type ID:ID];
+	if (file)
+		return [file readDataToEndOfFile:NULL];
+	return nil;
 }
 
 @end

@@ -55,10 +55,29 @@
 	[super dealloc];
 }
 
-- (ssize_t)readDataOfLength:(size_t)length inBuffer:(void*)buffer error:(NSError**)errorPtr {
+- (MHKArchive*)archive {
+	return __owner;
+}
+
+- (NSData*)readDataOfLength:(size_t)length error:(NSError**)error {
+	NSMutableData* buffer = [[NSMutableData alloc] initWithCapacity:length];
+	ssize_t bytes_read = [self readDataOfLength:length inBuffer:[buffer mutableBytes] error:error];
+	if (bytes_read == -1) {
+		[buffer release];
+		return nil;
+	}
+	
+	return [buffer autorelease];
+}
+
+- (NSData*)readDataToEndOfFile:(NSError**)error {
+	return [self readDataOfLength:__length error:error];
+}
+
+- (ssize_t)readDataOfLength:(size_t)length inBuffer:(void*)buffer error:(NSError**)error {
 	// is the request valid?
 	if (__position == __length)
-		ReturnValueWithError(-1, NSOSStatusErrorDomain, eofErr, nil, errorPtr);
+		ReturnValueWithError(-1, NSOSStatusErrorDomain, eofErr, nil, error);
 	
 	if (__length - __position < length)
 		length = __length - __position;
@@ -67,18 +86,18 @@
 	UInt32 bytes_read = 0;
 	OSStatus err = FSReadFork(__forkRef, fsFromStart | forceReadMask, __offset + __position, length, buffer, &bytes_read);
 	if (err && err != eofErr)
-		ReturnValueWithError(-1, NSOSStatusErrorDomain, err, nil, errorPtr);
+		ReturnValueWithError(-1, NSOSStatusErrorDomain, err, nil, error);
 	
 	// update the position
 	__position += bytes_read;
 	
 	if (err)
-		ReturnValueWithError(bytes_read, NSOSStatusErrorDomain, err, nil, errorPtr);
+		ReturnValueWithError(bytes_read, NSOSStatusErrorDomain, err, nil, error);
 	return bytes_read;
 }
 
-- (ssize_t)readDataToEndOfFileInBuffer:(void*)buffer error:(NSError**)errorPtr {
-	return [self readDataOfLength:__length inBuffer:buffer error:errorPtr];
+- (ssize_t)readDataToEndOfFileInBuffer:(void*)buffer error:(NSError**)error {
+	return [self readDataOfLength:__length inBuffer:buffer error:error];
 }
 
 - (off_t)offsetInFile {

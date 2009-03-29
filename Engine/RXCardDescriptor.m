@@ -117,7 +117,7 @@ struct _RXCardDescriptorPrimer {
 	if (!self)
 		return nil;
 	
-	// WARNING: weak reference to the stack
+	// NOTE: weak reference to the stack
 	_parent = stack;
 	_ID = cardID;
 	
@@ -134,9 +134,6 @@ struct _RXCardDescriptorPrimer {
 		_name = [[NSString alloc] initWithFormat: @"%@ %03hu", [_parent key], _ID];
 	else
 		_name = [[NSString alloc] initWithFormat: @"%@ (%@ %03hu)", _name, [_parent key], _ID];
-	
-	// create the simple descriptor for the card now
-	_simpleDescriptor = [[RXSimpleCardDescriptor alloc] initWithStackKey:[_parent key] ID:_ID];
 	
 	return self;
 }
@@ -160,7 +157,13 @@ struct _RXCardDescriptorPrimer {
 	return _ID;
 }
 
+- (NSData*)data {
+	return _data;
+}
+
 - (RXSimpleCardDescriptor*)simpleDescriptor {
+	if (!_simpleDescriptor)
+		_simpleDescriptor = [[RXSimpleCardDescriptor alloc] initWithStackKey:[_parent key] ID:_ID];
 	return [[_simpleDescriptor retain] autorelease];
 }
 

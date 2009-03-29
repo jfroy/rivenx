@@ -876,7 +876,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #pragma mark -
 #pragma mark dynamic pictures
 
-- (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive displayRect:(NSRect)display_rect samplingRect:(NSRect)sampling_rect {
+- (void)_drawPictureWithID:(uint16_t)ID stack:(RXStack*)stack displayRect:(NSRect)display_rect samplingRect:(NSRect)sampling_rect {
+	// find the archive for the picture
+	MHKArchive* archive = [[stack fileWithResourceType:@"tBMP" ID:ID] archive];
+	
 	// get the resource descriptor for the tBMP resource
 	NSError* error;
 	NSDictionary* picture_descriptor = [archive bitmapDescriptorWithID:ID error:&error];
@@ -1010,7 +1013,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 			logPrefix, argv[0], display_rect.origin.x, display_rect.origin.y, display_rect.size.width, display_rect.size.height);
 #endif
 	
-	[self _drawPictureWithID:argv[0] archive:[card archive] displayRect:display_rect samplingRect:sampling_rect];
+	[self _drawPictureWithID:argv[0] stack:[card parent] displayRect:display_rect samplingRect:sampling_rect];
 }
 
 // 2
@@ -1784,19 +1787,19 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 		NSPoint combination_sampling_origin = NSMakePoint(32.0f * 3, 0.0f);
 		NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 25.0f);
 		
-		[self _drawPictureWithID:13 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:13 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:14 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:14 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:15 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:15 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:16 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:16 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:17 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:17 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 	}
 }
 
@@ -1894,35 +1897,35 @@ DEFINE_COMMAND(xtchotakesbook) {
 		while (!(domecombo & (1 << combo_bit)))
 			combo_bit++;
 		combination_sampling_origin.x = 32.0f * combo_bit;
-		[self _drawPictureWithID:364 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:364 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		combo_bit++;
 
 		while (!(domecombo & (1 << combo_bit)))
 			combo_bit++;
 		combination_sampling_origin.x = 32.0f * combo_bit;		
-		[self _drawPictureWithID:365 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:365 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		combo_bit++;
 		
 		while (!(domecombo & (1 << combo_bit)))
 			combo_bit++;
 		combination_sampling_origin.x = 32.0f * combo_bit;
-		[self _drawPictureWithID:366 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:366 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		combo_bit++;
 		
 		while (!(domecombo & (1 << combo_bit)))
 			combo_bit++;
 		combination_sampling_origin.x = 32.0f * combo_bit;
-		[self _drawPictureWithID:367 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:367 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		combo_bit++;
 		
 		while (!(domecombo & (1 << combo_bit)))
 			combo_bit++;
 		combination_sampling_origin.x = 32.0f * combo_bit;
-		[self _drawPictureWithID:368 archive:[card archive] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:368 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 	}
 }
 
@@ -2650,7 +2653,7 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 	NSMapTable* hotspots_map = [card hotspotsIDMap];
 
 	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
-	[self _drawPictureWithID:548 archive:[card archive] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
+	[self _drawPictureWithID:548 stack:[card parent] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 	
 	uintptr_t k = 10;
 	for (int i = 0; i < 5; i++) {
@@ -2661,7 +2664,7 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 		rx_core_rect_t hotspot_rect = [h rect];
 		NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
 		NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
-		[self _drawPictureWithID:547 archive:[card archive] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
+		[self _drawPictureWithID:547 stack:[card parent] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
 	}
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }

@@ -20,8 +20,13 @@
 	uint32_t __length;
 }
 
-- (ssize_t)readDataOfLength:(size_t)length inBuffer:(void*)buffer error:(NSError**)errorPtr;
-- (ssize_t)readDataToEndOfFileInBuffer:(void*)buffer error:(NSError**)errorPtr;
+- (MHKArchive*)archive;
+
+- (NSData*)readDataOfLength:(size_t)length error:(NSError**)error;
+- (NSData*)readDataToEndOfFile:(NSError**)error;
+
+- (ssize_t)readDataOfLength:(size_t)length inBuffer:(void*)buffer error:(NSError**)error;
+- (ssize_t)readDataToEndOfFileInBuffer:(void*)buffer error:(NSError**)error;
 
 - (off_t)offsetInFile;
 - (off_t)seekToEndOfFile;

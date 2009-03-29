@@ -6,7 +6,8 @@
 //	Copyright 2005 MacStorm. All rights reserved.
 //
 
-#import <MHKKit/MHKAudioDecompression.h>
+#import <Foundation/Foundation.h>
+#import <MHKKit/MHKKit.h>
 
 
 @interface RXStack : NSObject {
@@ -23,9 +24,6 @@
 	NSArray* _varNames;
 	NSArray* _stackNames;
 	NSData* _rmapData;
-	
-	// card descriptors
-	uint32_t _cardCount;
 	
 	// card storage
 	uint16_t _entryCardID;
@@ -47,6 +45,7 @@
 - (id <MHKAudioDecompression>)audioDecompressorWithID:(uint16_t)soundID;
 - (id <MHKAudioDecompression>)audioDecompressorWithDataID:(uint16_t)soundID;
 
+- (MHKFileHandle*)fileWithResourceType:(NSString*)type ID:(uint16_t)ID;
 - (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)ID;
 
 @end
