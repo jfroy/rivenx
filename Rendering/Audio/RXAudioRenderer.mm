@@ -197,25 +197,33 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 		XThrowIf(source == NULL, paramErr, "AudioRenderer::AttachSources (source == NULL)");
 		
 		// if the source is already attached to this renderer, move on
-		if (source->rendererPtr == this)
+		if (source->rendererPtr == this) {
+			RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("AudioRenderer::AttachSources: skipping source %p because it is already attached"), source);
 			continue;
+		}
 		
 		// if the source is already attached to a different renderer, bail for this source
 		XThrowIf(source->rendererPtr != 0 && source->rendererPtr != this, paramErr, "AudioRenderer::AttachSources (source->rendererPtr != 0 && source->rendererPtr != this)");
 		
 		// if the mixer cannot accept more connections, bail
-		if (sourceCount >= sourceLimit)
+		if (sourceCount >= sourceLimit) {
+			RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("AudioRenderer::AttachSources: mixer has no available input busses left, dropping %d sources"), count - (sourceIndex + 1));
 			break;
+		}
 		
 		// find the next available bus, bail if there are no more busses
 		std::vector<bool>::iterator busIterator;
 		busIterator = find(busAllocationVector->begin(), busAllocationVector->end(), false);
-		if (busIterator == busAllocationVector->end() && busAllocationVector->size() == sourceLimit)
+		if (busIterator == busAllocationVector->end() && busAllocationVector->size() == sourceLimit) {
+			RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("AudioRenderer::AttachSources: mixer has no available input busses left, dropping %d sources"), count - (sourceIndex + 1));
 			break;
+		}
 		
 		// if the source format is invalid or not mixable, bail for this source
-		if (!CAStreamBasicDescription::IsMixable(source->Format()))
+		if (!CAStreamBasicDescription::IsMixable(source->Format())) {
+			RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("AudioRenderer::AttachSources: skipping source %p because its format is not mixable"), source);
 			continue;
+		}
 		
 		// compute and set the source's bus index
 		source->bus = static_cast<AudioUnitElement>(busIterator - busAllocationVector->begin());
@@ -324,8 +332,8 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw (CAXException) {
 		
 		// if this source has no node, then it was connected directly to the mixer and we so we need to reset the mixer's render callback to the silence callback
 		if (!(*busNodeVector)[source->bus]) {
-			AURenderCallbackStruct render_callbacks = {RXAudioRendererSilenceRenderCallback, 0};
-			XThrowIfError(mixer->SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, source->bus, &render_callbacks, sizeof(AURenderCallbackStruct)), "mixer->SetProperty kAudioUnitProperty_SetRenderCallback");
+			AURenderCallbackStruct silence_render = {RXAudioRendererSilenceRenderCallback, 0};
+			XThrowIfError(mixer->SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, source->bus, &silence_render, sizeof(AURenderCallbackStruct)), "mixer->SetProperty kAudioUnitProperty_SetRenderCallback");
 		} else {
 			// otherwise, we have to disconnect the converter node at this time
 			XThrowIfError(AUGraphDisconnectNodeInput(graph, *mixer, source->bus), "AUGraphDisconnectNodeInput");
@@ -693,10 +701,6 @@ void AudioRenderer::CreateGraph() {
 	XThrowIfError(output->SetFormat(kAudioUnitScope_Input, 0, format), "output->SetFormat");
 	XThrowIfError(mixer->SetFormat(kAudioUnitScope_Output, 0, format), "mixer->SetFormat");
 	
-	// set a silence render callback on mixer bus 0 to allow starting without any sources
-	AURenderCallbackStruct render_callbacks = {RXAudioRendererSilenceRenderCallback, 0};
-	XThrowIfError(mixer->SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0, &render_callbacks, sizeof(AURenderCallbackStruct)), "mixer->SetProperty kAudioUnitProperty_SetRenderCallback");
-	
 	// add a pre-render callback on the mixer so we can schedule gain and pan ramps
 	XThrowIfError(mixer->AddRenderNotify(AudioRenderer::MixerRenderNotifyCallback, this), "CAAudioUnit::AddRenderNotify");
 	
@@ -707,6 +711,11 @@ void AudioRenderer::CreateGraph() {
 	sourceLimit = 16;
 	XThrowIfError(mixer->SetProperty(kAudioUnitProperty_BusCount, kAudioUnitScope_Input, 0, &sourceLimit, sizeof(UInt32)), "mixer->SetProperty kAudioUnitProperty_BusCount");
 	sourceCount = 0;
+	
+	// set a silence render callback on the mixer input busses
+	AURenderCallbackStruct silence_render = {RXAudioRendererSilenceRenderCallback, 0};
+	for (AudioUnitElement element = 0; element < 16; element++)
+		XThrowIfError(mixer->SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, element, &silence_render, sizeof(AURenderCallbackStruct)), "mixer->SetProperty kAudioUnitProperty_SetRenderCallback");
 	
 	// create the bus node and allocation vectors
 	busNodeVector = new std::vector<AUNode>(sourceLimit);
