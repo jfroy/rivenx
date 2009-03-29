@@ -498,16 +498,14 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	
 	// allocate the codec context
 	_mp2_codec_context = _ffmpeg_state.avcodec_alloc_context();
-	if (!_mp2_codec_context) {
-		pthread_mutex_unlock(&ffmpeg_mutex);
+	if (!_mp2_codec_context)
 		fprintf(stderr, "<MHKMP2Decompressor %p>: avcodec_alloc_context failed\n", self);
-		return;
+	else {	
+		// open the codec
+		int result = _ffmpeg_state.avcodec_open((AVCodecContext*)_mp2_codec_context, _ffmpeg_state.mp2_codec);
+		if (result < 0)
+			fprintf(stderr, "<MHKMP2Decompressor %p>: avcodec_open failed: %d\n", self, result);
 	}
-	
-	// open the codec
-	int result = _ffmpeg_state.avcodec_open((AVCodecContext*)_mp2_codec_context, _ffmpeg_state.mp2_codec);
-	if (result < 0)
-		fprintf(stderr, "<MHKMP2Decompressor %p>: avcodec_open failed: %d\n", self, result);
 	
 	pthread_mutex_unlock(&ffmpeg_mutex);
 	pthread_mutex_unlock(&_decompressor_lock);
