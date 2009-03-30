@@ -124,51 +124,51 @@ struct rx_card_picture_record {
 	free(listData);
 }
 
-- (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes {
+- (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slst_record soundCount:(uint16_t)sound_count swapBytes:(BOOL)swap {
 	RXSoundGroup* group = [RXSoundGroup new];
 	
 	// some useful pointers
-	const uint16_t* groupParameters = slstRecord + soundCount;
-	const uint16_t* sourceGains = groupParameters + 5;
-	const uint16_t* sourcePans = sourceGains + soundCount;
+	const uint16_t* group_parameters = slst_record + sound_count;
+	const uint16_t* gain_parameters = group_parameters + 5;
+	const uint16_t* pan_parameters = gain_parameters + sound_count;
 	
 	// fade flags
-	uint16_t fade_flags = *groupParameters;
-	if (swapBytes)
+	uint16_t fade_flags = *group_parameters;
+	if (swap)
 		fade_flags = CFSwapInt16BigToHost(fade_flags);
 	group->fadeOutActiveGroupBeforeActivating = (fade_flags & 0x0001) ? YES : NO;
 	group->fadeInOnActivation = (fade_flags & 0x0002) ? YES : NO;
 	
 	// loop flag
-	uint16_t loop = *(groupParameters + 1);
-	if (swapBytes)
+	uint16_t loop = *(group_parameters + 1);
+	if (swap)
 		loop = CFSwapInt16BigToHost(loop);
 	group->loop = (loop) ? YES : NO;
 	
 	// group gain
-	uint16_t integerGain = *(groupParameters + 2);
-	if (swapBytes)
-		integerGain = CFSwapInt16BigToHost(integerGain);
-	float gain = (float)integerGain / kRXSoundGainDivisor;
+	uint16_t integer_gain = *(group_parameters + 2);
+	if (swap)
+		integer_gain = CFSwapInt16BigToHost(integer_gain);
+	float gain = (float)integer_gain / kRXSoundGainDivisor;
 	group->gain = gain;
 	
-	uint16_t soundIndex = 0;
-	for (; soundIndex < soundCount; soundIndex++) {
-		uint16_t soundID = *(slstRecord + soundIndex);
-		if (swapBytes)
-			soundID = CFSwapInt16BigToHost(soundID);
+	uint16_t sound_index = 0;
+	for (; sound_index < sound_count; sound_index++) {
+		uint16_t sound_id = *(slst_record + sound_index);
+		if (swap)
+			sound_id = CFSwapInt16BigToHost(sound_id);
 		
-		uint16_t sourceIntegerGain = *(sourceGains + soundIndex);
-		if (swapBytes)
-			sourceIntegerGain = CFSwapInt16BigToHost(sourceIntegerGain);
-		float sourceGain = (float)sourceIntegerGain / kRXSoundGainDivisor;
+		integer_gain = *(gain_parameters + sound_index);
+		if (swap)
+			integer_gain = CFSwapInt16BigToHost(integer_gain);
+		gain = (float)integer_gain / kRXSoundGainDivisor;
 		
-		int16_t sourceIntegerPan = *((int16_t*)(sourcePans + soundIndex));
-		if (swapBytes)
-			sourceIntegerPan = (int16_t)CFSwapInt16BigToHost(sourceIntegerPan);
-		float sourcePan = 0.5f + ((float)sourceIntegerPan / 127.0f);
+		int16_t integer_pan = *((int16_t*)(pan_parameters + sound_index));
+		if (swap)
+			integer_pan = (int16_t)CFSwapInt16BigToHost(integer_pan);
+		float pan = 0.5f + ((float)integer_pan / 127.0f);
 		
-		[group addSoundWithStack:_parent ID:soundID gain:sourceGain pan:sourcePan];
+		[group addSoundWithStack:_parent ID:sound_id gain:gain pan:pan];
 	}
 	
 #if defined(DEBUG) && DEBUG > 1

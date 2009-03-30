@@ -92,7 +92,7 @@ busAllocationVector(0)
 {
 	CreateGraph();
 
-#if defined(DEBUG)
+#if defined(DEBUG_AUDIO)
 	RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::AudioRenderer: 0x%x> {sourceLimit=%u}"), this, sourceLimit);
 #endif
 }
@@ -244,7 +244,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 		if (oserr == kAudioUnitErr_FormatNotSupported) {
 			// we need to create a converter AU and connect it to the mixer, plugging the source as the converter's render callback
 			
-#if defined(DEBUG) && DEBUG > 1
+#if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
 			CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> creating ancillary converter for source %p on bus %u"), this, source, source->bus);
 			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 			CFRelease(rxar_debug);
@@ -298,7 +298,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 		sourceCount++;
 		(*busAllocationVector)[source->bus] = true;
 		
-#if defined(DEBUG)
+#if defined(DEBUG_AUDIO)
 		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> attached source %p to bus %u"), this, source, source->bus);
 		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 		CFRelease(rxar_debug);
@@ -322,29 +322,30 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw (CAXException) {
 	
 	for (; sourceIndex < count; sourceIndex++) {
 		AudioSourceBase* source = const_cast<AudioSourceBase*>(reinterpret_cast<const AudioSourceBase*>(CFArrayGetValueAtIndex(sources, sourceIndex)));
-		XThrowIf(source->rendererPtr != this, paramErr, "AudioRenderer::DetachSources");
+		XThrowIf(source->rendererPtr != this, paramErr, "AudioRenderer::DetachSources: tried to detach a source not attached to the renderer");
 		
-#if defined(DEBUG)
+#if defined(DEBUG_AUDIO)
 		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> detaching source %p from bus %u"), this, source, source->bus);
 		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 		CFRelease(rxar_debug);
 #endif
 		
 		// if this source has no node, then it was connected directly to the mixer and we so we need to reset the mixer's render callback to the silence callback
-		if (!(*busNodeVector)[source->bus]) {
-			AURenderCallbackStruct silence_render = {RXAudioRendererSilenceRenderCallback, 0};
-			XThrowIfError(mixer->SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, source->bus, &silence_render, sizeof(AURenderCallbackStruct)), "mixer->SetProperty kAudioUnitProperty_SetRenderCallback");
-		} else {
-			// otherwise, we have to disconnect the converter node at this time
+		if ((*busNodeVector)[source->bus]) {
+			// we have to disconnect the converter node at this time
 			XThrowIfError(AUGraphDisconnectNodeInput(graph, *mixer, source->bus), "AUGraphDisconnectNodeInput");
 		}
 		
+		// set the silence render callback on the mixer bus
+		AURenderCallbackStruct silence_render = {RXAudioRendererSilenceRenderCallback, 0};
+		XThrowIfError(mixer->SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, source->bus, &silence_render, sizeof(AURenderCallbackStruct)), "mixer->SetProperty kAudioUnitProperty_SetRenderCallback");
+		
 		// invalidate any ongoing ramps for this source; a parameter of UINTMAX is a special value which will match all parameters
-		ParameterRampDescriptor descriptor;
-		descriptor.generation = pending_ramp_generation++;
-		descriptor.event.element = source->bus;
-		descriptor.event.parameter = UINT32_MAX;
-		pending_ramps.deferred_add(descriptor);
+//		ParameterRampDescriptor descriptor;
+//		descriptor.generation = pending_ramp_generation++;
+//		descriptor.event.element = source->bus;
+//		descriptor.event.parameter = UINT32_MAX;
+//		pending_ramps.deferred_add(descriptor);
 		
 		// retain the source's bus before we zero it in the source for the code that comes after the required graph update below
 		busToRecycle[sourceIndex] = source->bus;
@@ -520,7 +521,7 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 					active_ramps.deferred_remove(*active);
 			}
 			
-#if defined(DEBUG) && DEBUG > 1
+#if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
 			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("%f - removed all ramps for element %lu"), CFAbsoluteTimeGetCurrent(), descriptor.event.element);
 #endif
 		} else {
@@ -528,7 +529,7 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 			if (descriptor.event.eventType == kParameterEvent_Immediate) {
 				err = mixer->SetParameter(descriptor.event.parameter, descriptor.event.scope, descriptor.event.element, descriptor.event.eventValues.immediate.value);
 				if (err != noErr) {
-#if defined(DEBUG)
+#if defined(DEBUG_AUDIO)
 					RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("mixer->SetParameter failed with error %ld"), err);
 #endif
 					return err;
@@ -569,13 +570,13 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 			// get the start value for the ramp's parameter
 			err = mixer->GetParameter(descriptor_ref.event.parameter, kAudioUnitScope_Input, descriptor_ref.event.element, descriptor_ref.event.eventValues.ramp.startValue);
 			if (err != noErr) {
-#if defined(DEBUG)
+#if defined(DEBUG_AUDIO)
 				RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("mixer->GetParameter for %ld, %d, %ld failed with error %ld"), descriptor_ref.event.parameter, kAudioUnitScope_Input, descriptor_ref.event.element, err);
 #endif
 				return err;
 			}
 			
-#if defined(DEBUG) && DEBUG > 1
+#if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
 			RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("%f - new ramp: {element=%lu, parameter=%lu, start=%f, end=%f, duration=%lu}"), 
 				CFAbsoluteTimeGetCurrent(),
 				descriptor_ref.event.element,
@@ -600,7 +601,7 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 			descriptor_ref.event.eventValues.ramp.startBufferOffset = static_cast<SInt32>(round(descriptor_ref.start.mSampleTime - inTimeStamp->mSampleTime));
 			if (static_cast<SInt32>(descriptor_ref.event.eventValues.ramp.durationInFrames) > abs(descriptor_ref.event.eventValues.ramp.startBufferOffset)) {
 				// this is an ongoing ramp
-#if defined(DEBUG) && DEBUG > 2
+#if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 2
 				  RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("	   %f - ongoing ramp: {element=%lu, parameter=%lu, start=%f, end=%f, bufferOffset=%ld}"), 
 					CFAbsoluteTimeGetCurrent(),
 					descriptor_ref.event.element,
@@ -619,7 +620,7 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 					v = 1.0f;
 				err = mixer->SetParameter(descriptor_ref.event.parameter, descriptor_ref.event.scope, descriptor_ref.event.element, v);
 				if (err != noErr) {
-#if defined(DEBUG)
+#if defined(DEBUG_AUDIO)
 					RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("mixer->SetParameter failed with error %ld"), err);
 #endif
 					return err;
@@ -629,7 +630,7 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 				descriptor_ref.previous = *inTimeStamp;
 			} else {
 				// this ramp is over
-#if defined(DEBUG) && DEBUG > 1
+#if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
 				RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("%f - completed ramp: {element=%lu, parameter=%lu, start=%f, end=%f, bufferOffset=%ld}"), 
 					CFAbsoluteTimeGetCurrent(),
 					descriptor_ref.event.element,
