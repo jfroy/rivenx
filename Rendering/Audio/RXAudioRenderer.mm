@@ -91,10 +91,7 @@ busNodeVector(0),
 busAllocationVector(0)
 {
 	CreateGraph();
-
-#if defined(DEBUG_AUDIO)
-	RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::AudioRenderer: 0x%x> {sourceLimit=%u}"), this, sourceLimit);
-#endif
+	RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("<RX::AudioRenderer: 0x%x> initialized with %u mixer inputs}"), this, sourceLimit);
 }
 
 AudioRenderer::AudioRenderer(const AudioRenderer &c) {
@@ -298,7 +295,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 		sourceCount++;
 		(*busAllocationVector)[source->bus] = true;
 		
-#if defined(DEBUG_AUDIO)
+#if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
 		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> attached source %p to bus %u"), this, source, source->bus);
 		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 		CFRelease(rxar_debug);
@@ -324,7 +321,7 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw (CAXException) {
 		AudioSourceBase* source = const_cast<AudioSourceBase*>(reinterpret_cast<const AudioSourceBase*>(CFArrayGetValueAtIndex(sources, sourceIndex)));
 		XThrowIf(source->rendererPtr != this, paramErr, "AudioRenderer::DetachSources: tried to detach a source not attached to the renderer");
 		
-#if defined(DEBUG_AUDIO)
+#if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
 		CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> detaching source %p from bus %u"), this, source, source->bus);
 		RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 		CFRelease(rxar_debug);
@@ -341,11 +338,11 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw (CAXException) {
 		XThrowIfError(mixer->SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, source->bus, &silence_render, sizeof(AURenderCallbackStruct)), "mixer->SetProperty kAudioUnitProperty_SetRenderCallback");
 		
 		// invalidate any ongoing ramps for this source; a parameter of UINTMAX is a special value which will match all parameters
-//		ParameterRampDescriptor descriptor;
-//		descriptor.generation = pending_ramp_generation++;
-//		descriptor.event.element = source->bus;
-//		descriptor.event.parameter = UINT32_MAX;
-//		pending_ramps.deferred_add(descriptor);
+		ParameterRampDescriptor descriptor;
+		descriptor.generation = pending_ramp_generation++;
+		descriptor.event.element = source->bus;
+		descriptor.event.parameter = UINT32_MAX;
+		pending_ramps.deferred_add(descriptor);
 		
 		// retain the source's bus before we zero it in the source for the code that comes after the required graph update below
 		busToRecycle[sourceIndex] = source->bus;
@@ -438,7 +435,7 @@ void AudioRenderer::RampSourcesPan(CFArrayRef sources, std::vector<Float32>value
 
 #pragma mark -
 
-void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID parameter, std::vector<Float32>& values, std::vector<Float64>& durations) throw(CAXException) {
+void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID parameter_id, std::vector<Float32>& values, std::vector<Float64>& durations) throw(CAXException) {
 	XThrowIf(CFArrayGetCount(sources) != (CFIndex)values.size(), paramErr, "AudioRenderer::RampMixerParameter (CFArrayGetCount(sources) != (CFIndex)values.size())");
 	XThrowIf(CFArrayGetCount(sources) != (CFIndex)durations.size(), paramErr, "AudioRenderer::RampMixerParameter (CFArrayGetCount(sources) != (CFIndex)durations.size())");
 	
@@ -459,7 +456,14 @@ void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID 
 		XThrowIf(source->rendererPtr != this, paramErr, "AudioRenderer::RampMixerParameter (source->rendererPtr != this)");
 		XThrowIf(duration < 0.0, paramErr, "AudioRenderer::RampMixerParameter (duration < 0.0)");
 		
-		// preapre a new ramp descriptor
+		// get the parameter information structure
+		CAAUParameter parameter = CAAUParameter(*mixer, parameter_id, kAudioUnitScope_Input, source->bus);
+		AudioUnitParameterInfo parameter_info = parameter.ParamInfo();
+		
+		// clamp the value to the valid range for the parameter
+		value = MAX(MIN(value, parameter_info.maxValue), parameter_info.minValue);
+		
+		// prepare a new ramp descriptor
 		ParameterRampDescriptor descriptor;
 		descriptor.generation = pending_ramp_generation++;
 		descriptor.source = source;
@@ -471,11 +475,11 @@ void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID 
 		// setup the parameter event structure
 		descriptor.event.scope = kAudioUnitScope_Input;
 		descriptor.event.element = source->bus;
-		descriptor.event.parameter = parameter;
+		descriptor.event.parameter = parameter_id;
 		descriptor.event.eventType = (fabs(duration) < 1.0e-3 || !ramps_are_enabled) ? kParameterEvent_Immediate : kParameterEvent_Ramped;
 		
 		// we need to take the cube root of the value if the parameter is volume
-		if (parameter == kStereoMixerParam_Volume)
+		if (parameter_id == kStereoMixerParam_Volume)
 			value = cbrt(value);
 		
 		if (descriptor.event.eventType == kParameterEvent_Ramped) {

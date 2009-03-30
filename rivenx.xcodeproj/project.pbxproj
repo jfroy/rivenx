@@ -2087,7 +2087,7 @@
 					CoreAudio_StopOnFailure,
 					"DEBUG=1",
 					"DEBUG_GL=1",
-					"DEBUG_AUDIO=2",
+					"DEBUG_AUDIO=1",
 				);
 				GCC_VERSION = 4.0;
 				ONLY_ACTIVE_ARCH = YES;

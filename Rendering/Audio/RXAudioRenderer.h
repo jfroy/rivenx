@@ -90,7 +90,7 @@ private:
 	AudioRenderer(const AudioRenderer &c);
 	AudioRenderer& operator=(const AudioRenderer& c) {return *this;}
 	
-	void RampMixerParameter(CFArrayRef sources, AudioUnitParameterID parameter, std::vector<Float32>& values, std::vector<Float64>& durations) throw(CAXException);
+	void RampMixerParameter(CFArrayRef sources, AudioUnitParameterID parameter_id, std::vector<Float32>& values, std::vector<Float64>& durations) throw(CAXException);
 	
 	OSStatus MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) throw();
 	OSStatus MixerPostRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) throw();

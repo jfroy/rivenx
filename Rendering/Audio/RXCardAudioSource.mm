@@ -40,7 +40,7 @@ CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float 
 	
 	_loopBuffer = 0;
 	
-#if defined(DEBUG_AUDIO)
+#if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
 	CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> initialized with decompressor %p"), this, decompressor);
 	RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 	CFRelease(rxar_debug);
@@ -48,7 +48,7 @@ CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float 
 }
 
 CardAudioSource::~CardAudioSource() throw(CAXException) {
-#if defined(DEBUG_AUDIO)
+#if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
 	CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> deallocating"), this);
 	RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 	CFRelease(rxar_debug);
@@ -234,7 +234,7 @@ void CardAudioSource::task(uint32_t byte_limit) throw() {
 #pragma mark -
 
 void CardAudioSource::Reset() throw() {
-#if defined(DEBUG_AUDIO)
+#if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
 	CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> resetting self and decompressor %p"), this, _decompressor);
 	RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
 	CFRelease(rxar_debug);
