@@ -24,7 +24,7 @@ static void dump_bitmaps(MHKArchive *archive) {
 	NSAutoreleasePool *p = [[NSAutoreleasePool alloc] init];
 	
 	NSFileManager *fm = [NSFileManager defaultManager];
-	NSString *dump_folder = [NSHomeDirectory() stringByAppendingPathComponent:@"mhk_bitmap_dump"];
+	NSString *dump_folder = [NSHomeDirectory() stringByAppendingPathComponent:@"Temporary/mhk_bitmap_dump"];
 	[fm createDirectoryAtPath:dump_folder attributes:nil];
 	
 	dump_folder = [dump_folder stringByAppendingPathComponent:[[[archive url] path] lastPathComponent]];
@@ -96,7 +96,7 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
 	NSAutoreleasePool *p = [[NSAutoreleasePool alloc] init];
 	
 	NSFileManager *fm = [NSFileManager defaultManager];
-	NSString *dump_folder = [NSHomeDirectory() stringByAppendingPathComponent:@"mhk_sound_dump"];
+	NSString *dump_folder = [NSHomeDirectory() stringByAppendingPathComponent:@"Temporary/mhk_sound_dump"];
 	[fm createDirectoryAtPath:dump_folder attributes:nil];
 	
 	dump_folder = [dump_folder stringByAppendingPathComponent:[[[archive url] path] lastPathComponent]];
@@ -107,10 +107,12 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
 	NSDictionary *wavDescriptor = nil;
 	while ((wavDescriptor = [wavEnumerator nextObject])) {
 		NSNumber *sound_id = [wavDescriptor objectForKey:@"ID"];
+		printf("    %03d (%s)\n", [sound_id intValue], [[wavDescriptor objectForKey:@"Name"] UTF8String]);
 		
 		NSDictionary *soundDescriptor = [archive soundDescriptorWithID:[sound_id unsignedShortValue] error:&error];
 		if (!soundDescriptor) {
-			NSLog(@"An error in the %@ domain with code %d (%@) has occured.", [error domain], [error code], UTCreateStringForOSType([error code]));
+			uint32_t code = (uint32_t)[error code];
+			fprintf(stderr, "an error in the %s domain with code %d (%c%c%c%c) has occured\n", [[error domain] UTF8String], code, ((char*)&code)[0], ((char*)&code)[1], ((char*)&code)[2], ((char*)&code)[3]);
 			continue;
 		}
 		
@@ -119,7 +121,8 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
 		// get a decompressor object for the sound
 		id <MHKAudioDecompression> decomp = [archive decompressorWithSoundID:[sound_id unsignedShortValue] error:&error];
 		if (!decomp) {
-			NSLog(@"An error in the %@ domain with code %d (%@) has occured.", [error domain], [error code], UTCreateStringForOSType([error code]));
+			uint32_t code = (uint32_t)[error code];
+			fprintf(stderr, "an error in the %s domain with code %d (%c%c%c%c) has occured\n", [[error domain] UTF8String], code, ((char*)&code)[0], ((char*)&code)[1], ((char*)&code)[2], ((char*)&code)[3]);
 			continue;
 		}
 		
@@ -212,25 +215,25 @@ int main(int argc, char *argv[]) {
 	}
 	
 	if (arguments.inputs_num < 1) {
-		NSLog(@"no archive was provided");
+		printf("no archive was provided");
 		exit(1);
 	}
 	
 	NSError *error = nil;
 	int archive_index = 0;
 	for (; archive_index < arguments.inputs_num; archive_index++) {
-		NSLog(@"processing %s", arguments.inputs[archive_index]);
+		printf("processing %s\n", arguments.inputs[archive_index]);
 		
 		MHKArchive *archive = [[MHKArchive alloc] initWithPath:[NSString stringWithUTF8String:arguments.inputs[archive_index]] error:&error];
 		if (!archive) {
-			NSLog(@"failed to open archive: %@", error);
+			fprintf(stderr, "failed to open archive: %s", [[error description] UTF8String]);
 			continue;
 		}
 		
-		NSLog(@"dumping bitmaps");
+		printf("--> dumping bitmaps\n");
 		dump_bitmaps(archive);
 		
-		NSLog(@"dumping sounds");
+		printf("--> dumping sounds\n");
 		dump_sounds(archive, arguments.first_mpeg_pkt_only_flag);
 		
 		[archive release];

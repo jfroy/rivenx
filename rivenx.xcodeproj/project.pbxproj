@@ -1844,14 +1844,10 @@
 				GCC_PREFIX_HEADER = mhk/MHKBase.pch;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$(SRCROOT)/ffmpeg\"",
+					"\"$(SRCROOT)/ffmpeg/$(CURRENT_ARCH)\"",
 				);
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					"\"$(SRCROOT)/ffmpeg\"",
-				);
 				OTHER_LDFLAGS = (
 					"-lz",
 					"-lbz2",

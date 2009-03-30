@@ -168,7 +168,7 @@
 	
 #if defined(DEBUG) && DEBUG > 2
 	fprintf(stderr, "samples offset: 0x%qx\n", file_offset);
-	fprintf(stderr, "sample rate: %u, samples: %u, bit depth: %d, channels: %d, compression: %u\n", 
+	fprintf(stderr, "sample rate: %u, frames: %u, bit depth: %d, channels: %d, compression: %u\n", 
 		data_header.sampling_rate, 
 		data_header.frame_count, 
 		data_header.bit_depth, 
@@ -176,7 +176,7 @@
 		data_header.compression_type);
 	fprintf(stderr, "headers length: 0x%x\n", headers_length);
 	fprintf(stderr, "computed resource length without headers: 0x%x\n", samples_length);
-	if(data_header.compression_type == MHK_WAVE_ADPCM) {
+	if (data_header.compression_type == MHK_WAVE_ADPCM) {
 		uint32_t required_bytes_for_adpcm = data_header.frame_count * data_header.channel_count / 2;
 		fprintf(stderr, "required bytes for compressed samples (using ADPCM): 0x%x\n", required_bytes_for_adpcm);
 		fprintf(stderr, "difference: 0x%x\n", required_bytes_for_adpcm - samples_length);

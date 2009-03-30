@@ -1,14 +1,12 @@
-The full FFmpeg source code can be downloaded from the ffmpeg project's web page at 
-http://ffmpeg.sourceforge.net/index.php
+FFmpeg README
+-------------
 
-MHKKit is distributed with a universal binary version of libavutil and libavcodec, a subset of
-the functional libraries of FFmpeg. At the time of writing, the FFmpeg project does not support 
-"universal binary compiling". My current process is to compile on a PowerPC Mac, compile 
-on an Intel Mac and create the universal binary using lipo. I am currently using Mac OS X 10.5 for 
-compiling, which due to a bug in the new ld forces mmx to be disabled on Intel.
+1) Documentation
+----------------
 
-FFmpeg was compiled with the following options:
+* Read the documentation in the doc/ directory.
 
-./configure --prefix=$HOME/ffmpeg --disable-static --enable-shared --enable-pthreads --disable-ffmpeg --disable-ffserver --disable-ffplay --disable-encoders --disable-decoders --disable-muxers --disable-demuxers --disable-parsers --disable-protocols --disable-devices --enable-decoder=mp2 --enable-demuxer=mp3 --enable-parser=mpegaudio --enable-protocol=file --disable-strip --disable-debug --extra-cflags="-mmacosx-version-min=10.4 -gdwarf-2" --extra-ldflags="-mmacosx-version-min=10.4" --disable-mmx
+2) Licensing
+------------
 
-The dsymutil tool was used to generate the dSYM file. strip -x was then applied to the dylib files.
+* See the LICENSE file.

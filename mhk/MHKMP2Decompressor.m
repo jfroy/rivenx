@@ -11,7 +11,7 @@
 #import <dlfcn.h>
 #import <pthread.h>
 
-#import <avcodec.h>
+#import <libavcodec/avcodec.h>
 
 #import "MHKMP2Decompressor.h"
 #import "MHKErrors.h"
@@ -413,9 +413,10 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	// if we're told we have more frames than we can have, bail
 	if (_frame_count > integer_frame_count)
 		ReturnFromInitWithError(MHKErrorDomain, errInvalidFrameCount, nil, errorPtr);
+	_frame_count = integer_frame_count;
 	
 	// compute how many bytes we should drop from the first packet (where extra silence will be)
-	_bytes_to_drop = FRAME_SKIP_FUDGE * _decomp_absd.mBytesPerFrame;
+//	_bytes_to_drop = FRAME_SKIP_FUDGE * _decomp_absd.mBytesPerFrame;
 	
 	// allocate the decompression buffer
 	_decompression_buffer_length = MAX(MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET * sizeof(SInt16) * _channel_count, AVCODEC_MAX_AUDIO_FRAME_SIZE);
