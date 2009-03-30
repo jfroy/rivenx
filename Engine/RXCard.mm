@@ -166,7 +166,7 @@ struct rx_card_picture_record {
 		int16_t integer_pan = *((int16_t*)(pan_parameters + sound_index));
 		if (swap)
 			integer_pan = (int16_t)CFSwapInt16BigToHost(integer_pan);
-		float pan = 0.5f + ((float)integer_pan / 127.0f);
+		float pan = 0.5f + ((float)integer_pan / 200.0f);
 		
 		[group addSoundWithStack:_parent ID:sound_id gain:gain pan:pan];
 	}
