@@ -20,7 +20,7 @@
 
 struct descriptor_binary_tree {
 	uint16_t resource_id;
-	NSDictionary* descriptor;
+	NSMutableDictionary* descriptor;
 };
 
 static int __descriptor_binary_tree_compare(const void* v1, const void* v2) {
@@ -45,10 +45,10 @@ static int _MHK_file_table_entry_pointer_offset_compare(const void* v1, const vo
 	return 1;
 }
 
-MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
-	uint32_t length = s.size_high;
+MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
+	uint32_t length = s->size_high;
 	length = length << 16;
-	length += s.size_low;
+	length += s->size_low;
 	return length;
 }
 
@@ -87,31 +87,68 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	qsort(file_table_entry_table, file_table_count, sizeof(MHK_file_table_entry*), &_MHK_file_table_entry_pointer_offset_compare);
 	
 	// the pointers have been sorted in ascending order by file offset
-	uint32_t file_length = 0;
-	NSRange entry_range = NSMakeRange(0, 1);
+	uint32_t file_length;
+	uint32_t stored_file_length;
+	
 	for (file_table_index = 1; file_table_index < file_table_count; file_table_index++) {
+		// compute the file length based on the space between the current file and the previous file
 		file_length = file_table_entry_table[file_table_index]->absolute_offset - file_table_entry_table[file_table_index - 1]->absolute_offset;
-		if (file_length == 0) {
-			entry_range.length++;
-			continue;
-		}
 		
-		// basically, adjust the length of the previous entry so that every file is packed with no gap. assumes no padding was ever used :|
-		uint32_t entry_index = entry_range.location;
-		for (; entry_index < entry_range.location + entry_range.length; entry_index++) {
-			file_table_entry_table[entry_index]->size_high = (file_length & 0x00FF0000) >> 16;
-			file_table_entry_table[entry_index]->size_low = file_length & 0x0000FFFF;
-		}
+		// get the metadata file length
+		stored_file_length = compute_file_table_entry_length(file_table_entry_table[file_table_index - 1]);
 		
-		// reset the range
-		entry_range.location = file_table_index;
-		entry_range.length = 1;
+		// if the length don't match, set it to the packed file length (e.g. as determined by the offsets)
+		if (file_length != stored_file_length) {
+#if defined(DEBUG) && DEBUG > 2
+			fprintf(stderr, "file entry %03d -> packed file size: %u, stored file size: %u, delta: %d\n", file_table_index - 1, file_length, stored_file_length, (int32_t)file_length - stored_file_length);
+			
+			NSEnumerator* types_enum = [file_descriptor_arrays keyEnumerator];
+			NSString* type;
+			while ((type = [types_enum nextObject])) {
+				NSArray* type_descs = [file_descriptor_arrays objectForKey:type];
+				
+				NSEnumerator* files_enum = [type_descs objectEnumerator];
+				NSDictionary* file_desc;
+				while ((file_desc = [files_enum nextObject])) {
+					uint32_t file_index = [[file_desc objectForKey:@"Index"] unsignedIntValue] - 1;
+					if (file_index == file_table_index - 1)
+						fprintf(stderr, "    %s %d (%s)\n", [type UTF8String], [[file_desc objectForKey:@"ID"] intValue], [[file_desc objectForKey:@"Name"] UTF8String]);
+				}
+			}
+#endif
+
+			file_table_entry_table[file_table_index - 1]->size_high = (file_length & 0x00FF0000) >> 16;
+			file_table_entry_table[file_table_index - 1]->size_low = file_length & 0x0000FFFF;
+		}
 	}
 	
-	// for the last entry, we compute the file length using the archive length
-	file_length = archive_size - file_table_entry_table[file_table_index - 1]->absolute_offset;
-	file_table_entry_table[file_table_index - 1]->size_high = (file_length & 0x00FF0000) >> 16;
-	file_table_entry_table[file_table_index - 1]->size_low = file_length & 0x0000FFFF;
+	// for the last entry, we compute the file length using the archive size
+	file_length = archive_size - file_table_entry_table[file_table_count - 1]->absolute_offset;
+	stored_file_length = compute_file_table_entry_length(file_table_entry_table[file_table_count - 1]);
+	
+	// if the length don't match, set it to the packed file length (e.g. as determined by the offsets)
+	if (file_length != stored_file_length) {
+#if defined(DEBUG) && DEBUG > 2
+		fprintf(stderr, "file entry %03d -> packed file size: %u, stored file size: %u, delta: %d\n", file_table_count - 1, file_length, stored_file_length, (int32_t)file_length - stored_file_length);
+		
+		NSEnumerator* types_enum = [file_descriptor_arrays keyEnumerator];
+		NSString* type;
+		while ((type = [types_enum nextObject])) {
+			NSArray* type_descs = [file_descriptor_arrays objectForKey:type];
+			
+			NSEnumerator* files_enum = [type_descs objectEnumerator];
+			NSDictionary* file_desc;
+			while ((file_desc = [files_enum nextObject])) {
+				uint32_t file_index = [[file_desc objectForKey:@"Index"] unsignedIntValue] - 1;
+				if (file_index == file_table_count - 1)
+					fprintf(stderr, "    %s %d (%s)\n", [type UTF8String], [[file_desc objectForKey:@"ID"] intValue], [[file_desc objectForKey:@"Name"] UTF8String]);
+			}
+		}
+#endif
+
+		file_table_entry_table[file_table_count - 1]->size_high = (file_length & 0x00FF0000) >> 16;
+		file_table_entry_table[file_table_count - 1]->size_low = file_length & 0x0000FFFF;
+	}
 	
 	// cleanup
 	free(file_table_entry_table);
@@ -234,25 +271,20 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 			}
 		}
 		
-		// compute the file size
-		uint32_t file_size = _compute_file_table_entry_length(*file_entry);
-		
 		// generate the file descriptor dictionary
-		NSNumber* file_size_number = [[NSNumber alloc] initWithUnsignedLong:file_size];
 		NSNumber* file_index_number = [[NSNumber alloc] initWithUnsignedShort:rsrc_entry->index];
 		NSNumber* file_id_number = [[NSNumber alloc] initWithUnsignedShort:rsrc_entry->id];
 		NSNumber* file_offset_number = [[NSNumber alloc] initWithUnsignedLong:file_entry->absolute_offset];
 		
-		NSDictionary* file_descriptor = [[NSDictionary alloc] initWithObjectsAndKeys:file_size_number, @"Length", 
-			file_index_number, @"Index", 
-			file_id_number, @"ID", 
-			file_offset_number, @"Offset", 
-			file_name, @"Name", 
+		NSMutableDictionary* file_descriptor = [[NSMutableDictionary alloc] initWithObjectsAndKeys:
+			file_index_number, @"Index",
+			file_id_number, @"ID",
+			file_offset_number, @"Offset",
+			file_name, @"Name",
 			nil];
 		file_descriptors[resource_index] = file_descriptor;
 		
 		// release objects
-		[file_size_number release];
 		[file_index_number release];
 		[file_id_number release];
 		[file_offset_number release];
@@ -280,7 +312,7 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	mergesort(descriptor_tree, rsrc_table_header.count, sizeof(struct descriptor_binary_tree), &__descriptor_binary_tree_compare);
 	
 	// store the sorted array in a NSData, then associate to type with the trees dictionary
-	NSData* descriptor_tree_data = [[NSData alloc] initWithBytesNoCopy:descriptor_tree length:rsrc_table_header.count * sizeof(struct descriptor_binary_tree) freeWhenDone:YES];
+	NSMutableData* descriptor_tree_data = [[NSMutableData alloc] initWithBytesNoCopy:descriptor_tree length:rsrc_table_header.count * sizeof(struct descriptor_binary_tree) freeWhenDone:YES];
 	[file_descriptor_trees setObject:descriptor_tree_data forKey:type_key];
 	[descriptor_tree_data release];
 	
@@ -305,6 +337,10 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	// if we've already been initialzed, return
 	if (initialized)
 		return YES;
+	
+#if defined(DEBUG) && DEBUG > 1
+	fprintf(stderr, "loading %s\n", [[[self url] path] UTF8String]);
+#endif
 	
 	// seek to start
 	err = FSSetForkPosition(forkRef, fsFromStart, 0);
@@ -410,9 +446,6 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	for (table_iterator = 0; table_iterator < file_table_count; table_iterator++)
 		MHK_file_table_entry_fton(file_table + table_iterator);
 	
-	// compute the file lengths since MHK have bogus values
-	[self compute_file_lengths];
-	
 	// allocate descriptor arrays dictionary
 	file_descriptor_arrays = [[NSMutableDictionary alloc] initWithCapacity:type_table_count];
 	if (!file_descriptor_arrays)
@@ -429,10 +462,10 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 			return NO;
 	}
 	
-	// we don't need the global tables anymore
-	free (file_table);
-	file_table = NULL;
+	// compute the file lengths since MHK have bogus values
+	[self compute_file_lengths];
 	
+	// we don't need the global tables anymore
 	if (name_list)
 		free(name_list);
 	name_list = NULL;
@@ -548,12 +581,12 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 #pragma mark -
 
 - (NSDictionary*)resourceDescriptorWithResourceType:(NSString*)type ID:(uint16_t)resourceID {
-	NSData* binary_tree_data = [file_descriptor_trees objectForKey:type];
+	NSMutableData* binary_tree_data = [file_descriptor_trees objectForKey:type];
 	if (!binary_tree_data)
 		return nil;
 	
 	uint16_t n = (uint16_t)[[file_descriptor_arrays objectForKey:type] count];
-	const struct descriptor_binary_tree* binary_tree = [binary_tree_data bytes];
+	struct descriptor_binary_tree* binary_tree = [binary_tree_data mutableBytes];
 	
 	if (n == 0)
 		return nil;
@@ -564,9 +597,17 @@ MHK_INLINE uint32_t _compute_file_table_entry_length(MHK_file_table_entry s) {
 	// binary search for the requested ID
 	while (l <= r) {
 		uint16_t m = l + (r - l) / 2;
-		if (resourceID == binary_tree[m].resource_id)
-			return binary_tree[m].descriptor;
-		else if (resourceID < binary_tree[m].resource_id) {
+		if (resourceID == binary_tree[m].resource_id) {
+			NSMutableDictionary* descriptor = binary_tree[m].descriptor;
+			
+			if (![descriptor objectForKey:@"Length"]) {
+				MHK_file_table_entry* file_entry = file_table + [[descriptor objectForKey:@"Index"] unsignedIntValue] - 1;
+				uint32_t file_size = compute_file_table_entry_length(file_entry);
+				[descriptor setObject:[NSNumber numberWithUnsignedInt:file_size] forKey:@"Length"];
+			}
+			
+			return [[descriptor copy] autorelease];
+		} else if (resourceID < binary_tree[m].resource_id) {
 			if (m == 0)
 				return nil;
 			else r = m - 1;

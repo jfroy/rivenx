@@ -474,7 +474,7 @@ struct rx_card_picture_record {
 		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, pictureRecords[currentListIndex].width, pictureRecords[currentListIndex].height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)); glReportError();
 		
 #if defined(DEBUG) && DEBUG > 1
-		NSRect original_rect = RXMakeCompositeDisplayRect(plstRecords[currentListIndex].left, plstRecords[currentListIndex].top, plstRecords[currentListIndex].right, plstRecords[currentListIndex].bottom);
+		NSRect original_rect = RXMakeCompositeDisplayRect(plstRecords[currentListIndex].rect.left, plstRecords[currentListIndex].rect.top, plstRecords[currentListIndex].rect.right, plstRecords[currentListIndex].rect.bottom);
 		if ((int)pictureRecords[currentListIndex].width != (int)original_rect.size.width || (int)pictureRecords[currentListIndex].height != (int)original_rect.size.height)
 			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"PLST record %hu has display rect size different than tBMP resource %hu: %dx%d vs. %dx%d", 
 				plstRecords[currentListIndex].index, plstRecords[currentListIndex].bitmap_id, (int)original_rect.size.width, (int)original_rect.size.height, (int)pictureRecords[currentListIndex].width, (int)pictureRecords[currentListIndex].height);

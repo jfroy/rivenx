@@ -48,7 +48,7 @@
 	file_offset = resource_offset;
 	
 #if defined(DEBUG) && DEBUG > 2
-	printf("offset: 0x%qx\n", resource_offset);
+	fprintf(stderr, "offset: 0x%qx\n", resource_offset);
 #endif
 	
 	// standard chunk header
@@ -67,10 +67,10 @@
 	
 	// since resource lengths are computed in the archive, we need to do some checking here
 	UInt32 resource_length = chunk_header.content_length + sizeof(MHK_chunk_header);
-	UInt32 resource_length_from_archive = [[descriptor objectForKey:@"Length"] unsignedLongValue];
+	UInt32 resource_length_from_archive = [[descriptor objectForKey:@"Length"] unsignedIntValue];
 	if (resource_length != resource_length_from_archive) {
 #if defined(DEBUG) && DEBUG > 2
-		printf("read length: 0x%x, computed length: 0x%x, difference = 0x%x\n", resource_length, resource_length_from_archive, resource_length_from_archive - resource_length);
+		fprintf(stderr, "read length: 0x%x, computed length: 0x%x, difference = 0x%x\n", (int)resource_length, (int)resource_length_from_archive, (int)(resource_length_from_archive - resource_length));
 #endif
 		
 		// if the resource length is greater than the one from the archive, take the one from the archive since it was computed to be the biggest size possible w/o resource overlap
@@ -167,21 +167,21 @@
 	}
 	
 #if defined(DEBUG) && DEBUG > 2
-	printf("samples offset: 0x%qx\n", file_offset);
-	printf("sample rate: %u, samples: %u, bit depth: %d, channels: %d, compression: %u\n", 
+	fprintf(stderr, "samples offset: 0x%qx\n", file_offset);
+	fprintf(stderr, "sample rate: %u, samples: %u, bit depth: %d, channels: %d, compression: %u\n", 
 		data_header.sampling_rate, 
 		data_header.frame_count, 
 		data_header.bit_depth, 
 		data_header.channel_count, 
 		data_header.compression_type);
-	printf("headers length: 0x%x\n", headers_length);
-	printf("computed resource length without headers: 0x%x\n", samples_length);
+	fprintf(stderr, "headers length: 0x%x\n", headers_length);
+	fprintf(stderr, "computed resource length without headers: 0x%x\n", samples_length);
 	if(data_header.compression_type == MHK_WAVE_ADPCM) {
 		uint32_t required_bytes_for_adpcm = data_header.frame_count * data_header.channel_count / 2;
-		printf("required bytes for compressed samples (using ADPCM): 0x%x\n", required_bytes_for_adpcm);
-		printf("difference: 0x%x\n", required_bytes_for_adpcm - samples_length);
+		fprintf(stderr, "required bytes for compressed samples (using ADPCM): 0x%x\n", required_bytes_for_adpcm);
+		fprintf(stderr, "difference: 0x%x\n", required_bytes_for_adpcm - samples_length);
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 #endif
 	
 	soundDescriptor = [NSDictionary dictionaryWithObjectsAndKeys:@"tWAV", @"Type", 
