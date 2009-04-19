@@ -353,6 +353,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	[[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:mountPath];
 }
 
+- (RXSimpleCardDescriptor*)lookupCardWithKey:(NSString*)lookup_key {
+	return [[currentEdition valueForKey:@"cardLUT"] objectForKey:lookup_key];
+}
+
 - (MHKArchive*)_archiveWithFilename:(NSString*)filename directoryKey:(NSString*)dirKey stackKey:(NSString*)stackKey error:(NSError**)error {
 	NSString* archivePath;
 	MHKArchive* archive = nil;

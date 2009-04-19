@@ -499,6 +499,19 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
 	}
 	
+	// workarounds
+	RXSimpleCardDescriptor* ecsd = [[executing_card descriptor] simpleDescriptor];
+	
+	// jspit dome combination card - if the dome combination is 1-2-3-4-5, the opendome hotspot won't get enabled, so do it here
+	if ([ecsd isEqual:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jdome combo"]]) {
+		// check if the sliders match the dome configuration
+		uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
+		if (sliders_state == domecombo) {
+			DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 37);
+			DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 36);
+		}
+	}
+	
 	// swap render state (by faking an execution of command 21 -- _opcode_enableAutomaticSwaps)
 	 _riven_command_dispatch_table[21].imp(self, _riven_command_dispatch_table[21].sel, 0, NULL);
 	 
@@ -2212,7 +2225,7 @@ DEFINE_COMMAND(xhandlecontrolup) {
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
 			
 			// go to the middle jungle elevator card
-			[controller setActiveCardWithSimpleDescriptor:[[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"cardLUT"] objectForKey:@"jungle elevator middle"] waitUntilDone:YES];
+			[controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator middle"] waitUntilDone:YES];
 			
 			// we're all done
 			break;
@@ -2238,7 +2251,7 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 5);
 			
 			// go to the top jungle elevator card
-			[controller setActiveCardWithSimpleDescriptor:[[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"cardLUT"] objectForKey:@"jungle elevator top"] waitUntilDone:YES];
+			[controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator top"] waitUntilDone:YES];
 			
 			// we're all done
 			break;
@@ -2252,7 +2265,7 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 4);
 			
 			// go to the bottom jungle elevator card
-			[controller setActiveCardWithSimpleDescriptor:[[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"cardLUT"] objectForKey:@"jungle elevator bottom"] waitUntilDone:YES];
+			[controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator bottom"] waitUntilDone:YES];
 			
 			// we're all done
 			break;
@@ -2276,7 +2289,7 @@ DEFINE_COMMAND(xhandlecontroldown) {
 			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
 			
 			// go to the middle jungle elevator card
-			[controller setActiveCardWithSimpleDescriptor:[[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"cardLUT"] objectForKey:@"jungle elevator middle"] waitUntilDone:YES];
+			[controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator middle"] waitUntilDone:YES];
 			
 			// we're all done
 			break;
@@ -2636,8 +2649,11 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 	if (movie_position - event_delay < 0.0f)
 		movie_position += duration * ceilf(event_delay / movie_position);
 	
-	// did we hit the roughtly the last frame?
-	if (movie_position - event_delay >= 4.60) {
+	// did we hit the golden eye frame?
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@movie_position=%f, event_delay=%f, position-delay=%f", logPrefix, movie_position, event_delay, movie_position - event_delay);
+#endif
+	if (movie_position - event_delay >= 4.59) {
 		[[g_world gameState] setUnsignedShort:1 forKey:@"domecheck"];
 		
 		// mute button movie and start playback

@@ -4,6 +4,8 @@
 <dict>
 	<key>Card LUT</key>
 	<dict>
+		<key>jdome combo</key>
+		<string>jspit 338</string>
 		<key>jungle elevator top</key>
 		<string>jspit 361</string>
 		<key>jungle elevator bottom</key>

@@ -319,10 +319,6 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 			return;
 		QTTrack* audio_track = ([tracks count]) ? [tracks objectAtIndex:0] : nil;
 		
-#if defined(DEBUG)
-		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"using smooth movie looping hack for %@", self);
-#endif
-		
 		TimeValue tv;
 		
 		// find the movie's last sample time
@@ -368,8 +364,11 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 		// flag the movie as being hacked for looping
 		_seamless_looping_hacked = YES;
 		
-#if defined(DEBUG) && DEBUG > 2
+#if defined(DEBUG)
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"used smooth movie looping hack for %@, original duration=%@", self, QTStringFromTime(_original_duration));
+#if DEBUG > 2
 		[_movie writeToFile:[[NSString stringWithFormat:@"~/Desktop/looping %p.mov", self] stringByExpandingTildeInPath] withAttributes:nil];
+#endif
 #endif
 	}
 	

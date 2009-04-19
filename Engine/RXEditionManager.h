@@ -11,6 +11,7 @@
 
 #import "Engine/RXEdition.h"
 #import "Engine/RXEditionManagerWindowController.h"
+#import "Engine/RXCardDescriptor.h"
 #import "Engine/RXStack.h"
 
 
@@ -52,6 +53,8 @@
 - (NSString*)mountPathForDisc:(NSString*)disc waitingInModalSession:(NSModalSession)session;
 
 - (void)ejectMountPath:(NSString*)mountPath;
+
+- (RXSimpleCardDescriptor*)lookupCardWithKey:(NSString*)lookup_key;
 
 - (NSArray*)dataPatchArchivesForStackKey:(NSString*)stackKey error:(NSError**)error;
 
