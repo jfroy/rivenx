@@ -413,7 +413,6 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	// if we're told we have more frames than we can have, bail
 	if (_frame_count > integer_frame_count)
 		ReturnFromInitWithError(MHKErrorDomain, errInvalidFrameCount, nil, errorPtr);
-//	_frame_count = integer_frame_count;
 	
 	// compute how many bytes we should drop from the first packet (where extra silence will be)
 	_bytes_to_drop = FRAME_SKIP_FUDGE * _decomp_absd.mBytesPerFrame;
@@ -483,6 +482,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 	
 	// reset the decompression buffer
 	_decompression_buffer_position = 0;
+	_decompression_buffer_available = 0;
 	
 	// start at the first packet, no packets available initially, current packet set to the read buffer's head
 	_packet_index = 0;

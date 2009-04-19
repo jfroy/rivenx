@@ -14,7 +14,7 @@
 #error C++ is required to include RXCardAudioSource.h
 #endif
 
-#include <pthread.h>
+#include <libkern/OSAtomic.h>
 #include <MHKKit/MHKAudioDecompression.h>
 
 #include "RXAudioSourceBase.h"
@@ -80,7 +80,7 @@ private:
 	uint8_t* _loopBufferReadPointer;
 	uint64_t _loopBufferLength;
 	
-	pthread_mutex_t _taskMutex;
+	OSSpinLock _task_lock;
 };
 
 

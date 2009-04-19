@@ -15,7 +15,7 @@ namespace RX {
 
 CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float gain, float pan, bool loop) throw(CAXException) : _decompressor(decompressor), _gain(gain), _pan(pan), _loop(loop)
 {
-	pthread_mutex_init(&_taskMutex, NULL);
+	_task_lock = OS_SPINLOCK_INIT;
 	
 	// keep our decompressor around
 	[_decompressor retain];
@@ -54,7 +54,7 @@ CardAudioSource::~CardAudioSource() throw(CAXException) {
 	CFRelease(rxar_debug);
 #endif
 	
-	pthread_mutex_lock(&_taskMutex);
+	OSSpinLockLock(&_task_lock);
 	
 	Finalize();
 	
@@ -64,7 +64,7 @@ CardAudioSource::~CardAudioSource() throw(CAXException) {
 	if (_loopBuffer)
 		free(_loopBuffer);
 	
-	pthread_mutex_destroy(&_taskMutex);
+	OSSpinLockUnlock(&_task_lock);
 }
 
 OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw() {	
@@ -134,13 +134,13 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 void CardAudioSource::RenderTask() throw() {
 	if (!_decompressor || !_decompressionBuffer)
 		return;
-	pthread_mutex_lock(&_taskMutex);
+	OSSpinLockLock(&_task_lock);
 	if (!_decompressor || !_decompressionBuffer)
 		return;
 
 	task(_bytesPerTask);
 	
-	pthread_mutex_unlock(&_taskMutex);
+	OSSpinLockUnlock(&_task_lock);
 }
 
 void CardAudioSource::task(uint32_t byte_limit) throw() {
@@ -240,7 +240,7 @@ void CardAudioSource::Reset() throw() {
 	CFRelease(rxar_debug);
 #endif
 
-	pthread_mutex_lock(&_taskMutex);
+	OSSpinLockLock(&_task_lock);
 	
 	// set the gain and pan
 	rendererPtr->SetSourceGain(*this, _gain);
@@ -263,7 +263,7 @@ void CardAudioSource::Reset() throw() {
 	OSSpinLockUnlock(&_buffer_swap_lock);
 	[render_buffer release];
 	
-	pthread_mutex_unlock(&_taskMutex);
+	OSSpinLockUnlock(&_task_lock);
 }
 
 void CardAudioSource::HandleAttach() throw(CAXException) {
