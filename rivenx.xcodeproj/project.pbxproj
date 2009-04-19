@@ -2081,7 +2081,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					CoreAudio_StopOnFailure,
-					"DEBUG=3",
+					"DEBUG=1",
 					"DEBUG_GL=1",
 					"DEBUG_AUDIO=1",
 				);

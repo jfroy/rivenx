@@ -163,7 +163,7 @@
 }
 
 - (BOOL)application:(NSApplication*)theApplication openFile:(NSString*)filename {
-	return [self _openGameWithURL:[NSURL fileURLWithPath:filename isDirectory:NO]];
+	return [self _openGameWithURL:[NSURL fileURLWithPath:filename]];
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {

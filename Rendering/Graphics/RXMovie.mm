@@ -368,7 +368,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 		// flag the movie as being hacked for looping
 		_seamless_looping_hacked = YES;
 		
-#if defined(DEBUG) && DEBUG > 1
+#if defined(DEBUG) && DEBUG > 2
 		[_movie writeToFile:[[NSString stringWithFormat:@"~/Desktop/looping %p.mov", self] stringByExpandingTildeInPath] withAttributes:nil];
 #endif
 	}
