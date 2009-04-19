@@ -2,6 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>tBMP LUT</key>
+	<dict>
+		<key>jdome sliders</key>
+		<integer>548</integer>
+		<key>jdome sliders background</key>
+		<integer>549</integer>
+	</dict>
 	<key>Patch Archives</key>
 	<dict>
 		<key>jspit</key>

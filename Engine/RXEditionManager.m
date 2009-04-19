@@ -357,6 +357,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	return [[currentEdition valueForKey:@"cardLUT"] objectForKey:lookup_key];
 }
 
+- (uint16_t)lookupBitmapWithKey:(NSString*)lookup_key {
+	return [[[currentEdition valueForKey:@"bitmapLUT"] objectForKey:lookup_key] unsignedShortValue];
+}
+
 - (MHKArchive*)_archiveWithFilename:(NSString*)filename directoryKey:(NSString*)dirKey stackKey:(NSString*)stackKey error:(NSError**)error {
 	NSString* archivePath;
 	MHKArchive* archive = nil;

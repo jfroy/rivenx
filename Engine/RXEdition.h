@@ -24,6 +24,7 @@
 	NSDictionary* stackSwitchTables;
 	NSDictionary* journalCardIDMap;
 	NSDictionary* cardLUT;
+	NSDictionary* bitmapLUT;
 	NSDictionary* patchArchives;
 	
 	NSString* userBase;

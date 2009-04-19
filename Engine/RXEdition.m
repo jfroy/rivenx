@@ -27,6 +27,8 @@
 		return NO;
 	if (![descriptor objectForKey:@"Card LUT"])
 		return NO;
+	if (![descriptor objectForKey:@"tBMP LUT"])
+		return NO;
 	
 	// the Edtion sub-directionary must have a Key, a Discs and a Install Directives key
 	id edition = [descriptor objectForKey:@"Edition"];
@@ -66,10 +68,12 @@
 	if (![journals objectForKey:@"Card ID Map"])
 		return NO;
 	
-	// "Stack switch table" and "Card LUT" must be dictionaries
+	// "Stack switch table", "Card LUT" and "tBMP LUT" must be dictionaries
 	if (![[descriptor objectForKey:@"Stack switch table"] isKindOfClass:[NSDictionary class]])
 		return NO;
 	if (![[descriptor objectForKey:@"Card LUT"] isKindOfClass:[NSDictionary class]])
+		return NO;
+	if (![[descriptor objectForKey:@"tBMP LUT"] isKindOfClass:[NSDictionary class]])
 		return NO;
 	
 	// good enough
@@ -152,7 +156,7 @@
 	}
 	
 	// the journal card ID map
-	journalCardIDMap = [[[_descriptor objectForKey:@"Journals"] objectForKey:@"Card ID Map"] retain];
+	journalCardIDMap = [[_descriptor objectForKey:@"Journals"] objectForKey:@"Card ID Map"];
 	
 	// process the card LUT to store simple card descriptors instead of strings as the values
 	NSDictionary* text_lut = [_descriptor objectForKey:@"Card LUT"];
@@ -164,6 +168,9 @@
 		[(NSMutableDictionary*)cardLUT setObject:to forKey:k];
 		[to release];
 	}
+	
+	// bitmap LUT
+	bitmapLUT = [_descriptor objectForKey:@"tBMP LUT"];
 	
 	// patch archives directory
 	patchArchives = [_descriptor objectForKey:@"Patch Archives"];
@@ -220,7 +227,6 @@
 	[openArchives release];
 	
 	[stackSwitchTables release];
-	[journalCardIDMap release];
 	[cardLUT release];
 	
 	[super dealloc];

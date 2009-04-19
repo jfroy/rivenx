@@ -2667,10 +2667,16 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 - (void)_jdomeDrawSliders {
 	// cache the hotspots ID map
 	NSMapTable* hotspots_map = [card hotspotsIDMap];
-
-	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
-	[self _drawPictureWithID:548 stack:[card parent] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
+	uint16_t background = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:@"jdome sliders background"];
+	uint16_t sliders = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:@"jdome sliders"];
 	
+	// begin a screen update transaction
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
+	
+	// draw the background
+	[self _drawPictureWithID:background stack:[card parent] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
+	
+	// draw the sliders
 	uintptr_t k = 10;
 	for (int i = 0; i < 5; i++) {
 		while (k < 35 && !(sliders_state & (1 << (24 - (k - 10)))))
@@ -2680,8 +2686,10 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 		rx_core_rect_t hotspot_rect = [h rect];
 		NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
 		NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
-		[self _drawPictureWithID:547 stack:[card parent] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
+		[self _drawPictureWithID:sliders stack:[card parent] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
 	}
+	
+	// end the screen update transaction
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }
 
