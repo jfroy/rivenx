@@ -225,7 +225,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	BOOL success = [gameStateData writeToURL:url options:NSAtomicWrite error:error];
 	
 	// if we were successful, update our internal URL
-	if (success) {
+	if (success && url != _URL) {
 		[_URL release];
 		_URL = [url retain];
 	}
