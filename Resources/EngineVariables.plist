@@ -5,7 +5,7 @@
 	<key>rendering</key>
 	<dict>
 		<key>movie_info</key>
-		<integer>1</integer>
+		<integer>0</integer>
 		<key>ambient</key>
 		<integer>1</integer>
 		<key>card_info</key>
