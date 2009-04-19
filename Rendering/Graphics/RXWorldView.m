@@ -700,8 +700,7 @@ major_number.minor_number major_number.minor_number.release_number
 }
 
 - (void)drawRect:(NSRect)rect {
-	[[NSColor blackColor] set];
-	NSRectFill(rect);
+
 }
 
 @end
