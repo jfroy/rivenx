@@ -44,8 +44,8 @@ static rx_post_flush_tasks_dispatch_t picture_flush_task_dispatch;
 static rx_render_dispatch_t _movieRenderDispatch;
 static rx_post_flush_tasks_dispatch_t _movieFlushTasksDispatch;
 
-static const double RX_AUDIO_FADE_DURATION = 2.0;
-static const double RX_AUDIO_UPDATE_DURATION = 0.5;
+static const double RX_AUDIO_GAIN_RAMP_DURATION = 2.0;
+static const double RX_AUDIO_PAN_RAMP_DURATION = 0.5;
 
 static const GLuint RX_CARD_DYNAMIC_RENDER_INDEX = 0;
 
@@ -95,7 +95,7 @@ static void RXCardAudioSourceFadeInApplier(const void* value, void* context) {
 	RX::AudioRenderer* renderer = reinterpret_cast<RX::AudioRenderer*>(context);
 	RX::CardAudioSource* source = const_cast<RX::CardAudioSource*>(reinterpret_cast<const RX::CardAudioSource*>(value));
 	renderer->SetSourceGain(*source, 0.0f);
-	renderer->RampSourceGain(*source, source->NominalGain(), RX_AUDIO_FADE_DURATION);
+	renderer->RampSourceGain(*source, source->NominalGain(), RX_AUDIO_GAIN_RAMP_DURATION);
 }
 
 static void RXCardAudioSourceEnableApplier(const void* value, void* context) {
@@ -730,11 +730,11 @@ init_failure:
 			active_sound->source->SetLooping(soundGroup->loop);
 			
 			// update the source's gain smoothly
-			renderer->RampSourceGain(*(active_sound->source), active_sound->gain * soundGroup->gain, RX_AUDIO_FADE_DURATION);
+			renderer->RampSourceGain(*(active_sound->source), active_sound->gain * soundGroup->gain, RX_AUDIO_GAIN_RAMP_DURATION);
 			active_sound->source->SetNominalGain(active_sound->gain * soundGroup->gain);
 			
 			// update the source's stereo panning smoothly
-			renderer->RampSourcePan(*(active_sound->source), active_sound->pan, RX_AUDIO_UPDATE_DURATION);
+			renderer->RampSourcePan(*(active_sound->source), active_sound->pan, RX_AUDIO_PAN_RAMP_DURATION);
 			active_sound->source->SetNominalPan(active_sound->pan);
 			
 #if defined(DEBUG) && DEBUG > 1
@@ -798,11 +798,11 @@ init_failure:
 	// schedule a fade out ramp for all to-be-removed sources if the fade out flag is on
 	if (soundGroup->fadeOutActiveGroupBeforeActivating) {
 		CFMutableArrayRef sourcesToRemove = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_weakAudioSourceArrayCallbacks];
-		renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_FADE_DURATION);
+		renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_GAIN_RAMP_DURATION);
 		CFRelease(sourcesToRemove);
 		
 		// the detach timestamp for those sources is now + the ramp duration + some comfort offset
-		uint64_t detach_timestamp = RXTimingOffsetTimestamp(RXTimingNow(), RX_AUDIO_FADE_DURATION + 0.5);
+		uint64_t detach_timestamp = RXTimingOffsetTimestamp(RXTimingNow(), RX_AUDIO_GAIN_RAMP_DURATION + 0.5);
 		
 		NSEnumerator* soundEnum = [soundsToRemove objectEnumerator];
 		RXSound* sound;

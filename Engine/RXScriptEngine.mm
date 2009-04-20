@@ -2741,12 +2741,53 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 }
 
 DEFINE_COMMAND(xjdome25_resetsliders) {
-	// FIXME: need to play a purdy animation and update the graphics
+	// cache the tick sound
+	RXDataSound* tick_sound = [RXDataSound new];
+	tick_sound->parent = [[card descriptor] parent];
+	tick_sound->ID = 81;
+	tick_sound->gain = 1.0f;
+	tick_sound->pan = 0.5f;
 	
-	// reset the sliders state
-	sliders_state = 0x1F00000;
+	uint32_t first_bit = 0x0;
+	while (first_bit < 25) {
+		if (sliders_state & (1 << first_bit))
+			break;
+		first_bit++;
+	}
 	
-	[self _jdomeDrawSliders];
+	// let's play the "push the bits" game until the sliders have been reset
+	while (sliders_state != 0x1F00000) {
+		if (sliders_state & (1 << (first_bit + 1))) {
+			if (sliders_state & (1 << (first_bit + 2))) {
+				if (sliders_state & (1 << (first_bit + 3))) {
+					if (sliders_state & (1 << (first_bit + 4))) {
+						sliders_state = (sliders_state & ~(1 << (first_bit + 4))) | (1 << (first_bit + 5));
+					}
+					sliders_state = (sliders_state & ~(1 << (first_bit + 3))) | (1 << (first_bit + 4));
+				}
+				sliders_state = (sliders_state & ~(1 << (first_bit + 2))) | (1 << (first_bit + 3));
+			}
+			sliders_state = (sliders_state & ~(1 << (first_bit + 1))) | (1 << (first_bit + 2));
+		}
+		sliders_state = (sliders_state & ~(1 << first_bit)) | (1 << (first_bit + 1));
+		
+		[controller playDataSound:tick_sound];
+		[self _jdomeDrawSliders];
+		usleep(20000);
+		first_bit++;
+	}
+	
+	// check if the sliders match the dome configuration
+	uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
+	if (sliders_state == domecombo) {
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 37);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 36);
+	} else {
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 37);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 36);
+	}
+	
+	[tick_sound release];
 }
 
 DEFINE_COMMAND(xjdome25_slidermd) {	
