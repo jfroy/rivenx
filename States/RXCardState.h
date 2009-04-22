@@ -85,6 +85,7 @@ struct rx_transition_program {
 	// transitions
 	semaphore_t _transitionSemaphore;
 	NSMutableArray* _transitionQueue;
+	BOOL _disable_transition_dequeueing;
 	
 	struct rx_transition_program _dissolve;
 	struct rx_transition_program _push[4];

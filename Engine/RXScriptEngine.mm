@@ -2755,6 +2755,9 @@ DEFINE_COMMAND(xjdome25_resetsliders) {
 		first_bit++;
 	}
 	
+	// disable transition dequeueing to work around the fact this external can be called by close card scripts after a transition has been queued
+	[controller disableTransitionDequeueing];
+	
 	// let's play the "push the bits" game until the sliders have been reset
 	while (sliders_state != 0x1F00000) {
 		if (sliders_state & (1 << (first_bit + 1))) {
@@ -2776,6 +2779,9 @@ DEFINE_COMMAND(xjdome25_resetsliders) {
 		usleep(20000);
 		first_bit++;
 	}
+	
+	// re-enable transition dequeueing
+	[controller enableTransitionDequeueing];
 	
 	// check if the sliders match the dome configuration
 	uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];

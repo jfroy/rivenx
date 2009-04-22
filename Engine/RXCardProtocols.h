@@ -23,7 +23,10 @@
 
 - (void)queuePicture:(RXPicture*)picture;
 - (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner;
+
 - (void)queueTransition:(RXTransition*)transition;
+- (void)enableTransitionDequeueing;
+- (void)disableTransitionDequeueing;
 
 - (void)enableMovie:(RXMovie*)movie;
 - (void)disableMovie:(RXMovie*)movie;

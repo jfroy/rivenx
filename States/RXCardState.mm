@@ -1038,6 +1038,14 @@ init_failure:
 #endif
 }
 
+- (void)enableTransitionDequeueing {
+	_disable_transition_dequeueing = NO;
+}
+
+- (void)disableTransitionDequeueing {
+	_disable_transition_dequeueing = YES;
+}
+
 - (void)update {
 	// if we'll queue a transition, hide the cursor
 	if ([_transitionQueue count] > 0)
@@ -1049,7 +1057,7 @@ init_failure:
 		semaphore_timedwait(_transitionSemaphore, waitTime);
 	
 	// dequeue the top transition
-	if ([_transitionQueue count] > 0) {
+	if ([_transitionQueue count] > 0 && !_disable_transition_dequeueing) {
 		_back_render_state->transition = [[_transitionQueue objectAtIndex:0] retain];
 		[_transitionQueue removeObjectAtIndex:0];
 		
