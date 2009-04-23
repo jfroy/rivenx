@@ -29,6 +29,8 @@
 		return NO;
 	if (![descriptor objectForKey:@"tBMP LUT"])
 		return NO;
+	if (![descriptor objectForKey:@"tWAV LUT"])
+		return NO;
 	
 	// the Edtion sub-directionary must have a Key, a Discs and a Install Directives key
 	id edition = [descriptor objectForKey:@"Edition"];
@@ -68,12 +70,14 @@
 	if (![journals objectForKey:@"Card ID Map"])
 		return NO;
 	
-	// "Stack switch table", "Card LUT" and "tBMP LUT" must be dictionaries
+	// "Stack switch table", "Card LUT", "tBMP LUT" and "tWAV LUT" must be dictionaries
 	if (![[descriptor objectForKey:@"Stack switch table"] isKindOfClass:[NSDictionary class]])
 		return NO;
 	if (![[descriptor objectForKey:@"Card LUT"] isKindOfClass:[NSDictionary class]])
 		return NO;
 	if (![[descriptor objectForKey:@"tBMP LUT"] isKindOfClass:[NSDictionary class]])
+		return NO;
+	if (![[descriptor objectForKey:@"tWAV LUT"] isKindOfClass:[NSDictionary class]])
 		return NO;
 	
 	// good enough
@@ -171,6 +175,9 @@
 	
 	// bitmap LUT
 	bitmapLUT = [_descriptor objectForKey:@"tBMP LUT"];
+	
+	// sound LUT
+	soundLUT = [_descriptor objectForKey:@"tWAV LUT"];
 	
 	// patch archives directory
 	patchArchives = [_descriptor objectForKey:@"Patch Archives"];

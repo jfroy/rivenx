@@ -25,6 +25,8 @@
 	NSDictionary* journalCardIDMap;
 	NSDictionary* cardLUT;
 	NSDictionary* bitmapLUT;
+	NSDictionary* soundLUT;
+	
 	NSDictionary* patchArchives;
 	
 	NSString* userBase;

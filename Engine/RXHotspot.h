@@ -18,6 +18,7 @@
 	uint16_t _cursor_id;
 	NSDictionary* _script;
 	
+	NSString* _name;
 	NSString* _description;
 	NSRect _world_frame;
 
@@ -27,6 +28,7 @@
 
 - (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID rect:(rx_core_rect_t)rect cursorID:(uint16_t)cursorID script:(NSDictionary*)script;
 
+- (NSString*)name;
 - (void)setName:(NSString*)name;
 
 - (uint16_t)ID;

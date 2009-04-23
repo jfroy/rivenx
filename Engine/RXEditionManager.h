@@ -56,6 +56,7 @@
 
 - (RXSimpleCardDescriptor*)lookupCardWithKey:(NSString*)lookup_key;
 - (uint16_t)lookupBitmapWithKey:(NSString*)lookup_key;
+- (uint16_t)lookupSoundWithKey:(NSString*)lookup_key;
 
 - (NSArray*)dataPatchArchivesForStackKey:(NSString*)stackKey error:(NSError**)error;
 

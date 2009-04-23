@@ -361,6 +361,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 	return [[[currentEdition valueForKey:@"bitmapLUT"] objectForKey:lookup_key] unsignedShortValue];
 }
 
+- (uint16_t)lookupSoundWithKey:(NSString*)lookup_key {
+	return [[[currentEdition valueForKey:@"soundLUT"] objectForKey:lookup_key] unsignedShortValue];
+}
+
 - (MHKArchive*)_archiveWithFilename:(NSString*)filename directoryKey:(NSString*)dirKey stackKey:(NSString*)stackKey error:(NSError**)error {
 	NSString* archivePath;
 	MHKArchive* archive = nil;

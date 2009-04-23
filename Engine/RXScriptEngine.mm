@@ -2607,17 +2607,10 @@ DEFINE_COMMAND(xschool280_playwhark) {
 }
 
 #pragma mark -
-#pragma mark tspit dome
+#pragma mark dome support
 
-DEFINE_COMMAND(xtisland5056_opencard) {
-
-}
-
-#pragma mark -
-#pragma mark jspit dome
-
-DEFINE_COMMAND(xjscpbtn) {
-	uint16_t dome_state = [[g_world gameState] unsignedShortForKey:@"jdome"];
+- (void)handleVisorButtonPressForDome:(NSString*)dome {
+	uint16_t dome_state = [[g_world gameState] unsignedShortForKey:dome];
 	if (dome_state == 3) {
 		uintptr_t k = 2;
 		RXMovie* button_movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
@@ -2626,7 +2619,7 @@ DEFINE_COMMAND(xjscpbtn) {
 	}
 }
 
-DEFINE_COMMAND(xjisland3500_domecheck) {
+- (void)checkDome:(NSString*)dome {
 	// when was the mouse pressed?
 	double mouse_ts_s = [controller mouseTimetamp];
 	
@@ -2645,15 +2638,11 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 	k = 2;
 	RXMovie* button_movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
 	
-	// wrap around if needed
-	if (movie_position - event_delay < 0.0f)
-		movie_position += duration * ceilf(event_delay / movie_position);
-	
 	// did we hit the golden eye frame?
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@movie_position=%f, event_delay=%f, position-delay=%f", logPrefix, movie_position, event_delay, movie_position - event_delay);
 #endif
-	if (movie_position - event_delay >= 4.59) {
+	if (movie_position >= 4.60) {
 		[[g_world gameState] setUnsignedShort:1 forKey:@"domecheck"];
 		
 		// mute button movie and start playback
@@ -2663,12 +2652,11 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
 }
 
-
-- (void)_jdomeDrawSliders {
+- (void)drawSlidersForDome:(NSString*)dome {
 	// cache the hotspots ID map
 	NSMapTable* hotspots_map = [card hotspotsIDMap];
-	uint16_t background = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:@"jdome sliders background"];
-	uint16_t sliders = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:@"jdome sliders"];
+	uint16_t background = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:[dome stringByAppendingString:@" sliders background"]];
+	uint16_t sliders = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:[dome stringByAppendingString:@" sliders"]];
 	
 	// begin a screen update transaction
 	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
@@ -2691,6 +2679,84 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 	
 	// end the screen update transaction
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+}
+
+- (void)resetSlidersForDome:(NSString*)dome {
+	// cache the tick sound
+	RXDataSound* tic_sound = [RXDataSound new];
+	tic_sound->parent = [[card descriptor] parent];
+	tic_sound->ID = [[RXEditionManager sharedEditionManager] lookupSoundWithKey:[dome stringByAppendingString:@" slider tic"]];
+	tic_sound->gain = 1.0f;
+	tic_sound->pan = 0.5f;
+	
+	uint32_t first_bit = 0x0;
+	while (first_bit < 25) {
+		if (sliders_state & (1 << first_bit))
+			break;
+		first_bit++;
+	}
+	
+	// disable transition dequeueing to work around the fact this external can be called by close card scripts after a transition has been queued
+	[controller disableTransitionDequeueing];
+	
+	// let's play the "push the bits" game until the sliders have been reset
+	while (sliders_state != 0x1F00000) {
+		if (sliders_state & (1 << (first_bit + 1))) {
+			if (sliders_state & (1 << (first_bit + 2))) {
+				if (sliders_state & (1 << (first_bit + 3))) {
+					if (sliders_state & (1 << (first_bit + 4))) {
+						sliders_state = (sliders_state & ~(1 << (first_bit + 4))) | (1 << (first_bit + 5));
+					}
+					sliders_state = (sliders_state & ~(1 << (first_bit + 3))) | (1 << (first_bit + 4));
+				}
+				sliders_state = (sliders_state & ~(1 << (first_bit + 2))) | (1 << (first_bit + 3));
+			}
+			sliders_state = (sliders_state & ~(1 << (first_bit + 1))) | (1 << (first_bit + 2));
+		}
+		sliders_state = (sliders_state & ~(1 << first_bit)) | (1 << (first_bit + 1));
+		
+		[controller playDataSound:tic_sound];
+		[self drawSlidersForDome:dome];
+		usleep(20000);
+		first_bit++;
+	}
+	
+	// re-enable transition dequeueing
+	[controller enableTransitionDequeueing];
+	
+	// check if the sliders match the dome configuration
+	uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
+	if (sliders_state == domecombo) {
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 37);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 36);
+	} else {
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 37);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 36);
+	}
+	
+	[tic_sound release];
+}
+
+#pragma mark -
+#pragma mark tspit dome
+
+DEFINE_COMMAND(xtscpbtn) {
+	[self handleVisorButtonPressForDome:@"tdome"];
+}
+
+DEFINE_COMMAND(xtisland4990_domecheck) {
+	[self checkDome:@"tdome"];
+}
+
+#pragma mark -
+#pragma mark jspit dome
+
+DEFINE_COMMAND(xjscpbtn) {
+	[self handleVisorButtonPressForDome:@"jdome"];
+}
+
+DEFINE_COMMAND(xjisland3500_domecheck) {
+	[self checkDome:@"jdome"];
 }
 
 - (RXHotspot*)_jdomeSliderHotspotForMousePosition:(NSPoint)mouse_position currentHotspot:(RXHotspot*)current {
@@ -2741,68 +2807,16 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 }
 
 DEFINE_COMMAND(xjdome25_resetsliders) {
-	// cache the tick sound
-	RXDataSound* tick_sound = [RXDataSound new];
-	tick_sound->parent = [[card descriptor] parent];
-	tick_sound->ID = 81;
-	tick_sound->gain = 1.0f;
-	tick_sound->pan = 0.5f;
-	
-	uint32_t first_bit = 0x0;
-	while (first_bit < 25) {
-		if (sliders_state & (1 << first_bit))
-			break;
-		first_bit++;
-	}
-	
-	// disable transition dequeueing to work around the fact this external can be called by close card scripts after a transition has been queued
-	[controller disableTransitionDequeueing];
-	
-	// let's play the "push the bits" game until the sliders have been reset
-	while (sliders_state != 0x1F00000) {
-		if (sliders_state & (1 << (first_bit + 1))) {
-			if (sliders_state & (1 << (first_bit + 2))) {
-				if (sliders_state & (1 << (first_bit + 3))) {
-					if (sliders_state & (1 << (first_bit + 4))) {
-						sliders_state = (sliders_state & ~(1 << (first_bit + 4))) | (1 << (first_bit + 5));
-					}
-					sliders_state = (sliders_state & ~(1 << (first_bit + 3))) | (1 << (first_bit + 4));
-				}
-				sliders_state = (sliders_state & ~(1 << (first_bit + 2))) | (1 << (first_bit + 3));
-			}
-			sliders_state = (sliders_state & ~(1 << (first_bit + 1))) | (1 << (first_bit + 2));
-		}
-		sliders_state = (sliders_state & ~(1 << first_bit)) | (1 << (first_bit + 1));
-		
-		[controller playDataSound:tick_sound];
-		[self _jdomeDrawSliders];
-		usleep(20000);
-		first_bit++;
-	}
-	
-	// re-enable transition dequeueing
-	[controller enableTransitionDequeueing];
-	
-	// check if the sliders match the dome configuration
-	uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
-	if (sliders_state == domecombo) {
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 37);
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 36);
-	} else {
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 37);
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 36);
-	}
-	
-	[tick_sound release];
+	[self resetSlidersForDome:@"jdome"];
 }
 
 DEFINE_COMMAND(xjdome25_slidermd) {	
 	// cache the tick sound
-	RXDataSound* tick_sound = [RXDataSound new];
-	tick_sound->parent = [[card descriptor] parent];
-	tick_sound->ID = 81;
-	tick_sound->gain = 1.0f;
-	tick_sound->pan = 0.5f;
+	RXDataSound* tic_sound = [RXDataSound new];
+	tic_sound->parent = [[card descriptor] parent];
+	tic_sound->ID = [[RXEditionManager sharedEditionManager] lookupSoundWithKey:@"jdome slider tic"];
+	tic_sound->gain = 1.0f;
+	tic_sound->pan = 0.5f;
 	
 	// determine if the mouse was on one of the active slider hotspots when it was pressed; if not, we're done
 	NSRect mouse_vector = [controller mouseVector];
@@ -2819,14 +2833,14 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 		RXHotspot* hotspot = [self _jdomeSliderHotspotForMousePosition:NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin currentHotspot:current_hotspot];
 		if (hotspot && hotspot != current_hotspot) {
 			// play the tick sound
-			[controller playDataSound:tick_sound];
+			[controller playDataSound:tic_sound];
 			
 			// disable the old and enable the new
 			sliders_state = (sliders_state & ~(1 << (24 - ([current_hotspot ID] - 10)))) | (1 << (24 - ([hotspot ID] - 10)));
 			current_hotspot = hotspot;
 			
 			// draw the new slider state
-			[self _jdomeDrawSliders];
+			[self drawSlidersForDome:@"jdome"];
 		}
 		
 		// update the mouse cursor and vector
@@ -2844,7 +2858,7 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 36);
 	}
 	
-	[tick_sound release];
+	[tic_sound release];
 }
 
 DEFINE_COMMAND(xjdome25_slidermw) {

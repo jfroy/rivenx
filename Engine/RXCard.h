@@ -31,6 +31,7 @@
 	// hotspots
 	NSMutableArray* _hotspots;
 	NSMapTable* _hotspotsIDMap;
+	NSMapTable* _hotspots_name_map;
 	void* _blstData;
 	struct rx_blst_record* _hotspotControlRecords;
 	
@@ -61,6 +62,7 @@
 - (NSDictionary*)events;
 - (NSArray*)hotspots;
 - (NSMapTable*)hotspotsIDMap;
+- (NSMapTable*)hotspotsNameMap;
 - (struct rx_blst_record*)hotspotControlRecords;
 
 - (GLuint)pictureCount;

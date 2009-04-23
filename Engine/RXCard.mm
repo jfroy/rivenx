@@ -277,6 +277,7 @@ struct rx_card_picture_record {
 	_hotspots = [[NSMutableArray alloc] initWithCapacity:hotspotCount];
 	
 	_hotspotsIDMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
+	_hotspots_name_map = NSCreateMapTable(NSObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
 	
 	// load the hotspots
 	for (currentListIndex = 0; currentListIndex < hotspotCount; currentListIndex++) {
@@ -328,8 +329,10 @@ struct rx_card_picture_record {
 		
 		// allocate the hotspot object
 		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id rect:hspt_record->rect cursorID:hspt_record->mouse_cursor script:hotspot_scripts];
-		if (hspt_record->name_rec >= 0)
+		if (hspt_record->name_rec >= 0) {
 			[hs setName:[[_descriptor parent] hotspotNameAtIndex:hspt_record->name_rec]];
+			NSMapInsert(_hotspots_name_map, [hs name], hs);
+		}
 		
 		uintptr_t key = hspt_record->blst_id;
 		NSMapInsert(_hotspotsIDMap, (void*)key, hs);
@@ -720,6 +723,10 @@ struct rx_card_picture_record {
 	return _hotspotsIDMap;
 }
 
+- (NSMapTable*)hotspotsNameMap {
+	return _hotspots_name_map;
+}
+
 - (struct rx_blst_record*)hotspotControlRecords {
 	return _hotspotControlRecords;
 }
@@ -779,6 +786,8 @@ struct rx_card_picture_record {
 	// hotspots
 	if (_hotspotsIDMap)
 		NSFreeMapTable(_hotspotsIDMap);
+	if (_hotspots_name_map)
+		NSFreeMapTable(_hotspots_name_map);
 	[_hotspots release];
 	
 	// sfxe

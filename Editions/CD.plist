@@ -2,8 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>tWAV LUT</key>
+	<dict>
+		<key>jdome slider tic</key>
+		<integer>81</integer>
+		<key>tdome slider tic</key>
+		<integer>37</integer>
+	</dict>
 	<key>tBMP LUT</key>
 	<dict>
+		<key>tdome sliders</key>
+		<integer>798</integer>
+		<key>tdome sliders background</key>
+		<string>799</string>
 		<key>jdome sliders</key>
 		<integer>548</integer>
 		<key>jdome sliders background</key>

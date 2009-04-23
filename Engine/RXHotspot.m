@@ -65,6 +65,7 @@
 - (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
+	[_name release];
 	[_description release];
 	[_script release];
 	
@@ -89,10 +90,19 @@
 	return _description;
 }
 
+- (NSString*)name {
+	return [[_name retain] autorelease];
+}
+
 - (void)setName:(NSString*)name {
-	NSString* old = _description;
+	if (_name == name)
+		return;
+	
+	[_description release];
 	_description = [[NSString alloc] initWithFormat: @"%@ {ID=%hu, rect=<%hu, %hu, %hu, %hu>}", name, _ID, _rect.left, _rect.top, _rect.right, _rect.bottom];
-	[old release];
+	
+	[_name release];
+	_name = [name retain];
 }
 
 - (uint16_t)ID {
