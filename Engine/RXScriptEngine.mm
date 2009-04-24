@@ -2655,7 +2655,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
 }
 
-- (void)drawSlidersForDome:(NSString*)dome {
+- (void)drawSlidersForDome:(NSString*)dome minHotspotID:(uintptr_t)min_id {
 	// cache the hotspots ID map
 	NSMapTable* hotspots_map = [card hotspotsIDMap];
 	uint16_t background = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:[dome stringByAppendingString:@" sliders background"]];
@@ -2668,12 +2668,14 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	[self _drawPictureWithID:background stack:[card parent] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 	
 	// draw the sliders
-	uintptr_t k = 10;
+	uintptr_t k = 0;
 	for (int i = 0; i < 5; i++) {
-		while (k < 35 && !(sliders_state & (1 << (24 - (k - 10)))))
+		while (k < 25 && !(sliders_state & (1 << (24 - k))))
 			k++;
 		
-		RXHotspot* h = (RXHotspot*)NSMapGet(hotspots_map, (void*)k++);
+		RXHotspot* h = (RXHotspot*)NSMapGet(hotspots_map, (void*)(k + min_id));
+		k++;
+		
 		rx_core_rect_t hotspot_rect = [h rect];
 		NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
 		NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
@@ -2691,6 +2693,11 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	tic_sound->ID = [[RXEditionManager sharedEditionManager] lookupSoundWithKey:[dome stringByAppendingString:@" slider tic"]];
 	tic_sound->gain = 1.0f;
 	tic_sound->pan = 0.5f;
+	
+	// cache the minimum slider hotspot ID
+	RXHotspot* min_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], @"s1");
+	assert(min_hotspot);
+	uintptr_t min_hotspot_id = [min_hotspot ID];
 	
 	uint32_t first_bit = 0x0;
 	while (first_bit < 25) {
@@ -2720,7 +2727,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 		
 		// play the tic sound and update the slider graphics
 		[controller playDataSound:tic_sound];
-		[self drawSlidersForDome:dome];
+		[self drawSlidersForDome:dome minHotspotID:min_hotspot_id];
 		
 		// sleep some arbitrary amount (until the next frame)
 		usleep(20000);
@@ -2836,7 +2843,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 			active_hotspot = hotspot;
 			
 			// draw the new slider state
-			[self drawSlidersForDome:dome];
+			[self drawSlidersForDome:dome minHotspotID:min_hotspot_id];
 		}
 		
 		// update the mouse cursor and vector
