@@ -2619,7 +2619,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	}
 }
 
-- (void)checkDome:(NSString*)dome {
+- (void)checkDome:(NSString*)dome mutingVisorButtonMovie:(BOOL)mute_visor {
 	// when was the mouse pressed?
 	double mouse_ts_s = [controller mouseTimetamp];
 	
@@ -2642,11 +2642,12 @@ DEFINE_COMMAND(xschool280_playwhark) {
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@movie_position=%f, event_delay=%f, position-delay=%f", logPrefix, movie_position, event_delay, movie_position - event_delay);
 #endif
-	if (movie_position >= 4.60) {
+	if (movie_position >= 4.58) {
 		[[g_world gameState] setUnsignedShort:1 forKey:@"domecheck"];
 		
-		// mute button movie and start playback
-		[self performSelectorOnMainThread:@selector(_muteMovie:) withObject:button_movie waitUntilDone:NO];
+		// mute button movie if requested and start asynchronous playback of the visor button movie
+		if (mute_visor)
+			[self performSelectorOnMainThread:@selector(_muteMovie:) withObject:button_movie waitUntilDone:NO];
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, 2);
 	} else
 		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
@@ -2745,7 +2746,7 @@ DEFINE_COMMAND(xtscpbtn) {
 }
 
 DEFINE_COMMAND(xtisland4990_domecheck) {
-	[self checkDome:@"tdome"];
+	[self checkDome:@"tdome" mutingVisorButtonMovie:NO];
 }
 
 #pragma mark -
@@ -2756,7 +2757,7 @@ DEFINE_COMMAND(xjscpbtn) {
 }
 
 DEFINE_COMMAND(xjisland3500_domecheck) {
-	[self checkDome:@"jdome"];
+	[self checkDome:@"jdome" mutingVisorButtonMovie:YES];
 }
 
 - (RXHotspot*)_jdomeSliderHotspotForMousePosition:(NSPoint)mouse_position currentHotspot:(RXHotspot*)current {
