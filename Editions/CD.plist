@@ -39,6 +39,8 @@
 	</dict>
 	<key>Card LUT</key>
 	<dict>
+		<key>tdome combo</key>
+		<string>tspit 386</string>
 		<key>jdome combo</key>
 		<string>jspit 339</string>
 		<key>jungle elevator top</key>

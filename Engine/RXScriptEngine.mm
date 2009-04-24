@@ -502,13 +502,15 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// workarounds
 	RXSimpleCardDescriptor* ecsd = [[executing_card descriptor] simpleDescriptor];
 	
-	// jspit dome combination card - if the dome combination is 1-2-3-4-5, the opendome hotspot won't get enabled, so do it here
-	if ([ecsd isEqual:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jdome combo"]]) {
+	// dome combination card - if the dome combination is 1-2-3-4-5, the opendome hotspot won't get enabled, so do it here
+	if ([ecsd isEqual:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jdome combo"]] || 
+		[ecsd isEqual:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"tdome combo"]])
+	{
 		// check if the sliders match the dome configuration
 		uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
 		if (sliders_state == domecombo) {
-			DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 37);
-			DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 36);
+			DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
+			DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
 		}
 	}
 	
@@ -2834,7 +2836,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 			active_hotspot = hotspot;
 			
 			// draw the new slider state
-			[self drawSlidersForDome:@"jdome"];
+			[self drawSlidersForDome:dome];
 		}
 		
 		// update the mouse cursor and vector
