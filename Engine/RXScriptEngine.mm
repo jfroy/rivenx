@@ -2738,58 +2738,52 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	[tic_sound release];
 }
 
-#pragma mark -
-#pragma mark tspit dome
-
-DEFINE_COMMAND(xtscpbtn) {
-	[self handleVisorButtonPressForDome:@"tdome"];
-}
-
-DEFINE_COMMAND(xtisland4990_domecheck) {
-	[self checkDome:@"tdome" mutingVisorButtonMovie:NO];
-}
-
-#pragma mark -
-#pragma mark jspit dome
-
-DEFINE_COMMAND(xjscpbtn) {
-	[self handleVisorButtonPressForDome:@"jdome"];
-}
-
-DEFINE_COMMAND(xjisland3500_domecheck) {
-	[self checkDome:@"jdome" mutingVisorButtonMovie:YES];
-}
-
-- (RXHotspot*)_jdomeSliderHotspotForMousePosition:(NSPoint)mouse_position currentHotspot:(RXHotspot*)current {
+- (RXHotspot*)domeSliderHotspotForDome:(NSString*)dome mousePosition:(NSPoint)mouse_position activeHotspot:(RXHotspot*)active_hotspot {
 	// cache the hotspots ID map
 	NSMapTable* hotspots_map = [card hotspotsIDMap];
+	NSMapTable* hotspots_name_map = [card hotspotsNameMap];
+	
+	RXHotspot* min_hotspot = (RXHotspot*)NSMapGet(hotspots_name_map, @"s1");
+	assert(min_hotspot);
+	uintptr_t min_hotspot_id = [min_hotspot ID];
 	
 	uintptr_t boundary_hotspot_id = 0;
-	for (uintptr_t k = 10; k < 35; k++) {
-		RXHotspot* hotspot = (RXHotspot*)NSMapGet(hotspots_map, (void*)k);
+	for (uintptr_t k = 0; k < 25; k++) {
+		RXHotspot* hotspot = (RXHotspot*)NSMapGet(hotspots_map, (void*)(k + min_hotspot_id));
 		
 		// look for the boundary hotspot for a move-to-right update here since we are doing a forward scan already
-		if (current && !boundary_hotspot_id && k > [current ID] && (sliders_state & (1 << (24 - (k - 10)))))
+		if (active_hotspot && !boundary_hotspot_id && (k + min_hotspot_id) > [active_hotspot ID] && (sliders_state & (1 << (24 - k))))
 			boundary_hotspot_id = [hotspot ID];
 		
+		// if there is an active hotspot, adjust the mouse position's y coordinate to be inside the hotspot (we ignore cursor height when dragging a slider)
+		if (active_hotspot)
+			mouse_position.y = [hotspot worldFrame].origin.y;
+		
 		if (NSPointInRect(mouse_position, [hotspot worldFrame])) {
-			if (!current) {
-				if (!(sliders_state & (1 << (24 - (k - 10)))))
+			// we found the hotspot over which the mouse currently is; this ends the forward search
+			
+			if (!active_hotspot) {
+				// there is no active hotspot, meaning we're not dragging a slider
+				
+				// if there is no slider in this slot, return nil (nothing here, basically)
+				if (!(sliders_state & (1 << (24 - k))))
 					hotspot = nil;
 			} else {
-				// we only need to do boundary checking if the hotspot under the mouse is not the current hotspot
-				if (hotspot != current) {
-					if ([hotspot ID] > [current ID]) {
-						// moving to the right; need to find the right boundary
-						if (boundary_hotspot_id > [current ID])
+				// a slider is being dragged (there is an active hotspot)
+			
+				// we only need to do boundary checking if the hotspot under the mouse is not the active hotspot
+				if (hotspot != active_hotspot) {
+					if ([hotspot ID] > [active_hotspot ID]) {
+						// moving to the right; if the boundary hotspot is on the right of the active hotspot, snap the hotspot we return to the boundary hotspot
+						if (boundary_hotspot_id > [active_hotspot ID])
 							hotspot = (RXHotspot*)NSMapGet(hotspots_map, (void*)(boundary_hotspot_id - 1));
 					} else {
-						// moving to the left; need to find the left boundary by doing a backward scan from current to hotspot
+						// moving to the left; need to find the left boundary by doing a backward scan from the active hotspot to the current hotspot
 						boundary_hotspot_id = 0;
-						uintptr_t reverse_scan_limit = [hotspot ID];
-						for (uintptr_t k2 = [current ID] - 1; k2 >= reverse_scan_limit; k2--) {
-							if ((sliders_state & (1 << (24 - (k2 - 10))))) {
-								boundary_hotspot_id = k2;
+						uintptr_t reverse_scan_limit = [hotspot ID] - min_hotspot_id;
+						for (uintptr_t k2 = [active_hotspot ID] - 1 - min_hotspot_id; k2 >= reverse_scan_limit; k2--) {
+							if ((sliders_state & (1 << (24 - k2)))) {
+								boundary_hotspot_id = k2 + min_hotspot_id;
 								break;
 							}
 						}
@@ -2807,6 +2801,32 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 	return nil;
 }
 
+#pragma mark -
+#pragma mark tspit dome
+
+DEFINE_COMMAND(xtscpbtn) {
+	[self handleVisorButtonPressForDome:@"tdome"];
+}
+
+DEFINE_COMMAND(xtisland4990_domecheck) {
+	[self checkDome:@"tdome" mutingVisorButtonMovie:NO];
+}
+
+DEFINE_COMMAND(xtisland5056_resetsliders) {
+	[self resetSlidersForDome:@"tdome"];
+}
+
+#pragma mark -
+#pragma mark jspit dome
+
+DEFINE_COMMAND(xjscpbtn) {
+	[self handleVisorButtonPressForDome:@"jdome"];
+}
+
+DEFINE_COMMAND(xjisland3500_domecheck) {
+	[self checkDome:@"jdome" mutingVisorButtonMovie:YES];
+}
+
 DEFINE_COMMAND(xjdome25_resetsliders) {
 	[self resetSlidersForDome:@"jdome"];
 }
@@ -2821,8 +2841,8 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 	
 	// determine if the mouse was on one of the active slider hotspots when it was pressed; if not, we're done
 	NSRect mouse_vector = [controller mouseVector];
-	RXHotspot* current_hotspot = [self _jdomeSliderHotspotForMousePosition:mouse_vector.origin currentHotspot:nil];
-	if (!current_hotspot || !current_hotspot->enabled)
+	RXHotspot* active_hotspot = [self domeSliderHotspotForDome:@"jdome" mousePosition:mouse_vector.origin activeHotspot:nil];
+	if (!active_hotspot || !active_hotspot->enabled)
 		return;
 	
 	// set the cursor to the closed hand cursor
@@ -2831,14 +2851,14 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 	// track the mouse, updating the position of the slider as appropriate
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		// where are we now?
-		RXHotspot* hotspot = [self _jdomeSliderHotspotForMousePosition:NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin currentHotspot:current_hotspot];
-		if (hotspot && hotspot != current_hotspot) {
+		RXHotspot* hotspot = [self domeSliderHotspotForDome:@"jdome" mousePosition:NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin activeHotspot:active_hotspot];
+		if (hotspot && hotspot != active_hotspot) {
 			// play the tick sound
 			[controller playDataSound:tic_sound];
 			
 			// disable the old and enable the new
-			sliders_state = (sliders_state & ~(1 << (24 - ([current_hotspot ID] - 10)))) | (1 << (24 - ([hotspot ID] - 10)));
-			current_hotspot = hotspot;
+			sliders_state = (sliders_state & ~(1 << (24 - ([active_hotspot ID] - 10)))) | (1 << (24 - ([hotspot ID] - 10)));
+			active_hotspot = hotspot;
 			
 			// draw the new slider state
 			[self drawSlidersForDome:@"jdome"];
@@ -2863,8 +2883,8 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 }
 
 DEFINE_COMMAND(xjdome25_slidermw) {
-	RXHotspot* current_hotspot = [self _jdomeSliderHotspotForMousePosition:[controller mouseVector].origin currentHotspot:nil];
-	if (current_hotspot)
+	RXHotspot* active_hotspot = [self domeSliderHotspotForDome:@"jdome" mousePosition:[controller mouseVector].origin activeHotspot:nil];
+	if (active_hotspot)
 		[controller setMouseCursor:RX_CURSOR_OPEN_HAND];
 	else
 		[controller setMouseCursor:RX_CURSOR_FORWARD];
