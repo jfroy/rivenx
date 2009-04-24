@@ -2727,11 +2727,11 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	// check if the sliders match the dome configuration
 	uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
 	if (sliders_state == domecombo) {
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 37);
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 36);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
 	} else {
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 37);
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 36);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
 	}
 	
 	[tic_sound release];
@@ -2851,11 +2851,11 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 	// check if the sliders match the dome configuration
 	uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
 	if (sliders_state == domecombo) {
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 37);
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 36);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
 	} else {
-		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 37);
-		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 36);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
 	}
 	
 	[tic_sound release];
