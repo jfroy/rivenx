@@ -12,7 +12,7 @@
 	<key>tBMP LUT</key>
 	<dict>
 		<key>tdome sliders background</key>
-		<string>814</string>
+		<integer>814</integer>
 		<key>tdome sliders</key>
 		<integer>813</integer>
 		<key>jdome sliders</key>

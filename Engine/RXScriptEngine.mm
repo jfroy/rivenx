@@ -2830,7 +2830,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 			[controller playDataSound:tic_sound];
 			
 			// disable the old and enable the new
-			sliders_state = (sliders_state & ~(1 << (24 - ([active_hotspot ID] - 10)))) | (1 << (24 - ([hotspot ID] - 10)));
+			sliders_state = (sliders_state & ~(1 << (24 - ([active_hotspot ID] - min_hotspot_id)))) | (1 << (24 - ([hotspot ID] - min_hotspot_id)));
 			active_hotspot = hotspot;
 			
 			// draw the new slider state
