@@ -2729,7 +2729,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 		[controller playDataSound:tic_sound];
 		[self drawSlidersForDome:dome minHotspotID:min_hotspot_id];
 		
-		// sleep some arbitrary amount (until the next frame)
+		// sleep some arbitrary amount of time (until the next frame); this value is to be tweaked visually
 		usleep(20000);
 		first_bit++;
 	}
@@ -2877,29 +2877,6 @@ DEFINE_COMMAND(xschool280_playwhark) {
 }
 
 #pragma mark -
-#pragma mark tspit dome
-
-DEFINE_COMMAND(xtscpbtn) {
-	[self handleVisorButtonPressForDome:@"tdome"];
-}
-
-DEFINE_COMMAND(xtisland4990_domecheck) {
-	[self checkDome:@"tdome" mutingVisorButtonMovie:NO];
-}
-
-DEFINE_COMMAND(xtisland5056_resetsliders) {
-	[self resetSlidersForDome:@"tdome"];
-}
-
-DEFINE_COMMAND(xtisland5056_slidermd) {	
-	[self handleSliderDragForDome:@"tdome"];
-}
-
-DEFINE_COMMAND(xtisland5056_slidermw) {
-	[self handleMouseOverSliderForDome:@"tdome"];
-}
-
-#pragma mark -
 #pragma mark jspit dome
 
 DEFINE_COMMAND(xjscpbtn) {
@@ -2920,6 +2897,29 @@ DEFINE_COMMAND(xjdome25_slidermd) {
 
 DEFINE_COMMAND(xjdome25_slidermw) {
 	[self handleMouseOverSliderForDome:@"jdome"];
+}
+
+#pragma mark -
+#pragma mark tspit dome
+
+DEFINE_COMMAND(xtscpbtn) {
+	[self handleVisorButtonPressForDome:@"tdome"];
+}
+
+DEFINE_COMMAND(xtisland4990_domecheck) {
+	[self checkDome:@"tdome" mutingVisorButtonMovie:NO];
+}
+
+DEFINE_COMMAND(xtisland5056_resetsliders) {
+	[self resetSlidersForDome:@"tdome"];
+}
+
+DEFINE_COMMAND(xtisland5056_slidermd) {	
+	[self handleSliderDragForDome:@"tdome"];
+}
+
+DEFINE_COMMAND(xtisland5056_slidermw) {
+	[self handleMouseOverSliderForDome:@"tdome"];
 }
 
 @end
