@@ -1511,6 +1511,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// play the movie
 	[self _opcode_startMovie:1 arguments:&movie_code];
 	
+	// 9500 for dome open
+	// 7000 for dome close
+	// 100 for dome spin down
+	
 	// wait the specified delay
 	if (delay > 0) {
 		// hide the mouse cursor
@@ -2660,12 +2664,14 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	NSMapTable* hotspots_map = [card hotspotsIDMap];
 	uint16_t background = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:[dome stringByAppendingString:@" sliders background"]];
 	uint16_t sliders = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:[dome stringByAppendingString:@" sliders"]];
+	uint32_t bg_x = RXEngineGetUInt32(@"rendering.dome_slider_background_x");
+	uint32_t bg_y = RXEngineGetUInt32(@"rendering.dome_slider_background_y");
 	
 	// begin a screen update transaction
 	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
 	
-	// draw the background
-	[self _drawPictureWithID:background stack:[card parent] displayRect:RXMakeCompositeDisplayRect(200, 319 - 69, 200 + 220, 319) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
+	// draw the background; 220 x 69 is the slider background dimension
+	[self _drawPictureWithID:background stack:[card parent] displayRect:RXMakeCompositeDisplayRect(bg_x, bg_y, bg_x + 220, bg_y + 69) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 	
 	// draw the sliders
 	uintptr_t k = 0;
@@ -2678,7 +2684,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 		
 		rx_core_rect_t hotspot_rect = [h rect];
 		NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
-		NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - 200, hotspot_rect.top - 250);
+		NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - bg_x, hotspot_rect.top - bg_y);
 		[self _drawPictureWithID:sliders stack:[card parent] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
 	}
 	
@@ -2888,15 +2894,51 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 }
 
 DEFINE_COMMAND(xjdome25_resetsliders) {
+	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
 	[self resetSlidersForDome:@"jdome"];
 }
 
-DEFINE_COMMAND(xjdome25_slidermd) {	
+DEFINE_COMMAND(xjdome25_slidermd) {
+	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
 	[self handleSliderDragForDome:@"jdome"];
 }
 
 DEFINE_COMMAND(xjdome25_slidermw) {
 	[self handleMouseOverSliderForDome:@"jdome"];
+}
+
+#pragma mark -
+#pragma mark pdome dome
+
+DEFINE_COMMAND(xpscpbtn) {
+	[self handleVisorButtonPressForDome:@"pdome"];
+}
+
+DEFINE_COMMAND(xpisland290_domecheck) {
+	[self checkDome:@"pdome" mutingVisorButtonMovie:NO];
+}
+
+DEFINE_COMMAND(xpisland25_opencard) {
+	// check if the sliders match the dome configuration
+	uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
+	if (sliders_state == domecombo) {
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+	}
+}
+
+DEFINE_COMMAND(xpisland25_resetsliders) {
+	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 198);
+	[self resetSlidersForDome:@"pdome"];
+}
+
+DEFINE_COMMAND(xpisland25_slidermd) {
+	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 198);
+	[self handleSliderDragForDome:@"pdome"];
+}
+
+DEFINE_COMMAND(xpisland25_slidermw) {
+	[self handleMouseOverSliderForDome:@"pdome"];
 }
 
 #pragma mark -
@@ -2911,10 +2953,12 @@ DEFINE_COMMAND(xtisland4990_domecheck) {
 }
 
 DEFINE_COMMAND(xtisland5056_resetsliders) {
+	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
 	[self resetSlidersForDome:@"tdome"];
 }
 
-DEFINE_COMMAND(xtisland5056_slidermd) {	
+DEFINE_COMMAND(xtisland5056_slidermd) {
+	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
 	[self handleSliderDragForDome:@"tdome"];
 }
 

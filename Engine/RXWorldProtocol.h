@@ -56,6 +56,17 @@ CF_INLINE BOOL RXEngineGetBool(NSString* path) {
 	return [o boolValue];
 }
 
+CF_INLINE uint32_t RXEngineGetUInt32(NSString* path) {
+	id o = [g_world valueForKeyPath:path];
+	if (!o)
+		return 0;
+	return (uint32_t)[o unsignedIntValue];
+}
+
+CF_INLINE void RXEngineSetUInt32(NSString* path, uint32_t value) {
+	[g_world setValue:[NSNumber numberWithInt:value] forKeyPath:path];
+}
+
 __END_DECLS
 
 #endif // __OBJC__

@@ -4,6 +4,8 @@
 <dict>
 	<key>tWAV LUT</key>
 	<dict>
+		<key>pdome slider tic</key>
+		<integer>10</integer>
 		<key>jdome slider tic</key>
 		<integer>81</integer>
 		<key>tdome slider tic</key>
@@ -11,6 +13,10 @@
 	</dict>
 	<key>tBMP LUT</key>
 	<dict>
+		<key>pdome sliders</key>
+		<integer>58</integer>
+		<key>pdome sliders background</key>
+		<integer>59</integer>
 		<key>tdome sliders</key>
 		<integer>798</integer>
 		<key>tdome sliders background</key>
@@ -19,6 +25,21 @@
 		<integer>548</integer>
 		<key>jdome sliders background</key>
 		<integer>549</integer>
+	</dict>
+	<key>Card LUT</key>
+	<dict>
+		<key>pdome combo</key>
+		<string>pspit 42</string>
+		<key>tdome combo</key>
+		<string>tspit 386</string>
+		<key>jdome combo</key>
+		<string>jspit 339</string>
+		<key>jungle elevator top</key>
+		<string>jspit 362</string>
+		<key>jungle elevator bottom</key>
+		<string>jspit 396</string>
+		<key>jungle elevator middle</key>
+		<string>jspit 393</string>
 	</dict>
 	<key>Patch Archives</key>
 	<dict>
@@ -36,19 +57,6 @@
 				<string>b_Data1.MHK</string>
 			</array>
 		</dict>
-	</dict>
-	<key>Card LUT</key>
-	<dict>
-		<key>tdome combo</key>
-		<string>tspit 386</string>
-		<key>jdome combo</key>
-		<string>jspit 339</string>
-		<key>jungle elevator top</key>
-		<string>jspit 362</string>
-		<key>jungle elevator bottom</key>
-		<string>jspit 396</string>
-		<key>jungle elevator middle</key>
-		<string>jspit 393</string>
 	</dict>
 	<key>Stack switch table</key>
 	<dict>

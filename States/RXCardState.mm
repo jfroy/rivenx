@@ -1047,8 +1047,9 @@ init_failure:
 }
 
 - (void)update {
-	// if we'll queue a transition, hide the cursor
-	if ([_transitionQueue count] > 0)
+	// if we'll queue a transition, hide the cursor; we want to do this before waiting for any ongoing transition so that if there is one,
+	// when it completes the cursor won't flash on screen (race condition between this thread and the render thread)
+	if ([_transitionQueue count] > 0 && !_disable_transition_dequeueing)
 		[self hideMouseCursor];
 	
 	// if a transition is ongoing, wait until its done
@@ -1992,9 +1993,8 @@ exit_flush_tasks:
 		[(RXApplicationDelegate*)[NSApp delegate] setSavingEnabled:NO];
 	
 	// if hotspot handling is disabled, simply return
-	if (_hotspot_handling_disable_counter > 0) {
+	if (_hotspot_handling_disable_counter > 0)
 		return;
-	}
 	
 	// hotspot updates cannot occur during a card switch
 	OSSpinLockLock(&_state_swap_lock);
