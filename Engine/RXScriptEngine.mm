@@ -503,9 +503,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	RXSimpleCardDescriptor* ecsd = [[executing_card descriptor] simpleDescriptor];
 	
 	// dome combination card - if the dome combination is 1-2-3-4-5, the opendome hotspot won't get enabled, so do it here
-	if ([ecsd isEqual:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jdome combo"]] || 
-		[ecsd isEqual:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"tdome combo"]])
-	{
+	if ([ecsd isEqual:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jdome combo"]]) {
 		// check if the sliders match the dome configuration
 		uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
 		if (sliders_state == domecombo) {
@@ -2883,6 +2881,40 @@ DEFINE_COMMAND(xschool280_playwhark) {
 }
 
 #pragma mark -
+#pragma mark bdome dome
+
+DEFINE_COMMAND(xbscpbtn) {
+	[self handleVisorButtonPressForDome:@"bdome"];
+}
+
+DEFINE_COMMAND(xbisland_domecheck) {
+	[self checkDome:@"bdome" mutingVisorButtonMovie:NO];
+}
+
+DEFINE_COMMAND(xbisland190_opencard) {
+	// check if the sliders match the dome configuration
+	uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
+	if (sliders_state == domecombo) {
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+	}
+}
+
+DEFINE_COMMAND(xbisland190_resetsliders) {
+	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	[self resetSlidersForDome:@"bdome"];
+}
+
+DEFINE_COMMAND(xbisland190_slidermd) {
+	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	[self handleSliderDragForDome:@"bdome"];
+}
+
+DEFINE_COMMAND(xbisland190_slidermw) {
+	[self handleMouseOverSliderForDome:@"bdome"];
+}
+
+#pragma mark -
 #pragma mark jspit dome
 
 DEFINE_COMMAND(xjscpbtn) {
@@ -2950,6 +2982,15 @@ DEFINE_COMMAND(xtscpbtn) {
 
 DEFINE_COMMAND(xtisland4990_domecheck) {
 	[self checkDome:@"tdome" mutingVisorButtonMovie:NO];
+}
+
+DEFINE_COMMAND(xtisland5056_opencard) {
+	// check if the sliders match the dome configuration
+	uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
+	if (sliders_state == domecombo) {
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+	}
 }
 
 DEFINE_COMMAND(xtisland5056_resetsliders) {
