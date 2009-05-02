@@ -4,6 +4,8 @@
 <dict>
 	<key>tWAV LUT</key>
 	<dict>
+		<key>gdome slider tic</key>
+		<integer>25</integer>
 		<key>bdome slider tic</key>
 		<integer>41</integer>
 		<key>pdome slider tic</key>
@@ -15,6 +17,10 @@
 	</dict>
 	<key>tBMP LUT</key>
 	<dict>
+		<key>gdome sliders</key>
+		<integer>161</integer>
+		<key>gdome sliders background</key>
+		<integer>162</integer>
 		<key>bdome sliders</key>
 		<integer>701</integer>
 		<key>bdome sliders background</key>

@@ -2915,6 +2915,41 @@ DEFINE_COMMAND(xbisland190_slidermw) {
 }
 
 #pragma mark -
+#pragma mark gdome dome
+
+DEFINE_COMMAND(xgscpbtn) {
+	[self handleVisorButtonPressForDome:@"gdome"];
+}
+
+DEFINE_COMMAND(xgisland1490_domecheck) {
+	[self checkDome:@"gdome" mutingVisorButtonMovie:NO];
+}
+
+DEFINE_COMMAND(xgisland25_opencard) {
+	// check if the sliders match the dome configuration
+	uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
+	if (sliders_state == domecombo) {
+		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
+		DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+	}
+}
+
+DEFINE_COMMAND(xgisland25_resetsliders) {
+	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	[self resetSlidersForDome:@"gdome"];
+}
+
+DEFINE_COMMAND(xgisland25_slidermd) {
+	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	[self handleSliderDragForDome:@"gdome"];
+}
+
+DEFINE_COMMAND(xgisland25_slidermw) {
+	[self handleMouseOverSliderForDome:@"gdome"];
+}
+
+
+#pragma mark -
 #pragma mark jspit dome
 
 DEFINE_COMMAND(xjscpbtn) {
