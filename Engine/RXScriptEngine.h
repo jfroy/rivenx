@@ -45,6 +45,13 @@
 	
 	// gameplay support
 	uint32_t sliders_state;
+	
+	uint16_t blue_marble_tBMP;
+	uint16_t green_marble_tBMP;
+	uint16_t orange_marble_tBMP;
+	uint16_t purple_marble_tBMP;
+	uint16_t red_marble_tBMP;
+	uint16_t yellow_marble_tBMP;
 }
 
 - (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr;

@@ -889,10 +889,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #pragma mark -
 #pragma mark dynamic pictures
 
-- (void)_drawPictureWithID:(uint16_t)ID stack:(RXStack*)stack displayRect:(NSRect)display_rect samplingRect:(NSRect)sampling_rect {
-	// find the archive for the picture
-	MHKArchive* archive = [[stack fileWithResourceType:@"tBMP" ID:ID] archive];
-	
+- (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive displayRect:(NSRect)display_rect samplingRect:(NSRect)sampling_rect {
 	// get the resource descriptor for the tBMP resource
 	NSError* error;
 	NSDictionary* picture_descriptor = [archive bitmapDescriptorWithID:ID error:&error];
@@ -984,6 +981,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// swap the render state; this always marks the back render state as modified
 	[self _swapRenderState];
+}
+
+- (void)_drawPictureWithID:(uint16_t)ID stack:(RXStack*)stack displayRect:(NSRect)display_rect samplingRect:(NSRect)sampling_rect {
+	MHKArchive* archive = [[stack fileWithResourceType:@"tBMP" ID:ID] archive];
+	[self _drawPictureWithID:ID archive:archive displayRect:display_rect samplingRect:sampling_rect];
 }
 
 #pragma mark -
@@ -3040,6 +3042,49 @@ DEFINE_COMMAND(xtisland5056_slidermd) {
 
 DEFINE_COMMAND(xtisland5056_slidermw) {
 	[self handleMouseOverSliderForDome:@"tdome"];
+}
+
+#pragma mark -
+#pragma mark power dome
+
+DEFINE_COMMAND(xt7800_setup) {
+	NSDictionary* marble_map = [[g_world extraBitmapsDescriptor] objectForKey:@"Marbles"];
+	
+	blue_marble_tBMP = [[marble_map objectForKey:@"Blue"] unsignedShortValue];
+	green_marble_tBMP = [[marble_map objectForKey:@"Green"] unsignedShortValue];
+	orange_marble_tBMP = [[marble_map objectForKey:@"Orange"] unsignedShortValue];
+	purple_marble_tBMP = [[marble_map objectForKey:@"Purple"] unsignedShortValue];
+	red_marble_tBMP = [[marble_map objectForKey:@"Red"] unsignedShortValue];
+	yellow_marble_tBMP = [[marble_map objectForKey:@"Yellow"] unsignedShortValue];
+}
+
+- (void)_drawMarbleWithKey:(NSString*)key bitmapID:(uint16_t)bitmap_id {
+	MHKArchive* extra_bitmaps_archive = [g_world extraBitmapsArchive];
+	NSRect display_rect;
+	RXHotspot* hotspot;
+	
+	hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], key);
+	rx_core_rect_t hotspot_rect = [hotspot rect];
+	hotspot_rect.left += 3;
+	hotspot_rect.top += 3;
+	hotspot_rect.right += 3;
+	hotspot_rect.bottom += 3;
+	
+	display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
+	[self _drawPictureWithID:bitmap_id archive:extra_bitmaps_archive displayRect:display_rect samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
+}
+
+DEFINE_COMMAND(xdrawmarbles) {
+	[self _drawMarbleWithKey:@"tblue" bitmapID:blue_marble_tBMP];
+	[self _drawMarbleWithKey:@"tgreen" bitmapID:green_marble_tBMP];
+	[self _drawMarbleWithKey:@"torange" bitmapID:orange_marble_tBMP];
+	[self _drawMarbleWithKey:@"tviolet" bitmapID:purple_marble_tBMP];
+	[self _drawMarbleWithKey:@"tred" bitmapID:red_marble_tBMP];
+	[self _drawMarbleWithKey:@"tyellow" bitmapID:yellow_marble_tBMP];
+}
+
+DEFINE_COMMAND(xtakeit) {
+	
 }
 
 @end
