@@ -3048,6 +3048,8 @@ DEFINE_COMMAND(xtisland5056_slidermw) {
 #pragma mark power dome
 
 DEFINE_COMMAND(xt7800_setup) {
+	// themarble + t<color> variables probably should be used to keep track of state
+	
 	NSDictionary* marble_map = [[g_world extraBitmapsDescriptor] objectForKey:@"Marbles"];
 	
 	blue_marble_tBMP = [[marble_map objectForKey:@"Blue"] unsignedShortValue];
@@ -3084,7 +3086,7 @@ DEFINE_COMMAND(xdrawmarbles) {
 }
 
 DEFINE_COMMAND(xtakeit) {
-	
+	// themarble + t<color> variables probably should be used to keep track of state
 }
 
 @end
