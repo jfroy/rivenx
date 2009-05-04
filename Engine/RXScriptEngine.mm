@@ -656,6 +656,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		[executing_card retain];
 	}
 	
+	// keep a weak reference to the hotspot while executing within the context of this hotspot handler
+	_current_hotspot = hotspot;
+	
 	// execute mouse moved programs (index 4)
 	NSArray* programs = [[hotspot script] objectForKey:RXMouseInsideScriptKey];
 	assert(programs);
@@ -678,6 +681,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
 		[executing_card release];
+		_current_hotspot = nil;
 		
 		// if the card hid the mouse cursor while executing programs, we can now show it again
 		if (_did_hide_mouse) {
@@ -702,6 +706,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		[executing_card retain];
 	}
 	
+	// keep a weak reference to the hotspot while executing within the context of this hotspot handler
+	_current_hotspot = hotspot;
+	
 	// execute mouse leave programs (index 5)
 	NSArray* programs = [[hotspot script] objectForKey:RXMouseExitedScriptKey];
 	assert(programs);
@@ -721,6 +728,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
 		[executing_card release];
+		_current_hotspot = nil;
 		
 		// if the card hid the mouse cursor while executing programs, we can now show it again
 		if (_did_hide_mouse) {
@@ -745,6 +753,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		[executing_card retain];
 	}
 	
+	// keep a weak reference to the hotspot while executing within the context of this hotspot handler
+	_current_hotspot = hotspot;
+	
 	// execute mouse down programs (index 0)
 	NSArray* programs = [[hotspot script] objectForKey:RXMouseDownScriptKey];
 	assert(programs);
@@ -764,6 +775,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
 		[executing_card release];
+		_current_hotspot = nil;
 		
 		// if the card hid the mouse cursor while executing programs, we can now show it again
 		if (_did_hide_mouse) {
@@ -791,6 +803,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		[executing_card retain];
 	}
 	
+	// keep a weak reference to the hotspot while executing within the context of this hotspot handler
+	_current_hotspot = hotspot;
+	
 	// execute mouse up programs (index 2)
 	NSArray* programs = [[hotspot script] objectForKey:RXMouseUpScriptKey];
 	assert(programs);
@@ -810,6 +825,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// release the card if it no longer is executing programs
 	if (_programExecutionDepth == 0) {
 		[executing_card release];
+		_current_hotspot = nil;
 		
 		// if the card hid the mouse cursor while executing programs, we can now show it again
 		if (_did_hide_mouse) {
@@ -1649,6 +1665,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 #define DEFINE_COMMAND(NAME) - (void)_external_ ## NAME:(const uint16_t)argc arguments:(const uint16_t*)argv
+#define DISPATCH_EXTERNAL0(NAME) [self _external_ ## NAME:0 arguments:NULL]
 
 #pragma mark -
 #pragma mark main menu
@@ -2221,7 +2238,8 @@ static const float k_jungle_elevator_trigger_magnitude = 16.0f;
 DEFINE_COMMAND(xhandlecontrolup) {
 	NSRect mouse_vector = [controller mouseVector];
 	[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
-
+	
+	// track the mouse until the mouse button is released
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
 			// play the switch down movie
@@ -2246,6 +2264,7 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 	NSRect mouse_vector = [controller mouseVector];
 	[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 	
+	// track the mouse until the mouse button is released
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
 			// play the switch up movie
@@ -2285,7 +2304,8 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 DEFINE_COMMAND(xhandlecontroldown) {
 	NSRect mouse_vector = [controller mouseVector];
 	[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
-
+	
+	// track the mouse until the mouse button is released
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
 			// play the switch up movie
@@ -2315,6 +2335,7 @@ DEFINE_COMMAND(xvalvecontrol) {
 	NSRect mouse_vector = [controller mouseVector];
 	[controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
 	
+	// track the mouse until the mouse button is released
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		float theta = 180.0f * atan2f(mouse_vector.size.height, mouse_vector.size.width) * M_1_PI;
 		float r = sqrtf((mouse_vector.size.height * mouse_vector.size.height) + (mouse_vector.size.width * mouse_vector.size.width));
@@ -2395,7 +2416,6 @@ DEFINE_COMMAND(xbchipper) {
 		return;
 	
 	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
-	// FIXME: need to disable that movie code
 }
 
 DEFINE_COMMAND(xbupdateboiler) {
@@ -3047,6 +3067,19 @@ DEFINE_COMMAND(xtisland5056_slidermw) {
 #pragma mark -
 #pragma mark power dome
 
+typedef enum  {
+	BLUE_MARBLE = 1,
+	GREEN_MARBLE,
+	ORANGE_MARBLE,
+	PURPLE_MARBLE,
+	RED_MARBLE,
+	YELLOW_MARBLE
+} rx_fire_marble_t;
+
+DEFINE_COMMAND(xt7600_setupmarbles) {
+	// this command draws the "tiny marbles" bitmaps on tspit 227
+}
+
 DEFINE_COMMAND(xt7800_setup) {
 	// themarble + t<color> variables probably should be used to keep track of state
 	
@@ -3077,16 +3110,53 @@ DEFINE_COMMAND(xt7800_setup) {
 }
 
 DEFINE_COMMAND(xdrawmarbles) {
-	[self _drawMarbleWithKey:@"tblue" bitmapID:blue_marble_tBMP];
-	[self _drawMarbleWithKey:@"tgreen" bitmapID:green_marble_tBMP];
-	[self _drawMarbleWithKey:@"torange" bitmapID:orange_marble_tBMP];
-	[self _drawMarbleWithKey:@"tviolet" bitmapID:purple_marble_tBMP];
-	[self _drawMarbleWithKey:@"tred" bitmapID:red_marble_tBMP];
-	[self _drawMarbleWithKey:@"tyellow" bitmapID:yellow_marble_tBMP];
+	RXGameState* gs = [g_world gameState];
+	uint16_t active_marble = [gs unsigned32ForKey:@"themarble"];
+	
+	if (active_marble != BLUE_MARBLE)
+		[self _drawMarbleWithKey:@"tblue" bitmapID:blue_marble_tBMP];
+	if (active_marble != GREEN_MARBLE)
+		[self _drawMarbleWithKey:@"tgreen" bitmapID:green_marble_tBMP];
+	if (active_marble != ORANGE_MARBLE)
+		[self _drawMarbleWithKey:@"torange" bitmapID:orange_marble_tBMP];
+	if (active_marble != PURPLE_MARBLE)
+		[self _drawMarbleWithKey:@"tviolet" bitmapID:purple_marble_tBMP];
+	if (active_marble != RED_MARBLE)
+		[self _drawMarbleWithKey:@"tred" bitmapID:red_marble_tBMP];
+	if (active_marble != YELLOW_MARBLE)
+		[self _drawMarbleWithKey:@"tyellow" bitmapID:yellow_marble_tBMP];
 }
 
 DEFINE_COMMAND(xtakeit) {
 	// themarble + t<color> variables probably should be used to keep track of state
+	RXGameState* gs = [g_world gameState];
+	
+	// update themarble based on which marble hotspot we're in
+	if ([[_current_hotspot name] isEqualToString:@"tblue"])
+		[gs setUnsigned32:BLUE_MARBLE forKey:@"themarble"];
+	else if ([[_current_hotspot name] isEqualToString:@"tgreen"])
+		[gs setUnsigned32:GREEN_MARBLE forKey:@"themarble"];
+	else if ([[_current_hotspot name] isEqualToString:@"torange"])
+		[gs setUnsigned32:ORANGE_MARBLE forKey:@"themarble"];
+	else if ([[_current_hotspot name] isEqualToString:@"tviolet"])
+		[gs setUnsigned32:PURPLE_MARBLE forKey:@"themarble"];
+	else if ([[_current_hotspot name] isEqualToString:@"tred"])
+		[gs setUnsigned32:RED_MARBLE forKey:@"themarble"];
+	else if ([[_current_hotspot name] isEqualToString:@"tyellow"])
+		[gs setUnsigned32:YELLOW_MARBLE forKey:@"themarble"];
+	else
+		abort();
+	
+	// draw the marbles to reflect the new state
+	DISPATCH_EXTERNAL0(xdrawmarbles);
+	
+	// track the mouse until the mouse button is released
+	NSRect mouse_vector = [controller mouseVector];
+	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
+		mouse_vector = [controller mouseVector];
+	}
+	
+	// FIXME: update the marble's position
 }
 
 @end

@@ -43,6 +43,8 @@
 	BOOL _didActivatePLST;
 	BOOL _didActivateSLST;
 	
+	RXHotspot* _current_hotspot;
+	
 	// gameplay support
 	uint32_t sliders_state;
 	
