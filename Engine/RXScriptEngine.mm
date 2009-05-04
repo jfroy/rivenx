@@ -3093,10 +3093,13 @@ DEFINE_COMMAND(xt7800_setup) {
 	yellow_marble_tBMP = [[marble_map objectForKey:@"Yellow"] unsignedShortValue];
 }
 
-- (void)_drawMarbleWithKey:(NSString*)key bitmapID:(uint16_t)bitmap_id {
+- (void)_drawMarbleWithKey:(NSString*)key marbleEnum:(rx_fire_marble_t)marble bitmapID:(uint16_t)bitmap_id activeMarble:(rx_fire_marble_t)active_marble {
 	MHKArchive* extra_bitmaps_archive = [g_world extraBitmapsArchive];
 	NSRect display_rect;
 	RXHotspot* hotspot;
+	
+	if (active_marble == marble)
+		return;
 	
 	hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], key);
 	rx_core_rect_t hotspot_rect = [hotspot rect];
@@ -3111,20 +3114,15 @@ DEFINE_COMMAND(xt7800_setup) {
 
 DEFINE_COMMAND(xdrawmarbles) {
 	RXGameState* gs = [g_world gameState];
-	uint16_t active_marble = [gs unsigned32ForKey:@"themarble"];
+	rx_fire_marble_t active_marble = (rx_fire_marble_t)[gs unsigned32ForKey:@"themarble"];
 	
-	if (active_marble != BLUE_MARBLE)
-		[self _drawMarbleWithKey:@"tblue" bitmapID:blue_marble_tBMP];
-	if (active_marble != GREEN_MARBLE)
-		[self _drawMarbleWithKey:@"tgreen" bitmapID:green_marble_tBMP];
-	if (active_marble != ORANGE_MARBLE)
-		[self _drawMarbleWithKey:@"torange" bitmapID:orange_marble_tBMP];
-	if (active_marble != PURPLE_MARBLE)
-		[self _drawMarbleWithKey:@"tviolet" bitmapID:purple_marble_tBMP];
-	if (active_marble != RED_MARBLE)
-		[self _drawMarbleWithKey:@"tred" bitmapID:red_marble_tBMP];
-	if (active_marble != YELLOW_MARBLE)
-		[self _drawMarbleWithKey:@"tyellow" bitmapID:yellow_marble_tBMP];
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
+	[self _drawMarbleWithKey:@"tblue" marbleEnum:BLUE_MARBLE bitmapID:blue_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithKey:@"tgreen" marbleEnum:GREEN_MARBLE bitmapID:green_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithKey:@"torange" marbleEnum:ORANGE_MARBLE bitmapID:orange_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithKey:@"tviolet" marbleEnum:PURPLE_MARBLE bitmapID:purple_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithKey:@"tred" marbleEnum:RED_MARBLE bitmapID:red_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithKey:@"tyellow" marbleEnum:YELLOW_MARBLE bitmapID:yellow_marble_tBMP activeMarble:active_marble];
 }
 
 DEFINE_COMMAND(xtakeit) {
@@ -3157,6 +3155,12 @@ DEFINE_COMMAND(xtakeit) {
 	}
 	
 	// FIXME: update the marble's position
+	
+	// we are no longer dragging any marble
+	[gs setUnsigned32:0 forKey:@"themarble"];
+	
+	// draw the marbles to reflect the new state
+	DISPATCH_EXTERNAL0(xdrawmarbles);
 }
 
 @end
