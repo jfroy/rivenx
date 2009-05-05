@@ -3129,20 +3129,27 @@ DEFINE_COMMAND(xtakeit) {
 	// themarble + t<color> variables probably should be used to keep track of state
 	RXGameState* gs = [g_world gameState];
 	
-	// update themarble based on which marble hotspot we're in
-	if ([[_current_hotspot name] isEqualToString:@"tblue"])
+	// update themarble based on which marble hotspot we're in and set the marble position variable we'll be updating
+	NSString* marble_var;
+	if ([[_current_hotspot name] isEqualToString:@"tblue"]) {
 		[gs setUnsigned32:BLUE_MARBLE forKey:@"themarble"];
-	else if ([[_current_hotspot name] isEqualToString:@"tgreen"])
+		marble_var = @"tblue";
+	} else if ([[_current_hotspot name] isEqualToString:@"tgreen"]) {
 		[gs setUnsigned32:GREEN_MARBLE forKey:@"themarble"];
-	else if ([[_current_hotspot name] isEqualToString:@"torange"])
+		marble_var = @"tgreen";
+	} else if ([[_current_hotspot name] isEqualToString:@"torange"]) {
 		[gs setUnsigned32:ORANGE_MARBLE forKey:@"themarble"];
-	else if ([[_current_hotspot name] isEqualToString:@"tviolet"])
+		marble_var = @"torange";
+	} else if ([[_current_hotspot name] isEqualToString:@"tviolet"]) {
 		[gs setUnsigned32:PURPLE_MARBLE forKey:@"themarble"];
-	else if ([[_current_hotspot name] isEqualToString:@"tred"])
+		marble_var = @"tviolet";
+	} else if ([[_current_hotspot name] isEqualToString:@"tred"]) {
 		[gs setUnsigned32:RED_MARBLE forKey:@"themarble"];
-	else if ([[_current_hotspot name] isEqualToString:@"tyellow"])
+		marble_var = @"tred";
+	} else if ([[_current_hotspot name] isEqualToString:@"tyellow"]) {
 		[gs setUnsigned32:YELLOW_MARBLE forKey:@"themarble"];
-	else
+		marble_var = @"tyellow";
+	} else
 		abort();
 	
 	// draw the marbles to reflect the new state
@@ -3154,7 +3161,19 @@ DEFINE_COMMAND(xtakeit) {
 		mouse_vector = [controller mouseVector];
 	}
 	
-	// FIXME: update the marble's position
+	// update the marble's position
+	rx_core_rect_t core_position = RXTransformRectWorldToCore(mouse_vector);
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@core position of mouse is <%u, %u>", logPrefix, core_position.left, core_position.top);
+#endif
+	if (core_position.left >= 135 && core_position.top >= 25) {
+		uint32_t marble_pos = ((uint32_t)(core_position.left - 135) / 13) << 16;
+		marble_pos |= (uint32_t)(core_position.top - 25) / 13;
+		[gs setUnsigned32:marble_pos forKey:marble_var];
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@dropping marble at <%u, %u>", logPrefix, marble_pos >> 16, marble_pos & 0xFFFF);
+#endif
+	}
 	
 	// we are no longer dragging any marble
 	[gs setUnsigned32:0 forKey:@"themarble"];

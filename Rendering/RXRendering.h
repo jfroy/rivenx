@@ -145,6 +145,13 @@ CF_INLINE rx_rect_t RXEffectiveRendererFrame() {
 	return RXRectMake((viewportSize.width / 2) - (contentSize.width / 2), (viewportSize.height / 2) - (contentSize.height / 2), contentSize.width, contentSize.height);
 }
 
+CF_INLINE NSRect RXRenderScaleRect() {
+	rx_rect_t render_frame = RXEffectiveRendererFrame();
+	float scale_x = (float)render_frame.size.width / (float)kRXRendererViewportSize.width;
+	float scale_y = (float)render_frame.size.height / (float)kRXRendererViewportSize.height;
+	return NSMakeRect(render_frame.origin.x, render_frame.origin.y, scale_x, scale_y);
+}
+
 CF_INLINE id <RXWorldViewProtocol> RXGetWorldView() {
 	return g_worldView;
 }
@@ -161,6 +168,44 @@ CF_INLINE NSRect RXMakeCompositeDisplayRect(uint16_t left, uint16_t top, uint16_
 
 CF_INLINE NSRect RXMakeCompositeDisplayRectFromCoreRect(rx_core_rect_t rect) {
 	return NSMakeRect((float)rect.left, (float)(kRXCardViewportSize.height - rect.bottom), (float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
+}
+
+CF_INLINE rx_core_rect_t RXMakeCoreRectFromCompositeDisplayRect(NSRect rect) {
+	rx_core_rect_t r;
+	r.left = rect.origin.x;
+	r.right = rect.origin.x + rect.size.width;
+	r.bottom = kRXCardViewportSize.height - rect.origin.y;
+	r.top = r.bottom - rect.size.height;
+	return r;
+}
+
+CF_INLINE NSRect RXTransformRectCoreToWorld(rx_core_rect_t rect) {
+	NSRect scale_rect = RXRenderScaleRect();
+	NSRect composite_rect = RXMakeCompositeDisplayRectFromCoreRect(rect);
+		
+	NSRect world_rect;
+	world_rect.origin.x = scale_rect.origin.x + (composite_rect.origin.x + kRXCardViewportOriginOffset.x) * scale_rect.size.width;
+	world_rect.origin.y = scale_rect.origin.y + (composite_rect.origin.y + kRXCardViewportOriginOffset.y) * scale_rect.size.height;
+	world_rect.size.width = composite_rect.size.width * scale_rect.size.width;
+	world_rect.size.height = composite_rect.size.height * scale_rect.size.height;
+	return world_rect;
+}
+
+CF_INLINE rx_core_rect_t RXTransformRectWorldToCore(NSRect rect) {
+	NSRect scale_rect = RXRenderScaleRect();
+	
+	// if the rect's size is <inf, inf>, rect is likely a mouse vector, so clamp to 0
+	if (isinf(rect.size.width) && isinf(rect.size.height)) {
+		rect.size.width = 0.0f;
+		rect.size.height = 0.0f;
+	}
+	
+	NSRect composite_rect;
+	composite_rect.origin.x = ((rect.origin.x - scale_rect.origin.x) / scale_rect.size.width) - kRXCardViewportOriginOffset.x;
+	composite_rect.origin.y = ((rect.origin.y - scale_rect.origin.y) / scale_rect.size.height) - kRXCardViewportOriginOffset.y;
+	composite_rect.size.width = rect.size.width / scale_rect.size.width;
+	composite_rect.size.height = rect.size.height / scale_rect.size.height;
+	return RXMakeCoreRectFromCompositeDisplayRect(composite_rect);
 }
 
 #pragma mark -
