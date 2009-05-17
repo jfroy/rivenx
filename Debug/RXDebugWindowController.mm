@@ -126,7 +126,7 @@
 			[[g_world gameState] setSigned32:[value intValue] forKey:path];
 		}
 	} else
-		[g_world setValue:value forKeyPath:path];
+		[g_world setValue:value forEngineVariable:path];
 }
 
 - (void)cmd_dump:(NSArray*)arguments from:(CLIView*)sender {

@@ -38,6 +38,9 @@
 
 - (RXGameState*)gameState;
 
+- (id)valueForEngineVariable:(NSString*)path;
+- (void)setValue:(id)value forEngineVariable:(NSString*)path;
+
 - (NSCursor*)defaultCursor;
 - (NSCursor*)openHandCursor;
 - (NSCursor*)invisibleCursor;
@@ -50,21 +53,21 @@ __BEGIN_DECLS
 extern NSObject <RXWorldProtocol>* g_world;
 
 CF_INLINE BOOL RXEngineGetBool(NSString* path) {
-	id o = [g_world valueForKeyPath:path];
-	if (!o)
+	id value = [g_world valueForEngineVariable:path];
+	if (!value || ![value isKindOfClass:[NSNumber class]])
 		return NO;
-	return [o boolValue];
+	return [value boolValue];
 }
 
 CF_INLINE uint32_t RXEngineGetUInt32(NSString* path) {
-	id o = [g_world valueForKeyPath:path];
-	if (!o)
-		return 0;
-	return (uint32_t)[o unsignedIntValue];
+	id value = [g_world valueForEngineVariable:path];
+	if (!value || ![value isKindOfClass:[NSNumber class]])
+		return NO;
+	return (uint32_t)[value unsignedIntValue];
 }
 
 CF_INLINE void RXEngineSetUInt32(NSString* path, uint32_t value) {
-	[g_world setValue:[NSNumber numberWithInt:value] forKeyPath:path];
+	[g_world setValue:[NSNumber numberWithInt:value] forEngineVariable:path];
 }
 
 __END_DECLS

@@ -49,19 +49,31 @@ NSObject* g_world = nil;
 
 - (void)_initEngineVariables {
 	NSError* error = nil;
-	NSData* defaultVarData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"EngineVariables" ofType:@"plist"] options:0 error:&error];
-	if (!defaultVarData)
-		@throw [NSException exceptionWithName:@"RXMissingDefaultEngineVariablesException" reason:@"Unable to find EngineVariables.plist." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+	NSData* default_vars_data = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"EngineVariables" ofType:@"plist"] options:0 error:&error];
+	if (!default_vars_data)
+		@throw [NSException exceptionWithName:@"RXMissingDefaultEngineVariablesException"
+									   reason:@"Unable to find EngineVariables.plist."
+									 userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 	
-	NSString* errorString = nil;
-	_engineVariables = [[NSPropertyListSerialization propertyListFromData:defaultVarData mutabilityOption:NSPropertyListMutableContainers format:NULL errorDescription:&errorString] retain];
+	NSString* error_str = nil;
+	_engineVariables = [[NSPropertyListSerialization propertyListFromData:default_vars_data
+														 mutabilityOption:NSPropertyListMutableContainers
+																   format:NULL
+														 errorDescription:&error_str] retain];
 	if (!_engineVariables)
-		@throw [NSException exceptionWithName:@"RXInvalidDefaultEngineVariablesException" reason:@"Unable to load the default engine variables." userInfo:[NSDictionary dictionaryWithObject:errorString forKey:@"RXErrorString"]];
-	[errorString release];
+		@throw [NSException exceptionWithName:@"RXInvalidDefaultEngineVariablesException"
+									   reason:@"Unable to load the default engine variables."
+									 userInfo:[NSDictionary dictionaryWithObject:error_str forKey:@"RXErrorString"]];
+	[error_str release];
 	
-#if defined(DEBUG)
-
-#endif
+	NSDictionary* user_vars = [[NSUserDefaults standardUserDefaults] objectForKey:@"EngineVariables"];
+	if (user_vars) {
+		NSEnumerator* keypaths = [user_vars keyEnumerator];
+		NSString* keypath;
+		while ((keypath = [keypaths nextObject]))
+			[_engineVariables setValue:[user_vars objectForKey:keypath] forKeyPath:keypath];
+	} else
+		[[NSUserDefaults standardUserDefaults] setValue:[NSMutableDictionary dictionary] forKey:@"EngineVariables"];
 }
 
 - (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context {
@@ -100,7 +112,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		[RXLogCenter sharedLogCenter];
 		
 		RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"I am the first and the last, the alpha and the omega, the beginning and the end.");
-		RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"Riven X version %@ (%@)", [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"], [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
+		RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"Riven X version %@ (%@)",
+			[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
+			[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
 		
 		// set the global to ourselves
 		g_world = self;
@@ -136,7 +150,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		if (!BZFSDirectoryExists(userBase)) {
 			BOOL success = BZFSCreateDirectory(userBase, &error);
 			if (!success)
-				@throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create its support folder in your Application Support folder." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+				@throw [NSException exceptionWithName:@"RXFilesystemException"
+											   reason:@"Riven X was unable to create its support folder in your Application Support folder."
+											 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		}
 		_worldUserBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)userBase, kCFURLPOSIXPathStyle, true);
 		
@@ -153,7 +169,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 		if (!_extraBitmapsArchive)
 			_extraBitmapsArchive = [[MHKArchive alloc] initWithPath:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"MHK"] error:&error];
 		if (!_extraBitmapsArchive)
-			@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Extras.MHK." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+			@throw [NSException exceptionWithName:@"RXMissingResourceException"
+										   reason:@"Unable to find Extras.MHK."
+										 userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 		
 		// load Extras.plist
 		_extrasDescriptor = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"plist"]];
@@ -181,7 +199,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 			NSPoint cursorHotspot = NSPointFromString([cursorMetadata objectForKey:cursorKey]);
 			NSImage* cursorImage = [[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:cursorKey ofType:@"png" inDirectory:@"cursors"]];
 			if (!cursorImage)
-				@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:[NSString stringWithFormat:@"Unable to find cursor %@.", cursorKey] userInfo:nil];
+				@throw [NSException exceptionWithName:@"RXMissingResourceException"
+											   reason:[NSString stringWithFormat:@"Unable to find cursor %@.", cursorKey]
+											 userInfo:nil];
 			
 			NSCursor* cursor = [[NSCursor alloc] initWithImage:cursorImage hotSpot:cursorHotspot];
 			uintptr_t key = [cursorKey intValue];
@@ -466,27 +486,17 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 	pthread_mutex_unlock(&_engineVariablesMutex);
 }
 
-- (NSMutableDictionary*)rendering {
-	return [_engineVariables objectForKey:@"rendering"];
-}
-
-- (id)valueForUndefinedKey:(NSString*)key {
-	if (!_engineVariables)
-		return nil;
-	
+- (id)valueForEngineVariable:(NSString*)path {
 	pthread_mutex_lock(&_engineVariablesMutex);
-	id v = [_engineVariables valueForKeyPath:key];
+	id value = [_engineVariables valueForKeyPath:path];
 	pthread_mutex_unlock(&_engineVariablesMutex);
-	
-	return v;
+	return value;
 }
 
-- (void)setValue:(id)value forUndefinedKey:(NSString*)key {
-	if (!_engineVariables)
-		return;
-	
+- (void)setValue:(id)value forEngineVariable:(NSString*)path {
 	pthread_mutex_lock(&_engineVariablesMutex);
-	[_engineVariables setValue:value forKeyPath:key];
+	[_engineVariables setValue:value forKeyPath:path];
+	[[[NSUserDefaults standardUserDefaults] objectForKey:@"EngineVariables"] setObject:value forKey:path];
 	pthread_mutex_unlock(&_engineVariablesMutex);
 }
 

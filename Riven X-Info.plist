@@ -30,7 +30,7 @@
 	<key>CFBundleIconFile</key>
 	<string>rivenx</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.macstorm.${PRODUCT_NAME:identifier}</string>
+	<string>org.macstorm.rivenx</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
