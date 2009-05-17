@@ -54,6 +54,7 @@
 	uint16_t purple_marble_tBMP;
 	uint16_t red_marble_tBMP;
 	uint16_t yellow_marble_tBMP;
+	rx_point_t dome_slider_background_position;
 }
 
 - (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr;

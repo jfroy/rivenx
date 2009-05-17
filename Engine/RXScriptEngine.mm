@@ -221,7 +221,14 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	_renderStateSwapsEnabled = YES;
 	
+	// initialize gameplay support variables
+	
+	// sliders are packed to the left
 	sliders_state = 0x1F00000;
+	
+	// default dome slider background display origin
+	dome_slider_background_position.x = 200;
+	dome_slider_background_position.y = 250;
 	
 	return self;
 }
@@ -2684,14 +2691,14 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	NSMapTable* hotspots_map = [card hotspotsIDMap];
 	uint16_t background = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:[dome stringByAppendingString:@" sliders background"]];
 	uint16_t sliders = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:[dome stringByAppendingString:@" sliders"]];
-	uint32_t bg_x = RXEngineGetUInt32(@"rendering.dome_slider_background_x");
-	uint32_t bg_y = RXEngineGetUInt32(@"rendering.dome_slider_background_y");
-	
+		
 	// begin a screen update transaction
 	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
 	
 	// draw the background; 220 x 69 is the slider background dimension
-	[self _drawPictureWithID:background stack:[card parent] displayRect:RXMakeCompositeDisplayRect(bg_x, bg_y, bg_x + 220, bg_y + 69) samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
+	NSRect display_rect = RXMakeCompositeDisplayRect(dome_slider_background_position.x, dome_slider_background_position.y,
+													 dome_slider_background_position.x + 220, dome_slider_background_position.y + 69);
+	[self _drawPictureWithID:background stack:[card parent] displayRect:display_rect samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 	
 	// draw the sliders
 	uintptr_t k = 0;
@@ -2703,9 +2710,10 @@ DEFINE_COMMAND(xschool280_playwhark) {
 		k++;
 		
 		rx_core_rect_t hotspot_rect = [h rect];
-		NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
-		NSPoint sampling_origin = NSMakePoint(hotspot_rect.left - bg_x, hotspot_rect.top - bg_y);
-		[self _drawPictureWithID:sliders stack:[card parent] displayRect:display_rect samplingRect:NSMakeRect(sampling_origin.x, sampling_origin.y, display_rect.size.width, display_rect.size.height)];
+		display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
+		NSRect sampling_rect = NSMakeRect(hotspot_rect.left - dome_slider_background_position.x, hotspot_rect.top - dome_slider_background_position.y,
+										 display_rect.size.width, display_rect.size.height);
+		[self _drawPictureWithID:sliders stack:[card parent] displayRect:display_rect samplingRect:sampling_rect];
 	}
 	
 	// end the screen update transaction
@@ -2923,12 +2931,12 @@ DEFINE_COMMAND(xbisland190_opencard) {
 }
 
 DEFINE_COMMAND(xbisland190_resetsliders) {
-	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	dome_slider_background_position.x = 200;
 	[self resetSlidersForDome:@"bdome"];
 }
 
 DEFINE_COMMAND(xbisland190_slidermd) {
-	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	dome_slider_background_position.x = 200;
 	[self handleSliderDragForDome:@"bdome"];
 }
 
@@ -2957,12 +2965,12 @@ DEFINE_COMMAND(xgisland25_opencard) {
 }
 
 DEFINE_COMMAND(xgisland25_resetsliders) {
-	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	dome_slider_background_position.x = 200;
 	[self resetSlidersForDome:@"gdome"];
 }
 
 DEFINE_COMMAND(xgisland25_slidermd) {
-	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	dome_slider_background_position.x = 200;
 	[self handleSliderDragForDome:@"gdome"];
 }
 
@@ -2983,12 +2991,12 @@ DEFINE_COMMAND(xjisland3500_domecheck) {
 }
 
 DEFINE_COMMAND(xjdome25_resetsliders) {
-	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	dome_slider_background_position.x = 200;
 	[self resetSlidersForDome:@"jdome"];
 }
 
 DEFINE_COMMAND(xjdome25_slidermd) {
-	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	dome_slider_background_position.x = 200;
 	[self handleSliderDragForDome:@"jdome"];
 }
 
@@ -3017,12 +3025,12 @@ DEFINE_COMMAND(xpisland25_opencard) {
 }
 
 DEFINE_COMMAND(xpisland25_resetsliders) {
-	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 198);
+	dome_slider_background_position.x = 198;
 	[self resetSlidersForDome:@"pdome"];
 }
 
 DEFINE_COMMAND(xpisland25_slidermd) {
-	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 198);
+	dome_slider_background_position.x = 198;
 	[self handleSliderDragForDome:@"pdome"];
 }
 
@@ -3051,12 +3059,12 @@ DEFINE_COMMAND(xtisland5056_opencard) {
 }
 
 DEFINE_COMMAND(xtisland5056_resetsliders) {
-	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	dome_slider_background_position.x = 200;
 	[self resetSlidersForDome:@"tdome"];
 }
 
 DEFINE_COMMAND(xtisland5056_slidermd) {
-	RXEngineSetUInt32(@"rendering.dome_slider_background_x", 200);
+	dome_slider_background_position.x = 200;
 	[self handleSliderDragForDome:@"tdome"];
 }
 
