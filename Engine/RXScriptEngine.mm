@@ -3184,7 +3184,7 @@ DEFINE_COMMAND(xtakeit) {
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@core position of mouse is <%u, %u>", logPrefix, core_position.left, core_position.top);
 #endif
 	
-	NSRect grid_rect = NSMakeRect(135, 25, marble_offset_matrix[0][4] + 13 - 135, marble_offset_matrix[1][4] + 13 - 25);
+	NSRect grid_rect = NSMakeRect(135, 25, marble_offset_matrix[0][4] + 13 * 5 - 135, marble_offset_matrix[1][4] + 13 * 5 - 25);
 	NSPoint core_rect_ns = NSMakePoint(core_position.left, core_position.top);
 	
 	if (NSPointInRect(core_rect_ns, grid_rect)) {
@@ -3192,13 +3192,13 @@ DEFINE_COMMAND(xtakeit) {
 		if (core_position.left < marble_offset_matrix[0][0] + 5 * 13)
 			marble_x = (core_position.left - marble_offset_matrix[0][0]) / 13;
 		else if (core_position.left < marble_offset_matrix[0][1] + 5 * 13)
-			marble_x = (core_position.left - marble_offset_matrix[0][1]) / 13;
+			marble_x = 5 + (core_position.left - marble_offset_matrix[0][1]) / 13;
 		else if (core_position.left < marble_offset_matrix[0][2] + 5 * 13)
-			marble_x = (core_position.left - marble_offset_matrix[0][2]) / 13;
+			marble_x = 10 + (core_position.left - marble_offset_matrix[0][2]) / 13;
 		else if (core_position.left < marble_offset_matrix[0][3] + 5 * 13)
-			marble_x = (core_position.left - marble_offset_matrix[0][3]) / 13;
+			marble_x = 15 + (core_position.left - marble_offset_matrix[0][3]) / 13;
 		else if (core_position.left < marble_offset_matrix[0][4] + 5 * 13)
-			marble_x = (core_position.left - marble_offset_matrix[0][4]) / 13;
+			marble_x = 20 + (core_position.left - marble_offset_matrix[0][4]) / 13;
 		else
 			marble_x = UINT32_MAX;
 		
@@ -3206,13 +3206,13 @@ DEFINE_COMMAND(xtakeit) {
 		if (core_position.top < marble_offset_matrix[1][0] + 5 * 13)
 			marble_y = (core_position.top - marble_offset_matrix[1][0]) / 13;
 		else if (core_position.top < marble_offset_matrix[1][1] + 5 * 13)
-			marble_y = (core_position.top - marble_offset_matrix[1][1]) / 13;
+			marble_y = 5 + (core_position.top - marble_offset_matrix[1][1]) / 13;
 		else if (core_position.top < marble_offset_matrix[1][2] + 5 * 13)
-			marble_y = (core_position.top - marble_offset_matrix[1][2]) / 13;
+			marble_y = 10 + (core_position.top - marble_offset_matrix[1][2]) / 13;
 		else if (core_position.top < marble_offset_matrix[1][3] + 5 * 13)
-			marble_y = (core_position.top - marble_offset_matrix[1][3]) / 13;
+			marble_y = 15 + (core_position.top - marble_offset_matrix[1][3]) / 13;
 		else if (core_position.top < marble_offset_matrix[1][4] + 5 * 13)
-			marble_y = (core_position.top - marble_offset_matrix[1][4]) / 13;
+			marble_y = 20 + (core_position.top - marble_offset_matrix[1][4]) / 13;
 		else
 			marble_y = UINT32_MAX;
 		
