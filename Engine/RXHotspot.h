@@ -32,9 +32,11 @@
 - (void)setName:(NSString*)name;
 
 - (uint16_t)ID;
-- (rx_core_rect_t)rect;
 - (uint16_t)cursorID;
 - (NSDictionary*)script;
+
+- (rx_core_rect_t)coreFrame;
+- (void)setCoreFrame:(rx_core_rect_t)frame;
 
 - (NSRect)worldFrame;
 

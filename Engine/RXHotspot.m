@@ -109,8 +109,13 @@
 	return _ID;
 }
 
-- (rx_core_rect_t)rect {
+- (rx_core_rect_t)coreFrame {
 	return _rect;
+}
+
+- (void)setCoreFrame:(rx_core_rect_t)frame {
+	_rect = frame;
+	[self _updateWorldFrame:nil];
 }
 
 - (uint16_t)cursorID {

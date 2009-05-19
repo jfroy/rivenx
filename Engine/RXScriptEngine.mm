@@ -2713,7 +2713,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 		RXHotspot* h = (RXHotspot*)NSMapGet(hotspots_map, (void*)(k + min_id));
 		k++;
 		
-		rx_core_rect_t hotspot_rect = [h rect];
+		rx_core_rect_t hotspot_rect = [h coreFrame];
 		display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
 		NSRect sampling_rect = NSMakeRect(hotspot_rect.left - dome_slider_background_position.x, hotspot_rect.top - dome_slider_background_position.y,
 										 display_rect.size.width, display_rect.size.height);
@@ -3114,7 +3114,7 @@ DEFINE_COMMAND(xt7800_setup) {
 		return;
 	
 	hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], key);
-	rx_core_rect_t hotspot_rect = [hotspot rect];
+	rx_core_rect_t hotspot_rect = [hotspot coreFrame];
 	hotspot_rect.left += 3;
 	hotspot_rect.top += 3;
 	hotspot_rect.right += 3;
@@ -3222,6 +3222,13 @@ DEFINE_COMMAND(xtakeit) {
 #if defined(DEBUG)
 			RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@dropping marble at <%u, %u>", logPrefix, marble_pos >> 16, marble_pos & 0xFFFF);
 #endif
+			// move the marble's hotspot to the new base location
+			RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], marble_var);
+			core_position.left = marble_offset_matrix[0][marble_x / 5] + 13 * (marble_x % 5);
+			core_position.right = core_position.left + 13;
+			core_position.top = marble_offset_matrix[1][marble_y / 5] + 13 * (marble_y % 5);
+			core_position.bottom = core_position.top + 13;
+			[hotspot setCoreFrame:core_position];
 		}
 	}
 	
