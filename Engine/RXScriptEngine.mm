@@ -219,7 +219,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		@throw [NSException exceptionWithName:@"RXSystemResourceException" reason:@"Could not create the movie playback semaphore." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	}
 	
-	_renderStateSwapsEnabled = YES;
+	_screen_update_disable_counter = 0;
 	
 	// initialize gameplay support variables
 	
@@ -409,7 +409,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 	
 	// this is a bit of a hack, but disable automatic render state swaps while running screen update programs
-	_renderStateSwapsEnabled = NO;
+	_screen_update_disable_counter++;
 	
 	NSArray* programs = [[card events] objectForKey:RXScreenUpdateScriptKey];
 	uint32_t programCount = [programs count];
@@ -420,7 +420,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// re-enable render state swaps (they must be enabled if we just ran screen update programs)
-	_renderStateSwapsEnabled = YES;
+	_screen_update_disable_counter--;
 	
 #if defined(DEBUG)
 	[logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
@@ -432,9 +432,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// WARNING: THIS IS NOT THREAD SAFE, BUT WILL NOT INTERFERE WITH THE RENDER THREAD NEGATIVELY
 	
 	// if swaps are disabled, return immediatly
-	if (!_renderStateSwapsEnabled) {
+	if (_screen_update_disable_counter > 0) {
 #if defined(DEBUG)
-		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"render state swap request ignored because swapping is disabled");
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"screen update command dropped because updates are disabled");
 #endif
 		return;
 	}	
@@ -1349,20 +1349,20 @@ static NSMapTable* _riven_external_command_dispatch_map;
 - (void)_opcode_disableAutomaticSwaps:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling render state swaps", logPrefix);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling screen updates", logPrefix);
 #endif
-	_renderStateSwapsEnabled = NO;
+	_screen_update_disable_counter++;
 }
 
 // 21
 - (void)_opcode_enableAutomaticSwaps:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling render state swaps", logPrefix);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling screen updates", logPrefix);
 #endif
 	
 	// swap
-	_renderStateSwapsEnabled = YES;
+	_screen_update_disable_counter--;
 	[self _swapRenderState];
 }
 
@@ -3133,6 +3133,11 @@ DEFINE_COMMAND(xdrawmarbles) {
 	[self _drawMarbleWithKey:@"tyellow" marbleEnum:YELLOW_MARBLE bitmapID:yellow_marble_tBMP activeMarble:active_marble];
 }
 
+static const uint32_t marble_offset_matrix[2][5] = {
+	{135, 203, 271, 339, 407},
+	{25, 93, 160, 228, 296},
+};
+
 DEFINE_COMMAND(xtakeit) {
 	// themarble + t<color> variables probably should be used to keep track of state
 	RXGameState* gs = [g_world gameState];
@@ -3161,7 +3166,9 @@ DEFINE_COMMAND(xtakeit) {
 		abort();
 	
 	// draw the marbles to reflect the new state
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
 	DISPATCH_EXTERNAL0(xdrawmarbles);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 	
 	// track the mouse until the mouse button is released
 	NSRect mouse_vector = [controller mouseVector];
@@ -3174,20 +3181,55 @@ DEFINE_COMMAND(xtakeit) {
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@core position of mouse is <%u, %u>", logPrefix, core_position.left, core_position.top);
 #endif
-	if (core_position.left >= 135 && core_position.top >= 25) {
-		uint32_t marble_pos = ((uint32_t)(core_position.left - 135) / 13) << 16;
-		marble_pos |= (uint32_t)(core_position.top - 25) / 13;
-		[gs setUnsigned32:marble_pos forKey:marble_var];
+	
+	NSRect grid_rect = NSMakeRect(135, 25, marble_offset_matrix[0][4] + 13 - 135, marble_offset_matrix[1][4] + 13 - 25);
+	NSPoint core_rect_ns = NSMakePoint(core_position.left, core_position.top);
+	
+	if (NSPointInRect(core_rect_ns, grid_rect)) {
+		uint32_t marble_x;		
+		if (core_position.left < marble_offset_matrix[0][0] + 5 * 13)
+			marble_x = (core_position.left - marble_offset_matrix[0][0]) / 13;
+		else if (core_position.left < marble_offset_matrix[0][1] + 5 * 13)
+			marble_x = (core_position.left - marble_offset_matrix[0][1]) / 13;
+		else if (core_position.left < marble_offset_matrix[0][2] + 5 * 13)
+			marble_x = (core_position.left - marble_offset_matrix[0][2]) / 13;
+		else if (core_position.left < marble_offset_matrix[0][3] + 5 * 13)
+			marble_x = (core_position.left - marble_offset_matrix[0][3]) / 13;
+		else if (core_position.left < marble_offset_matrix[0][4] + 5 * 13)
+			marble_x = (core_position.left - marble_offset_matrix[0][4]) / 13;
+		else
+			marble_x = UINT32_MAX;
+		
+		uint32_t marble_y;
+		if (core_position.top < marble_offset_matrix[1][0] + 5 * 13)
+			marble_y = (core_position.top - marble_offset_matrix[1][0]) / 13;
+		else if (core_position.top < marble_offset_matrix[1][1] + 5 * 13)
+			marble_y = (core_position.top - marble_offset_matrix[1][1]) / 13;
+		else if (core_position.top < marble_offset_matrix[1][2] + 5 * 13)
+			marble_y = (core_position.top - marble_offset_matrix[1][2]) / 13;
+		else if (core_position.top < marble_offset_matrix[1][3] + 5 * 13)
+			marble_y = (core_position.top - marble_offset_matrix[1][3]) / 13;
+		else if (core_position.top < marble_offset_matrix[1][4] + 5 * 13)
+			marble_y = (core_position.top - marble_offset_matrix[1][4]) / 13;
+		else
+			marble_y = UINT32_MAX;
+		
+		if (marble_x != UINT32_MAX && marble_y != UINT32_MAX) {
+			uint32_t marble_pos = marble_x << 16 | marble_y;
+			[gs setUnsigned32:marble_pos forKey:marble_var];
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@dropping marble at <%u, %u>", logPrefix, marble_pos >> 16, marble_pos & 0xFFFF);
+			RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@dropping marble at <%u, %u>", logPrefix, marble_pos >> 16, marble_pos & 0xFFFF);
 #endif
+		}
 	}
 	
 	// we are no longer dragging any marble
 	[gs setUnsigned32:0 forKey:@"themarble"];
 	
 	// draw the marbles to reflect the new state
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
 	DISPATCH_EXTERNAL0(xdrawmarbles);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }
 
 @end

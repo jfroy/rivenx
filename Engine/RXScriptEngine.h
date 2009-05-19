@@ -39,7 +39,7 @@
 	semaphore_t _moviePlaybackSemaphore;
 	RXSoundGroup* _synthesizedSoundGroup;
 	
-	BOOL _renderStateSwapsEnabled;
+	int32_t _screen_update_disable_counter;
 	BOOL _didActivatePLST;
 	BOOL _didActivateSLST;
 	
