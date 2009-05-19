@@ -420,7 +420,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	// re-enable render state swaps (they must be enabled if we just ran screen update programs)
-	_screen_update_disable_counter--;
+	if (_screen_update_disable_counter > 0)
+		_screen_update_disable_counter--;
 	
 #if defined(DEBUG)
 	[logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
@@ -428,22 +429,23 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
 }
 
-- (void)_swapRenderState {
-	// WARNING: THIS IS NOT THREAD SAFE, BUT WILL NOT INTERFERE WITH THE RENDER THREAD NEGATIVELY
+- (void)_updateScreen {
+	// WARNING: THIS IS NOT THREAD SAFE, BUT DOES NOT INTERFERE WITH THE RENDER THREAD
 	
-	// if swaps are disabled, return immediatly
+	// if screen updates are disabled, return immediatly
 	if (_screen_update_disable_counter > 0) {
 #if defined(DEBUG)
-		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"screen update command dropped because updates are disabled");
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    screen update command dropped because updates are disabled", logPrefix);
 #endif
 		return;
-	}	
-#if defined(DEBUG)
-	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"swapping render state");
-#endif
+	}
 
 	// run screen update programs
 	[self _runScreenUpdatePrograms];
+	
+	// some cards disable screen updates during screen update programs, so we need to decrement the counter here to function properly; see tspit 229 open card
+	if (_screen_update_disable_counter > 0)
+		_screen_update_disable_counter--;
 	
 	// the script handler will set our front render state to our back render state at the appropriate moment; when this returns, the swap has occured (front == back)
 	[controller update];
@@ -1003,7 +1005,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[picture release];
 	
 	// swap the render state; this always marks the back render state as modified
-	[self _swapRenderState];
+	[self _updateScreen];
 }
 
 - (void)_drawPictureWithID:(uint16_t)ID stack:(RXStack*)stack displayRect:(NSRect)display_rect samplingRect:(NSRect)sampling_rect {
@@ -1361,9 +1363,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling screen updates", logPrefix);
 #endif
 	
-	// swap
-	_screen_update_disable_counter--;
-	[self _swapRenderState];
+	if (_screen_update_disable_counter > 0)
+		_screen_update_disable_counter--;
+	
+	// this command also triggers a screen update (which may be dropped if the counter is still not 0)
+	[self _updateScreen];
 }
 
 // 24
@@ -1573,7 +1577,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[picture release];
 	
 	// opcode 39 triggers a render state swap
-	[self _swapRenderState];
+	[self _updateScreen];
 	
 	// indicate that an PLST record has been activated (to manage the automatic activation of PLST record 1 if none has been)
 	_didActivatePLST = YES;
@@ -3166,8 +3170,6 @@ DEFINE_COMMAND(xtakeit) {
 		abort();
 	
 	// draw the marbles to reflect the new state
-	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
-	DISPATCH_EXTERNAL0(xdrawmarbles);
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 	
 	// track the mouse until the mouse button is released
@@ -3227,8 +3229,6 @@ DEFINE_COMMAND(xtakeit) {
 	[gs setUnsigned32:0 forKey:@"themarble"];
 	
 	// draw the marbles to reflect the new state
-	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
-	DISPATCH_EXTERNAL0(xdrawmarbles);
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 }
 
