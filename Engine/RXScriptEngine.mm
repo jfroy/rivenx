@@ -3096,13 +3096,14 @@ DEFINE_COMMAND(xt7800_setup) {
 	// themarble + t<color> variables probably should be used to keep track of state
 	
 	NSDictionary* marble_map = [[g_world extraBitmapsDescriptor] objectForKey:@"Marbles"];
-	
 	blue_marble_tBMP = [[marble_map objectForKey:@"Blue"] unsignedShortValue];
 	green_marble_tBMP = [[marble_map objectForKey:@"Green"] unsignedShortValue];
 	orange_marble_tBMP = [[marble_map objectForKey:@"Orange"] unsignedShortValue];
 	purple_marble_tBMP = [[marble_map objectForKey:@"Purple"] unsignedShortValue];
 	red_marble_tBMP = [[marble_map objectForKey:@"Red"] unsignedShortValue];
 	yellow_marble_tBMP = [[marble_map objectForKey:@"Yellow"] unsignedShortValue];
+	
+	
 }
 
 - (void)_drawMarbleWithKey:(NSString*)key marbleEnum:(rx_fire_marble_t)marble bitmapID:(uint16_t)bitmap_id activeMarble:(rx_fire_marble_t)active_marble {
@@ -3115,10 +3116,10 @@ DEFINE_COMMAND(xt7800_setup) {
 	
 	hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], key);
 	rx_core_rect_t hotspot_rect = [hotspot coreFrame];
-	hotspot_rect.left += 3;
-	hotspot_rect.top += 3;
-	hotspot_rect.right += 3;
-	hotspot_rect.bottom += 3;
+	hotspot_rect.left += 2;
+	hotspot_rect.top += 2;
+	hotspot_rect.right += 2;
+	hotspot_rect.bottom += 2;
 	
 	display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
 	[self _drawPictureWithID:bitmap_id archive:extra_bitmaps_archive displayRect:display_rect samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
@@ -3141,6 +3142,8 @@ static const uint32_t marble_offset_matrix[2][5] = {
 	{135, 203, 271, 339, 407},
 	{25, 93, 160, 228, 296},
 };
+
+static const float marble_size = 13.48f;
 
 DEFINE_COMMAND(xtakeit) {
 	// themarble + t<color> variables probably should be used to keep track of state
@@ -3184,35 +3187,38 @@ DEFINE_COMMAND(xtakeit) {
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@core position of mouse is <%u, %u>", logPrefix, core_position.left, core_position.top);
 #endif
 	
-	NSRect grid_rect = NSMakeRect(135, 25, marble_offset_matrix[0][4] + 13 * 5 - 135, marble_offset_matrix[1][4] + 13 * 5 - 25);
+	NSRect grid_rect = NSMakeRect(marble_offset_matrix[0][0],
+								  marble_offset_matrix[1][0],
+								  marble_offset_matrix[0][4] + marble_size * 5 - marble_offset_matrix[0][0],
+								  marble_offset_matrix[1][4] + marble_size * 5 - marble_offset_matrix[1][0]);
 	NSPoint core_rect_ns = NSMakePoint(core_position.left, core_position.top);
 	
 	if (NSPointInRect(core_rect_ns, grid_rect)) {
 		uint32_t marble_x;		
-		if (core_position.left < marble_offset_matrix[0][0] + 5 * 13)
-			marble_x = (core_position.left - marble_offset_matrix[0][0]) / 13;
-		else if (core_position.left < marble_offset_matrix[0][1] + 5 * 13)
-			marble_x = 5 + (core_position.left - marble_offset_matrix[0][1]) / 13;
-		else if (core_position.left < marble_offset_matrix[0][2] + 5 * 13)
-			marble_x = 10 + (core_position.left - marble_offset_matrix[0][2]) / 13;
-		else if (core_position.left < marble_offset_matrix[0][3] + 5 * 13)
-			marble_x = 15 + (core_position.left - marble_offset_matrix[0][3]) / 13;
-		else if (core_position.left < marble_offset_matrix[0][4] + 5 * 13)
-			marble_x = 20 + (core_position.left - marble_offset_matrix[0][4]) / 13;
+		if (core_position.left < marble_offset_matrix[0][0] + 5 * marble_size)
+			marble_x = (core_position.left - marble_offset_matrix[0][0]) / marble_size;
+		else if (core_position.left < marble_offset_matrix[0][1] + 5 * marble_size)
+			marble_x = 5 + (core_position.left - marble_offset_matrix[0][1]) / marble_size;
+		else if (core_position.left < marble_offset_matrix[0][2] + 5 * marble_size)
+			marble_x = 10 + (core_position.left - marble_offset_matrix[0][2]) / marble_size;
+		else if (core_position.left < marble_offset_matrix[0][3] + 5 * marble_size)
+			marble_x = 15 + (core_position.left - marble_offset_matrix[0][3]) / marble_size;
+		else if (core_position.left < marble_offset_matrix[0][4] + 5 * marble_size)
+			marble_x = 20 + (core_position.left - marble_offset_matrix[0][4]) / marble_size;
 		else
 			marble_x = UINT32_MAX;
 		
 		uint32_t marble_y;
-		if (core_position.top < marble_offset_matrix[1][0] + 5 * 13)
-			marble_y = (core_position.top - marble_offset_matrix[1][0]) / 13;
-		else if (core_position.top < marble_offset_matrix[1][1] + 5 * 13)
-			marble_y = 5 + (core_position.top - marble_offset_matrix[1][1]) / 13;
-		else if (core_position.top < marble_offset_matrix[1][2] + 5 * 13)
-			marble_y = 10 + (core_position.top - marble_offset_matrix[1][2]) / 13;
-		else if (core_position.top < marble_offset_matrix[1][3] + 5 * 13)
-			marble_y = 15 + (core_position.top - marble_offset_matrix[1][3]) / 13;
-		else if (core_position.top < marble_offset_matrix[1][4] + 5 * 13)
-			marble_y = 20 + (core_position.top - marble_offset_matrix[1][4]) / 13;
+		if (core_position.top < marble_offset_matrix[1][0] + 5 * marble_size)
+			marble_y = (core_position.top - marble_offset_matrix[1][0]) / marble_size;
+		else if (core_position.top < marble_offset_matrix[1][1] + 5 * marble_size)
+			marble_y = 5 + (core_position.top - marble_offset_matrix[1][1]) / marble_size;
+		else if (core_position.top < marble_offset_matrix[1][2] + 5 * marble_size)
+			marble_y = 10 + (core_position.top - marble_offset_matrix[1][2]) / marble_size;
+		else if (core_position.top < marble_offset_matrix[1][3] + 5 * marble_size)
+			marble_y = 15 + (core_position.top - marble_offset_matrix[1][3]) / marble_size;
+		else if (core_position.top < marble_offset_matrix[1][4] + 5 * marble_size)
+			marble_y = 20 + (core_position.top - marble_offset_matrix[1][4]) / marble_size;
 		else
 			marble_y = UINT32_MAX;
 		
@@ -3224,10 +3230,10 @@ DEFINE_COMMAND(xtakeit) {
 #endif
 			// move the marble's hotspot to the new base location
 			RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], marble_var);
-			core_position.left = marble_offset_matrix[0][marble_x / 5] + 13 * (marble_x % 5);
-			core_position.right = core_position.left + 13;
-			core_position.top = marble_offset_matrix[1][marble_y / 5] + 13 * (marble_y % 5);
-			core_position.bottom = core_position.top + 13;
+			core_position.left = marble_offset_matrix[0][marble_x / 5] + marble_size * (marble_x % 5);
+			core_position.right = core_position.left + marble_size;
+			core_position.top = marble_offset_matrix[1][marble_y / 5] + marble_size * (marble_y % 5);
+			core_position.bottom = core_position.top + marble_size;
 			[hotspot setCoreFrame:core_position];
 		}
 	}
