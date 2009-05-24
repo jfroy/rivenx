@@ -3223,6 +3223,7 @@ DEFINE_COMMAND(xtakeit) {
 	NSPoint core_rect_ns = NSMakePoint(core_position.left, core_position.top);
 	
 	// new marble position; UINT32_MAX indicates "invalid" and will cause the marble to reset to its initial position
+	uint32_t marble_pos;
 	uint32_t new_marble_pos = UINT32_MAX;
 	uint32_t marble_x = UINT32_MAX;
 	uint32_t marble_y = UINT32_MAX;
@@ -3257,7 +3258,6 @@ DEFINE_COMMAND(xtakeit) {
 			new_marble_pos = (marble_x + 1) << 16 | (marble_y + 1);
 			
 			// check if a marble is already there; if so, reset the marble to its previous position
-			uint32_t marble_pos;
 			marble_pos = [gs unsigned32ForKey:@"tblue"];
 			if (marble_pos == new_marble_pos && ![marble_var isEqualToString:@"tblue"])
 				new_marble_pos = [gs unsigned32ForKey:marble_var];
@@ -3320,6 +3320,46 @@ DEFINE_COMMAND(xtakeit) {
 	
 	// draw the marbles to reflect the new state
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+}
+
+DEFINE_COMMAND(xt7500_checkmarbles) {
+	RXGameState* gs = [g_world gameState];
+	uint32_t marble_pos;
+	
+	// check if the marble configuration is correct
+	BOOL correct_configuration = NO;
+	marble_pos = [gs unsigned32ForKey:@"tblue"];
+	if (marble_pos == (22 << 16 | 1)) {
+		marble_pos = [gs unsigned32ForKey:@"tgreen"];
+		if (marble_pos == (16 << 16 | 1)) {
+			marble_pos = [gs unsigned32ForKey:@"torange"];
+			if (marble_pos == (6 << 16 | 22)) {
+				marble_pos = [gs unsigned32ForKey:@"tviolet"];
+				if (marble_pos == (2 << 16 | 4)) {
+					marble_pos = [gs unsigned32ForKey:@"tred"];
+					if (marble_pos == (9 << 16 | 17)) {
+						marble_pos = [gs unsigned32ForKey:@"tyellow"];
+						if (marble_pos == 0) {
+							correct_configuration = YES;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	if (correct_configuration) {
+		[gs setUnsigned32:1 forKey:@"apower"];
+		
+		// the correct marble configuration resets all the marbles to their initial position
+		[gs setUnsigned32:0 forKey:@"tblue"];
+		[gs setUnsigned32:0 forKey:@"tgreen"];
+		[gs setUnsigned32:0 forKey:@"torange"];
+		[gs setUnsigned32:0 forKey:@"tviolet"];
+		[gs setUnsigned32:0 forKey:@"tred"];
+		[gs setUnsigned32:0 forKey:@"tyellow"];
+	} else
+		[gs setUnsigned32:0 forKey:@"apower"];
 }
 
 @end
