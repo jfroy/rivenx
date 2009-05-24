@@ -3139,23 +3139,19 @@ DEFINE_COMMAND(xt7800_setup) {
 	[self _initializeMarbleHotspotWithVariable:@"tyellow" initialRectPointer:&yellow_marble_initial_rect];
 }
 
-- (void)_drawMarbleWithKey:(NSString*)key marbleEnum:(rx_fire_marble_t)marble bitmapID:(uint16_t)bitmap_id activeMarble:(rx_fire_marble_t)active_marble {
-	MHKArchive* extra_bitmaps_archive = [g_world extraBitmapsArchive];
-	NSRect display_rect;
-	RXHotspot* hotspot;
-	
+- (void)_drawMarbleWitVariable:(NSString*)marble_var marbleEnum:(rx_fire_marble_t)marble bitmapID:(uint16_t)bitmap_id activeMarble:(rx_fire_marble_t)active_marble {
 	if (active_marble == marble)
 		return;
 	
-	hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], key);
+	RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], marble_var);
 	rx_core_rect_t hotspot_rect = [hotspot coreFrame];
 	hotspot_rect.left += 3;
 	hotspot_rect.top += 3;
 	hotspot_rect.right += 3;
 	hotspot_rect.bottom += 3;
 	
-	display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
-	[self _drawPictureWithID:bitmap_id archive:extra_bitmaps_archive displayRect:display_rect samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
+	NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
+	[self _drawPictureWithID:bitmap_id archive:[g_world extraBitmapsArchive] displayRect:display_rect samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 }
 
 DEFINE_COMMAND(xdrawmarbles) {
@@ -3163,12 +3159,12 @@ DEFINE_COMMAND(xdrawmarbles) {
 	rx_fire_marble_t active_marble = (rx_fire_marble_t)[gs unsigned32ForKey:@"themarble"];
 	
 	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
-	[self _drawMarbleWithKey:@"tblue" marbleEnum:BLUE_MARBLE bitmapID:blue_marble_tBMP activeMarble:active_marble];
-	[self _drawMarbleWithKey:@"tgreen" marbleEnum:GREEN_MARBLE bitmapID:green_marble_tBMP activeMarble:active_marble];
-	[self _drawMarbleWithKey:@"torange" marbleEnum:ORANGE_MARBLE bitmapID:orange_marble_tBMP activeMarble:active_marble];
-	[self _drawMarbleWithKey:@"tviolet" marbleEnum:PURPLE_MARBLE bitmapID:violet_marble_tBMP activeMarble:active_marble];
-	[self _drawMarbleWithKey:@"tred" marbleEnum:RED_MARBLE bitmapID:red_marble_tBMP activeMarble:active_marble];
-	[self _drawMarbleWithKey:@"tyellow" marbleEnum:YELLOW_MARBLE bitmapID:yellow_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWitVariable:@"tblue" marbleEnum:BLUE_MARBLE bitmapID:blue_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWitVariable:@"tgreen" marbleEnum:GREEN_MARBLE bitmapID:green_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWitVariable:@"torange" marbleEnum:ORANGE_MARBLE bitmapID:orange_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWitVariable:@"tviolet" marbleEnum:PURPLE_MARBLE bitmapID:violet_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWitVariable:@"tred" marbleEnum:RED_MARBLE bitmapID:red_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWitVariable:@"tyellow" marbleEnum:YELLOW_MARBLE bitmapID:yellow_marble_tBMP activeMarble:active_marble];
 }
 
 DEFINE_COMMAND(xtakeit) {
