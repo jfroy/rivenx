@@ -3222,8 +3222,14 @@ DEFINE_COMMAND(xtakeit) {
 								  marble_offset_matrix[1][4] + marble_size * 5 - marble_offset_matrix[1][0]);
 	NSPoint core_rect_ns = NSMakePoint(core_position.left, core_position.top);
 	
+	// new marble position; UINT32_MAX indicates "invalid" and will cause the marble to reset to its initial position
+	uint32_t new_marble_pos = UINT32_MAX;
+	uint32_t marble_x = UINT32_MAX;
+	uint32_t marble_y = UINT32_MAX;
+	
 	if (NSPointInRect(core_rect_ns, grid_rect)) {
-		uint32_t marble_x;		
+		// we're inside the grid, determine on which cell
+		
 		if (core_position.left < marble_offset_matrix[0][0] + 5 * marble_size)
 			marble_x = (core_position.left - marble_offset_matrix[0][0]) / marble_size;
 		else if (core_position.left < marble_offset_matrix[0][1] + 5 * marble_size)
@@ -3234,10 +3240,7 @@ DEFINE_COMMAND(xtakeit) {
 			marble_x = 15 + (core_position.left - marble_offset_matrix[0][3]) / marble_size;
 		else if (core_position.left < marble_offset_matrix[0][4] + 5 * marble_size)
 			marble_x = 20 + (core_position.left - marble_offset_matrix[0][4]) / marble_size;
-		else
-			marble_x = UINT32_MAX;
 		
-		uint32_t marble_y;
 		if (core_position.top < marble_offset_matrix[1][0] + 5 * marble_size)
 			marble_y = (core_position.top - marble_offset_matrix[1][0]) / marble_size;
 		else if (core_position.top < marble_offset_matrix[1][1] + 5 * marble_size)
@@ -3248,35 +3251,71 @@ DEFINE_COMMAND(xtakeit) {
 			marble_y = 15 + (core_position.top - marble_offset_matrix[1][3]) / marble_size;
 		else if (core_position.top < marble_offset_matrix[1][4] + 5 * marble_size)
 			marble_y = 20 + (core_position.top - marble_offset_matrix[1][4]) / marble_size;
-		else
-			marble_y = UINT32_MAX;
 		
 		if (marble_x != UINT32_MAX && marble_y != UINT32_MAX) {
 			// store the marble position using a 1-based coordinate system to reserve 0 as the "receptacle"
-			uint32_t marble_pos = (marble_x + 1) << 16 | (marble_y + 1);
-			[gs setUnsigned32:marble_pos forKey:marble_var];
-#if defined(DEBUG)
-			RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@dropping marble at <%u, %u>", logPrefix, marble_pos >> 16, marble_pos & 0xFFFF);
-#endif
-			// move the marble's hotspot to the new base location
-			RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], marble_var);
-			core_position.left = marble_offset_matrix[0][marble_x / 5] + marble_size * (marble_x % 5);
-			core_position.right = core_position.left + marble_size;
-			core_position.top = marble_offset_matrix[1][marble_y / 5] + marble_size * (marble_y % 5);
-			core_position.bottom = core_position.top + marble_size;
-			[hotspot setCoreFrame:core_position];
-		}
-	} else {
-		// the marble was dropped somewhere invalid; the original engine resets it to its receptacle;
+			new_marble_pos = (marble_x + 1) << 16 | (marble_y + 1);
+			
+			// check if a marble is already there; if so, reset the marble to its previous position
+			uint32_t marble_pos;
+			marble_pos = [gs unsigned32ForKey:@"tblue"];
+			if (marble_pos == new_marble_pos && ![marble_var isEqualToString:@"tblue"])
+				new_marble_pos = [gs unsigned32ForKey:marble_var];
+			else {
+				marble_pos = [gs unsigned32ForKey:@"tgreen"];
+				if (marble_pos == new_marble_pos && ![marble_var isEqualToString:@"tgreen"])
+					new_marble_pos = [gs unsigned32ForKey:marble_var];
+				else {
+					marble_pos = [gs unsigned32ForKey:@"torange"];
+					if (marble_pos == new_marble_pos && ![marble_var isEqualToString:@"torange"])
+						new_marble_pos = [gs unsigned32ForKey:marble_var];
+					else {
+						marble_pos = [gs unsigned32ForKey:@"tviolet"];
+						if (marble_pos == new_marble_pos && ![marble_var isEqualToString:@"tviolet"])
+							new_marble_pos = [gs unsigned32ForKey:marble_var];
+						else {
+							marble_pos = [gs unsigned32ForKey:@"tred"];
+							if (marble_pos == new_marble_pos && ![marble_var isEqualToString:@"tred"])
+								new_marble_pos = [gs unsigned32ForKey:marble_var];
+							else {
+								marble_pos = [gs unsigned32ForKey:@"tyellow"];
+								if (marble_pos == new_marble_pos && ![marble_var isEqualToString:@"tyellow"])
+									new_marble_pos = [gs unsigned32ForKey:marble_var];
+							}
+						}
+					}
+				}
+			}
+		} else
+			new_marble_pos = [gs unsigned32ForKey:marble_var];
+	}
+	
+	// update the marble's position by moving its hotspot
+	RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], marble_var);
+	if (new_marble_pos == UINT32_MAX) {
+		// the marble was dropped somewhere outside the grid;
 		// set the marble variable to 0 to indicate the marble is in its receptacle
 		[gs setUnsigned32:0 forKey:marble_var];
 		
 		// reset the marble hotspot's core frame
-		RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], marble_var);
 		[hotspot setCoreFrame:initial_rect];
+	} else {
+		// set the new marble's position
+		[gs setUnsigned32:new_marble_pos forKey:marble_var];
+		
+		// update the convenience x and y position variables because new_marble_pos may have been changed
+		marble_x = (new_marble_pos >> 16) - 1;
+		marble_y = (new_marble_pos & 0xFFFF) - 1;
+		
+		// move the marble's hotspot to the new base location
+		core_position.left = marble_offset_matrix[0][marble_x / 5] + marble_size * (marble_x % 5);
+		core_position.right = core_position.left + marble_size;
+		core_position.top = marble_offset_matrix[1][marble_y / 5] + marble_size * (marble_y % 5);
+		core_position.bottom = core_position.top + marble_size;
+		[hotspot setCoreFrame:core_position];
 	}
 	
-	// we are no longer dragging any marble
+	// we are no longer dragging a marble
 	[gs setUnsigned32:0 forKey:@"themarble"];
 	
 	// draw the marbles to reflect the new state
