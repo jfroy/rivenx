@@ -130,15 +130,7 @@
 }
 
 - (void)cmd_dump:(NSArray*)arguments from:(CLIView*)sender {
-	if ([arguments count] < 1)
-		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"dump [game | engine]" userInfo:nil];
-	
-	if ([[arguments objectAtIndex:0] isEqualToString:@"game"])
-		[[g_world gameState] dump];
-	else if ([[arguments objectAtIndex:0] isEqualToString:@"engine"])
-		[g_world performSelector:@selector(_dumpEngineVariables)];
-	else
-		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"dump [game | engine]" userInfo:nil];
+	[[g_world cardRenderState] performSelector:@selector(exportCompositeFramebuffer)];
 }
 
 - (void)_nextJspitCard:(NSNotification*)notification {

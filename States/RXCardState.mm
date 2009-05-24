@@ -195,7 +195,7 @@ static void rx_release_owner_applier(const void* value, void* context) {
 	if (kerr != 0)
 		goto init_failure;
 	
-	_renderLock = OS_SPINLOCK_INIT;
+	_render_lock = OS_SPINLOCK_INIT;
 	_state_swap_lock = OS_SPINLOCK_INIT;
 	
 	// initialize all the rendering stuff (shaders, textures, buffers, VAOs)
@@ -962,7 +962,7 @@ init_failure:
 }
 
 - (void)enableMovie:(RXMovie*)movie {
-	OSSpinLockLock(&_renderLock);
+	OSSpinLockLock(&_render_lock);
 	
 	uint32_t index = [_active_movies indexOfObject:movie];
 	if (index != NSNotFound)
@@ -973,7 +973,7 @@ init_failure:
 	if (index == NSNotFound)
 		[[movie owner] retain];
 	
-	OSSpinLockUnlock(&_renderLock);
+	OSSpinLockUnlock(&_render_lock);
 	
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"enabled movie %@, back movie list count at %d", movie, [_active_movies count]);
@@ -982,7 +982,7 @@ init_failure:
 
 
 - (void)disableMovie:(RXMovie*)movie {
-	OSSpinLockLock(&_renderLock);
+	OSSpinLockLock(&_render_lock);
 	
 	uint32_t index = [_active_movies indexOfObject:movie];
 	if (index != NSNotFound) {
@@ -992,7 +992,7 @@ init_failure:
 		[_active_movies removeObjectAtIndex:index];
 	}
 	
-	OSSpinLockUnlock(&_renderLock);
+	OSSpinLockUnlock(&_render_lock);
 	
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled movie %@, back movie list count at %d", movie, [_active_movies count]);
@@ -1000,7 +1000,7 @@ init_failure:
 }
 
 - (void)disableAllMovies {
-	OSSpinLockLock(&_renderLock);
+	OSSpinLockLock(&_render_lock);
 	
 	NSEnumerator* movie_enum = [_active_movies objectEnumerator];
 	RXMovie* movie;
@@ -1011,7 +1011,7 @@ init_failure:
 	CFArrayApplyFunction((CFArrayRef)_active_movies, CFRangeMake(0, [_active_movies count]), rx_release_owner_applier, self);
 	[_active_movies removeAllObjects];
 	
-	OSSpinLockUnlock(&_renderLock);
+	OSSpinLockUnlock(&_render_lock);
 	
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled all movies, back movie list count at %d", [_active_movies count]);
@@ -1077,7 +1077,7 @@ init_failure:
 	struct rx_card_state_render_state* previous_front_render_state = _front_render_state;
 	
 	// take the render lock
-	OSSpinLockLock(&_renderLock);
+	OSSpinLockLock(&_render_lock);
 	
 	if (_front_render_state->refresh_static) {
 		// we need to merge the back render state into the front render state because we swapped before we could even render a single frame
@@ -1099,7 +1099,7 @@ init_failure:
 	OSSpinLockUnlock(&_state_swap_lock);
 	
 	// we can resume rendering now
-	OSSpinLockUnlock(&_renderLock);
+	OSSpinLockUnlock(&_render_lock);
 	
 	// set the back render state to the old front render state
 	_back_render_state = previous_front_render_state;
@@ -1464,7 +1464,7 @@ init_failure:
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
-	OSSpinLockLock(&_renderLock);
+	OSSpinLockLock(&_render_lock);
 	
 	// alias the render context state object pointer
 	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
@@ -1601,7 +1601,7 @@ init_failure:
 	
 exit_render:
 	[p release];
-	OSSpinLockUnlock(&_renderLock);
+	OSSpinLockUnlock(&_render_lock);
 }
 
 - (void)_renderInGlobalContext:(CGLContextObj)cgl_ctx {
@@ -1881,7 +1881,7 @@ exit_render:
 
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
-	OSSpinLockLock(&_renderLock);
+	OSSpinLockLock(&_render_lock);
 	
 	// we need an inner pool within the scope of that lock, or we run the risk of autoreleased enumerators causing objects that should be deallocated on the main thread not to be
 	NSAutoreleasePool* p = [NSAutoreleasePool new];
@@ -1894,7 +1894,39 @@ exit_render:
 	
 exit_flush_tasks:
 	[p release];
-	OSSpinLockUnlock(&_renderLock);
+	OSSpinLockUnlock(&_render_lock);
+}
+
+- (void)exportCompositeFramebuffer {
+	CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+	CGLLockContext(cgl_ctx);
+	
+	NSBitmapImageRep* image_rep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
+																		  pixelsWide:kRXCardViewportSize.width
+																		  pixelsHigh:kRXCardViewportSize.height
+																	   bitsPerSample:8
+																	 samplesPerPixel:4
+																			hasAlpha:YES
+																			isPlanar:NO
+																	  colorSpaceName:NSDeviceRGBColorSpace
+																		bitmapFormat:NSAlphaNonpremultipliedBitmapFormat
+																		 bytesPerRow:kRXRendererViewportSize.width * 4
+																		bitsPerPixel:32];
+	
+	glActiveTexture(GL_TEXTURE0); glReportError();
+	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
+	glGetTexImage(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, [image_rep bitmapData]);
+	CGLUnlockContext(cgl_ctx);
+	
+	OSSpinLockLock(&_state_swap_lock);
+	RXCardDescriptor* desc = [[_front_render_state->card descriptor] retain];
+	OSSpinLockUnlock(&_state_swap_lock);
+	
+	NSString* png_path = [[[NSSearchPathForDirectoriesInDomains(NSDesktopDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:[desc description]] stringByAppendingPathExtension:@"png"];
+	NSData* png_data = [image_rep representationUsingType:NSPNGFileType properties:nil];
+	[png_data writeToFile:png_path options:0 error:NULL];
+	
+	[image_rep release];
 }
 
 #pragma mark -

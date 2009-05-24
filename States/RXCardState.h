@@ -56,7 +56,7 @@ struct rx_transition_program {
 	struct rx_card_state_render_state* volatile _front_render_state;
 	struct rx_card_state_render_state* volatile _back_render_state;
 	NSMutableArray* _active_movies;
-	OSSpinLock volatile _renderLock;
+	OSSpinLock volatile _render_lock;
 	OSSpinLock volatile _state_swap_lock;
 	
 	// mouse and hotspots handling

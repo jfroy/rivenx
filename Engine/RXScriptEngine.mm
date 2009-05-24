@@ -3116,10 +3116,10 @@ DEFINE_COMMAND(xt7800_setup) {
 	
 	hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], key);
 	rx_core_rect_t hotspot_rect = [hotspot coreFrame];
-	hotspot_rect.left += 2;
-	hotspot_rect.top += 2;
-	hotspot_rect.right += 2;
-	hotspot_rect.bottom += 2;
+	hotspot_rect.left += 3;
+	hotspot_rect.top += 3;
+	hotspot_rect.right += 3;
+	hotspot_rect.bottom += 3;
 	
 	display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
 	[self _drawPictureWithID:bitmap_id archive:extra_bitmaps_archive displayRect:display_rect samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
@@ -3139,11 +3139,11 @@ DEFINE_COMMAND(xdrawmarbles) {
 }
 
 static const uint32_t marble_offset_matrix[2][5] = {
-	{135, 203, 271, 339, 407},
-	{25, 93, 160, 228, 296},
+	{134, 202, 270, 338, 406},
+	{24, 92, 159, 227, 295},
 };
 
-static const float marble_size = 13.48f;
+static const float marble_size = 13.5f;
 
 DEFINE_COMMAND(xtakeit) {
 	// themarble + t<color> variables probably should be used to keep track of state
