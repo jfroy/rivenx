@@ -3099,11 +3099,17 @@ DEFINE_COMMAND(xt7800_setup) {
 	blue_marble_tBMP = [[marble_map objectForKey:@"Blue"] unsignedShortValue];
 	green_marble_tBMP = [[marble_map objectForKey:@"Green"] unsignedShortValue];
 	orange_marble_tBMP = [[marble_map objectForKey:@"Orange"] unsignedShortValue];
-	purple_marble_tBMP = [[marble_map objectForKey:@"Purple"] unsignedShortValue];
+	violet_marble_tBMP = [[marble_map objectForKey:@"Violet"] unsignedShortValue];
 	red_marble_tBMP = [[marble_map objectForKey:@"Red"] unsignedShortValue];
 	yellow_marble_tBMP = [[marble_map objectForKey:@"Yellow"] unsignedShortValue];
 	
-	
+	NSMapTable* hotspots_map = [card hotspotsNameMap];
+	blue_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"tblue") coreFrame];
+	green_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"tgreen") coreFrame];
+	orange_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"torange") coreFrame];
+	violet_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"tviolet") coreFrame];
+	red_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"tred") coreFrame];
+	yellow_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"tyellow") coreFrame];
 }
 
 - (void)_drawMarbleWithKey:(NSString*)key marbleEnum:(rx_fire_marble_t)marble bitmapID:(uint16_t)bitmap_id activeMarble:(rx_fire_marble_t)active_marble {
@@ -3133,7 +3139,7 @@ DEFINE_COMMAND(xdrawmarbles) {
 	[self _drawMarbleWithKey:@"tblue" marbleEnum:BLUE_MARBLE bitmapID:blue_marble_tBMP activeMarble:active_marble];
 	[self _drawMarbleWithKey:@"tgreen" marbleEnum:GREEN_MARBLE bitmapID:green_marble_tBMP activeMarble:active_marble];
 	[self _drawMarbleWithKey:@"torange" marbleEnum:ORANGE_MARBLE bitmapID:orange_marble_tBMP activeMarble:active_marble];
-	[self _drawMarbleWithKey:@"tviolet" marbleEnum:PURPLE_MARBLE bitmapID:purple_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithKey:@"tviolet" marbleEnum:PURPLE_MARBLE bitmapID:violet_marble_tBMP activeMarble:active_marble];
 	[self _drawMarbleWithKey:@"tred" marbleEnum:RED_MARBLE bitmapID:red_marble_tBMP activeMarble:active_marble];
 	[self _drawMarbleWithKey:@"tyellow" marbleEnum:YELLOW_MARBLE bitmapID:yellow_marble_tBMP activeMarble:active_marble];
 }
@@ -3151,24 +3157,31 @@ DEFINE_COMMAND(xtakeit) {
 	
 	// update themarble based on which marble hotspot we're in and set the marble position variable we'll be updating
 	NSString* marble_var;
+	rx_core_rect_t initial_rect;
 	if ([[_current_hotspot name] isEqualToString:@"tblue"]) {
 		[gs setUnsigned32:BLUE_MARBLE forKey:@"themarble"];
 		marble_var = @"tblue";
+		initial_rect = blue_marble_initial_rect;
 	} else if ([[_current_hotspot name] isEqualToString:@"tgreen"]) {
 		[gs setUnsigned32:GREEN_MARBLE forKey:@"themarble"];
 		marble_var = @"tgreen";
+		initial_rect = green_marble_initial_rect;
 	} else if ([[_current_hotspot name] isEqualToString:@"torange"]) {
 		[gs setUnsigned32:ORANGE_MARBLE forKey:@"themarble"];
 		marble_var = @"torange";
+		initial_rect = orange_marble_initial_rect;
 	} else if ([[_current_hotspot name] isEqualToString:@"tviolet"]) {
 		[gs setUnsigned32:PURPLE_MARBLE forKey:@"themarble"];
 		marble_var = @"tviolet";
+		initial_rect = violet_marble_initial_rect;
 	} else if ([[_current_hotspot name] isEqualToString:@"tred"]) {
 		[gs setUnsigned32:RED_MARBLE forKey:@"themarble"];
 		marble_var = @"tred";
+		initial_rect = red_marble_initial_rect;
 	} else if ([[_current_hotspot name] isEqualToString:@"tyellow"]) {
 		[gs setUnsigned32:YELLOW_MARBLE forKey:@"themarble"];
 		marble_var = @"tyellow";
+		initial_rect = yellow_marble_initial_rect;
 	} else
 		abort();
 	
@@ -3223,7 +3236,8 @@ DEFINE_COMMAND(xtakeit) {
 			marble_y = UINT32_MAX;
 		
 		if (marble_x != UINT32_MAX && marble_y != UINT32_MAX) {
-			uint32_t marble_pos = marble_x << 16 | marble_y;
+			// store the marble position using a 1-based coordinate system to reserve 0 as the "receptacle"
+			uint32_t marble_pos = (marble_x + 1) << 16 | (marble_y + 1);
 			[gs setUnsigned32:marble_pos forKey:marble_var];
 #if defined(DEBUG)
 			RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@dropping marble at <%u, %u>", logPrefix, marble_pos >> 16, marble_pos & 0xFFFF);
@@ -3236,6 +3250,14 @@ DEFINE_COMMAND(xtakeit) {
 			core_position.bottom = core_position.top + marble_size;
 			[hotspot setCoreFrame:core_position];
 		}
+	} else {
+		// the marble was dropped somewhere invalid; the original engine resets it to its receptacle;
+		// set the marble variable to 0 to indicate the marble is in its receptacle
+		[gs setUnsigned32:0 forKey:marble_var];
+		
+		// reset the marble hotspot's core frame
+		RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], marble_var);
+		[hotspot setCoreFrame:initial_rect];
 	}
 	
 	// we are no longer dragging any marble
