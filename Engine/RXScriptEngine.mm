@@ -3088,13 +3088,40 @@ typedef enum  {
 	YELLOW_MARBLE
 } rx_fire_marble_t;
 
+static const uint32_t marble_offset_matrix[2][5] = {
+	{134, 202, 270, 338, 406},
+	{24, 92, 159, 227, 295},
+};
+
+static const float marble_size = 13.5f;
+
 DEFINE_COMMAND(xt7600_setupmarbles) {
 	// this command draws the "tiny marbles" bitmaps on tspit 227
 }
 
-DEFINE_COMMAND(xt7800_setup) {
-	// themarble + t<color> variables probably should be used to keep track of state
+- (void)_initializeMarbleHotspotWithVariable:(NSString*)marble_var initialRectPointer:(rx_core_rect_t*)initial_rect_ptr {
+	RXGameState* gs = [g_world gameState];
+	NSMapTable* hotspots_map = [card hotspotsNameMap];
 	
+	RXHotspot* hotspot = (RXHotspot*)NSMapGet(hotspots_map, marble_var);
+	*initial_rect_ptr = [hotspot coreFrame];
+	uint32_t marble_pos = [gs unsigned32ForKey:marble_var];
+	if (marble_pos)  {
+		uint32_t marble_x = (marble_pos >> 16) - 1;
+		uint32_t marble_y = (marble_pos & 0xFFFF) - 1;
+		
+		rx_core_rect_t core_position;
+		core_position.left = marble_offset_matrix[0][marble_x / 5] + marble_size * (marble_x % 5);
+		core_position.right = core_position.left + marble_size;
+		core_position.top = marble_offset_matrix[1][marble_y / 5] + marble_size * (marble_y % 5);
+		core_position.bottom = core_position.top + marble_size;
+		[hotspot setCoreFrame:core_position];
+	}
+}
+
+DEFINE_COMMAND(xt7800_setup) {
+	
+	// initialize the marble bitmap IDs
 	NSDictionary* marble_map = [[g_world extraBitmapsDescriptor] objectForKey:@"Marbles"];
 	blue_marble_tBMP = [[marble_map objectForKey:@"Blue"] unsignedShortValue];
 	green_marble_tBMP = [[marble_map objectForKey:@"Green"] unsignedShortValue];
@@ -3103,13 +3130,13 @@ DEFINE_COMMAND(xt7800_setup) {
 	red_marble_tBMP = [[marble_map objectForKey:@"Red"] unsignedShortValue];
 	yellow_marble_tBMP = [[marble_map objectForKey:@"Yellow"] unsignedShortValue];
 	
-	NSMapTable* hotspots_map = [card hotspotsNameMap];
-	blue_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"tblue") coreFrame];
-	green_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"tgreen") coreFrame];
-	orange_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"torange") coreFrame];
-	violet_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"tviolet") coreFrame];
-	red_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"tred") coreFrame];
-	yellow_marble_initial_rect = [(RXHotspot*)NSMapGet(hotspots_map, @"tyellow") coreFrame];
+	// initialize the initial rects and set the hotspot's core rect to the marble's position
+	[self _initializeMarbleHotspotWithVariable:@"tblue" initialRectPointer:&blue_marble_initial_rect];
+	[self _initializeMarbleHotspotWithVariable:@"tgreen" initialRectPointer:&green_marble_initial_rect];
+	[self _initializeMarbleHotspotWithVariable:@"torange" initialRectPointer:&orange_marble_initial_rect];
+	[self _initializeMarbleHotspotWithVariable:@"tviolet" initialRectPointer:&violet_marble_initial_rect];
+	[self _initializeMarbleHotspotWithVariable:@"tred" initialRectPointer:&red_marble_initial_rect];
+	[self _initializeMarbleHotspotWithVariable:@"tyellow" initialRectPointer:&yellow_marble_initial_rect];
 }
 
 - (void)_drawMarbleWithKey:(NSString*)key marbleEnum:(rx_fire_marble_t)marble bitmapID:(uint16_t)bitmap_id activeMarble:(rx_fire_marble_t)active_marble {
@@ -3143,13 +3170,6 @@ DEFINE_COMMAND(xdrawmarbles) {
 	[self _drawMarbleWithKey:@"tred" marbleEnum:RED_MARBLE bitmapID:red_marble_tBMP activeMarble:active_marble];
 	[self _drawMarbleWithKey:@"tyellow" marbleEnum:YELLOW_MARBLE bitmapID:yellow_marble_tBMP activeMarble:active_marble];
 }
-
-static const uint32_t marble_offset_matrix[2][5] = {
-	{134, 202, 270, 338, 406},
-	{24, 92, 159, 227, 295},
-};
-
-static const float marble_size = 13.5f;
 
 DEFINE_COMMAND(xtakeit) {
 	// themarble + t<color> variables probably should be used to keep track of state
