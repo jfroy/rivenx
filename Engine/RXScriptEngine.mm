@@ -3120,7 +3120,6 @@ DEFINE_COMMAND(xt7600_setupmarbles) {
 }
 
 DEFINE_COMMAND(xt7800_setup) {
-	
 	// initialize the marble bitmap IDs
 	NSDictionary* marble_map = [[g_world extraBitmapsDescriptor] objectForKey:@"Marbles"];
 	blue_marble_tBMP = [[marble_map objectForKey:@"Blue"] unsignedShortValue];

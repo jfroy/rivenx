@@ -392,6 +392,7 @@
 		312F4DAF0DC263F400B3AF0D /* RXVBOBroker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVBOBroker.m; sourceTree = "<group>"; };
 		312F4DB20DC263F400B3AF0D /* RXWorldView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWorldView.h; sourceTree = "<group>"; };
 		312F4DB30DC263F400B3AF0D /* RXWorldView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXWorldView.m; sourceTree = "<group>"; };
+		3131F6EB0FCB233E00A7469F /* tbmp_dump */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tbmp_dump; sourceTree = BUILT_PRODUCTS_DIR; };
 		31327B640DCF509E00280D8F /* RXScriptEngineProtocols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptEngineProtocols.h; sourceTree = "<group>"; };
 		31333F5009B019E300DB6FC7 /* rxaudio_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = rxaudio_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = rxaudio_test.mm; sourceTree = "<group>"; };
@@ -580,6 +581,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3131F6E90FCB233E00A7469F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		31333F4E09B019E300DB6FC7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -783,6 +791,7 @@
 				3149598F0E327B2D00E49C83 /* MHKKit.framework */,
 				316E1EE80E77803100F28E2A /* mhkdump */,
 				317ACC7C0F285B780040FFFD /* MHKMoviePlayer.app */,
+				3131F6EB0FCB233E00A7469F /* tbmp_dump */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1169,6 +1178,22 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		3131F6EA0FCB233E00A7469F /* tbmp_dump */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3131F6F40FCB236F00A7469F /* Build configuration list for PBXNativeTarget "tbmp_dump" */;
+			buildPhases = (
+				3131F6E80FCB233E00A7469F /* Sources */,
+				3131F6E90FCB233E00A7469F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = tbmp_dump;
+			productName = tbmp_dump;
+			productReference = 3131F6EB0FCB233E00A7469F /* tbmp_dump */;
+			productType = "com.apple.product-type.tool";
+		};
 		31333F4F09B019E300DB6FC7 /* rxaudio_test */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 31333F5509B01A2300DB6FC7 /* Build configuration list for PBXNativeTarget "rxaudio_test" */;
@@ -1380,6 +1405,7 @@
 				31DC67FE09CB879B00BFF447 /* VirtualRingBuffer_test */,
 				31DAA0DE09D888E100F63F20 /* RXCardAudioSource_test */,
 				317ACC7B0F285B780040FFFD /* MHKMoviePlayer */,
+				3131F6EA0FCB233E00A7469F /* tbmp_dump */,
 			);
 		};
 /* End PBXProject section */
@@ -1526,6 +1552,13 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		3131F6E80FCB233E00A7469F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		31333F4D09B019E300DB6FC7 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1806,6 +1839,54 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		3131F6ED0FCB234100A7469F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = tbmp_dump;
+			};
+			name = Debug;
+		};
+		3131F6EE0FCB234100A7469F /* Debug Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = tbmp_dump;
+			};
+			name = "Debug Release";
+		};
+		3131F6EF0FCB234100A7469F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
+				INSTALL_PATH = /usr/local/bin;
+				PREBINDING = NO;
+				PRODUCT_NAME = tbmp_dump;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
 		31333F5609B01A2300DB6FC7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2358,6 +2439,16 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		3131F6F40FCB236F00A7469F /* Build configuration list for PBXNativeTarget "tbmp_dump" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3131F6ED0FCB234100A7469F /* Debug */,
+				3131F6EE0FCB234100A7469F /* Debug Release */,
+				3131F6EF0FCB234100A7469F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		31333F5509B01A2300DB6FC7 /* Build configuration list for PBXNativeTarget "rxaudio_test" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
