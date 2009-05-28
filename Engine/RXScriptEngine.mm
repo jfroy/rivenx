@@ -264,6 +264,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[super dealloc];
 }
 
+- (NSString*)description {
+	return @"";
+}
+
 - (void)setCard:(RXCard*)c {
 	if (c == card)
 		return;
@@ -409,7 +413,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[logPrefix appendString:@"    "];
 #endif
 	
-	// this is a bit of a hack, but disable automatic render state swaps while running screen update programs
+	// this is a bit of a hack, but disable screen updates while running screen update programs
 	_screen_update_disable_counter++;
 	
 	NSArray* programs = [[card events] objectForKey:RXScreenUpdateScriptKey];
@@ -420,7 +424,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		[self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
 	}
 	
-	// re-enable render state swaps (they must be enabled if we just ran screen update programs)
+	// re-enable screen updates to match the disable we did above
 	if (_screen_update_disable_counter > 0)
 		_screen_update_disable_counter--;
 	
@@ -466,8 +470,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		[executing_card retain];
 	}
 
-	// disable automatic render state swaps by faking an execution of opcode 20
-	_riven_command_dispatch_table[20].imp(self, _riven_command_dispatch_table[20].sel, 0, NULL);
+	// disable screen updates
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
 	 
 	// disable all movies (not sure this needs to be done here, but bad drawing glitches occur if this is not done, see bspit 163)
 	[(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:NO];
@@ -490,7 +494,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// reset water animation
 	[controller queueSpecialEffect:NULL owner:card];
 	
-	// execute loading programs (index 6)
+	// execute card open programs
 	NSArray* programs = [[card events] objectForKey:RXCardOpenScriptKey];
 	assert(programs);
 	
@@ -522,8 +526,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		}
 	}
 	
-	// swap render state (by faking an execution of command 21 -- _opcode_enableScreenUpdates)
-	 _riven_command_dispatch_table[21].imp(self, _riven_command_dispatch_table[21].sel, 0, NULL);
+	// enable screen updates
+	 DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+	 
+	 // now run the start rendering programs
+	 [self startRendering];
 	 
 #if defined(DEBUG)
 	[logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];

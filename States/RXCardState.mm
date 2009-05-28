@@ -1120,14 +1120,11 @@ init_failure:
 	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"swapped render state, front card=%@", _front_render_state->card);
 #endif
 	
-	// if the front card has changed, we need to run the new card's "start rendering" program
+	// if the front card has changed, we need to reap the back render state's card, put the front card in it, and show the mouse cursor
 	if (_front_render_state->new_card) {
 		// reclaim the back render state's card
 		[_back_render_state->card release];
 		_back_render_state->card = _front_render_state->card;
-		
-		// run the new front card's "start rendering" script
-		[sengine startRendering];
 		
 		// show the mouse cursor now that the card switch is done
 		[self showMouseCursor];
