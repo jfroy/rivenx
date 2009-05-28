@@ -144,7 +144,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[34].sel = @selector(_opcode_stopMovie:arguments:); // is "stop", given movie code
 	_riven_command_dispatch_table[35].sel = @selector(_opcode_noop:arguments:); // is like 44 (enable water effect), but takes SFXE ID directly
 	_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:); // no-op
-	_riven_command_dispatch_table[37].sel = @selector(_opcode_clearAmbientSounds:arguments:);
+	_riven_command_dispatch_table[37].sel = @selector(_opcode_fadeAmbientSounds:arguments:);
 	_riven_command_dispatch_table[38].sel = @selector(_opcode_complexPlayMovie:arguments:);
 	_riven_command_dispatch_table[39].sel = @selector(_opcode_activatePLST:arguments:);
 	_riven_command_dispatch_table[40].sel = @selector(_opcode_activateSLST:arguments:);
@@ -1540,7 +1540,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 37
-- (void)_opcode_clearAmbientSounds:(const uint16_t)argc arguments:(const uint16_t*)argv {	
+- (void)_opcode_fadeAmbientSounds:(const uint16_t)argc arguments:(const uint16_t*)argv {	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@clearing ambient sounds immediately", logPrefix, argv[0]);
@@ -1550,7 +1550,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	RXSoundGroup* sgroup = [RXSoundGroup new];
 	sgroup->gain = 1.0f;
 	sgroup->loop = NO;
-	sgroup->fadeOutRemovedSounds = NO;
+	sgroup->fadeOutRemovedSounds = YES;
 	sgroup->fadeInNewSounds = NO;
 	
 	[controller activateSoundGroup:sgroup];
