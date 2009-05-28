@@ -440,13 +440,16 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// if screen updates are disabled, return immediatly
 	if (_screen_update_disable_counter > 0) {
 #if defined(DEBUG)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    screen update command dropped because updates are disabled", logPrefix);
+		if (!_doing_screen_update)
+			RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    screen update command dropped because updates are disabled", logPrefix);
 #endif
 		return;
 	}
 
 	// run screen update programs
+	_doing_screen_update = YES;
 	[self _runScreenUpdatePrograms];
+	_doing_screen_update = NO;
 	
 	// some cards disable screen updates during screen update programs, so we need to decrement the counter here to function properly; see tspit 229 open card
 	if (_screen_update_disable_counter > 0)
@@ -1363,22 +1366,22 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 // 20
 - (void)_opcode_disableScreenUpdates:(const uint16_t)argc arguments:(const uint16_t*)argv {
+	_screen_update_disable_counter++;
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling screen updates", logPrefix);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling screen updates (%d)", logPrefix, _screen_update_disable_counter);
 #endif
-	_screen_update_disable_counter++;
 }
 
 // 21
 - (void)_opcode_enableScreenUpdates:(const uint16_t)argc arguments:(const uint16_t*)argv {
-#if defined(DEBUG)
-	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling screen updates", logPrefix);
-#endif
-	
 	if (_screen_update_disable_counter > 0)
 		_screen_update_disable_counter--;
+	
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling screen updates (%d)", logPrefix, _screen_update_disable_counter);
+#endif
 	
 	// this command also triggers a screen update (which may be dropped if the counter is still not 0)
 	[self _updateScreen];

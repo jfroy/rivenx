@@ -40,6 +40,7 @@
 	RXSoundGroup* _synthesizedSoundGroup;
 	
 	int32_t _screen_update_disable_counter;
+	BOOL _doing_screen_update;
 	BOOL _didActivatePLST;
 	BOOL _didActivateSLST;
 	
