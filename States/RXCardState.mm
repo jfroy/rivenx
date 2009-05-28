@@ -744,7 +744,7 @@ init_failure:
 	}
 	
 	// if no fade out is requested, set the detach timestamp of sounds not already scheduled for detach to now
-	if (!soundGroup->fadeOutActiveGroupBeforeActivating) {
+	if (!soundGroup->fadeOutRemovedSounds) {
 		soundEnum = [soundsToRemove objectEnumerator];
 		while ((sound = [soundEnum nextObject])) {
 			if (sound->detach_timestamp == 0) {
@@ -771,7 +771,7 @@ init_failure:
 	[soundsToRemove intersectSet:_activeSounds];
 	
 	// now that any sources bound to be detached has been, go ahead and attach as many of the new sources as possible
-	if (soundGroup->fadeInOnActivation || _forceFadeInOnNextSoundGroup) {
+	if (soundGroup->fadeInNewSounds || _forceFadeInOnNextSoundGroup) {
 		// disabling the sources will prevent the fade in from starting before we update the graph
 		CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));
 		CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceDisableApplier, [g_world audioRenderer]);
@@ -790,13 +790,13 @@ init_failure:
 	}
 	
 	// enable all the new audio sources
-	if (soundGroup->fadeInOnActivation || _forceFadeInOnNextSoundGroup) {
+	if (soundGroup->fadeInNewSounds || _forceFadeInOnNextSoundGroup) {
 		CFRange everything = CFRangeMake(0, CFArrayGetCount(sourcesToAdd));
 		CFArrayApplyFunction(sourcesToAdd, everything, RXCardAudioSourceEnableApplier, [g_world audioRenderer]);
 	}
 	
 	// schedule a fade out ramp for all to-be-removed sources if the fade out flag is on
-	if (soundGroup->fadeOutActiveGroupBeforeActivating) {
+	if (soundGroup->fadeOutRemovedSounds) {
 		CFMutableArrayRef sourcesToRemove = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_weakAudioSourceArrayCallbacks];
 		renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_GAIN_RAMP_DURATION);
 		CFRelease(sourcesToRemove);
@@ -2143,8 +2143,8 @@ exit_flush_tasks:
 	RXSoundGroup* sgroup = [RXSoundGroup new];
 	sgroup->gain = 1.0f;
 	sgroup->loop = NO;
-	sgroup->fadeOutActiveGroupBeforeActivating = YES;
-	sgroup->fadeInOnActivation = NO;
+	sgroup->fadeOutRemovedSounds = YES;
+	sgroup->fadeInNewSounds = NO;
 	[self performSelector:@selector(activateSoundGroup:) withObject:sgroup inThread:[g_world scriptThread] waitUntilDone:NO];
 	[sgroup release];
 	

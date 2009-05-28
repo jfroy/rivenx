@@ -36,8 +36,8 @@
 
 @interface RXSoundGroup : NSObject {
 @public
-	BOOL fadeOutActiveGroupBeforeActivating;
-	BOOL fadeInOnActivation;
+	BOOL fadeOutRemovedSounds;
+	BOOL fadeInNewSounds;
 	BOOL loop;
 	float gain;
 	

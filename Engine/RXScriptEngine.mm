@@ -1212,8 +1212,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXSoundGroup* sgroup = [RXSoundGroup new];
 		sgroup->gain = 1.0f;
 		sgroup->loop = NO;
-		sgroup->fadeOutActiveGroupBeforeActivating = NO;
-		sgroup->fadeInOnActivation = NO;
+		sgroup->fadeOutRemovedSounds = NO;
+		sgroup->fadeInNewSounds = NO;
 		
 		[controller activateSoundGroup:sgroup];		
 		[sgroup release];
@@ -1550,8 +1550,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	RXSoundGroup* sgroup = [RXSoundGroup new];
 	sgroup->gain = 1.0f;
 	sgroup->loop = NO;
-	sgroup->fadeOutActiveGroupBeforeActivating = NO;
-	sgroup->fadeInOnActivation = NO;
+	sgroup->fadeOutRemovedSounds = NO;
+	sgroup->fadeInNewSounds = NO;
 	
 	[controller activateSoundGroup:sgroup];
 	[sgroup release];

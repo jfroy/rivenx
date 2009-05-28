@@ -81,7 +81,7 @@
 }
 
 - (NSString *)description {
-	return [NSString stringWithFormat: @"%@ {fadeOutActiveGroupBeforeActivating=%d, fadeInOnActivation=%d, loop=%d, gain=%f, %d sounds}", [super description], fadeOutActiveGroupBeforeActivating, fadeInOnActivation, loop, gain, [_sounds count]];
+	return [NSString stringWithFormat: @"%@ {fadeOutRemovedSounds=%d, fadeInNewSounds=%d, loop=%d, gain=%f, %d sounds}", [super description], fadeOutRemovedSounds, fadeInNewSounds, loop, gain, [_sounds count]];
 }
 
 - (void)addSoundWithStack:(RXStack*)parent ID:(uint16_t)ID gain:(float)g pan:(float)p {

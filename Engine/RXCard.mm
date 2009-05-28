@@ -136,8 +136,8 @@ struct rx_card_picture_record {
 	uint16_t fade_flags = *group_parameters;
 	if (swap)
 		fade_flags = CFSwapInt16BigToHost(fade_flags);
-	group->fadeOutActiveGroupBeforeActivating = (fade_flags & 0x0001) ? YES : NO;
-	group->fadeInOnActivation = (fade_flags & 0x0002) ? YES : NO;
+	group->fadeOutRemovedSounds = (fade_flags & 0x0001) ? YES : NO;
+	group->fadeInNewSounds = (fade_flags & 0x0002) ? YES : NO;
 	
 	// loop flag
 	uint16_t loop = *(group_parameters + 1);
