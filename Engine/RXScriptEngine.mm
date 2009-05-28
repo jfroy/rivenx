@@ -1543,7 +1543,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 - (void)_opcode_fadeAmbientSounds:(const uint16_t)argc arguments:(const uint16_t*)argv {	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@clearing ambient sounds immediately", logPrefix, argv[0]);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@fading out ambient sounds", logPrefix, argv[0]);
 #endif
 	
 	// synthesize and activate an empty sound group
@@ -1568,9 +1568,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uint16_t delayed_command_arg = argv[4];
 	
 #if defined(DEBUG)
-	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing movie with code %hu, waiting %u ms, and executing command %d with argument %d",
+	if (!_disableScriptLogging) {
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing movie with code %hu, waiting %u ms, and executing command %d with argument %d {",
 			logPrefix, movie_code, delay, delayed_command, delayed_command_arg);
+		[logPrefix appendString:@"    "];
+	}
 #endif
 	
 	// play the movie
@@ -1590,6 +1592,13 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// execute the delayed command
 	DISPATCH_COMMAND1(delayed_command, delayed_command_arg);
+	
+#if defined(DEBUG)
+	if (!_disableScriptLogging) {
+		[logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+	}
+#endif
 }
 
 // 39
