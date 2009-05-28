@@ -1316,15 +1316,26 @@ init_failure:
 			r->water_fx.current_frame = 0;
 			r->water_fx.frame_timestamp = 0;
 			
-			// we need to immediately readback the dynamic RT into the water buffer
+			// we need to immediately readback the dynamic RT into the water readback buffer
+#if defined(RX_USE_PBO_WATER_READBACK)
+			glFlush();
 			glBindBuffer(GL_PIXEL_PACK_BUFFER, _water_buffer); glReportError();
 			glReadPixels(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
 			
 			// copy the water buffer into the water readback buffer
+			glFinishObjectAPPLE(GL_BUFFER_OBJECT_APPLE, _water_buffer);
 			water_draw_ptr = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_WRITE); glReportError();
 			memcpy(_water_readback_buffer, water_draw_ptr, kRXCardViewportSize.width * kRXCardViewportSize.height << 2);
 			
 			glBindBuffer(GL_PIXEL_PACK_BUFFER, 0); glReportError();
+#else
+			glFlush();
+			glReadPixels(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, _water_readback_buffer); glReportError();
+			
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _water_buffer); glReportError();
+			water_draw_ptr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
+			memcpy(water_draw_ptr, _water_readback_buffer, kRXCardViewportSize.width * kRXCardViewportSize.height << 2);
+#endif
 		}
 		
 		// if the special effect frame timestamp is 0 or expired, update the special effect texture
