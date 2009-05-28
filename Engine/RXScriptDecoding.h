@@ -13,27 +13,27 @@ __BEGIN_DECLS
 
 enum {
 	kScriptTypeMouseDown = 0,
-	kScriptTypeUnknown1,
+	kScriptTypeMouseStillDown,
 	kScriptTypeMouseUp,
 	kScriptTypeUnknown3,
 	kScriptTypeMouseInside,
 	kScriptTypeMouseExited,
 	kScriptTypeCardOpen,
 	kScriptTypeCardClose,
-	kScriptTypeUnknown8,
+	kScriptTypeIdle,
 	kScriptTypeStartRendering,
 	kScriptTypeScreenUpdate,
 };
 
 extern NSString* const RXMouseDownScriptKey;
-extern NSString* const RXUnknown1ScriptKey;
+extern NSString* const RXMouseStillDownScriptKey;
 extern NSString* const RXMouseUpScriptKey;
 extern NSString* const RXUnknown3ScriptKey;
 extern NSString* const RXMouseInsideScriptKey;
 extern NSString* const RXMouseExitedScriptKey;
 extern NSString* const RXCardOpenScriptKey;
 extern NSString* const RXCardCloseScriptKey;
-extern NSString* const RXUnknown8ScriptKey;
+extern NSString* const RXIdleScriptKey;
 extern NSString* const RXStartRenderingScriptKey;
 extern NSString* const RXScreenUpdateScriptKey;
 

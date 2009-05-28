@@ -89,7 +89,7 @@ CF_INLINE void rx_dispatch_command5(id target, rx_command_dispatch_entry_t* comm
 #define DISPATCH_COMMAND4(COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4) rx_dispatch_command4(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4)
 #define DISPATCH_COMMAND5(COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4, ARG5) rx_dispatch_command5(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4, ARG5)
 
-static rx_command_dispatch_entry_t _riven_command_dispatch_table[47];
+static rx_command_dispatch_entry_t _riven_command_dispatch_table[48];
 static NSMapTable* _riven_external_command_dispatch_map;
 
 
@@ -107,19 +107,19 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// build the principal command dispatch table
 #pragma mark opcode dispatch table
-	_riven_command_dispatch_table[0].sel = @selector(_invalid_opcode:arguments:);
+	_riven_command_dispatch_table[0].sel = @selector(_invalid_opcode:arguments:); // may be a valid command (draw back bitmap)
 	_riven_command_dispatch_table[1].sel = @selector(_opcode_drawDynamicPicture:arguments:);
 	_riven_command_dispatch_table[2].sel = @selector(_opcode_goToCard:arguments:);
 	_riven_command_dispatch_table[3].sel = @selector(_opcode_enableSynthesizedSLST:arguments:);
 	_riven_command_dispatch_table[4].sel = @selector(_opcode_playLocalSound:arguments:);
-	_riven_command_dispatch_table[5].sel = @selector(_opcode_noop:arguments:);
-	_riven_command_dispatch_table[6].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[5].sel = @selector(_opcode_noop:arguments:); // is "register" movie, like 46, but takes a MLST structure as parameters (minus the index)
+	_riven_command_dispatch_table[6].sel = @selector(_opcode_noop:arguments:); // is complex animate command
 	_riven_command_dispatch_table[7].sel = @selector(_opcode_setVariable:arguments:);
 	_riven_command_dispatch_table[8].sel = @selector(_invalid_opcode:arguments:);
 	_riven_command_dispatch_table[9].sel = @selector(_opcode_enableHotspot:arguments:);
 	_riven_command_dispatch_table[10].sel = @selector(_opcode_disableHotspot:arguments:);
 	_riven_command_dispatch_table[11].sel = @selector(_opcode_noop:arguments:);
-	_riven_command_dispatch_table[12].sel = @selector(_opcode_clearSLST:arguments:);
+	_riven_command_dispatch_table[12].sel = @selector(_opcode_clearSounds:arguments:);
 	_riven_command_dispatch_table[13].sel = @selector(_opcode_setCursor:arguments:);
 	_riven_command_dispatch_table[14].sel = @selector(_opcode_pause:arguments:);
 	_riven_command_dispatch_table[15].sel = @selector(_opcode_noop:arguments:);
@@ -127,35 +127,36 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[17].sel = @selector(_opcode_callExternal:arguments:);
 	_riven_command_dispatch_table[18].sel = @selector(_opcode_scheduleTransition:arguments:);
 	_riven_command_dispatch_table[19].sel = @selector(_opcode_reloadCard:arguments:);
-	_riven_command_dispatch_table[20].sel = @selector(_opcode_disableAutomaticSwaps:arguments:);
-	_riven_command_dispatch_table[21].sel = @selector(_opcode_enableAutomaticSwaps:arguments:);
+	_riven_command_dispatch_table[20].sel = @selector(_opcode_disableScreenUpdates:arguments:);
+	_riven_command_dispatch_table[21].sel = @selector(_opcode_enableScreenUpdates:arguments:);
 	_riven_command_dispatch_table[22].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[23].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[24].sel = @selector(_opcode_incrementVariable:arguments:);
-	_riven_command_dispatch_table[25].sel = @selector(_opcode_noop:arguments:);
-	_riven_command_dispatch_table[26].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[25].sel = @selector(_opcode_decrementVariable:arguments:);
+	_riven_command_dispatch_table[26].sel = @selector(_opcode_noop:arguments:); // is "close all movies"
 	_riven_command_dispatch_table[27].sel = @selector(_opcode_goToStack:arguments:);
-	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMovie:arguments:);
-	_riven_command_dispatch_table[29].sel = @selector(_opcode_disableAllMovies:arguments:);
-	_riven_command_dispatch_table[30].sel = @selector(_opcode_noop:arguments:);
-	_riven_command_dispatch_table[31].sel = @selector(_opcode_noop:arguments:);
-	_riven_command_dispatch_table[32].sel = @selector(_opcode_startMovieAndWaitUntilDone:arguments:);
-	_riven_command_dispatch_table[33].sel = @selector(_opcode_startMovie:arguments:);
-	_riven_command_dispatch_table[34].sel = @selector(_opcode_stopMovie:arguments:);
-	_riven_command_dispatch_table[35].sel = @selector(_opcode_noop:arguments:);
-	_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:);
-	_riven_command_dispatch_table[37].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMovie:arguments:); // is "hide movie" actually, may need to keep playing the movie, given movie code
+	_riven_command_dispatch_table[29].sel = @selector(_opcode_disableAllMovies:arguments:); // is "hide all movies"
+	_riven_command_dispatch_table[30].sel = @selector(_opcode_noop:arguments:); // is "set movie rate", given movie code
+	_riven_command_dispatch_table[31].sel = @selector(_opcode_noop:arguments:); // is "show movie" -> actually, "show" + "show" + "play", given movie code
+	_riven_command_dispatch_table[32].sel = @selector(_opcode_startMovieAndWaitUntilDone:arguments:); // set rate 1.0, set no looping, show, wait for end, given movie code
+	_riven_command_dispatch_table[33].sel = @selector(_opcode_startMovie:arguments:); // is "show" + "play", given movie code
+	_riven_command_dispatch_table[34].sel = @selector(_opcode_stopMovie:arguments:); // is "stop", given movie code
+	_riven_command_dispatch_table[35].sel = @selector(_opcode_noop:arguments:); // is like 44 (enable water effect), but takes SFXE ID directly
+	_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:); // no-op
+	_riven_command_dispatch_table[37].sel = @selector(_opcode_clearAmbientSounds:arguments:);
 	_riven_command_dispatch_table[38].sel = @selector(_opcode_complexPlayMovie:arguments:);
 	_riven_command_dispatch_table[39].sel = @selector(_opcode_activatePLST:arguments:);
 	_riven_command_dispatch_table[40].sel = @selector(_opcode_activateSLST:arguments:);
-	_riven_command_dispatch_table[41].sel = @selector(_opcode_activateAndPlayMLST:arguments:);
-	_riven_command_dispatch_table[42].sel = @selector(_opcode_noop:arguments:);
+	_riven_command_dispatch_table[41].sel = @selector(_opcode_activateAndPlayMLST:arguments:); // is "register" + "load" +  "show" + "play", given MLST ID
+	_riven_command_dispatch_table[42].sel = @selector(_opcode_noop:arguments:); // no-op
 	_riven_command_dispatch_table[43].sel = @selector(_opcode_activateBLST:arguments:);
 	_riven_command_dispatch_table[44].sel = @selector(_opcode_activateFLST:arguments:);
-	_riven_command_dispatch_table[45].sel = @selector(_opcode_noop:arguments:);
-	_riven_command_dispatch_table[46].sel = @selector(_opcode_activateMLST:arguments:);
+	_riven_command_dispatch_table[45].sel = @selector(_opcode_noop:arguments:); // is "do zip"
+	_riven_command_dispatch_table[46].sel = @selector(_opcode_activateMLST:arguments:); // is "register", given MLST ID -- register hides the movie
+	_riven_command_dispatch_table[47].sel = @selector(_opcode_activateSLST:arguments:);
 	
-	for (unsigned char selectorIndex = 0; selectorIndex < 47; selectorIndex++)
+	for (unsigned char selectorIndex = 0; selectorIndex < 48; selectorIndex++)
 		_riven_command_dispatch_table[selectorIndex].imp = (rx_command_imp_t)[self instanceMethodForSelector:_riven_command_dispatch_table[selectorIndex].sel];
 	
 	// search for external command implementation methods and register them
@@ -521,7 +522,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		}
 	}
 	
-	// swap render state (by faking an execution of command 21 -- _opcode_enableAutomaticSwaps)
+	// swap render state (by faking an execution of command 21 -- _opcode_enableScreenUpdates)
 	 _riven_command_dispatch_table[21].imp(self, _riven_command_dispatch_table[21].sel, 0, NULL);
 	 
 #if defined(DEBUG)
@@ -1025,7 +1026,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (argv)
 		formatString = [NSString stringWithFormat:@"WARNING: opcode %hu not implemented. arguments: {", *(argv - 2)];
 	else
-		formatString = [NSString stringWithFormat:@"WARNING: unknown opcode called (most likely the _opcode_enableAutomaticSwaps hack) {"];
+		formatString = [NSString stringWithFormat:@"WARNING: unknown opcode called (most likely the _opcode_enableScreenUpdates hack) {"];
 	
 	if (argc > 1) {
 		for (; argi < argc - 1; argi++)
@@ -1195,26 +1196,32 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 12
-- (void)_opcode_clearSLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
+- (void)_opcode_clearSounds:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 1)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
+	uint16_t options = argv[0];
+	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@clearing ambient sounds with fade flags %hu", logPrefix, argv[0]);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@clearing sounds with options %hu", logPrefix, options);
 #endif
 	
-	// synthesize and activate an empty sound group
-	RXSoundGroup* sgroup = [RXSoundGroup new];
-	sgroup->gain = 1.0f;
-	sgroup->loop = NO;
-	sgroup->fadeOutActiveGroupBeforeActivating = (argv[0] & 0x0001) ? YES : NO;
-	sgroup->fadeInOnActivation = (argv[0] & 0x0002) ? YES : NO;
+	if (options & 2) {
+		// synthesize and activate an empty sound group
+		RXSoundGroup* sgroup = [RXSoundGroup new];
+		sgroup->gain = 1.0f;
+		sgroup->loop = NO;
+		sgroup->fadeOutActiveGroupBeforeActivating = NO;
+		sgroup->fadeInOnActivation = NO;
+		
+		[controller activateSoundGroup:sgroup];		
+		[sgroup release];
+	}
 	
-	[controller activateSoundGroup:sgroup];
-	_didActivateSLST = YES;
-	
-	[sgroup release];
+	if (options & 1) {
+		// foreground sounds, whatever
+	}
 }
 
 // 13
@@ -1348,7 +1355,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 20
-- (void)_opcode_disableAutomaticSwaps:(const uint16_t)argc arguments:(const uint16_t*)argv {
+- (void)_opcode_disableScreenUpdates:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling screen updates", logPrefix);
@@ -1357,7 +1364,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 21
-- (void)_opcode_enableAutomaticSwaps:(const uint16_t)argc arguments:(const uint16_t*)argv {
+- (void)_opcode_enableScreenUpdates:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling screen updates", logPrefix);
@@ -1377,7 +1384,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	RXStack* parent = [[card descriptor] parent];
 	NSString* name = [parent varNameAtIndex:argv[0]];
-	if (!name) name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
+	if (!name)
+		name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@incrementing variable %@ by %hu", logPrefix, name, argv[1]);
@@ -1385,6 +1393,24 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	uint16_t v = [[g_world gameState] unsignedShortForKey:name];
 	[[g_world gameState] setUnsignedShort:(v + argv[1]) forKey:name];
+}
+
+// 25
+- (void)_opcode_decrementVariable:(const uint16_t)argc arguments:(const uint16_t*)argv {
+	if (argc < 2)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	
+	RXStack* parent = [[card descriptor] parent];
+	NSString* name = [parent varNameAtIndex:argv[0]];
+	if (!name)
+		name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@decrementing variable %@ by %hu", logPrefix, name, argv[1]);
+#endif
+	
+	uint16_t v = [[g_world gameState] unsignedShortForKey:name];
+	[[g_world gameState] setUnsignedShort:(v - argv[1]) forKey:name];
 }
 
 // 27
@@ -1513,6 +1539,24 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:NO];
 }
 
+// 37
+- (void)_opcode_clearAmbientSounds:(const uint16_t)argc arguments:(const uint16_t*)argv {	
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@clearing ambient sounds immediately", logPrefix, argv[0]);
+#endif
+	
+	// synthesize and activate an empty sound group
+	RXSoundGroup* sgroup = [RXSoundGroup new];
+	sgroup->gain = 1.0f;
+	sgroup->loop = NO;
+	sgroup->fadeOutActiveGroupBeforeActivating = NO;
+	sgroup->fadeInOnActivation = NO;
+	
+	[controller activateSoundGroup:sgroup];
+	[sgroup release];
+}
+
 // 38
 - (void)_opcode_complexPlayMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 5)
@@ -1520,27 +1564,17 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	uint32_t delay = (argv[1] << 16) | argv[2];
 	uint16_t movie_code = argv[0];
-	uint16_t flags = argv[3];
-	uint16_t delayed_record = argv[4];
+	uint16_t delayed_command = argv[3];
+	uint16_t delayed_command_arg = argv[4];
 	
 #if defined(DEBUG)
-	char* record_type;
-	if (flags == 40)
-		record_type = "slst";
-	else if (flags == 0)
-		record_type = "plst";
-	else
-		record_type = "unknown";
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing movie with code %hu and activating %s record %hu after %u ms", logPrefix, movie_code, record_type, delayed_record, delay);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing movie with code %hu, waiting %u ms, and executing command %d with argument %d",
+			logPrefix, movie_code, delay, delayed_command, delayed_command_arg);
 #endif
 	
 	// play the movie
 	[self _opcode_startMovie:1 arguments:&movie_code];
-	
-	// 9500 for dome open
-	// 7000 for dome close
-	// 100 for dome spin down
 	
 	// wait the specified delay
 	if (delay > 0) {
@@ -1554,11 +1588,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		usleep(delay * 1000);
 	}
 	
-	// activate the delayed record
-	if (flags == 40)
-		[self _opcode_activateSLST:1 arguments:&delayed_record];
-	else
-		abort();
+	// execute the delayed command
+	DISPATCH_COMMAND1(delayed_command, delayed_command_arg);
 }
 
 // 39

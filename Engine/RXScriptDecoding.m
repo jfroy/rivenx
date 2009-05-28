@@ -10,14 +10,14 @@
 
 
 NSString* const RXMouseDownScriptKey = @"mouse down";
-NSString* const RXUnknown1ScriptKey = @"unknown 1";
+NSString* const RXMouseStillDownScriptKey = @"mouse still down";
 NSString* const RXMouseUpScriptKey = @"mouse up";
 NSString* const RXUnknown3ScriptKey = @"unknown 3";
 NSString* const RXMouseInsideScriptKey = @"mouse inside";
 NSString* const RXMouseExitedScriptKey = @"mouse exited";
 NSString* const RXCardOpenScriptKey = @"open card";
 NSString* const RXCardCloseScriptKey = @"close card";
-NSString* const RXUnknown8ScriptKey = @"unknown 8";
+NSString* const RXIdleScriptKey = @"idle";
 NSString* const RXStartRenderingScriptKey = @"start rendering";
 NSString* const RXScreenUpdateScriptKey = @"screen update";
 
@@ -33,7 +33,7 @@ static NSString* const script_keys_array[11] = {
 	@"mouse exited",
 	@"open card",
 	@"close card",
-	@"unknown 8",
+	@"idle",
 	@"start rendering",
 	@"screen update"
 };
