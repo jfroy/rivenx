@@ -1207,7 +1207,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@clearing sounds with options %hu", logPrefix, options);
 #endif
 	
-	if (options & 2) {
+	if ((options & 2) || !options) {
 		// synthesize and activate an empty sound group
 		RXSoundGroup* sgroup = [RXSoundGroup new];
 		sgroup->gain = 1.0f;
@@ -1219,8 +1219,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		[sgroup release];
 	}
 	
-	if (options & 1) {
-		// foreground sounds, whatever
+	if ((options & 1) || !options) {
+		// foreground sounds
 	}
 }
 
