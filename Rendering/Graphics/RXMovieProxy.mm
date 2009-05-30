@@ -118,7 +118,7 @@
 }
 
 - (void)restoreMovieVolume {
-// if the movie has not been loaded yet, do that on the main thread
+	// if the movie has not been loaded yet, do that on the main thread
 	if (!_movie)
 		[self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
 	

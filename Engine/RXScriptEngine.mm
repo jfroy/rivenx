@@ -1158,6 +1158,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// disable the movie
 	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
+	
+	// should re-apply the MLST settings to the movie here, but because of the way RX is setup, we don't need to do that
+	// in particular, _stopMovie will reset the movie back to the beginning and invalidate any decoded frame it may have
 }
 
 // 7
@@ -1758,6 +1761,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// disable the movie
 	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
+	
+	// should re-apply the MLST settings to the movie here, but because of the way RX is setup, we don't need to do that
+	// in particular, _stopMovie will reset the movie back to the beginning and invalidate any decoded frame it may have
 }
 
 #define DEFINE_COMMAND(NAME) - (void)_external_ ## NAME:(const uint16_t)argc arguments:(const uint16_t*)argv
