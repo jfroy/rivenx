@@ -1501,7 +1501,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		return;
 	
 	// start the movie and register for rate change notifications
-	[self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:movie waitUntilDone:NO];
+	[self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:movie waitUntilDone:YES];
 	
 	// wait until the movie is done playing
 	semaphore_wait(_moviePlaybackSemaphore);
@@ -1524,8 +1524,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (!movie)
 		return;
 	
-	// start the movie
-	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:NO];
+	// start the movie and block until done
+	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
 }
 
 // 34
@@ -1545,8 +1545,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (!movie)
 		return;
 	
-	// stop the movie
-	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:NO];
+	// stop the movie and block until done
+	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
 }
 
 // 37
@@ -1662,7 +1662,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	RXMovie* movie = [[card movies] objectAtIndex:argv[0] - 1];
 	NSMapInsert(code2movieMap, (const void*)k, movie);
 	
-	// start the movie
+	// start the movie and block until done
 	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:NO];
 }
 
@@ -2133,6 +2133,14 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 
 DEFINE_COMMAND(xicon) {
 	// this command sets the variable atemp to 1 if the specified icon is depressed, 0 otherwise; sets atemp to 2 if the icon cannot be depressed
+	
+	// must set atemp to 2 if the rebel puzzle has been solved already (jrbook != 0)
+	uint32_t jrbook = [[g_world gameState] unsigned32ForKey:@"jrbook"];
+	if (jrbook) {
+		[[g_world gameState] setUnsigned32:2 forKey:@"atemp"];
+		return;
+	}
+	
 	uint32_t icon_sequence = [[g_world gameState] unsigned32ForKey:@"jiconorder"];
 	if ([self _isIconDepressed:argv[0]]) {
 		if (argv[0] != (icon_sequence & 0x1F))
