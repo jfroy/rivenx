@@ -113,7 +113,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[3].sel = @selector(_opcode_activateSynthesizedSLST:arguments:);
 	_riven_command_dispatch_table[4].sel = @selector(_opcode_playLocalSound:arguments:);
 	_riven_command_dispatch_table[5].sel = @selector(_opcode_activateSynthesizedMLST:arguments:);
-	_riven_command_dispatch_table[6].sel = @selector(_opcode_noop:arguments:); // is complex animate command
+	_riven_command_dispatch_table[6].sel = @selector(_opcode_unimplemented:arguments:); // is complex animate command
 	_riven_command_dispatch_table[7].sel = @selector(_opcode_setVariable:arguments:);
 	_riven_command_dispatch_table[8].sel = @selector(_invalid_opcode:arguments:);
 	_riven_command_dispatch_table[9].sel = @selector(_opcode_enableHotspot:arguments:);
@@ -137,22 +137,22 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[27].sel = @selector(_opcode_goToStack:arguments:);
 	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMovie:arguments:); // is "hide movie" actually, may need to keep playing the movie, given movie code
 	_riven_command_dispatch_table[29].sel = @selector(_opcode_disableAllMovies:arguments:); // is "hide all movies"
-	_riven_command_dispatch_table[30].sel = @selector(_opcode_noop:arguments:); // is "set movie rate", given movie code
-	_riven_command_dispatch_table[31].sel = @selector(_opcode_noop:arguments:); // is "show movie" -> actually, "show" + "show" + "play", given movie code
+	_riven_command_dispatch_table[30].sel = @selector(_opcode_unimplemented:arguments:); // is "set movie rate", given movie code
+	_riven_command_dispatch_table[31].sel = @selector(_opcode_unimplemented:arguments:); // is "show movie" -> actually, "show" + "show" + "play", given movie code
 	_riven_command_dispatch_table[32].sel = @selector(_opcode_startMovieAndWaitUntilDone:arguments:); // set rate 1.0, set no looping, show, wait for end, given movie code
 	_riven_command_dispatch_table[33].sel = @selector(_opcode_startMovie:arguments:); // is "show" + "play", given movie code
 	_riven_command_dispatch_table[34].sel = @selector(_opcode_stopMovie:arguments:); // is "stop", given movie code
-	_riven_command_dispatch_table[35].sel = @selector(_opcode_noop:arguments:); // is like 44 (enable water effect), but takes SFXE ID directly
-	_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:); // no-op
+	_riven_command_dispatch_table[35].sel = @selector(_opcode_unimplemented:arguments:); // is like 44 (enable water effect), but takes SFXE ID directly
+	_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[37].sel = @selector(_opcode_fadeAmbientSounds:arguments:);
 	_riven_command_dispatch_table[38].sel = @selector(_opcode_complexStartMovie:arguments:);
 	_riven_command_dispatch_table[39].sel = @selector(_opcode_activatePLST:arguments:);
 	_riven_command_dispatch_table[40].sel = @selector(_opcode_activateSLST:arguments:);
 	_riven_command_dispatch_table[41].sel = @selector(_opcode_activateMLSTAndStartMovie:arguments:);
-	_riven_command_dispatch_table[42].sel = @selector(_opcode_noop:arguments:); // no-op
+	_riven_command_dispatch_table[42].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[43].sel = @selector(_opcode_activateBLST:arguments:);
 	_riven_command_dispatch_table[44].sel = @selector(_opcode_activateFLST:arguments:);
-	_riven_command_dispatch_table[45].sel = @selector(_opcode_noop:arguments:); // is "do zip"
+	_riven_command_dispatch_table[45].sel = @selector(_opcode_unimplemented:arguments:); // is "do zip"
 	_riven_command_dispatch_table[46].sel = @selector(_opcode_activateMLST:arguments:);
 	_riven_command_dispatch_table[47].sel = @selector(_opcode_activateSLST:arguments:);
 	
@@ -1026,28 +1026,27 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 #pragma mark -
 
-- (void)_invalid_opcode:(const uint16_t)argc arguments:(const uint16_t *)argv {
+- (void)_invalid_opcode:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:[NSString stringWithFormat:@"INVALID RIVEN SCRIPT OPCODE EXECUTED: %d", argv[-2]] userInfo:nil];
 }
 
-- (void)_opcode_noop:(const uint16_t)argc arguments:(const uint16_t *)argv {
+- (void)_opcode_unimplemented:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	uint16_t argi = 0;
-	NSString* formatString;
-	if (argv)
-		formatString = [NSString stringWithFormat:@"WARNING: opcode %hu not implemented. arguments: {", *(argv - 2)];
-	else
-		formatString = [NSString stringWithFormat:@"WARNING: unknown opcode called (most likely the _opcode_enableScreenUpdates hack) {"];
-	
+	NSString* fmt_str = [NSString stringWithFormat:@"WARNING: opcode %hu not implemented, arguments: {", *(argv - 2)];
 	if (argc > 1) {
 		for (; argi < argc - 1; argi++)
-			formatString = [formatString stringByAppendingFormat:@"%hu, ", argv[argi]];
+			fmt_str = [fmt_str stringByAppendingFormat:@"%hu, ", argv[argi]];
 	}
 	
 	if (argc > 0)
-		formatString = [formatString stringByAppendingFormat:@"%hu", argv[argi]];
+		fmt_str = [fmt_str stringByAppendingFormat:@"%hu", argv[argi]];
 	
-	formatString = [formatString stringByAppendingString:@"}"];
-	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", logPrefix, formatString);
+	fmt_str = [fmt_str stringByAppendingString:@"}"];
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", logPrefix, fmt_str);
+}
+
+- (void)_opcode_noop:(const uint16_t)argc arguments:(const uint16_t*)argv {
+
 }
 
 // 1
