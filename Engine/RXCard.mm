@@ -575,11 +575,11 @@ struct rx_card_picture_record {
 	if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
 		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding FLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
-	_sfxeCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
-	_sfxes = (rx_card_sfxe*)malloc(sizeof(rx_card_sfxe) * _sfxeCount);
+	_flstCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
+	_sfxes = (rx_card_sfxe*)malloc(sizeof(rx_card_sfxe) * _flstCount);
 	
 	struct rx_flst_record* flstRecordPointer = (struct rx_flst_record*)BUFFER_OFFSET(listData, sizeof(uint16_t));
-	for (currentListIndex = 0; currentListIndex < _sfxeCount; currentListIndex++) {
+	for (currentListIndex = 0; currentListIndex < _flstCount; currentListIndex++) {
 		struct rx_flst_record* record = flstRecordPointer + currentListIndex;
 		
 #if defined(__LITTLE_ENDIAN__)
@@ -594,11 +594,11 @@ struct rx_card_picture_record {
 			@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open a required SFXE resource." userInfo:nil];
 		
 		// get the size of the SFXE resource and allocate the sfxe's record buffer
-		size_t sfxeLength = (size_t)[sfxeHandle length];
-		assert(sfxeLength >= sizeof(struct rx_sfxe_record*));
+		size_t sfxe_size = (size_t)[sfxeHandle length];
+		assert(sfxe_size >= sizeof(struct rx_sfxe_record*));
 		
 		rx_card_sfxe* sfxe = _sfxes + currentListIndex;
-		sfxe->record = (struct rx_sfxe_record*)malloc(sfxeLength);
+		sfxe->record = (struct rx_sfxe_record*)malloc(sfxe_size);
 		
 		// read the data from the archive
 		if ([sfxeHandle readDataToEndOfFileInBuffer:(void*)sfxe->record error:&error] == -1)
@@ -646,7 +646,7 @@ struct rx_card_picture_record {
 				*mp = CFSwapInt16(*mp);
 			}
 			
-			assert(mp <= (uint16_t*)BUFFER_OFFSET(sfxe->record, sfxeLength));
+			assert(mp <= (uint16_t*)BUFFER_OFFSET(sfxe->record, sfxe_size));
 		}
 #endif
 	}
@@ -809,7 +809,7 @@ struct rx_card_picture_record {
 	
 	// sfxe
 	if (_sfxes) {
-		for (uint16_t i = 0; i < _sfxeCount; i++) {
+		for (uint16_t i = 0; i < _flstCount; i++) {
 			free(_sfxes[i].record);
 		}
 		free(_sfxes);

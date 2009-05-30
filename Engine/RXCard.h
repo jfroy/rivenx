@@ -50,7 +50,7 @@
 	NSMutableArray* _soundGroups;
 	
 	// special effects
-	uint16_t _sfxeCount;
+	uint16_t _flstCount;
 	rx_card_sfxe* _sfxes;
 }
 

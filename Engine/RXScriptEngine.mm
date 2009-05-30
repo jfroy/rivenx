@@ -138,11 +138,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMovie:arguments:); // is "hide movie" actually, may need to keep playing the movie, given movie code
 	_riven_command_dispatch_table[29].sel = @selector(_opcode_disableAllMovies:arguments:); // is "hide all movies"
 	_riven_command_dispatch_table[30].sel = @selector(_opcode_unimplemented:arguments:); // is "set movie rate", given movie code
-	_riven_command_dispatch_table[31].sel = @selector(_opcode_unimplemented:arguments:); // is "show movie" -> actually, "show" + "show" + "play", given movie code
+	_riven_command_dispatch_table[31].sel = @selector(_opcode_unimplemented:arguments:); // is "show movie", given movie code
 	_riven_command_dispatch_table[32].sel = @selector(_opcode_startMovieAndWaitUntilDone:arguments:); // set rate 1.0, set no looping, show, wait for end, given movie code
-	_riven_command_dispatch_table[33].sel = @selector(_opcode_startMovie:arguments:); // is "show" + "play", given movie code
+	_riven_command_dispatch_table[33].sel = @selector(_opcode_startMovie:arguments:);
 	_riven_command_dispatch_table[34].sel = @selector(_opcode_stopMovie:arguments:); // is "stop", given movie code
-	_riven_command_dispatch_table[35].sel = @selector(_opcode_unimplemented:arguments:); // is like 44 (enable water effect), but takes SFXE ID directly
+	_riven_command_dispatch_table[35].sel = @selector(_opcode_unimplemented:arguments:); // activate SFXE (arg0 is the SFXE ID)
 	_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[37].sel = @selector(_opcode_fadeAmbientSounds:arguments:);
 	_riven_command_dispatch_table[38].sel = @selector(_opcode_complexStartMovie:arguments:);
@@ -1584,7 +1584,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 37
-- (void)_opcode_fadeAmbientSounds:(const uint16_t)argc arguments:(const uint16_t*)argv {	
+- (void)_opcode_fadeAmbientSounds:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@fading out ambient sounds", logPrefix, argv[0]);
@@ -1667,7 +1667,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_didActivatePLST = YES;
 }
 
-// 40
+// 40 and 47
 - (void)_opcode_activateSLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 1)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
