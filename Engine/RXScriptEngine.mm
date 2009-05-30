@@ -154,7 +154,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[44].sel = @selector(_opcode_activateFLST:arguments:);
 	_riven_command_dispatch_table[45].sel = @selector(_opcode_unimplemented:arguments:); // is "do zip"
 	_riven_command_dispatch_table[46].sel = @selector(_opcode_activateMLST:arguments:);
-	_riven_command_dispatch_table[47].sel = @selector(_opcode_activateSLST:arguments:);
+	_riven_command_dispatch_table[47].sel = @selector(_opcode_activateSLSTWithVolume:arguments:);
 	
 	for (unsigned char selectorIndex = 0; selectorIndex < 48; selectorIndex++)
 		_riven_command_dispatch_table[selectorIndex].imp = (rx_command_imp_t)[self instanceMethodForSelector:_riven_command_dispatch_table[selectorIndex].sel];
@@ -1667,7 +1667,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_didActivatePLST = YES;
 }
 
-// 40 and 47
+// 40
 - (void)_opcode_activateSLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 1)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
@@ -1769,6 +1769,32 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// should re-apply the MLST settings to the movie here, but because of the way RX is setup, we don't need to do that
 	// in particular, _stopMovie will reset the movie back to the beginning and invalidate any decoded frame it may have
+}
+
+// 47
+- (void)_opcode_activateSLSTWithVolume:(const uint16_t)argc arguments:(const uint16_t*)argv {
+	if (argc < 2)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu and overriding volunme to %hu", logPrefix, argv[0], argv[1]);
+#endif
+	
+	// get the sound group
+	RXSoundGroup* sg = [[card soundGroups] objectAtIndex:argv[0] - 1];
+	
+	// temporarily change its gain
+	uint16_t integer_gain = argv[1];
+	float gain = (float)integer_gain / kRXSoundGainDivisor;
+	float original_gain = sg->gain;
+	sg->gain = gain;
+	
+	// activate the sound group
+	[controller activateSoundGroup:sg];
+	_didActivateSLST = YES;
+	
+	// restore its original gain
+	sg->gain = original_gain;
 }
 
 #define DEFINE_COMMAND(NAME) - (void)_external_ ## NAME:(const uint16_t)argc arguments:(const uint16_t*)argv
@@ -2361,6 +2387,15 @@ DEFINE_COMMAND(xhandlecontrolup) {
 			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
 			
 			// play the going down movie
+			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, 2);
+			
+			// wait 3.333 seconds
+			usleep(3333 * 1000);
+			
+			// activate SLST 1 (which is the ambient mix inside the elevator)
+			DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 1);
+			
+			// wait for the movie to finish
 			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
 			
 			// go to the middle jungle elevator card
@@ -2388,6 +2423,15 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 			[self _handleJungleElevatorMouth];
 			
 			// play the going up movie
+			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, 5);
+			
+			// wait 3.333 seconds
+			usleep(3333 * 1000);
+			
+			// activate SLST 2 (which is the ambient mix for the upper jungle level)
+			DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 2);
+			
+			// wait for the movie to finish
 			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 5);
 			
 			// go to the top jungle elevator card
