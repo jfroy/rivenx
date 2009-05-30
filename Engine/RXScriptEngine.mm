@@ -110,9 +110,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[0].sel = @selector(_invalid_opcode:arguments:); // may be a valid command (draw back bitmap)
 	_riven_command_dispatch_table[1].sel = @selector(_opcode_drawDynamicPicture:arguments:);
 	_riven_command_dispatch_table[2].sel = @selector(_opcode_goToCard:arguments:);
-	_riven_command_dispatch_table[3].sel = @selector(_opcode_enableSynthesizedSLST:arguments:);
+	_riven_command_dispatch_table[3].sel = @selector(_opcode_activateSynthesizedSLST:arguments:);
 	_riven_command_dispatch_table[4].sel = @selector(_opcode_playLocalSound:arguments:);
-	_riven_command_dispatch_table[5].sel = @selector(_opcode_noop:arguments:); // is "register" movie, like 46, but takes a MLST structure as parameters (minus the index)
+	_riven_command_dispatch_table[5].sel = @selector(_opcode_activateSynthesizedMLST:arguments:); // is "register" movie, like 46, but takes a MLST structure as parameters (minus the index)
 	_riven_command_dispatch_table[6].sel = @selector(_opcode_noop:arguments:); // is complex animate command
 	_riven_command_dispatch_table[7].sel = @selector(_opcode_setVariable:arguments:);
 	_riven_command_dispatch_table[8].sel = @selector(_invalid_opcode:arguments:);
@@ -133,7 +133,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[23].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[24].sel = @selector(_opcode_incrementVariable:arguments:);
 	_riven_command_dispatch_table[25].sel = @selector(_opcode_decrementVariable:arguments:);
-	_riven_command_dispatch_table[26].sel = @selector(_opcode_noop:arguments:); // is "close all movies"
+	_riven_command_dispatch_table[26].sel = @selector(_opcode_closeAllMovies:arguments:);
 	_riven_command_dispatch_table[27].sel = @selector(_opcode_goToStack:arguments:);
 	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMovie:arguments:); // is "hide movie" actually, may need to keep playing the movie, given movie code
 	_riven_command_dispatch_table[29].sel = @selector(_opcode_disableAllMovies:arguments:); // is "hide all movies"
@@ -1079,7 +1079,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 3
-- (void)_opcode_enableSynthesizedSLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
+- (void)_opcode_activateSynthesizedSLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling a synthesized slst record", logPrefix);
@@ -1134,6 +1134,27 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 	
 	[sound release];
+}
+
+// 5
+- (void)_opcode_activateSynthesizedMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
+	if (argc < 10)
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	
+	// there's always going to be something before argv, so doing the -1 offset here is fine
+	struct rx_mlst_record* mlst_r = (struct rx_mlst_record*)(argv - 1);
+
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating synthesized MLST [movie_id=%hu, code=%hu]", logPrefix, mlst_r->movie_id, mlst_r->code);
+#endif
+	
+	// have the card load the movie
+	RXMovie* movie = [card loadMovieWithMLSTRecord:mlst_r];
+	
+	// update the code to movie map
+	uintptr_t k = mlst_r->code;
+	NSMapInsert(code2movieMap, (const void*)k, movie);
 }
 
 // 7
@@ -1421,6 +1442,14 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	uint16_t v = [[g_world gameState] unsignedShortForKey:name];
 	[[g_world gameState] setUnsignedShort:(v - argv[1]) forKey:name];
+}
+
+// 26
+- (void)_opcode_closeAllMovies:(const uint16_t)argc arguments:(const uint16_t*)argv {
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing all movies", logPrefix);
+#endif
 }
 
 // 27

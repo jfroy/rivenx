@@ -33,10 +33,12 @@ struct rx_mlst_record {
 	uint16_t code;
 	uint16_t left;
 	uint16_t top;
-	uint16_t u0[3]; // movie selection is first and last, movie time is second
+	uint16_t selection_start;
+	uint16_t selection_current;
+	uint16_t selection_end;
 	uint16_t loop;
 	uint16_t volume;
-	uint16_t u1; // rate
+	uint16_t rate;
 };
 
 struct rx_slst_record1 {

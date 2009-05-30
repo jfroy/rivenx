@@ -83,12 +83,12 @@ struct rx_card_picture_record {
 		mlstRecords[currentListIndex].code = CFSwapInt16(mlstRecords[currentListIndex].code);
 		mlstRecords[currentListIndex].left = CFSwapInt16(mlstRecords[currentListIndex].left);
 		mlstRecords[currentListIndex].top = CFSwapInt16(mlstRecords[currentListIndex].top);
-		mlstRecords[currentListIndex].u0[0] = CFSwapInt16(mlstRecords[currentListIndex].u0[0]);
-		mlstRecords[currentListIndex].u0[1] = CFSwapInt16(mlstRecords[currentListIndex].u0[1]);
-		mlstRecords[currentListIndex].u0[2] = CFSwapInt16(mlstRecords[currentListIndex].u0[2]);
+		mlstRecords[currentListIndex].selection_start = CFSwapInt16(mlstRecords[currentListIndex].selection_start);
+		mlstRecords[currentListIndex].selection_current = CFSwapInt16(mlstRecords[currentListIndex].selection_current);
+		mlstRecords[currentListIndex].selection_end = CFSwapInt16(mlstRecords[currentListIndex].selection_end);
 		mlstRecords[currentListIndex].loop = CFSwapInt16(mlstRecords[currentListIndex].loop);
 		mlstRecords[currentListIndex].volume = CFSwapInt16(mlstRecords[currentListIndex].volume);
-		mlstRecords[currentListIndex].u1 = CFSwapInt16(mlstRecords[currentListIndex].u1);
+		mlstRecords[currentListIndex].rate = CFSwapInt16(mlstRecords[currentListIndex].rate);
 	}
 #endif
 	
@@ -103,18 +103,18 @@ struct rx_card_picture_record {
 			mlstRecords[currentListIndex].volume);
 #endif
 		
-		// FIXME: sometimes volume > 256...
+		// sometimes volume > 256, so fix it up here
 		if (mlstRecords[currentListIndex].volume > 256)
 			mlstRecords[currentListIndex].volume = 256;
 		
 		// load the movie up
 		CGPoint origin = CGPointMake(mlstRecords[currentListIndex].left, kRXCardViewportSize.height - mlstRecords[currentListIndex].top);
 		MHKArchive* archive = [[_parent fileWithResourceType:@"tMOV" ID:mlstRecords[currentListIndex].movie_id] archive];
-		RXMovieProxy* movieProxy = [[RXMovieProxy alloc] initWithArchive:archive ID:mlstRecords[currentListIndex].movie_id origin:origin volume:mlstRecords[currentListIndex].volume / 256.0f loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO) owner:self];
+		RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive ID:mlstRecords[currentListIndex].movie_id origin:origin volume:mlstRecords[currentListIndex].volume / 256.0f loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO) owner:self];
 		
 		// add the movie to the movies array
-		[_movies addObject:movieProxy];
-		[movieProxy release];
+		[_movies addObject:movie_proxy];
+		[movie_proxy release];
 		
 		// set the movie code in the mlst to code array
 		_mlstCodes[currentListIndex] = mlstRecords[currentListIndex].code;
@@ -175,6 +175,23 @@ struct rx_card_picture_record {
 	RXOLog(@"created sound group: %@", group);
 #endif
 	return group;
+}
+
+- (RXMovie*)loadMovieWithMLSTRecord:(struct rx_mlst_record*)mlst {
+	// sometimes volume > 256, so fix it up here
+	if (mlst->volume > 256)
+		mlst->volume = 256;
+	
+	// load the movie up
+	CGPoint origin = CGPointMake(mlst->left, kRXCardViewportSize.height - mlst->top);
+	MHKArchive* archive = [[_parent fileWithResourceType:@"tMOV" ID:mlst->movie_id] archive];
+	RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive ID:mlst->movie_id origin:origin volume:mlst->volume / 256.0f loop:((mlst->loop == 1) ? YES : NO) owner:self];
+
+	// add the movie to the movies array
+	[_movies addObject:movie_proxy];
+	[movie_proxy release];
+	
+	return (RXMovie*)movie_proxy;
 }
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor {

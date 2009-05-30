@@ -76,5 +76,6 @@
 - (rx_card_sfxe*)sfxes;
 
 - (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes;
+- (RXMovie*)loadMovieWithMLSTRecord:(struct rx_mlst_record*)mlst;
 
 @end
