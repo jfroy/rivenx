@@ -112,7 +112,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[2].sel = @selector(_opcode_goToCard:arguments:);
 	_riven_command_dispatch_table[3].sel = @selector(_opcode_activateSynthesizedSLST:arguments:);
 	_riven_command_dispatch_table[4].sel = @selector(_opcode_playLocalSound:arguments:);
-	_riven_command_dispatch_table[5].sel = @selector(_opcode_activateSynthesizedMLST:arguments:); // is "register" movie, like 46, but takes a MLST structure as parameters (minus the index)
+	_riven_command_dispatch_table[5].sel = @selector(_opcode_activateSynthesizedMLST:arguments:);
 	_riven_command_dispatch_table[6].sel = @selector(_opcode_noop:arguments:); // is complex animate command
 	_riven_command_dispatch_table[7].sel = @selector(_opcode_setVariable:arguments:);
 	_riven_command_dispatch_table[8].sel = @selector(_invalid_opcode:arguments:);
@@ -153,7 +153,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[43].sel = @selector(_opcode_activateBLST:arguments:);
 	_riven_command_dispatch_table[44].sel = @selector(_opcode_activateFLST:arguments:);
 	_riven_command_dispatch_table[45].sel = @selector(_opcode_noop:arguments:); // is "do zip"
-	_riven_command_dispatch_table[46].sel = @selector(_opcode_activateMLST:arguments:); // is "register", given MLST ID -- register hides the movie
+	_riven_command_dispatch_table[46].sel = @selector(_opcode_activateMLST:arguments:);
 	_riven_command_dispatch_table[47].sel = @selector(_opcode_activateSLST:arguments:);
 	
 	for (unsigned char selectorIndex = 0; selectorIndex < 48; selectorIndex++)
@@ -1155,6 +1155,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// update the code to movie map
 	uintptr_t k = mlst_r->code;
 	NSMapInsert(code2movieMap, (const void*)k, movie);
+	
+	// disable the movie
+	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
 }
 
 // 7
@@ -1746,12 +1749,15 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record %hu, code %hu (u0=%hu)", logPrefix, argv[0], k, argv[1]);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record %hu [code=%hu] (u0=%hu)", logPrefix, argv[0], k, argv[1]);
 #endif
 	
 	// update the code to movie map
 	RXMovie* movie = [[card movies] objectAtIndex:argv[0] - 1];
 	NSMapInsert(code2movieMap, (const void*)k, movie);
+	
+	// disable the movie
+	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
 }
 
 #define DEFINE_COMMAND(NAME) - (void)_external_ ## NAME:(const uint16_t)argc arguments:(const uint16_t*)argv
