@@ -2425,8 +2425,8 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 			// play the going up movie
 			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, 5);
 			
-			// wait 3.333 seconds
-			usleep(3333 * 1000);
+			// wait 5 seconds
+			usleep(5000 * 1000);
 			
 			// activate SLST 2 (which is the ambient mix for the upper jungle level)
 			DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 2);
