@@ -145,10 +145,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[35].sel = @selector(_opcode_noop:arguments:); // is like 44 (enable water effect), but takes SFXE ID directly
 	_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:); // no-op
 	_riven_command_dispatch_table[37].sel = @selector(_opcode_fadeAmbientSounds:arguments:);
-	_riven_command_dispatch_table[38].sel = @selector(_opcode_complexPlayMovie:arguments:);
+	_riven_command_dispatch_table[38].sel = @selector(_opcode_complexStartMovie:arguments:);
 	_riven_command_dispatch_table[39].sel = @selector(_opcode_activatePLST:arguments:);
 	_riven_command_dispatch_table[40].sel = @selector(_opcode_activateSLST:arguments:);
-	_riven_command_dispatch_table[41].sel = @selector(_opcode_activateAndPlayMLST:arguments:); // is "register" + "load" +  "show" + "play", given MLST ID
+	_riven_command_dispatch_table[41].sel = @selector(_opcode_activateMLSTAndStartMovie:arguments:);
 	_riven_command_dispatch_table[42].sel = @selector(_opcode_noop:arguments:); // no-op
 	_riven_command_dispatch_table[43].sel = @selector(_opcode_activateBLST:arguments:);
 	_riven_command_dispatch_table[44].sel = @selector(_opcode_activateFLST:arguments:);
@@ -1603,7 +1603,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 38
-- (void)_opcode_complexPlayMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
+- (void)_opcode_complexStartMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 5)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	
@@ -1614,7 +1614,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 #if defined(DEBUG)
 	if (!_disableScriptLogging) {
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing movie with code %hu, waiting %u ms, and executing command %d with argument %d {",
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu, waiting %u ms, and executing command %d with argument %d {",
 			logPrefix, movie_code, delay, delayed_command, delayed_command_arg);
 		[logPrefix appendString:@"    "];
 	}
@@ -1683,22 +1683,28 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 41
-- (void)_opcode_activateAndPlayMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
+- (void)_opcode_activateMLSTAndStartMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 1)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
-	uintptr_t k = [card movieCodes][argv[0] - 1];
+	
+	uint16_t code = [card movieCodes][argv[0] - 1];
 	
 #if defined(DEBUG)
-	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@activating and playing in background mlst record %hu (code=%hu)", logPrefix, argv[0], k);
+	if (!_disableScriptLogging) {
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@activating mlst record %hu [code=%hu] and starting movie {", logPrefix, argv[0], code);
+		[logPrefix appendString:@"    "];
+	}
 #endif
 	
-	// update the code to movie map
-	RXMovie* movie = [[card movies] objectAtIndex:argv[0] - 1];
-	NSMapInsert(code2movieMap, (const void*)k, movie);
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, argv[0]);
+	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, code);
 	
-	// start the movie and block until done
-	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:NO];
+#if defined(DEBUG)
+	if (!_disableScriptLogging) {
+		[logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+	}
+#endif
 }
 
 // 43
@@ -2336,10 +2342,10 @@ DEFINE_COMMAND(xreseticons) {
 		[[g_world gameState] setUnsignedShort:0 forKey:@"jwmouth"];
 		
 		// play the close mouth movie
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 3);
+		DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 3);
 		
 		// play the mouth control lever movie
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 8);
+		DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 8);
 	}
 }
 
@@ -2353,10 +2359,10 @@ DEFINE_COMMAND(xhandlecontrolup) {
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
 			// play the switch down movie
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
+			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
 			
 			// play the going down movie
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
 			
 			// go to the middle jungle elevator card
 			[controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator middle"] waitUntilDone:YES];
@@ -2378,12 +2384,12 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
 			// play the switch up movie
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 7);
+			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 7);
 			
 			[self _handleJungleElevatorMouth];
 			
 			// play the going up movie
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 5);
+			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 5);
 			
 			// go to the top jungle elevator card
 			[controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator top"] waitUntilDone:YES];
@@ -2392,12 +2398,12 @@ DEFINE_COMMAND(xhandlecontrolmid) {
 			break;
 		} else if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
 			// play the switch down movie
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 6);
+			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 6);
 			
 			[self _handleJungleElevatorMouth];
 			
 			// play the going down movie
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 4);
+			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 4);
 			
 			// go to the bottom jungle elevator card
 			[controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator bottom"] waitUntilDone:YES];
@@ -2419,10 +2425,10 @@ DEFINE_COMMAND(xhandlecontroldown) {
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
 			// play the switch up movie
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
+			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
 			
 			// play the going up movie
-			DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+			DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
 			
 			// go to the middle jungle elevator card
 			[controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator middle"] waitUntilDone:YES];
@@ -2455,7 +2461,7 @@ DEFINE_COMMAND(xvalvecontrol) {
 				if (theta <= -90.0f && theta >= -150.0f && r >= 40.0f) {
 					valve_state = 1;
 					[[g_world gameState] setUnsignedShort:valve_state forKey:@"bvalve"];
-					DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+					DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
 					DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
 				}
 				break;
@@ -2463,12 +2469,12 @@ DEFINE_COMMAND(xvalvecontrol) {
 				if (theta <= 80.0f && theta >= -10.0f && r >= 40.0f) {
 					valve_state = 0;
 					[[g_world gameState] setUnsignedShort:valve_state forKey:@"bvalve"];
-					DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 3);
+					DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 3);
 					DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
 				} else if ((theta <= -60.0f || theta >= 160.0f) && r >= 20.0f) {
 					valve_state = 2;
 					[[g_world gameState] setUnsignedShort:valve_state forKey:@"bvalve"];
-					DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 1);
+					DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
 					DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
 				}
 				break;
@@ -2476,7 +2482,7 @@ DEFINE_COMMAND(xvalvecontrol) {
 				if (theta <= 30.0f && theta >= -30.0f && r >= 20.0f) {
 					valve_state = 1;
 					[[g_world gameState] setUnsignedShort:valve_state forKey:@"bvalve"];
-					DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 4);
+					DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 4);
 					DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
 				}
 				break;
@@ -2525,7 +2531,7 @@ DEFINE_COMMAND(xbchipper) {
 	if (valve_state != 2)
 		return;
 	
-	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
 }
 
 DEFINE_COMMAND(xbupdateboiler) {
@@ -2538,9 +2544,9 @@ DEFINE_COMMAND(xbupdateboiler) {
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 8);
 	} else {
 		if (platform)
-			DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLAY_MLST, 7);
+			DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, 7);
 		else
-			DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLAY_MLST, 8);
+			DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, 8);
 	}
 	
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
@@ -2617,7 +2623,7 @@ DEFINE_COMMAND(xbchangeboiler) {
 	else if (argv[0] == 2)
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 1);
 	
-	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 11);
+	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 11);
 }
 
 DEFINE_COMMAND(xsoundplug) {
@@ -2703,7 +2709,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	}
 	
 	// to the left
-	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, spin_mlst);
+	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, spin_mlst);
 	
 	// in a transaction, re-blit the base picture, blit the overlay picture, blit the number picture and disable the spin movie
 	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
@@ -2718,14 +2724,14 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	
 	// configure the doomed villager movie and play it
 	[self performSelectorOnMainThread:@selector(_configureDoomedVillagerMovie:) withObject:[NSNumber numberWithUnsignedShort:the_number] waitUntilDone:YES];
-	DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, doom_mlst);
+	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, doom_mlst);
 	
 	// update the villager's doom level
 	[state setUnsignedShort:level_of_doom + the_number forKey:villager_position_variable];
 	
 	// is it time for a snack?
 	if (level_of_doom + the_number > 19) {
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, snak_mlst);
+		DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, snak_mlst);
 		
 		DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
 		DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, doom_mlst);
@@ -2751,7 +2757,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 		uintptr_t k = 2;
 		RXMovie* button_movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
 		[self performSelectorOnMainThread:@selector(_unmuteMovie:) withObject:button_movie waitUntilDone:NO];
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+		DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
 	}
 }
 
@@ -2784,9 +2790,9 @@ DEFINE_COMMAND(xschool280_playwhark) {
 		// mute button movie if requested and start asynchronous playback of the visor button movie
 		if (mute_visor)
 			[self performSelectorOnMainThread:@selector(_muteMovie:) withObject:button_movie waitUntilDone:NO];
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE, 2);
+		DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, 2);
 	} else
-		DISPATCH_COMMAND1(RX_COMMAND_PLAY_MOVIE_BLOCKING, 2);
+		DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
 }
 
 - (void)drawSlidersForDome:(NSString*)dome minHotspotID:(uintptr_t)min_id {
