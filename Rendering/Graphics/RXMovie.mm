@@ -91,6 +91,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	
 	// we do not restrict playback to the selection initially
 	[_movie setAttribute:[NSNumber numberWithBool:NO] forKey:QTMoviePlaysSelectionOnlyAttribute];
+	_playing_selection = NO;
 	
 	// cache the movie's current size
 	[[_movie attributeForKey:QTMovieCurrentSizeAttribute] getValue:&_current_size];
@@ -389,17 +390,19 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 }
 
 - (BOOL)isPlayingSelection {
-	return [[_movie attributeForKey:QTMoviePlaysSelectionOnlyAttribute] boolValue];
+	return _playing_selection;
 }
 
 - (void)setPlaybackSelection:(QTTimeRange)selection {
 	[_movie setSelection:selection];
 	[self setLooping:NO];
 	[_movie setAttribute:[NSNumber numberWithBool:YES] forKey:QTMoviePlaysSelectionOnlyAttribute];
+	_playing_selection = YES;
 }
 
 - (void)clearPlaybackSelection {
 	[_movie setAttribute:[NSNumber numberWithBool:NO] forKey:QTMoviePlaysSelectionOnlyAttribute];
+	_playing_selection = NO;
 }
 
 - (void)setExpectedReadAheadFromDisplayLink:(CVDisplayLinkRef)displayLink {

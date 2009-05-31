@@ -42,6 +42,8 @@
 		312D9ECD0D4D81A3006E384C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9EC70D4D81A3006E384C /* InfoPlist.strings */; };
 		312D9ECE0D4D81A3006E384C /* Extras.MHK in Resources */ = {isa = PBXBuildFile; fileRef = 312D9EC90D4D81A3006E384C /* Extras.MHK */; };
 		312D9ECF0D4D81A3006E384C /* About.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9ECB0D4D81A3006E384C /* About.strings */; };
+		312EBAA40FD1FB2800D65E22 /* Python.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 312EBAA30FD1FB2800D65E22 /* Python.framework */; };
+		312EBAC80FD202ED00D65E22 /* debug_init.py in Resources */ = {isa = PBXBuildFile; fileRef = 312EBAC70FD202ED00D65E22 /* debug_init.py */; };
 		312EDC730A2E3B80005D26AF /* RXHotspot.m in Sources */ = {isa = PBXBuildFile; fileRef = 312EDC710A2E3B80005D26AF /* RXHotspot.m */; };
 		312F4D8F0DC2639C00B3AF0D /* RXRendering.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D8C0DC2639C00B3AF0D /* RXRendering.m */; };
 		312F4D900DC2639C00B3AF0D /* RXWorldRendering.mm in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D8D0DC2639C00B3AF0D /* RXWorldRendering.mm */; };
@@ -155,8 +157,6 @@
 		317ACCCC0F285CE00040FFFD /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31DCF73208CB855C00E351D9 /* QuickTime.framework */; };
 		3185C43B0E06027800528220 /* sparkle.pem in Resources */ = {isa = PBXBuildFile; fileRef = 3185C43A0E06027800528220 /* sparkle.pem */; };
 		3185C4730E06046D00528220 /* RXVersionComparator.m in Sources */ = {isa = PBXBuildFile; fileRef = 3185C4720E06046D00528220 /* RXVersionComparator.m */; };
-		31863BAF09919B04001A4A42 /* FScript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31863BAE09919B04001A4A42 /* FScript.framework */; };
-		31863BE009919B29001A4A42 /* FScript.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 31863BAE09919B04001A4A42 /* FScript.framework */; };
 		31863C5B0991AA28001A4A42 /* InterThreadMessaging.m in Sources */ = {isa = PBXBuildFile; fileRef = 31863C590991AA28001A4A42 /* InterThreadMessaging.m */; };
 		318CB4640E04917A00BD2C38 /* RXGameState_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 318CB4630E04917A00BD2C38 /* RXGameState_test.m */; };
 		318CB4FD0E05C60C00BD2C38 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
@@ -301,7 +301,6 @@
 			files = (
 				315D43B50E328591003F7EDD /* Sparkle.framework in Copy Frameworks */,
 				31495A4F0E327DA400E49C83 /* MHKKit.framework in Copy Frameworks */,
-				31863BE009919B29001A4A42 /* FScript.framework in Copy Frameworks */,
 			);
 			name = "Copy Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -380,6 +379,8 @@
 		312D9ECC0D4D81A3006E384C /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/About.strings; sourceTree = "<group>"; };
 		312D9ED10D4D81D4006E384C /* fr */ = {isa = PBXFileReference; lastKnownFileType = file; name = fr; path = fr.lproj/Extras.MHK; sourceTree = "<group>"; };
 		312D9ED20D4D81E1006E384C /* de */ = {isa = PBXFileReference; lastKnownFileType = file; name = de; path = de.lproj/Extras.MHK; sourceTree = "<group>"; };
+		312EBAA30FD1FB2800D65E22 /* Python.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Python.framework; path = /System/Library/Frameworks/Python.framework; sourceTree = "<absolute>"; };
+		312EBAC70FD202ED00D65E22 /* debug_init.py */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = text.script.python; path = debug_init.py; sourceTree = "<group>"; tabWidth = 4; usesTabs = 0; };
 		312EDC700A2E3B80005D26AF /* RXHotspot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXHotspot.h; sourceTree = "<group>"; };
 		312EDC710A2E3B80005D26AF /* RXHotspot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXHotspot.m; sourceTree = "<group>"; };
 		312F4D8B0DC2639C00B3AF0D /* RXRendering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRendering.h; sourceTree = "<group>"; };
@@ -497,7 +498,6 @@
 		3185C43A0E06027800528220 /* sparkle.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sparkle.pem; sourceTree = "<group>"; };
 		3185C4710E06046D00528220 /* RXVersionComparator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVersionComparator.h; sourceTree = "<group>"; };
 		3185C4720E06046D00528220 /* RXVersionComparator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVersionComparator.m; sourceTree = "<group>"; };
-		31863BAE09919B04001A4A42 /* FScript.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = FScript.framework; sourceTree = "<group>"; };
 		31863C0509919F87001A4A42 /* RXCardProtocols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardProtocols.h; sourceTree = "<group>"; };
 		31863C580991AA28001A4A42 /* InterThreadMessaging.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = InterThreadMessaging.h; sourceTree = "<group>"; };
 		31863C590991AA28001A4A42 /* InterThreadMessaging.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = InterThreadMessaging.m; sourceTree = "<group>"; };
@@ -590,7 +590,7 @@
 		93FDAD39098A789100D94CD0 /* BDAlias.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = BDAlias.m; sourceTree = "<group>"; };
 		93FDAD3A098A789100D94CD0 /* BDAlias.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = BDAlias.h; sourceTree = "<group>"; };
 		93FDAD44098A78DE00D94CD0 /* RXDebugWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXDebugWindowController.h; sourceTree = "<group>"; };
-		93FDAD45098A78DE00D94CD0 /* RXDebugWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXDebugWindowController.mm; sourceTree = "<group>"; };
+		93FDAD45098A78DE00D94CD0 /* RXDebugWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXDebugWindowController.mm; sourceTree = "<group>"; tabWidth = 4; usesTabs = 1; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -708,12 +708,12 @@
 				31DCF73408CB855C00E351D9 /* QTKit.framework in Frameworks */,
 				31DCF73508CB855C00E351D9 /* QuartzCore.framework in Frameworks */,
 				31DCF73608CB855C00E351D9 /* QuickTime.framework in Frameworks */,
-				31863BAF09919B04001A4A42 /* FScript.framework in Frameworks */,
 				31E0122E0C90F016000A271E /* MHKKit.framework in Frameworks */,
 				31AE54570DE0ADD6000E71CF /* ExceptionHandling.framework in Frameworks */,
 				3153E7F40DE5ABC900DF63B8 /* Carbon.framework in Frameworks */,
 				315D438C0E328582003F7EDD /* Sparkle.framework in Frameworks */,
 				311138A70F23FB000009C6C1 /* GLUT.framework in Frameworks */,
+				312EBAA40FD1FB2800D65E22 /* Python.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -783,11 +783,11 @@
 				3145384B08C6A73E004B7FD0 /* CoreServices.framework */,
 				31AE54560DE0ADD6000E71CF /* ExceptionHandling.framework */,
 				08FB779EFE84155DC02AAC07 /* Foundation.framework */,
-				31863BAE09919B04001A4A42 /* FScript.framework */,
 				311138A60F23FB000009C6C1 /* GLUT.framework */,
 				3145383F08C6A5F4004B7FD0 /* IOKit.framework */,
 				3158857A0C8729D800204DDD /* MHKKit.framework */,
 				31DCF72F08CB855C00E351D9 /* OpenGL.framework */,
+				312EBAA30FD1FB2800D65E22 /* Python.framework */,
 				31DCF73008CB855C00E351D9 /* QTKit.framework */,
 				31DCF73108CB855C00E351D9 /* QuartzCore.framework */,
 				31DCF73208CB855C00E351D9 /* QuickTime.framework */,
@@ -1128,6 +1128,7 @@
 				31DAAF210DDE21EF00D06D0C /* sounds */,
 				3185C43A0E06027800528220 /* sparkle.pem */,
 				31D21B980DBC078E00E970E1 /* VariableEditor.xib */,
+				312EBAC70FD202ED00D65E22 /* debug_init.py */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1487,6 +1488,7 @@
 				31DAAF260DDE21EF00D06D0C /* cursors in Resources */,
 				31DAAF270DDE21EF00D06D0C /* sounds in Resources */,
 				3185C43B0E06027800528220 /* sparkle.pem in Resources */,
+				312EBAC80FD202ED00D65E22 /* debug_init.py in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

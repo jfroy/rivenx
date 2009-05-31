@@ -28,6 +28,7 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
 	
 	BOOL _looping;
 	BOOL _seamless_looping_hacked;
+	BOOL _playing_selection;
 	
 	GLuint _vao;
 	GLfloat _coordinates[16];

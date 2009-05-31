@@ -89,7 +89,8 @@ CF_INLINE void rx_dispatch_command5(id target, rx_command_dispatch_entry_t* comm
 #define DISPATCH_COMMAND4(COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4) rx_dispatch_command4(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4)
 #define DISPATCH_COMMAND5(COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4, ARG5) rx_dispatch_command5(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4, ARG5)
 
-static rx_command_dispatch_entry_t _riven_command_dispatch_table[48];
+static const uint32_t rx_command_count = 48;
+static rx_command_dispatch_entry_t _riven_command_dispatch_table[rx_command_count];
 static NSMapTable* _riven_external_command_dispatch_map;
 
 
@@ -135,13 +136,13 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[25].sel = @selector(_opcode_decrementVariable:arguments:);
 	_riven_command_dispatch_table[26].sel = @selector(_opcode_closeAllMovies:arguments:);
 	_riven_command_dispatch_table[27].sel = @selector(_opcode_goToStack:arguments:);
-	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMovie:arguments:); // is "hide movie" actually, may need to keep playing the movie, given movie code
-	_riven_command_dispatch_table[29].sel = @selector(_opcode_disableAllMovies:arguments:); // is "hide all movies"
+	_riven_command_dispatch_table[28].sel = @selector(_opcode_disableMovie:arguments:);
+	_riven_command_dispatch_table[29].sel = @selector(_opcode_disableAllMovies:arguments:);
 	_riven_command_dispatch_table[30].sel = @selector(_opcode_unimplemented:arguments:); // is "set movie rate", given movie code
-	_riven_command_dispatch_table[31].sel = @selector(_opcode_unimplemented:arguments:); // is "show movie", given movie code
-	_riven_command_dispatch_table[32].sel = @selector(_opcode_startMovieAndWaitUntilDone:arguments:); // set rate 1.0, set no looping, show, wait for end, given movie code
+	_riven_command_dispatch_table[31].sel = @selector(_opcode_enableMovie:arguments:);
+	_riven_command_dispatch_table[32].sel = @selector(_opcode_startMovieAndWaitUntilDone:arguments:);
 	_riven_command_dispatch_table[33].sel = @selector(_opcode_startMovie:arguments:);
-	_riven_command_dispatch_table[34].sel = @selector(_opcode_stopMovie:arguments:); // is "stop", given movie code
+	_riven_command_dispatch_table[34].sel = @selector(_opcode_stopMovie:arguments:);
 	_riven_command_dispatch_table[35].sel = @selector(_opcode_unimplemented:arguments:); // activate SFXE (arg0 is the SFXE ID)
 	_riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:);
 	_riven_command_dispatch_table[37].sel = @selector(_opcode_fadeAmbientSounds:arguments:);
@@ -156,7 +157,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[46].sel = @selector(_opcode_activateMLST:arguments:);
 	_riven_command_dispatch_table[47].sel = @selector(_opcode_activateSLSTWithVolume:arguments:);
 	
-	for (unsigned char selectorIndex = 0; selectorIndex < 48; selectorIndex++)
+	for (unsigned char selectorIndex = 0; selectorIndex < rx_command_count; selectorIndex++)
 		_riven_command_dispatch_table[selectorIndex].imp = (rx_command_imp_t)[self instanceMethodForSelector:_riven_command_dispatch_table[selectorIndex].sel];
 	
 	// search for external command implementation methods and register them
@@ -869,25 +870,14 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	semaphore_signal(_moviePlaybackSemaphore);
 }
 
-- (void)_reallyDoPlayMovie:(RXMovie*)movie {
+- (void)_resetMovie:(RXMovie*)movie {
 	// WARNING: MUST RUN ON MAIN THREAD
-	
-	// make sure the movie is playing (which is different than being rendered)
-	if (fabsf([movie rate]) < 0.001f) {	
-		// reset the movie at its beginning if it's not looping or playing a selection
-		if (![movie looping] && ![movie isPlayingSelection])
-			[movie reset];
-		
-		// begin playback
-		[movie play];
-	}
-	
-	// queue the movie for rendering
-	[controller enableMovie:movie];
+	[movie reset];
 }
 
 - (void)_playMovie:(RXMovie*)movie {
-	[self _reallyDoPlayMovie:movie];
+	// WARNING: MUST RUN ON MAIN THREAD
+	[movie play];
 }
 
 - (void)_playBlockingMovie:(RXMovie*)movie {
@@ -905,20 +895,25 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		[controller hideMouseCursor];
 	}
 	
-	// start playing the movie (this may be a no-op if the movie was already started)
-	[self _reallyDoPlayMovie:movie];
+	// disable looping to make sure we don't deadlock by never finishing playback
+	[movie setLooping:NO];
+	
+	// start playing the movie
+	[movie play];
 }
 
 - (void)_stopMovie:(RXMovie*)movie {
-	// disable the movie in the card renderer
-	[controller disableMovie:movie];
+	// WARNING: MUST RUN ON MAIN THREAD
+	[movie stop];
 }
 
 - (void)_muteMovie:(RXMovie*)movie {
+	// WARNING: MUST RUN ON MAIN THREAD
 	[movie setVolume:0.0f];
 }
 
 - (void)_unmuteMovie:(RXMovie*)movie {
+	// WARNING: MUST RUN ON MAIN THREAD
 	[(RXMovieProxy*)movie restoreMovieVolume];
 }
 
@@ -1155,11 +1150,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	uintptr_t k = mlst_r->code;
 	NSMapInsert(code2movieMap, (const void*)k, movie);
 	
-	// disable the movie
-	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
+	// reset the movie
+	[self performSelectorOnMainThread:@selector(_resetMovie:) withObject:movie waitUntilDone:YES];
 	
 	// should re-apply the MLST settings to the movie here, but because of the way RX is setup, we don't need to do that
-	// in particular, _stopMovie will reset the movie back to the beginning and invalidate any decoded frame it may have
+	// in particular, _resetMovie will reset the movie back to the beginning and invalidate any decoded frame it may have
 }
 
 // 7
@@ -1499,8 +1494,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (!movie)
 		return;
 	
-	// stop the movie on the main thread and block until done
-	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
+	// disable the movie in the renderer
+	[controller disableMovie:movie];
 }
 
 // 29
@@ -1513,14 +1508,34 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling all movies", logPrefix);
 #endif
 	
-	// stop all movies on the main thread and block until done
-	[(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:YES];
+	// disable all movies in the renderer
+	[controller disableAllMovies];
+}
+
+// 31
+- (void)_opcode_enableMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
+#if defined(DEBUG)
+	if (!_disableScriptLogging)
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling movie with code %hu", logPrefix, argv[0]);
+#endif
+	
+	// get the movie object
+	uintptr_t k = argv[0];
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+	
+	// it is legal to disable a code that has no movie associated with it
+	if (!movie)
+		return;
+	
+	// enable the movie in the renderer
+	[controller enableMovie:movie];
 }
 
 // 32
 - (void)_opcode_startMovieAndWaitUntilDone:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 1)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+	
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu and waiting until done", logPrefix, argv[0]);
@@ -1536,6 +1551,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	
 	// start the movie and register for rate change notifications
 	[self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:movie waitUntilDone:YES];
+	
+	// enable the movie in the renderer
+	[controller enableMovie:movie];
 	
 	// wait until the movie is done playing
 	semaphore_wait(_moviePlaybackSemaphore);
@@ -1557,6 +1575,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// it is legal to play a code that has no movie associated with it; it's a no-op
 	if (!movie)
 		return;
+	
+	// enable the movie in the renderer
+	[controller enableMovie:movie];
 	
 	// start the movie and block until done
 	[self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
@@ -1764,11 +1785,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	RXMovie* movie = [[card movies] objectAtIndex:argv[0] - 1];
 	NSMapInsert(code2movieMap, (const void*)k, movie);
 	
-	// disable the movie
-	[self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
+	// reset the movie
+	[self performSelectorOnMainThread:@selector(_resetMovie:) withObject:movie waitUntilDone:YES];
 	
 	// should re-apply the MLST settings to the movie here, but because of the way RX is setup, we don't need to do that
-	// in particular, _stopMovie will reset the movie back to the beginning and invalidate any decoded frame it may have
+	// in particular, _resetMovie will reset the movie back to the beginning and invalidate any decoded frame it may have
 }
 
 // 47

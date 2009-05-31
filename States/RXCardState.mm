@@ -976,7 +976,7 @@ init_failure:
 	OSSpinLockUnlock(&_render_lock);
 	
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"enabled movie %@, back movie list count at %d", movie, [_active_movies count]);
+	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"enabled movie %@ [%d active movies]", movie, [_active_movies count]);
 #endif
 }
 
@@ -986,8 +986,6 @@ init_failure:
 	
 	uint32_t index = [_active_movies indexOfObject:movie];
 	if (index != NSNotFound) {
-		[movie stop];
-		[movie reset];
 		[[movie owner] release];
 		[_active_movies removeObjectAtIndex:index];
 	}
@@ -995,26 +993,20 @@ init_failure:
 	OSSpinLockUnlock(&_render_lock);
 	
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled movie %@, back movie list count at %d", movie, [_active_movies count]);
+	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled movie %@ [%d active movies]", movie, [_active_movies count]);
 #endif
 }
 
 - (void)disableAllMovies {
 	OSSpinLockLock(&_render_lock);
 	
-	NSEnumerator* movie_enum = [_active_movies objectEnumerator];
-	RXMovie* movie;
-	while ((movie = [movie_enum nextObject])) {
-		[movie stop];
-		[movie reset];
-	}
 	CFArrayApplyFunction((CFArrayRef)_active_movies, CFRangeMake(0, [_active_movies count]), rx_release_owner_applier, self);
 	[_active_movies removeAllObjects];
 	
 	OSSpinLockUnlock(&_render_lock);
 	
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled all movies, back movie list count at %d", [_active_movies count]);
+	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled all movies [%d active movies]", [_active_movies count]);
 #endif
 }
 
@@ -1034,7 +1026,7 @@ init_failure:
 	// queue the transition
 	[_transitionQueue addObject:transition];
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"queued transition %@, queue depth=%lu", transition, [_transitionQueue count]);
+	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"queued transition %@ [queue depth=%lu]", transition, [_transitionQueue count]);
 #endif
 }
 
@@ -1063,7 +1055,7 @@ init_failure:
 		[_transitionQueue removeObjectAtIndex:0];
 		
 #if defined(DEBUG)
-		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"dequeued transition %@, queue depth=%lu", _back_render_state->transition, [_transitionQueue count]);
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"dequeued transition %@ [queue depth=%lu]", _back_render_state->transition, [_transitionQueue count]);
 #endif
 	}
 	
@@ -1117,7 +1109,7 @@ init_failure:
 	_back_render_state->water_fx = _front_render_state->water_fx;
 	
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"swapped render state, front card=%@", _front_render_state->card);
+	RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"updated render state, front card=%@", _front_render_state->card);
 #endif
 	
 	// if the front card has changed, we need to reap the back render state's card, put the front card in it, and show the mouse cursor

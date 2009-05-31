@@ -7,12 +7,16 @@
 //
 
 
-@class CLIView;
+#import <Cocoa/Cocoa.h>
+
 
 @interface RXDebugWindowController : NSWindowController {
-	IBOutlet CLIView* cli;
+	IBOutlet NSTextView* consoleView;
+	NSFont* _consoleFont;
 	
 	uint16_t _trip;
 }
+
+- (IBAction)runPythonCmd:(id)sender;
 
 @end

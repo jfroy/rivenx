@@ -6,6 +6,8 @@
 //	Copyright 2006 MacStorm. All rights reserved.
 //
 
+#import <Python/Python.h>
+
 #import "RXDebugWindowController.h"
 
 #import "Engine/RXWorldProtocol.h"
@@ -13,27 +15,137 @@
 
 #import "States/RXCardState.h"
 
-@interface NSObject (CLIViewPrivate)
-- (void)notifyUser:(NSString *)message;
-- (void)putText:(NSString *)text;
+
+@interface RXDebugWindowController (RXDebugConsolePythonIO)
+- (IBAction)runPythonCmd:(id)sender;
+- (void)pythonOut:(NSString*)string;
+
+- (void)print:(NSString*)msg;
 @end
+
+
+// pointer to python controller
+static RXDebugWindowController* rx_debug_window_controller;
+
+PyObject* rivenx_CaptureStdout(PyObject* self, PyObject* pArgs) {
+	char* log_string = NULL;
+	if (!PyArg_ParseTuple(pArgs, "s", &log_string))
+		return NULL;
+	
+	[rx_debug_window_controller pythonOut:[NSString stringWithCString:log_string encoding:NSASCIIStringEncoding]];
+	
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+PyObject* rivenx_CaptureStderr(PyObject* self, PyObject* pArgs) {
+	char* log_string = NULL;
+	if (!PyArg_ParseTuple(pArgs, "s", &log_string))
+		return NULL;
+
+	[rx_debug_window_controller pythonOut:[NSString stringWithCString:log_string encoding:NSASCIIStringEncoding]];
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
+// methods for the 'rivenx' module
+static PyMethodDef rivenx_methods[] = {
+	{"CaptureStdout", rivenx_CaptureStdout, METH_VARARGS, "Logs stdout"},
+	{"CaptureStderr", rivenx_CaptureStderr, METH_VARARGS, "Logs stderr"},
+	{NULL, NULL, 0, NULL}
+};
+
+
+
+
+@interface NSObject (CLIViewPrivate)
+
+@end
+
 
 @implementation RXDebugWindowController
 
++ (RXDebugWindowController*)globalDebugWindowController {
+	return rx_debug_window_controller;
+}
+
 - (void)awakeFromNib {
-	[self setWindowFrameAutosaveName:@"Debug Window"];
-	[cli notifyUser:@"Riven X debug shell v3. Type help for commands. Type a command for usage information."];
+	//[cli notifyUser:@"Riven X debug shell v3. Type help for commands. Type a command for usage information."];
+	
+	rx_debug_window_controller = self;
+	
+	[consoleView setRichText: NO];
+	_consoleFont = [NSFont fontWithName:@"Menlo" size:11];
+	if (!_consoleFont)
+		_consoleFont = [NSFont fontWithName:@"Monaco" size:11];
+	[consoleView setFont:_consoleFont];
+	[_consoleFont retain];
+	
+	// initialize Python (skipping signal initialization)
+	Py_InitializeEx(0);
+	
+	// add a log module with the log functions
+	Py_InitModule("rivenx", rivenx_methods);
+	
+	// initialize the debug console
+	NSString* init_file = [[NSBundle mainBundle] pathForResource:@"debug_init" ofType:@"py"];
+	FILE* fp = fopen([init_file fileSystemRepresentation], "r");
+	PyRun_SimpleFileEx(fp, [[init_file lastPathComponent] cStringUsingEncoding:NSASCIIStringEncoding], 1);
 }
 
 - (NSString*)windowFrameAutosaveName {
-	return @"DebugWindowFrame";
+	return @"DebugConsoleFrame";
 }
 
-- (void)cmd_help:(NSArray*)arguments from:(CLIView*)sender {
-	[sender putText:@"you're on your own, sorry\n"];
+- (IBAction)runPythonCmd:(id)sender {
+	NSFont* bold_console_font = [[NSFontManager sharedFontManager] convertFont:_consoleFont toHaveTrait:NSBoldFontMask];
+	NSAttributedString* attr_str = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@">> %@\n", [sender stringValue]]
+																   attributes:[NSDictionary dictionaryWithObject:bold_console_font forKey:NSFontAttributeName]];
+	[[consoleView textStorage] beginEditing];
+	[[consoleView textStorage] appendAttributedString:attr_str];
+	[[consoleView textStorage] endEditing];
+
+	PyObject* main_module = PyImport_AddModule("__main__");
+	PyObject* global_dict = PyModule_GetDict(main_module);
+	PyObject* exec_cmd_f = PyDict_GetItemString(global_dict, "exec_cmd");
+	PyObject_CallFunction(exec_cmd_f, "s", [[sender stringValue] cStringUsingEncoding:NSASCIIStringEncoding]);
+	[sender setStringValue:@""];
 }
 
-- (void)cmd_card:(NSArray*)arguments from:(CLIView*)sender {
+- (void)print:(NSString*)msg { 
+//	NSString* cmd = [NSString stringWithFormat:@"print '%@'\n", [msg stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"]];
+//	const char* c_cmd = [cmd cStringUsingEncoding:NSASCIIStringEncoding];
+//	if (c_cmd)
+//		PyRun_SimpleString(c_cmd);
+//	else {
+//		size_t cmd_size = [cmd lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
+//		char* cmd_buf = (char*)malloc(cmd_size);
+//		[cmd getCString:cmd_buf maxLength:cmd_size encoding:NSASCIIStringEncoding];
+//		PyRun_SimpleString(cmd_buf);
+//		free(cmd_buf);
+//	}
+
+	// FIXME: workaround until I figure out why calling back into Python crashes
+	[self pythonOut:[msg stringByAppendingString:@"\n"]];
+}
+
+- (void)pythonOut:(NSString*)str {
+	NSAttributedString* attr_str = [[NSAttributedString alloc] initWithString:str
+																   attributes:[NSDictionary dictionaryWithObject:_consoleFont forKey:NSFontAttributeName]];
+	[[consoleView textStorage] beginEditing];
+	[[consoleView textStorage] appendAttributedString:attr_str];
+	[[consoleView textStorage] endEditing];
+	[attr_str release];
+}
+
+#pragma mark debug commands
+
+- (void)cmd_help:(NSArray*)arguments {
+	[self print:@"you're on your own, sorry"];
+}
+
+- (void)cmd_card:(NSArray*)arguments {
 	if ([arguments count] < 2)
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"card [stack] [ID]" userInfo:nil];
 
@@ -51,7 +163,7 @@
 	[renderingState setActiveCardWithStack:stackKey ID:cardID waitUntilDone:NO];
 }
 
-- (void)cmd_refresh:(NSArray*)arguments from:(CLIView*)sender {
+- (void)cmd_refresh:(NSArray*)arguments {
 	RXSimpleCardDescriptor* current_card = [[g_world gameState] currentCard];
 	RXCardState* renderingState = (RXCardState*)[g_world cardRenderState];
 	[renderingState setActiveCardWithStack:current_card->stackKey ID:current_card->cardID waitUntilDone:NO];
@@ -63,24 +175,24 @@
 	[[renderingState valueForKey:@"sengine"] performSelector:@selector(_opcode_activateSLST:arguments:) withObject:(id)1 withObject:(id)&args];
 }
 
-- (void)cmd_slst:(NSArray*)arguments from:(CLIView*)sender {
+- (void)cmd_slst:(NSArray*)arguments {
 	if ([arguments count] < 1)
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"slst [1-based index]" userInfo:nil];
 	[self performSelector:@selector(_activateSLST:) withObject:[arguments objectAtIndex:0] inThread:[g_world scriptThread] waitUntilDone:YES];
 }
 
-- (void)cmd_get:(NSArray*)arguments from:(CLIView*)sender {
+- (void)cmd_get:(NSArray*)arguments {
 	if ([arguments count] < 1)
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"get [variable]" userInfo:nil];
 	NSString* path = [arguments objectAtIndex:0];
 	
 	if ([[g_world gameState] isKeySet:path])
-		[sender putText:[NSString stringWithFormat:@"%d\n", [[g_world gameState] signed32ForKey:path]]];
+		[self print:[NSString stringWithFormat:@"%d", [[g_world gameState] signed32ForKey:path]]];
 	else
-		[sender putText:[NSString stringWithFormat:@"%@\n", [[g_world valueForKeyPath:path] stringValue]]];
+		[self print:[NSString stringWithFormat:@"%@", [[g_world valueForKeyPath:path] stringValue]]];
 }
 
-- (void)cmd_set:(NSArray*)arguments from:(CLIView*)sender {
+- (void)cmd_set:(NSArray*)arguments {
 	if ([arguments count] < 2)
 		@throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"set [variable] [value]" userInfo:nil];
 	
@@ -129,7 +241,7 @@
 		[g_world setValue:value forEngineVariable:path];
 }
 
-- (void)cmd_dump:(NSArray*)arguments from:(CLIView*)sender {
+- (void)cmd_dump:(NSArray*)arguments {
 	[[g_world cardRenderState] performSelector:@selector(exportCompositeFramebuffer)];
 }
 
@@ -151,40 +263,11 @@
 	[renderingState setActiveCardWithStack:@"jspit" ID:_trip waitUntilDone:NO];
 }
 
-- (void)cmd_jtrip:(NSArray*)arguments from:(CLIView*)sender {
+- (void)cmd_jtrip:(NSArray*)arguments {
 	RXCardState* renderingState = (RXCardState*)[g_world cardRenderState];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_nextJspitCard:) name:@"RXActiveCardDidChange" object:nil];
 	_trip = 1;
 	[renderingState setActiveCardWithStack:@"jspit" ID:_trip waitUntilDone:NO];
-}
-
-- (void)command:(NSString*)command from:(CLIView*)sender {
-	if ([command length] == 0)
-		return;
-	
-	NSArray* components = [command componentsSeparatedByString:@" "];
-	NSString* command_name = [components objectAtIndex:0];
-	components = [components subarrayWithRange:NSMakeRange(1, [components count] - 1)];
-	
-	@try {
-		SEL commandSel = NSSelectorFromString([NSString stringWithFormat:@"cmd_%@:from:", command_name]);
-		if ([self respondsToSelector:commandSel])
-			[self performSelector:commandSel withObject:components withObject:sender];
-		else
-			@throw [NSException exceptionWithName:@"RXUnknownCommandException" reason:@"Command not found, type help for commands." userInfo:nil];
-	} @catch (NSException* e) {
-		NSString* exceptionName = [e name];
-		if ([exceptionName isEqualToString:@"RXCommandArgumentsException"]) {
-			[sender putText:[NSString stringWithFormat:@"usage: %@\n", [e reason]]];
-		} else if ([exceptionName isEqualToString:@"RXUnknownCommandException"]) {
-			[sender putText:[NSString stringWithFormat:@"%@: command not found\n", command_name]];
-		} else if ([exceptionName isEqualToString:@"RXCommandError"]) {
-			[sender putText:[e reason]];
-			[sender putText:@"\n"];
-		} else {
-			[sender putText:[NSString stringWithFormat:@"unknown error: %@ - %@\n", [e name], [e reason]]];
-		}
-	}
 }
 
 @end
