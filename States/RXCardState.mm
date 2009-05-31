@@ -980,7 +980,6 @@ init_failure:
 #endif
 }
 
-
 - (void)disableMovie:(RXMovie*)movie {
 	OSSpinLockLock(&_render_lock);
 	
