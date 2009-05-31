@@ -44,7 +44,7 @@ def exec_cmd(cmd):
         cmd_func = globals()[cmd_parts[0]]
         cmd_func(*cmd_parts[1:])
     except KeyError:
-        exec cmd
+        exec cmd in globals()
 
 # greet the user
 print "Riven X debug shell v4. Type help for commands. Type a command for usage information.\n"
