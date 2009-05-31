@@ -530,7 +530,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		}
 	}
 	
-	// enable screen updates
+	// force a screen update
+	_screen_update_disable_counter = 1;
 	 DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 	 
 	 // now run the start rendering programs
@@ -603,14 +604,14 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 - (void)closeCard {
+	// we may be switching from the NULL card, so check for that and return immediately if that's the case
+	if (!card)
+		return;
+
 #if defined(DEBUG)
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing card {", logPrefix);
 	[logPrefix appendString:@"    "];
 #endif
-	
-	// we may be switching from the NULL card, so check for that and return immediately if that's the case
-	if (!card)
-		return;
 	
 	// retain the card while it executes programs
 	RXCard* executing_card = card;
