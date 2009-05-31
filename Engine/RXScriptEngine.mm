@@ -1833,7 +1833,7 @@ DEFINE_COMMAND(xasetupcomplete) {
 	// schedule a fade transition
 	DISPATCH_COMMAND1(RX_COMMAND_SCHEDULE_TRANSITION, 16);
 	
-	// clear the ambiant sound
+	// clear the ambient sound
 	DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 0);
 	
 	// go to card 1
@@ -1978,19 +1978,34 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 		NSPoint combination_sampling_origin = NSMakePoint(32.0f * 3, 0.0f);
 		NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 25.0f);
 		
-		[self _drawPictureWithID:13 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:13
+						   stack:[card parent]
+					 displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
+					samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:14 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:14
+						   stack:[card parent]
+					 displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
+					samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:15 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:15
+						   stack:[card parent]
+					 displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
+					samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:16 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:16
+						   stack:[card parent]
+					 displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
+					samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		
-		[self _drawPictureWithID:17 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:17
+						   stack:[card parent]
+					 displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
+					samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 	}
 }
 
@@ -2088,35 +2103,50 @@ DEFINE_COMMAND(xtchotakesbook) {
 		while (!(domecombo & (1 << combo_bit)))
 			combo_bit--;
 		combination_sampling_origin.x = 32.0f * (24 - combo_bit);
-		[self _drawPictureWithID:364 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:364
+						   stack:[card parent]
+					 displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
+					samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		combo_bit--;
 
 		while (!(domecombo & (1 << combo_bit)))
 			combo_bit--;
 		combination_sampling_origin.x = 32.0f * (24 - combo_bit);		
-		[self _drawPictureWithID:365 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:365
+						   stack:[card parent]
+					 displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
+					samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		combo_bit--;
 		
 		while (!(domecombo & (1 << combo_bit)))
 			combo_bit--;
 		combination_sampling_origin.x = 32.0f * (24 - combo_bit);
-		[self _drawPictureWithID:366 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:366
+						   stack:[card parent]
+					 displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
+					samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		combo_bit--;
 		
 		while (!(domecombo & (1 << combo_bit)))
 			combo_bit--;
 		combination_sampling_origin.x = 32.0f * (24 - combo_bit);
-		[self _drawPictureWithID:367 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:367
+						   stack:[card parent]
+					 displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
+					samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 		combination_display_origin.x += combination_base_rect.size.width;
 		combo_bit--;
 		
 		while (!(domecombo & (1 << combo_bit)))
 			combo_bit--;
 		combination_sampling_origin.x = 32.0f * (24 - combo_bit);
-		[self _drawPictureWithID:368 stack:[card parent] displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y) samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+		[self _drawPictureWithID:368
+						   stack:[card parent]
+					 displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
+					samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
 	}
 }
 
@@ -2226,7 +2256,8 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 }
 
 DEFINE_COMMAND(xicon) {
-	// this command sets the variable atemp to 1 if the specified icon is depressed, 0 otherwise; sets atemp to 2 if the icon cannot be depressed
+	// this command sets the variable atemp to 1 if the specified icon is depressed, 0 otherwise; 
+	// sets atemp to 2 if the icon cannot be depressed
 	
 	// must set atemp to 2 if the rebel puzzle has been solved already (jrbook != 0)
 	uint32_t jrbook = [[g_world gameState] unsigned32ForKey:@"jrbook"];
@@ -2732,7 +2763,8 @@ DEFINE_COMMAND(xjschool280_resetright) {
 	duration.timeValue /= 19;
 	
 	// set the movie's playback range
-	QTTimeRange movie_range = QTMakeTimeRange(QTMakeTime(duration.timeValue * level_of_doom, duration.timeScale), QTMakeTime(duration.timeValue * [stepsNumber unsignedShortValue], duration.timeScale));
+	QTTimeRange movie_range = QTMakeTimeRange(QTMakeTime(duration.timeValue * level_of_doom, duration.timeScale),
+											  QTMakeTime(duration.timeValue * [stepsNumber unsignedShortValue], duration.timeScale));
 	[movie setPlaybackSelection:movie_range];
 }
 
@@ -2847,7 +2879,8 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	
 	// did we hit the golden eye frame?
 #if defined(DEBUG)
-	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@movie_position=%f, event_delay=%f, position-delay=%f", logPrefix, movie_position, event_delay, movie_position - event_delay);
+	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@movie_position=%f, event_delay=%f, position-delay=%f",
+		logPrefix, movie_position, event_delay, movie_position - event_delay);
 #endif
 	if (movie_position >= 4.58) {
 		[[g_world gameState] setUnsignedShort:1 forKey:@"domecheck"];
@@ -3041,7 +3074,10 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	// track the mouse, updating the position of the slider as appropriate
 	while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
 		// where are we now?
-		RXHotspot* hotspot = [self domeSliderHotspotForDome:dome mousePosition:NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin activeHotspot:active_hotspot minHotspotID:min_hotspot_id];
+		RXHotspot* hotspot = [self domeSliderHotspotForDome:dome
+											  mousePosition:NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin
+											  activeHotspot:active_hotspot
+											   minHotspotID:min_hotspot_id];
 		if (hotspot && hotspot != active_hotspot) {
 			// play the tic sound
 			[controller playDataSound:tic_sound];
