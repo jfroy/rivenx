@@ -44,9 +44,11 @@
 	BOOL _didActivatePLST;
 	BOOL _didActivateSLST;
 	
-	RXHotspot* _current_hotspot;
+	GLuint tiny_marble_atlas;
 	
 	// gameplay support
+	RXHotspot* _current_hotspot;
+	
 	uint32_t sliders_state;
 	rx_point_t dome_slider_background_position;
 	

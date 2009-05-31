@@ -926,7 +926,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	NSError* error;
 	NSDictionary* picture_descriptor = [archive bitmapDescriptorWithID:ID error:&error];
 	if (!picture_descriptor)
-		@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not get a picture resource's picture descriptor." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		@throw [NSException exceptionWithName:@"RXPictureLoadException"
+									   reason:@"Could not get a picture resource's picture descriptor."
+									 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	GLsizei picture_width = [[picture_descriptor objectForKey:@"Width"] intValue];
 	GLsizei picture_height = [[picture_descriptor objectForKey:@"Height"] intValue];
 	
@@ -942,7 +944,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		sampling_rect.size.height = picture_height;
 	}
 	
-	// make sure the display rect is not larger than the picture -- pictures are clipped to the top-left corner of their display rects, they're never scaled
+	// make sure the display rect is not larger than the picture -- pictures
+	// are clipped to the top-left corner of their display rects, they're never scaled
 	if (display_rect.size.width > sampling_rect.size.width)
 		display_rect.size.width = sampling_rect.size.width;
 	if (display_rect.size.height > sampling_rect.size.height) {
@@ -950,7 +953,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		display_rect.size.height = sampling_rect.size.height;
 	}
 	
-	// compute the size of the buffer needed to store the texture; we'll be using MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED as the texture format, which is 4 bytes per pixel
+	// compute the size of the buffer needed to store the texture; we'll be using
+	// MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED as the texture format, which is 4 bytes per pixel
 	GLsizeiptr picture_size = picture_width * picture_height * 4;
 	
 	// check if we have a cache for the tBMP ID; create a dynamic picture structure otherwise and map it to the tBMP ID
@@ -959,7 +963,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	if (dynamic_picture == NULL) {
 		dynamic_picture = (struct rx_card_dynamic_picture*)malloc(sizeof(struct rx_card_dynamic_picture*));
 		
-		// get the load context
+		// get the load context and lock it
 		CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
 		CGLLockContext(cgl_ctx);
 		
@@ -968,7 +972,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		
 		// load the picture in the mapped picture buffer
 		if (![archive loadBitmapWithID:ID buffer:picture_buffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
-			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+			@throw [NSException exceptionWithName:@"RXPictureLoadException"
+										   reason:@"Could not load a picture resource."
+										 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 		// unmap the unpack buffer
 		if (GLEE_APPLE_flush_buffer_range)
@@ -3299,10 +3305,99 @@ static const uint32_t marble_offset_matrix[2][5] = {
 	{24, 92, 159, 227, 295},
 };
 
+static const uint32_t tiny_marble_offset_matrix[2][5] = {
+	{246, 269, 293, 316, 340},
+	{263, 272, 284, 295, 309},
+};
+
+static const uint32_t tiny_marble_receptable_position_vectors[2][6] = {
+//	 red	orange	yellow	green	blue	violet
+	{376,	378,	380,	382,	384,	386},
+	{253,	257,	261,	265,	268,	273},
+};
+
 static const float marble_size = 13.5f;
+
+- (void)_drawTinyMarbleWithPosition:(uint32_t)marble_pos index:(uint32_t)index {
+	uint32_t marble_x = (marble_pos >> 16) - 1;
+	uint32_t marble_y = (marble_pos & 0xFFFF) - 1;
+	
+	// create a RXDynamicPicture object and queue it for rendering
+	NSRect sampling_rect = NSMakeRect(0.f, index * 2, 4.f, 2.f);
+	
+	rx_core_rect_t core_display_rect;
+	if (marble_pos == 0) {
+		core_display_rect.left = tiny_marble_receptable_position_vectors[0][index];
+		core_display_rect.top = tiny_marble_receptable_position_vectors[1][index];
+	} else {
+		core_display_rect.left = tiny_marble_offset_matrix[0][marble_x / 5] + 5 * (marble_x % 5) - 2 * (marble_y % 5);
+		core_display_rect.top = tiny_marble_offset_matrix[1][marble_y / 5] + 2 * (marble_y % 5);
+	}
+	core_display_rect.right = core_display_rect.left + 4;
+	core_display_rect.bottom = core_display_rect.top + 2;
+	
+	RXDynamicPicture* picture = [[RXDynamicPicture alloc] initWithTexture:tiny_marble_atlas
+															 samplingRect:sampling_rect
+															   renderRect:RXMakeCompositeDisplayRectFromCoreRect(core_display_rect)
+																	owner:self];
+	[controller queuePicture:picture];
+	[picture release];
+}
 
 DEFINE_COMMAND(xt7600_setupmarbles) {
 	// this command draws the "tiny marbles" bitmaps on tspit 227
+	
+	// load the tiny marble atlas if we haven't done so yet
+	if (!tiny_marble_atlas) {
+		NSString* tma_path = [[NSBundle mainBundle] pathForResource:@"tiny_marbles" ofType:@"png"];
+		if (!tma_path)
+			@throw [NSException exceptionWithName:@"RXMissingResourceException"
+										   reason:@"Unable to find tiny_marbles.png."
+										 userInfo:nil];
+		
+		CGImageSourceRef source = CGImageSourceCreateWithURL((CFURLRef)[NSURL fileURLWithPath:tma_path], NULL);
+		CGImageRef image = CGImageSourceCreateImageAtIndex(source, 0, NULL);
+		CFRelease(source);
+		
+		size_t width = CGImageGetWidth(image);
+		size_t height = CGImageGetHeight(image);
+		CFDataRef data = CGDataProviderCopyData(CGImageGetDataProvider(image));
+		CFRelease(image);
+		
+		// get the load context and lock it
+		CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+		CGLLockContext(cgl_ctx);
+		
+		// create, bind and configure the tiny marble texture atlas
+		glGenTextures(1, &tiny_marble_atlas);
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, tiny_marble_atlas); glReportError();
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST); glReportError();
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST); glReportError();
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); glReportError();
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); glReportError();
+		
+		// disable client storage for this texture unpack operation (we just keep the texture alive in GL for ever)
+		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+		
+		// unpack the texture
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 16, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL); glReportError();
+		glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, CFDataGetBytePtr(data)); glReportError();
+		glFlush();
+		
+		// re-enable client storage
+		glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
+		
+		CGLUnlockContext(cgl_ctx);
+		CFRelease(data);
+	}
+	
+	RXGameState* gs = [g_world gameState];
+	[self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tred"] index:0];
+	[self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"torange"] index:1];
+	[self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tyellow"] index:2];
+	[self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tgreen"] index:3];
+	[self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tblue"] index:4];
+	[self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tviolet"] index:5];
 }
 
 - (void)_initializeMarbleHotspotWithVariable:(NSString*)marble_var initialRectPointer:(rx_core_rect_t*)initial_rect_ptr {

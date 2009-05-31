@@ -125,6 +125,7 @@
 		315BD41C0D85B64D007A3BFA /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		315D438C0E328582003F7EDD /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 315D438B0E328582003F7EDD /* Sparkle.framework */; };
 		315D43B50E328591003F7EDD /* Sparkle.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 315D438B0E328582003F7EDD /* Sparkle.framework */; };
+		3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */ = {isa = PBXBuildFile; fileRef = 3160E1810FD3075300F18E86 /* tiny_marbles.png */; };
 		316721AB0D27F5F700FB2C0E /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
 		316721AD0D27F60A00FB2C0E /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		316721AF0D27F63000FB2C0E /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
@@ -473,6 +474,7 @@
 		3158CD16094F7BEB004D5D00 /* RXCreditsState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXCreditsState.m; path = States/RXCreditsState.m; sourceTree = "<group>"; };
 		315A129708F1C3E500566B20 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = /System/Library/Frameworks/Accelerate.framework; sourceTree = "<absolute>"; };
 		315D438B0E328582003F7EDD /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
+		3160E1810FD3075300F18E86 /* tiny_marbles.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = tiny_marbles.png; sourceTree = "<group>"; };
 		316721D80D27FB3200FB2C0E /* integer_pair_hash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = integer_pair_hash.h; sourceTree = "<group>"; };
 		316721D90D27FB3200FB2C0E /* integer_pair_hash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = integer_pair_hash.c; sourceTree = "<group>"; };
 		316C37B10987227800AC2C8E /* RXCardState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXCardState.h; path = States/RXCardState.h; sourceTree = "<group>"; };
@@ -1107,6 +1109,7 @@
 		31F3093C08BE43D500417394 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				3160E1810FD3075300F18E86 /* tiny_marbles.png */,
 				31F1BEA50D3B03D000CFE301 /* about.png */,
 				312D9ECB0D4D81A3006E384C /* About.strings */,
 				312876F80F2972E900A114FF /* CardInspector.xib */,
@@ -1489,6 +1492,7 @@
 				31DAAF270DDE21EF00D06D0C /* sounds in Resources */,
 				3185C43B0E06027800528220 /* sparkle.pem in Resources */,
 				312EBAC80FD202ED00D65E22 /* debug_init.py in Resources */,
+				3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

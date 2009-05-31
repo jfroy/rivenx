@@ -58,14 +58,18 @@ struct rx_card_picture_record {
 	
 	fh = [_parent fileWithResourceType:@"MLST" ID:resourceID];
 	if (!fh)
-		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding MLST resource." userInfo:nil];
+		@throw [NSException exceptionWithName:@"RXMissingResourceException"
+									   reason:@"Could not open the card's corresponding MLST resource."
+									 userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	listData = malloc(listDataLength);
 	
 	// read the data from the archive
 	if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
-		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding MLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		@throw [NSException exceptionWithName:@"RXRessourceIOException"
+									   reason:@"Could not read the card's corresponding MLST ressource."
+									 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	// how many movies do we have?
 	uint16_t movieCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
@@ -110,7 +114,12 @@ struct rx_card_picture_record {
 		// load the movie up
 		CGPoint origin = CGPointMake(mlstRecords[currentListIndex].left, kRXCardViewportSize.height - mlstRecords[currentListIndex].top);
 		MHKArchive* archive = [[_parent fileWithResourceType:@"tMOV" ID:mlstRecords[currentListIndex].movie_id] archive];
-		RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive ID:mlstRecords[currentListIndex].movie_id origin:origin volume:mlstRecords[currentListIndex].volume / 256.0f loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO) owner:self];
+		RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive
+																	   ID:mlstRecords[currentListIndex].movie_id
+																   origin:origin
+																   volume:mlstRecords[currentListIndex].volume / 256.0f
+																	 loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO)
+																	owner:self];
 		
 		// add the movie to the movies array
 		[_movies addObject:movie_proxy];
@@ -185,7 +194,12 @@ struct rx_card_picture_record {
 	// load the movie up
 	CGPoint origin = CGPointMake(mlst->left, kRXCardViewportSize.height - mlst->top);
 	MHKArchive* archive = [[_parent fileWithResourceType:@"tMOV" ID:mlst->movie_id] archive];
-	RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive ID:mlst->movie_id origin:origin volume:mlst->volume / 256.0f loop:((mlst->loop == 1) ? YES : NO) owner:self];
+	RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive
+																   ID:mlst->movie_id
+															   origin:origin
+															   volume:mlst->volume / 256.0f
+																 loop:((mlst->loop == 1) ? YES : NO)
+																owner:self];
 
 	// add the movie to the movies array
 	[_movies addObject:movie_proxy];
@@ -202,7 +216,9 @@ struct rx_card_picture_record {
 	// check that the descriptor is "valid"
 	if (!cardDescriptor || ![cardDescriptor isKindOfClass:[RXCardDescriptor class]]) { 
 		[self release];
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Card descriptor object is nil or of the wrong type." userInfo:nil];
+		@throw [NSException exceptionWithName:NSInvalidArgumentException
+									   reason:@"Card descriptor object is nil or of the wrong type."
+									 userInfo:nil];
 	}
 	
 	// NOTE: Stack descriptors belong to cards initialized with them, and to the object that initialized the descriptor.
@@ -232,8 +248,12 @@ struct rx_card_picture_record {
 	// card events
 	_card_scripts = rx_decode_riven_script(BUFFER_OFFSET([cardData bytes], 4), NULL);
 	
-	// WORKAROUND: there is a legitimate bug in the CD edition's tspit 155 open card program; it executes activate SLST record 2 command after the introduction sequence, which is the mute SLST; patch it up to activate SLST 1
-	if ([_descriptor ID] == 155 && [[[_descriptor parent] key] isEqualToString:@"tspit"] && [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
+	// get the current edition
+	RXEdition* ce = [[RXEditionManager sharedEditionManager] currentEdition];
+	
+	// WORKAROUND: there is a legitimate bug in the CD edition's tspit 155 open card program;
+	// it executes activate SLST record 2 command after the introduction sequence, which is the mute SLST; patch it up to activate SLST 1
+	if ([_descriptor ID] == 155 && [[[_descriptor parent] key] isEqualToString:@"tspit"] && [[ce valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
 		NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndex:0];
 		
 		const uint16_t* base_program = (const uint16_t*)[[start_rendering_program objectForKey:RXScriptProgramKey] bytes];
@@ -244,12 +264,18 @@ struct rx_card_picture_record {
 			uint16_t case_opcode_count = rx_get_riven_script_case_opcode_count(BUFFER_OFFSET(base_program, switch_opcode_offset), 0, &case_program_offset);
 			
 			uint32_t slst_opcode_offset;
-			if (case_program_offset > 0 && rx_get_riven_script_opcode(BUFFER_OFFSET(base_program, switch_opcode_offset + case_program_offset), case_opcode_count, case_opcode_count - 3, &slst_opcode_offset) == RX_COMMAND_ACTIVATE_SLST) {
+			if (case_program_offset > 0 && rx_get_riven_script_opcode(BUFFER_OFFSET(base_program, switch_opcode_offset + case_program_offset),
+																	  case_opcode_count,
+																	  case_opcode_count - 3,
+																	  &slst_opcode_offset) == RX_COMMAND_ACTIVATE_SLST) {
 				NSMutableData* program = [[start_rendering_program objectForKey:RXScriptProgramKey] mutableCopy];
 				uint16_t* slst_index = BUFFER_OFFSET((uint16_t*)[program mutableBytes], switch_opcode_offset + case_program_offset + slst_opcode_offset + 4);
 				if (*slst_index == 2) {
 					*slst_index = 1;
-					start_rendering_program = [[NSDictionary alloc] initWithObjectsAndKeys:program, RXScriptProgramKey, [start_rendering_program objectForKey:RXScriptOpcodeCountKey], RXScriptOpcodeCountKey, nil];
+					start_rendering_program = [[NSDictionary alloc] initWithObjectsAndKeys:
+						program, RXScriptProgramKey,
+						[start_rendering_program objectForKey:RXScriptOpcodeCountKey], RXScriptOpcodeCountKey,
+						nil];
 					
 					NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
 					[mutable_script setObject:[NSArray arrayWithObject:start_rendering_program] forKey:RXStartRenderingScriptKey];
@@ -279,14 +305,18 @@ struct rx_card_picture_record {
 	
 	fh = [_parent fileWithResourceType:@"HSPT" ID:resourceID];
 	if (!fh)
-		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding HSPT resource." userInfo:nil];
+		@throw [NSException exceptionWithName:@"RXMissingResourceException"
+									   reason:@"Could not open the card's corresponding HSPT resource."
+									 userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	listData = malloc(listDataLength);
 	
 	// read the data from the archive
 	if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
-		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding HSPT ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		@throw [NSException exceptionWithName:@"RXRessourceIOException"
+									   reason:@"Could not read the card's corresponding HSPT ressource."
+									 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	// how many hotspots do we have?
 	uint16_t hotspotCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
@@ -327,13 +357,20 @@ struct rx_card_picture_record {
 		if (hspt_record->zip == 1)
 			continue;
 		
-		// WORKAROUND: there is a legitimate bug in aspit's "start new game" hotspot; it executes a command 12 at the very end, which kills ambient sound after the introduction sequence; we remove that command here
+		// WORKAROUND: there is a legitimate bug in aspit's "start new game" hotspot; it executes a command 12 at the very end,
+		// which kills ambient sound after the introduction sequence; we remove that command here
 		if ([_descriptor ID] == 1 && [[[_descriptor parent] key] isEqualToString:@"aspit"] && hspt_record->blst_id == 16) {
 			NSDictionary* mouse_down_program = [[hotspot_scripts objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
 			
 			uint16_t opcode_count = [[mouse_down_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
-			if (opcode_count > 0 && rx_get_riven_script_opcode([[mouse_down_program objectForKey:RXScriptProgramKey] bytes] , opcode_count, opcode_count - 1, NULL) == RX_COMMAND_CLEAR_SLST) {
-				mouse_down_program = [[NSDictionary alloc] initWithObjectsAndKeys:[mouse_down_program objectForKey:RXScriptProgramKey], RXScriptProgramKey, [NSNumber numberWithUnsignedShort:opcode_count - 1], RXScriptOpcodeCountKey, nil];
+			if (opcode_count > 0 && rx_get_riven_script_opcode([[mouse_down_program objectForKey:RXScriptProgramKey] bytes],
+															   opcode_count,
+															   opcode_count - 1,
+															   NULL) == RX_COMMAND_CLEAR_SLST) {
+				mouse_down_program = [[NSDictionary alloc] initWithObjectsAndKeys:
+					[mouse_down_program objectForKey:RXScriptProgramKey], RXScriptProgramKey,
+					[NSNumber numberWithUnsignedShort:opcode_count - 1], RXScriptOpcodeCountKey,
+					nil];
 				
 				NSMutableDictionary* mutable_script = [hotspot_scripts mutableCopy];
 				[mutable_script setObject:[NSArray arrayWithObject:mouse_down_program] forKey:RXMouseDownScriptKey];
@@ -345,7 +382,11 @@ struct rx_card_picture_record {
 		}
 		
 		// allocate the hotspot object
-		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index ID:hspt_record->blst_id rect:hspt_record->rect cursorID:hspt_record->mouse_cursor script:hotspot_scripts];
+		RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index
+													  ID:hspt_record->blst_id
+													rect:hspt_record->rect
+												cursorID:hspt_record->mouse_cursor
+												  script:hotspot_scripts];
 		if (hspt_record->name_rec >= 0) {
 			[hs setName:[[_descriptor parent] hotspotNameAtIndex:hspt_record->name_rec]];
 			NSMapInsert(_hotspots_name_map, [hs name], hs);
@@ -366,14 +407,18 @@ struct rx_card_picture_record {
 	
 	fh = [_parent fileWithResourceType:@"BLST" ID:resourceID];
 	if (!fh)
-		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding BLST resource." userInfo:nil];
+		@throw [NSException exceptionWithName:@"RXMissingResourceException"
+									   reason:@"Could not open the card's corresponding BLST resource."
+									 userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	_blstData = malloc(listDataLength);
 	
 	// read the data from the archive
 	if ([fh readDataToEndOfFileInBuffer:_blstData error:&error] == -1)
-		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding BLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		@throw [NSException exceptionWithName:@"RXRessourceIOException"
+									   reason:@"Could not read the card's corresponding BLST ressource."
+									 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	_hotspotControlRecords = (struct rx_blst_record*)BUFFER_OFFSET(_blstData, sizeof(uint16_t));
 	
@@ -399,14 +444,18 @@ struct rx_card_picture_record {
 	
 	fh = [_parent fileWithResourceType:@"PLST" ID:resourceID];
 	if (!fh)
-		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding PLST resource." userInfo:nil];
+		@throw [NSException exceptionWithName:@"RXMissingResourceException"
+									   reason:@"Could not open the card's corresponding PLST resource."
+									 userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	listData = malloc(listDataLength);
 	
 	// read the data from the archive
 	if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
-		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding PLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		@throw [NSException exceptionWithName:@"RXRessourceIOException"
+									   reason:@"Could not read the card's corresponding PLST ressource."
+									 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	// how many pictures do we have?
 	_pictureCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
@@ -430,7 +479,9 @@ struct rx_card_picture_record {
 		MHKArchive* archive = [[_parent fileWithResourceType:@"tBMP" ID:plstRecords[currentListIndex].bitmap_id] archive];
 		NSDictionary* pictureDescriptor = [archive bitmapDescriptorWithID:plstRecords[currentListIndex].bitmap_id error:&error];
 		if (!pictureDescriptor)
-			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not get a picture resource's picture descriptor." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+			@throw [NSException exceptionWithName:@"RXPictureLoadException"
+										   reason:@"Could not get a picture resource's picture descriptor."
+										 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 		pictureRecords[currentListIndex].width = [[pictureDescriptor objectForKey:@"Width"] floatValue];
 		pictureRecords[currentListIndex].height = [[pictureDescriptor objectForKey:@"Height"] floatValue];
@@ -473,8 +524,13 @@ struct rx_card_picture_record {
 	size_t textureStorageOffset = 0;
 	for (currentListIndex = 0; currentListIndex < _pictureCount; currentListIndex++) {
 		MHKArchive* archive = [[_parent fileWithResourceType:@"tBMP" ID:plstRecords[currentListIndex].bitmap_id] archive];
-		if (![archive loadBitmapWithID:plstRecords[currentListIndex].bitmap_id buffer:BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset) format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
-			@throw [NSException exceptionWithName:@"RXPictureLoadException" reason:@"Could not load a picture resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		if (![archive loadBitmapWithID:plstRecords[currentListIndex].bitmap_id
+								buffer:BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)
+								format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
+								 error:&error])
+			@throw [NSException exceptionWithName:@"RXPictureLoadException"
+										   reason:@"Could not load a picture resource."
+										 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 		// bind the corresponding texture object, configure it and upload the picture
 		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _pictureTextures[currentListIndex]); glReportError();
@@ -491,13 +547,30 @@ struct rx_card_picture_record {
 		glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, textureStorageSize, _pictureTextureStorage);
 		
 		// upload the texture
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, pictureRecords[currentListIndex].width, pictureRecords[currentListIndex].height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)); glReportError();
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+					 0,
+					 GL_RGBA8,
+					 pictureRecords[currentListIndex].width,
+					 pictureRecords[currentListIndex].height,
+					 0,
+					 GL_BGRA,
+					 GL_UNSIGNED_INT_8_8_8_8_REV,
+					 BUFFER_OFFSET(_pictureTextureStorage, textureStorageOffset)); glReportError();
 		
 #if defined(DEBUG) && DEBUG > 1
-		NSRect original_rect = RXMakeCompositeDisplayRect(plstRecords[currentListIndex].rect.left, plstRecords[currentListIndex].rect.top, plstRecords[currentListIndex].rect.right, plstRecords[currentListIndex].rect.bottom);
+		NSRect original_rect = RXMakeCompositeDisplayRect(plstRecords[currentListIndex].rect.left,
+														  plstRecords[currentListIndex].rect.top,
+														  plstRecords[currentListIndex].rect.right,
+														  plstRecords[currentListIndex].rect.bottom);
 		if ((int)pictureRecords[currentListIndex].width != (int)original_rect.size.width || (int)pictureRecords[currentListIndex].height != (int)original_rect.size.height)
-			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"PLST record %hu has display rect size different than tBMP resource %hu: %dx%d vs. %dx%d", 
-				plstRecords[currentListIndex].index, plstRecords[currentListIndex].bitmap_id, (int)original_rect.size.width, (int)original_rect.size.height, (int)pictureRecords[currentListIndex].width, (int)pictureRecords[currentListIndex].height);
+			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug,
+				@"PLST record %hu has display rect size different than tBMP resource %hu: %dx%d vs. %dx%d",
+				plstRecords[currentListIndex].index,
+				plstRecords[currentListIndex].bitmap_id,
+				(int)original_rect.size.width,
+				(int)original_rect.size.height,
+				(int)pictureRecords[currentListIndex].width,
+				(int)pictureRecords[currentListIndex].height);
 #endif
 		
 		// adjust the display rect to anchor the picture to the top-left corner while clipping the picture to its size (and never scaling the picture either)
@@ -558,6 +631,9 @@ struct rx_card_picture_record {
 	// bind 0 to the current VAO
 	[gl_state bindVertexArrayObject:0];
 	
+	// disable texture range
+	glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, 0, 0); glReportError();
+	
 	// we don't need the picture records and the PLST data anymore
 	delete[] pictureRecords;
 	free(listData);
@@ -566,14 +642,18 @@ struct rx_card_picture_record {
 	
 	fh = [_parent fileWithResourceType:@"FLST" ID:resourceID];
 	if (!fh)
-		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding FLST resource." userInfo:nil];
+		@throw [NSException exceptionWithName:@"RXMissingResourceException"
+									   reason:@"Could not open the card's corresponding FLST resource."
+									 userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	listData = malloc(listDataLength);
 	
 	// read the data from the archive
 	if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
-		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding FLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		@throw [NSException exceptionWithName:@"RXRessourceIOException"
+									   reason:@"Could not read the card's corresponding FLST ressource."
+									 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	_flstCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
 	_sfxes = (rx_card_sfxe*)malloc(sizeof(rx_card_sfxe) * _flstCount);
@@ -591,7 +671,9 @@ struct rx_card_picture_record {
 		// open the corresponding SFXE resource
 		MHKFileHandle* sfxeHandle = [_parent fileWithResourceType:@"SFXE" ID:record->sfxe_id];
 		if (!sfxeHandle)
-			@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open a required SFXE resource." userInfo:nil];
+			@throw [NSException exceptionWithName:@"RXMissingResourceException"
+										   reason:@"Could not open a required SFXE resource."
+										 userInfo:nil];
 		
 		// get the size of the SFXE resource and allocate the sfxe's record buffer
 		size_t sfxe_size = (size_t)[sfxeHandle length];
@@ -602,7 +684,9 @@ struct rx_card_picture_record {
 		
 		// read the data from the archive
 		if ([sfxeHandle readDataToEndOfFileInBuffer:(void*)sfxe->record error:&error] == -1)
-			@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read a required SFXE resource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+			@throw [NSException exceptionWithName:@"RXRessourceIOException"
+										   reason:@"Could not read a required SFXE resource."
+										 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 		
 #if defined(__LITTLE_ENDIAN__)
 		// byte swap on litle endian architectures
@@ -664,14 +748,18 @@ struct rx_card_picture_record {
 	
 	fh = [_parent fileWithResourceType:@"SLST" ID:resourceID];
 	if (!fh)
-		@throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Could not open the card's corresponding SLST resource." userInfo:nil];
+		@throw [NSException exceptionWithName:@"RXMissingResourceException"
+									   reason:@"Could not open the card's corresponding SLST resource."
+									 userInfo:nil];
 	
 	listDataLength = (size_t)[fh length];
 	listData = malloc(listDataLength);
 	
 	// read the data from the archive
 	if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
-		@throw [NSException exceptionWithName:@"RXRessourceIOException" reason:@"Could not read the card's corresponding SLST ressource." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+		@throw [NSException exceptionWithName:@"RXRessourceIOException"
+									   reason:@"Could not read the card's corresponding SLST ressource."
+									 userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
 	
 	// how many sound groups do we have?
 	uint16_t soundGroupCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
