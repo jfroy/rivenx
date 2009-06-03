@@ -253,9 +253,13 @@ init_failure:
 
 - (void)_reportShaderProgramError:(NSError*)error {
 	if ([[error domain] isEqualToString:GLShaderCompileErrorDomain])
-		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"%@ shader failed to compile:\n%@\n%@", [[error userInfo] objectForKey:@"GLShaderType"], [[error userInfo] objectForKey:@"GLCompileLog"], [[error userInfo] objectForKey:@"GLShaderSource"]);
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"%@ shader failed to compile:\n%@\n%@",
+			[[error userInfo] objectForKey:@"GLShaderType"],
+			[[error userInfo] objectForKey:@"GLCompileLog"],
+			[[error userInfo] objectForKey:@"GLShaderSource"]);
 	else if ([[error domain] isEqualToString:GLShaderLinkErrorDomain])
-		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"%@ shader program failed to link:\n%@", [[error userInfo] objectForKey:@"GLLinkLog"]);
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"%@ shader program failed to link:\n%@",
+			[[error userInfo] objectForKey:@"GLLinkLog"]);
 	else
 		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to create shader program: %@", error);
 }
@@ -309,11 +313,13 @@ init_failure:
 	// kick start the audio task thread
 	[NSThread detachNewThreadSelector:@selector(_audioTaskThread:) toTarget:self withObject:nil];
 	
-	// we need one FBO to render a card's composite texture and one FBO to apply the water effect; as well as matching textures for the color0 attachement point and one extra texture to store the previous frame
+	// we need one FBO to render a card's composite texture and one FBO to apply the water effect;
+	// as well as matching textures for the color0 attachement point and one extra texture to store the previous frame
 	glGenFramebuffersEXT(1, _fbos);
 	glGenTextures(1, _textures);
 	
-	// disable client storage because it's incompatible with allocating texture space with NULL (which is what we want to do for FBO color attachement textures) and with the PIXEL_UNPACK buffer
+	// disable client storage because it's incompatible with allocating texture space with NULL
+	// (which is what we want to do for FBO color attachement textures) and with the PIXEL_UNPACK buffer
 	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
 	
 	for (GLuint i = 0; i < 1; i++) {
@@ -384,7 +390,10 @@ init_failure:
 	// decompress the textures into the buffer
 	// FIXME: we need actual error handling beyond just logging...
 	for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-		if (![extraBitmapsArchive loadBitmapWithID:[[journalDescriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue] buffer:inventoryBuffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error]) {
+		if (![extraBitmapsArchive loadBitmapWithID:[[journalDescriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue]
+											buffer:inventoryBuffer
+											format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
+											 error:&error]) {
 			RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to load inventory texture for item \"%@\": %@", RX_INVENTORY_KEYS[inventory_i], error);
 			continue;
 		}
@@ -453,21 +462,25 @@ init_failure:
 	// shaders
 	
 	// water animation shader
-	_waterProgram = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"water" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
-	if (!_waterProgram)
-		[self _reportShaderProgramError:error];
-	
-	GLint cardTextureUniform = glGetUniformLocation(_waterProgram, "card_texture"); glReportError();
-	GLint displacementMapUniform = glGetUniformLocation(_waterProgram, "water_displacement_map"); glReportError();
-	GLint previousFrameUniform = glGetUniformLocation(_waterProgram, "previous_frame"); glReportError();
-	
-	glUseProgram(_waterProgram); glReportError();
-	glUniform1i(cardTextureUniform, 0); glReportError();
-	glUniform1i(displacementMapUniform, 1); glReportError();
-	glUniform1i(previousFrameUniform, 2); glReportError();
+//	_waterProgram = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"water" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
+//	if (!_waterProgram)
+//		[self _reportShaderProgramError:error];
+//	
+//	GLint cardTextureUniform = glGetUniformLocation(_waterProgram, "card_texture"); glReportError();
+//	GLint displacementMapUniform = glGetUniformLocation(_waterProgram, "water_displacement_map"); glReportError();
+//	GLint previousFrameUniform = glGetUniformLocation(_waterProgram, "previous_frame"); glReportError();
+//	
+//	glUseProgram(_waterProgram); glReportError();
+//	glUniform1i(cardTextureUniform, 0); glReportError();
+//	glUniform1i(displacementMapUniform, 1); glReportError();
+//	glUniform1i(previousFrameUniform, 2); glReportError();
 	
 	// card shader
-	_single_rect_texture_program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"card" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
+	_single_rect_texture_program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"card"
+																									extraSources:nil
+																								   epilogueIndex:0
+																										 context:cgl_ctx
+																										   error:&error];
 	if (!_single_rect_texture_program)
 		[self _reportShaderProgramError:error];
 	
@@ -541,7 +554,15 @@ init_failure:
 		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glReportError();
 		
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, (GLsizei)_inventoryRegions[inventory_i].size.width, (GLsizei)_inventoryRegions[inventory_i].size.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, inventoryBuffer); glReportError();
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+					 0,
+					 GL_RGBA8,
+					 (GLsizei)_inventoryRegions[inventory_i].size.width,
+					 (GLsizei)_inventoryRegions[inventory_i].size.height,
+					 0,
+					 GL_BGRA,
+					 GL_UNSIGNED_INT_8_8_8_8_REV,
+					 inventoryBuffer); glReportError();
 		
 		inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventoryRegions[inventory_i].size.width * _inventoryRegions[inventory_i].size.height) << 2);
 	}
@@ -618,7 +639,8 @@ init_failure:
 	[_activeDataSounds minusSet:soundsToRemove];
 	
 	// swap the active sources array
-	CFMutableArrayRef newActiveSources = [self _createSourceArrayFromSoundSets:[NSArray arrayWithObjects:_activeSounds, _activeDataSounds, nil] callbacks:&g_weakAudioSourceArrayCallbacks];
+	CFMutableArrayRef newActiveSources = [self _createSourceArrayFromSoundSets:[NSArray arrayWithObjects:_activeSounds, _activeDataSounds, nil]
+																	 callbacks:&g_weakAudioSourceArrayCallbacks];
 	CFMutableArrayRef oldActiveSources = _activeSources;
 	
 	// swap _activeSources
@@ -646,7 +668,8 @@ init_failure:
 	RX::AudioRenderer* renderer = (reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer]));
 	renderer->DetachSources(_sourcesToDelete);
 	
-	// if automatic graph updates are enabled, we can safely delete the sources, otherwise the responsibility incurs to whatever will re-enabled automatic graph updates
+	// if automatic graph updates are enabled, we can safely delete the sources,
+	// otherwise the responsibility incurs to whatever will re-enabled automatic graph updates
 	if (renderer->AutomaticGraphUpdates()) {
 		CFRelease(_sourcesToDelete);
 		_sourcesToDelete = NULL;
@@ -659,7 +682,9 @@ init_failure:
 - (void)activateSoundGroup:(RXSoundGroup*)soundGroup {
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
 	if ([NSThread currentThread] != [g_world scriptThread])
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"activateSoundGroup: MUST RUN ON SCRIPT THREAD" userInfo:nil];
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException
+									   reason:@"activateSoundGroup: MUST RUN ON SCRIPT THREAD"
+									 userInfo:nil];
 	
 	if (!RXEngineGetBool(@"rendering.ambient"))
 		return;
@@ -761,7 +786,8 @@ init_failure:
 	// disable automatic graph updates on the audio renderer (e.g. begin a transaction)
 	renderer->SetAutomaticGraphUpdates(false);
 	
-	// FIXME: handle situation where there are not enough busses (in which case we would probably have to do a graph update to really release the busses)
+	// FIXME: handle situation where there are not enough busses (in which case
+	// we would probably have to do a graph update to really release the busses)
 	assert(renderer->AvailableMixerBusCount() >= (uint32_t)CFArrayGetCount(sourcesToAdd));
 	
 	// update active sources immediately
@@ -797,7 +823,8 @@ init_failure:
 	
 	// schedule a fade out ramp for all to-be-removed sources if the fade out flag is on
 	if (soundGroup->fadeOutRemovedSounds) {
-		CFMutableArrayRef sourcesToRemove = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_weakAudioSourceArrayCallbacks];
+		CFMutableArrayRef sourcesToRemove = [self _createSourceArrayFromSoundSet:soundsToRemove
+																	   callbacks:&g_weakAudioSourceArrayCallbacks];
 		renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_GAIN_RAMP_DURATION);
 		CFRelease(sourcesToRemove);
 		
@@ -828,7 +855,9 @@ init_failure:
 - (void)playDataSound:(RXDataSound*)sound {
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
 	if ([NSThread currentThread] != [g_world scriptThread])
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"playDataSound: MUST RUN ON SCRIPT THREAD" userInfo:nil];
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException
+									   reason:@"playDataSound: MUST RUN ON SCRIPT THREAD"
+									 userInfo:nil];
 	
 	// cache a pointer to the audio renderer
 	RX::AudioRenderer* renderer = (reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer]));
@@ -919,11 +948,17 @@ init_failure:
 	// let's get a bit more attention
 	thread_extended_policy_data_t extendedPolicy;
 	extendedPolicy.timeshare = false;
-	kern_return_t kr = thread_policy_set(pthread_mach_thread_np(pthread_self()), THREAD_EXTENDED_POLICY, (thread_policy_t)&extendedPolicy, THREAD_EXTENDED_POLICY_COUNT);
+	kern_return_t kr = thread_policy_set(pthread_mach_thread_np(pthread_self()),
+										 THREAD_EXTENDED_POLICY,
+										 (thread_policy_t)&extendedPolicy,
+										 THREAD_EXTENDED_POLICY_COUNT);
 	
 	thread_precedence_policy_data_t precedencePolicy;
 	precedencePolicy.importance = 63;
-	kr = thread_policy_set(pthread_mach_thread_np(pthread_self()), THREAD_PRECEDENCE_POLICY, (thread_policy_t)&precedencePolicy, THREAD_PRECEDENCE_POLICY_COUNT);
+	kr = thread_policy_set(pthread_mach_thread_np(pthread_self()),
+						   THREAD_PRECEDENCE_POLICY,
+						   (thread_policy_t)&precedencePolicy,
+						   THREAD_PRECEDENCE_POLICY_COUNT);
 	
 	while (1) {
 		OSSpinLockLock(&_audioTaskThreadStatusLock);
@@ -1054,7 +1089,8 @@ init_failure:
 		[_transitionQueue removeObjectAtIndex:0];
 		
 #if defined(DEBUG)
-		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"dequeued transition %@ [queue depth=%lu]", _back_render_state->transition, [_transitionQueue count]);
+		RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"dequeued transition %@ [queue depth=%lu]",
+			_back_render_state->transition, [_transitionQueue count]);
 #endif
 	}
 	
@@ -1139,7 +1175,9 @@ init_failure:
 - (void)_switchCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)scd {
 	// WARNING: MUST RUN ON THE SCRIPT THREAD
 	if ([NSThread currentThread] != [g_world scriptThread])
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_switchCardWithSimpleDescriptor: MUST RUN ON SCRIPT THREAD" userInfo:nil];
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException
+									   reason:@"_switchCardWithSimpleDescriptor: MUST RUN ON SCRIPT THREAD"
+									 userInfo:nil];
 	
 	RXCard* new_card = nil;
 	
@@ -1165,7 +1203,8 @@ init_failure:
 		RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:scd->stackKey];
 		if (!stack) {
 #if defined(DEBUG)
-			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"aborting _switchCardWithSimpleDescriptor because stack %@ could not be loaded", scd->stackKey);
+			RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug,
+				@"aborting _switchCardWithSimpleDescriptor because stack %@ could not be loaded", scd->stackKey);
 #endif
 			return;
 		}
@@ -1187,12 +1226,15 @@ init_failure:
 		[sengine closeCard];
 	}
 	
-	// setup the back render state; notice that the ownership of new_card is transferred to the back render state and thus we will not need a release elsewhere to match the card's allocation
+	// setup the back render state; notice that the ownership of new_card is
+	// transferred to the back render state and thus we will not need a release
+	// elsewhere to match the card's allocation
 	_back_render_state->card = new_card;
 	_back_render_state->new_card = YES;
 	_back_render_state->transition = nil;
 	
-	// we have to update the current card in the game state now, otherwise refresh card commands in the prepare for rendering script will jump back to the old card
+	// we have to update the current card in the game state now, otherwise refresh
+	// card commands in the prepare for rendering script will jump back to the old card
 	[[g_world gameState] setCurrentCard:[[new_card descriptor] simpleDescriptor]];
 	[sengine setCard:new_card];
 	
@@ -1213,7 +1255,9 @@ init_failure:
 	_back_render_state->new_card = YES;
 	_back_render_state->transition = nil;
 	
-	// run the close card script on the old card; note that we do not need to protect access to the front card since this method will always execute on the script thread
+	// run the close card script on the old card; note that we do not need to
+	// protect access to the front card since this method will always execute
+	// on the script thread
 	[sengine closeCard];
 	
 	// wipe out the transition queue
@@ -1347,7 +1391,9 @@ init_failure:
 				if (*mp == 1) {
 					draw_row++;
 				} else if (*mp == 3) {
-					memcpy(BUFFER_OFFSET(water_draw_ptr, (draw_row * kRXCardViewportSize.width + mp[1]) << 2), BUFFER_OFFSET(_water_readback_buffer, (mp[3] * kRXCardViewportSize.width + mp[2]) << 2), mp[4] << 2);
+					memcpy(BUFFER_OFFSET(water_draw_ptr, (draw_row * kRXCardViewportSize.width + mp[1]) << 2),
+						   BUFFER_OFFSET(_water_readback_buffer, (mp[3] * kRXCardViewportSize.width + mp[2]) << 2),
+						   mp[4] << 2);
 					mp += 4;
 				} else
 					abort();
@@ -1427,19 +1473,26 @@ init_failure:
 	// compute vertex positions and texture coordinates for the items
 	for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
 		positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y;
-		tex_coords0[0] = 0.0f; tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
+		tex_coords0[0] = 0.0f;
+		tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
 		positions += 4; tex_coords0 += 4;
 		
-		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width; positions[1] = _inventoryRegions[inventory_i].origin.y;
-		tex_coords0[0] = _inventoryRegions[inventory_i].size.width; tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
+		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width;
+		positions[1] = _inventoryRegions[inventory_i].origin.y;
+		tex_coords0[0] = _inventoryRegions[inventory_i].size.width;
+		tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
 		positions += 4; tex_coords0 += 4;
 		
-		positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
-		tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
+		positions[0] = _inventoryRegions[inventory_i].origin.x;
+		positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
+		tex_coords0[0] = 0.0f;
+		tex_coords0[1] = 0.0f;
 		positions += 4; tex_coords0 += 4;
 		
-		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width; positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
-		tex_coords0[0] = _inventoryRegions[inventory_i].size.width; tex_coords0[1] = 0.0f;
+		positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width;
+		positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
+		tex_coords0[0] = _inventoryRegions[inventory_i].size.width;
+		tex_coords0[1] = 0.0f;
 		positions += 4; tex_coords0 += 4;
 	}
 	
@@ -1468,7 +1521,9 @@ init_failure:
 	// alias the render context state object pointer
 	NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
 	
-	// we need an inner pool within the scope of that lock, or we run the risk of autoreleased enumerators causing objects that should be deallocated on the main thread not to be
+	// we need an inner pool within the scope of that lock, or we run the risk
+	// of autoreleased enumerators causing objects that should be deallocated on
+	// the main thread not to be
 	NSAutoreleasePool* p = [NSAutoreleasePool new];
 	
 	// do nothing if there is no front card
@@ -1522,7 +1577,8 @@ init_failure:
 		
 		if (t >= 1.0f) {
 #if defined(DEBUG)
-			RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"transition %@ completed, queue depth=%lu", _front_render_state->transition, [_transitionQueue count]);
+			RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"transition %@ completed, queue depth=%lu",
+				_front_render_state->transition, [_transitionQueue count]);
 #endif
 			[_front_render_state->transition release];
 			_front_render_state->transition = nil;
@@ -1714,7 +1770,10 @@ exit_render:
 		glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
 		
 		[gl_state bindVertexArrayObject:_hotspotDebugRenderVAO];
-		glMultiDrawArrays(GL_LINE_LOOP, _hotspotDebugRenderFirstElementArray, _hotspotDebugRenderElementCountArray, [activeHotspots count] + _inventoryItemCount); glReportError();
+		glMultiDrawArrays(GL_LINE_LOOP,
+						  _hotspotDebugRenderFirstElementArray,
+						  _hotspotDebugRenderElementCountArray,
+						  [activeHotspots count] + _inventoryItemCount); glReportError();
 		
 		[gl_state bindVertexArrayObject:0];
 	}
@@ -1778,7 +1837,8 @@ exit_render:
 		float theta = 180.0f * atan2f(mouse.size.height, mouse.size.width) * M_1_PI;
 		float r = sqrtf((mouse.size.height * mouse.size.height) + (mouse.size.width * mouse.size.width));
 		
-		snprintf(debug_buffer, 100, "mouse vector: (%d, %d) (%.3f, %.3f) (%.3f, %.3f)", (int)mouse.origin.x, (int)mouse.origin.y, mouse.size.width, mouse.size.height, theta, r);
+		snprintf(debug_buffer, 100, "mouse vector: (%d, %d) (%.3f, %.3f) (%.3f, %.3f)",
+			(int)mouse.origin.x, (int)mouse.origin.y, mouse.size.width, mouse.size.height, theta, r);
 		
 		background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
 		background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
@@ -1882,7 +1942,9 @@ exit_render:
 	// WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 	OSSpinLockLock(&_render_lock);
 	
-	// we need an inner pool within the scope of that lock, or we run the risk of autoreleased enumerators causing objects that should be deallocated on the main thread not to be
+	// we need an inner pool within the scope of that lock, or we run the risk of
+	// autoreleased enumerators causing objects that should be deallocated on the
+	// main thread not to be
 	NSAutoreleasePool* p = [NSAutoreleasePool new];
 	
 	// do nothing if there is no front card
@@ -1921,7 +1983,8 @@ exit_flush_tasks:
 	RXCardDescriptor* desc = [[_front_render_state->card descriptor] retain];
 	OSSpinLockUnlock(&_state_swap_lock);
 	
-	NSString* png_path = [[[NSSearchPathForDirectoriesInDomains(NSDesktopDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:[desc description]] stringByAppendingPathExtension:@"png"];
+	NSString* png_path = [[[NSSearchPathForDirectoriesInDomains(NSDesktopDirectory, NSUserDomainMask, YES) objectAtIndex:0]
+						   stringByAppendingPathComponent:[desc description]] stringByAppendingPathExtension:@"png"];
 	NSData* png_data = [image_rep representationUsingType:NSPNGFileType properties:nil];
 	[png_data writeToFile:png_path options:0 error:NULL];
 	
@@ -1963,7 +2026,8 @@ exit_flush_tasks:
 	assert(updated_counter >= 0);
 	
 	if (updated_counter == 0) {
-		// if the hotspot handling disable counter is at 0, updateHotspotState ran and updated the cursor; so if it's > 0, we need to restore the backup
+		// if the hotspot handling disable counter is at 0, updateHotspotState
+		// ran and updated the cursor; so if it's > 0, we need to restore the backup
 		if (_hotspot_handling_disable_counter > 0)
 			[g_worldView setCursor:_hidden_cursor];
 	
@@ -2030,7 +2094,8 @@ exit_flush_tasks:
 	// hotspot updates cannot occur during a card switch
 	OSSpinLockLock(&_state_swap_lock);
 	
-	// check if hotspot handling is disabled again (last time, this is only to handle the situation where we might have slept a little while on the spin lock
+	// check if hotspot handling is disabled again (last time, this is only to handle the situation where we might
+	// have slept a little while on the spin lock
 	if (_hotspot_handling_disable_counter > 0) {
 		OSSpinLockUnlock(&_state_swap_lock);
 		return;
@@ -2060,14 +2125,16 @@ exit_flush_tasks:
 	if (!hotspot) {
 		for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
 			if (NSPointInRect(mouse_vector.origin, _inventoryHotspotRegions[inventory_i])) {
-				// set hotspot to the inventory item index (plus one to avoid the value 0); the following block of code will check if hotspot is not 0 and below PAGEZERO, and act accordingly
+				// set hotspot to the inventory item index (plus one to avoid the value 0); the following block of code
+				// will check if hotspot is not 0 and below PAGEZERO, and act accordingly
 				hotspot = (RXHotspot*)(inventory_i + 1);
 				break;
 			}
 		}
 	}
 	
-	// if the new current hotspot is valid, matches the mouse down hotspot and the mouse is not dragging, we need to send a mouse up message to the hotspot
+	// if the new current hotspot is valid, matches the mouse down hotspot and the mouse is not dragging, we need to send
+	// a mouse up message to the hotspot
 	if (hotspot >= (RXHotspot*)0x1000 && hotspot == _mouse_down_hotspot && isinf(mouse_vector.size.width)) {
 		// reset the mouse down hotspot
 		[_mouse_down_hotspot release];
@@ -2080,13 +2147,15 @@ exit_flush_tasks:
 		[sengine performSelector:@selector(mouseUpInHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
 	}
 	
-	// if the old current hotspot is valid, doesn't match the new current hotspot and is still active, we need to send the old current hotspot a mouse exited message
+	// if the old current hotspot is valid, doesn't match the new current hotspot and is still active, we need to send the old
+	// current hotspot a mouse exited message
 	if (_currentHotspot >= (RXHotspot*)0x1000 && _currentHotspot != hotspot && [active_hotspots indexOfObjectIdenticalTo:_currentHotspot] != NSNotFound) {
 		// note that we DO NOT disable hotspot handling for "exited hotspot" messages
 		[sengine performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
 	}
 	
-	// handle cursor changes here so we don't ping-pong across 2 threads (at least for a hotspot's cursor, the inventory item cursor and the default cursor)
+	// handle cursor changes here so we don't ping-pong across 2 threads (at least for a hotspot's cursor, the inventory item
+	// cursor and the default cursor)
 	if (hotspot == 0)
 		[g_worldView setCursor:[g_world defaultCursor]];
 	else if (hotspot < (RXHotspot*)0x1000)
@@ -2094,7 +2163,8 @@ exit_flush_tasks:
 	else {
 		[g_worldView setCursor:[g_world cursorForID:[hotspot cursorID]]];
 		
-		// valid hotspots receive periodic "inside hotspot" messages when the mouse is not dragging; note that we do NOT disable hotspot handling for "inside hotspot" messages
+		// valid hotspots receive periodic "inside hotspot" messages when the mouse is not dragging; note that we do NOT disable
+		// hotspot handling for "inside hotspot" messages
 		if (isinf(mouse_vector.size.width))
 			[sengine performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
 	}
@@ -2119,22 +2189,29 @@ exit_flush_tasks:
 	// WARNING: this method assumes the state swap lock has been taken by the caller
 	
 	if (index >= RX_MAX_INVENTORY_ITEMS)
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"OUT OF BOUNDS INVENTORY INDEX" userInfo:nil];
+		@throw [NSException exceptionWithName:NSInvalidArgumentException
+									   reason:@"OUT OF BOUNDS INVENTORY INDEX"
+									 userInfo:nil];
 	
 	RXEdition* edition = [[RXEditionManager sharedEditionManager] currentEdition];
 	
 	NSNumber* journalCardIDNumber = [[edition valueForKey:@"journalCardIDMap"] objectForKey:RX_INVENTORY_KEYS[index]];
 	if (!journalCardIDNumber)
-		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO CARD ID FOR GIVEN INVENTORY KEY IN JOURNAL CARD ID MAP" userInfo:nil];
+		@throw [NSException exceptionWithName:NSInternalInconsistencyException
+									   reason:@"NO CARD ID FOR GIVEN INVENTORY KEY IN JOURNAL CARD ID MAP"
+									 userInfo:nil];
 	
 	// disable the inventory
 	[[g_world gameState] setUnsigned32:0 forKey:@"ainventory"];
 	
-	// set the return card in the game state to the current card; need to take the render lock to avoid a race condition with the script thread executing a card swap
+	// set the return card in the game state to the current card; need to take the render lock to avoid a race condition
+	// with the script thread executing a card swap
 	[[g_world gameState] setReturnCard:[[_front_render_state->card descriptor] simpleDescriptor]];
 	
 	// schedule a cross-fade transition to the journal card
-	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve
+														direction:0
+														   region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[self queueTransition:transition];
 	[transition release];
 	
@@ -2230,7 +2307,8 @@ exit_flush_tasks:
 		return;
 	}
 	
-	// finally we need to update the hotspot state; updateHotspotState will take care of sending the mouse up event if there is a mouse down hotspot and the mouse is still over that hotspot
+	// finally we need to update the hotspot state; updateHotspotState will take care of sending the mouse up event if there is a
+	// mouse down hotspot and the mouse is still over that hotspot
 	[self updateHotspotState];
 }
 
