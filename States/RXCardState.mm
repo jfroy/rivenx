@@ -1654,6 +1654,28 @@ init_failure:
 			glDisable(GL_BLEND);
 	}
 	
+	if (RXEngineGetBool(@"rendering.marble_lines")) {
+		GLfloat attribs[] = {
+			226.f + 16.f, 392.f - 316.f + 66.f,
+			//246.f + 16.f, 392.f - 263.f + 66,
+			11834.f/39.f + 16.f, 392.f - 4321.f/39.f + 66.f,
+			
+			377.f + 16.f, 392.f - 316.f + 66.f,
+			//358.f + 16.f, 392.f - 263.f + 66,
+			11834.f/39.f + 16.f, 392.f - 4321.f/39.f + 66.f,
+		};
+		
+		glUseProgram(0); glReportError();
+		glColor4f(0.0f, 1.0f, 0.0f, 1.0f); glReportError();
+		
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		[gl_state bindVertexArrayObject:0]; glReportError();
+		glEnableClientState(GL_VERTEX_ARRAY); glReportError();
+		glVertexPointer(2, GL_FLOAT, 0, attribs); glReportError();
+		glDrawArrays(GL_LINES, 0, 4); glReportError();
+		glDisableClientState(GL_VERTEX_ARRAY); glReportError();
+	}
+	
 exit_render:
 	[p release];
 	OSSpinLockUnlock(&_render_lock);
