@@ -29,7 +29,7 @@ const int kRXLoggingLevelMessage = ASL_LEVEL_NOTICE;
 const int kRXLoggingLevelError = ASL_LEVEL_ERR;
 const int kRXLoggingLevelCritical = ASL_LEVEL_CRIT;
 
-static NSString* RX_log_format = @"[%@] [%@] %@\n";
+static NSString* RX_log_format = @"%@ [%@] [%@] %@\n";
 
 void RXLog(const char* facility, int level, NSString* format, ...) {
 	va_list args;
@@ -47,7 +47,7 @@ void RXLogv(const char* facility, int level, NSString* format, va_list args) {
 	if (!threadName)
 		threadName = @"unknown thread";
 	
-	NSString* logString = [[NSString alloc] initWithFormat:RX_log_format, threadName, facilityString, userString];
+	NSString* logString = [[NSString alloc] initWithFormat:RX_log_format, [NSDate date], threadName, facilityString, userString];
 	[[RXLogCenter sharedLogCenter] log:logString facility:facilityString level:level];
 	
 	[logString release];

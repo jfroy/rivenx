@@ -3675,14 +3675,14 @@ DEFINE_COMMAND(xt7500_checkmarbles) {
 #pragma mark gspit scribe
 
 DEFINE_COMMAND(xgwt200_scribetime) {
-	[[g_world gameState] setUnsigned32:(uint32_t)(CFAbsoluteTimeGetCurrent() * 1000) forKey:@"gScribeTime"];
+	[[g_world gameState] setUnsigned64:(uint64_t)(CFAbsoluteTimeGetCurrent() * 1000) forKey:@"gScribeTime"];
 }
 
 DEFINE_COMMAND(xgwt900_scribe) {
 	RXGameState* gs = [g_world gameState];
-	uint32_t scribe_time = [gs unsigned32ForKey:@"gScribeTime"];
+	uint64_t scribe_time = [gs unsigned64ForKey:@"gScribeTime"];
 	uint32_t scribe = [gs unsigned32ForKey:@"gScribe"];
-	if (scribe == 1 && (uint32_t)(CFAbsoluteTimeGetCurrent() * 1000) > scribe_time + 2400)
+	if (scribe == 1 && (uint64_t)(CFAbsoluteTimeGetCurrent() * 1000) > scribe_time + 20000)
 		[gs setUnsigned32:2 forKey:@"gScribe"];
 }
 

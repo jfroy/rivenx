@@ -41,9 +41,13 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 			if ([[e userInfo] objectForKey:NSUnderlyingErrorKey])
 				*error = [[[[e userInfo] objectForKey:NSUnderlyingErrorKey] retain] autorelease];
 			else if ([[e userInfo] objectForKey:@"RXErrorString"])
-				*error = [NSError errorWithDomain:RXErrorDomain code:0 userInfo:[NSDictionary dictionaryWithObject:[[e userInfo] objectForKey:@"RXErrorString"] forKey:NSLocalizedDescriptionKey]];
+				*error = [NSError errorWithDomain:RXErrorDomain
+											 code:0
+										 userInfo:[NSDictionary dictionaryWithObject:[[e userInfo] objectForKey:@"RXErrorString"] forKey:NSLocalizedDescriptionKey]];
 			else
-				*error = [NSError errorWithDomain:RXErrorDomain code:0 userInfo:[NSDictionary dictionaryWithObject:[e reason] forKey:NSLocalizedDescriptionKey]];
+				*error = [NSError errorWithDomain:RXErrorDomain
+											 code:0
+										 userInfo:[NSDictionary dictionaryWithObject:[e reason] forKey:NSLocalizedDescriptionKey]];
 		}
 	}
 	
@@ -96,21 +100,27 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	
 	if (edition == nil) {
 		[self release];
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"edition must not be nil" userInfo:nil];
+		@throw [NSException exceptionWithName:NSInvalidArgumentException
+									   reason:@"edition must not be nil"
+									 userInfo:nil];
 	}
 	
 	NSError* error = nil;
 	NSData* defaultVarData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"GameVariables" ofType:@"plist"] options:0 error:&error];
 	if (!defaultVarData) {
 		[self release];
-		@throw [NSException exceptionWithName:@"RXMissingDefaultEngineVariablesException" reason:@"Unable to find the default engine variables file." userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+		@throw [NSException exceptionWithName:@"RXMissingDefaultEngineVariablesException"
+									   reason:@"Unable to find the default engine variables file."
+									 userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
 	}
 	
 	NSString* errorString = nil;
 	_variables = [[NSPropertyListSerialization propertyListFromData:defaultVarData mutabilityOption:NSPropertyListMutableContainers format:NULL errorDescription:&errorString] retain];
 	if (!_variables) {
 		[self release];
-		@throw [NSException exceptionWithName:@"RXInvalidDefaultEngineVariablesException" reason:@"Unable to load the default engine variables." userInfo:[NSDictionary dictionaryWithObject:errorString forKey:@"RXErrorString"]];
+		@throw [NSException exceptionWithName:@"RXInvalidDefaultEngineVariablesException"
+									   reason:@"Unable to load the default engine variables."
+									 userInfo:[NSDictionary dictionaryWithObject:errorString forKey:@"RXErrorString"]];
 	}
 	[errorString release];
 	
@@ -141,38 +151,50 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 		case 1:
 			if (![decoder containsValueForKey:@"returnCard"]) {
 				[self release];
-				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
+				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive"
+											   reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
+											 userInfo:nil];
 			}
 			_returnCard = [[decoder decodeObjectForKey:@"returnCard"] retain];
 		
 		case 0:
 			if (![decoder containsValueForKey:@"editionKey"]) {
 				[self release];
-				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
+				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive"
+											   reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
+											 userInfo:nil];
 			}
 			NSString* editionKey = [decoder decodeObjectForKey:@"editionKey"];
 			_edition = [[[RXEditionManager sharedEditionManager] editionForKey:editionKey] retain];
 			if (!_edition) {
 				[self release];
-				@throw [NSException exceptionWithName:@"RXUnknownEditionKeyException" reason:@"Riven X was unable to find the edition for the save file. It may have been created with a more recent version of Riven X than you are using." userInfo:nil];
+				@throw [NSException exceptionWithName:@"RXUnknownEditionKeyException"
+											   reason:@"Riven X was unable to find the edition for the save file. It may have been created with a more recent version of Riven X than you are using."
+											 userInfo:nil];
 			}
 			
 			if (![decoder containsValueForKey:@"currentCard"]) {
 				[self release];
-				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
+				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive"
+											   reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
+											 userInfo:nil];
 			}
 			_currentCard = [[decoder decodeObjectForKey:@"currentCard"] retain];
 
 			if (![decoder containsValueForKey:@"variables"]) {
 				[self release];
-				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
+				@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive"
+											   reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
+											 userInfo:nil];
 			}
 			_variables = [[decoder decodeObjectForKey:@"variables"] retain];
 			
 			break;
 		
 		default:
-			@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive" reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." userInfo:nil];
+			@throw [NSException exceptionWithName:@"RXInvalidGameStateArchive"
+										   reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
+										 userInfo:nil];
 	}
 	
 	return self;
@@ -180,7 +202,9 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 
 - (void)encodeWithCoder:(NSCoder*)encoder {
 	if (![encoder allowsKeyedCoding])
-		@throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"RXGameState only supports keyed archiving." userInfo:nil];
+		@throw [NSException exceptionWithName:NSInvalidArgumentException
+									   reason:@"RXGameState only supports keyed archiving."
+									 userInfo:nil];
 	
 	[_accessLock lock];
 	
@@ -341,6 +365,60 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 	[self willChangeValueForKey:key];
 	[_accessLock lock];
 	[_variables setObject:[NSNumber numberWithInt:value] forKey:key];
+	[_accessLock unlock];
+	[self didChangeValueForKey:key];
+}
+
+- (uint64_t)unsigned64ForKey:(NSString*)key {
+	key = [key lowercaseString];
+	uint64_t v = 0;
+	
+	[_accessLock lock];
+	NSNumber* n = [_variables objectForKey:key];
+	if (n)
+		v = [n unsignedLongLongValue];
+	else
+		[self setUnsigned64:0 forKey:key];
+	[_accessLock unlock];
+	
+	return v;
+}
+
+- (int64_t)signed64ForKey:(NSString*)key {
+	key = [key lowercaseString];
+	int64_t v = 0;
+	
+	[_accessLock lock];
+	NSNumber* n = [_variables objectForKey:key];
+	if (n)
+		v = [n longLongValue];
+	else
+		[self setSigned32:0 forKey:key];
+	[_accessLock unlock];
+	
+	return v;
+}
+
+- (void)setUnsigned64:(uint64_t)value forKey:(NSString*)key {
+	key = [key lowercaseString];
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"setting variable %@ to %llu", key, value);
+#endif
+	[self willChangeValueForKey:key];
+	[_accessLock lock];
+	[_variables setObject:[NSNumber numberWithUnsignedLongLong:value] forKey:key];
+	[_accessLock unlock];
+	[self didChangeValueForKey:key];
+}
+
+- (void)setSigned64:(int64_t)value forKey:(NSString*)key {
+	key = [key lowercaseString];
+#if defined(DEBUG)
+	RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"setting variable %@ to %lld", key, value);
+#endif
+	[self willChangeValueForKey:key];
+	[_accessLock lock];
+	[_variables setObject:[NSNumber numberWithLongLong:value] forKey:key];
 	[_accessLock unlock];
 	[self didChangeValueForKey:key];
 }

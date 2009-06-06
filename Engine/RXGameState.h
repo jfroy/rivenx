@@ -33,16 +33,20 @@
 - (RXEdition*)edition;
 
 - (uint16_t)unsignedShortForKey:(NSString*)key;
-- (int16_t)shortForKey:(NSString*)key;
-
 - (void)setUnsignedShort:(uint16_t)value forKey:(NSString*)key;
+- (int16_t)shortForKey:(NSString*)key;
 - (void)setShort:(int16_t)value forKey:(NSString*)key;
 
 - (uint32_t)unsigned32ForKey:(NSString*)key;
-- (int32_t)signed32ForKey:(NSString*)key;
-
 - (void)setUnsigned32:(uint32_t)value forKey:(NSString*)key;
+- (int32_t)signed32ForKey:(NSString*)key;
 - (void)setSigned32:(int32_t)value forKey:(NSString*)key;
+
+- (uint64_t)unsigned64ForKey:(NSString*)key;
+- (void)setUnsigned64:(uint64_t)value forKey:(NSString*)key;
+- (int64_t)signed64ForKey:(NSString*)key;
+- (void)setSigned64:(int64_t)value forKey:(NSString*)key;
+
 
 - (BOOL)isKeySet:(NSString*)key;
 
