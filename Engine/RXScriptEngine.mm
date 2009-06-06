@@ -3301,19 +3301,19 @@ typedef enum  {
 } rx_fire_marble_t;
 
 static const uint32_t marble_offset_matrix[2][5] = {
-	{134, 202, 270, 338, 406},
-	{24, 92, 159, 227, 295},
+	{134, 202, 270, 338, 406},	// x
+	{24, 92, 159, 227, 295},	// y
 };
 
 static const uint32_t tiny_marble_offset_matrix[2][5] = {
-	{246, 269, 293, 316, 340},
-	{263, 272, 284, 295, 309},
+	{246, 269, 293, 316, 340},	// x
+	{263, 272, 284, 295, 309},	// y
 };
 
 static const uint32_t tiny_marble_receptable_position_vectors[2][6] = {
 //	 red	orange	yellow	green	blue	violet
-	{376,	378,	380,	382,	384,	386},
-	{253,	257,	261,	265,	268,	273},
+	{376,	378,	380,	382,	384,	386},	// x
+	{253,	257,	261,	265,	268,	273},	// y
 };
 
 static const float marble_size = 13.5f;
@@ -3330,8 +3330,18 @@ static const float marble_size = 13.5f;
 		core_display_rect.left = tiny_marble_receptable_position_vectors[0][index];
 		core_display_rect.top = tiny_marble_receptable_position_vectors[1][index];
 	} else {
-		core_display_rect.left = tiny_marble_offset_matrix[0][marble_x / 5] + 5 * (marble_x % 5) - 2 * (marble_y % 5);
-		core_display_rect.top = tiny_marble_offset_matrix[1][marble_y / 5] + 2 * (marble_y % 5);
+		// special exception rule: we draw nothing if the marble is in the last column
+		if (marble_y == 24)
+			return;
+		
+		NSPoint p1 = NSMakePoint(11834.f/39.f, 4321.f/39.f);
+		NSPoint p2 = NSMakePoint(tiny_marble_offset_matrix[0][marble_x / 5] + 5 * (marble_x % 5), tiny_marble_offset_matrix[1][0]);
+		float y = tiny_marble_offset_matrix[1][marble_y / 5] + 2 * (marble_y % 5);
+		float t = (y - p1.y) / (p2.y - p1.y + 0.000001);
+		float x = p2.x * t + p1.x * (1.f - t);
+		
+		core_display_rect.left = x - 1;
+		core_display_rect.top = y;
 	}
 	core_display_rect.right = core_display_rect.left + 4;
 	core_display_rect.bottom = core_display_rect.top + 2;

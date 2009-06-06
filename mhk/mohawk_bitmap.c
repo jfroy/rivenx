@@ -733,30 +733,26 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 					pixel_offset = CFSwapInt16BigToHost(pixel_offset);
 					
 					// extract the top 6 bits of pixel_offset
-					uint8_t flubber = (pixel_offset >> 8) & 0xfc;
+					uint8_t n_pixel = (pixel_offset >> 10) + 3;
 					
 					// mask to keep only the low 2 bits of the second byte
 					pixel_offset &= 0x03ff;
 					
-					// pixel counter
-					uint8_t i_pixel = 0;
-					uint8_t n_pixel = 2 * (flubber >> 3) + 3;
-					if (flubber & 0x04)
-						n_pixel++;
-					
 					// copy some pixels around
+					uint8_t i_pixel = 0;
 					for (; i_pixel < n_pixel; i_pixel++) {
 						file_pixels[pixel_index + i_pixel] = file_pixels[pixel_index - pixel_offset + i_pixel];
 					}
 					
 					// check if we need to read an extra pixel from stream
-					if (!(flubber & 0x04)) {
+					if ((n_pixel & 0x01)) {
 						err = _buffered_linear_read_fork(&ioBuffer, 1, file_pixels + pixel_index + i_pixel, NULL);
 						if (err)
 							goto AbortReadCompressedIndexedPixels;
 						pixel_index++;
 					}
 					
+					// negate n_pixel by 2 to offset the += 2 we do for every instruction
 					pixel_index += n_pixel - 2;
 				}
 				

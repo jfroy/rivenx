@@ -496,7 +496,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 - (void)setValue:(id)value forEngineVariable:(NSString*)path {
 	pthread_mutex_lock(&_engineVariablesMutex);
 	[_engineVariables setValue:value forKeyPath:path];
-	[[[NSUserDefaults standardUserDefaults] objectForKey:@"EngineVariables"] setObject:value forKey:path];
+	[[NSUserDefaults standardUserDefaults] setObject:_engineVariables forKey:@"EngineVariables"];
 	pthread_mutex_unlock(&_engineVariablesMutex);
 }
 
