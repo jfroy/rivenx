@@ -1238,11 +1238,11 @@ init_failure:
 	[[g_world gameState] setCurrentCard:[[new_card descriptor] simpleDescriptor]];
 	[sengine setCard:new_card];
 	
-	// run the prepare for rendering script on the new card
-	[sengine openCard];
-	
 	// notify that the front card has changed
 	[self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:new_card waitUntilDone:NO];
+	
+	// run the prepare for rendering script on the new card
+	[sengine openCard];
 }
 
 - (void)_clearActiveCard {
