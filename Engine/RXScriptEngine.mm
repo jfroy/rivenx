@@ -2656,7 +2656,7 @@ DEFINE_COMMAND(xbupdateboiler) {
 
 DEFINE_COMMAND(xbchangeboiler) {
 	// when xbchangeboiler gets called, the boiler state variables have not yet been updated
-	// the above therefore represent the *previous* state
+	// the following variables therefore represent the *previous* state
 	uint16_t heat = [[g_world gameState] unsignedShortForKey:@"bheat"];
 	uint16_t water = [[g_world gameState] unsignedShortForKey:@"bblrwtr"];
 	uint16_t platform = [[g_world gameState] unsignedShortForKey:@"bblrgrt"];
@@ -3776,7 +3776,6 @@ DEFINE_COMMAND(xglview_prisonon) {
 	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 8);
 		
 	// play the appropriate viewer turn on movie
-	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
 	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, turnon_code);
 	
 	// if the selected movie is one where catherine is visible at the start, we need to play it now
@@ -3806,7 +3805,7 @@ DEFINE_COMMAND(xglview_prisonon) {
 }
 
 DEFINE_COMMAND(xglview_prisonoff) {
-	// set gLView to indicate the left viewer is off
+	// set gLView to indicate the viewer is off
 	[[g_world gameState] setUnsigned32:0 forKey:@"gLView"];
 	
 	// invalidate the prison viewer timer
@@ -3819,6 +3818,24 @@ DEFINE_COMMAND(xglview_prisonoff) {
 	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 5);
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
 	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
+}
+
+DEFINE_COMMAND(xglview_villageon) {
+	RXGameState* gs = [g_world gameState];
+	
+	// set gLView to indicate the right viewer is on
+	[gs setUnsigned32:2 forKey:@"gLView"];
+	
+	// activate the correct village viewer picture
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 2 + [gs unsignedShortForKey:@"gLViewPos"]);
+}
+
+DEFINE_COMMAND(xglview_villageoff) {
+	// set gLView to indicate the viewer is off
+	[[g_world gameState] setUnsigned32:0 forKey:@"gLView"];
+	
+	// activate the viewer off picture
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
 }
 
 @end
