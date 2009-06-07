@@ -3776,18 +3776,17 @@ DEFINE_COMMAND(xglview_prisonon) {
 	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 8);
 		
 	// play the appropriate viewer turn on movie
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
 	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, turnon_code);
 	
 	// if the selected movie is one where catherine is visible at the start, we need to play it now
-	if (prison_mlst == 8 || (prison_mlst >= 13 && prison_mlst <= 16)) {
+	if (prison_mlst == 8 || (prison_mlst >= 13 && prison_mlst <= 16))
 		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, prison_mlst);
-		DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 30);
-	} else
+	else
 		NSMapRemove(code2movieMap, (const void*)(uintptr_t)30);
 	
-	// enable screen updates and stop all movies
+	// enable screen updates
 	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
-	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
 	
 	// schedule the next prison activity movie
 	uintptr_t k = 30;
