@@ -301,7 +301,6 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 
 - (void)setLooping:(BOOL)flag {
 	[_movie setAttribute:[NSNumber numberWithBool:flag] forKey:QTMovieLoopsAttribute];
-	[self clearPlaybackSelection];
 	
 	if (flag && !_seamless_looping_hacked) {
 		// ladies and gentlemen, because QuickTime fails at life, here is the seamless movie hack

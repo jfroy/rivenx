@@ -3838,4 +3838,37 @@ DEFINE_COMMAND(xglview_villageoff) {
 	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
 }
 
+static int64_t village_viewer_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216LL, 4016LL, 4816LL, 5616LL, 6416LL, 7216LL, 8016LL, 8816LL};
+
+- (void)_configureVillageViewerMovie {
+	RXGameState* gs = [g_world gameState];
+	
+	// determine the new village viewer position based on the hotspot name
+	uint32_t new_pos = [gs unsigned32ForKey:@"gLViewPos"] + [[[_current_hotspot name] substringFromIndex:1] intValue];
+	
+	// determine the playback selection for the viewer rotate movie
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)1);
+	QTTime duration = [movie duration];
+
+	QTTime start_time = QTMakeTime(village_viewer_timevals[[gs unsigned32ForKey:@"gLViewPos"]], duration.timeScale);
+	QTTimeRange movie_range = QTMakeTimeRange(start_time,
+											  QTMakeTime(village_viewer_timevals[new_pos] - start_time.timeValue, duration.timeScale));
+	[movie setPlaybackSelection:movie_range];
+	
+	// update the position variable
+	[gs setUnsigned32:new_pos % 6 forKey:@"gLViewPos"];
+}
+
+DEFINE_COMMAND(xglviewer) {
+	RXGameState* gs = [g_world gameState];
+	
+	// configure the movie's playback selection and play it
+	[self performSelectorOnMainThread:@selector(_configureVillageViewerMovie) withObject:nil waitUntilDone:YES];
+	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
+	
+	// activate the appropriate PLST and disable the movie
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 2 + [gs unsigned32ForKey:@"gLViewPos"]);
+	DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 1);
+}
+
 @end
