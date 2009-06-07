@@ -64,6 +64,8 @@
 	rx_core_rect_t red_marble_initial_rect;
 	uint16_t yellow_marble_tBMP;
 	rx_core_rect_t yellow_marble_initial_rect;
+	
+	NSTimer* prison_viewer_timer;
 }
 
 - (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr;

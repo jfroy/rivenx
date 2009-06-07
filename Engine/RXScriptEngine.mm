@@ -1723,7 +1723,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	}
 #endif
 	
-	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, argv[0]);
+	DISPATCH_COMMAND2(RX_COMMAND_ACTIVATE_MLST, argv[0], 0);
 	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, code);
 	
 #if defined(DEBUG)
@@ -1779,13 +1779,13 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 // 46
 - (void)_opcode_activateMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
-	if (argc < 2)
+	if (argc < 1)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 	uintptr_t k = [card movieCodes][argv[0] - 1];
 
 #if defined(DEBUG)
 	if (!_disableScriptLogging)
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record %hu [code=%hu] (u0=%hu)", logPrefix, argv[0], k, argv[1]);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record %hu [code=%hu]", logPrefix, argv[0], k);
 #endif
 	
 	// update the code to movie map
@@ -2888,6 +2888,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 	RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@movie_position=%f, event_delay=%f, position-delay=%f",
 		logPrefix, movie_position, event_delay, movie_position - event_delay);
 #endif
+	// if (time > 2780 || time < 200)
 	if (movie_position >= 4.58) {
 		[[g_world gameState] setUnsignedShort:1 forKey:@"domecheck"];
 		
@@ -3682,8 +3683,143 @@ DEFINE_COMMAND(xgwt900_scribe) {
 	RXGameState* gs = [g_world gameState];
 	uint64_t scribe_time = [gs unsigned64ForKey:@"gScribeTime"];
 	uint32_t scribe = [gs unsigned32ForKey:@"gScribe"];
-	if (scribe == 1 && (uint64_t)(CFAbsoluteTimeGetCurrent() * 1000) > scribe_time + 20000)
+	if (scribe == 1 && (uint64_t)(CFAbsoluteTimeGetCurrent() * 1000) > scribe_time + 40000)
 		[gs setUnsigned32:2 forKey:@"gScribe"];
+}
+
+#pragma mark gspit viewer
+
+static const uint16_t prison_activity_movies[3][8] = {
+	{9, 10, 19, 19, 21, 21},
+	{18, 20, 22},
+	{11, 11, 12, 17, 17, 17, 17, 23}
+};
+
+- (void)_playRandomPrisonActivityMovie:(NSTimer*)timer {
+	RXGameState* gs = [g_world gameState];
+	uint32_t cath_state = [gs unsigned32ForKey:@"gCathState"];
+	
+	uint16_t prison_mlst;
+	if (cath_state == 1)
+		prison_mlst = prison_activity_movies[0][random() % 6];
+	else if (cath_state == 2)
+		prison_mlst = prison_activity_movies[1][random() % 3];
+	else if (cath_state == 3)
+		prison_mlst = prison_activity_movies[2][random() % 8];
+	else
+		abort();
+	
+	// update catherine's state based on which movie we selected
+	if (prison_mlst == 10 || prison_mlst == 17 || prison_mlst == 18 || prison_mlst == 20)
+		cath_state = 1;
+	else if (prison_mlst == 19 || prison_mlst == 21 || prison_mlst == 23)
+		cath_state = 2;
+	else
+		cath_state = 3;
+	[gs setUnsigned32:cath_state forKey:@"gCathState"];
+	
+	// play the movie
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)30);
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, prison_mlst);
+	if (movie)
+		[controller disableMovie:movie];
+	
+	// schedule the next prison activity movie
+	NSTimeInterval delay;
+	movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)30);
+	QTGetTimeInterval([movie duration], &delay);
+	delay += (random() % 30) + (random() % 30) + 2;
+	
+	prison_viewer_timer = [NSTimer scheduledTimerWithTimeInterval:delay
+														   target:self
+														 selector:@selector(_playRandomPrisonActivityMovie:)
+														 userInfo:nil
+														  repeats:NO];
+}
+
+DEFINE_COMMAND(xglview_prisonon) {
+	RXGameState* gs = [g_world gameState];
+	
+	// set gLView to indicate the left viewer is on
+	[gs setUnsigned32:1 forKey:@"gLView"];
+	
+	// MLST 8 to 23 (16 movies) are the prison activity movies; pick one
+	uint16_t prison_mlst = random() % 16 + 8;
+	
+	// now need to select the correct viewer turn on movie and catherine state based on the selection above
+	uintptr_t turnon_code;
+	uint16_t cath_state;
+	if (prison_mlst == 8 || prison_mlst == 10 || prison_mlst == 13 || prison_mlst >= 16 && prison_mlst <= 18 || prison_mlst == 20) {
+		turnon_code = 4;
+		cath_state = 1;
+	} else if (prison_mlst == 19 || prison_mlst == 21 || prison_mlst == 23) {
+		turnon_code = 4;
+		cath_state = 2;
+	} else if (prison_mlst == 9 || prison_mlst == 11 || prison_mlst == 12 || prison_mlst == 22) {
+		turnon_code = 4;
+		cath_state = 3;
+	} else if (prison_mlst == 14) {
+		turnon_code = 6;
+		cath_state = 2;
+	} else if (prison_mlst == 15) {
+		turnon_code = 7;
+		cath_state = 1;
+	}
+	
+	// set catherine's current state
+	[gs setUnsigned32:cath_state forKey:@"gCathState"];
+	
+	// disable screen updates
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
+	
+	// activate the viewer on PLST
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 8);
+		
+	// play the appropriate viewer turn on movie
+	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, turnon_code);
+	
+	// if the selected movie is one where catherine is visible at the start, we need to play it now
+	if (prison_mlst == 8 || (prison_mlst >= 13 && prison_mlst <= 16)) {
+		DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, prison_mlst);
+		DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 30);
+	} else
+		NSMapRemove(code2movieMap, (const void*)(uintptr_t)30);
+	
+	// enable screen updates and stop all movies
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
+	
+	// schedule the next prison activity movie
+	uintptr_t k = 30;
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+	NSTimeInterval delay;
+	if (movie) {
+		QTGetTimeInterval([movie duration], &delay);
+		delay += (random() % 30) + (random() % 30) + 2;
+	} else
+		delay = 10.0 + (random() % 5) + (random() % 5) + 2;
+	
+	prison_viewer_timer = [NSTimer scheduledTimerWithTimeInterval:delay
+														   target:self
+														 selector:@selector(_playRandomPrisonActivityMovie:)
+														 userInfo:nil
+														  repeats:NO];
+}
+
+DEFINE_COMMAND(xglview_prisonoff) {
+	// set gLView to indicate the left viewer is off
+	[[g_world gameState] setUnsigned32:0 forKey:@"gLView"];
+	
+	// invalidate the prison viewer timer
+	[prison_viewer_timer invalidate];
+	
+	// disable screen updates, activate PLST 1 (viewer off background), play
+	// movie 5 (viewer turn off), enable screen updates and disable all movies
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
+	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 5);
+	DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+	DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
 }
 
 @end
