@@ -71,7 +71,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     // we must be on the main thread to use QuickTime
     if (!pthread_main_np()) {
         [self release];
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie initWithMovie:disposeWhenDone:] MAIN THREAD ONLY" userInfo:nil];
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                       reason:@"[RXMovie initWithMovie:disposeWhenDone:] MAIN THREAD ONLY"
+                                     userInfo:nil];
     }
     
     _owner = owner;
@@ -83,7 +85,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     _movie = [[QTMovie alloc] initWithQuickTimeMovie:movie disposeWhenDone:disposeWhenDone error:&error];
     if (!_movie) {
         [self release];
-        @throw [NSException exceptionWithName:@"RXMovieException" reason:@"[QTMovie initWithQuickTimeMovie:disposeWhenDone:error:] failed." userInfo:(error) ? [NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey] : nil];
+        @throw [NSException exceptionWithName:@"RXMovieException"
+                                       reason:@"[QTMovie initWithQuickTimeMovie:disposeWhenDone:error:] failed."
+                                     userInfo:(error) ? [NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey] : nil];
     }
     
     // no particular movie hints initially
@@ -138,7 +142,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         CFRelease(visualContextOptions);
         if (err != noErr) {
             [self release];
-            @throw [NSException exceptionWithName:@"RXMovieException" reason:@"QTPixelBufferContextCreate failed." userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
+            @throw [NSException exceptionWithName:@"RXMovieException"
+                                           reason:@"QTPixelBufferContextCreate failed."
+                                         userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
         }
         
         // allocate a texture storage buffer and setup a texture object
@@ -165,7 +171,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         CFRelease(visualContextOptions);
         if (err != noErr) {
             [self release];
-            @throw [NSException exceptionWithName:@"RXMovieException" reason:@"QTOpenGLTextureContextCreate failed." userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
+            @throw [NSException exceptionWithName:@"RXMovieException"
+                                           reason:@"QTOpenGLTextureContextCreate failed."
+                                         userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
         }
     }
     
@@ -196,7 +204,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     err = SetMovieVisualContext(movie, _vc);
     if (err != noErr) {
         [self release];
-        @throw [NSException exceptionWithName:@"RXMovieException" reason:@"SetMovieVisualContext failed." userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
+        @throw [NSException exceptionWithName:@"RXMovieException"
+                                       reason:@"SetMovieVisualContext failed."
+                                     userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
     }
     
     _display_ts_lock = OS_SPINLOCK_INIT;
@@ -207,7 +217,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 - (id)initWithURL:(NSURL*)movieURL owner:(id)owner {
     if (!pthread_main_np()) {
         [self release];
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"[RXMovie initWithURL:] MAIN THREAD ONLY" userInfo:nil];
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                       reason:@"[RXMovie initWithURL:] MAIN THREAD ONLY"
+                                     userInfo:nil];
     }
     
     // prepare a property structure
@@ -235,7 +247,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     OSStatus err = NewMovieFromProperties(sizeof(newMovieProperties) / sizeof(newMovieProperties[0]), newMovieProperties, 0, NULL, &aMovie);
     if (err != noErr) {
         [self release];
-        @throw [NSException exceptionWithName:@"RXMovieException" reason:@"NewMovieFromProperties failed." userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
+        @throw [NSException exceptionWithName:@"RXMovieException"
+                                       reason:@"NewMovieFromProperties failed."
+                                     userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
     }
     
     @try {
@@ -344,7 +358,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         
         // loop the video samples using the *last video sample time plus half the last video sample duration* as the duration
         if (QTTimeCompare(last_sample_duration, second_last_sample_duration) == NSOrderedDescending)
-            track_range = QTMakeTimeRange(QTZeroTime, QTTimeIncrement(video_last_sample_time, QTMakeTime((duration.timeValue - video_last_sample_time.timeValue) / 2, duration.timeScale)));
+            track_range = QTMakeTimeRange(QTZeroTime,
+                                          QTTimeIncrement(video_last_sample_time,
+                                                          QTMakeTime((duration.timeValue - video_last_sample_time.timeValue) / 2, duration.timeScale)));
         for (int i = 0; i < 300; i++)
             [video_track insertSegmentOfTrack:video_track timeRange:track_range atTime:track_range.duration];
         
@@ -365,7 +381,8 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         _seamless_looping_hacked = YES;
         
 #if defined(DEBUG)
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"used smooth movie looping hack for %@, original duration=%@", self, QTStringFromTime(_original_duration));
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"used smooth movie looping hack for %@, original duration=%@",
+            self, QTStringFromTime(_original_duration));
 #if DEBUG > 2
         [_movie writeToFile:[[NSString stringWithFormat:@"~/Desktop/looping %p.mov", self] stringByExpandingTildeInPath] withAttributes:nil];
 #endif
@@ -605,9 +622,24 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
                 glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();
                 
 #if defined(__LITTLE_ENDIAN__)
-                glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, MAX(_current_size.width, 128), height, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, _texture_storage); glReportError();
+                glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                                0,
+                                0,
+                                0,
+                                MAX(_current_size.width, 128),
+                                height,
+                                GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE,
+                                _texture_storage); glReportError();
 #else
-                glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, MAX(_currentSize.width, 128), height, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, _textureStorage); glReportError();
+                glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                                0,
+                                0,
+                                0,
+                                MAX(_currentSize.width, 128),
+                                height,
+                                GL_YCBCR_422_APPLE,
+                                GL_UNSIGNED_SHORT_8_8_REV_APPLE,
+                                _textureStorage); glReportError();
 #endif
             }
         }

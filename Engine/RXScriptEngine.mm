@@ -218,7 +218,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
     if (kerr != 0) {
         [self release];
         error = [NSError errorWithDomain:NSMachErrorDomain code:kerr userInfo:nil];
-        @throw [NSException exceptionWithName:@"RXSystemResourceException" reason:@"Could not create the movie playback semaphore." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        @throw [NSException exceptionWithName:@"RXSystemResourceException"
+                                       reason:@"Could not create the movie playback semaphore."
+                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     
     _screen_update_disable_counter = 0;
@@ -1663,7 +1665,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
         }
         
         // sleep for the specified amount of ms
-        usleep(delay * 1000);
+        if (delay > 0)
+            usleep(delay * 1000);
     }
     
     // execute the delayed command
@@ -2497,7 +2500,7 @@ DEFINE_COMMAND(xhandlecontrolmid) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, 5);
             
             // wait 5 seconds
-            usleep(5000 * 1000);
+            usleep(5 * 1E6);
             
             // activate SLST 2 (which is the ambient mix for the upper jungle level)
             DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 2);
@@ -3921,18 +3924,12 @@ DEFINE_COMMAND(xgrviewer) {
     if (viewer_light == 1) {
         [gs setUnsigned32:0 forKey:@"gRView"];
         
-        uint16_t button_up_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_%@_1", [[card descriptor] ID], @"gScpBtnUp"]];
+        uint16_t button_up_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gScpBtnUp_1", [[card descriptor] ID]]];
         double duration;
         [self _playDataSoundWithID:button_up_sound gain:1.0f duration:&duration];
         CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
     
         DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
-        
-        // hide the mouse cursor
-        if (!_did_hide_mouse) {
-            _did_hide_mouse = YES;
-            [controller hideMouseCursor];
-        }
         
         // sleep for the duration minus the time that has elapsed since we started the sound
         usleep(duration - (CFAbsoluteTimeGetCurrent() - now) * 1E6);
@@ -3947,11 +3944,62 @@ DEFINE_COMMAND(xgrviewer) {
 }
 
 DEFINE_COMMAND(xgwharksnd) {
-
+    uint32_t whark_visits = [[g_world gameState] unsigned32ForKey:@"gWhark"];
+    
+    // if the whark got angry at us, we're not playing anything
+    if (whark_visits >= 5)
+        return;
+    
+    // get a random solo index (there's only 9 of them, the extra range is to
+    // have some invocations of this method do nothing
+    uint32_t whark_solo = (random() % 24) + 1;
+    if (whark_solo >= 10)
+        return;
+    
+    // sleep some random amount plus the amount of time left on the previous solo
+    CFAbsoluteTime prev_solo_remaining = MAX(whark_solo_done_ts - CFAbsoluteTimeGetCurrent(), 0.0);
+    usleep(((random() % 30) + 1 + 120) * 1000 + (prev_solo_remaining * 1E6));
+    
+    // play the solo
+    uint16_t solo_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gWharkSolo%d_1", [[card descriptor] ID], whark_solo]];
+    double duration;
+    [self _playDataSoundWithID:solo_sound gain:1.0f duration:&duration];
+    whark_solo_done_ts = CFAbsoluteTimeGetCurrent() + duration + 5.0;
 }
 
 DEFINE_COMMAND(xgplaywhark) {
-
+    RXGameState* gs = [g_world gameState];
+    
+    uint32_t whark_visits = [gs unsigned32ForKey:@"gWhark"];
+    uint64_t whark_state = [gs unsigned64ForKey:@"gWharkTime"];
+    
+    // if gWharkTime is not 1, we don't do anything
+    if (whark_state != 1)
+        return;
+    
+    // count the number of times the red light has been light / the whark has come
+    whark_visits++;
+    if (whark_visits > 5)
+        whark_visits = 5;
+    [gs setUnsigned32:whark_visits forKey:@"gWhark"];
+    
+    // determine which movie to play based on the visit count
+    uint16_t mlst_index;
+    if (whark_visits == 1)
+        mlst_index = 3; // first whark movie, where we get a good look at it
+    else if (whark_visits == 2)
+        mlst_index = (random() % 2) + 4; // random 4 or 5
+    else if (whark_visits == 3)
+        mlst_index = (random() % 2) + 6; // random 6 or 7
+    else if (whark_visits == 4)
+        mlst_index = 8; // he's pissed, hope that glass doesn't break
+    else
+        mlst_index = 0;
+    
+    // and play the movie; they all use code 31
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, mlst_index);
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 31);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 31);
 }
 
 @end

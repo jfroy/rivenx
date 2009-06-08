@@ -66,6 +66,7 @@
     rx_core_rect_t yellow_marble_initial_rect;
     
     NSTimer* prison_viewer_timer;
+    CFAbsoluteTime whark_solo_done_ts;
 }
 
 - (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr;
