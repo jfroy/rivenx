@@ -46,5 +46,6 @@ typedef uint8_t RXTransitionDirection;
 - (BOOL)isPrimed;
 
 - (void)primeWithSourceTexture:(GLuint)texture outputTime:(const CVTimeStamp*)outputTime;
+- (float)applyAnimationCurve:(float)t;
 
 @end

@@ -35,7 +35,8 @@ static NSString* _kRXTransitionDirectionNames[4] = {
         direction = code & 0x3;
         pushNew = (code & 0x4) ? YES : NO;
         pushOld = (code & 0x8) ? YES : NO;
-    } else if (code == 16 || code == 17) type = RXTransitionDissolve;
+    } else if (code == 16 || code == 17)
+        type = RXTransitionDissolve;
     else {
         [self release];
         @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"INVALID TRANSITION CODE" userInfo:nil];
@@ -95,6 +96,15 @@ static NSString* _kRXTransitionDirectionNames[4] = {
 #if defined(DEBUG)
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"primed with texture ID %u at %lu", sourceTexture, startTime);
 #endif
+}
+
+- (float)applyAnimationCurve:(float)t {
+    if (type == RXTransitionDissolve)
+        return t; // linear for dissolves
+    else {
+        double sine = sin(M_PI_2 * t);
+        return sine * sine;
+    }
 }
 
 @end

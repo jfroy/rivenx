@@ -1146,7 +1146,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
         }
         
         // sleep for the duration minus the time that has elapsed since we started the sound
-        usleep(duration - (CFAbsoluteTimeGetCurrent() - now) * 1E6);
+        usleep((duration - (CFAbsoluteTimeGetCurrent() - now)) * 1E6);
     }
 }
 
@@ -3754,7 +3754,7 @@ static const uint16_t prison_activity_movies[3][8] = {
     QTGetTimeInterval([movie duration], &delay);
     delay += (random() % 30) + (random() % 30) + 2;
     
-    prison_viewer_timer = [NSTimer scheduledTimerWithTimeInterval:delay
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:delay
                                                            target:self
                                                          selector:@selector(_playRandomPrisonActivityMovie:)
                                                          userInfo:nil
@@ -3821,7 +3821,7 @@ DEFINE_COMMAND(xglview_prisonon) {
     } else
         delay = 10.0 + (random() % 5) + (random() % 5) + 2;
     
-    prison_viewer_timer = [NSTimer scheduledTimerWithTimeInterval:delay
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:delay
                                                            target:self
                                                          selector:@selector(_playRandomPrisonActivityMovie:)
                                                          userInfo:nil
@@ -3833,7 +3833,8 @@ DEFINE_COMMAND(xglview_prisonoff) {
     [[g_world gameState] setUnsigned32:0 forKey:@"gLView"];
     
     // invalidate the prison viewer timer
-    [prison_viewer_timer invalidate];
+    [event_timer invalidate];
+    event_timer = nil;
     
     // disable screen updates, activate PLST 1 (viewer off background), play
     // movie 5 (viewer turn off), enable screen updates and disable all movies
@@ -3932,14 +3933,12 @@ DEFINE_COMMAND(xgrviewer) {
         [gs setUnsigned32:0 forKey:@"gRView"];
         
         uint16_t button_up_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gScpBtnUp_1", [[card descriptor] ID]]];
-        double duration;
-        [self _playDataSoundWithID:button_up_sound gain:1.0f duration:&duration];
-        CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+        [self _playDataSoundWithID:button_up_sound gain:1.0f duration:NULL];
     
         DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
         
-        // sleep for the duration minus the time that has elapsed since we started the sound
-        usleep(duration - (CFAbsoluteTimeGetCurrent() - now) * 1E6);
+        // sleep for a little bit less than a second (the duration of the button up sound)
+        usleep(0.2 * 1E6);
     }
     
     // configure the viewer spin movie playback selection and play it
@@ -3950,28 +3949,40 @@ DEFINE_COMMAND(xgrviewer) {
     DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
 }
 
-DEFINE_COMMAND(xgwharksnd) {
-    uint32_t whark_visits = [[g_world gameState] unsigned32ForKey:@"gWhark"];
+- (void)_playWharkSolo:(NSTimer*)timer {
+    RXGameState* gs = [g_world gameState];
     
-    // if the whark got angry at us, we're not playing anything
-    if (whark_visits >= 5)
+    // if the whark got angry at us, or there is no light turned on, move along
+    if ([gs unsigned32ForKey:@"gWhark"] >= 5 || ![gs unsigned32ForKey:@"gRView"]) {
+        [event_timer invalidate];
+        event_timer = nil;
         return;
+    }
     
-    // get a random solo index (there's only 9 of them, the extra range is to
-    // have some invocations of this method do nothing
-    uint32_t whark_solo = (random() % 24) + 1;
-    if (whark_solo >= 10)
-        return;
-    
-    // sleep some random amount plus the amount of time left on the previous solo
-    CFAbsoluteTime prev_solo_remaining = MAX(whark_solo_done_ts - CFAbsoluteTimeGetCurrent(), 0.0);
-    usleep(((random() % 30) + 1 + 120) * 1000 + (prev_solo_remaining * 1E6));
+    // get a random solo index (there's 9 of them)
+    uint32_t whark_solo = (random() % 9) + 1;
     
     // play the solo
-    uint16_t solo_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gWharkSolo%d_1", [[card descriptor] ID], whark_solo]];
-    double duration;
-    [self _playDataSoundWithID:solo_sound gain:1.0f duration:&duration];
-    whark_solo_done_ts = CFAbsoluteTimeGetCurrent() + duration + 5.0;
+    uint16_t solo_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gWharkSolo%d_1", whark_solo_card, whark_solo]];
+    [self _playDataSoundWithID:solo_sound gain:1.0f duration:NULL];
+    
+    // schedule the next one within the next 30 seconds but not sooner than in 15 seconds
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:15 + (random() % 15) + 1
+                                                   target:self
+                                                 selector:@selector(_playWharkSolo:)
+                                                 userInfo:nil
+                                                  repeats:NO];
+}
+
+DEFINE_COMMAND(xgwharksnd) {
+    if (!event_timer) {
+        whark_solo_card = [[card descriptor] ID];
+        event_timer = [NSTimer scheduledTimerWithTimeInterval:(double)((random() % 30) + 1 + 120) * 1000 / 1E6
+                                                       target:self
+                                                     selector:@selector(_playWharkSolo:)
+                                                     userInfo:nil
+                                                      repeats:NO];
+    }
 }
 
 DEFINE_COMMAND(xgplaywhark) {

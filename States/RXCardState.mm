@@ -1650,7 +1650,7 @@ init_failure:
             
             // use the transition's program and update its t and margin uniforms
             glUseProgram(transition->program); glReportError();
-            glUniform1f(transition->t_uniform, t); glReportError();
+            glUniform1f(transition->t_uniform, [_front_render_state->transition applyAnimationCurve:t]); glReportError();
             
             // bind the transition source texture on unit 1
             glActiveTexture(GL_TEXTURE1); glReportError();
