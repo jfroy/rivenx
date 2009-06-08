@@ -1,6 +1,6 @@
 //
-//	VirtualRingBuffer.h
-//	PlayBufferedSoundFile
+//  VirtualRingBuffer.h
+//  PlayBufferedSoundFile
 //
 /*
  Copyright (c) 2002, Kurt Revis.  All rights reserved.
@@ -25,22 +25,22 @@
 // VirtualRingBuffer implements a classic ring buffer (or circular buffer), with a couple of twists.
 //
 // * It allows reads and writes to happen in different threads, with no explicit locking,
-//	 so readers and writers will never block. This is useful if either thread uses the
-//	 time-constraint scheduling policy, since it is bad for such threads to block for
-//	 indefinite amounts of time.
-//	 
+//   so readers and writers will never block. This is useful if either thread uses the
+//   time-constraint scheduling policy, since it is bad for such threads to block for
+//   indefinite amounts of time.
+//   
 // * It uses a virtual memory trick to allow the client to read or write using just one
-//	 operation, even if the data involved wraps around the end of the buffer. We allocate
-//	 our buffer normally, and then place a VM region immediately after it in the address
-//	 space which maps back to the "real" buffer. So reads and writes into both sections
-//	 are transparently translated into the same physical memory.
-//	 This makes the API much simpler to use, and saves us from doing some math to
-//	 calculate the wraparound points.
-//	 The tradeoff is that we use twice as much address space for the buffer than we would
-//	 otherwise.	 Address space is not typically constrained for most applications, though,
-//	 so this isn't a big problem.
-//	 The idea for this trick came from <http://phil.ipal.org/freeware/vrb/> (via sweetcode.org),
-//	 although none of that code is used here. (We use the Mach VM API directly.)
+//   operation, even if the data involved wraps around the end of the buffer. We allocate
+//   our buffer normally, and then place a VM region immediately after it in the address
+//   space which maps back to the "real" buffer. So reads and writes into both sections
+//   are transparently translated into the same physical memory.
+//   This makes the API much simpler to use, and saves us from doing some math to
+//   calculate the wraparound points.
+//   The tradeoff is that we use twice as much address space for the buffer than we would
+//   otherwise.  Address space is not typically constrained for most applications, though,
+//   so this isn't a big problem.
+//   The idea for this trick came from <http://phil.ipal.org/freeware/vrb/> (via sweetcode.org),
+//   although none of that code is used here. (We use the Mach VM API directly.)
 //
 
 // Threading note:
@@ -55,15 +55,15 @@
 
 @interface VirtualRingBuffer : NSObject
 {
-	void* buffer;
-	void* bufferEnd;
-	UInt32 bufferLength;
-		// buffer is the start of the ring buffer's address space.
-		// bufferEnd is the end of the "real" buffer (always buffer + bufferLength).
-		// Note that the "virtual" portion of the buffer extends from bufferEnd to bufferEnd+bufferLength.
-	
-	void* readPointer;
-	void* writePointer;
+    void* buffer;
+    void* bufferEnd;
+    UInt32 bufferLength;
+        // buffer is the start of the ring buffer's address space.
+        // bufferEnd is the end of the "real" buffer (always buffer + bufferLength).
+        // Note that the "virtual" portion of the buffer extends from bufferEnd to bufferEnd+bufferLength.
+    
+    void* readPointer;
+    void* writePointer;
 }
 
 // Note: The specified length will be rounded up to an integral number of VM pages.

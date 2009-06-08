@@ -1,8 +1,8 @@
 //
-//	QTCompressionSession.h
-//	rivenx
+//  QTCompressionSession.h
+//  rivenx
 //
-//	Created by Jean-François Roy on 20/08/2006.
+//  Created by Jean-François Roy on 20/08/2006.
 
 /*
 Copyright (c) 2006 Jean-François Roy
@@ -38,22 +38,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 @interface QTCompressionSession : NSObject {
-	int							width;						// video width
-	int							height;						// video height
-	CodecType					codecType;					// video codec
-	SInt32						averageDataRate;			// video data rate
-	TimeScale					timeScale;					// video time scale
-	int							desiredFramesPerSecond;		// video frames per second
-	long						frameCount;					// video frame count
-	
-	Movie						outputMovie;				// movie file for storing compressed frames
-	DataHandler					outputMovieDataHandler;		// storage for movie header
-	
-	Media						outputVideoMedia;			// media for the video track in the movie
-	BOOL						didBeginVideoMediaEdits;
-	
-	ICMCompressionSessionRef	compressionSession;			// compresses video frames
-	BOOL						sessionFinalized;
+    int                         width;                      // video width
+    int                         height;                     // video height
+    CodecType                   codecType;                  // video codec
+    SInt32                      averageDataRate;            // video data rate
+    TimeScale                   timeScale;                  // video time scale
+    int                         desiredFramesPerSecond;     // video frames per second
+    long                        frameCount;                 // video frame count
+    
+    Movie                       outputMovie;                // movie file for storing compressed frames
+    DataHandler                 outputMovieDataHandler;     // storage for movie header
+    
+    Media                       outputVideoMedia;           // media for the video track in the movie
+    BOOL                        didBeginVideoMediaEdits;
+    
+    ICMCompressionSessionRef    compressionSession;         // compresses video frames
+    BOOL                        sessionFinalized;
 }
 
 + (Movie)quicktimeMovieFromTempFile:(DataHandler *)outDataHandler error:(NSError **)error;

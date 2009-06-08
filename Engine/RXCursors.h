@@ -1,9 +1,9 @@
 //
-//	RXCursors.h
-//	rivenx
+//  RXCursors.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 21/03/2009.
-//	Copyright 2009 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 21/03/2009.
+//  Copyright 2009 MacStorm. All rights reserved.
 //
 
 #define RX_CURSOR_ZIP 1002

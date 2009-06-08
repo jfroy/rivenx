@@ -1,9 +1,9 @@
 //
-//	RXCardDescriptor.h
-//	rivenx
+//  RXCardDescriptor.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 29/01/2006.
-//	Copyright 2006 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 29/01/2006.
+//  Copyright 2006 MacStorm. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -14,8 +14,8 @@
 
 @interface RXSimpleCardDescriptor : NSObject <NSCoding, NSCopying> {
 @public
-	NSString* stackKey;
-	uint16_t cardID;
+    NSString* stackKey;
+    uint16_t cardID;
 }
 
 - (id)initWithStackKey:(NSString*)name ID:(uint16_t)ID;
@@ -27,13 +27,13 @@
 @end
 
 @interface RXCardDescriptor : NSObject {
-	__weak RXStack* _parent;
-	uint16_t _ID;
-	
-	NSData* _data;
-	NSString* _name;
-	
-	RXSimpleCardDescriptor* _simpleDescriptor;
+    __weak RXStack* _parent;
+    uint16_t _ID;
+    
+    NSData* _data;
+    NSString* _name;
+    
+    RXSimpleCardDescriptor* _simpleDescriptor;
 }
 
 + (id)descriptorWithStack:(RXStack*)stack ID:(uint16_t)ID;

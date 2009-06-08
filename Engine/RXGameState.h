@@ -1,9 +1,9 @@
 //
-//	RXGameState.h
-//	rivenx
+//  RXGameState.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 02/11/2007.
-//	Copyright 2007 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 02/11/2007.
+//  Copyright 2007 MacStorm. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -13,12 +13,12 @@
 
 
 @interface RXGameState : NSObject <NSCoding> {
-	RXEdition* _edition;
-	NSMutableDictionary* _variables;
-	RXSimpleCardDescriptor* _currentCard;
-	RXSimpleCardDescriptor* _returnCard;
-	NSURL* _URL;
-	NSRecursiveLock* _accessLock;
+    RXEdition* _edition;
+    NSMutableDictionary* _variables;
+    RXSimpleCardDescriptor* _currentCard;
+    RXSimpleCardDescriptor* _returnCard;
+    NSURL* _URL;
+    NSRecursiveLock* _accessLock;
 }
 
 + (RXGameState*)gameStateWithURL:(NSURL*)url error:(NSError**)error;

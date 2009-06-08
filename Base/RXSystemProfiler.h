@@ -10,10 +10,10 @@
 
 
 @interface RXSystemProfiler : NSObject {
-	uint32_t _systemVersion;
-	uint32_t _architecture;
-	uint32_t _logicalCPUs;
-	uint64_t _ram;
+    uint32_t _systemVersion;
+    uint32_t _architecture;
+    uint32_t _logicalCPUs;
+    uint64_t _ram;
 }
 
 + (RXSystemProfiler*)sharedSystemProfiler;

@@ -1,9 +1,9 @@
 //
-//	RXRendering.m
-//	rivenx
+//  RXRendering.m
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 11/12/2005.
-//	Copyright 2005 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 11/12/2005.
+//  Copyright 2005 MacStorm. All rights reserved.
 //
 
 #import "RXRendering.h"

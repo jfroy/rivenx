@@ -1,9 +1,9 @@
 /*
- *	RXWorldProtocol.h
- *	rivenx
+ *  RXWorldProtocol.h
+ *  rivenx
  *
- *	Created by Jean-Francois Roy on 01/10/2005.
- *	Copyright 2005 MacStorm. All rights reserved.
+ *  Created by Jean-Francois Roy on 01/10/2005.
+ *  Copyright 2005 MacStorm. All rights reserved.
  *
  */
 
@@ -53,21 +53,21 @@ __BEGIN_DECLS
 extern NSObject <RXWorldProtocol>* g_world;
 
 CF_INLINE BOOL RXEngineGetBool(NSString* path) {
-	id value = [g_world valueForEngineVariable:path];
-	if (!value || ![value isKindOfClass:[NSNumber class]])
-		return NO;
-	return [value boolValue];
+    id value = [g_world valueForEngineVariable:path];
+    if (!value || ![value isKindOfClass:[NSNumber class]])
+        return NO;
+    return [value boolValue];
 }
 
 CF_INLINE uint32_t RXEngineGetUInt32(NSString* path) {
-	id value = [g_world valueForEngineVariable:path];
-	if (!value || ![value isKindOfClass:[NSNumber class]])
-		return NO;
-	return (uint32_t)[value unsignedIntValue];
+    id value = [g_world valueForEngineVariable:path];
+    if (!value || ![value isKindOfClass:[NSNumber class]])
+        return NO;
+    return (uint32_t)[value unsignedIntValue];
 }
 
 CF_INLINE void RXEngineSetUInt32(NSString* path, uint32_t value) {
-	[g_world setValue:[NSNumber numberWithInt:value] forEngineVariable:path];
+    [g_world setValue:[NSNumber numberWithInt:value] forEngineVariable:path];
 }
 
 __END_DECLS

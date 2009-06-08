@@ -1,9 +1,9 @@
 //
-//	RXDebugWindowController.h
-//	rivenx
+//  RXDebugWindowController.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 27/01/2006.
-//	Copyright 2006 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 27/01/2006.
+//  Copyright 2006 MacStorm. All rights reserved.
 //
 
 
@@ -11,10 +11,10 @@
 
 
 @interface RXDebugWindowController : NSWindowController {
-	IBOutlet NSTextView* consoleView;
-	NSFont* _consoleFont;
-	
-	uint16_t _trip;
+    IBOutlet NSTextView* consoleView;
+    NSFont* _consoleFont;
+    
+    uint16_t _trip;
 }
 
 - (IBAction)runPythonCmd:(id)sender;

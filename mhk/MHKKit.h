@@ -1,9 +1,9 @@
 /*
- *	MHKKit.h
- *	MHKKit
+ *  MHKKit.h
+ *  MHKKit
  *
- *	Created by Jean-Francois Roy on 09/04/2005.
- *	Copyright 2005 MacStorm. All rights reserved.
+ *  Created by Jean-Francois Roy on 09/04/2005.
+ *  Copyright 2005 MacStorm. All rights reserved.
  *
  */
 

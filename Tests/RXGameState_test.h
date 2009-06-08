@@ -12,7 +12,7 @@
 
 
 @interface RXGameState_test : SenTestCase {
-	RXGameState* gameState;
+    RXGameState* gameState;
 }
 
 @end

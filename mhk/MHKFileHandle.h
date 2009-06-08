@@ -1,9 +1,9 @@
 //
-//	MHKFileHandle.h
-//	MHKKit
+//  MHKFileHandle.h
+//  MHKKit
 //
-//	Created by Jean-Francois Roy on 07/04/2005.
-//	Copyright 2005 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 07/04/2005.
+//  Copyright 2005 MacStorm. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -12,12 +12,12 @@
 
 
 @interface MHKFileHandle : NSObject {
-	int16_t __forkRef;
-	MHKArchive* __owner;
-	
-	off_t __offset;
-	uint32_t __position;
-	uint32_t __length;
+    int16_t __forkRef;
+    MHKArchive* __owner;
+    
+    off_t __offset;
+    uint32_t __position;
+    uint32_t __length;
 }
 
 - (MHKArchive*)archive;

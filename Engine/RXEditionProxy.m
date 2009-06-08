@@ -12,42 +12,42 @@
 @implementation RXEditionProxy
 
 - (id)initWithEdition:(RXEdition*)e {
-	self = [super init];
-	if (!self)
-		return nil;
-	
-	edition = [e retain];
-	return self;
+    self = [super init];
+    if (!self)
+        return nil;
+    
+    edition = [e retain];
+    return self;
 }
 
 - (void)dealloc {
-	[edition release];
-	[super dealloc];
+    [edition release];
+    [super dealloc];
 }
 
 - (id)copyWithZone:(NSZone*)zone {
-	RXEditionProxy* new = [[RXEditionProxy allocWithZone:zone] initWithEdition:edition];
-	return new;
+    RXEditionProxy* new = [[RXEditionProxy allocWithZone:zone] initWithEdition:edition];
+    return new;
 }
 
 - (BOOL)isEqual:(id)object {
-	if ([self class] != [object class])
-		return NO;
-	return [edition isEqual:((RXEditionProxy*)object)->edition];
+    if ([self class] != [object class])
+        return NO;
+    return [edition isEqual:((RXEditionProxy*)object)->edition];
 }
 
 - (NSUInteger)hash {
-	return [edition hash];
+    return [edition hash];
 }
 
 - (RXEdition*)edition {
-	return edition;
+    return edition;
 }
 
 - (id)valueForKey:(NSString*)key {
-	if ([key isEqualToString:@"edition"])
-		return edition;
-	return [edition valueForKey:key];
+    if ([key isEqualToString:@"edition"])
+        return edition;
+    return [edition valueForKey:key];
 }
 
 @end

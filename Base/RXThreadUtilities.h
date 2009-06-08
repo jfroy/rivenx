@@ -1,9 +1,9 @@
 //
-//	RXThreadUtilities.h
-//	rivenx
+//  RXThreadUtilities.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 12/10/2007.
-//	Copyright 2007 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 12/10/2007.
+//  Copyright 2007 MacStorm. All rights reserved.
 //
 //
 
@@ -19,7 +19,7 @@
 __BEGIN_DECLS
 
 struct rx_thread_storage {
-	NSString* name;
+    NSString* name;
 };
 typedef struct rx_thread_storage rx_thread_storage_t;
 

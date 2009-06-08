@@ -16,10 +16,10 @@
 GTMOBJECT_SINGLETON_BOILERPLATE(RXSystemProfiler, sharedSystemProfiler)
 
 - (id)init {
-	self = [super init];
-	if (!self) return nil;
-	
-	return self;
+    self = [super init];
+    if (!self) return nil;
+    
+    return self;
 }
 
 @end

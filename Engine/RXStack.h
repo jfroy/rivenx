@@ -1,9 +1,9 @@
 //
-//	RXStack.h
-//	rivenx
+//  RXStack.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 30/08/2005.
-//	Copyright 2005 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 30/08/2005.
+//  Copyright 2005 MacStorm. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -12,21 +12,21 @@
 
 @interface RXStack : NSObject {
 @private
-	NSString* _key;
-	
-	NSMutableArray* _dataArchives;
-	NSMutableArray* _soundArchives;
-	
-	// global stack data
-	NSArray* _cardNames;
-	NSArray* _hotspotNames;
-	NSArray* _externalNames;
-	NSArray* _varNames;
-	NSArray* _stackNames;
-	NSData* _rmapData;
-	
-	// card storage
-	uint16_t _entryCardID;
+    NSString* _key;
+    
+    NSMutableArray* _dataArchives;
+    NSMutableArray* _soundArchives;
+    
+    // global stack data
+    NSArray* _cardNames;
+    NSArray* _hotspotNames;
+    NSArray* _externalNames;
+    NSArray* _varNames;
+    NSArray* _stackNames;
+    NSData* _rmapData;
+    
+    // card storage
+    uint16_t _entryCardID;
 }
 
 - (id)initWithStackDescriptor:(NSDictionary*)descriptor key:(NSString*)key error:(NSError**)error;

@@ -1,9 +1,9 @@
 /*
- *	integer_pair_hash.h
- *	rivenx
+ *  integer_pair_hash.h
+ *  rivenx
  *
- *	Created by Jean-Francois Roy on 30/12/2007.
- *	Copyright 2007 MacStorm. All rights reserved.
+ *  Created by Jean-Francois Roy on 30/12/2007.
+ *  Copyright 2007 MacStorm. All rights reserved.
  *
  */
 

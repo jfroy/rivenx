@@ -1,9 +1,9 @@
 /*
- *	MHKArchive.h
- *	MHKKit
+ *  MHKArchive.h
+ *  MHKKit
  *
- *	Created by Jean-Francois Roy on 09/04/2005.
- *	Copyright 2005 MacStorm. All rights reserved.
+ *  Created by Jean-Francois Roy on 09/04/2005.
+ *  Copyright 2005 MacStorm. All rights reserved.
  *
  */
 
@@ -20,36 +20,36 @@
 
 
 @interface MHKArchive : NSObject {
-	NSURL* mhk_url;
-	
-	SInt16 forkRef;
-	uint32_t archive_size;
-	
-	BOOL initialized;
-	
-	// global MHK parameters
-	uint32_t resource_directory_absolute_offset;
-	
-	uint32_t type_table_count;
-	MHK_type_table_entry* type_table;
-	
-	char* name_list;
-	
-	uint32_t file_table_count;
-	MHK_file_table_entry* file_table;
-	
-	// processed information
-	NSMutableDictionary* file_descriptor_arrays;
-	NSMutableDictionary* file_descriptor_trees;
-	NSMutableDictionary* file_descriptor_name_maps;
-	
-	// opened file count
-	uint32_t __open_files;
-	pthread_mutex_t __open_files_mutex;
-	
-	// cached descriptors
-	pthread_rwlock_t __cached_sound_descriptors_rwlock;
-	NSMutableDictionary* __cached_sound_descriptors;
+    NSURL* mhk_url;
+    
+    SInt16 forkRef;
+    uint32_t archive_size;
+    
+    BOOL initialized;
+    
+    // global MHK parameters
+    uint32_t resource_directory_absolute_offset;
+    
+    uint32_t type_table_count;
+    MHK_type_table_entry* type_table;
+    
+    char* name_list;
+    
+    uint32_t file_table_count;
+    MHK_file_table_entry* file_table;
+    
+    // processed information
+    NSMutableDictionary* file_descriptor_arrays;
+    NSMutableDictionary* file_descriptor_trees;
+    NSMutableDictionary* file_descriptor_name_maps;
+    
+    // opened file count
+    uint32_t __open_files;
+    pthread_mutex_t __open_files_mutex;
+    
+    // cached descriptors
+    pthread_rwlock_t __cached_sound_descriptors_rwlock;
+    NSMutableDictionary* __cached_sound_descriptors;
 }
 
 // designated initializer

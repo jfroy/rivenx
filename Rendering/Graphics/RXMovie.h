@@ -1,9 +1,9 @@
 //
-//	RXMovie.h
-//	rivenx
+//  RXMovie.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 08/09/2005.
-//	Copyright 2005 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 08/09/2005.
+//  Copyright 2005 MacStorm. All rights reserved.
 //
 
 #import <libkern/OSAtomic.h>
@@ -17,32 +17,32 @@
 extern NSString* const RXMoviePlaybackDidEndNotification;
 
 @interface RXMovie : NSObject <RXRenderingProtocol> {
-	__weak id _owner;
-	
-	QTMovie* _movie;
-	QTVisualContextRef _vc;
-	
-	long _hints;
-	CGSize _current_size;
-	QTTime _original_duration;
-	
-	BOOL _looping;
-	BOOL _seamless_looping_hacked;
-	BOOL _playing_selection;
-	
-	GLuint _vao;
-	GLfloat _coordinates[16];
-	CGRect _render_rect;
-	
-	GLuint _glTexture;
-	void* _texture_storage;
-	
-	CVImageBufferRef _image_buffer;
-	
-	CVTimeStamp _play_ts;
-	CVTimeStamp _display_ts;
-	QTTime _current_time;
-	OSSpinLock _display_ts_lock;
+    __weak id _owner;
+    
+    QTMovie* _movie;
+    QTVisualContextRef _vc;
+    
+    long _hints;
+    CGSize _current_size;
+    QTTime _original_duration;
+    
+    BOOL _looping;
+    BOOL _seamless_looping_hacked;
+    BOOL _playing_selection;
+    
+    GLuint _vao;
+    GLfloat _coordinates[16];
+    CGRect _render_rect;
+    
+    GLuint _glTexture;
+    void* _texture_storage;
+    
+    CVImageBufferRef _image_buffer;
+    
+    CVTimeStamp _play_ts;
+    CVTimeStamp _display_ts;
+    QTTime _current_time;
+    OSSpinLock _display_ts_lock;
 }
 
 - (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone owner:(id)owner;

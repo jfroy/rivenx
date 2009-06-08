@@ -32,46 +32,46 @@ const int kRXLoggingLevelCritical = ASL_LEVEL_CRIT;
 static NSString* RX_log_format = @"%@ [%@] [%@] %@\n";
 
 void RXLog(const char* facility, int level, NSString* format, ...) {
-	va_list args;
-	va_start(args, format);
-	RXLogv(facility, level, format, args);
-	va_end(args);
+    va_list args;
+    va_start(args, format);
+    RXLogv(facility, level, format, args);
+    va_end(args);
 }
 
 void RXLogv(const char* facility, int level, NSString* format, va_list args) {
-	NSString* userString = [[NSString alloc] initWithFormat:format arguments:args];
-	NSString* facilityString = [[NSString alloc] initWithCString:facility encoding:NSASCIIStringEncoding];
-	NSDate* now = [NSDate new];
-	
-	NSString* threadName = RXGetThreadName();
-	if (!threadName)
-		threadName = @"unknown thread";
-	
-	NSString* logString = [[NSString alloc] initWithFormat:RX_log_format, [NSDate date], threadName, facilityString, userString];
-	[[RXLogCenter sharedLogCenter] log:logString facility:facilityString level:level];
-	
-	[logString release];
-	[now release];
-	[facilityString release];
-	[userString release];
+    NSString* userString = [[NSString alloc] initWithFormat:format arguments:args];
+    NSString* facilityString = [[NSString alloc] initWithCString:facility encoding:NSASCIIStringEncoding];
+    NSDate* now = [NSDate new];
+    
+    NSString* threadName = RXGetThreadName();
+    if (!threadName)
+        threadName = @"unknown thread";
+    
+    NSString* logString = [[NSString alloc] initWithFormat:RX_log_format, [NSDate date], threadName, facilityString, userString];
+    [[RXLogCenter sharedLogCenter] log:logString facility:facilityString level:level];
+    
+    [logString release];
+    [now release];
+    [facilityString release];
+    [userString release];
 }
 
 void _RXOLog(id object, const char* facility, int level, NSString* format, ...) {
-	va_list args;
-	va_start(args, format);
-	
-	NSString* finalFormat = [[NSString alloc] initWithFormat:@"%@: %@", [object description], format];
-	RXLogv(facility, level, finalFormat, args);
-	
-	va_end(args);
-	[finalFormat release];
+    va_list args;
+    va_start(args, format);
+    
+    NSString* finalFormat = [[NSString alloc] initWithFormat:@"%@: %@", [object description], format];
+    RXLogv(facility, level, finalFormat, args);
+    
+    va_end(args);
+    [finalFormat release];
 }
 
 void RXCFLog(const char* facility, int level, CFStringRef format, ...) {
-	va_list args;
-	va_start(args, format);
-	NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
-	RXLogv(facility, level, (NSString*)format, args);
-	[p release];
-	va_end(args);
+    va_list args;
+    va_start(args, format);
+    NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
+    RXLogv(facility, level, (NSString*)format, args);
+    [p release];
+    va_end(args);
 }

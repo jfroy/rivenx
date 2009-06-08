@@ -1,9 +1,9 @@
 //
-//	RXScriptCommandAliases.h
-//	rivenx
+//  RXScriptCommandAliases.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 07/12/2008.
-//	Copyright 2008 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 07/12/2008.
+//  Copyright 2008 MacStorm. All rights reserved.
 //
 
 #define RX_COMMAND_GOTO_CARD 2
