@@ -1332,7 +1332,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	// dispatch the call to the external command
 	rx_command_dispatch_entry_t* command_dispatch = (rx_command_dispatch_entry_t*)NSMapGet(_riven_external_command_dispatch_map, externalName);
 	if (!command_dispatch) {
-		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    WARNING: external command is not implemented!", logPrefix);
+		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    WARNING: external command '%@' is not implemented!", logPrefix, externalName);
 #if defined(DEBUG)
 		[logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
@@ -3856,15 +3856,17 @@ static int64_t left_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216LL
 
 - (void)_configureLeftViewerSpinMovie {
 	RXGameState* gs = [g_world gameState];
+	NSString* hn = [_current_hotspot name];
 	
 	// determine the new left viewer position based on the hotspot name
-	uint32_t new_pos = [gs unsigned32ForKey:@"gLViewPos"] + [[[_current_hotspot name] substringFromIndex:1] intValue];
+	uint32_t old_pos = [gs unsigned32ForKey:@"gLViewPos"];
+	uint32_t new_pos = old_pos + [[hn substringFromIndex:[hn length] - 1] intValue];
 	
 	// determine the playback selection for the viewer spin movie
 	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)1);
 	QTTime duration = [movie duration];
 
-	QTTime start_time = QTMakeTime(left_viewer_spin_timevals[[gs unsigned32ForKey:@"gLViewPos"]], duration.timeScale);
+	QTTime start_time = QTMakeTime(left_viewer_spin_timevals[old_pos], duration.timeScale);
 	QTTimeRange movie_range = QTMakeTimeRange(start_time,
 											  QTMakeTime(left_viewer_spin_timevals[new_pos] - start_time.timeValue, duration.timeScale));
 	[movie setPlaybackSelection:movie_range];
@@ -3892,11 +3894,31 @@ static int64_t right_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216L
 
 - (void)_configureRightViewerSpinMovie {
 	RXGameState* gs = [g_world gameState];
+	NSString* hn = [_current_hotspot name];
 	
-	uint32_t viewer_pos = [gs unsigned32ForKey:@"gRView"];
+	// determine the new right viewer position based on the hotspot name
+	uint32_t old_pos = [gs unsigned32ForKey:@"gRViewPos"];
+	uint32_t new_pos = old_pos + [[hn substringFromIndex:[hn length] - 1] intValue];
+	
+	// determine the playback selection for the viewer spin movie
+	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)1);
+	QTTime duration = [movie duration];
+
+	QTTime start_time = QTMakeTime(right_viewer_spin_timevals[old_pos], duration.timeScale);
+	QTTimeRange movie_range = QTMakeTimeRange(start_time,
+											  QTMakeTime(right_viewer_spin_timevals[new_pos] - start_time.timeValue, duration.timeScale));
+	[movie setPlaybackSelection:movie_range];
+	
+	// update the position variable
+	[gs setUnsigned32:new_pos % 6 forKey:@"gRViewPos"];
+}
+
+DEFINE_COMMAND(xgrviewer) {
+	RXGameState* gs = [g_world gameState];
 	
 	// if the viewer light is active, we need to turn it off first
-	if (viewer_pos == 1) {
+	uint32_t viewer_light = [gs unsigned32ForKey:@"gRView"];
+	if (viewer_light == 1) {
 		[gs setUnsigned32:0 forKey:@"gRView"];
 		
 		uint16_t button_up_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_%@_1", [[card descriptor] ID], @"gScpBtnUp"]];
@@ -3916,34 +3938,20 @@ static int64_t right_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216L
 		usleep(duration - (CFAbsoluteTimeGetCurrent() - now) * 1E6);
 	}
 	
-	right_viewer_spin_timevals[0] = right_viewer_spin_timevals[0];
-	
-//	// determine the new right viewer position based on the hotspot name
-//	uint32_t new_pos = [gs unsigned32ForKey:@"gRView"] + [[[_current_hotspot name] substringFromIndex:1] intValue];
-//	
-//	// determine the playback selection for the viewer spin movie
-//	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)1);
-//	QTTime duration = [movie duration];
-//
-//	QTTime start_time = QTMakeTime(right_viewer_spin_timevals[[gs unsigned32ForKey:@"gLViewPos"]], duration.timeScale);
-//	QTTimeRange movie_range = QTMakeTimeRange(start_time,
-//											  QTMakeTime(right_viewer_spin_timevals[new_pos] - start_time.timeValue, duration.timeScale));
-//	[movie setPlaybackSelection:movie_range];
-//	
-//	// update the position variable
-//	[gs setUnsigned32:new_pos % 6 forKey:@"gLViewPos"];
-}
-
-DEFINE_COMMAND(xgrviewer) {
-	RXGameState* gs = [g_world gameState];
-	
 	// configure the viewer spin movie playback selection and play it
 	[self performSelectorOnMainThread:@selector(_configureRightViewerSpinMovie) withObject:nil waitUntilDone:YES];
 	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
 	
-	// activate the appropriate PLST and disable the viewer spin movie
-	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 2 + [gs unsigned32ForKey:@"gLViewPos"]);
-	DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 1);
+	// refresh the card
+	DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+}
+
+DEFINE_COMMAND(xgwharksnd) {
+
+}
+
+DEFINE_COMMAND(xgplaywhark) {
+
 }
 
 @end

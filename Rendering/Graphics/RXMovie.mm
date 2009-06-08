@@ -393,7 +393,19 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 }
 
 - (void)setPlaybackSelection:(QTTimeRange)selection {
+	// release and clear the current image buffer
+	CVPixelBufferRelease(_image_buffer);
+	_image_buffer = NULL;
+	
 	[_movie setSelection:selection];
+	[_movie setCurrentTime:selection.time];
+	
+	// task the VC
+	CGLContextObj load_ctx = [RXGetWorldView() loadContext];
+	CGLLockContext(load_ctx);
+	QTVisualContextTask(_vc);
+	CGLUnlockContext(load_ctx);
+	
 	[self setLooping:NO];
 	[_movie setAttribute:[NSNumber numberWithBool:YES] forKey:QTMoviePlaysSelectionOnlyAttribute];
 	_playing_selection = YES;
@@ -434,7 +446,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 	_render_rect = rect;
 	
 	// update certain visual context attributes
-	NSDictionary* attribDict = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithFloat:_render_rect.size.width], kQTVisualContextTargetDimensions_WidthKey, [NSNumber numberWithFloat:_render_rect.size.height], kQTVisualContextTargetDimensions_HeightKey, nil];
+	NSDictionary* attribDict = [NSDictionary dictionaryWithObjectsAndKeys:
+		[NSNumber numberWithFloat:_render_rect.size.width], kQTVisualContextTargetDimensions_WidthKey,
+		[NSNumber numberWithFloat:_render_rect.size.height], kQTVisualContextTargetDimensions_HeightKey,
+		nil];
 	QTVisualContextSetAttribute(_vc, kQTVisualContextTargetDimensionsKey, attribDict);
 	
 	// specify video rectangle vertices counter-clockwise from (0, 0)
