@@ -1913,9 +1913,9 @@ DEFINE_COMMAND(xaatrusbookprevpage) {
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"aatruspage"];
 	
 	if (page == 2)
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 8, 255, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 8, 256, 0);
 	else
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 3, 255, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 3, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[controller queueTransition:transition];
@@ -1930,9 +1930,9 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"aatruspage"];
 		
 		if (page == 1)
-			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 8, 255, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 8, 256, 0);
 		else
-			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 5, 255, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 5, 256, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[controller queueTransition:transition];
@@ -2029,9 +2029,9 @@ DEFINE_COMMAND(xacathbookprevpage) {
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"acathpage"];
 	
 	if (page == 2)
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 9, 255, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 9, 256, 0);
 	else
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 4, 255, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 4, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionBottom region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[controller queueTransition:transition];
@@ -2046,9 +2046,9 @@ DEFINE_COMMAND(xacathbooknextpage) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"acathpage"];
 		
 		if (page == 1)
-			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 9, 255, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 9, 256, 0);
 		else
-			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 6, 255, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 6, 256, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionTop region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[controller queueTransition:transition];
@@ -2165,7 +2165,7 @@ DEFINE_COMMAND(xblabbookprevpage) {
 	assert(page > 1);
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"blabpage"];
 	
-	DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 22, 255, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 22, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
 														direction:RXTransitionRight
@@ -2181,7 +2181,7 @@ DEFINE_COMMAND(xblabbooknextpage) {
 	if (page < 22) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"blabpage"];
 		
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 23, 255, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 23, 256, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
 															direction:RXTransitionLeft
@@ -2214,7 +2214,7 @@ DEFINE_COMMAND(xogehnbookprevpage) {
 	
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"ogehnpage"];
 	
-	DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 12, 255, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 12, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
 														direction:RXTransitionRight
@@ -2232,7 +2232,7 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 
 	[[g_world gameState] setUnsignedShort:page + 1 forKey:@"ogehnpage"];
 	
-	DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 13, 255, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 13, 256, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
 														direction:RXTransitionLeft
@@ -2296,7 +2296,7 @@ DEFINE_COMMAND(xcheckicons) {
 		[[g_world gameState] setUnsigned32:0 forKey:@"jicons"];
 		[[g_world gameState] setUnsigned32:0 forKey:@"jiconorder"];
 		
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 46, 255, 1);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 46, 256, 1);
 	}
 }
 
@@ -3890,7 +3890,7 @@ static int64_t right_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216L
 	if (viewer_pos == 1) {
 		[gs setUnsigned32:0 forKey:@"gRView"];
 		uint16_t button_up_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_%@_1", [[card descriptor] ID], @"gScpBtnUp"]];
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, button_up_sound, 255, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, button_up_sound, 256, 0);
 		DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
 	}
 	
