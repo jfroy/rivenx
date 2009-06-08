@@ -49,7 +49,7 @@
 
 - (id <MHKAudioDecompression>)audioDecompressor {
 	if (!_decompressor)
-		_decompressor = [parent audioDecompressorWithDataID:ID];
+		_decompressor = [[parent audioDecompressorWithDataID:ID] retain];
 	return _decompressor;
 }
 

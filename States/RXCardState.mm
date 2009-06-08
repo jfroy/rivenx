@@ -85,8 +85,21 @@ static Boolean RXCardAudioSourceArrayEqual(const void* value1, const void* value
 	return value1 == value2;
 }
 
-static CFArrayCallBacks g_weakAudioSourceArrayCallbacks = {0, RXCardAudioSourceArrayWeakRetain, RXCardAudioSourceArrayWeakRelease, RXCardAudioSourceArrayDescription, RXCardAudioSourceArrayEqual};
-static CFArrayCallBacks g_deleteOnReleaseAudioSourceArrayCallbacks = {0, RXCardAudioSourceArrayWeakRetain, RXCardAudioSourceArrayDeleteRelease, RXCardAudioSourceArrayDescription, RXCardAudioSourceArrayEqual};
+static CFArrayCallBacks g_weakAudioSourceArrayCallbacks = {
+	0,
+	RXCardAudioSourceArrayWeakRetain,
+	RXCardAudioSourceArrayWeakRelease,
+	RXCardAudioSourceArrayDescription,
+	RXCardAudioSourceArrayEqual
+};
+
+static CFArrayCallBacks g_deleteOnReleaseAudioSourceArrayCallbacks = {
+	0,
+	RXCardAudioSourceArrayWeakRetain,
+	RXCardAudioSourceArrayDeleteRelease,
+	RXCardAudioSourceArrayDescription,
+	RXCardAudioSourceArrayEqual
+};
 
 #pragma mark -
 #pragma mark audio array applier functions
@@ -616,6 +629,23 @@ init_failure:
 	return [self _createSourceArrayFromSoundSets:[NSArray arrayWithObject:s] callbacks:callbacks];
 }
 
+- (void)_appendToSourceArray:(CFMutableArrayRef)sources soundSets:(NSArray*)sets {	
+	NSEnumerator* setEnum = [sets objectEnumerator];
+	NSSet* s;
+	while ((s = [setEnum nextObject])) {	
+		NSEnumerator* soundEnum = [s objectEnumerator];
+		RXSound* sound;
+		while ((sound = [soundEnum nextObject])) {
+			assert(sound->source);
+			CFArrayAppendValue(sources, sound->source);
+		}
+	}
+}
+
+- (void)_appendToSourceArray:(CFMutableArrayRef)sources soundSet:(NSSet*)s {
+	return [self _appendToSourceArray:sources soundSets:[NSArray arrayWithObject:s]];
+}
+
 - (void)_updateActiveSources {
 	// WARNING: WILL BE RUNNING ON THE SCRIPT THREAD
 	NSMutableSet* soundsToRemove = [NSMutableSet new];
@@ -663,6 +693,13 @@ init_failure:
 	// remove the sources for all expired sounds from the sound to source map and prepare the detach and delete array
 	if (!_sourcesToDelete)
 		_sourcesToDelete = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_deleteOnReleaseAudioSourceArrayCallbacks];
+	else
+		[self _appendToSourceArray:_sourcesToDelete soundSet:soundsToRemove];
+	
+	// we can now set the source ivar of the sounds to remove to NULL
+	soundEnum = [soundsToRemove objectEnumerator];
+	while ((sound = [soundEnum nextObject]))
+		sound->source = NULL;
 	
 	// detach the sources
 	RX::AudioRenderer* renderer = (reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer]));
@@ -1335,14 +1372,14 @@ init_failure:
 	glScalef(1.0f, -1.0f, 1.0f);
 	
 	// render static card pictures only when necessary
-	if (r->refresh_static) {		
+	if (r->refresh_static) {
 		// render each picture
 		renderListEnumerator = [r->pictures objectEnumerator];
 		while ((renderObject = [renderListEnumerator nextObject]))
 			[renderObject render:outputTime inContext:cgl_ctx framebuffer:_fbos[RX_CARD_DYNAMIC_RENDER_INDEX]];
 	}
 	
-	if (r->water_fx.sfxe) {		
+	if (r->water_fx.sfxe) {
 		// map pointer for the water buffer
 		void* water_draw_ptr = NULL;
 		

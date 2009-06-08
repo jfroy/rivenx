@@ -1027,6 +1027,23 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 #pragma mark -
+#pragma mark sound playback
+
+- (void)_playDataSoundWithID:(uint16_t)ID gain:(float)gain duration:(double*)duration_ptr {
+	RXDataSound* sound = [RXDataSound new];
+	sound->parent = [[card descriptor] parent];
+	sound->ID = ID;
+	sound->gain = gain;
+	sound->pan = 0.5f;
+	
+	[controller playDataSound:sound];
+	
+	if (duration_ptr)
+		*duration_ptr = sound->source->Duration();
+	[sound release];
+}
+
+#pragma mark -
 
 - (void)_invalid_opcode:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:[NSString stringWithFormat:@"INVALID RIVEN SCRIPT OPCODE EXECUTED: %d", argv[-2]] userInfo:nil];
@@ -1107,34 +1124,21 @@ static NSMapTable* _riven_external_command_dispatch_map;
 		RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource id=%hu, volume=%hu, blocking=%hu", logPrefix, argv[0], argv[1], argv[2]);
 #endif
 	
-	RXDataSound* sound = [RXDataSound new];
-	sound->parent = [[card descriptor] parent];
-	sound->ID = argv[0];
-	sound->gain = (float)argv[1] / kRXSoundGainDivisor;
-	sound->pan = 0.5f;
+	double duration;
+	[self _playDataSoundWithID:argv[0] gain:(float)argv[1] / kRXSoundGainDivisor duration:&duration];
+	CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
 	
-	[controller playDataSound:sound];
-	
-	// EXPERIMENTAL: use argv[2] as a boolean to indicate "blocking" playback
+	// argv[2] is a "wait for sound" boolean
 	if (argv[2]) {
-		double duration;
-		if (sound->source)
-			duration = sound->source->Duration();
-		else {
-			id <MHKAudioDecompression> decompressor = [sound audioDecompressor];
-			duration = [decompressor frameCount] / [decompressor outputFormat].mSampleRate;
-		}
-		
 		// hide the mouse cursor
 		if (!_did_hide_mouse) {
 			_did_hide_mouse = YES;
 			[controller hideMouseCursor];
 		}
 		
-		usleep(duration * 1E6);
+		// sleep for the duration minus the time that has elapsed since we started the sound
+		usleep(duration - (CFAbsoluteTimeGetCurrent() - now) * 1E6);
 	}
-	
-	[sound release];
 }
 
 // 5
@@ -3681,6 +3685,7 @@ DEFINE_COMMAND(xt7500_checkmarbles) {
 		[gs setUnsigned32:0 forKey:@"apower"];
 }
 
+#pragma mark -
 #pragma mark gspit scribe
 
 DEFINE_COMMAND(xgwt200_scribetime) {
@@ -3695,6 +3700,7 @@ DEFINE_COMMAND(xgwt900_scribe) {
 		[gs setUnsigned32:2 forKey:@"gScribe"];
 }
 
+#pragma mark -
 #pragma mark gspit left viewer
 
 static const uint16_t prison_activity_movies[3][8] = {
@@ -3879,7 +3885,8 @@ DEFINE_COMMAND(xglviewer) {
 	DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 1);
 }
 
-#define gspit right viewer
+#pragma mark -
+#pragma mark gspit right viewer
 
 static int64_t right_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216LL, 4016LL, 4816LL, 5616LL, 6416LL, 7216LL, 8016LL, 8816LL};
 
@@ -3887,11 +3894,26 @@ static int64_t right_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216L
 	RXGameState* gs = [g_world gameState];
 	
 	uint32_t viewer_pos = [gs unsigned32ForKey:@"gRView"];
+	
+	// if the viewer light is active, we need to turn it off first
 	if (viewer_pos == 1) {
 		[gs setUnsigned32:0 forKey:@"gRView"];
+		
 		uint16_t button_up_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_%@_1", [[card descriptor] ID], @"gScpBtnUp"]];
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, button_up_sound, 256, 0);
+		double duration;
+		[self _playDataSoundWithID:button_up_sound gain:1.0f duration:&duration];
+		CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+	
 		DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+		
+		// hide the mouse cursor
+		if (!_did_hide_mouse) {
+			_did_hide_mouse = YES;
+			[controller hideMouseCursor];
+		}
+		
+		// sleep for the duration minus the time that has elapsed since we started the sound
+		usleep(duration - (CFAbsoluteTimeGetCurrent() - now) * 1E6);
 	}
 	
 	right_viewer_spin_timevals[0] = right_viewer_spin_timevals[0];
