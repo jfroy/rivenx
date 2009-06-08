@@ -1,9 +1,9 @@
 //
-//	RXEdition.h
-//	rivenx
+//  RXEdition.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 02/02/2008.
-//	Copyright 2008 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 02/02/2008.
+//  Copyright 2008 MacStorm. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -13,29 +13,33 @@
 
 
 @interface RXEdition : NSObject {
-	// should not be modified through KVC
-	NSString* key;
-	NSString* name;
-	
-	NSArray* discs;
-	NSArray* installDirectives;
-	NSDictionary* directories;
-	
-	NSDictionary* stackSwitchTables;
-	NSDictionary* journalCardIDMap;
-	NSDictionary* cardLUT;
-	
-	NSString* userBase;
-	NSString* userDataBase;
-	
-	NSArray* stackDescriptors;
-	
-	NSMutableArray* openArchives;
-	
+    // should not be modified through KVC
+    NSString* key;
+    NSString* name;
+    
+    NSArray* discs;
+    NSArray* installDirectives;
+    NSDictionary* directories;
+    
+    NSDictionary* stackSwitchTables;
+    NSDictionary* journalCardIDMap;
+    NSDictionary* cardLUT;
+    NSDictionary* bitmapLUT;
+    NSDictionary* soundLUT;
+    
+    NSDictionary* patchArchives;
+    
+    NSString* userBase;
+    NSString* userDataBase;
+    
+    NSArray* stackDescriptors;
+    
+    NSMutableArray* openArchives;
+    
 @private
-	NSMutableDictionary* _userData;
-	NSDictionary* _descriptor;
-	BOOL _mustInstall;
+    NSMutableDictionary* _userData;
+    NSDictionary* _descriptor;
+    BOOL _mustInstall;
 }
 
 - (id)initWithDescriptor:(NSDictionary*)descriptor;

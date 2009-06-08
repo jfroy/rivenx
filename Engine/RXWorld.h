@@ -1,9 +1,9 @@
 //
-//	RXWorld.h
-//	rivenx
+//  RXWorld.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 25/08/2005.
-//	Copyright 2005 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 25/08/2005.
+//  Copyright 2005 MacStorm. All rights reserved.
 //
 
 #import <mach/semaphore.h>
@@ -25,42 +25,42 @@
 
 
 @interface RXWorld : NSObject <RXWorldProtocol> {
-	BOOL _tornDown;
-	
-	// world location
-	NSURL* _worldBase;
-	NSURL* _worldUserBase;
-	
-	// extras data store
-	MHKArchive* _extraBitmapsArchive;
-	NSDictionary* _extrasDescriptor;
-	
-	// cursors
-	NSMapTable* _cursors;
-	
-	// threading
-	semaphore_t _threadInitSemaphore;
-	NSThread* _scriptThread;
-	NSThread* _animationThread;
-	
-	// rendering
-	BOOL _rendering_initialized;
-	NSView <RXWorldViewProtocol>* _worldView;
-	void* _audioRenderer;
-	RXStateCompositor* _stateCompositor;
-	
-	// rendering states
-	RXRenderState* _cardState;
-	RXRenderState* _cyanMovieState;
-	RXRenderState* _creditsState;
-	
-	// game state
-	RXGameState* _gameState;
-	RXGameState* _gameStateToLoad;
-	
-	// engine variables
-	pthread_mutex_t _engineVariablesMutex;
-	NSMutableDictionary* _engineVariables;
+    BOOL _tornDown;
+    
+    // world location
+    NSURL* _worldBase;
+    NSURL* _worldUserBase;
+    
+    // extras data store
+    MHKArchive* _extraBitmapsArchive;
+    NSDictionary* _extrasDescriptor;
+    
+    // cursors
+    NSMapTable* _cursors;
+    
+    // threading
+    semaphore_t _threadInitSemaphore;
+    NSThread* _scriptThread;
+    NSThread* _animationThread;
+    
+    // rendering
+    BOOL _rendering_initialized;
+    NSView <RXWorldViewProtocol>* _worldView;
+    void* _audioRenderer;
+    RXStateCompositor* _stateCompositor;
+    
+    // rendering states
+    RXRenderState* _cardState;
+    RXRenderState* _cyanMovieState;
+    RXRenderState* _creditsState;
+    
+    // game state
+    RXGameState* _gameState;
+    RXGameState* _gameStateToLoad;
+    
+    // engine variables
+    pthread_mutex_t _engineVariablesMutex;
+    NSMutableDictionary* _engineVariables;
 }
 
 + (RXWorld*)sharedWorld;

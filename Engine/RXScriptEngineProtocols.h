@@ -14,9 +14,9 @@
 @protocol RXScriptEngineProtocol <NSObject>
 - (void)setCard:(RXCard*)c;
 
-- (void)prepareForRendering;
+- (void)openCard;
 - (void)startRendering;
-- (void)stopRendering;
+- (void)closeCard;
 
 - (NSArray*)activeHotspots;
 - (void)mouseInsideHotspot:(RXHotspot*)hotspot;

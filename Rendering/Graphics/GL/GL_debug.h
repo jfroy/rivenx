@@ -1,9 +1,9 @@
 /*
- *	GL_debug.h
- *	cidnectrl
+ *  GL_debug.h
+ *  cidnectrl
  *
- *	Created by Jean-Francois Roy on 30/09/2007.
- *	Copyright 2007 Design III Equipe 1. All rights reserved.
+ *  Created by Jean-Francois Roy on 30/09/2007.
+ *  Copyright 2007 Design III Equipe 1. All rights reserved.
  *
  */
 

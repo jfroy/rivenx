@@ -14,30 +14,30 @@
 @implementation RXRenderStateOpacityAnimation
 
 - (id)initWithState:(RXRenderState*)state targetOpacity:(float)opacity duration:(NSTimeInterval)duration {
-	self = [super initWithDuration:duration animationCurve:NSAnimationEaseInOut];
-	if (!self) return nil;
-	
-	_compositor = [g_world stateCompositor];
-	_state = [state retain];
-	
-	_start = [_compositor opacityForState:_state];
-	_end = opacity;
-	
-	return self;
+    self = [super initWithDuration:duration animationCurve:NSAnimationEaseInOut];
+    if (!self) return nil;
+    
+    _compositor = [g_world stateCompositor];
+    _state = [state retain];
+    
+    _start = [_compositor opacityForState:_state];
+    _end = opacity;
+    
+    return self;
 }
 
 - (void)dealloc {
-	[_state release];
-	
-	[super dealloc];
+    [_state release];
+    
+    [super dealloc];
 }
 
 - (void)setCurrentProgress:(NSAnimationProgress)progress {
-	[super setCurrentProgress:progress];
-	
-	GLfloat t = [self currentValue];
-	GLfloat v = (t * _end) + ((1.0f - t) * _start);
-	[_compositor setOpacity:v ofState:_state];
+    [super setCurrentProgress:progress];
+    
+    GLfloat t = [self currentValue];
+    GLfloat v = (t * _end) + ((1.0f - t) * _start);
+    [_compositor setOpacity:v ofState:_state];
 }
 
 @end

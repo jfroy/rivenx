@@ -12,17 +12,17 @@
 
 @interface RXLogCenter : NSObject {
 @private
-	BOOL _toreDown;
-	BOOL _didInit;
-	
-	NSString* _logsBase;
-	
-	int _genericLogFD;
-	
-	pthread_mutex_t _facilityFDMapMutex;
-	NSMutableDictionary* _facilityFDMap;
-	
-	uint32_t _levelFilter;
+    BOOL _toreDown;
+    BOOL _didInit;
+    
+    NSString* _logsBase;
+    
+    int _genericLogFD;
+    
+    pthread_mutex_t _facilityFDMapMutex;
+    NSMutableDictionary* _facilityFDMap;
+    
+    uint32_t _levelFilter;
 }
 
 + (RXLogCenter*)sharedLogCenter;

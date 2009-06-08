@@ -1,9 +1,9 @@
 //
-//	RXRendering.m
-//	rivenx
+//  RXRendering.m
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 11/12/2005.
-//	Copyright 2005 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 11/12/2005.
+//  Copyright 2005 MacStorm. All rights reserved.
 //
 
 #import "RXRendering.h"
@@ -15,7 +15,7 @@ const rx_point_t kRXCardViewportOriginOffset = {16, 66};
 
 const double kRXTransitionDuration = 0.3;
 
-const float kRXSoundGainDivisor = 255.0f;
+const float kRXSoundGainDivisor = 256.0f;
 
 NSObject<RXWorldViewProtocol>* g_worldView = nil;
 

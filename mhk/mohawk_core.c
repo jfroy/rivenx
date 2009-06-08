@@ -1,9 +1,9 @@
 /*
- *	mohawk_core.c
- *	MHKKit
+ *  mohawk_core.c
+ *  MHKKit
  *
- *	Created by Jean-Francois Roy on 06/19/2005.
- *	Copyright 2005 MacStorm. All rights reserved.
+ *  Created by Jean-Francois Roy on 06/19/2005.
+ *  Copyright 2005 MacStorm. All rights reserved.
  *
  */
 

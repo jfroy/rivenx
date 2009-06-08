@@ -1,9 +1,9 @@
 //
-//	RXCard.h
-//	rivenx
+//  RXCard.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 30/08/2005.
-//	Copyright 2005 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 30/08/2005.
+//  Copyright 2005 MacStorm. All rights reserved.
 //
 
 #import <mach/semaphore.h>
@@ -22,45 +22,47 @@
 
 
 @interface RXCard : NSObject {
-	RXCardDescriptor* _descriptor;
-	MHKArchive* _archive;
-	
-	// scripts
-	NSDictionary* _card_scripts;
-	
-	// hotspots
-	NSMutableArray* _hotspots;
-	NSMapTable* _hotspotsIDMap;
-	void* _blstData;
-	struct rx_blst_record* _hotspotControlRecords;
-	
-	// pictures
-	GLuint _pictureCount;
-	GLuint _pictureVertexArrayBuffer;
-	GLuint _pictureVAO;
-	GLuint* _pictureTextures;
-	void* _pictureTextureStorage;
-	
-	// movies
-	NSMutableArray* _movies;
-	uint16_t* _mlstCodes;
-	
-	// sound groups
-	NSMutableArray* _soundGroups;
-	
-	// special effects
-	uint16_t _sfxeCount;
-	rx_card_sfxe* _sfxes;
+    RXCardDescriptor* _descriptor;
+    RXStack* _parent;
+    
+    // scripts
+    NSDictionary* _card_scripts;
+    
+    // hotspots
+    NSMutableArray* _hotspots;
+    NSMapTable* _hotspotsIDMap;
+    NSMapTable* _hotspots_name_map;
+    void* _blstData;
+    struct rx_blst_record* _hotspotControlRecords;
+    
+    // pictures
+    GLuint _pictureCount;
+    GLuint _pictureVertexArrayBuffer;
+    GLuint _pictureVAO;
+    GLuint* _pictureTextures;
+    void* _pictureTextureStorage;
+    
+    // movies
+    NSMutableArray* _movies;
+    uint16_t* _mlstCodes;
+    
+    // sound groups
+    NSMutableArray* _soundGroups;
+    
+    // special effects
+    uint16_t _flstCount;
+    rx_card_sfxe* _sfxes;
 }
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;
 
 - (RXCardDescriptor*)descriptor;
-- (MHKArchive*)archive;
+- (RXStack*)parent;
 
 - (NSDictionary*)events;
 - (NSArray*)hotspots;
 - (NSMapTable*)hotspotsIDMap;
+- (NSMapTable*)hotspotsNameMap;
 - (struct rx_blst_record*)hotspotControlRecords;
 
 - (GLuint)pictureCount;
@@ -74,5 +76,6 @@
 - (rx_card_sfxe*)sfxes;
 
 - (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes;
+- (RXMovie*)loadMovieWithMLSTRecord:(struct rx_mlst_record*)mlst;
 
 @end

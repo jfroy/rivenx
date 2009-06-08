@@ -2,8 +2,46 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>tWAV LUT</key>
+	<dict>
+		<key>gdome slider tic</key>
+		<integer>25</integer>
+		<key>bdome slider tic</key>
+		<integer>41</integer>
+		<key>pdome slider tic</key>
+		<integer>10</integer>
+		<key>jdome slider tic</key>
+		<integer>81</integer>
+		<key>tdome slider tic</key>
+		<integer>37</integer>
+	</dict>
+	<key>tBMP LUT</key>
+	<dict>
+		<key>gdome sliders</key>
+		<integer>161</integer>
+		<key>gdome sliders background</key>
+		<integer>162</integer>
+		<key>bdome sliders</key>
+		<integer>701</integer>
+		<key>bdome sliders background</key>
+		<integer>702</integer>
+		<key>pdome sliders</key>
+		<integer>58</integer>
+		<key>pdome sliders background</key>
+		<integer>59</integer>
+		<key>tdome sliders</key>
+		<integer>813</integer>
+		<key>tdome sliders background</key>
+		<integer>814</integer>
+		<key>jdome sliders</key>
+		<integer>547</integer>
+		<key>jdome sliders background</key>
+		<integer>548</integer>
+	</dict>
 	<key>Card LUT</key>
 	<dict>
+		<key>jdome combo</key>
+		<string>jspit 338</string>
 		<key>jungle elevator top</key>
 		<string>jspit 361</string>
 		<key>jungle elevator bottom</key>

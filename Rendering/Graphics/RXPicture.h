@@ -12,11 +12,11 @@
 
 
 @interface RXPicture : NSObject <RXRenderingProtocol> {
-	__weak id _owner;
-	
-	GLuint _tex;
-	GLuint _vao;
-	GLuint _index;
+    __weak id _owner;
+    
+    GLuint _tex;
+    GLuint _vao;
+    GLuint _index;
 }
 
 - (id)initWithTexture:(GLuint)texid vao:(GLuint)vao index:(GLuint)index owner:(id)owner;

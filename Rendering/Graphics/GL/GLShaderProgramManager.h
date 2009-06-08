@@ -1,9 +1,9 @@
 //
-//	GLShaderProgramManager.h
-//	rivenx
+//  GLShaderProgramManager.h
+//  rivenx
 //
-//	Created by Jean-François Roy on 31/12/2006.
-//	Copyright 2006 MacStorm. All rights reserved.
+//  Created by Jean-François Roy on 31/12/2006.
+//  Copyright 2006 MacStorm. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -15,8 +15,8 @@ extern NSString* const GLShaderLinkErrorDomain;
 
 
 @interface GLShaderProgramManager : NSObject {
-	NSURL* _shaders_root;
-	GLuint _ff_tex0_pos_vs;
+    NSURL* _shaders_root;
+    GLuint _ff_tex0_pos_vs;
 }
 
 + (GLShaderProgramManager*)sharedManager;

@@ -12,7 +12,7 @@
 
 
 @interface RXEditionProxy : NSObject <NSCopying> {
-	RXEdition* edition;
+    RXEdition* edition;
 }
 
 - (id)initWithEdition:(RXEdition*)e;

@@ -13,12 +13,12 @@
 
 
 @interface RXRenderStateOpacityAnimation : RXAnimation {
-	RXStateCompositor* _compositor;
-	RXRenderState* _state;
-	
-	GLfloat _start;
-	GLfloat _end;
-	BOOL inverse;
+    RXStateCompositor* _compositor;
+    RXRenderState* _state;
+    
+    GLfloat _start;
+    GLfloat _end;
+    BOOL inverse;
 }
 
 - (id)initWithState:(RXRenderState*)state targetOpacity:(GLfloat)opacity duration:(NSTimeInterval)duration;

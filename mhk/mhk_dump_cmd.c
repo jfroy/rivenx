@@ -8,7 +8,7 @@
   we make no copyright claims on it.
 */
 
-/* If we use autoconf.	*/
+/* If we use autoconf.  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -59,9 +59,9 @@ cmdline_parser_print_help (void)
 {
   cmdline_parser_print_version ();
   printf("\nUsage: mhk_dump [OPTIONS]... [archives]...\n\n");
-  printf("%s\n","  -h, --help				  Print help and exit");
-  printf("%s\n","  -V, --version			  Print version and exit");
-  printf("%s\n","  -f, --first-mpeg-pkt-only  Only output the first 1152 samples for MPEG 1/2 \n							   Layer II tWAV resources	(default=off)");
+  printf("%s\n","  -h, --help                 Print help and exit");
+  printf("%s\n","  -V, --version              Print version and exit");
+  printf("%s\n","  -f, --first-mpeg-pkt-only  Only output the first 1152 samples for MPEG 1/2 \n                               Layer II tWAV resources  (default=off)");
   
 }
 
@@ -82,10 +82,10 @@ cmdline_parser_release (struct gengetopt_args_info *args_info)
   unsigned int i;
   
   for (i = 0; i < args_info->inputs_num; ++i)
-	free (args_info->inputs [i]);
+    free (args_info->inputs [i]);
   
   if (args_info->inputs_num)
-	free (args_info->inputs);
+    free (args_info->inputs);
   
   clear_given (args_info);
 }
@@ -99,19 +99,19 @@ cmdline_parser_file_save(const char *filename, struct gengetopt_args_info *args_
   outfile = fopen(filename, "w");
 
   if (!outfile)
-	{
-	  fprintf (stderr, "%s: cannot open file for writing: %s\n", CMDLINE_PARSER_PACKAGE, filename);
-	  return EXIT_FAILURE;
-	}
+    {
+      fprintf (stderr, "%s: cannot open file for writing: %s\n", CMDLINE_PARSER_PACKAGE, filename);
+      return EXIT_FAILURE;
+    }
 
   if (args_info->help_given) {
-	fprintf(outfile, "%s\n", "help");
+    fprintf(outfile, "%s\n", "help");
   }
   if (args_info->version_given) {
-	fprintf(outfile, "%s\n", "version");
+    fprintf(outfile, "%s\n", "version");
   }
   if (args_info->first_mpeg_pkt_only_given) {
-	fprintf(outfile, "%s\n", "first-mpeg-pkt-only");
+    fprintf(outfile, "%s\n", "first-mpeg-pkt-only");
   }
   
   fclose (outfile);
@@ -134,11 +134,11 @@ gengetopt_strdup (const char *s)
 {
   char *result = NULL;
   if (!s)
-	return result;
+    return result;
 
   result = (char*)malloc(strlen(s) + 1);
   if (result == (char*)0)
-	return (char*)0;
+    return (char*)0;
   strcpy(result, s);
   return result;
 }
@@ -157,10 +157,10 @@ cmdline_parser2 (int argc, char * const *argv, struct gengetopt_args_info *args_
   result = cmdline_parser_internal (argc, argv, args_info, override, initialize, check_required, NULL);
 
   if (result == EXIT_FAILURE)
-	{
-	  cmdline_parser_free (args_info);
-	  exit (EXIT_FAILURE);
-	}
+    {
+      cmdline_parser_free (args_info);
+      exit (EXIT_FAILURE);
+    }
   
   return result;
 }
@@ -174,13 +174,13 @@ cmdline_parser_required (struct gengetopt_args_info *args_info, const char *prog
 int
 cmdline_parser_internal (int argc, char * const *argv, struct gengetopt_args_info *args_info, int override, int initialize, int check_required, const char *additional_error)
 {
-  int c;	/* Character of the parsed option.	*/
+  int c;    /* Character of the parsed option.  */
 
   int error = 0;
   struct gengetopt_args_info local_args_info;
 
   if (initialize)
-	cmdline_parser_init (args_info);
+    cmdline_parser_init (args_info);
 
   cmdline_parser_init (&local_args_info);
 
@@ -190,58 +190,58 @@ cmdline_parser_internal (int argc, char * const *argv, struct gengetopt_args_inf
   optopt = '?';
 
   while (1)
-	{
-	  int option_index = 0;
-	  char *stop_char;
+    {
+      int option_index = 0;
+      char *stop_char;
 
-	  static struct option long_options[] = {
-		{ "help",	0, NULL, 'h' },
-		{ "version",	0, NULL, 'V' },
-		{ "first-mpeg-pkt-only",	0, NULL, 'f' },
-		{ NULL, 0, NULL, 0 }
-	  };
+      static struct option long_options[] = {
+        { "help",   0, NULL, 'h' },
+        { "version",    0, NULL, 'V' },
+        { "first-mpeg-pkt-only",    0, NULL, 'f' },
+        { NULL, 0, NULL, 0 }
+      };
 
-	  stop_char = 0;
-	  c = getopt_long (argc, argv, "hVf", long_options, &option_index);
+      stop_char = 0;
+      c = getopt_long (argc, argv, "hVf", long_options, &option_index);
 
-	  if (c == -1) break;	/* Exit from `while (1)' loop.	*/
+      if (c == -1) break;   /* Exit from `while (1)' loop.  */
 
-	  switch (c)
-		{
-		case 'h':	/* Print help and exit.	 */
-		  cmdline_parser_print_help ();
-		  cmdline_parser_free (&local_args_info);
-		  exit (EXIT_SUCCESS);
+      switch (c)
+        {
+        case 'h':   /* Print help and exit.  */
+          cmdline_parser_print_help ();
+          cmdline_parser_free (&local_args_info);
+          exit (EXIT_SUCCESS);
 
-		case 'V':	/* Print version and exit.	*/
-		  cmdline_parser_print_version ();
-		  cmdline_parser_free (&local_args_info);
-		  exit (EXIT_SUCCESS);
+        case 'V':   /* Print version and exit.  */
+          cmdline_parser_print_version ();
+          cmdline_parser_free (&local_args_info);
+          exit (EXIT_SUCCESS);
 
-		case 'f':	/* Only output the first 1152 samples for MPEG 1/2 Layer II tWAV resources.	 */
-		  if (local_args_info.first_mpeg_pkt_only_given)
-			{
-			  fprintf (stderr, "%s: `--first-mpeg-pkt-only' (`-f') option given more than once%s\n", argv[0], (additional_error ? additional_error : ""));
-			  goto failure;
-			}
-		  if (args_info->first_mpeg_pkt_only_given && ! override)
-			continue;
-		  local_args_info.first_mpeg_pkt_only_given = 1;
-		  args_info->first_mpeg_pkt_only_given = 1;
-		  args_info->first_mpeg_pkt_only_flag = !(args_info->first_mpeg_pkt_only_flag);
-		  break;
+        case 'f':   /* Only output the first 1152 samples for MPEG 1/2 Layer II tWAV resources.  */
+          if (local_args_info.first_mpeg_pkt_only_given)
+            {
+              fprintf (stderr, "%s: `--first-mpeg-pkt-only' (`-f') option given more than once%s\n", argv[0], (additional_error ? additional_error : ""));
+              goto failure;
+            }
+          if (args_info->first_mpeg_pkt_only_given && ! override)
+            continue;
+          local_args_info.first_mpeg_pkt_only_given = 1;
+          args_info->first_mpeg_pkt_only_given = 1;
+          args_info->first_mpeg_pkt_only_flag = !(args_info->first_mpeg_pkt_only_flag);
+          break;
 
 
-		case 0: /* Long option with no short option */
-		case '?':	/* Invalid option.	*/
-		  /* `getopt_long' already printed an error message.  */
-		  goto failure;
+        case 0: /* Long option with no short option */
+        case '?':   /* Invalid option.  */
+          /* `getopt_long' already printed an error message.  */
+          goto failure;
 
-		default:	/* bug: option not considered.	*/
-		  fprintf (stderr, "%s: option unknown: %c%s\n", CMDLINE_PARSER_PACKAGE, c, (additional_error ? additional_error : ""));
-		  abort ();
-		} /* switch */
-	} /* while */
+        default:    /* bug: option not considered.  */
+          fprintf (stderr, "%s: option unknown: %c%s\n", CMDLINE_PARSER_PACKAGE, c, (additional_error ? additional_error : ""));
+          abort ();
+        } /* switch */
+    } /* while */
 
 
 
@@ -249,18 +249,18 @@ cmdline_parser_internal (int argc, char * const *argv, struct gengetopt_args_inf
   cmdline_parser_release (&local_args_info);
 
   if ( error )
-	return (EXIT_FAILURE);
+    return (EXIT_FAILURE);
 
   if (optind < argc)
-	{
-	  int i = 0 ;
+    {
+      int i = 0 ;
 
-	  args_info->inputs_num = argc - optind ;
-	  args_info->inputs =
-		(char **)(malloc ((args_info->inputs_num)*sizeof(char *))) ;
-	  while (optind < argc)
-		args_info->inputs[ i++ ] = gengetopt_strdup (argv[optind++]) ;
-	}
+      args_info->inputs_num = argc - optind ;
+      args_info->inputs =
+        (char **)(malloc ((args_info->inputs_num)*sizeof(char *))) ;
+      while (optind < argc)
+        args_info->inputs[ i++ ] = gengetopt_strdup (argv[optind++]) ;
+    }
 
   return 0;
 

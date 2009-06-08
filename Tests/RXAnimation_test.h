@@ -14,9 +14,9 @@
 
 
 @interface RXAnimation_test : SenTestCase {
-	RXAnimation* animation;
-	BOOL wrongThread;
-	semaphore_t animationEndSemaphore;
+    RXAnimation* animation;
+    BOOL wrongThread;
+    semaphore_t animationEndSemaphore;
 }
 
 @end

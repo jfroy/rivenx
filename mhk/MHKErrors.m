@@ -1,9 +1,9 @@
 /*
- *	MHKErrors.m
- *	MHKKit
+ *  MHKErrors.m
+ *  MHKKit
  *
- *	Created by Jean-Francois Roy on 06/23/2005.
- *	Copyright 2005 MacStorm. All rights reserved.
+ *  Created by Jean-Francois Roy on 06/23/2005.
+ *  Copyright 2005 MacStorm. All rights reserved.
  *
  */
 

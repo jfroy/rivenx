@@ -1,9 +1,9 @@
 /*
- *	RXDebug.h
- *	rivenx
+ *  RXDebug.h
+ *  rivenx
  *
- *	Created by Jean-François Roy on 10/04/2007.
- *	Copyright 2007 MacStorm. All rights reserved.
+ *  Created by Jean-François Roy on 10/04/2007.
+ *  Copyright 2007 MacStorm. All rights reserved.
  *
  */
 

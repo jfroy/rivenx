@@ -1,9 +1,9 @@
 //
-//	NSFontAdditions.h
-//	rivenx
+//  NSFontAdditions.h
+//  rivenx
 //
-//	Created by Jean-Francois Roy on 05/09/2005.
-//	Copyright 2005 MacStorm. All rights reserved.
+//  Created by Jean-Francois Roy on 05/09/2005.
+//  Copyright 2005 MacStorm. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>
