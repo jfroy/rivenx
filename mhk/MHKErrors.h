@@ -18,7 +18,7 @@ extern NSString *const MHKffmpegErrorDomain;
 typedef enum {
 	errFileTooLarge = 1, 
 	errBadArchive, 
-	errUnknownID, 
+	errResourceNotFound,
 	errDamagedResource, 
 	errInvalidChannelCount, 
 	errInvalidFrameCount, 

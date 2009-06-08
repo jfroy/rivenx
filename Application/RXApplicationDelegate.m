@@ -31,7 +31,11 @@
 
 + (void)initialize {
 	[super initialize];
-	[[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO], @"FullScreenMode", [NSNumber numberWithBool:NO], @"StretchToFit", nil]];
+	[[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:
+		[NSNumber numberWithBool:NO], @"FullScreenMode",
+		[NSNumber numberWithBool:NO], @"StretchToFit",
+		nil
+	]];
 }
 
 - (void)awakeFromNib {
@@ -112,7 +116,10 @@
 	
 	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:0];
 	rx_print_exception_backtrace(e);
-	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:NSLogAndHandleEveryExceptionMask];
+	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:
+		NSLogUncaughtExceptionMask | NSHandleUncaughtExceptionMask |
+		NSLogUncaughtSystemExceptionMask | NSHandleUncaughtSystemExceptionMask |
+		NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
 
 	NSAlert* failureAlert = [NSAlert new];
 	[failureAlert setMessageText:[e reason]];
@@ -147,7 +154,10 @@
 
 - (void)applicationWillFinishLaunching:(NSNotification*)notification {
 	[[NSExceptionHandler defaultExceptionHandler] setDelegate:self];
-	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:NSLogAndHandleEveryExceptionMask];
+	[[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:
+		NSLogUncaughtExceptionMask | NSHandleUncaughtExceptionMask |
+		NSLogUncaughtSystemExceptionMask | NSHandleUncaughtSystemExceptionMask |
+		NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
 	
 	// and a flower shall blossom
 	[RXWorld sharedWorld];

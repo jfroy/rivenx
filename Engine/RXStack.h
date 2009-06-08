@@ -45,6 +45,8 @@
 - (id <MHKAudioDecompression>)audioDecompressorWithID:(uint16_t)soundID;
 - (id <MHKAudioDecompression>)audioDecompressorWithDataID:(uint16_t)soundID;
 
+- (uint16_t)dataSoundIDForName:(NSString*)sound_name;
+
 - (MHKFileHandle*)fileWithResourceType:(NSString*)type ID:(uint16_t)ID;
 - (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)ID;
 

@@ -182,6 +182,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
 		NSString* type_key = [[NSString alloc] initWithBytes:type_table_entry->name length:4 encoding:NSASCIIStringEncoding];
 		NSArray* descriptors = [[NSArray alloc] init];
 		[file_descriptor_arrays setObject:descriptors forKey:type_key];
+		[file_descriptor_trees setObject:descriptors forKey:type_key];
+		[file_descriptor_name_maps setObject:[NSDictionary dictionary] forKey:type_key];
 		[descriptors release];
 		[type_key release];
 		return YES;
@@ -194,7 +196,10 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
 	
 	// read the resource table
 	err = FSReadFork(forkRef, fsAtMark, 0, sizeof(MHK_rsrc_table_entry) * rsrc_table_header.count, rsrc_table, NULL);
-	if (err) { free(rsrc_table); return NO; }
+	if (err) {
+		free(rsrc_table);
+		return NO;
+	}
 	
 	// seek to the name table
 	err = FSSetForkPosition(forkRef, fsFromStart, resource_directory_absolute_offset + type_table_entry->name_table_rsrc_dir_offset);
@@ -247,6 +252,9 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
 	// allocate the descriptor binary tree entries
 	struct descriptor_binary_tree* descriptor_tree = calloc(rsrc_table_header.count, sizeof(struct descriptor_binary_tree));
 	
+	// allocate the name map right now since we'll build it as we go over the resources
+	NSMutableDictionary* name_map = [[NSMutableDictionary alloc] init];
+	
 	// iterate over the resources
 	uint16_t resource_index = 0;
 	for (; resource_index < rsrc_table_header.count; resource_index++) {
@@ -260,13 +268,20 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
 		// attempt to find a resource name
 		NSString* file_name = nil;
 		if (name_table) {
-			uint16_t name_index = 0;
-			for (; name_index < name_table_header.count; name_index++) {
-				if (name_table[name_index].index == rsrc_entry->index) {
-					// we found a matching name table entry
-					char* c_name = name_list + name_table[name_index].name_list_offset;
-					file_name = [[NSString alloc] initWithBytes:c_name length:strlen(c_name) encoding:NSASCIIStringEncoding];
-					break;
+			// attempt to do a quick "parallel array" lookup
+			if (resource_index < name_table_header.count && name_table[resource_index].index == rsrc_entry->index) {
+				// we found a matching name table entry
+				char* c_name = name_list + name_table[resource_index].name_list_offset;
+				file_name = [[NSString alloc] initWithBytes:c_name length:strlen(c_name) encoding:NSASCIIStringEncoding];
+			} else {
+				uint16_t name_index = 0;
+				for (; name_index < name_table_header.count; name_index++) {
+					if (name_table[name_index].index == rsrc_entry->index) {
+						// we found a matching name table entry
+						char* c_name = name_list + name_table[name_index].name_list_offset;
+						file_name = [[NSString alloc] initWithBytes:c_name length:strlen(c_name) encoding:NSASCIIStringEncoding];
+						break;
+					}
 				}
 			}
 		}
@@ -293,6 +308,10 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
 		// generate a descriptor binary tree entry
 		descriptor_tree[resource_index].resource_id = rsrc_entry->id;
 		descriptor_tree[resource_index].descriptor = file_descriptor;
+		
+		// if the resource has a name, map its name to its descriptor
+		if (file_name)
+			[name_map setObject:file_descriptor forKey:[file_name lowercaseString]];
 	}
 	
 	// create the dictionary key for this resource type
@@ -315,6 +334,10 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
 	NSMutableData* descriptor_tree_data = [[NSMutableData alloc] initWithBytesNoCopy:descriptor_tree length:rsrc_table_header.count * sizeof(struct descriptor_binary_tree) freeWhenDone:YES];
 	[file_descriptor_trees setObject:descriptor_tree_data forKey:type_key];
 	[descriptor_tree_data release];
+	
+	// associated the name map with the resource type key
+	[file_descriptor_name_maps setObject:name_map forKey:type_key];
+	[name_map release];
 	
 	// release the resource type dictionary key
 	[type_key release];
@@ -456,6 +479,11 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
 	if (!file_descriptor_trees)
 		return NO;
 	
+	// allocate the descriptor name maps dictionary
+	file_descriptor_name_maps = [[NSMutableDictionary alloc] initWithCapacity:type_table_count];
+	if (!file_descriptor_name_maps)
+		return NO;
+	
 	// process each type in the archive
 	for (table_iterator = 0; table_iterator < type_table_count; table_iterator++) {
 		if (![self load_mhk_type:table_iterator])
@@ -561,6 +589,7 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
 	
 	[file_descriptor_trees release];
 	[file_descriptor_arrays release];
+	[file_descriptor_name_maps release];
 	
 	if (file_table)
 		free(file_table);
@@ -656,6 +685,38 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
 	
 	[fh release];
 	return [resourceData autorelease];
+}
+
+- (NSDictionary*)resourceDescriptorWithResourceType:(NSString*)type name:(NSString*)name {
+	return [[file_descriptor_name_maps objectForKey:type] objectForKey:[name lowercaseString]];
+}
+
+- (MHKFileHandle*)openResourceWithResourceType:(NSString*)type name:(NSString*)name {
+	NSDictionary* descriptor = [self resourceDescriptorWithResourceType:type name:name];
+	if (!descriptor)
+		return nil;
+	
+	MHKFileHandle* fh = [[MHKFileHandle alloc] _initWithArchive:self fork:forkRef descriptor:descriptor];
+	if (fh)
+		[self performSelector:@selector(_fileDidAlloc)];
+	return [fh autorelease];
+}
+
+- (NSData*)dataWithResourceType:(NSString*)type name:(NSString*)name {
+	MHKFileHandle* fh = [self openResourceWithResourceType:type name:name];
+	if (!fh)
+		return nil;
+	
+	void* buffer = malloc((size_t)[fh length]);
+	if (!buffer)
+		return nil;
+	
+	if ([fh readDataToEndOfFileInBuffer:buffer error:NULL] == -1) {
+		free(buffer);
+		return nil;
+	}
+	
+	return [[[NSData alloc] initWithBytesNoCopy:buffer length:[fh length] freeWhenDone:YES] autorelease];
 }
 
 - (void)_fileDidAlloc {

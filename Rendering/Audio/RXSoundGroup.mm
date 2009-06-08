@@ -32,7 +32,8 @@
 }
 
 - (NSString*)description {
-	return [NSString stringWithFormat:@"%@ {parent=%@, ID=%hu, gain=%f, pan=%f, detach_timestamp=%qu, source=%p}", [super description], parent, ID, gain, pan, detach_timestamp, source];
+	return [NSString stringWithFormat:@"%@ {parent=%@, ID=%hu, gain=%f, pan=%f, detach_timestamp=%qu, source=%p}",
+		[super description], parent, ID, gain, pan, detach_timestamp, source];
 }
 
 - (id <MHKAudioDecompression>)audioDecompressor {
@@ -43,10 +44,13 @@
 
 @end
 
+
 @implementation RXDataSound
 
 - (id <MHKAudioDecompression>)audioDecompressor {
-	return [parent audioDecompressorWithDataID:ID];
+	if (!_decompressor)
+		_decompressor = [parent audioDecompressorWithDataID:ID];
+	return _decompressor;
 }
 
 - (BOOL)isEqual:(id)anObject {
@@ -58,6 +62,7 @@
 }
 
 @end
+
 
 @implementation RXSoundGroup
 
@@ -81,7 +86,8 @@
 }
 
 - (NSString *)description {
-	return [NSString stringWithFormat: @"%@ {fadeOutRemovedSounds=%d, fadeInNewSounds=%d, loop=%d, gain=%f, %d sounds}", [super description], fadeOutRemovedSounds, fadeInNewSounds, loop, gain, [_sounds count]];
+	return [NSString stringWithFormat: @"%@ {fadeOutRemovedSounds=%d, fadeInNewSounds=%d, loop=%d, gain=%f, %d sounds}",
+		[super description], fadeOutRemovedSounds, fadeInNewSounds, loop, gain, [_sounds count]];
 }
 
 - (void)addSoundWithStack:(RXStack*)parent ID:(uint16_t)ID gain:(float)g pan:(float)p {

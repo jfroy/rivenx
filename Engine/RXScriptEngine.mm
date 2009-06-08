@@ -112,7 +112,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 	_riven_command_dispatch_table[1].sel = @selector(_opcode_drawDynamicPicture:arguments:);
 	_riven_command_dispatch_table[2].sel = @selector(_opcode_goToCard:arguments:);
 	_riven_command_dispatch_table[3].sel = @selector(_opcode_activateSynthesizedSLST:arguments:);
-	_riven_command_dispatch_table[4].sel = @selector(_opcode_playLocalSound:arguments:);
+	_riven_command_dispatch_table[4].sel = @selector(_opcode_playDataSound:arguments:);
 	_riven_command_dispatch_table[5].sel = @selector(_opcode_activateSynthesizedMLST:arguments:);
 	_riven_command_dispatch_table[6].sel = @selector(_opcode_unimplemented:arguments:); // is complex animate command
 	_riven_command_dispatch_table[7].sel = @selector(_opcode_setVariable:arguments:);
@@ -1099,7 +1099,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 // 4
-- (void)_opcode_playLocalSound:(const uint16_t)argc arguments:(const uint16_t*)argv {
+- (void)_opcode_playDataSound:(const uint16_t)argc arguments:(const uint16_t*)argv {
 	if (argc < 3)
 		@throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
@@ -1913,9 +1913,9 @@ DEFINE_COMMAND(xaatrusbookprevpage) {
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"aatruspage"];
 	
 	if (page == 2)
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 8, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 8, 255, 0);
 	else
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 3, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 3, 255, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[controller queueTransition:transition];
@@ -1930,9 +1930,9 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"aatruspage"];
 		
 		if (page == 1)
-			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 8, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 8, 255, 0);
 		else
-			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 5, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 5, 255, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[controller queueTransition:transition];
@@ -2029,9 +2029,9 @@ DEFINE_COMMAND(xacathbookprevpage) {
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"acathpage"];
 	
 	if (page == 2)
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 9, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 9, 255, 0);
 	else
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 4, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 4, 255, 0);
 	
 	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionBottom region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[controller queueTransition:transition];
@@ -2046,9 +2046,9 @@ DEFINE_COMMAND(xacathbooknextpage) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"acathpage"];
 		
 		if (page == 1)
-			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 9, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 9, 255, 0);
 		else
-			DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 6, 256, 0);
+			DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 6, 255, 0);
 		
 		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionTop region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[controller queueTransition:transition];
@@ -2165,9 +2165,11 @@ DEFINE_COMMAND(xblabbookprevpage) {
 	assert(page > 1);
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"blabpage"];
 	
-	DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 22, 256, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 22, 255, 0);
 	
-	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
+														direction:RXTransitionRight
+														   region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[controller queueTransition:transition];
 	[transition release];
 	
@@ -2179,9 +2181,11 @@ DEFINE_COMMAND(xblabbooknextpage) {
 	if (page < 22) {
 		[[g_world gameState] setUnsignedShort:page + 1 forKey:@"blabpage"];
 		
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 23, 256, 0);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 23, 255, 0);
 		
-		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+		RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
+															direction:RXTransitionLeft
+															   region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 		[controller queueTransition:transition];
 		[transition release];
 		
@@ -2210,9 +2214,11 @@ DEFINE_COMMAND(xogehnbookprevpage) {
 	
 	[[g_world gameState] setUnsignedShort:page - 1 forKey:@"ogehnpage"];
 	
-	DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 12, 256, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 12, 255, 0);
 	
-	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
+														direction:RXTransitionRight
+														   region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[controller queueTransition:transition];
 	[transition release];
 	
@@ -2226,9 +2232,11 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 
 	[[g_world gameState] setUnsignedShort:page + 1 forKey:@"ogehnpage"];
 	
-	DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 13, 256, 0);
+	DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 13, 255, 0);
 	
-	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+	RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
+														direction:RXTransitionLeft
+														   region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
 	[controller queueTransition:transition];
 	[transition release];
 	
@@ -2288,7 +2296,7 @@ DEFINE_COMMAND(xcheckicons) {
 		[[g_world gameState] setUnsigned32:0 forKey:@"jicons"];
 		[[g_world gameState] setUnsigned32:0 forKey:@"jiconorder"];
 		
-		DISPATCH_COMMAND3(RX_COMMAND_PLAY_LOCAL_SOUND, 46, (short)kRXSoundGainDivisor, 1);
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 46, 255, 1);
 	}
 }
 
@@ -3687,7 +3695,7 @@ DEFINE_COMMAND(xgwt900_scribe) {
 		[gs setUnsigned32:2 forKey:@"gScribe"];
 }
 
-#pragma mark gspit viewer
+#pragma mark gspit left viewer
 
 static const uint16_t prison_activity_movies[3][8] = {
 	{9, 10, 19, 19, 21, 21},
@@ -3838,21 +3846,21 @@ DEFINE_COMMAND(xglview_villageoff) {
 	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
 }
 
-static int64_t village_viewer_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216LL, 4016LL, 4816LL, 5616LL, 6416LL, 7216LL, 8016LL, 8816LL};
+static int64_t left_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216LL, 4016LL, 4816LL, 5616LL, 6416LL, 7216LL, 8016LL, 8816LL};
 
-- (void)_configureVillageViewerMovie {
+- (void)_configureLeftViewerSpinMovie {
 	RXGameState* gs = [g_world gameState];
 	
-	// determine the new village viewer position based on the hotspot name
+	// determine the new left viewer position based on the hotspot name
 	uint32_t new_pos = [gs unsigned32ForKey:@"gLViewPos"] + [[[_current_hotspot name] substringFromIndex:1] intValue];
 	
-	// determine the playback selection for the viewer rotate movie
+	// determine the playback selection for the viewer spin movie
 	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)1);
 	QTTime duration = [movie duration];
 
-	QTTime start_time = QTMakeTime(village_viewer_timevals[[gs unsigned32ForKey:@"gLViewPos"]], duration.timeScale);
+	QTTime start_time = QTMakeTime(left_viewer_spin_timevals[[gs unsigned32ForKey:@"gLViewPos"]], duration.timeScale);
 	QTTimeRange movie_range = QTMakeTimeRange(start_time,
-											  QTMakeTime(village_viewer_timevals[new_pos] - start_time.timeValue, duration.timeScale));
+											  QTMakeTime(left_viewer_spin_timevals[new_pos] - start_time.timeValue, duration.timeScale));
 	[movie setPlaybackSelection:movie_range];
 	
 	// update the position variable
@@ -3862,11 +3870,56 @@ static int64_t village_viewer_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216LL, 
 DEFINE_COMMAND(xglviewer) {
 	RXGameState* gs = [g_world gameState];
 	
-	// configure the movie's playback selection and play it
-	[self performSelectorOnMainThread:@selector(_configureVillageViewerMovie) withObject:nil waitUntilDone:YES];
+	// configure the viewer spin movie playback selection and play it
+	[self performSelectorOnMainThread:@selector(_configureLeftViewerSpinMovie) withObject:nil waitUntilDone:YES];
 	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
 	
-	// activate the appropriate PLST and disable the movie
+	// activate the appropriate PLST and disable the viewer spin movie
+	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 2 + [gs unsigned32ForKey:@"gLViewPos"]);
+	DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 1);
+}
+
+#define gspit right viewer
+
+static int64_t right_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216LL, 4016LL, 4816LL, 5616LL, 6416LL, 7216LL, 8016LL, 8816LL};
+
+- (void)_configureRightViewerSpinMovie {
+	RXGameState* gs = [g_world gameState];
+	
+	uint32_t viewer_pos = [gs unsigned32ForKey:@"gRView"];
+	if (viewer_pos == 1) {
+		[gs setUnsigned32:0 forKey:@"gRView"];
+		uint16_t button_up_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_%@_1", [[card descriptor] ID], @"gScpBtnUp"]];
+		DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, button_up_sound, 255, 0);
+		DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+	}
+	
+	right_viewer_spin_timevals[0] = right_viewer_spin_timevals[0];
+	
+//	// determine the new right viewer position based on the hotspot name
+//	uint32_t new_pos = [gs unsigned32ForKey:@"gRView"] + [[[_current_hotspot name] substringFromIndex:1] intValue];
+//	
+//	// determine the playback selection for the viewer spin movie
+//	RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)1);
+//	QTTime duration = [movie duration];
+//
+//	QTTime start_time = QTMakeTime(right_viewer_spin_timevals[[gs unsigned32ForKey:@"gLViewPos"]], duration.timeScale);
+//	QTTimeRange movie_range = QTMakeTimeRange(start_time,
+//											  QTMakeTime(right_viewer_spin_timevals[new_pos] - start_time.timeValue, duration.timeScale));
+//	[movie setPlaybackSelection:movie_range];
+//	
+//	// update the position variable
+//	[gs setUnsigned32:new_pos % 6 forKey:@"gLViewPos"];
+}
+
+DEFINE_COMMAND(xgrviewer) {
+	RXGameState* gs = [g_world gameState];
+	
+	// configure the viewer spin movie playback selection and play it
+	[self performSelectorOnMainThread:@selector(_configureRightViewerSpinMovie) withObject:nil waitUntilDone:YES];
+	DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
+	
+	// activate the appropriate PLST and disable the viewer spin movie
 	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 2 + [gs unsigned32ForKey:@"gLViewPos"]);
 	DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 1);
 }

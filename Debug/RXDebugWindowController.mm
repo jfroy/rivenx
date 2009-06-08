@@ -188,8 +188,13 @@ static PyMethodDef rivenx_methods[] = {
 	
 	if ([[g_world gameState] isKeySet:path])
 		[self print:[NSString stringWithFormat:@"%d", [[g_world gameState] signed32ForKey:path]]];
-	else
-		[self print:[NSString stringWithFormat:@"%@", [[g_world valueForKeyPath:path] stringValue]]];
+	else {
+		@try {
+			[self print:[NSString stringWithFormat:@"%@", [[g_world valueForKeyPath:path] stringValue]]];
+		} @catch (NSException* e) {
+			[self print:@"undefined variable"];
+		}
+	}
 }
 
 - (void)cmd_set:(NSArray*)arguments {

@@ -34,6 +34,7 @@
 @interface RXDataSound : RXSound {}
 @end
 
+
 @interface RXSoundGroup : NSObject {
 @public
 	BOOL fadeOutRemovedSounds;

@@ -19,7 +19,7 @@
 	// get the movie resource descriptor
 	NSDictionary *descriptor = [self resourceDescriptorWithResourceType:@"tMOV" ID:movieID];
 	if (!descriptor)
-		ReturnNULLWithError(MHKErrorDomain, errUnknownID, nil, errorPtr);
+		ReturnNULLWithError(MHKErrorDomain, errResourceNotFound, nil, errorPtr);
 		
 	// store the movie offset in a variable
 	SInt64 qt_offset = [[descriptor objectForKey:@"Offset"] longLongValue];

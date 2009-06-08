@@ -291,6 +291,17 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 	return decompressor;
 }
 
+- (uint16_t)dataSoundIDForName:(NSString*)sound_name {
+	NSEnumerator* archive_enum = [_dataArchives objectEnumerator];
+	MHKArchive* archive;
+	while ((archive = [archive_enum nextObject])) {
+		NSDictionary* desc = [archive resourceDescriptorWithResourceType:@"tWAV" name:sound_name];
+		if (desc)
+			return [[desc objectForKey:@"ID"] unsignedShortValue];
+	}
+	return 0;
+}
+
 - (MHKFileHandle*)fileWithResourceType:(NSString*)type ID:(uint16_t)ID {
 	NSEnumerator* archive_enumerator = [_dataArchives objectEnumerator];
 	MHKArchive* archive = nil;

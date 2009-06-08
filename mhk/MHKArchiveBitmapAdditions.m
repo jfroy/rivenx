@@ -21,7 +21,7 @@
 	// get a resource descriptor
 	NSDictionary* descriptor = [self resourceDescriptorWithResourceType:@"tBMP" ID:bitmapID];
 	if (!descriptor)
-		ReturnNULLWithError(MHKErrorDomain, errUnknownID, nil, errorPtr);
+		ReturnNULLWithError(MHKErrorDomain, errResourceNotFound, nil, errorPtr);
 	
 	// seek to the tBMP resource
 	SInt64 resource_offset = [[descriptor objectForKey:@"Offset"] longLongValue];
@@ -47,7 +47,7 @@
 	// get a resource descriptor
 	NSDictionary *descriptor = [self resourceDescriptorWithResourceType:@"tBMP" ID:bitmapID];
 	if (!descriptor)
-		ReturnValueWithError(NO, MHKErrorDomain, errUnknownID, nil, errorPtr);
+		ReturnValueWithError(NO, MHKErrorDomain, errResourceNotFound, nil, errorPtr);
 	
 	// seek to the tBMP resource
 	SInt64 resource_offset = [[descriptor objectForKey:@"Offset"] longLongValue];

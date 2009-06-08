@@ -20,24 +20,24 @@ static void texture_provider_data_release(void *info, const void *data, size_t s
 }
 
 static void dump_bitmaps(MHKArchive *archive) {
-	NSError *error = nil;
-	NSAutoreleasePool *p = [[NSAutoreleasePool alloc] init];
+	NSError* error = nil;
+	NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
 	
-	NSFileManager *fm = [NSFileManager defaultManager];
-	NSString *dump_folder = [NSHomeDirectory() stringByAppendingPathComponent:@"Temporary/mhk_bitmap_dump"];
+	NSFileManager* fm = [NSFileManager defaultManager];
+	NSString* dump_folder = [NSHomeDirectory() stringByAppendingPathComponent:@"Temporary/mhk_bitmap_dump"];
 	[fm createDirectoryAtPath:dump_folder attributes:nil];
 	
 	dump_folder = [dump_folder stringByAppendingPathComponent:[[[archive url] path] lastPathComponent]];
 	[fm createDirectoryAtPath:dump_folder attributes:nil];
 	
-	NSArray *bmpResources = [archive valueForKey:@"tBMP"];
-	NSEnumerator *bmpEnumerator = [bmpResources objectEnumerator];
-	NSDictionary *resourceDescriptor = nil;
+	NSArray* bmpResources = [archive valueForKey:@"tBMP"];
+	NSEnumerator* bmpEnumerator = [bmpResources objectEnumerator];
+	NSDictionary* resourceDescriptor = nil;
 	while ((resourceDescriptor = [bmpEnumerator nextObject])) {
-		NSNumber *bmp_id = [resourceDescriptor objectForKey:@"ID"];
+		NSNumber* bmp_id = [resourceDescriptor objectForKey:@"ID"];
 		uint16_t bmp_id_native = [bmp_id unsignedShortValue];
 		
-		NSDictionary *bmpDescriptor = [archive bitmapDescriptorWithID:bmp_id_native error:&error];
+		NSDictionary* bmpDescriptor = [archive bitmapDescriptorWithID:bmp_id_native error:&error];
 		if (!bmpDescriptor || error) {
 			NSLog(@"An error in the %@ domain with code %d (%@) has occured.", [error domain], [error code], UTCreateStringForOSType([error code]));
 			continue;
@@ -47,7 +47,7 @@ static void dump_bitmaps(MHKArchive *archive) {
 		uint16_t height = [[bmpDescriptor valueForKey:@"Height"] unsignedShortValue];
 		
 		uint32_t texture_length = width * height * 4;
-		void *texture_buffer = malloc(texture_length);
+		void* texture_buffer = malloc(texture_length);
 		[archive loadBitmapWithID:bmp_id_native buffer:texture_buffer format:MHK_ARGB_UNSIGNED_BYTE_PACKED error:&error];
 		if (error) {
 			NSLog(@"An error in the %@ domain with code %d (%@) has occured.", [error domain], [error code], UTCreateStringForOSType([error code]));
@@ -55,12 +55,13 @@ static void dump_bitmaps(MHKArchive *archive) {
 			continue;
 		}
 		
-		NSString *bmp_path_base = [dump_folder stringByAppendingPathComponent:[bmp_id stringValue]];
-		NSString *bmp_name = [resourceDescriptor objectForKey:@"Name"];
-		if(bmp_name) bmp_path_base = [bmp_path_base stringByAppendingFormat:@" - %@", bmp_name];
+		NSString* bmp_path_base = [dump_folder stringByAppendingPathComponent:[bmp_id stringValue]];
+		NSString* bmp_name = [resourceDescriptor objectForKey:@"Name"];
+		if (bmp_name)
+			bmp_path_base = [bmp_path_base stringByAppendingFormat:@" - %@", bmp_name];
 		
 		bmp_path_base = [bmp_path_base stringByAppendingPathExtension:@"tiff"];
-		NSURL *bmp_url = [NSURL fileURLWithPath:bmp_path_base];
+		NSURL* bmp_url = [NSURL fileURLWithPath:bmp_path_base];
 		if (!bmp_url) {
 			NSLog(@"The output URL failed to allocate!");
 			free(texture_buffer);
@@ -92,31 +93,34 @@ static void dump_bitmaps(MHKArchive *archive) {
 }
 
 static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
-	NSError *error = nil;
-	NSAutoreleasePool *p = [[NSAutoreleasePool alloc] init];
+	NSError* error = nil;
+	NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
 	
-	NSFileManager *fm = [NSFileManager defaultManager];
-	NSString *dump_folder = [NSHomeDirectory() stringByAppendingPathComponent:@"Temporary/mhk_sound_dump"];
+	NSFileManager* fm = [NSFileManager defaultManager];
+	NSString* dump_folder = [NSHomeDirectory() stringByAppendingPathComponent:@"Temporary/mhk_sound_dump"];
 	[fm createDirectoryAtPath:dump_folder attributes:nil];
 	
 	dump_folder = [dump_folder stringByAppendingPathComponent:[[[archive url] path] lastPathComponent]];
 	[fm createDirectoryAtPath:dump_folder attributes:nil];
 	
-	NSArray *wavResources = [archive valueForKey:@"tWAV"];
-	NSEnumerator *wavEnumerator = [wavResources objectEnumerator];
-	NSDictionary *wavDescriptor = nil;
-	while ((wavDescriptor = [wavEnumerator nextObject])) {
-		NSNumber *sound_id = [wavDescriptor objectForKey:@"ID"];
-		printf("    %03d (%s)\n", [sound_id intValue], [[wavDescriptor objectForKey:@"Name"] UTF8String]);
+	NSArray* wavResources = [archive valueForKey:@"tWAV"];
+	NSEnumerator* wavEnumerator = [wavResources objectEnumerator];
+	NSDictionary* resourceDescriptor = nil;
+	while ((resourceDescriptor = [wavEnumerator nextObject])) {
+		NSNumber *sound_id = [resourceDescriptor objectForKey:@"ID"];
+		printf("    %03d (%s)\n", [sound_id intValue], [[resourceDescriptor objectForKey:@"Name"] UTF8String]);
 		
-		NSDictionary *soundDescriptor = [archive soundDescriptorWithID:[sound_id unsignedShortValue] error:&error];
+		NSDictionary* soundDescriptor = [archive soundDescriptorWithID:[sound_id unsignedShortValue] error:&error];
 		if (!soundDescriptor) {
 			uint32_t code = (uint32_t)[error code];
 			fprintf(stderr, "an error in the %s domain with code %d (%c%c%c%c) has occured\n", [[error domain] UTF8String], code, ((char*)&code)[0], ((char*)&code)[1], ((char*)&code)[2], ((char*)&code)[3]);
 			continue;
 		}
 		
-		NSString *sound_path_base = [dump_folder stringByAppendingPathComponent:[sound_id stringValue]];
+		NSString* sound_path_base = [dump_folder stringByAppendingPathComponent:[sound_id stringValue]];
+		NSString* sound_name = [resourceDescriptor objectForKey:@"Name"];
+		if (sound_name)
+			sound_path_base = [sound_path_base stringByAppendingFormat:@" - %@", sound_name];
 		
 		// get a decompressor object for the sound
 		id <MHKAudioDecompression> decomp = [archive decompressorWithSoundID:[sound_id unsignedShortValue] error:&error];
@@ -131,13 +135,12 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
 		AudioStreamBasicDescription absd = [decomp outputFormat];
 		
 		// handle first packet option
-		if (first_pkt_only && [decomp isMemberOfClass:NSClassFromString(@"MHKMP2Decompressor")]) {
+		if (first_pkt_only && [decomp isMemberOfClass:NSClassFromString(@"MHKMP2Decompressor")])
 			frame_count = 1152;
-		}
 		
 		// allocate samples buffer
 		size_t samples_size = frame_count * absd.mBytesPerFrame;
-		UInt8 *samples = (UInt8*)malloc(samples_size);
+		UInt8* samples = (UInt8*)malloc(samples_size);
 		
 		// setup a buffer list structure
 		AudioBufferList abl;
