@@ -3462,7 +3462,7 @@ DEFINE_COMMAND(xt7800_setup) {
 	[self _initializeMarbleHotspotWithVariable:@"tyellow" initialRectPointer:&yellow_marble_initial_rect];
 }
 
-- (void)_drawMarbleWitVariable:(NSString*)marble_var marbleEnum:(rx_fire_marble_t)marble bitmapID:(uint16_t)bitmap_id activeMarble:(rx_fire_marble_t)active_marble {
+- (void)_drawMarbleWithVariable:(NSString*)marble_var marbleEnum:(rx_fire_marble_t)marble bitmapID:(uint16_t)bitmap_id activeMarble:(rx_fire_marble_t)active_marble {
 	if (active_marble == marble)
 		return;
 	
@@ -3482,12 +3482,12 @@ DEFINE_COMMAND(xdrawmarbles) {
 	rx_fire_marble_t active_marble = (rx_fire_marble_t)[gs unsigned32ForKey:@"themarble"];
 	
 	DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
-	[self _drawMarbleWitVariable:@"tblue" marbleEnum:BLUE_MARBLE bitmapID:blue_marble_tBMP activeMarble:active_marble];
-	[self _drawMarbleWitVariable:@"tgreen" marbleEnum:GREEN_MARBLE bitmapID:green_marble_tBMP activeMarble:active_marble];
-	[self _drawMarbleWitVariable:@"torange" marbleEnum:ORANGE_MARBLE bitmapID:orange_marble_tBMP activeMarble:active_marble];
-	[self _drawMarbleWitVariable:@"tviolet" marbleEnum:PURPLE_MARBLE bitmapID:violet_marble_tBMP activeMarble:active_marble];
-	[self _drawMarbleWitVariable:@"tred" marbleEnum:RED_MARBLE bitmapID:red_marble_tBMP activeMarble:active_marble];
-	[self _drawMarbleWitVariable:@"tyellow" marbleEnum:YELLOW_MARBLE bitmapID:yellow_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithVariable:@"tblue" marbleEnum:BLUE_MARBLE bitmapID:blue_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithVariable:@"tgreen" marbleEnum:GREEN_MARBLE bitmapID:green_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithVariable:@"torange" marbleEnum:ORANGE_MARBLE bitmapID:orange_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithVariable:@"tviolet" marbleEnum:PURPLE_MARBLE bitmapID:violet_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithVariable:@"tred" marbleEnum:RED_MARBLE bitmapID:red_marble_tBMP activeMarble:active_marble];
+	[self _drawMarbleWithVariable:@"tyellow" marbleEnum:YELLOW_MARBLE bitmapID:yellow_marble_tBMP activeMarble:active_marble];
 }
 
 DEFINE_COMMAND(xtakeit) {
