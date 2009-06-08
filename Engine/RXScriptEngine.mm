@@ -3966,8 +3966,8 @@ DEFINE_COMMAND(xgrviewer) {
     uint16_t solo_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gWharkSolo%d_1", whark_solo_card, whark_solo]];
     [self _playDataSoundWithID:solo_sound gain:1.0f duration:NULL];
     
-    // schedule the next one within the next 30 seconds but not sooner than in 15 seconds
-    event_timer = [NSTimer scheduledTimerWithTimeInterval:15 + (random() % 15) + 1
+    // schedule the next one within the next 5 minutes but no sooner than in 2 minutes
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:120 + (random() % 180) + 1
                                                    target:self
                                                  selector:@selector(_playWharkSolo:)
                                                  userInfo:nil
@@ -3975,14 +3975,15 @@ DEFINE_COMMAND(xgrviewer) {
 }
 
 DEFINE_COMMAND(xgwharksnd) {
-    if (!event_timer) {
-        whark_solo_card = [[card descriptor] ID];
-        event_timer = [NSTimer scheduledTimerWithTimeInterval:(double)((random() % 30) + 1 + 120) * 1000 / 1E6
-                                                       target:self
-                                                     selector:@selector(_playWharkSolo:)
-                                                     userInfo:nil
-                                                      repeats:NO];
-    }
+    whark_solo_card = [[card descriptor] ID];
+    
+    // play a solo within the next 5 seconds
+    [event_timer invalidate];
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:(random() % 5) + 1
+                                                   target:self
+                                                 selector:@selector(_playWharkSolo:)
+                                                 userInfo:nil
+                                                  repeats:NO];
 }
 
 DEFINE_COMMAND(xgplaywhark) {
