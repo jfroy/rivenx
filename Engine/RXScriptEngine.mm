@@ -293,6 +293,12 @@ static NSMapTable* _riven_external_command_dispatch_map;
     
     RXStack* parent = [[card descriptor] parent];
     
+    // if this is a top-level execution, reset the previous opcodes array
+    if (_programExecutionDepth == 0) {
+        _previous_opcodes[0] = UINT16_MAX;
+        _previous_opcodes[1] = UINT16_MAX;
+    }
+    
     // bump the execution depth
     _programExecutionDepth++;
     
@@ -391,7 +397,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
         } else {
             // execute the command
             _riven_command_dispatch_table[*shortedProgram].imp(self, _riven_command_dispatch_table[*shortedProgram].sel, *(shortedProgram + 1), shortedProgram + 2);
-            _previousOpcode = *shortedProgram;
+            _previous_opcodes[1] = _previous_opcodes[0];
+            _previous_opcodes[0] = *shortedProgram;
             
             // adjust the shorted program
             programOffset += 4 + (*(shortedProgram + 1) * sizeof(uint16_t));
@@ -1371,8 +1378,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
     
     // queue the transition
-    if (transition->type == RXTransitionDissolve && _previousOpcode == 18 && _queuedAPushTransition)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because previous command queued a push transition");
+    if (transition->type == RXTransitionDissolve && (_previous_opcodes[0] == 18 || _previous_opcodes[1] == 18) && _queuedAPushTransition)
+        RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because of recently scheduled push transition");
     else
         [controller queueTransition:transition];
     
@@ -3994,7 +4001,7 @@ DEFINE_COMMAND(xgplaywhark) {
     else if (whark_visits == 4)
         mlst_index = 8; // he's pissed, hope that glass doesn't break
     else
-        mlst_index = 0;
+        return;
     
     // and play the movie; they all use code 31
     DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, mlst_index);
