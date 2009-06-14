@@ -158,7 +158,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     _riven_command_dispatch_table[47].sel = @selector(_opcode_activateSLSTWithVolume:arguments:);
     
     for (unsigned char selectorIndex = 0; selectorIndex < rx_command_count; selectorIndex++)
-        _riven_command_dispatch_table[selectorIndex].imp = (rx_command_imp_t)[self instanceMethodForSelector:_riven_command_dispatch_table[selectorIndex].sel];
+        _riven_command_dispatch_table[selectorIndex].imp =
+            (rx_command_imp_t)[self instanceMethodForSelector:_riven_command_dispatch_table[selectorIndex].sel];
     
     // search for external command implementation methods and register them
     _riven_external_command_dispatch_map = NSCreateMapTable(NSObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, 0);
@@ -173,7 +174,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
             NSString* method_selector_string = NSStringFromSelector(m->method_name);
             if ([method_selector_string hasPrefix:@"_external_"]) {
                 NSRange first_colon_range = [method_selector_string rangeOfCharacterFromSet:colon_character_set options:NSLiteralSearch];
-                NSString* external_name = [method_selector_string substringWithRange:NSMakeRange([(NSString*)@"_external_" length], first_colon_range.location - [(NSString*)@"_external_" length])];
+                NSString* external_name = [method_selector_string substringWithRange:NSMakeRange([(NSString*)@"_external_" length],
+                                                                                                 first_colon_range.location - [(NSString*)@"_external_" length])];
 #if defined(DEBUG) && DEBUG > 1
                 RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"registering external command: %@", external_name);
 #endif
@@ -380,7 +382,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
                 
                 // execute the switch statement program
-                [self _executeRivenProgram:((uint16_t*)BUFFER_OFFSET(program, defaultCaseOffset)) + 2 count:*(((uint16_t*)BUFFER_OFFSET(program, defaultCaseOffset)) + 1)];
+                [self _executeRivenProgram:((uint16_t*)BUFFER_OFFSET(program, defaultCaseOffset)) + 2
+                                     count:*(((uint16_t*)BUFFER_OFFSET(program, defaultCaseOffset)) + 1)];
                 
 #if defined(DEBUG)
                 [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
@@ -396,7 +399,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
             }
         } else {
             // execute the command
-            _riven_command_dispatch_table[*shortedProgram].imp(self, _riven_command_dispatch_table[*shortedProgram].sel, *(shortedProgram + 1), shortedProgram + 2);
+            _riven_command_dispatch_table[*shortedProgram].imp(self, _riven_command_dispatch_table[*shortedProgram].sel,
+                                                               *(shortedProgram + 1), shortedProgram + 2);
             _previous_opcodes[1] = _previous_opcodes[0];
             _previous_opcodes[0] = *shortedProgram;
             
@@ -431,7 +435,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
         NSDictionary* program = [programs objectAtIndex:programIndex];
-        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
+        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes]
+                             count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
     }
     
     // re-enable screen updates to match the disable we did above
@@ -461,11 +466,15 @@ static NSMapTable* _riven_external_command_dispatch_map;
     [self _runScreenUpdatePrograms];
     _doing_screen_update = NO;
     
-    // some cards disable screen updates during screen update programs, so we need to decrement the counter here to function properly; see tspit 229 open card
+    // some cards disable screen updates during screen update programs, so we
+    // need to decrement the counter here to function properly; see tspit 229
+    // open card
     if (_screen_update_disable_counter > 0)
         _screen_update_disable_counter--;
     
-    // the script handler will set our front render state to our back render state at the appropriate moment; when this returns, the swap has occured (front == back)
+    // the script handler will set our front render state to our back render
+    // state at the appropriate moment; when this returns, the swap has occured
+    // (front == back)
     [controller update];
 }
 
@@ -515,7 +524,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     uint32_t programIndex = 0;
     for(; programIndex < programCount; programIndex++) {
         NSDictionary* program = [programs objectAtIndex:programIndex];
-        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
+        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes]
+                             count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
     }
     
     // activate the first picture if none has been enabled already
@@ -583,7 +593,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
         NSDictionary* program = [programs objectAtIndex:programIndex];
-        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
+        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes]
+                             count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
     }
     
     // activate the first sound group if none has been enabled already
@@ -636,7 +647,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
         NSDictionary* program = [programs objectAtIndex:programIndex];
-        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
+        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes]
+                             count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
     }
     
 #if defined(DEBUG)
@@ -698,7 +710,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
         NSDictionary* program = [programs objectAtIndex:programIndex];
-        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
+        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes]
+                             count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
     }
     
 #if defined(DEBUG)
@@ -748,7 +761,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
         NSDictionary* program = [programs objectAtIndex:programIndex];
-        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
+        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes]
+                             count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
     }
     
 #if defined(DEBUG)
@@ -795,7 +809,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
         NSDictionary* program = [programs objectAtIndex:programIndex];
-        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
+        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes]
+                             count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
     }
     
 #if defined(DEBUG)
@@ -845,7 +860,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
         NSDictionary* program = [programs objectAtIndex:programIndex];
-        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes] count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
+        [self _executeRivenProgram:[[program objectForKey:RXScriptProgramKey] bytes]
+                             count:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
     }
     
 #if defined(DEBUG)
@@ -895,9 +911,15 @@ static NSMapTable* _riven_external_command_dispatch_map;
     
     // register for rate notifications on the blocking movie handler
     if ([movie isKindOfClass:[RXMovieProxy class]])
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieFinishedPlaying:) name:RXMoviePlaybackDidEndNotification object:[(RXMovieProxy*)movie proxiedMovie]];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(_handleBlockingMovieFinishedPlaying:)
+                                                     name:RXMoviePlaybackDidEndNotification
+                                                   object:[(RXMovieProxy*)movie proxiedMovie]];
     else
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieFinishedPlaying:) name:RXMoviePlaybackDidEndNotification object:movie];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(_handleBlockingMovieFinishedPlaying:)
+                                                     name:RXMoviePlaybackDidEndNotification
+                                                   object:movie];
     
     // hide the mouse cursor
     if (!_did_hide_mouse) {
@@ -968,7 +990,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     
     // check if we have a cache for the tBMP ID; create a dynamic picture structure otherwise and map it to the tBMP ID
     uintptr_t dynamic_picture_key = ID;
-    struct rx_card_dynamic_picture* dynamic_picture = (struct rx_card_dynamic_picture*)NSMapGet(_dynamicPictureMap, (const void*)dynamic_picture_key);
+    struct rx_card_dynamic_picture* dynamic_picture = (struct rx_card_dynamic_picture*)NSMapGet(_dynamicPictureMap,
+                                                                                                (const void*)dynamic_picture_key);
     if (dynamic_picture == NULL) {
         dynamic_picture = (struct rx_card_dynamic_picture*)malloc(sizeof(struct rx_card_dynamic_picture*));
         
@@ -1005,7 +1028,13 @@ static NSMapTable* _riven_external_command_dispatch_map;
         glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
         
         // unpack the texture
-        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, picture_width, picture_height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, BUFFER_OFFSET(NULL, 0)); glReportError();
+        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                     0,
+                     GL_RGBA8,
+                     picture_width, picture_height,
+                     0,
+                     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+                     BUFFER_OFFSET(NULL, 0)); glReportError();
         
         // reset the unpack buffer state and re-enable client storage
         glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
@@ -1022,7 +1051,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
     }
     
     // create a RXDynamicPicture object and queue it for rendering
-    RXDynamicPicture* picture = [[RXDynamicPicture alloc] initWithTexture:dynamic_picture->texture samplingRect:sampling_rect renderRect:display_rect owner:self];
+    RXDynamicPicture* picture = [[RXDynamicPicture alloc] initWithTexture:dynamic_picture->texture
+                                                             samplingRect:sampling_rect
+                                                               renderRect:display_rect
+                                                                    owner:self];
     [controller queuePicture:picture];
     [picture release];
     
@@ -1055,7 +1087,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #pragma mark -
 
 - (void)_invalid_opcode:(const uint16_t)argc arguments:(const uint16_t*)argv {
-    @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:[NSString stringWithFormat:@"INVALID RIVEN SCRIPT OPCODE EXECUTED: %d", argv[-2]] userInfo:nil];
+    @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                   reason:[NSString stringWithFormat:@"INVALID RIVEN SCRIPT OPCODE EXECUTED: %d", argv[-2]]
+                                 userInfo:nil];
 }
 
 - (void)_opcode_unimplemented:(const uint16_t)argc arguments:(const uint16_t*)argv {
@@ -1130,7 +1164,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource id=%hu, volume=%hu, blocking=%hu", logPrefix, argv[0], argv[1], argv[2]);
+        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource id=%hu, volume=%hu, blocking=%hu",
+            logPrefix, argv[0], argv[1], argv[2]);
 #endif
     
     double duration;
@@ -1160,7 +1195,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating synthesized MLST [movie_id=%hu, code=%hu]", logPrefix, mlst_r->movie_id, mlst_r->code);
+        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating synthesized MLST [movie_id=%hu, code=%hu]",
+            logPrefix, mlst_r->movie_id, mlst_r->code);
 #endif
     
     // have the card load the movie
@@ -1339,9 +1375,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
     
     // dispatch the call to the external command
-    rx_command_dispatch_entry_t* command_dispatch = (rx_command_dispatch_entry_t*)NSMapGet(_riven_external_command_dispatch_map, externalName);
+    rx_command_dispatch_entry_t* command_dispatch = (rx_command_dispatch_entry_t*)NSMapGet(_riven_external_command_dispatch_map,
+                                                                                           externalName);
     if (!command_dispatch) {
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    WARNING: external command '%@' is not implemented!", logPrefix, externalName);
+        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    WARNING: external command '%@' is not implemented!",
+            logPrefix, externalName);
 #if defined(DEBUG)
         [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
         RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
@@ -1378,6 +1416,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #endif
     
     // queue the transition
+    // FIXME: need to review this dropping mechanism and see if we could just clear the transition queue at certain points
     if (transition->type == RXTransitionDissolve && (_previous_opcodes[0] == 18 || _previous_opcodes[1] == 18) && _queuedAPushTransition)
         RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because of recently scheduled push transition");
     else
@@ -1698,7 +1737,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
     
     // create an RXPicture for the PLST record and queue it for rendering
     GLuint index = argv[0] - 1;
-    RXPicture* picture = [[RXPicture alloc] initWithTexture:[card pictureTextures][index] vao:[card pictureVAO] index:4 * index owner:self];
+    RXPicture* picture = [[RXPicture alloc] initWithTexture:[card pictureTextures][index]
+                                                        vao:[card pictureVAO]
+                                                      index:4 * index
+                                                      owner:self];
     [controller queuePicture:picture];
     [picture release];
     
@@ -1819,7 +1861,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu and overriding volunme to %hu", logPrefix, argv[0], argv[1]);
+        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu and overriding volunme to %hu",
+            logPrefix, argv[0], argv[1]);
 #endif
     
     // get the sound group
@@ -1872,7 +1915,9 @@ DEFINE_COMMAND(xthideinventory) {
 
 - (void)_returnFromJournal {
     // schedule a cross-fade transition to the return card
-    RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+    RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve
+                                                        direction:0
+                                                           region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
     [controller queueTransition:transition];
     [transition release];
     
@@ -1931,7 +1976,9 @@ DEFINE_COMMAND(xaatrusbookprevpage) {
     else
         DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 3, 256, 0);
     
-    RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionRight region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+    RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
+                                                        direction:RXTransitionRight
+                                                           region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
     [controller queueTransition:transition];
     [transition release];
     
@@ -1948,7 +1995,9 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
         else
             DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 5, 256, 0);
         
-        RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionLeft region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+        RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
+                                                            direction:RXTransitionLeft
+                                                               region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
         [controller queueTransition:transition];
         [transition release];
         
@@ -1993,7 +2042,6 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
     // draw the telescope combination
     // FIXME: actually generate a combination per game...
     if (page == 28) {
-        // GO MAGIC NUMBERS!
         NSPoint combination_display_origin = NSMakePoint(156.0f, 120.0f);
         NSPoint combination_sampling_origin = NSMakePoint(32.0f * 3, 0.0f);
         NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 25.0f);
@@ -2047,7 +2095,9 @@ DEFINE_COMMAND(xacathbookprevpage) {
     else
         DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 4, 256, 0);
     
-    RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionBottom region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+    RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
+                                                        direction:RXTransitionBottom
+                                                           region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
     [controller queueTransition:transition];
     [transition release];
     
@@ -2064,7 +2114,9 @@ DEFINE_COMMAND(xacathbooknextpage) {
         else
             DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 6, 256, 0);
         
-        RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionTop region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+        RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
+                                                            direction:RXTransitionTop
+                                                               region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
         [controller queueTransition:transition];
         [transition release];
         
@@ -2089,7 +2141,9 @@ DEFINE_COMMAND(xtatrusgivesbooks) {
 DEFINE_COMMAND(xtchotakesbook) {
     // FIXME: implement xtchotakesbook
 
-    // WORKAROUND as a side-effect of this command, we'll silence the ambient sound before the last introduction movie plays; a active SLST command comes after the movie
+    // WORKAROUND as a side-effect of this command, we'll silence the ambient
+    // sound before the last introduction movie plays; a active SLST command
+    // comes after the movie
     DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 1);
 }
 
@@ -2462,7 +2516,10 @@ DEFINE_COMMAND(xhandlecontrolup) {
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
     // track the mouse until the mouse button is released
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+           isfinite(mouse_vector.size.width))
+    {
         if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
             // play the switch down movie
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
@@ -2480,7 +2537,8 @@ DEFINE_COMMAND(xhandlecontrolup) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
             
             // go to the middle jungle elevator card
-            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator middle"] waitUntilDone:YES];
+            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator middle"]
+                                            waitUntilDone:YES];
             
             // we're all done
             break;
@@ -2496,7 +2554,10 @@ DEFINE_COMMAND(xhandlecontrolmid) {
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
     // track the mouse until the mouse button is released
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+           isfinite(mouse_vector.size.width))
+    {
         if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
             // play the switch up movie
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 7);
@@ -2516,7 +2577,8 @@ DEFINE_COMMAND(xhandlecontrolmid) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 5);
             
             // go to the top jungle elevator card
-            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator top"] waitUntilDone:YES];
+            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator top"]
+                                            waitUntilDone:YES];
             
             // we're all done
             break;
@@ -2530,7 +2592,8 @@ DEFINE_COMMAND(xhandlecontrolmid) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 4);
             
             // go to the bottom jungle elevator card
-            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator bottom"] waitUntilDone:YES];
+            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator bottom"]
+                                            waitUntilDone:YES];
             
             // we're all done
             break;
@@ -2546,7 +2609,10 @@ DEFINE_COMMAND(xhandlecontroldown) {
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
     // track the mouse until the mouse button is released
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+           isfinite(mouse_vector.size.width))
+    {
         if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
             // play the switch up movie
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
@@ -2555,7 +2621,8 @@ DEFINE_COMMAND(xhandlecontroldown) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
             
             // go to the middle jungle elevator card
-            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator middle"] waitUntilDone:YES];
+            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator middle"]
+                                            waitUntilDone:YES];
             
             // we're all done
             break;
@@ -2576,7 +2643,10 @@ DEFINE_COMMAND(xvalvecontrol) {
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
     // track the mouse until the mouse button is released
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+           isfinite(mouse_vector.size.width))
+    {
         float theta = 180.0f * atan2f(mouse_vector.size.height, mouse_vector.size.width) * M_1_PI;
         float r = sqrtf((mouse_vector.size.height * mouse_vector.size.height) + (mouse_vector.size.width * mouse_vector.size.width));
         
@@ -2848,7 +2918,9 @@ DEFINE_COMMAND(xschool280_playwhark) {
     uint16_t level_of_doom = [state unsignedShortForKey:villager_position_variable];
     
     // configure the doomed villager movie and play it
-    [self performSelectorOnMainThread:@selector(_configureDoomedVillagerMovie:) withObject:[NSNumber numberWithUnsignedShort:the_number] waitUntilDone:YES];
+    [self performSelectorOnMainThread:@selector(_configureDoomedVillagerMovie:)
+                           withObject:[NSNumber numberWithUnsignedShort:the_number]
+                        waitUntilDone:YES];
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, doom_mlst);
     
     // update the villager's doom level
@@ -2947,8 +3019,10 @@ DEFINE_COMMAND(xschool280_playwhark) {
         
         rx_core_rect_t hotspot_rect = [h coreFrame];
         display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
-        NSRect sampling_rect = NSMakeRect(hotspot_rect.left - dome_slider_background_position.x, hotspot_rect.top - dome_slider_background_position.y,
-                                         display_rect.size.width, display_rect.size.height);
+        NSRect sampling_rect = NSMakeRect(hotspot_rect.left - dome_slider_background_position.x,
+                                          hotspot_rect.top - dome_slider_background_position.y,
+                                          display_rect.size.width,
+                                          display_rect.size.height);
         [self _drawPictureWithID:sliders stack:[card parent] displayRect:display_rect samplingRect:sampling_rect];
     }
     
@@ -3032,30 +3106,40 @@ DEFINE_COMMAND(xschool280_playwhark) {
         if (active_hotspot && !boundary_hotspot_id && (k + min_id) > [active_hotspot ID] && (sliders_state & (1 << (24 - k))))
             boundary_hotspot_id = [hotspot ID];
         
-        // if there is an active hotspot, adjust the mouse position's y coordinate to be inside the hotspot (we ignore cursor height when dragging a slider)
+        // if there is an active hotspot, adjust the mouse position's y
+        // coordinate to be inside the hotspot (we ignore cursor height
+        // when dragging a slider)
         if (active_hotspot)
             mouse_position.y = [hotspot worldFrame].origin.y;
         
         if (NSPointInRect(mouse_position, [hotspot worldFrame])) {
-            // we found the hotspot over which the mouse currently is; this ends the forward search
+            // we found the hotspot over which the mouse currently is; this ends
+            // the forward search
             
             if (!active_hotspot) {
-                // there is no active hotspot, meaning we're not dragging a slider
+                // there is no active hotspot, meaning we're not dragging a
+                // slider
                 
-                // if there is no slider in this slot, return nil (nothing here, basically)
+                // if there is no slider in this slot, return nil (nothing here,
+                // basically)
                 if (!(sliders_state & (1 << (24 - k))))
                     hotspot = nil;
             } else {
                 // a slider is being dragged (there is an active hotspot)
             
-                // we only need to do boundary checking if the hotspot under the mouse is not the active hotspot
+                // we only need to do boundary checking if the hotspot under the
+                // mouse is not the active hotspot
                 if (hotspot != active_hotspot) {
                     if ([hotspot ID] > [active_hotspot ID]) {
-                        // moving to the right; if the boundary hotspot is on the right of the active hotspot, snap the hotspot we return to the boundary hotspot
+                        // moving to the right; if the boundary hotspot is on
+                        // the right of the active hotspot, snap the hotspot we
+                        // return to the boundary hotspot
                         if (boundary_hotspot_id > [active_hotspot ID])
                             hotspot = (RXHotspot*)NSMapGet(hotspots_map, (void*)(boundary_hotspot_id - 1));
                     } else {
-                        // moving to the left; need to find the left boundary by doing a backward scan from the active hotspot to the current hotspot
+                        // moving to the left; need to find the left boundary
+                        // by doing a backward scan from the active hotspot to
+                        // the current hotspot
                         boundary_hotspot_id = 0;
                         uintptr_t reverse_scan_limit = [hotspot ID] - min_id;
                         for (uintptr_t k2 = [active_hotspot ID] - 1 - min_id; k2 >= reverse_scan_limit; k2--) {
@@ -3093,7 +3177,10 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     // determine if the mouse was on one of the active slider hotspots when it was pressed; if not, we're done
     NSRect mouse_vector = [controller mouseVector];
-    RXHotspot* active_hotspot = [self domeSliderHotspotForDome:dome mousePosition:mouse_vector.origin activeHotspot:nil minHotspotID:min_hotspot_id];
+    RXHotspot* active_hotspot = [self domeSliderHotspotForDome:dome
+                                                 mousePosition:mouse_vector.origin
+                                                 activeHotspot:nil
+                                                  minHotspotID:min_hotspot_id];
     if (!active_hotspot || !active_hotspot->enabled)
         return;
     
@@ -3101,10 +3188,14 @@ DEFINE_COMMAND(xschool280_playwhark) {
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
     // track the mouse, updating the position of the slider as appropriate
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+           isfinite(mouse_vector.size.width))
+    {
         // where are we now?
         RXHotspot* hotspot = [self domeSliderHotspotForDome:dome
-                                              mousePosition:NSOffsetRect(mouse_vector, mouse_vector.size.width, mouse_vector.size.height).origin
+                                              mousePosition:NSOffsetRect(mouse_vector, mouse_vector.size.width,
+                                                                         mouse_vector.size.height).origin
                                               activeHotspot:active_hotspot
                                                minHotspotID:min_hotspot_id];
         if (hotspot && hotspot != active_hotspot) {
@@ -3112,7 +3203,8 @@ DEFINE_COMMAND(xschool280_playwhark) {
             [controller playDataSound:tic_sound];
             
             // disable the old and enable the new
-            sliders_state = (sliders_state & ~(1 << (24 - ([active_hotspot ID] - min_hotspot_id)))) | (1 << (24 - ([hotspot ID] - min_hotspot_id)));
+            sliders_state = (sliders_state & ~(1 << (24 - ([active_hotspot ID] - min_hotspot_id)))) |
+                            (1 << (24 - ([hotspot ID] - min_hotspot_id)));
             active_hotspot = hotspot;
             
             // draw the new slider state
@@ -3142,7 +3234,10 @@ DEFINE_COMMAND(xschool280_playwhark) {
     assert(min_hotspot);
     uintptr_t min_hotspot_id = [min_hotspot ID];
     
-    RXHotspot* active_hotspot = [self domeSliderHotspotForDome:dome mousePosition:[controller mouseVector].origin activeHotspot:nil minHotspotID:min_hotspot_id];
+    RXHotspot* active_hotspot = [self domeSliderHotspotForDome:dome
+                                                 mousePosition:[controller mouseVector].origin
+                                                 activeHotspot:nil
+                                                  minHotspotID:min_hotspot_id];
     if (active_hotspot)
         [controller setMouseCursor:RX_CURSOR_OPEN_HAND];
     else
@@ -3358,7 +3453,8 @@ static const float marble_size = 13.5f;
             return;
         
         NSPoint p1 = NSMakePoint(11834.f/39.f, 4321.f/39.f);
-        NSPoint p2 = NSMakePoint(tiny_marble_offset_matrix[0][marble_x / 5] + 5 * (marble_x % 5), tiny_marble_offset_matrix[1][0]);
+        NSPoint p2 = NSMakePoint(tiny_marble_offset_matrix[0][marble_x / 5] + 5 * (marble_x % 5),
+                                 tiny_marble_offset_matrix[1][0]);
         float y = tiny_marble_offset_matrix[1][marble_y / 5] + 2 * (marble_y % 5);
         float t = (y - p1.y) / (p2.y - p1.y + 0.000001);
         float x = p2.x * t + p1.x * (1.f - t);
@@ -3484,7 +3580,10 @@ DEFINE_COMMAND(xt7800_setup) {
     hotspot_rect.bottom += 3;
     
     NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
-    [self _drawPictureWithID:bitmap_id archive:[g_world extraBitmapsArchive] displayRect:display_rect samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
+    [self _drawPictureWithID:bitmap_id
+                     archive:[g_world extraBitmapsArchive]
+                 displayRect:display_rect
+                samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 }
 
 DEFINE_COMMAND(xdrawmarbles) {
@@ -3539,14 +3638,18 @@ DEFINE_COMMAND(xtakeit) {
     
     // track the mouse until the mouse button is released
     NSRect mouse_vector = [controller mouseVector];
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] && isfinite(mouse_vector.size.width)) {
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+           isfinite(mouse_vector.size.width))
+    {
         mouse_vector = [controller mouseVector];
     }
     
     // update the marble's position
     rx_core_rect_t core_position = RXTransformRectWorldToCore(mouse_vector);
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@core position of mouse is <%u, %u>", logPrefix, core_position.left, core_position.top);
+    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@core position of mouse is <%u, %u>",
+        logPrefix, core_position.left, core_position.top);
 #endif
     
     NSRect grid_rect = NSMakeRect(marble_offset_matrix[0][0],
@@ -3917,7 +4020,8 @@ static int64_t right_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216L
 
     QTTime start_time = QTMakeTime(right_viewer_spin_timevals[old_pos], duration.timeScale);
     QTTimeRange movie_range = QTMakeTimeRange(start_time,
-                                              QTMakeTime(right_viewer_spin_timevals[new_pos] - start_time.timeValue, duration.timeScale));
+                                              QTMakeTime(right_viewer_spin_timevals[new_pos] - start_time.timeValue,
+                                                         duration.timeScale));
     [movie setPlaybackSelection:movie_range];
     
     // update the position variable
@@ -3932,7 +4036,8 @@ DEFINE_COMMAND(xgrviewer) {
     if (viewer_light == 1) {
         [gs setUnsigned32:0 forKey:@"gRView"];
         
-        uint16_t button_up_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gScpBtnUp_1", [[card descriptor] ID]]];
+        uint16_t button_up_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gScpBtnUp_1",
+                                                                      [[card descriptor] ID]]];
         [self _playDataSoundWithID:button_up_sound gain:1.0f duration:NULL];
     
         DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
@@ -3963,7 +4068,8 @@ DEFINE_COMMAND(xgrviewer) {
     uint32_t whark_solo = (random() % 9) + 1;
     
     // play the solo
-    uint16_t solo_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gWharkSolo%d_1", whark_solo_card, whark_solo]];
+    uint16_t solo_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gWharkSolo%d_1",
+                                                             whark_solo_card, whark_solo]];
     [self _playDataSoundWithID:solo_sound gain:1.0f duration:NULL];
     
     // schedule the next one within the next 5 minutes but no sooner than in 2 minutes

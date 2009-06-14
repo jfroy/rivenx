@@ -20,7 +20,7 @@
 + (NSString*)rendererNameForID:(GLint)renderer;
 
 - (void)_createWorkingColorSpace;
-- (void)_displayProfileChanged:(NSNotification *)notification;
+- (void)_handleColorProfileChange:(NSNotification*)notification;
 - (void)_handleScreenChange:(NSNotification*)notification;
 - (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx;
 - (void)_determineGLVersion:(CGLContextObj)cgl_ctx;
@@ -31,36 +31,16 @@
 
 @implementation RXWorldView
 
-static CVReturn _rx_render_output_callback(CVDisplayLinkRef displayLink,
-                                           const CVTimeStamp* inNow,
-                                           const CVTimeStamp* inOutputTime,
-                                           CVOptionFlags flagsIn,
-                                           CVOptionFlags* flagsOut,
-                                           void* displayLinkContext)
+static CVReturn rx_render_output_callback(CVDisplayLinkRef displayLink,
+                                          const CVTimeStamp* inNow,
+                                          const CVTimeStamp* inOutputTime,
+                                          CVOptionFlags flagsIn,
+                                          CVOptionFlags* flagsOut,
+                                          void* ctx)
 {
     NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
-    
-    if (![(RXWorldView *)displayLinkContext lockFocusIfCanDraw])
-        goto end_outout_callback;
-    
-    [(RXWorldView *)displayLinkContext _render:inOutputTime];
-    [(RXWorldView *)displayLinkContext unlockFocus];
-    
-end_outout_callback:
+    [(RXWorldView*)ctx _render:inOutputTime];
     [p release];
-    return kCVReturnSuccess;
-}
-
-static CVReturn _rx_render_setup_output_callback(CVDisplayLinkRef displayLink,
-                                                 const CVTimeStamp* inNow,
-                                                 const CVTimeStamp* inOutputTime,
-                                                 CVOptionFlags flagsIn,
-                                                 CVOptionFlags* flagsOut,
-                                                 void* displayLinkContext)
-{
-    CGLSetCurrentContext([(RXWorldView *)displayLinkContext renderContext]);
-    RXSetThreadNameC("Rendering");
-    CVDisplayLinkSetOutputCallback(displayLink, &_rx_render_output_callback, displayLinkContext);
     return kCVReturnSuccess;
 }
 
@@ -154,7 +134,8 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
     for (GLint ipix = 0; ipix < npix; ipix++) {
         GLint renderer;
         [format getValues:&renderer forAttribute:NSOpenGLPFARendererID forVirtualScreen:ipix];
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"virtual screen %d is driven by the \"%@\" renderer", ipix, [RXWorldView rendererNameForID:renderer]);
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"virtual screen %d is driven by the \"%@\" renderer",
+            ipix, [RXWorldView rendererNameForID:renderer]);
     }
     
     _render_context = [[NSOpenGLContext alloc] initWithFormat:format shareContext:nil];
@@ -173,6 +154,7 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
     
     // set the render context on the view
     [self setOpenGLContext:_render_context];
+    [_render_context release];
     
     // cache the underlying CGL context
     _render_context_cgl = [_render_context CGLContextObj];
@@ -201,7 +183,8 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
     param = 1;
     cgl_err = CGLSetParameter(_render_context_cgl, kCGLCPSwapInterval, &param);
     if (cgl_err != kCGLNoError) {
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPSwapInterval failed with error %d: %s", cgl_err, CGLErrorString(cgl_err));
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPSwapInterval failed with error %d: %s",
+            cgl_err, CGLErrorString(cgl_err));
         [self release];
         return nil;
     }
@@ -209,13 +192,15 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
     // disable the MT engine as it is a significant performance hit for Riven X
     cgl_err = CGLDisable(_render_context_cgl, kCGLCEMPEngine);
     if (cgl_err != kCGLNoError) {
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLEnable for kCGLCEMPEngine failed with error %d: %s", cgl_err, CGLErrorString(cgl_err));
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLEnable for kCGLCEMPEngine failed with error %d: %s",
+            cgl_err, CGLErrorString(cgl_err));
         [self release];
         return nil;
     }
     cgl_err = CGLDisable(_load_context_cgl, kCGLCEMPEngine);
     if (cgl_err != kCGLNoError) {
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLEnable for kCGLCEMPEngine failed with error %d: %s", cgl_err, CGLErrorString(cgl_err));
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLEnable for kCGLCEMPEngine failed with error %d: %s",
+            cgl_err, CGLErrorString(cgl_err));
         [self release];
         return nil;
     }
@@ -223,13 +208,15 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
     // set ourselves as the context data
     cgl_err = CGLSetParameter(_render_context_cgl, kCGLCPClientStorage, (const GLint*)&self);
     if (cgl_err != kCGLNoError) {
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s", cgl_err, CGLErrorString(cgl_err));
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s",
+            cgl_err, CGLErrorString(cgl_err));
         [self release];
         return nil;
     }
     cgl_err = CGLSetParameter(_load_context_cgl, kCGLCPClientStorage, (const GLint*)&self);
     if (cgl_err != kCGLNoError) {
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s", cgl_err, CGLErrorString(cgl_err));
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s",
+            cgl_err, CGLErrorString(cgl_err));
         [self release];
         return nil;
     }
@@ -237,13 +224,16 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
     // create the state object for the loading context
     g_loadContextState = [[RXOpenGLState alloc] initWithContext:_load_context_cgl];
     
+    // configure the view's autoresizing behavior to resize itself to match its container
+    [self setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+    
     // do base state setup
     [self _baseOpenGLStateSetup:_load_context_cgl];
     [self _baseOpenGLStateSetup:_render_context_cgl];
     
     // create the CV display link
     CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
-    CVDisplayLinkSetOutputCallback(_displayLink, &_rx_render_setup_output_callback, self);
+    CVDisplayLinkSetOutputCallback(_displayLink, &rx_render_output_callback, self);
     
     // working color space
     _workingColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
@@ -415,40 +405,149 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
 }
 
 #pragma mark -
+#pragma mark view behavior
 
 - (BOOL)isOpaque {
     return YES;
 }
 
-- (BOOL)lockFocusIfCanDraw {
-    BOOL canDraw = [super lockFocusIfCanDraw];
-    if (canDraw && [[self openGLContext] view] != self)
-        [[self openGLContext] setView:self];
-    return canDraw;
+- (void)_handleColorProfileChange:(NSNotification*)notification {
+    CGDirectDisplayID ddid = CVDisplayLinkGetCurrentCGDisplay(_displayLink);
+    CMProfileRef displayProfile;
+    
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"updating display colorspace");
+#endif
+    
+    // ask ColorSync for our current display's profile
+    CMGetProfileByAVID((CMDisplayIDType)ddid, &displayProfile);
+    if (_displayColorSpace)
+        CGColorSpaceRelease(_displayColorSpace);
+    
+    _displayColorSpace = CGColorSpaceCreateWithPlatformColorSpace(displayProfile);
+    CMCloseProfile(displayProfile);
 }
 
-- (void)viewWillMoveToWindow:(NSWindow*)window {
+- (void)_handleScreenChange:(NSNotification*)notification {
+    CGLLockContext(_render_context_cgl);
+    CGLLockContext(_load_context_cgl);
+    
+    if (_displayLink)
+        CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(_displayLink, _render_context_cgl, _cglPixelFormat);
+    CGLSetVirtualScreen(_load_context_cgl, [_render_context currentVirtualScreen]);
+    
+    GLint renderer;
+    CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFARendererID, &renderer);
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"primary screen changed, now using virtual screen %d driven by the \"%@\" renderer", 
+        [_render_context currentVirtualScreen], [RXWorldView rendererNameForID:renderer]);
+    
+    // determine OpenGL version and features
+    [self _determineGLVersion:_render_context_cgl];
+    [self _determineGLFeatures:_render_context_cgl];
+    
+    CGLUnlockContext(_load_context_cgl);
+    CGLUnlockContext(_render_context_cgl);
+}
+
+- (void)viewDidMoveToWindow {
+    [super viewDidMoveToWindow];
+    
     NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self name:NSWindowDidChangeScreenProfileNotification object:nil];
     [center removeObserver:self name:NSWindowDidChangeScreenNotification object:nil];
     
-    if (window) {
-        [center addObserver:self selector:@selector(_displayProfileChanged:) name:NSWindowDidChangeScreenProfileNotification object:window];
-        [center addObserver:self selector:@selector(windowChangedScreen:) name:NSWindowDidChangeScreenNotification object:window];
-        
-        [self _displayProfileChanged:nil];
-    }
+    NSWindow* w = [self window];
+    if (!w)
+        return;
     
-    [super viewWillMoveToWindow:window];
+	[w setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
+//	[w setAllowsConcurrentViewDrawing:YES];
+	[w useOptimizedDrawing:YES];
+	[w makeKeyAndOrderFront:self];
+    
+    [center addObserver:self selector:@selector(_handleColorProfileChange:) name:NSWindowDidChangeScreenProfileNotification object:w];
+    [center addObserver:self selector:@selector(_handleScreenChange:) name:NSWindowDidChangeScreenNotification object:w];
+    
+    [self _handleColorProfileChange:nil];
+    [self _handleScreenChange:nil];
 }
 
-- (void)viewDidMoveToWindow {
-    [self setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+- (void)prepareOpenGL {
+    if (_glInitialized)
+        return;
+    _glInitialized = YES;
     
-    if ([self window])
-        [self _handleScreenChange:nil];
-    [super viewDidMoveToWindow];
+    // make sure the viewport is setup correctly
+    [self reshape];
+    
+    // cache the imp for world render methods
+    _renderTarget = [g_world stateCompositor];
+    _renderDispatch = RXGetRenderImplementation([_renderTarget class], RXRenderingRenderSelector);
+    _postFlushTasksDispatch = RXGetPostFlushTasksImplementation([_renderTarget class], RXRenderingPostFlushTasksSelector);
+    
+    // start the CV display link
+    CVDisplayLinkStart(_displayLink);
 }
+
+- (void)update {
+    CGLLockContext(_load_context_cgl);
+    CGLLockContext(_render_context_cgl);
+    
+    [super update];
+    CGLSetVirtualScreen(_load_context_cgl, [_render_context currentVirtualScreen]);
+    
+    CGLUnlockContext(_load_context_cgl);
+    CGLUnlockContext(_render_context_cgl);
+}
+
+- (void)reshape {
+    if (!_glInitialized || _tornDown)
+        return;
+    
+    float uiScale = ([self window]) ? [[self window] userSpaceScaleFactor] : 1.0F;
+    GLint viewportLeft, viewportBottom;
+    NSRect glRect;
+    
+    // calculate the pixel-aligned rectangle in which OpenGL will render. convertRect converts to/from window coordinates when the view argument is nil
+    glRect.size = NSIntegralRect([self convertRect:[self bounds] toView:nil]).size;
+    glRect.origin = NSPointFromCGPoint(CGPointMake(([self bounds].size.width - glRect.size.width)/2.0,
+                                                   ([self bounds].size.height - glRect.size.height)/2.0));
+    
+    // compute the viewport origin
+    viewportLeft = glRect.origin.x > 0 ? -glRect.origin.x * uiScale : 0;
+    viewportBottom = glRect.origin.y > 0 ? -glRect.origin.y * uiScale : 0;
+    
+    _glWidth = glRect.size.width;
+    _glHeight = glRect.size.height;
+    
+    // use the render context because it's the one that matters for screen output
+    CGLContextObj cgl_ctx = _render_context_cgl;
+    CGLLockContext(cgl_ctx);
+    
+    // set the OpenGL viewport
+    glViewport(viewportLeft, viewportBottom, _glWidth, _glHeight);
+    
+    // set up our coordinate system with lower-left at (0, 0) and upper-right at (_glWidth, _glHeight)
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0.0, _glWidth, 0.0, _glHeight, 0.0, 1.0);
+    
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    
+    glReportError();
+    
+    // let others re-configure OpenGL to their needs
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"sending RXOpenGLDidReshapeNotification notification");
+#endif
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"RXOpenGLDidReshapeNotification" object:self];
+    
+    CGLUnlockContext(cgl_ctx);
+}
+
+#pragma mark -
+#pragma mark OpenGL initialization
 
 - (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx {  
     // set background color to black
@@ -487,118 +586,6 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
         glHint(GL_TRANSFORM_HINT_APPLE, GL_NICEST);
     
     glReportError();
-}
-
-- (void)prepareOpenGL {
-    if (_glInitialized)
-        return;
-    _glInitialized = YES;
-    
-    // make sure the viewport is setup correctly
-    [self reshape];
-    
-    // cache the imp for world render methods
-    _renderTarget = [g_world stateCompositor];
-    _renderDispatch = RXGetRenderImplementation([_renderTarget class], RXRenderingRenderSelector);
-    _postFlushTasksDispatch = RXGetPostFlushTasksImplementation([_renderTarget class], RXRenderingPostFlushTasksSelector);
-    
-    // start the CV display link
-    CVDisplayLinkStart(_displayLink);
-}
-
-- (void)update {
-    CGLLockContext(_load_context_cgl);
-    [_load_context update];
-    CGLUnlockContext(_load_context_cgl);
-    
-    CGLLockContext(_render_context_cgl);
-    [super update];
-    CGLUnlockContext(_render_context_cgl);
-}
-
-- (void)reshape {
-    if (!_glInitialized || _tornDown)
-        return;
-    
-    float uiScale = ([self window]) ? [[self window] userSpaceScaleFactor] : 1.0F;
-    GLint viewportLeft, viewportBottom;
-    NSRect glRect;
-    
-    // calculate the pixel-aligned rectangle in which OpenGL will render. convertRect converts to/from window coordinates when the view argument is nil
-    glRect.size = NSIntegralRect([self convertRect:[self bounds] toView:nil]).size;
-    glRect.origin = NSPointFromCGPoint(CGPointMake(([self bounds].size.width - glRect.size.width)/2.0, ([self bounds].size.height - glRect.size.height)/2.0));
-    
-    // compute the viewport origin
-    viewportLeft = glRect.origin.x > 0 ? -glRect.origin.x * uiScale : 0;
-    viewportBottom = glRect.origin.y > 0 ? -glRect.origin.y * uiScale : 0;
-    
-    _glWidth = glRect.size.width;
-    _glHeight = glRect.size.height;
-    
-    // use the render context because it's the one that matters for screen output
-    CGLContextObj cgl_ctx = _render_context_cgl;
-    CGLLockContext(cgl_ctx);
-    
-    // set the OpenGL viewport
-    glViewport(viewportLeft, viewportBottom, _glWidth, _glHeight);
-    
-    // set up our coordinate system with lower-left at (0, 0) and upper-right at (_glWidth, _glHeight)
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0.0, _glWidth, 0.0, _glHeight, 0.0, 1.0);
-    
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    
-    glReportError();
-    
-    // let others re-configure OpenGL to their needs
-#if defined(DEBUG)
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"sending RXOpenGLDidReshapeNotification notification");
-#endif
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"RXOpenGLDidReshapeNotification" object:self];
-    
-    CGLUnlockContext(cgl_ctx);
-}
-
-#pragma mark -
-
-- (void)_displayProfileChanged:(NSNotification*)notification {
-    CGDirectDisplayID ddid = CVDisplayLinkGetCurrentCGDisplay(_displayLink);
-    CMProfileRef displayProfile;
-    
-#if defined(DEBUG)
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"updating display colorspace");
-#endif
-    
-    // ask ColorSync for our current display's profile
-    CMGetProfileByAVID((CMDisplayIDType)ddid, &displayProfile);
-    if (_displayColorSpace)
-        CGColorSpaceRelease(_displayColorSpace);
-    
-    _displayColorSpace = CGColorSpaceCreateWithPlatformColorSpace(displayProfile);
-    CMCloseProfile(displayProfile);
-}
-
-- (void)_handleScreenChange:(NSNotification*)notification {
-    CGLLockContext(_render_context_cgl);
-    CGLLockContext(_load_context_cgl);
-    
-    if (_displayLink)
-        CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(_displayLink, _render_context_cgl, _cglPixelFormat);
-    CGLSetVirtualScreen(_load_context_cgl, [_render_context currentVirtualScreen]);
-    
-    GLint renderer;
-    CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFARendererID, &renderer);
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"primary screen changed, now using virtual screen %d driven by the \"%@\" renderer", 
-        [_render_context currentVirtualScreen], [RXWorldView rendererNameForID:renderer]);
-    
-    // determine OpenGL version and features
-    [self _determineGLVersion:_render_context_cgl];
-    [self _determineGLFeatures:_render_context_cgl];
-    
-    CGLUnlockContext(_load_context_cgl);
-    CGLUnlockContext(_render_context_cgl);
 }
 
 - (void)_determineGLVersion:(CGLContextObj)cgl_ctx {
@@ -658,7 +645,9 @@ major_number.minor_number major_number.minor_number.release_number
 
 - (void)_determineGLFeatures:(CGLContextObj)cgl_ctx {
     NSMutableString* features_message = [[NSMutableString alloc] initWithString:@"supported OpenGL features:\n"];
-    NSSet* extensions = [[NSSet alloc] initWithArray:[[NSString stringWithCString:(const char*)glGetString(GL_EXTENSIONS) encoding:NSASCIIStringEncoding] componentsSeparatedByString:@" "]];
+    NSSet* extensions = [[NSSet alloc] initWithArray:
+                         [[NSString stringWithCString:(const char*)glGetString(GL_EXTENSIONS)
+                                             encoding:NSASCIIStringEncoding] componentsSeparatedByString:@" "]];
     
     if ([extensions containsObject:@"GL_ARB_texture_rectangle"])
         [features_message appendString:@"    texture rectangle (ARB)\n"];
@@ -682,6 +671,7 @@ major_number.minor_number major_number.minor_number.release_number
         return;
     
     CGLContextObj cgl_ctx = _render_context_cgl;
+    CGLSetCurrentContext(cgl_ctx);
     CGLLockContext(cgl_ctx);
     
     // clear to black

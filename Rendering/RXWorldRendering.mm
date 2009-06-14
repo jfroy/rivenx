@@ -25,7 +25,9 @@
 #if defined(DEBUG)
     RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
 #endif
-    [(RXCardState*)_cardState setActiveCardWithStack:@"aspit" ID:[[[RXEditionManager sharedEditionManager] activeStackWithKey:@"aspit"] entryCardID] waitUntilDone:NO];
+    [(RXCardState*)_cardState setActiveCardWithStack:@"aspit"
+                                                  ID:[[[RXEditionManager sharedEditionManager] activeStackWithKey:@"aspit"] entryCardID]
+                                       waitUntilDone:NO];
     [_stateCompositor setOpacity:1.0f ofState:_cardState];
 }
 
@@ -40,7 +42,10 @@
     audioRenderer->Initialize();
     
     // we can now observe the volume key path rendering setting
-    [[_engineVariables objectForKey:@"rendering"] addObserver:self forKeyPath:@"volume" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionInitial context:[_engineVariables objectForKey:@"rendering"]];
+    [[_engineVariables objectForKey:@"rendering"] addObserver:self
+                                                   forKeyPath:@"volume"
+                                                      options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionInitial
+                                                      context:[_engineVariables objectForKey:@"rendering"]];
     
     // FIXME: we should store the last screen ID (index? some other?) used and keep using that
     // create our window on the main screen
@@ -66,7 +71,8 @@
                                                       screen:mainScreen];
         
         [renderWindow setLevel:NSNormalWindowLevel];
-        [renderWindow setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - (kRXRendererViewportSize.width / 2), (screenRect.size.height / 2) - (kRXRendererViewportSize.height / 2))];
+        [renderWindow setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - (kRXRendererViewportSize.width / 2),
+                                                 (screenRect.size.height / 2) - (kRXRendererViewportSize.height / 2))];
     }
     
     [renderWindow setAcceptsMouseMovedEvents:YES];
@@ -76,16 +82,12 @@
     [renderWindow setReleasedWhenClosed:YES];
     [renderWindow setTitle:@"Riven X"];
     
-    // allocate the world view
+    // allocate the world view (which will create the GL contexes)
     NSRect contentViewRect = [renderWindow contentRectForFrameRect:[renderWindow frame]];
     contentViewRect.origin.x = 0;
     contentViewRect.origin.y = 0;
     _worldView = [[RXWorldView alloc] initWithFrame:contentViewRect];
-    
-    // set the world view as the content view
-    [renderWindow setContentView:_worldView];
-    [_worldView release];
-    
+        
     // initialize the shader manager
     [GLShaderProgramManager sharedManager];
     
@@ -94,6 +96,10 @@
     
     // initialize the dynamic picture unpack buffer
     [RXDynamicPicture sharedDynamicPictureUnpackBuffer];
+    
+    // set the world view as the content view
+    [renderWindow setContentView:_worldView];
+    [_worldView release];
     
     // if we're in fullscreen mode, hide the menu bar now
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"])
