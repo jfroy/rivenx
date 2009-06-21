@@ -48,7 +48,9 @@
     NSError* error = nil;
     Movie movie = [_archive movieWithID:_ID error:&error];
     if (!movie)
-        @throw [NSException exceptionWithName:@"RXMovieException" reason:@"[RXMovieProxy _loadMovie] failed to get movie from archive." userInfo:(error) ? [NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey] : nil];
+        @throw [NSException exceptionWithName:@"RXMovieException"
+                                       reason:@"[RXMovieProxy _loadMovie] failed to get movie from archive."
+                                     userInfo:(error) ? [NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey] : nil];
     
     _movie = [[RXMovie alloc] initWithMovie:movie disposeWhenDone:YES owner:_owner];
     
@@ -163,6 +165,14 @@
         [self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
     
     [_movie stop];
+}
+
+- (void)setRate:(float)rate {
+    // if the movie has not been loaded yet, do that on the main thread
+    if (!_movie)
+        [self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
+    
+    [_movie setRate:rate];
 }
 
 - (QTTime)_noLockCurrentTime {

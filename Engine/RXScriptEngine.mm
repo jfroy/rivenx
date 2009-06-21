@@ -931,7 +931,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
     [movie setLooping:NO];
     
     // start playing the movie
-    [movie play];
+    [movie setRate:1.0f];
 }
 
 - (void)_stopMovie:(RXMovie*)movie {
@@ -4158,6 +4158,12 @@ DEFINE_COMMAND(xgplaywhark) {
     DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, mlst_index);
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 31);
     DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 31);
+}
+
+#pragma mark gspit pools
+
+DEFINE_COMMAND(xgplateau3160_dopools) {
+
 }
 
 @end

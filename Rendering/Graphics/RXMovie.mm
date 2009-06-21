@@ -484,10 +484,22 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 }
 
 - (void)play {
+    [self setRate:1.0f];
+}
+
+- (void)stop {
+    [_movie stop];
+}
+
+- (float)rate {
+    return [_movie rate];
+}
+
+- (void)setRate:(float)rate {
     QTTime current_time = [_movie currentTime];
 
     // play the movie
-    [_movie play];
+    [_movie setRate:rate];
     
     // set the display timestamp to now
     CVTimeStamp ts;
@@ -511,14 +523,6 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
             duration.timeValue = duration.timeValue * _play_ts.videoTimeScale / duration.timeScale;
         _play_ts.videoTime = _play_ts.videoTime % duration.timeValue;
     }
-}
-
-- (void)stop {
-    [_movie stop];
-}
-
-- (float)rate {
-    return [_movie rate];
 }
 
 - (void)_handleRateChange:(NSNotification*)notification {
