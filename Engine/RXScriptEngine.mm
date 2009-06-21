@@ -4163,7 +4163,27 @@ DEFINE_COMMAND(xgplaywhark) {
 #pragma mark gspit pools
 
 DEFINE_COMMAND(xgplateau3160_dopools) {
-
+    // if another pool is already active, we need to play it's disable movie
+    uint32_t pool_button = [[g_world gameState] unsigned32ForKey:@"glkbtns"];
+    switch (pool_button) {
+        case 1:
+            DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
+            break;
+        case 2:
+            DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 4);
+            break;
+        case 3:
+            DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 6);
+            break;
+        case 4:
+            DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 8);
+            break;
+        case 5:
+            DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 10);
+            break;
+        default:
+            break;
+    }
 }
 
 @end
