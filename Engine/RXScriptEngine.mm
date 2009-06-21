@@ -2312,7 +2312,7 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 }
 
 #pragma mark -
-#pragma mark rebel tunnel
+#pragma mark rebel icon puzzle
 
 - (BOOL)_isIconDepressed:(uint16_t)index {
     uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
@@ -2946,7 +2946,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 }
 
 #pragma mark -
-#pragma mark dome support
+#pragma mark common dome methods
 
 - (void)handleVisorButtonPressForDome:(NSString*)dome {
     uint16_t dome_state = [[g_world gameState] unsignedShortForKey:dome];
@@ -4160,6 +4160,7 @@ DEFINE_COMMAND(xgplaywhark) {
     DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 31);
 }
 
+#pragma mark -
 #pragma mark gspit pools
 
 DEFINE_COMMAND(xgplateau3160_dopools) {
@@ -4185,5 +4186,10 @@ DEFINE_COMMAND(xgplateau3160_dopools) {
             break;
     }
 }
+
+#pragma mark -
+#pragma mark village trapeze
+
+
 
 @end
