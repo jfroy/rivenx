@@ -30,7 +30,7 @@ extern const int MHK_WAVE_MP2;
 
 // File structures, turn on packing
 
-#pragma options align=packed
+#pragma pack(push, 1)
 typedef struct {
     uint16_t sampling_rate;
     uint32_t frame_count;
@@ -39,7 +39,7 @@ typedef struct {
     uint16_t compression_type;
     unsigned char reserved[10];
 } MHK_WAVE_Data_chunk_header;
-#pragma options align=reset
+#pragma pack(pop)
 
 // Byte order utilities
 // f == file, n == native

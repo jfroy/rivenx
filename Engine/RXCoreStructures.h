@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 
-#pragma options align=packed
+#pragma pack(push, 1)
 struct rx_core_rect {
     uint16_t left;
     uint16_t top;
@@ -92,7 +92,7 @@ struct rx_sfxe_record {
     uint32_t u5;
     uint32_t u6;
 };
-#pragma options align=reset
+#pragma pack(pop)
 
 #endif // RX_CORE_STRUCTURES_H
 

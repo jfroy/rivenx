@@ -104,7 +104,7 @@ void		CAAUParameter::Init (AudioUnit au, AudioUnitParameterID param, AudioUnitSc
 	} else
 		mParamName = CFStringCreateWithCString(NULL, mParamInfo.name, kCFStringEncodingUTF8);
 	
-	char* str = 0;
+	const char* str = 0;
 	switch (mParamInfo.unit)
 	{
 		case kAudioUnitParameterUnit_Boolean:
@@ -327,7 +327,7 @@ CFStringRef CAAUParameter::GetStringFromValueCopy(const Float32 *value) const
 											&stringValue, 
 											&propertySize);
 		
-		if (err == noErr && stringValue.outString != NULL)
+		if (!err && stringValue.outString != NULL)
 			return stringValue.outString;
 	}
 	
@@ -355,7 +355,7 @@ Float32 CAAUParameter::GetValueFromString(CFStringRef str) const
 										&valueString, 
 										&propertySize);
 										
-		if (err == noErr) {
+		if (!err) {
 			return valueString.outValue;
 		}
 	}
@@ -388,7 +388,7 @@ void	CAAUParameter::Print() const
 	if (!CFStringGetCString (mParamName, chars, len * 2, kCFStringEncodingUTF8))
 		chars[0] = 0;
 	
-	printf ("ID: %ld, Clump: %ld, Name: %s\n", mParameterID, clump, chars);
+	printf ("ID: %ld, Clump: %u, Name: %s\n", (long unsigned int) mParameterID, (unsigned int) clump, chars);
 	free (chars);
 }
 #endif

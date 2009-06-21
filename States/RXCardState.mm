@@ -466,11 +466,11 @@ init_failure:
     
     // configure the VAs
     glEnableClientState(GL_VERTEX_ARRAY); glReportError();
-    glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 0)); glReportError();
+    glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET((void*)NULL, 0)); glReportError();
     
     glClientActiveTexture(GL_TEXTURE0);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), (void*)BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET((void*)NULL, 2 * sizeof(GLfloat))); glReportError();
     
     // shaders
     

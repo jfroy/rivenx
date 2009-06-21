@@ -25,7 +25,7 @@ typedef enum {
 
 // File structures, turn on packing
 
-#pragma options align=packed
+#pragma pack(push, 1)
 typedef struct {
     uint16_t width;
     uint16_t height;
@@ -33,7 +33,7 @@ typedef struct {
     unsigned char compression_flag;
     unsigned char truecolor_flag;
 } MHK_BITMAP_header;
-#pragma options align=reset
+#pragma pack(pop)
 
 // Byte order utilities
 // f == file, n == native

@@ -109,7 +109,7 @@ static PyMethodDef rivenx_methods[] = {
     PyObject* main_module = PyImport_AddModule("__main__");
     PyObject* global_dict = PyModule_GetDict(main_module);
     PyObject* exec_cmd_f = PyDict_GetItemString(global_dict, "exec_cmd");
-    PyObject_CallFunction(exec_cmd_f, "s", [[sender stringValue] cStringUsingEncoding:NSASCIIStringEncoding]);
+    PyObject_CallFunction(exec_cmd_f, (char*)"s", [[sender stringValue] cStringUsingEncoding:NSASCIIStringEncoding]);
     [sender setStringValue:@""];
 }
 

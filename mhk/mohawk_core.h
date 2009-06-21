@@ -28,7 +28,7 @@ extern const uint32_t MHK_RSRC_signature_integer;
 
 // File structures, turn on packing
 
-#pragma options align=packed
+#pragma pack(push, 1)
 typedef struct {
     char signature[4];
     uint32_t content_length;
@@ -83,7 +83,7 @@ typedef struct {
     unsigned char flags;
     uint16_t unknown1;
 } MHK_file_table_entry;
-#pragma options align=reset
+#pragma pack(pop)
 
 // Byte order utilities
 // f == file, n == native

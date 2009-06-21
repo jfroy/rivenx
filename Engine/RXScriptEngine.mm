@@ -1034,7 +1034,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
                      picture_width, picture_height,
                      0,
                      GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-                     BUFFER_OFFSET(NULL, 0)); glReportError();
+                     BUFFER_OFFSET((void*)NULL, 0)); glReportError();
         
         // reset the unpack buffer state and re-enable client storage
         glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
