@@ -113,7 +113,8 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
         NSDictionary* soundDescriptor = [archive soundDescriptorWithID:[sound_id unsignedShortValue] error:&error];
         if (!soundDescriptor) {
             uint32_t code = (uint32_t)[error code];
-            fprintf(stderr, "an error in the %s domain with code %d (%c%c%c%c) has occured\n", [[error domain] UTF8String], code, ((char*)&code)[0], ((char*)&code)[1], ((char*)&code)[2], ((char*)&code)[3]);
+            fprintf(stderr, "an error in the %s domain with code %d (%c%c%c%c) has occured\n",
+                    [[error domain] UTF8String], code, ((char*)&code)[0], ((char*)&code)[1], ((char*)&code)[2], ((char*)&code)[3]);
             continue;
         }
         
@@ -126,7 +127,8 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
         id <MHKAudioDecompression> decomp = [archive decompressorWithSoundID:[sound_id unsignedShortValue] error:&error];
         if (!decomp) {
             uint32_t code = (uint32_t)[error code];
-            fprintf(stderr, "an error in the %s domain with code %d (%c%c%c%c) has occured\n", [[error domain] UTF8String], code, ((char*)&code)[0], ((char*)&code)[1], ((char*)&code)[2], ((char*)&code)[3]);
+            fprintf(stderr, "an error in the %s domain with code %d (%c%c%c%c) has occured\n",
+                    [[error domain] UTF8String], code, ((char*)&code)[0], ((char*)&code)[1], ((char*)&code)[2], ((char*)&code)[3]);
             continue;
         }
         
@@ -153,7 +155,7 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
         [decomp fillAudioBufferList:&abl];
         
         // create a caf file
-        int fd = open([[sound_path_base stringByAppendingPathExtension:@"caf"] UTF8String], O_WRONLY | O_CREAT | O_TRUNC, 0600);
+        int fd = open([[sound_path_base stringByAppendingPathExtension:@"caf"] UTF8String], O_WRONLY | O_CREAT | O_TRUNC, 0644);
         
         // caf header
         CAFFileHeader ch = {kCAF_FileType, kCAF_FileVersion_Initial, 0};
