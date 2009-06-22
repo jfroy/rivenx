@@ -4190,6 +4190,8 @@ DEFINE_COMMAND(xgplateau3160_dopools) {
 #pragma mark -
 #pragma mark village trapeze
 
+DEFINE_COMMAND(xvga1300_carriage) {
 
+}
 
 @end

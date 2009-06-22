@@ -1873,16 +1873,8 @@
 		3131F6ED0FCB234100A7469F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
 				INSTALL_PATH = /usr/local/bin;
-				PREBINDING = NO;
+				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = tbmp_dump;
 			};
 			name = Debug;
@@ -1890,13 +1882,8 @@
 		3131F6EE0FCB234100A7469F /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
 				INSTALL_PATH = /usr/local/bin;
-				PREBINDING = NO;
+				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = tbmp_dump;
 			};
 			name = "Debug Release";
@@ -1904,44 +1891,26 @@
 		3131F6EF0FCB234100A7469F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/AppKit.framework/Headers/AppKit.h";
 				INSTALL_PATH = /usr/local/bin;
-				PREBINDING = NO;
+				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = tbmp_dump;
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
 		31333F5609B01A2300DB6FC7 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
-				PREBINDING = NO;
 				PRODUCT_NAME = rxaudio_test;
-				STRIP_INSTALLED_PRODUCT = NO;
 			};
 			name = Debug;
 		};
 		31333F5809B01A2300DB6FC7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
-				PREBINDING = NO;
 				PRODUCT_NAME = rxaudio_test;
 			};
 			name = Release;
@@ -2018,10 +1987,8 @@
 		316E1EEA0E77803200F28E2A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
 				INSTALL_PATH = /usr/local/bin;
+				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = mhkdump;
 			};
 			name = Debug;
@@ -2030,6 +1997,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				INSTALL_PATH = /usr/local/bin;
+				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = mhkdump;
 			};
 			name = "Debug Release";
@@ -2037,8 +2005,8 @@
 		316E1EEC0E77803200F28E2A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
 				INSTALL_PATH = /usr/local/bin;
+				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = mhkdump;
 			};
 			name = Release;
@@ -2273,9 +2241,6 @@
 		31DAA10B09D888FA00F63F20 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = RXCardAudioSource_test;
@@ -2285,9 +2250,6 @@
 		31DAA10D09D888FA00F63F20 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = RXCardAudioSource_test;
@@ -2297,48 +2259,18 @@
 		31DC682509CB87EF00BFF447 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_ALTIVEC_EXTENSIONS = YES;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
-				GCC_ENABLE_CPP_RTTI = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_FAST_OBJC_DISPATCH = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = DEBUG;
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				PREBINDING = NO;
 				PRODUCT_NAME = VirtualRingBuffer_test;
-				WARNING_CFLAGS = "-Wall";
-				ZERO_LINK = NO;
 			};
 			name = Debug;
 		};
 		31DC682709CB87EF00BFF447 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				GCC_ALTIVEC_EXTENSIONS = YES;
-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
-				GCC_ENABLE_CPP_RTTI = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_FAST_OBJC_DISPATCH = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
-				GCC_MODEL_TUNING = G5;
-				GCC_PREPROCESSOR_DEFINITIONS = DEBUG;
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				PREBINDING = NO;
 				PRODUCT_NAME = VirtualRingBuffer_test;
-				WARNING_CFLAGS = "-Wall";
-				ZERO_LINK = NO;
 			};
 			name = Release;
 		};
@@ -2366,49 +2298,24 @@
 		31EAEB3A0A92530E004CC449 /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
-				PREBINDING = NO;
 				PRODUCT_NAME = rxaudio_test;
-				STRIP_INSTALLED_PRODUCT = NO;
 			};
 			name = "Debug Release";
 		};
 		31EAEB3B0A92530E004CC449 /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_ALTIVEC_EXTENSIONS = YES;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_CPP_EXCEPTIONS = NO;
-				GCC_ENABLE_CPP_RTTI = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_FAST_OBJC_DISPATCH = YES;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = DEBUG;
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
-				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				PREBINDING = NO;
 				PRODUCT_NAME = VirtualRingBuffer_test;
-				WARNING_CFLAGS = "-Wall";
-				ZERO_LINK = NO;
 			};
 			name = "Debug Release";
 		};
 		31EAEB3C0A92530E004CC449 /* Debug Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				INSTALL_PATH = "$(HOME)/bin";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = RXCardAudioSource_test;
