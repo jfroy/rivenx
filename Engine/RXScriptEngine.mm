@@ -4194,7 +4194,107 @@ DEFINE_COMMAND(xgplateau3160_dopools) {
 #pragma mark village trapeze
 
 DEFINE_COMMAND(xvga1300_carriage) {
-
+    RXTransition* transition;
+    
+    // first play the handle movie (code 1)
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 1);
+    
+    // in a transaction, queue a slide up transition and enable picture 7
+    DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
+    
+    // we need to disable screen update programs to avoid painting the floor
+    _disable_screen_update_programs = YES;
+    
+    // we need to disable the water effect while we're looking up
+    [controller disableWaterSpecialEffect];
+    
+    transition = [[RXTransition alloc] initWithCode:15 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+    [controller queueTransition:transition];
+    [transition release];
+    
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 7);
+    DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+    
+    // re-enable screen update programs
+    _disable_screen_update_programs = NO;
+    
+    // play the trapeze coming down from above movie (code 4)
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 4);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 4);
+    
+    // in a transaction, queue a slide down transition and enable picture 1
+    DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
+    
+    transition = [[RXTransition alloc] initWithCode:14 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+    [controller queueTransition:transition];
+    [transition release];
+    
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
+    DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+    
+    // re-enable the water special effect; we have to do this after the screen
+    // update otherwise the transition will be wrong
+    [controller enableWaterSpecialEffect];
+    
+    // play the trapeze coming down movie (code 2)
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
+    
+    // show the cursor again (it was hidden by the play movie blocking commands)
+    if (_did_hide_mouse) {
+        [controller showMouseCursor];
+        _did_hide_mouse = NO;
+    }
+    
+    // if the gallows floor is open, the player can't hop on the trapeze and we
+    // just sleep the thread for 5 seconds then have the trapeze go up
+    if ([[g_world gameState] unsigned32ForKey:@"jGallows"]) {        
+        // wait 5 seconds
+        usleep(5 * 1E6);
+        
+        // play the trapeze going up movie (code 3)
+        DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, 3);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 2);
+        DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 3);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 3);
+        
+        // refresh the card
+        DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+        
+        // all done
+        return;
+    }
+    
+    // run the run loop and watch for a mouse down (somewhere??) for the next
+    // 5 seconds
+    // track the mouse until the mouse button is released
+    CFAbsoluteTime trapeze_window_start = CFAbsoluteTimeGetCurrent();
+    NSRect mouse_vector = [controller mouseVector];
+    BOOL mouse_initially_down = (isfinite(mouse_vector.size.width)) ? YES : NO;
+    fprintf(stderr, "mouse_initially_down=%d\n", mouse_initially_down);
+    BOOL mouse_was_pressed = NO;
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]])
+    {
+        // have we passed the trapeze window?
+        if (trapeze_window_start + 5.0 < CFAbsoluteTimeGetCurrent())
+            break;
+        
+        // if the mouse was initially down and we see that it's now up, clear
+        // the mouse initially down flag
+        if (mouse_initially_down && !isfinite(mouse_vector.size.width))
+            mouse_initially_down = NO;
+        
+        // if the mouse is down, set mouse_was_pressed to YES and exit the loop
+        if (!mouse_initially_down && isfinite(mouse_vector.size.width)) {
+            mouse_was_pressed = YES;
+            break;
+        }
+        
+        mouse_vector = [controller mouseVector];
+    }
+    
+    fprintf(stderr, "mouse_was_pressed=%d\n", mouse_was_pressed);
 }
 
 @end

@@ -1103,6 +1103,18 @@ init_failure:
         _back_render_state->water_fx.owner = nil;
 }
 
+- (void)disableWaterSpecialEffect {
+    OSSpinLockLock(&_render_lock);
+    _water_sfx_disabled = YES;
+    OSSpinLockUnlock(&_render_lock);
+}
+
+- (void)enableWaterSpecialEffect {
+    OSSpinLockLock(&_render_lock);
+    _water_sfx_disabled = NO;
+    OSSpinLockUnlock(&_render_lock);
+}
+
 - (void)queueTransition:(RXTransition*)transition { 
     // queue the transition
     [_transitionQueue addObject:transition];
@@ -1389,7 +1401,7 @@ init_failure:
             [renderObject render:outputTime inContext:cgl_ctx framebuffer:_fbos[RX_CARD_DYNAMIC_RENDER_INDEX]];
     }
     
-    if (r->water_fx.sfxe) {
+    if (r->water_fx.sfxe && !_water_sfx_disabled) {
         // map pointer for the water buffer
         void* water_draw_ptr = NULL;
         
