@@ -462,9 +462,12 @@ static NSMapTable* _riven_external_command_dispatch_map;
     }
 
     // run screen update programs
-    _doing_screen_update = YES;
-    [self _runScreenUpdatePrograms];
-    _doing_screen_update = NO;
+    if (!_disable_screen_update_programs) {
+        _doing_screen_update = YES;
+        [self _runScreenUpdatePrograms];
+        _doing_screen_update = NO;
+    } else
+        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@screen update (programs disabled)", logPrefix);
     
     // some cards disable screen updates during screen update programs, so we
     // need to decrement the counter here to function properly; see tspit 229
@@ -507,8 +510,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     OSSpinLockUnlock(&_activeHotspotsLock);
     
     // reset auto-activation states
-    _didActivatePLST = NO;
-    _didActivateSLST = NO;
+    _did_activate_plst = NO;
+    _did_activate_slst = NO;
     
     // reset the transition queue flag
     _queuedAPushTransition = NO;
@@ -529,7 +532,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
     }
     
     // activate the first picture if none has been enabled already
-    if ([card pictureCount] > 0 && !_didActivatePLST) {
+    if ([card pictureCount] > 0 && !_did_activate_plst) {
 #if defined(DEBUG)
         RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first plst record", logPrefix);
 #endif
@@ -598,12 +601,12 @@ static NSMapTable* _riven_external_command_dispatch_map;
     }
     
     // activate the first sound group if none has been enabled already
-    if ([[card soundGroups] count] > 0 && !_didActivateSLST) {
+    if ([[card soundGroups] count] > 0 && !_did_activate_slst) {
 #if defined(DEBUG)
         RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first slst record", logPrefix);
 #endif
         [controller activateSoundGroup:[[card soundGroups] objectAtIndex:0]];
-        _didActivateSLST = YES;
+        _did_activate_slst = YES;
     }
     
 #if defined(DEBUG)
@@ -1153,7 +1156,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
     _synthesizedSoundGroup = [card createSoundGroupWithSLSTRecord:(argv + 1) soundCount:soundCount swapBytes:NO];
     
     [controller activateSoundGroup:_synthesizedSoundGroup];
-    _didActivateSLST = YES;
+    _did_activate_slst = YES;
     
     [oldSoundGroup release];
 }
@@ -1748,7 +1751,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
     [self _updateScreen];
     
     // indicate that an PLST record has been activated (to manage the automatic activation of PLST record 1 if none has been)
-    _didActivatePLST = YES;
+    _did_activate_plst = YES;
 }
 
 // 40
@@ -1762,7 +1765,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
     
     // the script handler is responsible for this
     [controller activateSoundGroup:[[card soundGroups] objectAtIndex:argv[0] - 1]];
-    _didActivateSLST = YES;
+    _did_activate_slst = YES;
 }
 
 // 41
@@ -1876,7 +1879,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
     
     // activate the sound group
     [controller activateSoundGroup:sg];
-    _didActivateSLST = YES;
+    _did_activate_slst = YES;
     
     // restore its original gain
     sg->gain = original_gain;

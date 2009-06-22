@@ -349,7 +349,15 @@ init_failure:
         glReportError();
         
         // allocate memory for the texture
-        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXRendererViewportSize.width, kRXRendererViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
+        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                     0,
+                     GL_RGBA8,
+                     kRXRendererViewportSize.width,
+                     kRXRendererViewportSize.height,
+                     0,
+                     GL_BGRA,
+                     GL_UNSIGNED_INT_8_8_8_8_REV,
+                     NULL); glReportError();
         
         // color0 texture attach
         glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_RECTANGLE_ARB, _textures[i], 0); glReportError();
@@ -375,7 +383,9 @@ init_failure:
     NSDictionary* inventoryTextureDescriptors[3];
     uint32_t inventoryTotalTextureSize = 0;
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-        inventoryTextureDescriptors[inventory_i] = [[g_world extraBitmapsArchive] bitmapDescriptorWithID:[[journalDescriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue] error:&error];
+        inventoryTextureDescriptors[inventory_i] = [[g_world extraBitmapsArchive]
+                                                    bitmapDescriptorWithID:[[journalDescriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue]
+                                                    error:&error];
         if (!inventoryTextureDescriptors[inventory_i]) {
             RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get inventory texture descriptor for item \"%@\": %@", RX_INVENTORY_KEYS[inventory_i], error);
             continue;

@@ -41,8 +41,9 @@
     
     int32_t _screen_update_disable_counter;
     BOOL _doing_screen_update;
-    BOOL _didActivatePLST;
-    BOOL _didActivateSLST;
+    BOOL _did_activate_plst;
+    BOOL _did_activate_slst;
+    BOOL _disable_screen_update_programs;
     
     GLuint tiny_marble_atlas;
     
