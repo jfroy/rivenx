@@ -4267,14 +4267,14 @@ DEFINE_COMMAND(xvga1300_carriage) {
     
     // run the run loop and wait for a mouse down event within the next
     // 5 seconds
-    CFAbsoluteTime trapeze_window_start = CFAbsoluteTimeGetCurrent();
+    CFAbsoluteTime trapeze_window_end = CFAbsoluteTimeGetCurrent() + 5.0;
     uint64_t initial_mouse_down_count = [controller mouseDownEventCount];
     BOOL mouse_was_pressed = NO;
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
                                     beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]])
     {
         // have we passed the trapeze window?
-        if (trapeze_window_start + 5.0 < CFAbsoluteTimeGetCurrent())
+        if (trapeze_window_end < CFAbsoluteTimeGetCurrent())
             break;
         
         // if the mouse is down, set mouse_was_pressed to YES and exit the loop
