@@ -2963,7 +2963,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 
 - (void)checkDome:(NSString*)dome mutingVisorButtonMovie:(BOOL)mute_visor {
     // when was the mouse pressed?
-    double mouse_ts_s = [controller mouseTimetamp];
+    double mouse_ts_s = [controller mouseTimestamp];
     
     // when was the movie at the time?
     uintptr_t k = 1;

@@ -219,6 +219,7 @@ static void rx_release_owner_applier(const void* value, void* context) {
     _mouseVector.size.width = INFINITY;
     _mouseVector.size.height = INFINITY;
     _mouse_timestamp = RXTimingTimestampDelta(RXTimingNow(), 0);
+    _mouse_down_counter = 0;
     
     // register for current card request notifications
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_broadcastCurrentCard:) name:@"RXBroadcastCurrentCardNotification" object:nil];
@@ -2075,11 +2076,18 @@ exit_flush_tasks:
 #pragma mark -
 #pragma mark user event handling
 
-- (double)mouseTimetamp {
+- (double)mouseTimestamp {
     OSSpinLockLock(&_mouse_state_lock);
     double t = _mouse_timestamp;
     OSSpinLockUnlock(&_mouse_state_lock);
     return t;
+}
+
+- (uint64_t)mouseDownEventCount {
+    OSSpinLockLock(&_mouse_state_lock);
+    uint64_t c = _mouse_down_counter;
+    OSSpinLockUnlock(&_mouse_state_lock);
+    return c;
 }
 
 - (NSRect)mouseVector {
@@ -2345,12 +2353,12 @@ exit_flush_tasks:
     _mouseVector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
     _mouseVector.size = NSZeroSize;
     _mouse_timestamp = [event timestamp];
+    _mouse_down_counter++;
     OSSpinLockUnlock(&_mouse_state_lock);
     
     // if hotspot handling is disabled, simply return
-    if (_hotspot_handling_disable_counter > 0) {
+    if (_hotspot_handling_disable_counter > 0)
         return;
-    }
     
     // cannot use the front card during state swaps
     OSSpinLockLock(&_state_swap_lock);
@@ -2384,9 +2392,8 @@ exit_flush_tasks:
     OSSpinLockUnlock(&_mouse_state_lock);
     
     // if hotspot handling is disabled, simply return
-    if (_hotspot_handling_disable_counter > 0) {
+    if (_hotspot_handling_disable_counter > 0)
         return;
-    }
     
     // finally we need to update the hotspot state; updateHotspotState will take care of sending the mouse up event if there is a
     // mouse down hotspot and the mouse is still over that hotspot
