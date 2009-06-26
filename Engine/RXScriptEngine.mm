@@ -4265,13 +4265,10 @@ DEFINE_COMMAND(xvga1300_carriage) {
         return;
     }
     
-    // run the run loop and watch for a mouse down (somewhere??) for the next
+    // run the run loop and wait for a mouse down event within the next
     // 5 seconds
-    // track the mouse until the mouse button is released
     CFAbsoluteTime trapeze_window_start = CFAbsoluteTimeGetCurrent();
-    NSRect mouse_vector = [controller mouseVector];
-    BOOL mouse_initially_down = (isfinite(mouse_vector.size.width)) ? YES : NO;
-    fprintf(stderr, "mouse_initially_down=%d\n", mouse_initially_down);
+    uint64_t initial_mouse_down_count = [controller mouseDownEventCount];
     BOOL mouse_was_pressed = NO;
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
                                     beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]])
@@ -4280,18 +4277,11 @@ DEFINE_COMMAND(xvga1300_carriage) {
         if (trapeze_window_start + 5.0 < CFAbsoluteTimeGetCurrent())
             break;
         
-        // if the mouse was initially down and we see that it's now up, clear
-        // the mouse initially down flag
-        if (mouse_initially_down && !isfinite(mouse_vector.size.width))
-            mouse_initially_down = NO;
-        
         // if the mouse is down, set mouse_was_pressed to YES and exit the loop
-        if (!mouse_initially_down && isfinite(mouse_vector.size.width)) {
+        if ([controller mouseDownEventCount] > initial_mouse_down_count) {
             mouse_was_pressed = YES;
             break;
         }
-        
-        mouse_vector = [controller mouseVector];
     }
     
     fprintf(stderr, "mouse_was_pressed=%d\n", mouse_was_pressed);
