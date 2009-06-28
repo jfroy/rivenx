@@ -1078,17 +1078,23 @@ init_failure:
 #endif
 }
 
-- (void)disableAllMovies {
-    OSSpinLockLock(&_render_lock);
-    
+- (void)_disableAllMoviesNoLock {
     CFArrayApplyFunction((CFArrayRef)_active_movies, CFRangeMake(0, [_active_movies count]), rx_release_owner_applier, self);
     [_active_movies removeAllObjects];
-    
-    OSSpinLockUnlock(&_render_lock);
     
 #if defined(DEBUG)
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled all movies [%d active movies]", [_active_movies count]);
 #endif
+}
+
+- (void)disableAllMovies {
+    OSSpinLockLock(&_render_lock);
+    [self _disableAllMoviesNoLock];
+    OSSpinLockUnlock(&_render_lock);
+}
+
+- (void)disableAllMoviesOnNextScreenUpdate {
+    _disable_movies_next_update = YES;
 }
 
 - (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner {
@@ -1183,6 +1189,10 @@ init_failure:
     
     // release the state swap lock
     OSSpinLockUnlock(&_state_swap_lock);
+    
+    if (_disable_movies_next_update)
+        [self _disableAllMoviesNoLock];
+    _disable_movies_next_update = NO;
     
     // we can resume rendering now
     OSSpinLockUnlock(&_render_lock);

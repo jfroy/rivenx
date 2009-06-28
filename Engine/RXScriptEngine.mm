@@ -500,9 +500,6 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
     // disable screen updates
     DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
-     
-    // disable all movies (not sure this needs to be done here, but bad drawing glitches occur if this is not done, see bspit 163)
-    [(NSObject*)controller performSelectorOnMainThread:@selector(disableAllMovies) withObject:nil waitUntilDone:NO];
     
     // clear all active hotspots and replace them with the new card's hotspots
     OSSpinLockLock(&_activeHotspotsLock);
@@ -521,6 +518,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
     
     // reset water animation
     [controller queueSpecialEffect:NULL owner:card];
+    
+    // disable all movies on the next screen refresh (bad drawing glitches occur if this is not done, see bspit 163)
+    [controller disableAllMoviesOnNextScreenUpdate];
     
     // execute card open programs
     NSArray* programs = [[card events] objectForKey:RXCardOpenScriptKey];
