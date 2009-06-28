@@ -54,6 +54,12 @@ CF_INLINE rx_rect_t RXRectMake(GLint x, GLint y, GLsizei width, GLsizei height) 
     rx_rect_t rect; rect.origin = RXPointMake(x, y); rect.size = RXSizeMake(width, height); return rect;
 }
 
+struct rx_event {
+    NSPoint location;
+    NSTimeInterval timestamp;
+};
+typedef struct rx_event rx_event_t;
+
 #pragma mark -
 #pragma mark rendering constants
 

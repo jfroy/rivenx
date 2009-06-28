@@ -69,6 +69,8 @@
     NSTimer* event_timer;
     uint16_t whark_solo_card;
     BOOL played_one_whark_solo;
+    
+    NSRect trapeze_rect;
 }
 
 - (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr;

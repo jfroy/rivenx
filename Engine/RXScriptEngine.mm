@@ -236,6 +236,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
     dome_slider_background_position.x = 200;
     dome_slider_background_position.y = 250;
     
+    // the trapeze rect is emcompasses the bottom part of the trapeze on jspit 276
+    trapeze_rect = NSMakeRect(310, 172, 16, 36);
+    
     return self;
 }
 
@@ -4268,7 +4271,7 @@ DEFINE_COMMAND(xvga1300_carriage) {
     // run the run loop and wait for a mouse down event within the next
     // 5 seconds
     CFAbsoluteTime trapeze_window_end = CFAbsoluteTimeGetCurrent() + 5.0;
-    uint64_t initial_mouse_down_count = [controller mouseDownEventCount];
+    rx_event_t mouse_down_event = [controller lastMouseDownEvent];
     BOOL mouse_was_pressed = NO;
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
                                     beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]])
@@ -4277,14 +4280,75 @@ DEFINE_COMMAND(xvga1300_carriage) {
         if (trapeze_window_end < CFAbsoluteTimeGetCurrent())
             break;
         
-        // if the mouse is down, set mouse_was_pressed to YES and exit the loop
-        if ([controller mouseDownEventCount] > initial_mouse_down_count) {
-            mouse_was_pressed = YES;
-            break;
+        // if the mouse has been pressed, update the mouse down event
+        rx_event_t event = [controller lastMouseDownEvent];
+        if (event.timestamp > mouse_down_event.timestamp) {
+            mouse_down_event = event;
+            
+            // check where the mouse was pressed, and if it is inside the
+            // trapeze region, set mouse_was_pressed to YES and exit the loop
+            if (NSPointInRect(mouse_down_event.location, trapeze_rect)) {
+                mouse_was_pressed = YES;
+                break;
+            }
         }
     }
     
-    fprintf(stderr, "mouse_was_pressed=%d\n", mouse_was_pressed);
+    // if the player did not click on the trapeze within the alloted time, have
+    // the trapeze go back up
+    if (!mouse_was_pressed) {
+        // play the trapeze going up movie (code 3)
+        DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, 3);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 2);
+        DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 3);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 3);
+        
+        // refresh the card
+        DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+        
+        // all done
+        return;
+    }
+    
+    // hide the cursor (if it is not already hidden)
+    if (!_did_hide_mouse) {
+        [controller hideMouseCursor];
+        _did_hide_mouse = YES;
+    }
+    
+    // schedule a forward transition
+    transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+    [controller queueTransition:transition];
+    [transition release];
+    
+    // go to card RMAP 101709
+    uint16_t card_id = [[[card descriptor] parent] cardIDFromRMAPCode:101709];
+    DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, card_id);
+    
+    // schedule a transition with code 12 (from left, push new and old)
+    transition = [[RXTransition alloc] initWithCode:12 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+    [controller queueTransition:transition];
+    [transition release];
+    
+    // go to card RMAP 101045
+    card_id = [[[card descriptor] parent] cardIDFromRMAPCode:101045];
+    DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, card_id);
+    
+    // play movie with code 1 (going up movie)
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, 1);
+    
+    // wait 7 seconds before activating the "upper village" ambience
+    usleep(7 * 1E6);
+    
+    // activate SLST 2 (upper village ambience)
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 2);
+    
+    // wait the movie to end
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
+    
+    // go to card RMAP 94567
+    card_id = [[[card descriptor] parent] cardIDFromRMAPCode:94567];
+    DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, card_id);
 }
 
 @end

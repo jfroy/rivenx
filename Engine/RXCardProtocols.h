@@ -41,9 +41,8 @@
 
 @protocol RXCardEventsHandlerProtocol <NSObject>
 - (double)mouseTimestamp;
-- (uint64_t)mouseDownEventCount;
+- (rx_event_t)lastMouseDownEvent;
 - (NSRect)mouseVector;
-
 - (void)resetMouseVector;
 
 - (void)showMouseCursor;

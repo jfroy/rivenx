@@ -215,11 +215,10 @@ static void rx_release_owner_applier(const void* value, void* context) {
     [self _initializeRendering];
     
     // initialize the mouse state
-    _mouseVector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
-    _mouseVector.size.width = INFINITY;
-    _mouseVector.size.height = INFINITY;
+    _mouse_vector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
+    _mouse_vector.size.width = INFINITY;
+    _mouse_vector.size.height = INFINITY;
     _mouse_timestamp = RXTimingTimestampDelta(RXTimingNow(), 0);
-    _mouse_down_counter = 0;
     
     // register for current card request notifications
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_broadcastCurrentCard:) name:@"RXBroadcastCurrentCardNotification" object:nil];
@@ -2083,27 +2082,27 @@ exit_flush_tasks:
     return t;
 }
 
-- (uint64_t)mouseDownEventCount {
+- (rx_event_t)lastMouseDownEvent {
     OSSpinLockLock(&_mouse_state_lock);
-    uint64_t c = _mouse_down_counter;
+    rx_event_t e = _last_mouse_down_event;
     OSSpinLockUnlock(&_mouse_state_lock);
-    return c;
+    return e;
 }
 
 - (NSRect)mouseVector {
     OSSpinLockLock(&_mouse_state_lock);
-    NSRect r = _mouseVector;
+    NSRect r = _mouse_vector;
     OSSpinLockUnlock(&_mouse_state_lock);
     return r;
 }
 
 - (void)resetMouseVector {
     OSSpinLockLock(&_mouse_state_lock);
-    if (isfinite(_mouseVector.size.width)) {
-        _mouseVector.origin.x = _mouseVector.origin.x + _mouseVector.size.width;
-        _mouseVector.origin.y = _mouseVector.origin.y + _mouseVector.size.height;
-        _mouseVector.size.width = 0.0;
-        _mouseVector.size.height = 0.0;
+    if (isfinite(_mouse_vector.size.width)) {
+        _mouse_vector.origin.x = _mouse_vector.origin.x + _mouse_vector.size.width;
+        _mouse_vector.origin.y = _mouse_vector.origin.y + _mouse_vector.size.height;
+        _mouse_vector.size.width = 0.0;
+        _mouse_vector.size.height = 0.0;
     }
     OSSpinLockUnlock(&_mouse_state_lock);
 }
@@ -2325,7 +2324,7 @@ exit_flush_tasks:
     
     // update the mouse vector
     OSSpinLockLock(&_mouse_state_lock);
-    _mouseVector.origin = mousePoint;
+    _mouse_vector.origin = mousePoint;
     _mouse_timestamp = [event timestamp];
     OSSpinLockUnlock(&_mouse_state_lock);
     
@@ -2338,8 +2337,8 @@ exit_flush_tasks:
     
     // update the mouse vector
     OSSpinLockLock(&_mouse_state_lock);
-    _mouseVector.size.width = mousePoint.x - _mouseVector.origin.x;
-    _mouseVector.size.height = mousePoint.y - _mouseVector.origin.y;
+    _mouse_vector.size.width = mousePoint.x - _mouse_vector.origin.x;
+    _mouse_vector.size.height = mousePoint.y - _mouse_vector.origin.y;
     _mouse_timestamp = [event timestamp];
     OSSpinLockUnlock(&_mouse_state_lock);
     
@@ -2350,10 +2349,11 @@ exit_flush_tasks:
 - (void)mouseDown:(NSEvent*)event {
     // update the mouse vector
     OSSpinLockLock(&_mouse_state_lock);
-    _mouseVector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
-    _mouseVector.size = NSZeroSize;
+    _mouse_vector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
+    _mouse_vector.size = NSZeroSize;
     _mouse_timestamp = [event timestamp];
-    _mouse_down_counter++;
+    _last_mouse_down_event.location = _mouse_vector.origin;
+    _last_mouse_down_event.timestamp = _mouse_timestamp;
     OSSpinLockUnlock(&_mouse_state_lock);
     
     // if hotspot handling is disabled, simply return
@@ -2385,9 +2385,9 @@ exit_flush_tasks:
 - (void)mouseUp:(NSEvent*)event {
     // update the mouse vector
     OSSpinLockLock(&_mouse_state_lock);
-    _mouseVector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
-    _mouseVector.size.width = INFINITY;
-    _mouseVector.size.height = INFINITY;
+    _mouse_vector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
+    _mouse_vector.size.width = INFINITY;
+    _mouse_vector.size.height = INFINITY;
     _mouse_timestamp = [event timestamp];
     OSSpinLockUnlock(&_mouse_state_lock);
     
@@ -2407,9 +2407,9 @@ exit_flush_tasks:
     if (window == [g_worldView window]) {
         // update the mouse vector
         OSSpinLockLock(&_mouse_state_lock);
-        _mouseVector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
-        _mouseVector.size.width = INFINITY;
-        _mouseVector.size.height = INFINITY;
+        _mouse_vector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
+        _mouse_vector.size.width = INFINITY;
+        _mouse_vector.size.height = INFINITY;
         OSSpinLockUnlock(&_mouse_state_lock);
         
         // update the hotspot state
