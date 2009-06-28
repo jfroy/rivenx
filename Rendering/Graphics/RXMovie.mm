@@ -161,11 +161,19 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
         glReportError();
         
+        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                     0,
+                     GL_RGB8,
+                     MAX(_current_size.width, 128),
+                     _current_size.height,
+                     0,
+                     GL_YCBCR_422_APPLE,
 #if defined(__LITTLE_ENDIAN__)
-        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB8, MAX(_current_size.width, 128), _current_size.height, 0, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE, _texture_storage); glReportError();
+                     GL_UNSIGNED_SHORT_8_8_APPLE,
 #else
-        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB8, MAX(_currentSize.width, 128), _currentSize.height, 0, GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_REV_APPLE, _textureStorage); glReportError();
+                     GL_UNSIGNED_SHORT_8_8_REV_APPLE,
 #endif
+                     _texture_storage); glReportError();
     } else {
         err = QTOpenGLTextureContextCreate(NULL, cgl_ctx, pixel_format, visualContextOptions, &_vc);
         CFRelease(visualContextOptions);
