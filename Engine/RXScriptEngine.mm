@@ -1641,11 +1641,11 @@ static NSMapTable* _riven_external_command_dispatch_map;
     if (!movie)
         return;
     
-    // enable the movie in the renderer
-    [controller enableMovie:movie];
-    
     // start the movie and block until done
     [self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
+    
+    // enable the movie in the renderer
+    [controller enableMovie:movie];
 }
 
 // 34
@@ -1855,6 +1855,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
     NSMapInsert(code2movieMap, (const void*)k, movie);
     
     // reset the movie
+    // FIXME: the movie in question could already be on-screen (bspit 163 book shows this), in which case the reset will be VISIBLE
     [self performSelectorOnMainThread:@selector(_resetMovie:) withObject:movie waitUntilDone:YES];
     
     // should re-apply the MLST settings to the movie here, but because of the way RX is setup, we don't need to do that

@@ -34,7 +34,7 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
     GLfloat _coordinates[16];
     CGRect _render_rect;
     
-    GLuint _glTexture;
+    GLuint _texture;
     void* _texture_storage;
     
     CVImageBufferRef _image_buffer;

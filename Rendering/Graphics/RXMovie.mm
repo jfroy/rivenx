@@ -151,8 +151,8 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         _texture_storage = malloc(MAX((int)_current_size.width, 128) * (int)_current_size.height * 2);
         bzero(_texture_storage, MAX((int)_current_size.width, 128) * (int)_current_size.height * 2);
         
-        glGenTextures(1, &_glTexture); glReportError();
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();
+        glGenTextures(1, &_texture); glReportError();
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _texture); glReportError();
         
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -280,8 +280,8 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     
     if (_vao)
         glDeleteVertexArraysAPPLE(1, &_vao);
-    if (_glTexture)
-        glDeleteTextures(1, &_glTexture);
+    if (_texture)
+        glDeleteTextures(1, &_texture);
     if (_texture_storage)
         free(_texture_storage);
     if (_image_buffer)
@@ -631,7 +631,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
                 CVPixelBufferUnlockBaseAddress(_image_buffer, 0);
                 
                 // bind the texture object and update the texture data
-                glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture); glReportError();
+                glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _texture); glReportError();
                 
 #if defined(__LITTLE_ENDIAN__)
                 glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
@@ -661,7 +661,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
             assert(CVOpenGLTextureGetTarget(_image_buffer) == GL_TEXTURE_RECTANGLE_ARB);
             glBindTexture(CVOpenGLTextureGetTarget(_image_buffer), CVOpenGLTextureGetName(_image_buffer));
         } else
-            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _glTexture);
+            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _texture);
         glReportError();
     }
     
