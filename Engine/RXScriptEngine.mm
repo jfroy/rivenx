@@ -216,6 +216,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     code2movieMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
     _dynamicPictureMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSOwnedPointerMapValueCallBacks, 0);
     
+    _movies_to_reset = [NSMutableSet new];
+    
     kerr = semaphore_create(mach_task_self(), &_moviePlaybackSemaphore, SYNC_POLICY_FIFO, 0);
     if (kerr != 0) {
         [self release];
@@ -243,8 +245,6 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 - (void)dealloc {
-    [_synthesizedSoundGroup release];
-    
     // lock the GL context and clean up textures and GL buffers
     CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
     CGLLockContext(cgl_ctx);
@@ -262,10 +262,16 @@ static NSMapTable* _riven_external_command_dispatch_map;
     glFlush();
     CGLUnlockContext(cgl_ctx);
     
-    semaphore_destroy(mach_task_self(), _moviePlaybackSemaphore);
-    [_activeHotspots release];
-    NSFreeMapTable(code2movieMap);
+    if (_moviePlaybackSemaphore)
+        semaphore_destroy(mach_task_self(), _moviePlaybackSemaphore);
+    if (code2movieMap)
+        NSFreeMapTable(code2movieMap);
+    [_movies_to_reset release];
+    
+    [_synthesizedSoundGroup release];
+    
     [logPrefix release];
+    [_activeHotspots release];
     
     [card release];
     
@@ -273,6 +279,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 }
 
 - (NSString*)description {
+    // this is mostly a hack to avoid printing anything in the script log
     return @"";
 }
 
@@ -904,11 +911,27 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 - (void)_resetMovie:(RXMovie*)movie {
     // WARNING: MUST RUN ON MAIN THREAD
-    [movie reset];
+    
+    // the movie could be enabled (the bspit 279 book shows this), in which
+    // case we need to defer the reset until the movie is played or enabled
+    if ([controller isMovieEnabled:movie]) {
+#if defined(DEBUG)
+        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@deferring reset of movie %@ because it is enabled", logPrefix, movie);
+#endif
+        [_movies_to_reset addObject:movie];
+    } else
+        [movie reset];
 }
 
 - (void)_playMovie:(RXMovie*)movie {
     // WARNING: MUST RUN ON MAIN THREAD
+    
+    // if the movie is scheduled for reset, do the reset now
+    if ([_movies_to_reset containsObject:movie]) {
+        [movie reset];
+        [_movies_to_reset removeObject:movie];
+    }
+    
     [movie play];
 }
 
@@ -916,6 +939,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
     // WARNING: MUST RUN ON MAIN THREAD
     
     // register for rate notifications on the blocking movie handler
+    // FIXME: remove exposed movie proxy implementation detail
     if ([movie isKindOfClass:[RXMovieProxy class]])
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_handleBlockingMovieFinishedPlaying:)
@@ -931,6 +955,12 @@ static NSMapTable* _riven_external_command_dispatch_map;
     if (!_did_hide_mouse) {
         _did_hide_mouse = YES;
         [controller hideMouseCursor];
+    }
+    
+    // if the movie is scheduled for reset, do the reset now
+    if ([_movies_to_reset containsObject:movie]) {
+        [movie reset];
+        [_movies_to_reset removeObject:movie];
     }
     
     // disable looping to make sure we don't deadlock by never finishing playback
@@ -952,6 +982,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 - (void)_unmuteMovie:(RXMovie*)movie {
     // WARNING: MUST RUN ON MAIN THREAD
+    // FIXME: remove exposed movie proxy implementation detail
     [(RXMovieProxy*)movie restoreMovieVolume];
 }
 
@@ -1592,6 +1623,12 @@ static NSMapTable* _riven_external_command_dispatch_map;
     if (!movie)
         return;
     
+    // if the movie is scheduled for reset, do the reset now
+    if ([_movies_to_reset containsObject:movie]) {
+        [self performSelectorOnMainThread:@selector(_resetMovie:) withObject:movie waitUntilDone:YES];
+        [_movies_to_reset removeObject:movie];
+    }
+    
     // enable the movie in the renderer
     [controller enableMovie:movie];
 }
@@ -1855,7 +1892,6 @@ static NSMapTable* _riven_external_command_dispatch_map;
     NSMapInsert(code2movieMap, (const void*)k, movie);
     
     // reset the movie
-    // FIXME: the movie in question could already be on-screen (bspit 163 book shows this), in which case the reset will be VISIBLE
     [self performSelectorOnMainThread:@selector(_resetMovie:) withObject:movie waitUntilDone:YES];
     
     // should re-apply the MLST settings to the movie here, but because of the way RX is setup, we don't need to do that

@@ -1097,6 +1097,10 @@ init_failure:
     _disable_movies_next_update = YES;
 }
 
+- (BOOL)isMovieEnabled:(RXMovie*)movie {
+    return ([_active_movies indexOfObject:movie] == NSNotFound) ? NO : YES;
+}
+
 - (void)queueSpecialEffect:(rx_card_sfxe*)sfxe owner:(id)owner {
     if (_back_render_state->water_fx.sfxe == sfxe)
         return;

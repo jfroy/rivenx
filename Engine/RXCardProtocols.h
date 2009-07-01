@@ -35,6 +35,7 @@
 - (void)disableMovie:(RXMovie*)movie;
 - (void)disableAllMovies;
 - (void)disableAllMoviesOnNextScreenUpdate;
+- (BOOL)isMovieEnabled:(RXMovie*)movie;
 
 - (void)update;
 @end

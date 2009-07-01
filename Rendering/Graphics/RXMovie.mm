@@ -541,6 +541,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 }
 
 - (void)reset {
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"resetting");
+#endif
+    
     // release and clear the current image buffer
     CVPixelBufferRelease(_image_buffer);
     _image_buffer = NULL;

@@ -38,6 +38,7 @@
     NSMapTable* code2movieMap;
     semaphore_t _moviePlaybackSemaphore;
     RXSoundGroup* _synthesizedSoundGroup;
+    NSMutableSet* _movies_to_reset;
     
     int32_t _screen_update_disable_counter;
     BOOL _doing_screen_update;
