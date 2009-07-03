@@ -229,6 +229,8 @@ static NSMapTable* _riven_external_command_dispatch_map;
     
     _screen_update_disable_counter = 0;
     
+    _movie_collection_timer = [NSTimer scheduledTimerWithTimeInterval:10*60.0 target:self selector:@selector(_collectMovies:) userInfo:nil repeats:YES];
+    
     // initialize gameplay support variables
     
     // sliders are packed to the left
@@ -262,6 +264,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
     glFlush();
     CGLUnlockContext(cgl_ctx);
     
+    [_movie_collection_timer invalidate];
     if (_moviePlaybackSemaphore)
         semaphore_destroy(mach_task_self(), _moviePlaybackSemaphore);
     if (code2movieMap)
@@ -984,6 +987,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
     // WARNING: MUST RUN ON MAIN THREAD
     // FIXME: remove exposed movie proxy implementation detail
     [(RXMovieProxy*)movie restoreMovieVolume];
+}
+
+- (void)_collectMovies:(NSTimer*)timer {
+    // iterate through the code2movie map and unload any movie that's not active
 }
 
 #pragma mark -

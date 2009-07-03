@@ -112,11 +112,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     [pixelBufferAttributes setObject:[NSNumber numberWithInt:_current_size.height] forKey:(NSString*)kCVPixelBufferHeightKey];
     [pixelBufferAttributes setObject:[NSNumber numberWithInt:4] forKey:(NSString*)kCVPixelBufferBytesPerRowAlignmentKey];
     [pixelBufferAttributes setObject:[NSNumber numberWithBool:YES] forKey:(NSString*)kCVPixelBufferOpenGLCompatibilityKey];
-#if defined(__LITTLE_ENDIAN__)
     [pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_422YpCbCr8] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
-#else
-    [pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_422YpCbCr8] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
-#endif
 
     CFMutableDictionaryRef visualContextOptions = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     CFDictionarySetValue(visualContextOptions, kQTVisualContextPixelBufferAttributesKey, pixelBufferAttributes);
@@ -346,7 +342,6 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         // find the movie's last sample time
         GetMovieNextInterestingTime([_movie quickTimeMovie], nextTimeStep | nextTimeEdgeOK, 0, NULL, (TimeValue)duration.timeValue, -1, &tv, NULL);
         assert(GetMoviesError() == noErr);
-        __attribute__((unused)) QTTime last_sample_time = QTMakeTime(tv, duration.timeScale);
         
         // find the beginning time of the video track's last sample
         QTTimeRange track_range = [[video_track attributeForKey:QTTrackRangeAttribute] QTTimeRangeValue];
