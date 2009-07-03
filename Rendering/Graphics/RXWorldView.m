@@ -15,6 +15,10 @@
 #import "RXThreadUtilities.h"
 #import "RXApplicationDelegate.h"
 
+#ifndef kCGLRendererIDMatchingMask
+#define kCGLRendererIDMatchingMask   0x00FE7F00
+#endif
+
 
 @interface RXWorldView (RXWorldView_Private)
 + (NSString*)rendererNameForID:(GLint)renderer;
@@ -58,7 +62,7 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
 
 + (NSString*)rendererNameForID:(GLint)renderer {
     NSString* renderer_name;
-    switch (renderer & 0xffffff00) {
+    switch (renderer & kCGLRendererIDMatchingMask) {
         case kCGLRendererGenericID:
             renderer_name = @"Generic";
             break;
