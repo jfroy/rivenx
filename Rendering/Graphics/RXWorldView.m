@@ -10,10 +10,12 @@
 #import <OpenGL/CGLMacro.h>
 #import <OpenGL/CGLRenderers.h>
 
-#import "RXWorldView.h"
-#import "RXWorldProtocol.h"
-#import "RXThreadUtilities.h"
-#import "RXApplicationDelegate.h"
+#import "Application/RXApplicationDelegate.h"
+#import "Base/RXThreadUtilities.h"
+#import "Engine/RXWorldProtocol.h"
+#import "Utilities/GTMSystemVersion.h"
+
+#import "Rendering/Graphics/RXWorldView.h"
 
 #ifndef kCGLRendererIDMatchingMask
 #define kCGLRendererIDMatchingMask   0x00FE7F00
@@ -26,9 +28,11 @@
 - (void)_createWorkingColorSpace;
 - (void)_handleColorProfileChange:(NSNotification*)notification;
 - (void)_handleScreenChange:(NSNotification*)notification;
+
 - (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx;
 - (void)_determineGLVersion:(CGLContextObj)cgl_ctx;
 - (void)_determineGLFeatures:(CGLContextObj)cgl_ctx;
+
 - (void)_render:(const CVTimeStamp*)outputTime;
 @end
 
@@ -48,7 +52,7 @@ static CVReturn rx_render_output_callback(CVDisplayLinkRef displayLink,
     return kCVReturnSuccess;
 }
 
-static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
+static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     NSOpenGLPFAWindow,
     NSOpenGLPFADoubleBuffer,
     NSOpenGLPFAColorSize, 24,
@@ -132,16 +136,25 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[] = {
     // initialize the global world view reference
     g_worldView = self;
     
-    // create an NSGL pixel format and then a context
+    // if we're on Leopard and later, allow offline renderers
+    if ([GTMSystemVersion isLeopardOrGreater]) {
+        windowed_attribs[4] = NSOpenGLPFAAllowOfflineRenderers;
+        windowed_attribs[5] = 0;
+    }
+    
+    // create an NSGL pixel format
     NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:windowed_attribs];
+#if defined(DEBUG)
     GLint npix = [format numberOfVirtualScreens];
     for (GLint ipix = 0; ipix < npix; ipix++) {
         GLint renderer;
         [format getValues:&renderer forAttribute:NSOpenGLPFARendererID forVirtualScreen:ipix];
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"virtual screen %d is driven by the \"%@\" renderer",
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"virtual screen %d is driven by the \"%@\" renderer",
             ipix, [RXWorldView rendererNameForID:renderer]);
     }
+#endif
     
+    // create the render context
     _render_context = [[NSOpenGLContext alloc] initWithFormat:format shareContext:nil];
     if (!_render_context) {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"could not create the render OpenGL context");
@@ -670,6 +683,9 @@ major_number.minor_number major_number.minor_number.release_number
     [features_message release];
 }
 
+#pragma mark -
+#pragma mark rendering
+
 - (void)_render:(const CVTimeStamp*)outputTime {
     if (_tornDown)
         return;
@@ -679,7 +695,7 @@ major_number.minor_number major_number.minor_number.release_number
     CGLLockContext(cgl_ctx);
     
     // clear to black
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
     
     // render the world
     _renderDispatch.imp(_renderTarget, _renderDispatch.sel, outputTime, cgl_ctx, 0);
