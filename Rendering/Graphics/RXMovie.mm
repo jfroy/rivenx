@@ -632,26 +632,19 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
                 // bind the texture object and update the texture data
                 glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _texture); glReportError();
                 
-#if defined(__LITTLE_ENDIAN__)
                 glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
                                 0,
                                 0,
                                 0,
                                 MAX(_current_size.width, 128),
                                 height,
-                                GL_YCBCR_422_APPLE, GL_UNSIGNED_SHORT_8_8_APPLE,
-                                _texture_storage); glReportError();
-#else
-                glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                                0,
-                                0,
-                                0,
-                                MAX(_currentSize.width, 128),
-                                height,
                                 GL_YCBCR_422_APPLE,
+#if defined(__LITTLE_ENDIAN__)
+                                GL_UNSIGNED_SHORT_8_8_APPLE,
+#else
                                 GL_UNSIGNED_SHORT_8_8_REV_APPLE,
-                                _textureStorage); glReportError();
 #endif
+                                _texture_storage); glReportError();
             }
         }
     } else if (_image_buffer) {
