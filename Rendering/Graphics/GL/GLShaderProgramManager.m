@@ -37,7 +37,7 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     }
     
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"initializing");
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"initializing");
 #endif
     
     // get the load context and lock it
@@ -94,7 +94,9 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
         free(source);
         free(log);
         
-        @throw [NSException exceptionWithName:@"RXShaderCompileException" reason:@"Riven X was unable to compile the standard texturing vertex shader." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        @throw [NSException exceptionWithName:@"RXShaderCompileException"
+                                       reason:@"Riven X was unable to compile the standard texturing vertex shader."
+                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     
     CGLUnlockContext(cgl_ctx);
@@ -121,7 +123,12 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     return self;
 }
 
-- (GLuint)standardProgramWithFragmentShaderName:(NSString*)name extraSources:(NSArray*)extraSources epilogueIndex:(NSUInteger)epilogueIndex context:(CGLContextObj)cgl_ctx error:(NSError**)error {
+- (GLuint)standardProgramWithFragmentShaderName:(NSString*)name
+                                   extraSources:(NSArray*)extraSources
+                                  epilogueIndex:(NSUInteger)epilogueIndex
+                                        context:(CGLContextObj)cgl_ctx
+                                          error:(NSError**)error
+{
     // WARNING: ASSUMES THE CALLER HAS LOCKED THE CONTEXT
     
     // argument validation

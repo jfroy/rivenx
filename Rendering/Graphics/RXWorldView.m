@@ -27,7 +27,6 @@
 
 - (void)_createWorkingColorSpace;
 - (void)_handleColorProfileChange:(NSNotification*)notification;
-- (void)_handleScreenChange:(NSNotification*)notification;
 
 - (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx;
 - (void)_determineGLVersion:(CGLContextObj)cgl_ctx;
@@ -445,48 +444,25 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     CMCloseProfile(displayProfile);
 }
 
-- (void)_handleScreenChange:(NSNotification*)notification {
-    CGLLockContext(_render_context_cgl);
-    CGLLockContext(_load_context_cgl);
-    
-    if (_displayLink)
-        CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(_displayLink, _render_context_cgl, _cglPixelFormat);
-    CGLSetVirtualScreen(_load_context_cgl, [_render_context currentVirtualScreen]);
-    
-    GLint renderer;
-    CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFARendererID, &renderer);
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"primary screen changed, now using virtual screen %d driven by the \"%@\" renderer", 
-        [_render_context currentVirtualScreen], [RXWorldView rendererNameForID:renderer]);
-    
-    // determine OpenGL version and features
-    [self _determineGLVersion:_render_context_cgl];
-    [self _determineGLFeatures:_render_context_cgl];
-    
-    CGLUnlockContext(_load_context_cgl);
-    CGLUnlockContext(_render_context_cgl);
-}
-
 - (void)viewDidMoveToWindow {
     [super viewDidMoveToWindow];
     
+    // remove ourselves from any previous screen or window related notifications
     NSNotificationCenter* center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self name:NSWindowDidChangeScreenProfileNotification object:nil];
-    [center removeObserver:self name:NSWindowDidChangeScreenNotification object:nil];
     
+    // get our new window
     NSWindow* w = [self window];
     if (!w)
         return;
     
+    // configure our new window
 	[w setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
-//	[w setAllowsConcurrentViewDrawing:YES];
 	[w useOptimizedDrawing:YES];
-	[w makeKeyAndOrderFront:self];
     
+    // register for color profile changes and trigger one artificially
     [center addObserver:self selector:@selector(_handleColorProfileChange:) name:NSWindowDidChangeScreenProfileNotification object:w];
-    [center addObserver:self selector:@selector(_handleScreenChange:) name:NSWindowDidChangeScreenNotification object:w];
-    
     [self _handleColorProfileChange:nil];
-    [self _handleScreenChange:nil];
 }
 
 - (void)prepareOpenGL {
@@ -494,8 +470,8 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
         return;
     _glInitialized = YES;
     
-    // make sure the viewport is setup correctly
-    [self reshape];
+    // generate an update so we look at the OpenGL capabilities
+    [self update];
     
     // cache the imp for world render methods
     _renderTarget = [g_world stateCompositor];
@@ -506,12 +482,28 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     CVDisplayLinkStart(_displayLink);
 }
 
-- (void)update {
-    CGLLockContext(_load_context_cgl);
-    CGLLockContext(_render_context_cgl);
-    
+- (void)update {    
     [super update];
+    
+    // the virtual screen has changed, reconfigure the contexes and the display link
+    
+    CGLLockContext(_render_context_cgl);
+    CGLLockContext(_load_context_cgl);
+    
+    if (_displayLink)
+        CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(_displayLink, _render_context_cgl, _cglPixelFormat);
     CGLSetVirtualScreen(_load_context_cgl, [_render_context currentVirtualScreen]);
+    
+    GLint renderer;
+    CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFARendererID, &renderer);
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"now using virtual screen %d driven by the \"%@\" renderer",
+        [_render_context currentVirtualScreen], [RXWorldView rendererNameForID:renderer]);
+    
+    // determine OpenGL version and features
+    [self _determineGLVersion:_render_context_cgl];
+    [self _determineGLFeatures:_render_context_cgl];
+    
+    // FIXME: determine if we need to fallback to software and do so here; this may not be required since we allow fallback in the pixel format
     
     CGLUnlockContext(_load_context_cgl);
     CGLUnlockContext(_render_context_cgl);
@@ -654,10 +646,8 @@ major_number.minor_number major_number.minor_number.release_number
         GLubyte* minorVersionString;
         _glslMajorVersion = (GLuint)strtol((const char*)glslVersionString, (char**)&minorVersionString, 10);
         _glslMinorVersion = (GLuint)strtol((const char*)minorVersionString + 1, NULL, 10);
-    } else {
+    } else
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"unsupported OpenGL major version");
-        return;
-    }
 }
 
 - (void)_determineGLFeatures:(CGLContextObj)cgl_ctx {
