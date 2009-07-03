@@ -484,20 +484,6 @@ init_failure:
     
     // shaders
     
-    // water animation shader
-//  _waterProgram = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"water" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
-//  if (!_waterProgram)
-//      [self _reportShaderProgramError:error];
-//  
-//  GLint cardTextureUniform = glGetUniformLocation(_waterProgram, "card_texture"); glReportError();
-//  GLint displacementMapUniform = glGetUniformLocation(_waterProgram, "water_displacement_map"); glReportError();
-//  GLint previousFrameUniform = glGetUniformLocation(_waterProgram, "previous_frame"); glReportError();
-//  
-//  glUseProgram(_waterProgram); glReportError();
-//  glUniform1i(cardTextureUniform, 0); glReportError();
-//  glUniform1i(displacementMapUniform, 1); glReportError();
-//  glUniform1i(previousFrameUniform, 2); glReportError();
-    
     // card shader
     _single_rect_texture_program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"card"
                                                                                                     extraSources:nil
