@@ -74,9 +74,16 @@
     NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
     
     // render state composition shader program
-    _compositing_program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"state_compositor" extraSources:nil epilogueIndex:0 context:cgl_ctx error:&error];
+    _compositing_program = [[GLShaderProgramManager sharedManager]
+                            standardProgramWithFragmentShaderName:@"state_compositor"
+                            extraSources:nil
+                            epilogueIndex:0
+                            context:cgl_ctx
+                            error:&error];
     if (_compositing_program == 0)
-        @throw [NSException exceptionWithName:@"RXStateCompositorException" reason:@"Riven X was unable to load the render state compositor shader program." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        @throw [NSException exceptionWithName:@"RXStateCompositorException"
+                                       reason:@"Riven X was unable to load the render state compositor shader program."
+                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     
     _texture_units_uniform = glGetUniformLocation(_compositing_program, "texture_units"); glReportError();
     _texture_blend_weights_uniform = glGetUniformLocation(_compositing_program, "texture_blend_weights"); glReportError();
@@ -112,7 +119,9 @@
 }
 
 - (void)tearDown {
-    if (_toreDown) return;
+    if (_toreDown)
+        return;
+    
     _toreDown = YES;
 #if defined(DEBUG)
     RXOLog(@"tearing down");
@@ -169,7 +178,8 @@
             _texture_blend_weights[1] = ((RXRenderStateCompositionDescriptor*)[_states objectAtIndex:1])->opacity;
             if (state_count > 2) {
                 _texture_blend_weights[2] = ((RXRenderStateCompositionDescriptor*)[_states objectAtIndex:2])->opacity;
-                if (state_count > 3) _texture_blend_weights[3] = ((RXRenderStateCompositionDescriptor*)[_states objectAtIndex:3])->opacity;
+                if (state_count > 3)
+                    _texture_blend_weights[3] = ((RXRenderStateCompositionDescriptor*)[_states objectAtIndex:3])->opacity;
             }
         }
     }
@@ -262,14 +272,16 @@
 
 - (GLfloat)opacityForState:(RXRenderState*)state {
     RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
-    if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
+    if (!descriptor)
+        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
     
     return descriptor->opacity;
 }
 
 - (void)setOpacity:(GLfloat)opacity ofState:(RXRenderState *)state {
     RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
-    if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
+    if (!descriptor)
+        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
     
     // change the opacity in the render state descriptor
     descriptor->opacity = opacity;
@@ -282,7 +294,8 @@
     [(NSInvocation*)NSMapGet(_animationCompletionInvocations, animation) invoke];
     NSMapRemove(_animationCompletionInvocations, animation);
     
-    if (_currentFadeAnimation == animation) _currentFadeAnimation = nil;
+    if (_currentFadeAnimation == animation)
+        _currentFadeAnimation = nil;
     [animation release];
 }
 
@@ -290,16 +303,19 @@
     [(NSInvocation*)NSMapGet(_animationCompletionInvocations, animation) invoke];
     NSMapRemove(_animationCompletionInvocations, animation);
     
-    if (_currentFadeAnimation == animation) _currentFadeAnimation = nil;
+    if (_currentFadeAnimation == animation)
+        _currentFadeAnimation = nil;
     [animation release];
 }
 
 - (void)fadeInState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector {
     RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
-    if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
+    if (!descriptor)
+        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
     
     NSAnimation* animation = [[RXRenderStateOpacityAnimation alloc] initWithState:state targetOpacity:1.0f duration:duration];
-    if (!_currentFadeAnimation) _currentFadeAnimation = animation;
+    if (!_currentFadeAnimation)
+        _currentFadeAnimation = animation;
     else {
         [animation startWhenAnimation:_currentFadeAnimation reachesProgress:1.0];
         _currentFadeAnimation = animation;
@@ -318,10 +334,12 @@
 
 - (void)fadeOutState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector {
     RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
-    if (!descriptor) @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
+    if (!descriptor)
+        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
     
     NSAnimation* animation = [[RXRenderStateOpacityAnimation alloc] initWithState:state targetOpacity:0.0f duration:duration];
-    if (!_currentFadeAnimation) _currentFadeAnimation = animation;
+    if (!_currentFadeAnimation)
+        _currentFadeAnimation = animation;
     else {
         [animation startWhenAnimation:_currentFadeAnimation reachesProgress:1.0];
         _currentFadeAnimation = animation;
@@ -354,7 +372,9 @@
     return rect;
 }
 
-- (void)setRenderRect:(CGRect)rect {}
+- (void)setRenderRect:(CGRect)rect {
+
+}
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
@@ -471,7 +491,8 @@
 
 - (void)keyDown:(NSEvent *)theEvent {
     // do not dispatch events if an animation is running
-    if (_currentFadeAnimation) return;
+    if (_currentFadeAnimation)
+        return;
 
 #if defined(DEBUG)
     NSString* characters = [theEvent charactersIgnoringModifiers];
