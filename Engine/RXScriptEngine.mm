@@ -34,11 +34,9 @@
 
 static const NSTimeInterval k_mouse_tracking_loop_period = 0.001;
 
-
 struct rx_card_dynamic_picture {
     GLuint texture;
 };
-
 
 typedef void (*rx_command_imp_t)(id, SEL, const uint16_t, const uint16_t*);
 struct _rx_command_dispatch_entry {
@@ -46,6 +44,13 @@ struct _rx_command_dispatch_entry {
     SEL sel;
 };
 typedef struct _rx_command_dispatch_entry rx_command_dispatch_entry_t;
+
+static const uint32_t rx_command_count = 48;
+static rx_command_dispatch_entry_t _riven_command_dispatch_table[rx_command_count];
+static NSMapTable* _riven_external_command_dispatch_map;
+
+#define DEFINE_COMMAND(NAME) - (void)_external_ ## NAME:(const uint16_t)argc arguments:(const uint16_t*)argv
+#define COMMAND_SELECTOR(NAME) @selector(_external_ ## NAME:arguments:)
 
 CF_INLINE void rx_dispatch_commandv(id target, rx_command_dispatch_entry_t* command, uint16_t argc, uint16_t* argv) {
     command->imp(target, command->sel, argc, argv);
@@ -89,9 +94,21 @@ CF_INLINE void rx_dispatch_command5(id target, rx_command_dispatch_entry_t* comm
 #define DISPATCH_COMMAND4(COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4) rx_dispatch_command4(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4)
 #define DISPATCH_COMMAND5(COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4, ARG5) rx_dispatch_command5(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4, ARG5)
 
-static const uint32_t rx_command_count = 48;
-static rx_command_dispatch_entry_t _riven_command_dispatch_table[rx_command_count];
-static NSMapTable* _riven_external_command_dispatch_map;
+CF_INLINE void rx_dispatch_externalv(id target, NSString* external_name, uint16_t argc, uint16_t* argv) {
+    rx_command_dispatch_entry_t* command = (rx_command_dispatch_entry_t*)NSMapGet(_riven_external_command_dispatch_map,
+                                                                                  [external_name lowercaseString]);
+    command->imp(target, command->sel, argc, argv);
+}
+
+CF_INLINE void rx_dispatch_external0(id target, NSString* external_name) {
+    uint16_t args;
+    rx_dispatch_externalv(target, external_name, 0, &args);
+}
+
+CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_t a1) {
+    uint16_t args[] = {a1};
+    rx_dispatch_externalv(target, external_name, 1, args);
+}
 
 
 @interface RXScriptEngine (RXScriptOpcodes)
@@ -174,8 +191,9 @@ static NSMapTable* _riven_external_command_dispatch_map;
             NSString* method_selector_string = NSStringFromSelector(m->method_name);
             if ([method_selector_string hasPrefix:@"_external_"]) {
                 NSRange first_colon_range = [method_selector_string rangeOfCharacterFromSet:colon_character_set options:NSLiteralSearch];
-                NSString* external_name = [method_selector_string substringWithRange:NSMakeRange([(NSString*)@"_external_" length],
-                                                                                                 first_colon_range.location - [(NSString*)@"_external_" length])];
+                NSString* external_name = [[method_selector_string substringWithRange:NSMakeRange([(NSString*)@"_external_" length],
+                                                                                                  first_colon_range.location - [(NSString*)@"_external_" length])]
+                                           lowercaseString];
 #if defined(DEBUG) && DEBUG > 1
                 RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"registering external command: %@", external_name);
 #endif
@@ -991,6 +1009,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
 
 - (void)_collectMovies:(NSTimer*)timer {
     // iterate through the code2movie map and unload any movie that's not active
+    // FIXME: implement the movie collector
 }
 
 #pragma mark -
@@ -1393,26 +1412,26 @@ static NSMapTable* _riven_external_command_dispatch_map;
 // 17
 - (void)_opcode_callExternal:(const uint16_t)argc arguments:(const uint16_t*)argv {
     uint16_t argi = 0;
-    uint16_t externalID = argv[0];
-    uint16_t extarnalArgc = argv[1];
+    uint16_t external_id = argv[0];
+    uint16_t external_argc = argv[1];
     
-    NSString* externalName = [[[card descriptor] parent] externalNameAtIndex:externalID];
-    if (!externalName)
+    NSString* external_name = [[[[card descriptor] parent] externalNameAtIndex:external_id] lowercaseString];
+    if (!external_name)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID EXTERNAL COMMAND ID" userInfo:nil];
     
 #if defined(DEBUG)
-    NSString* formatString = [NSString stringWithFormat:@"calling external %@(", externalName];
+    NSString* fmt = [NSString stringWithFormat:@"calling external %@(", external_name];
     
-    if (extarnalArgc > 1) {
-        for (; argi < extarnalArgc - 1; argi++)
-            formatString = [formatString stringByAppendingFormat:@"%hu, ", argv[2 + argi]];
+    if (external_argc > 1) {
+        for (; argi < external_argc - 1; argi++)
+            fmt = [fmt stringByAppendingFormat:@"%hu, ", argv[2 + argi]];
     }
     
-    if (extarnalArgc > 0)
-        formatString = [formatString stringByAppendingFormat:@"%hu", argv[2 + argi]];
+    if (external_argc > 0)
+        fmt = [fmt stringByAppendingFormat:@"%hu", argv[2 + argi]];
     
-    formatString = [formatString stringByAppendingString:@") {"];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", logPrefix, formatString);
+    fmt = [fmt stringByAppendingString:@") {"];
+    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", logPrefix, fmt);
     
     // augment script log indentation for the external command
     [logPrefix appendString:@"    "];
@@ -1420,10 +1439,10 @@ static NSMapTable* _riven_external_command_dispatch_map;
     
     // dispatch the call to the external command
     rx_command_dispatch_entry_t* command_dispatch = (rx_command_dispatch_entry_t*)NSMapGet(_riven_external_command_dispatch_map,
-                                                                                           externalName);
+                                                                                           external_name);
     if (!command_dispatch) {
         RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    WARNING: external command '%@' is not implemented!",
-            logPrefix, externalName);
+                logPrefix, external_name);
 #if defined(DEBUG)
         [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
         RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
@@ -1431,7 +1450,7 @@ static NSMapTable* _riven_external_command_dispatch_map;
         return;
     }
         
-    command_dispatch->imp(self, command_dispatch->sel, extarnalArgc, argv + 2);
+    command_dispatch->imp(self, command_dispatch->sel, external_argc, argv + 2);
     
 #if defined(DEBUG)
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
@@ -1931,9 +1950,6 @@ static NSMapTable* _riven_external_command_dispatch_map;
     // restore its original gain
     sg->gain = original_gain;
 }
-
-#define DEFINE_COMMAND(NAME) - (void)_external_ ## NAME:(const uint16_t)argc arguments:(const uint16_t*)argv
-#define DISPATCH_EXTERNAL0(NAME) [self _external_ ## NAME:0 arguments:NULL]
 
 #pragma mark -
 #pragma mark main menu
@@ -4393,6 +4409,72 @@ DEFINE_COMMAND(xvga1300_carriage) {
     // go to card RMAP 94567
     card_id = [[[card descriptor] parent] cardIDFromRMAPCode:94567];
     DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, card_id);
+}
+
+#pragma mark -
+#pragma mark gspit topology viewer
+
+static int64_t pin_rotate_timevals[] = {8416LL, 0LL, 1216LL, 2416LL, 3616LL, 4816LL, 6016LL, 7216LL};
+
+- (void)_configurePinMovieForRotation {
+    RXGameState* gs = [g_world gameState];
+    
+    // get the old (current) position, the new position and the current pin movie code
+    int32_t old_pos = [gs unsigned32ForKey:@"gPinPos"];
+    int32_t new_pos = old_pos + 1;
+    uintptr_t pin_movie_code = [gs unsigned32ForKey:@"gUpMoov"];
+    
+    // determine the playback selection for the pin movie
+    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)pin_movie_code);
+    QTTime duration = [movie duration];
+
+    QTTime start_time = QTMakeTime(pin_rotate_timevals[old_pos], duration.timeScale);
+    QTTimeRange movie_range = QTMakeTimeRange(start_time,
+                                              QTMakeTime(pin_rotate_timevals[new_pos] - start_time.timeValue,
+                                                         duration.timeScale));
+    [movie setPlaybackSelection:movie_range];
+    
+    // update the position variable
+    [gs setUnsigned32:(new_pos % 4) + 1 forKey:@"gPinPos"];
+}
+
+DEFINE_COMMAND(xgrotatepins) {
+    RXGameState* gs = [g_world gameState];
+    
+    // if no pins are raised, we do nothing
+    if (![gs unsigned32ForKey:@"gPinUp"])
+        return;
+    
+    // configure the raised pin movie for a rotation
+    [self performSelectorOnMainThread:@selector(_configurePinMovieForRotation) withObject:nil waitUntilDone:YES];
+    
+    // get the raised pin movie
+    uintptr_t pin_movie_code = [gs unsigned32ForKey:@"gUpMoov"];
+    
+    // get the pin rotation sound
+    uint16_t pin_rotation_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gPinsRot_1",
+                                                                     [[card descriptor] ID]]];
+    
+    // play the pin rotate sound and movie
+    [self _playDataSoundWithID:pin_rotation_sound gain:1.0f duration:NULL];
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, pin_movie_code);
+}
+
+DEFINE_COMMAND(xgpincontrols) {
+
+}
+
+DEFINE_COMMAND(xglowerpins) {
+
+}
+
+DEFINE_COMMAND(xgraisepins) {
+
+}
+
+DEFINE_COMMAND(xgresetpins) {
+    uint16_t pin_up = [[g_world gameState] unsignedShortForKey:@"gPinUp"];
+    rx_dispatch_external1(self, @"xglowerpins", pin_up);
 }
 
 @end
