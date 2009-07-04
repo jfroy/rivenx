@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 
 #import "Engine/RXCoreStructures.h"
+#import "Rendering/RXRendering.h"
 
 
 @interface RXHotspot : NSObject {
@@ -21,6 +22,8 @@
     NSString* _name;
     NSString* _description;
     NSRect _world_frame;
+    
+    rx_event_t _event;
 
 @public
     BOOL enabled;
@@ -39,6 +42,9 @@
 - (void)setCoreFrame:(rx_core_rect_t)frame;
 
 - (NSRect)worldFrame;
+
+- (rx_event_t)event;
+- (void)setEvent:(rx_event_t)event;
 
 - (void)enable;
 

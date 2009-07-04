@@ -60,13 +60,15 @@ struct rx_transition_program {
     OSSpinLock volatile _state_swap_lock;
     BOOL _disable_movies_next_update;
     
-    // mouse and hotspots handling
+    // mouse event and hotspot handling
     NSRect _mouse_vector;
     double _mouse_timestamp;
     rx_event_t _last_mouse_down_event;
     OSSpinLock _mouse_state_lock;
+    
     RXHotspot* _current_hotspot;
     RXHotspot* _mouse_down_hotspot;
+    
     int32_t volatile _hotspot_handling_disable_counter;
     NSCursor* _hidden_cursor;
     int32_t volatile _cursor_hide_counter;

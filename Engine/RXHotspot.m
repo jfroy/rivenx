@@ -130,6 +130,14 @@
     return _world_frame;
 }
 
+- (rx_event_t)event {
+    return _event;
+}
+
+- (void)setEvent:(rx_event_t)event {
+    _event = event;
+}
+
 - (void)enable {
     enabled = YES;
 }

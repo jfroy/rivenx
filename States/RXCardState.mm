@@ -2104,18 +2104,18 @@ exit_flush_tasks:
     return t;
 }
 
-- (rx_event_t)lastMouseDownEvent {
-    OSSpinLockLock(&_mouse_state_lock);
-    rx_event_t e = _last_mouse_down_event;
-    OSSpinLockUnlock(&_mouse_state_lock);
-    return e;
-}
-
 - (NSRect)mouseVector {
     OSSpinLockLock(&_mouse_state_lock);
     NSRect r = _mouse_vector;
     OSSpinLockUnlock(&_mouse_state_lock);
     return r;
+}
+
+- (rx_event_t)lastMouseDownEvent {
+    OSSpinLockLock(&_mouse_state_lock);
+    rx_event_t e = _last_mouse_down_event;
+    OSSpinLockUnlock(&_mouse_state_lock);
+    return e;
 }
 
 - (void)resetMouseVector {
@@ -2253,6 +2253,10 @@ exit_flush_tasks:
         // disable hotspot handling; the script engine is responsible for re-enabling it
         [self disableHotspotHandling];
         
+        // set the event of the hotspot so that the script engine knows where the event occurred
+        rx_event_t event = {_mouse_vector.origin, _mouse_timestamp};
+        [hotspot setEvent:event];
+        
         // let the script engine run mouse up scripts
         [sengine performSelector:@selector(mouseUpInHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
     }
@@ -2381,6 +2385,9 @@ exit_flush_tasks:
     // if hotspot handling is disabled, simply return
     if (_hotspot_handling_disable_counter > 0)
         return;
+    
+    // set the event of the current hotspot so that the script engine knows where the mouse down occurred
+    [_current_hotspot setEvent:_last_mouse_down_event];
     
     // cannot use the front card during state swaps
     OSSpinLockLock(&_state_swap_lock);
