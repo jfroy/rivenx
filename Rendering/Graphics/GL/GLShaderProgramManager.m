@@ -217,6 +217,10 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     glAttachShader(program, _1texcoord_vs); glReportError();
     glAttachShader(program, fs); glReportError();
     
+    // bind the attribute positions
+    glBindAttribLocation(program, RX_ATTRIB_POSITION, "position"); glReportError();
+    glBindAttribLocation(program, RX_ATTRIB_TEXCOORD0, "tex_coord0"); glReportError();
+    
     // link
     glLinkProgram(program); glReportError();
     glGetProgramiv(program, GL_LINK_STATUS, &status);

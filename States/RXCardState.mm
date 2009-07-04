@@ -287,7 +287,12 @@ init_failure:
     NSString* directionSource = [NSString stringWithFormat:@"#define RX_DIRECTION %d\n", direction];
     NSArray* extraSource = [NSArray arrayWithObjects:@"#version 110\n", directionSource, nil];
     
-    program.program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:name extraSources:extraSource epilogueIndex:[extraSource count] context:cgl_ctx error:&error];
+    program.program = [[GLShaderProgramManager sharedManager]
+                       standardProgramWithFragmentShaderName:name
+                       extraSources:extraSource
+                       epilogueIndex:[extraSource count]
+                       context:cgl_ctx
+                       error:&error];
     if (program.program == 0) {
         [self _reportShaderProgramError:error];
         return program;
@@ -326,53 +331,19 @@ init_failure:
     // kick start the audio task thread
     [NSThread detachNewThreadSelector:@selector(_audioTaskThread:) toTarget:self withObject:nil];
     
-    // we need one FBO to render a card's composite texture and one FBO to apply the water effect;
-    // as well as matching textures for the color0 attachement point and one extra texture to store the previous frame
-    glGenFramebuffersEXT(1, _fbos);
-    glGenTextures(1, _textures);
-    
-    // disable client storage because it's incompatible with allocating texture space with NULL
-    // (which is what we want to do for FBO color attachement textures) and with the PIXEL_UNPACK buffer
+    // disable client storage for the duration of this method, because we'll either be transferring textures
+    // using a PBO or allocating RT textures (which are just surfaces)
     glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
     
-    for (GLuint i = 0; i < 1; i++) {
-        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[i]); glReportError();
-        
-        // bind the texture
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[i]); glReportError();
-        
-        // texture parameters
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glReportError();
-        
-        // allocate memory for the texture
-        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                     0,
-                     GL_RGBA8,
-                     kRXRendererViewportSize.width,
-                     kRXRendererViewportSize.height,
-                     0,
-                     GL_BGRA,
-                     GL_UNSIGNED_INT_8_8_8_8_REV,
-                     NULL); glReportError();
-        
-        // color0 texture attach
-        glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_RECTANGLE_ARB, _textures[i], 0); glReportError();
-        
-        // completeness check
-        GLenum fboStatus = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-        if (fboStatus != GL_FRAMEBUFFER_COMPLETE_EXT)
-            RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"FBO not complete, status 0x%04x\n", (unsigned int)fboStatus);
-    }
+// water sfxe
     
     // create the water unpack buffer and the water readback buffer
     glGenBuffers(1, &_water_buffer); glReportError();
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _water_buffer); glReportError();
     glBufferData(GL_PIXEL_UNPACK_BUFFER, (kRXRendererViewportSize.width * kRXRendererViewportSize.height) << 2, NULL, GL_DYNAMIC_DRAW); glReportError();
     _water_readback_buffer = malloc((kRXRendererViewportSize.width * kRXRendererViewportSize.height) << 2);
+    
+// inventory textures
     
     // get a reference to the extra bitmaps archive, and get the inventory texture descriptors
     MHKArchive* extraBitmapsArchive = [g_world extraBitmapsArchive];
@@ -429,13 +400,51 @@ init_failure:
     
     // while we DMA the inventory textures, let's do some more work
     
-    // card composite VAO / VA / VBO
+// card compositing
     
-    // gen the buffers
+    // we need one FBO to render a card's composite texture and one FBO to apply the water effect;
+    // as well as matching textures for the color0 attachement point and one extra texture to store the previous frame
+    glGenFramebuffersEXT(1, _fbos);
+    glGenTextures(1, _textures);
+    
+    for (GLuint i = 0; i < 1; i++) {
+        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[i]); glReportError();
+        
+        // bind the texture
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[i]); glReportError();
+        
+        // texture parameters
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glReportError();
+        
+        // allocate memory for the texture
+        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                     0,
+                     GL_RGBA8,
+                     kRXRendererViewportSize.width,
+                     kRXRendererViewportSize.height,
+                     0,
+                     GL_BGRA,
+                     GL_UNSIGNED_INT_8_8_8_8_REV,
+                     NULL); glReportError();
+        
+        // color0 texture attach
+        glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_RECTANGLE_ARB, _textures[i], 0); glReportError();
+        
+        // completeness check
+        GLenum fboStatus = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+        if (fboStatus != GL_FRAMEBUFFER_COMPLETE_EXT)
+            RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"FBO not complete, status 0x%04x\n", (unsigned int)fboStatus);
+    }
+    
+    // create the compositing VAO and vertex attrib VBO
     glGenVertexArraysAPPLE(1, &_cardCompositeVAO); glReportError();
     glGenBuffers(1, &_cardCompositeVBO); glReportError();
     
-    // bind them
+    // bind the VAO and the VBO
     [gl_state bindVertexArrayObject:_cardCompositeVAO];
     glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
     
@@ -475,14 +484,13 @@ init_failure:
     glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
     
     // configure the VAs
-    glEnableClientState(GL_VERTEX_ARRAY); glReportError();
-    glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET((void*)NULL, 0)); glReportError();
+    glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0); glReportError();
     
-    glClientActiveTexture(GL_TEXTURE0);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET((void*)NULL, 2 * sizeof(GLfloat))); glReportError();
+    glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat))); glReportError();
     
-    // shaders
+// shaders
     
     // card shader
     _single_rect_texture_program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"card"
@@ -520,12 +528,19 @@ init_failure:
     _swipe[RXTransitionTop] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionTop context:cgl_ctx];
     _swipe[RXTransitionBottom] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionBottom context:cgl_ctx];
     
-    // create a VAO and VBO for hotspot debug rendering
-    glGenVertexArraysAPPLE(1, &_hotspotDebugRenderVAO); glReportError();
-    glGenBuffers(1, &_hotspotDebugRenderVBO); glReportError();
+// debug rendering
+
+    // create a VAO for all debug rendering
+    glGenVertexArraysAPPLE(1, &_debugRenderVAO); glReportError();
+    [gl_state bindVertexArrayObject:_debugRenderVAO];
     
-    // bind them
-    [gl_state bindVertexArrayObject:_hotspotDebugRenderVAO];
+    // the fixed-function vertex array is always enabled in the debug VAO
+    glEnableClientState(GL_VERTEX_ARRAY); glReportError();
+    
+// hotspot debug rendering
+    
+    // create a VBO for the hotspot vertices
+    glGenBuffers(1, &_hotspotDebugRenderVBO); glReportError();
     glBindBuffer(GL_ARRAY_BUFFER, _hotspotDebugRenderVBO); glReportError();
     
     // enable sub-range flushing if available
@@ -535,18 +550,11 @@ init_failure:
     // 4 lines per hotspot, 6 floats per line (coord[x, y] color[r, g, b, a])
     glBufferData(GL_ARRAY_BUFFER, (RX_MAX_RENDER_HOTSPOT + RX_MAX_INVENTORY_ITEMS) * 24 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); glReportError();
     
-    // configure the VAs
-    glEnableClientState(GL_VERTEX_ARRAY); glReportError();
-    glVertexPointer(2, GL_FLOAT, 6 * sizeof(GLfloat), NULL); glReportError();
-    
-    glEnableClientState(GL_COLOR_ARRAY); glReportError();
-    glColorPointer(4, GL_FLOAT, 6 * sizeof(GLfloat), (void*)BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
-    
     // allocate the first element and element count arrays
     _hotspotDebugRenderFirstElementArray = new GLint[RX_MAX_RENDER_HOTSPOT + RX_MAX_INVENTORY_ITEMS];
     _hotspotDebugRenderElementCountArray = new GLint[RX_MAX_RENDER_HOTSPOT + RX_MAX_INVENTORY_ITEMS];
     
-    // alright, we've done all the work we could, let's now make those inventory textures
+// alright, we've done all the work we could, let's now make those inventory textures
     
     // create the textures and reset inventoryBuffer which we'll use as a buffer offset
     glGenTextures(RX_MAX_INVENTORY_ITEMS, _inventoryTextures);
@@ -579,20 +587,22 @@ init_failure:
     // the inventory begins at half opacity
     _inventoryAlphaFactor = 0.5f;
     
+// restore state to Riven X assumptions
+    
+    // bind program 0 back (Riven X assumption)
+    glUseProgram(0);
+    
+    // reset the current VAO to 0
+    [gl_state bindVertexArrayObject:0];
+    
     // bind 0 to the unpack buffer (e.g. client memory unpacking)
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-    
-    // we're done with the inventory unpack buffer
-    glDeleteBuffers(1, &inventory_unpack_buffer);
     
     // re-enable client storage
     glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
     
-    // bind 0 to the current VAO
-    [gl_state bindVertexArrayObject:0];
-    
-    // bind program 0 (e.g. back to fixed-function)
-    glUseProgram(0);
+    // we're done with the inventory unpack buffer
+    glDeleteBuffers(1, &inventory_unpack_buffer);
     
     // new texture, buffer and program objects
     glFlush();
@@ -1727,12 +1737,14 @@ init_failure:
         glUseProgram(0); glReportError();
         glColor4f(0.0f, 1.0f, 0.0f, 1.0f); glReportError();
         
+        [gl_state bindVertexArrayObject:_debugRenderVAO]; glReportError();
+        
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        [gl_state bindVertexArrayObject:0]; glReportError();
-        glEnableClientState(GL_VERTEX_ARRAY); glReportError();
         glVertexPointer(2, GL_FLOAT, 0, attribs); glReportError();
+        
         glDrawArrays(GL_LINES, 0, 4); glReportError();
-        glDisableClientState(GL_VERTEX_ARRAY); glReportError();
+        
+        [gl_state bindVertexArrayObject:0]; glReportError();
     }
     
 exit_render:
@@ -1744,6 +1756,9 @@ exit_render:
     // alias the render context state object pointer
     NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
     RXCard* front_card = nil;
+    
+    // bind the debug rendering VAO
+    [gl_state bindVertexArrayObject:_debugRenderVAO];
     
     // render hotspots
     if (RXEngineGetBool(@"rendering.hotspots_info")) {
@@ -1850,13 +1865,18 @@ exit_render:
             glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, [activeHotspots count] * 24 * sizeof(GLfloat));
         glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
         
-        [gl_state bindVertexArrayObject:_hotspotDebugRenderVAO];
+        // configure the VAs
+        glVertexPointer(2, GL_FLOAT, 6 * sizeof(GLfloat), NULL); glReportError();
+        
+        glEnableClientState(GL_COLOR_ARRAY); glReportError();
+        glColorPointer(4, GL_FLOAT, 6 * sizeof(GLfloat), (void*)BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+        
         glMultiDrawArrays(GL_LINE_LOOP,
                           _hotspotDebugRenderFirstElementArray,
                           _hotspotDebugRenderElementCountArray,
                           [activeHotspots count] + _inventoryItemCount); glReportError();
         
-        [gl_state bindVertexArrayObject:0];
+        glDisableClientState(GL_COLOR_ARRAY); glReportError();
     }
     
     // character buffer for debug strings to render
@@ -1872,10 +1892,8 @@ exit_render:
     };
     
     // setup the pipeline to use the client memory VA we defined above
-    [gl_state bindVertexArrayObject:0];
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glVertexPointer(3, GL_FLOAT, 0, background_strip);
-    glEnableClientState(GL_VERTEX_ARRAY);
     
     // card info
     if (RXEngineGetBool(@"rendering.card_info")) {
@@ -2012,8 +2030,8 @@ exit_render:
         background_strip[10] = background_strip[7];
     }
     
-    // re-disable the VA in VAO 0
-    glDisableClientState(GL_VERTEX_ARRAY);
+    // reset the VAO binding to 0 (Riven X assumption)
+    [gl_state bindVertexArrayObject:0];
     
     // release front_card
     [front_card release];

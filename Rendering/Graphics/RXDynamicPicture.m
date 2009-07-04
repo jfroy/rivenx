@@ -42,12 +42,11 @@ static void initialize_dynamic_picture_system() {
         glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
     glBufferData(GL_ARRAY_BUFFER, dynamic_picture_vertex_bo_picture_capacity * 16 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW); glReportError();
     
-    glEnableClientState(GL_VERTEX_ARRAY); glReportError();
-    glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 0)); glReportError();
+    glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0); glReportError();
     
-    glClientActiveTexture(GL_TEXTURE0);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
-    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+    glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat))); glReportError();
     
     [gl_state bindVertexArrayObject:0];
     
@@ -85,12 +84,11 @@ static void grow_dynamic_picture_vertex_bo() {
         glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
     glBufferData(GL_ARRAY_BUFFER, dynamic_picture_vertex_bo_picture_capacity * 16 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW); glReportError();
     
-    glEnableClientState(GL_VERTEX_ARRAY); glReportError();
-    glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 0)); glReportError();
+    glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0); glReportError();
     
-    glClientActiveTexture(GL_TEXTURE0);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
-    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+    glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat))); glReportError();
     
     // reset the VAO state
     [gl_state bindVertexArrayObject:0];

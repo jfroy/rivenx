@@ -187,12 +187,11 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     
-    glEnableClientState(GL_VERTEX_ARRAY); glReportError();
-    glVertexPointer(2, GL_FLOAT, 0, _coordinates); glReportError();
+    glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 0, _coordinates); glReportError();
     
-    glClientActiveTexture(GL_TEXTURE0);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
-    glTexCoordPointer(2, GL_FLOAT, 0, _coordinates + 8); glReportError();
+    glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 0, _coordinates + 8); glReportError();
     
     [gl_state bindVertexArrayObject:0];
     

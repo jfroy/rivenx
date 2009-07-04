@@ -60,6 +60,12 @@ struct rx_event {
 };
 typedef struct rx_event rx_event_t;
 
+struct rx_card_sfxe {
+    struct rx_sfxe_record* record;
+    uint32_t* offsets;
+};
+typedef struct rx_card_sfxe rx_card_sfxe;
+
 #pragma mark -
 #pragma mark rendering constants
 
@@ -72,13 +78,8 @@ extern const double kRXTransitionDuration;
 
 extern const float kRXSoundGainDivisor;
 
-#pragma mark -
-
-struct rx_card_sfxe {
-    struct rx_sfxe_record* record;
-    uint32_t* offsets;
-};
-typedef struct rx_card_sfxe rx_card_sfxe;
+#define RX_ATTRIB_POSITION 0
+#define RX_ATTRIB_TEXCOORD0 1
 
 #pragma mark -
 
