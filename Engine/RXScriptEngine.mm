@@ -4414,6 +4414,11 @@ DEFINE_COMMAND(xvga1300_carriage) {
 #pragma mark -
 #pragma mark gspit topology viewer
 
+static uint16_t pin_ids[] = {10, 11, 12, 16, 17,
+                             20, 211, 216, 221, 222,
+                             30, 312, 313, 314, 315, 317, 318, 319, 320, 323, 324, 325,
+                             40, 45,
+                             50, 53, 54, 58, 59, 510};
 static int64_t pin_rotate_timevals[] = {8416LL, 0LL, 1216LL, 2416LL, 3616LL, 4816LL, 6016LL, 7216LL};
 
 - (void)_configurePinMovieForRotation {
@@ -4461,7 +4466,9 @@ DEFINE_COMMAND(xgrotatepins) {
 }
 
 DEFINE_COMMAND(xgpincontrols) {
-
+    RXGameState* gs = [g_world gameState];
+    
+    
 }
 
 DEFINE_COMMAND(xglowerpins) {
