@@ -397,6 +397,7 @@ init_failure:
     
     // unmap the pixel unpack buffer to begin the DMA transfer
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
     
     // while we DMA the inventory textures, let's do some more work
     
@@ -555,6 +556,9 @@ init_failure:
     _hotspotDebugRenderElementCountArray = new GLint[RX_MAX_RENDER_HOTSPOT + RX_MAX_INVENTORY_ITEMS];
     
 // alright, we've done all the work we could, let's now make those inventory textures
+    
+    // re-bind the inventory unpack buffer
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, inventory_unpack_buffer); glReportError();
     
     // create the textures and reset inventoryBuffer which we'll use as a buffer offset
     glGenTextures(RX_MAX_INVENTORY_ITEMS, _inventoryTextures);
