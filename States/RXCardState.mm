@@ -1966,7 +1966,7 @@ exit_render:
     // hotspots info (part 2)
     if (RXEngineGetBool(@"rendering.hotspots_info")) {
         OSSpinLockLock(&_state_swap_lock);
-        RXHotspot* hotspot = (_currentHotspot >= (RXHotspot*)0x1000) ? [_currentHotspot retain] : _currentHotspot;
+        RXHotspot* hotspot = (_current_hotspot >= (RXHotspot*)0x1000) ? [_current_hotspot retain] : _current_hotspot;
         OSSpinLockUnlock(&_state_swap_lock);
         
         if (hotspot >= (RXHotspot*)0x1000)
@@ -2259,9 +2259,9 @@ exit_flush_tasks:
     
     // if the old current hotspot is valid, doesn't match the new current hotspot and is still active, we need to send the old
     // current hotspot a mouse exited message
-    if (_currentHotspot >= (RXHotspot*)0x1000 && _currentHotspot != hotspot && [active_hotspots indexOfObjectIdenticalTo:_currentHotspot] != NSNotFound) {
+    if (_current_hotspot >= (RXHotspot*)0x1000 && _current_hotspot != hotspot && [active_hotspots indexOfObjectIdenticalTo:_current_hotspot] != NSNotFound) {
         // note that we DO NOT disable hotspot handling for "exited hotspot" messages
-        [sengine performSelector:@selector(mouseExitedHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
+        [sengine performSelector:@selector(mouseExitedHotspot:) withObject:_current_hotspot inThread:[g_world scriptThread]];
     }
     
     // handle cursor changes here so we don't ping-pong across 2 threads (at least for a hotspot's cursor, the inventory item
@@ -2280,13 +2280,13 @@ exit_flush_tasks:
     }
     
     // update the current hotspot to the new current hotspot
-    if (_currentHotspot != hotspot) {
-        id old = _currentHotspot;
+    if (_current_hotspot != hotspot) {
+        id old = _current_hotspot;
         
         if (hotspot >= (RXHotspot*)0x1000)
-            _currentHotspot = [hotspot retain];
+            _current_hotspot = [hotspot retain];
         else
-            _currentHotspot = hotspot;
+            _current_hotspot = hotspot;
         
         if (old >= (RXHotspot*)0x1000)
             [old release];
@@ -2386,22 +2386,22 @@ exit_flush_tasks:
     OSSpinLockLock(&_state_swap_lock);
     
     // if the current hotspot is valid, send it a mouse down event; if the current "hotspot" is an inventory item, handle that too
-    if (_currentHotspot >= (RXHotspot*)0x1000) {
+    if (_current_hotspot >= (RXHotspot*)0x1000) {
         // remember the last hotspot for which we've sent a "mouse down" message
-        _mouse_down_hotspot = [_currentHotspot retain];
+        _mouse_down_hotspot = [_current_hotspot retain];
         
         // disable hotspot handling; the script engine is responsible for re-enabling it
         [self disableHotspotHandling];
         
         // let the script engine run mouse down scripts
-        [sengine performSelector:@selector(mouseDownInHotspot:) withObject:_currentHotspot inThread:[g_world scriptThread]];
-    } else if (_currentHotspot)
-        [self _handleInventoryMouseDown:event inventoryIndex:(uint32_t)_currentHotspot - 1];
+        [sengine performSelector:@selector(mouseDownInHotspot:) withObject:_current_hotspot inThread:[g_world scriptThread]];
+    } else if (_current_hotspot)
+        [self _handleInventoryMouseDown:event inventoryIndex:(uint32_t)_current_hotspot - 1];
     
     OSSpinLockUnlock(&_state_swap_lock);
     
     // we do not need to call updateHotspotState from mouse down, since handling inventory hotspots would be difficult there 
-    // (can't retain a non-valid pointer value, e.g. can't store the dummy _currentHotspot value into _mouse_down_hotspot
+    // (can't retain a non-valid pointer value, e.g. can't store the dummy _current_hotspot value into _mouse_down_hotspot
 }
 
 - (void)mouseUp:(NSEvent*)event {

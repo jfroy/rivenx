@@ -65,7 +65,7 @@ struct rx_transition_program {
     double _mouse_timestamp;
     rx_event_t _last_mouse_down_event;
     OSSpinLock _mouse_state_lock;
-    RXHotspot* _currentHotspot;
+    RXHotspot* _current_hotspot;
     RXHotspot* _mouse_down_hotspot;
     int32_t volatile _hotspot_handling_disable_counter;
     NSCursor* _hidden_cursor;
