@@ -108,7 +108,8 @@ struct rx_transition_program {
     GLuint _waterProgram;
     GLuint _single_rect_texture_program;
     
-    GLuint _hotspotDebugRenderVAO;
+    GLuint _debugRenderVAO;
+    
     GLuint _hotspotDebugRenderVBO;
     GLint* _hotspotDebugRenderFirstElementArray;
     GLint* _hotspotDebugRenderElementCountArray;

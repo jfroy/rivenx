@@ -48,50 +48,50 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     _shaders_root = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[NSBundle mainBundle] pathForResource:@"Shaders" ofType:nil], kCFURLPOSIXPathStyle, true);
     
     // get the source of the standard one texture coordinates vertex shader
-    NSURL* ff_tex0_vs_url = [NSURL URLWithString:[@"ff_tex0_pos" stringByAppendingPathExtension:@"vs"] relativeToURL:_shaders_root];
-    NSString* ff_tex0_vs_source = [NSString stringWithContentsOfURL:ff_tex0_vs_url encoding:NSASCIIStringEncoding error:NULL];
-    if (!ff_tex0_vs_source)
+    NSURL* source_url = [NSURL URLWithString:[@"1texcoord" stringByAppendingPathExtension:@"vs"] relativeToURL:_shaders_root];
+    NSString* source = [NSString stringWithContentsOfURL:source_url encoding:NSASCIIStringEncoding error:NULL];
+    if (!source)
         @throw [NSException exceptionWithName:@"RXShaderException" reason:@"Riven X was unable to load the standard texturing vertex shader's source." userInfo:nil];
     
     // convert the source to an ASCII C string
-    GLchar* ff_tex0_vs_csource = (GLchar*)[ff_tex0_vs_source cStringUsingEncoding:NSASCIIStringEncoding];
-    if (!ff_tex0_vs_source)
+    GLchar* source_cstr = (GLchar*)[source cStringUsingEncoding:NSASCIIStringEncoding];
+    if (!source_cstr)
         @throw [NSException exceptionWithName:@"RXShaderException" reason:@"Riven X was unable to convert the encoding of the standard texturing vertex shader's source." userInfo:nil];
     
     // create the vertex shader
-    _ff_tex0_pos_vs = glCreateShader(GL_VERTEX_SHADER); glReportError();
-    if (_ff_tex0_pos_vs == 0)
+    _1texcoord_vs = glCreateShader(GL_VERTEX_SHADER); glReportError();
+    if (_1texcoord_vs == 0)
         @throw [NSException exceptionWithName:@"RXShaderException" reason:@"Riven X was unable to create the standard texturing vertex shader." userInfo:nil];
     
     // source it
-    glShaderSource(_ff_tex0_pos_vs, 1, (const GLchar**)&ff_tex0_vs_csource, NULL); glReportError();
+    glShaderSource(_1texcoord_vs, 1, (const GLchar**)&source_cstr, NULL); glReportError();
     
     // compile it
-    glCompileShader(_ff_tex0_pos_vs); glReportError();
+    glCompileShader(_1texcoord_vs); glReportError();
     
     // check if it compiler or not
     GLint status;
-    glGetShaderiv(_ff_tex0_pos_vs, GL_COMPILE_STATUS, &status);
+    glGetShaderiv(_1texcoord_vs, GL_COMPILE_STATUS, &status);
     if (status != GL_TRUE) {
         NSError* error;
         GLint length;
         
-        glGetShaderiv(_ff_tex0_pos_vs, GL_INFO_LOG_LENGTH, &length);
+        glGetShaderiv(_1texcoord_vs, GL_INFO_LOG_LENGTH, &length);
         GLchar* log = malloc(length);
-        glGetShaderInfoLog(_ff_tex0_pos_vs, length, NULL, log);
+        glGetShaderInfoLog(_1texcoord_vs, length, NULL, log);
         
-        glGetShaderiv(_ff_tex0_pos_vs, GL_SHADER_SOURCE_LENGTH, &length);
-        GLchar* source = malloc(length);
-        glGetShaderSource(_ff_tex0_pos_vs, length, NULL, source);
+        glGetShaderiv(_1texcoord_vs, GL_SHADER_SOURCE_LENGTH, &length);
+        source_cstr = malloc(length);
+        glGetShaderSource(_1texcoord_vs, length, NULL, source_cstr);
         
         NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
             [NSString stringWithCString:log encoding:NSASCIIStringEncoding], @"GLCompileLog",
-            [NSString stringWithCString:source encoding:NSASCIIStringEncoding], @"GLShaderSource",
+            [NSString stringWithCString:source_cstr encoding:NSASCIIStringEncoding], @"GLShaderSource",
             @"vertex", @"GLShaderType",
             nil];
         error = [NSError errorWithDomain:GLShaderCompileErrorDomain code:status userInfo:userInfo];
         
-        free(source);
+        free(source_cstr);
         free(log);
         
         @throw [NSException exceptionWithName:@"RXShaderCompileException"
@@ -173,7 +173,8 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     
     // fragment shader source
     fs = glCreateShader(GL_FRAGMENT_SHADER); glReportError();
-    if (fs == 0) goto failure_delete_fs;
+    if (fs == 0)
+        goto failure_delete_fs;
     
     shaderSources[epilogueIndex - 1] = (GLchar*)[fshader_source cStringUsingEncoding:NSASCIIStringEncoding];
     if (!shaderSources[epilogueIndex - 1])
@@ -213,8 +214,12 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     program = glCreateProgram(); glReportError();
     
     // attach the vertex and fragment shaders
-    glAttachShader(program, _ff_tex0_pos_vs); glReportError();
+    glAttachShader(program, _1texcoord_vs); glReportError();
     glAttachShader(program, fs); glReportError();
+    
+    // bind the attribute positions
+    glBindAttribLocation(program, RX_ATTRIB_POSITION, "position"); glReportError();
+    glBindAttribLocation(program, RX_ATTRIB_TEXCOORD0, "tex_coord0"); glReportError();
     
     // link
     glLinkProgram(program); glReportError();

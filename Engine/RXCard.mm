@@ -621,12 +621,11 @@ struct rx_card_picture_record {
     glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
     
     // configure VAs
-    glEnableClientState(GL_VERTEX_ARRAY); glReportError();
-    glVertexPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET((void*)NULL, 0)); glReportError();
+    glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0); glReportError();
     
-    glClientActiveTexture(GL_TEXTURE0);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
-    glTexCoordPointer(2, GL_FLOAT, 4 * sizeof(GLfloat), BUFFER_OFFSET((void*)NULL, 2 * sizeof(GLfloat))); glReportError();
+    glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat))); glReportError();
     
     // bind 0 to the current VAO
     [gl_state bindVertexArrayObject:0];

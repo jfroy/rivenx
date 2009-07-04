@@ -102,8 +102,11 @@
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     
-    glEnableClientState(GL_VERTEX_ARRAY); glReportError();
-    glVertexPointer(2, GL_FLOAT, 0, vertex_coords); glReportError();
+    glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 0, vertex_coords); glReportError();
+    
+    glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 0, tex_coords); glReportError();
     
     [gl_state bindVertexArrayObject:0];
     
@@ -204,7 +207,6 @@
     // use the load context to prepare the state for the new render state
     CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
     CGLLockContext(cgl_ctx);
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
     
     glGenFramebuffersEXT(1, &(descriptor->fbo));
     glGenTextures(1, &(descriptor->texture));
@@ -241,17 +243,6 @@
     
     // re-enable client storage
     glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-    
-    // configure the tex coord array for the new state
-    [gl_state bindVertexArrayObject:_compositing_vao];
-    
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    
-    glClientActiveTexture(GL_TEXTURE0 + [_states count]);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY); glReportError();
-    glTexCoordPointer(2, GL_FLOAT, 0, tex_coords); glReportError();
-    
-    [gl_state bindVertexArrayObject:0];
     
     CGLUnlockContext(cgl_ctx);
     

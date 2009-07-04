@@ -16,11 +16,15 @@ extern NSString* const GLShaderLinkErrorDomain;
 
 @interface GLShaderProgramManager : NSObject {
     NSURL* _shaders_root;
-    GLuint _ff_tex0_pos_vs;
+    GLuint _1texcoord_vs;
 }
 
 + (GLShaderProgramManager*)sharedManager;
 
-- (GLuint)standardProgramWithFragmentShaderName:(NSString*)name extraSources:(NSArray*)extraSources epilogueIndex:(NSUInteger)epilogueIndex context:(CGLContextObj)cgl_ctx error:(NSError**)error;
+- (GLuint)standardProgramWithFragmentShaderName:(NSString*)name
+                                   extraSources:(NSArray*)extraSources
+                                  epilogueIndex:(NSUInteger)epilogueIndex
+                                        context:(CGLContextObj)cgl_ctx
+                                          error:(NSError**)error;
 
 @end

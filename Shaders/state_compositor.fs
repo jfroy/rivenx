@@ -3,8 +3,8 @@
 uniform sampler2DRect texture_units[4];
 uniform vec4 texture_blend_weights;
 
-void main()
-{
+void main() {
+/*
 	vec4 samples[4];
 	samples[0] = texture2DRect(texture_units[0], gl_TexCoord[0].st);
 	samples[1] = texture2DRect(texture_units[1], gl_TexCoord[0].st);
@@ -14,4 +14,7 @@ void main()
 		+ samples[1] * texture_blend_weights.y 
 		+ samples[2] * texture_blend_weights.z  
 		+ samples[3] * texture_blend_weights.w;
+*/
+	vec4 color = texture2DRect(texture_units[0], gl_TexCoord[0].st);
+	gl_FragColor = color * texture_blend_weights.x;
 }
