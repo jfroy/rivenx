@@ -199,4 +199,12 @@
     [_movie performPostFlushTasks:outputTime];
 }
 
+- (void)reset {
+    // if the movie has not been loaded yet, *we do nothing*
+    if (!_movie)
+        return;
+    
+    [_movie reset];
+}
+
 @end
