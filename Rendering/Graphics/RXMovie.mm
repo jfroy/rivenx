@@ -212,7 +212,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
                                      userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
     }
     
-    _display_ts_lock = OS_SPINLOCK_INIT;
+    _current_time_lock = OS_SPINLOCK_INIT;
+    _current_time = [_movie currentTime];
+    
+    _render_lock = OS_SPINLOCK_INIT;
     
     return self;
 }
@@ -270,6 +273,8 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     RXOLog2(kRXLoggingRendering, kRXLoggingLevelDebug, @"deallocating");
 #endif
     
+    OSSpinLockLock(&_render_lock);
+    
     CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
     CGLLockContext(cgl_ctx);
     
@@ -289,11 +294,16 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         reaper->movie = _movie;
         reaper->vc = _vc;
         
+        _movie = nil;
+        _vc = NULL;
+        
         if (!pthread_main_np())
             [reaper performSelectorOnMainThread:@selector(release) withObject:nil waitUntilDone:NO];
         else
             [reaper release];
     }
+    
+    OSSpinLockUnlock(&_render_lock);
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
@@ -412,12 +422,14 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 }
 
 - (void)setPlaybackSelection:(QTTimeRange)selection {
+    OSSpinLockLock(&_render_lock);
+    
     // release and clear the current image buffer
     CVPixelBufferRelease(_image_buffer);
     _image_buffer = NULL;
     
-    [_movie setSelection:selection];
     [_movie setCurrentTime:selection.time];
+    [_movie setSelection:selection];
     
     // task the VC
     CGLContextObj load_ctx = [RXGetWorldView() loadContext];
@@ -428,6 +440,8 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     [self setLooping:NO];
     [_movie setAttribute:[NSNumber numberWithBool:YES] forKey:QTMoviePlaysSelectionOnlyAttribute];
     _playing_selection = YES;
+    
+    OSSpinLockUnlock(&_render_lock);
 }
 
 - (void)clearPlaybackSelection {
@@ -498,33 +512,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 }
 
 - (void)setRate:(float)rate {
-    QTTime current_time = [_movie currentTime];
-
-    // play the movie
     [_movie setRate:rate];
-    
-    // set the display timestamp to now
-    CVTimeStamp ts;
-    CVDisplayLinkGetCurrentTime([g_worldView displayLink], &ts);
-    OSSpinLockLock(&_display_ts_lock);
-    _display_ts = ts;
-    OSSpinLockUnlock(&_display_ts_lock);
-    
-    // set the play timestamp to the current timestamp
-    _play_ts = _display_ts;
-    
-    // adjust it by the movie time when playback was initiated
-    if (current_time.timeScale != _play_ts.videoTimeScale)
-        current_time.timeValue = current_time.timeValue * _play_ts.videoTimeScale / current_time.timeScale;
-    _play_ts.videoTime = _play_ts.videoTime + current_time.timeValue;
-    
-    // need to handle wrap-around for looping movies
-    if (_looping) {
-        QTTime duration = _original_duration;
-        if (duration.timeScale != _play_ts.videoTimeScale)
-            duration.timeValue = duration.timeValue * _play_ts.videoTimeScale / duration.timeScale;
-        _play_ts.videoTime = _play_ts.videoTime % duration.timeValue;
-    }
 }
 
 - (void)_handleRateChange:(NSNotification*)notification {
@@ -539,29 +527,33 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"resetting");
 #endif
     
+    OSSpinLockLock(&_render_lock);
+    
     // release and clear the current image buffer
     CVPixelBufferRelease(_image_buffer);
     _image_buffer = NULL;
     
-    // zero the current timestamp
-    OSSpinLockLock(&_display_ts_lock);
-    memset((void*)&_display_ts, 0, sizeof(CVTimeStamp));
-    OSSpinLockUnlock(&_display_ts_lock);
-    
     // reset the movie to the beginning
     [_movie gotoBeginning];
+    
+    // update the current time
+    OSSpinLockLock(&_current_time_lock);
+    _current_time = [_movie currentTime];
+    OSSpinLockUnlock(&_current_time_lock);
     
     // task the VC
     CGLContextObj load_ctx = [RXGetWorldView() loadContext];
     CGLLockContext(load_ctx);
     QTVisualContextTask(_vc);
     CGLUnlockContext(load_ctx);
+    
+    OSSpinLockUnlock(&_render_lock);
 }
 
 - (QTTime)_noLockCurrentTime {
-    OSSpinLockLock(&_display_ts_lock);
+    OSSpinLockLock(&_current_time_lock);
     QTTime t = _current_time;
-    OSSpinLockUnlock(&_display_ts_lock);
+    OSSpinLockUnlock(&_current_time_lock);
     
     t.timeValue = t.timeValue % _original_duration.timeValue;
     return t;
@@ -569,11 +561,13 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
-    if (!_movie)
+    if (!_movie || !_vc)
         return;
     
     // alias the render context state object pointer
     NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+    
+    OSSpinLockLock(&_render_lock);
     
     // does the visual context have a new image?
     if (QTVisualContextIsNewImageAvailable(_vc, outputTime)) {
@@ -584,14 +578,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         // get the new image
         CGLContextObj load_ctx = [RXGetWorldView() loadContext];
         CGLLockContext(load_ctx);
-        
-        QTVisualContextCopyImageForTime(_vc, kCFAllocatorDefault, outputTime, &_image_buffer);
-        
-        // update the display timestamp
-        OSSpinLockLock(&_display_ts_lock);
-        _current_time = [_movie currentTime];
-        OSSpinLockUnlock(&_display_ts_lock);
-        
+            QTVisualContextCopyImageForTime(_vc, kCFAllocatorDefault, outputTime, &_image_buffer);
         CGLUnlockContext(load_ctx);
         
         // get the current texture's coordinates
@@ -606,7 +593,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
             } else {
                 GLsizei width = CVPixelBufferGetWidth(_image_buffer);
                 GLsizei height = CVPixelBufferGetHeight(_image_buffer);
-                GLsizei bytesPerRow = CVPixelBufferGetBytesPerRow(_image_buffer);
+                GLsizei bpr = CVPixelBufferGetBytesPerRow(_image_buffer);
                 
                 // compute texture coordinates
                 texCoords[0] = 0.0f;
@@ -625,7 +612,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
                 CVPixelBufferLockBaseAddress(_image_buffer, 0);
                 void* baseAddress = CVPixelBufferGetBaseAddress(_image_buffer);
                 for (GLint row = 0; row < height; row++)
-                    memcpy(BUFFER_OFFSET(_texture_storage, (row * MAX((int)_current_size.width, 128)) << 1), BUFFER_OFFSET(baseAddress, row * bytesPerRow), width << 1);
+                    memcpy(BUFFER_OFFSET(_texture_storage, (row * MAX((GLint)_current_size.width, 128)) << 1),
+                           BUFFER_OFFSET(baseAddress, row * bpr),
+                           width << 1);
                 CVPixelBufferUnlockBaseAddress(_image_buffer, 0);
                 
                 // bind the texture object and update the texture data
@@ -661,6 +650,13 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         [gl_state bindVertexArrayObject:_vao];
         glDrawArrays(GL_QUADS, 0, 4); glReportError();
     }
+    
+    OSSpinLockUnlock(&_render_lock);
+    
+    // update the current time
+    OSSpinLockLock(&_current_time_lock);
+    _current_time = [_movie currentTime];
+    OSSpinLockUnlock(&_current_time_lock);
 }
 
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {

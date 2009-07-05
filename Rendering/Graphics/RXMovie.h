@@ -36,13 +36,12 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
     
     GLuint _texture;
     void* _texture_storage;
-    
     CVImageBufferRef _image_buffer;
     
-    CVTimeStamp _play_ts;
-    CVTimeStamp _display_ts;
     QTTime _current_time;
-    OSSpinLock _display_ts_lock;
+    OSSpinLock _current_time_lock;
+    
+    OSSpinLock _render_lock;
 }
 
 - (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone owner:(id)owner;
