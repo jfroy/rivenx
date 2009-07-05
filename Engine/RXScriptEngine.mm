@@ -4557,7 +4557,6 @@ DEFINE_COMMAND(xgpincontrols) {
     
     NSPoint mouse_pos = [_current_hotspot event].location;
     rx_core_rect_t core_pos = RXTransformRectWorldToCore(NSMakeRect(mouse_pos.x, mouse_pos.y, 0.0f, 0.0f));
-    printf("core mouse pos = <%d, %d>\n", core_pos.left, core_pos.top);
     
     // get the base index of the selected pin
     int16_t pin_x = (core_pos.left - pin_control_grid_origin.x) / 9.8;
@@ -4583,8 +4582,6 @@ DEFINE_COMMAND(xgpincontrols) {
     uint32_t island_index = [gs unsigned32ForKey:@"gLkBtns"];
     uint16_t pin_id = pin_x + pin_y;
     uint16_t up_pin_id = [gs unsignedShortForKey:@"gPinUp"];
-    
-    printf("island = %u, pin_x = %hu, pin_y = %hu, pin_id = %hu\n", island_index, pin_x, pin_y, pin_id);
     
     // determine if we've hit a valid pin control by going over the pin IDs for the current island
     uint16_t const* islan_pin_ids = pin_ids[island_index - 1];
