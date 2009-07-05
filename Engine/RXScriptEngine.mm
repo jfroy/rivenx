@@ -4460,8 +4460,8 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     if (!movie)
         return;
     
-    QTTime start_time = QTMakeTime(9600 - pin_pos * 600, 600);
-    QTTimeRange movie_range = QTMakeTimeRange(start_time, QTMakeTime(580, 600));
+    QTTime start_time = QTMakeTime(9600 - pin_pos * 600 + 30, 600);
+    QTTimeRange movie_range = QTMakeTimeRange(start_time, QTMakeTime(580 - 30, 600));
     [movie setPlaybackSelection:movie_range];
 }
 
@@ -4476,8 +4476,8 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     if (!movie)
         return;
     
-    QTTime start_time = QTMakeTime(4800 + (pin_pos - 1) * 600, 600);
-    QTTimeRange movie_range = QTMakeTimeRange(start_time, QTMakeTime(580, 600));
+    QTTime start_time = QTMakeTime(4800 + (pin_pos - 1) * 600 + 30, 600);
+    QTTimeRange movie_range = QTMakeTimeRange(start_time, QTMakeTime(580 - 30, 600));
     [movie setPlaybackSelection:movie_range];
 }
 
