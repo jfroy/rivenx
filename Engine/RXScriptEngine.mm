@@ -228,8 +228,8 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     logPrefix = [NSMutableString new];
     
-    _activeHotspotsLock = OS_SPINLOCK_INIT;
-    _activeHotspots = [NSMutableArray new];
+    _active_hotspots_lock = OS_SPINLOCK_INIT;
+    _active_hotspots = [NSMutableArray new];
     
     code2movieMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
     _dynamicPictureMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSOwnedPointerMapValueCallBacks, 0);
@@ -292,7 +292,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [_synthesizedSoundGroup release];
     
     [logPrefix release];
-    [_activeHotspots release];
+    [_active_hotspots release];
     
     [card release];
     
@@ -530,12 +530,12 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
     
     // clear all active hotspots and replace them with the new card's hotspots
-    OSSpinLockLock(&_activeHotspotsLock);
-    [_activeHotspots removeAllObjects];
-    [_activeHotspots addObjectsFromArray:[card hotspots]];
-    [_activeHotspots makeObjectsPerformSelector:@selector(enable)];
-    [_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
-    OSSpinLockUnlock(&_activeHotspotsLock);
+    OSSpinLockLock(&_active_hotspots_lock);
+    [_active_hotspots removeAllObjects];
+    [_active_hotspots addObjectsFromArray:[card hotspots]];
+    [_active_hotspots makeObjectsPerformSelector:@selector(enable)];
+    [_active_hotspots sortUsingSelector:@selector(compareByIndex:)];
+    OSSpinLockUnlock(&_active_hotspots_lock);
     
     // reset auto-activation states
     _did_activate_plst = NO;
@@ -708,9 +708,9 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (NSArray*)activeHotspots {
     // WARNING: WILL BE CALLED BY THE MAIN THREAD
     
-    OSSpinLockLock(&_activeHotspotsLock);
-    NSArray* hotspots = [[_activeHotspots copy] autorelease];
-    OSSpinLockUnlock(&_activeHotspotsLock);
+    OSSpinLockLock(&_active_hotspots_lock);
+    NSArray* hotspots = [[_active_hotspots copy] autorelease];
+    OSSpinLockUnlock(&_active_hotspots_lock);
     
     return hotspots;
 }
@@ -1309,10 +1309,10 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     if (!hotspot->enabled) {
         hotspot->enabled = YES;
         
-        OSSpinLockLock(&_activeHotspotsLock);
-        [_activeHotspots addObject:hotspot];
-        [_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
-        OSSpinLockUnlock(&_activeHotspotsLock);
+        OSSpinLockLock(&_active_hotspots_lock);
+        [_active_hotspots addObject:hotspot];
+        [_active_hotspots sortUsingSelector:@selector(compareByIndex:)];
+        OSSpinLockUnlock(&_active_hotspots_lock);
         
         // instruct the script handler to update the hotspot state
         [controller updateHotspotState];
@@ -1335,10 +1335,10 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     if (hotspot->enabled) {
         hotspot->enabled = NO;
         
-        OSSpinLockLock(&_activeHotspotsLock);
-        [_activeHotspots removeObject:hotspot];
-        [_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
-        OSSpinLockUnlock(&_activeHotspotsLock);
+        OSSpinLockLock(&_active_hotspots_lock);
+        [_active_hotspots removeObject:hotspot];
+        [_active_hotspots sortUsingSelector:@selector(compareByIndex:)];
+        OSSpinLockUnlock(&_active_hotspots_lock);
         
         // instruct the script handler to update the hotspot state
         [controller updateHotspotState];
@@ -1873,18 +1873,18 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
     assert(hotspot);
     
-    OSSpinLockLock(&_activeHotspotsLock);
+    OSSpinLockLock(&_active_hotspots_lock);
     if (record->enabled == 1 && !hotspot->enabled)
-        [_activeHotspots addObject:hotspot];
+        [_active_hotspots addObject:hotspot];
     else if (record->enabled == 0 && hotspot->enabled)
-        [_activeHotspots removeObject:hotspot];
-    OSSpinLockUnlock(&_activeHotspotsLock);
+        [_active_hotspots removeObject:hotspot];
+    OSSpinLockUnlock(&_active_hotspots_lock);
     
     hotspot->enabled = record->enabled;
     
-    OSSpinLockLock(&_activeHotspotsLock);
-    [_activeHotspots sortUsingSelector:@selector(compareByIndex:)];
-    OSSpinLockUnlock(&_activeHotspotsLock);
+    OSSpinLockLock(&_active_hotspots_lock);
+    [_active_hotspots sortUsingSelector:@selector(compareByIndex:)];
+    OSSpinLockUnlock(&_active_hotspots_lock);
     
     // instruct the script handler to update the hotspot state
     [controller updateHotspotState];
@@ -4613,6 +4613,80 @@ DEFINE_COMMAND(xgresetpins) {
     
     // we can reset the UpMoov to 0 now
     [gs setUnsignedShort:0 forKey:@"gUpMoov"];
+}
+
+#pragma mark -
+#pragma mark frog trap
+
+DEFINE_COMMAND(xbait) {
+    // set the cursor to the "bait" cursor
+    [controller setMouseCursor:RX_CURSOR_BAIT];
+    
+    // track the mouse until the mouse button is released
+    NSRect mouse_vector = [controller mouseVector];
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+           isfinite(mouse_vector.size.width))
+    {
+        [controller setMouseCursor:RX_CURSOR_BAIT];
+        mouse_vector = [controller mouseVector];
+    }
+    
+    // did we drop the bait over the bait plate?
+    RXHotspot* plate_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], @"baitplate");
+    assert(plate_hotspot);
+    if (!NSMouseInRect(mouse_vector.origin, [plate_hotspot worldFrame], NO))
+        return;
+    
+    // set bbait to 1
+    [[g_world gameState] setUnsigned32:1 forKey:@"bbait"];
+    
+    // paint picture 4
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 4);
+    
+    // disable the bait (9) hotspot and enable the baitplate (16) hotspot
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 9);
+    DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 16);
+}
+
+DEFINE_COMMAND(xbaitplate) {
+    // paint picture 3 (no bait on the plate)
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 3);
+    
+    // set the cursor to the "bait" cursor
+    [controller setMouseCursor:RX_CURSOR_BAIT];
+    
+    // track the mouse until the mouse button is released
+    NSRect mouse_vector = [controller mouseVector];
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+           isfinite(mouse_vector.size.width))
+    {
+        [controller setMouseCursor:RX_CURSOR_BAIT];
+        mouse_vector = [controller mouseVector];
+    }
+    
+    // did we drop the bait over the bait plate?
+    RXHotspot* plate_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], @"baitplate");
+    assert(plate_hotspot);
+    if (NSMouseInRect(mouse_vector.origin, [plate_hotspot worldFrame], NO)) {
+        // set bbait to 1
+        [[g_world gameState] setUnsigned32:1 forKey:@"bbait"];
+        
+        // paint picture 4 (bait on the plate)
+        DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 4);
+        
+        // disable the bait (9) hotspot and enable the baitplate (16) hotspot
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 9);
+        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 16);
+    } else {
+        // set bbait to 0
+        [[g_world gameState] setUnsigned32:0 forKey:@"bbait"];
+        
+        // enable the bait (9) hotspot and disable the baitplate (16) hotspot
+        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, 9);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, 16);
+    }
 }
 
 @end

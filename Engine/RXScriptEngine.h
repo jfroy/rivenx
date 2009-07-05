@@ -29,8 +29,8 @@
     NSMutableString* logPrefix;
     BOOL _disableScriptLogging;
     
-    NSMutableArray* _activeHotspots;
-    OSSpinLock _activeHotspotsLock;
+    NSMutableArray* _active_hotspots;
+    OSSpinLock _active_hotspots_lock;
     BOOL _did_hide_mouse;
     
     // rendering support

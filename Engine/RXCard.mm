@@ -388,7 +388,7 @@ struct rx_card_picture_record {
                                                 cursorID:hspt_record->mouse_cursor
                                                   script:hotspot_scripts];
         if (hspt_record->name_rec >= 0) {
-            [hs setName:[[_descriptor parent] hotspotNameAtIndex:hspt_record->name_rec]];
+            [hs setName:[[[_descriptor parent] hotspotNameAtIndex:hspt_record->name_rec] lowercaseString]];
             NSMapInsert(_hotspots_name_map, [hs name], hs);
         }
         
