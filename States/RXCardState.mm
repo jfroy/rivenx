@@ -2218,7 +2218,7 @@ exit_flush_tasks:
     NSArray* active_hotspots = [sengine activeHotspots];
 
     // if the mouse is below the game viewport, bring up the alpha of the inventory to 1; otherwise set it to 0.5
-    if (NSPointInRect(mouse_vector.origin, [(NSView*)g_worldView bounds]) && mouse_vector.origin.y < kRXCardViewportOriginOffset.y)
+    if (NSMouseInRect(mouse_vector.origin, [(NSView*)g_worldView bounds], NO) && mouse_vector.origin.y < kRXCardViewportOriginOffset.y)
         _inventoryAlphaFactor = 1.f;
     else
         _inventoryAlphaFactor = 0.5f;
@@ -2227,14 +2227,14 @@ exit_flush_tasks:
     NSEnumerator* hotspots_enum = [active_hotspots objectEnumerator];
     RXHotspot* hotspot;
     while ((hotspot = [hotspots_enum nextObject])) {
-        if (NSPointInRect(mouse_vector.origin, [hotspot worldFrame]))
+        if (NSMouseInRect(mouse_vector.origin, [hotspot worldFrame], NO))
             break;
     }
     
     // now check if we're over one of the inventory regions
     if (!hotspot) {
         for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
-            if (NSPointInRect(mouse_vector.origin, _inventoryHotspotRegions[inventory_i])) {
+            if (NSMouseInRect(mouse_vector.origin, _inventoryHotspotRegions[inventory_i], NO)) {
                 // set hotspot to the inventory item index (plus one to avoid the value 0); the following block of code
                 // will check if hotspot is not 0 and below PAGEZERO, and act accordingly
                 hotspot = (RXHotspot*)(inventory_i + 1);

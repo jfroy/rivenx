@@ -3178,7 +3178,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
         if (active_hotspot)
             mouse_position.y = [hotspot worldFrame].origin.y;
         
-        if (NSPointInRect(mouse_position, [hotspot worldFrame])) {
+        if (NSMouseInRect(mouse_position, [hotspot worldFrame], NO)) {
             // we found the hotspot over which the mouse currently is; this ends
             // the forward search
             
@@ -3730,7 +3730,7 @@ DEFINE_COMMAND(xtakeit) {
     uint32_t marble_x = UINT32_MAX;
     uint32_t marble_y = UINT32_MAX;
     
-    if (NSPointInRect(core_rect_ns, grid_rect)) {
+    if (NSMouseInRect(core_rect_ns, grid_rect, NO)) {
         // we're inside the grid, determine on which cell
         
         if (core_position.left < marble_offset_matrix[0][0] + 5 * marble_size)
@@ -4347,7 +4347,7 @@ DEFINE_COMMAND(xvga1300_carriage) {
             
             // check where the mouse was pressed, and if it is inside the
             // trapeze region, set mouse_was_pressed to YES and exit the loop
-            if (NSPointInRect(mouse_down_event.location, trapeze_rect)) {
+            if (NSMouseInRect(mouse_down_event.location, trapeze_rect, NO)) {
                 mouse_was_pressed = YES;
                 break;
             }
