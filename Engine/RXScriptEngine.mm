@@ -4537,7 +4537,7 @@ DEFINE_COMMAND(xgpincontrols) {
         pin_y = (4 - pin_y) * 5;
     } else if (pin_pos == 2) {
         pin_x = (4 - pin_x) * 5;
-        pin_y = 1 - pin_y;
+        pin_y = 1 + pin_y;
     } else if (pin_pos == 3) {
         pin_x = 1 + pin_x;
         pin_y = pin_y * 5;
