@@ -32,7 +32,7 @@
 #import "Rendering/Graphics/RXMovieProxy.h"
 
 
-static const NSTimeInterval k_mouse_tracking_loop_period = 0.001;
+static NSTimeInterval const k_mouse_tracking_loop_period = 0.001;
 
 struct rx_card_dynamic_picture {
     GLuint texture;
@@ -45,7 +45,7 @@ struct _rx_command_dispatch_entry {
 };
 typedef struct _rx_command_dispatch_entry rx_command_dispatch_entry_t;
 
-static const uint32_t rx_command_count = 48;
+static uint32_t const rx_command_count = 48;
 static rx_command_dispatch_entry_t _riven_command_dispatch_table[rx_command_count];
 static NSMapTable* _riven_external_command_dispatch_map;
 
@@ -2575,7 +2575,7 @@ DEFINE_COMMAND(xreseticons) {
     }
 }
 
-static const float k_jungle_elevator_trigger_magnitude = 16.0f;
+static float const k_jungle_elevator_trigger_magnitude = 16.0f;
 
 DEFINE_COMMAND(xhandlecontrolup) {
     NSRect mouse_vector = [controller mouseVector];
@@ -3484,23 +3484,23 @@ typedef enum  {
     YELLOW_MARBLE
 } rx_fire_marble_t;
 
-static const uint32_t marble_offset_matrix[2][5] = {
+static uint32_t const marble_offset_matrix[2][5] = {
     {134, 202, 270, 338, 406},  // x
     {24, 92, 159, 227, 295},    // y
 };
 
-static const uint32_t tiny_marble_offset_matrix[2][5] = {
+static uint32_t const tiny_marble_offset_matrix[2][5] = {
     {246, 269, 293, 316, 340},  // x
     {263, 272, 284, 295, 309},  // y
 };
 
-static const uint32_t tiny_marble_receptable_position_vectors[2][6] = {
+static uint32_t const tiny_marble_receptable_position_vectors[2][6] = {
 //   red    orange  yellow  green   blue    violet
     {376,   378,    380,    382,    384,    386},   // x
     {253,   257,    261,    265,    268,    273},   // y
 };
 
-static const float marble_size = 13.5f;
+static float const marble_size = 13.5f;
 
 - (void)_drawTinyMarbleWithPosition:(uint32_t)marble_pos index:(uint32_t)index {
     uint32_t marble_x = (marble_pos >> 16) - 1;
@@ -3882,7 +3882,7 @@ DEFINE_COMMAND(xgwt900_scribe) {
 #pragma mark -
 #pragma mark gspit left viewer
 
-static const uint16_t prison_activity_movies[3][8] = {
+static uint16_t const prison_activity_movies[3][8] = {
     {9, 10, 19, 19, 21, 21},
     {18, 20, 22},
     {11, 11, 12, 17, 17, 17, 17, 23}
@@ -4034,7 +4034,7 @@ DEFINE_COMMAND(xglview_villageoff) {
     DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
 }
 
-static int64_t left_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216LL, 4016LL, 4816LL, 5616LL, 6416LL, 7216LL, 8016LL, 8816LL};
+static int64_t const left_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216LL, 4016LL, 4816LL, 5616LL, 6416LL, 7216LL, 8016LL, 8816LL};
 
 - (void)_configureLeftViewerSpinMovie {
     RXGameState* gs = [g_world gameState];
@@ -4072,7 +4072,7 @@ DEFINE_COMMAND(xglviewer) {
 #pragma mark -
 #pragma mark gspit right viewer
 
-static int64_t right_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216LL, 4016LL, 4816LL, 5616LL, 6416LL, 7216LL, 8016LL, 8816LL};
+static int64_t const right_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 3216LL, 4016LL, 4816LL, 5616LL, 6416LL, 7216LL, 8016LL, 8816LL};
 
 - (void)_configureRightViewerSpinMovie {
     RXGameState* gs = [g_world gameState];
