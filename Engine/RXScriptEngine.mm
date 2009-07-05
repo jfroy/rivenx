@@ -4444,7 +4444,6 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     if (!movie)
         return;
     
-    QTTime duration = [movie duration];
     QTTime start_time = QTMakeTime((old_pos - 1) * 1200, 600);
     QTTimeRange movie_range = QTMakeTimeRange(start_time, QTMakeTime(1200, 600));
     [movie setPlaybackSelection:movie_range];
@@ -4461,8 +4460,23 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     if (!movie)
         return;
     
-    QTTime duration = [movie duration];
-    QTTime start_time = QTMakeTime(6600 + (pin_pos - 1) * 600, 600);
+    QTTime start_time = QTMakeTime(9600 - pin_pos * 600, 600);
+    QTTimeRange movie_range = QTMakeTimeRange(start_time, QTMakeTime(580, 600));
+    [movie setPlaybackSelection:movie_range];
+}
+
+- (void)_configurePinMovieForLower {
+    RXGameState* gs = [g_world gameState];
+    
+    uintptr_t pin_movie_code = [gs unsigned32ForKey:@"gUpMoov"];
+    uint32_t pin_pos = [gs unsigned32ForKey:@"gPinPos"];
+    
+    // configure the playback selection for the pin movie
+    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)pin_movie_code);
+    if (!movie)
+        return;
+    
+    QTTime start_time = QTMakeTime(4800 + (pin_pos - 1) * 600, 600);
     QTTimeRange movie_range = QTMakeTimeRange(start_time, QTMakeTime(580, 600));
     [movie setPlaybackSelection:movie_range];
 }
@@ -4471,7 +4485,7 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     RXGameState* gs = [g_world gameState];
     
     uint16_t new_pin_movie_code = pin_movie_codes[pin_id - 1];
-//    uint16_t old_pin_movie_code = [gs unsigned32ForKey:@"gUpMoov"];
+    uint16_t old_pin_movie_code = [gs unsigned32ForKey:@"gUpMoov"];
     
     // set the new pin movie now, before we call _configurePinMovieForRaise
     // (so that the method works on the correct movie)
@@ -4488,13 +4502,33 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     [self _playDataSoundWithID:pin_raise_sound gain:1.0f duration:NULL];
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, new_pin_movie_code);
     
+    // disable the previous up movie
+    if (old_pin_movie_code)
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, old_pin_movie_code);
+    
     // set the current raised pin ID variable
     [gs setUnsignedShort:pin_id forKey:@"gPinUp"];
 }
 
 - (void)_lowerTopographyPins:(uint16_t)pin_id {
-    [[g_world gameState] setUnsignedShort:0 forKey:@"gPinUp"];
-    [[g_world gameState] setUnsignedShort:0 forKey:@"gUpMoov"];
+    RXGameState* gs = [g_world gameState];
+    
+    uint16_t pin_movie_code = pin_movie_codes[pin_id - 1];
+    
+    // configure the new pin movie for lower
+    [self performSelectorOnMainThread:@selector(_configurePinMovieForLower) withObject:nil waitUntilDone:YES];
+    
+    // get the pin lower sound
+    uint16_t pin_lower_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gPinsDn_1",
+                                                                  [[card descriptor] ID]]];
+    
+    // play the pin lower sound and movie
+    [self _playDataSoundWithID:pin_lower_sound gain:1.0f duration:NULL];
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, pin_movie_code);
+    
+    // reset PinUp and UpMoov to 0
+    [gs setUnsignedShort:0 forKey:@"gPinUp"];
+    [gs setUnsignedShort:0 forKey:@"gUpMoov"];
 }
 
 DEFINE_COMMAND(xgrotatepins) {
