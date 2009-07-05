@@ -4445,7 +4445,7 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
         return;
     
     QTTime start_time = QTMakeTime((old_pos - 1) * 1200, 600);
-    QTTimeRange movie_range = QTMakeTimeRange(start_time, QTMakeTime(1200, 600));
+    QTTimeRange movie_range = QTMakeTimeRange(start_time, QTMakeTime(1215, 600));
     [movie setPlaybackSelection:movie_range];
 }
 
@@ -4502,8 +4502,8 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     [self _playDataSoundWithID:pin_raise_sound gain:1.0f duration:NULL];
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, new_pin_movie_code);
     
-    // disable the previous up movie
-    if (old_pin_movie_code)
+    // disable the previous up movie (if it is different from the new movie code)
+    if (old_pin_movie_code && old_pin_movie_code != new_pin_movie_code)
         DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, old_pin_movie_code);
     
     // set the current raised pin ID variable
@@ -4526,9 +4526,8 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     [self _playDataSoundWithID:pin_lower_sound gain:1.0f duration:NULL];
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, pin_movie_code);
     
-    // reset PinUp and UpMoov to 0
+    // reset PinUp
     [gs setUnsignedShort:0 forKey:@"gPinUp"];
-    [gs setUnsignedShort:0 forKey:@"gUpMoov"];
 }
 
 DEFINE_COMMAND(xgrotatepins) {
@@ -4608,9 +4607,15 @@ DEFINE_COMMAND(xgpincontrols) {
 }
 
 DEFINE_COMMAND(xgresetpins) {
-    uint16_t up_pin_id = [[g_world gameState] unsignedShortForKey:@"gPinUp"];
+    RXGameState* gs = [g_world gameState];
+    
+    // if there are raised pins, lower them now
+    uint16_t up_pin_id = [gs unsignedShortForKey:@"gPinUp"];
     if (up_pin_id)
         [self _lowerTopographyPins:up_pin_id];
+    
+    // we can reset the UpMoov to 0 now
+    [gs setUnsignedShort:0 forKey:@"gUpMoov"];
 }
 
 @end
