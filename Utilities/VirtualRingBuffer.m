@@ -71,6 +71,7 @@ static void* allocateVirtualBuffer(UInt32 bufferLength) {
 #endif
         return NULL;
     }
+    
     if (realAddress != originalAddress) {
 #if defined(DEBUG)
         RXLog(kRXLoggingAudio, kRXLoggingLevelDebug, @"allocateVirtualBuffer: vm_allocate 2nd time didn't return same address (%p vs %p)", originalAddress, realAddress);

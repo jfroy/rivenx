@@ -16,7 +16,12 @@
     IBOutlet NSDrawer *mediaListDrawer;
     IBOutlet NSTableView* movieTableView;
     
+    IBOutlet NSTextField* timeValueField;
+    IBOutlet NSTextField* timeBaseField;
+    
     MHKArchive *archive;
 }
+
+- (IBAction)setCurrentTime:(id)sender;
 
 @end

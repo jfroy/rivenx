@@ -114,4 +114,9 @@
     return YES;
 }
 
+- (IBAction)setCurrentTime:(id)sender {
+    QTTime time = QTMakeTime([[timeValueField stringValue] integerValue], [[timeBaseField stringValue] integerValue]);
+    [[qtView movie] setCurrentTime:time];
+}
+
 @end

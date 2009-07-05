@@ -141,6 +141,7 @@
 		316C38B30F469FE800EFB7FB /* CADebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C010F03F8EC006EFF93 /* CADebugger.cpp */; };
 		316C38D70F46B22300EFB7FB /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */; };
 		316C38DE0F46B53900EFB7FB /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */; };
+		316D273E10004B23003579F9 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 316D273C10004B23003579F9 /* MainMenu.xib */; };
 		316E1F2A0E77806100F28E2A /* mhk_dump.m in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F270E77806100F28E2A /* mhk_dump.m */; };
 		316E1F2B0E77806100F28E2A /* mhk_dump_cmd.c in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F280E77806100F28E2A /* mhk_dump_cmd.c */; };
 		316E1F300E77809400F28E2A /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3158857A0C8729D800204DDD /* MHKKit.framework */; };
@@ -149,7 +150,6 @@
 		316E1F3D0E77810800F28E2A /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384B08C6A73E004B7FD0 /* CoreServices.framework */; };
 		316E1F3F0E77810F00F28E2A /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313C7E9F08CCFB4D00950A70 /* ApplicationServices.framework */; };
 		317403940CDC1A67006F3523 /* RXGameState.m in Sources */ = {isa = PBXBuildFile; fileRef = 317403930CDC1A67006F3523 /* RXGameState.m */; };
-		317ACC900F285BE10040FFFD /* MainMenu.nib in Resources */ = {isa = PBXBuildFile; fileRef = 317ACC8B0F285BE10040FFFD /* MainMenu.nib */; };
 		317ACC910F285BE10040FFFD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 317ACC8D0F285BE10040FFFD /* main.m */; };
 		317ACC920F285BE10040FFFD /* MHKQTPlayerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 317ACC8F0F285BE10040FFFD /* MHKQTPlayerController.m */; };
 		317ACCC90F285CD60040FFFD /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311FD39108C03AF20045BE11 /* Cocoa.framework */; };
@@ -483,6 +483,7 @@
 		316C38AB0F469FC700EFB7FB /* CAHostTimeBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAHostTimeBase.cpp; sourceTree = "<group>"; };
 		316C38B00F469FDE00EFB7FB /* CAPThread.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAPThread.cpp; sourceTree = "<group>"; };
 		316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAAUParameter.cpp; sourceTree = "<group>"; };
+		316D273D10004B23003579F9 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = mhk/English.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		316E1EE80E77803100F28E2A /* mhkdump */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mhkdump; sourceTree = BUILT_PRODUCTS_DIR; };
 		316E1F270E77806100F28E2A /* mhk_dump.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = mhk_dump.m; path = mhk/mhk_dump.m; sourceTree = "<group>"; };
 		316E1F280E77806100F28E2A /* mhk_dump_cmd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mhk_dump_cmd.c; path = mhk/mhk_dump_cmd.c; sourceTree = "<group>"; };
@@ -492,7 +493,6 @@
 		317A0E130A889C5D0076E5E9 /* RXAtomic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXAtomic.h; path = Base/RXAtomic.h; sourceTree = "<group>"; usesTabs = 0; };
 		317ACC7C0F285B780040FFFD /* MHKMoviePlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MHKMoviePlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		317ACC7E0F285B780040FFFD /* MHKMoviePlayer-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "MHKMoviePlayer-Info.plist"; sourceTree = "<group>"; };
-		317ACC8C0F285BE10040FFFD /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = mhk/English.lproj/MainMenu.nib; sourceTree = "<group>"; };
 		317ACC8D0F285BE10040FFFD /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = mhk/main.m; sourceTree = "<group>"; };
 		317ACC8E0F285BE10040FFFD /* MHKQTPlayerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKQTPlayerController.h; path = mhk/MHKQTPlayerController.h; sourceTree = "<group>"; };
 		317ACC8F0F285BE10040FFFD /* MHKQTPlayerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKQTPlayerController.m; path = mhk/MHKQTPlayerController.m; sourceTree = "<group>"; };
@@ -753,6 +753,7 @@
 				31C357220D92A6C700EDEF81 /* Tests */,
 				08FB779DFE84155DC02AAC07 /* Frameworks */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
+				316D273C10004B23003579F9 /* MainMenu.xib */,
 			);
 			name = rivenx;
 			sourceTree = "<group>";
@@ -975,7 +976,6 @@
 			isa = PBXGroup;
 			children = (
 				317ACC8D0F285BE10040FFFD /* main.m */,
-				317ACC8B0F285BE10040FFFD /* MainMenu.nib */,
 				317ACC7E0F285B780040FFFD /* MHKMoviePlayer-Info.plist */,
 				317ACC8E0F285BE10040FFFD /* MHKQTPlayerController.h */,
 				317ACC8F0F285BE10040FFFD /* MHKQTPlayerController.m */,
@@ -1455,7 +1455,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				317ACC900F285BE10040FFFD /* MainMenu.nib in Resources */,
+				316D273E10004B23003579F9 /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1859,12 +1859,12 @@
 			name = About.strings;
 			sourceTree = "<group>";
 		};
-		317ACC8B0F285BE10040FFFD /* MainMenu.nib */ = {
+		316D273C10004B23003579F9 /* MainMenu.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				317ACC8C0F285BE10040FFFD /* English */,
+				316D273D10004B23003579F9 /* English */,
 			);
-			name = MainMenu.nib;
+			name = MainMenu.xib;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

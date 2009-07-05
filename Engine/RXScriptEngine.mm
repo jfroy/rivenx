@@ -4414,33 +4414,87 @@ DEFINE_COMMAND(xvga1300_carriage) {
 #pragma mark -
 #pragma mark gspit topology viewer
 
-static uint16_t pin_ids[] = {10, 11, 12, 16, 17,
-                             20, 211, 216, 221, 222,
-                             30, 312, 313, 314, 315, 317, 318, 319, 320, 323, 324, 325,
-                             40, 45,
-                             50, 53, 54, 58, 59, 510};
-static int64_t pin_rotate_timevals[] = {8416LL, 0LL, 1216LL, 2416LL, 3616LL, 4816LL, 6016LL, 7216LL};
+static rx_point_t const pin_control_grid_origin = {279, 325};
+static uint16_t const pin_id_counts[] = {5, 5, 12, 2, 6};
+static uint16_t const pin_ids[5][12] = {
+    {0, 1, 2, 6, 7},
+    {0, 1, 6, 21, 22},
+    {0, 2, 3, 14, 15, 17, 18, 19, 20, 23, 24, 25},
+    {0, 5},
+    {0, 3, 4, 8, 9, 10}
+};
+
+static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2, 3, 4, 2, 5, 6, 7, 8, 3, 4, 9, 10, 11};
 
 - (void)_configurePinMovieForRotation {
     RXGameState* gs = [g_world gameState];
     
     // get the old (current) position, the new position and the current pin movie code
     int32_t old_pos = [gs unsigned32ForKey:@"gPinPos"];
-    int32_t new_pos = old_pos + 1;
     uintptr_t pin_movie_code = [gs unsigned32ForKey:@"gUpMoov"];
     
-    // determine the playback selection for the pin movie
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)pin_movie_code);
-    QTTime duration = [movie duration];
-
-    QTTime start_time = QTMakeTime(pin_rotate_timevals[old_pos], duration.timeScale);
-    QTTimeRange movie_range = QTMakeTimeRange(start_time,
-                                              QTMakeTime(pin_rotate_timevals[new_pos] - start_time.timeValue,
-                                                         duration.timeScale));
-    [movie setPlaybackSelection:movie_range];
+    // update the pin position variable
+    if (old_pos == 4)
+        [gs setUnsigned32:1 forKey:@"gPinPos"];
+    else
+        [gs setUnsigned32:old_pos + 1 forKey:@"gPinPos"];
     
-    // update the position variable
-    [gs setUnsigned32:(new_pos % 4) + 1 forKey:@"gPinPos"];
+    // configure the playback selection for the pin movie
+    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)pin_movie_code);
+    if (!movie)
+        return;
+    
+    QTTime duration = [movie duration];
+    QTTime start_time = QTMakeTime((old_pos - 1) * 1200, 600);
+    QTTimeRange movie_range = QTMakeTimeRange(start_time, QTMakeTime(1200, 600));
+    [movie setPlaybackSelection:movie_range];
+}
+
+- (void)_configurePinMovieForRaise {
+    RXGameState* gs = [g_world gameState];
+    
+    uintptr_t pin_movie_code = [gs unsigned32ForKey:@"gUpMoov"];
+    uint32_t pin_pos = [gs unsigned32ForKey:@"gPinPos"];
+    
+    // configure the playback selection for the pin movie
+    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)pin_movie_code);
+    if (!movie)
+        return;
+    
+    QTTime duration = [movie duration];
+    QTTime start_time = QTMakeTime(6600 + (pin_pos - 1) * 600, 600);
+    QTTimeRange movie_range = QTMakeTimeRange(start_time, QTMakeTime(580, 600));
+    [movie setPlaybackSelection:movie_range];
+}
+
+- (void)_raiseTopographyPins:(uint16_t)pin_id {
+    RXGameState* gs = [g_world gameState];
+    
+    uint16_t new_pin_movie_code = pin_movie_codes[pin_id - 1];
+//    uint16_t old_pin_movie_code = [gs unsigned32ForKey:@"gUpMoov"];
+    
+    // set the new pin movie now, before we call _configurePinMovieForRaise
+    // (so that the method works on the correct movie)
+    [gs setUnsignedShort:new_pin_movie_code forKey:@"gUpMoov"];
+    
+    // configure the new pin movie for a raise
+    [self performSelectorOnMainThread:@selector(_configurePinMovieForRaise) withObject:nil waitUntilDone:YES];
+    
+    // get the pin raise sound
+    uint16_t pin_raise_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gPinsUp_1",
+                                                                  [[card descriptor] ID]]];
+    
+    // play the pin raise sound and movie
+    [self _playDataSoundWithID:pin_raise_sound gain:1.0f duration:NULL];
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, new_pin_movie_code);
+    
+    // set the current raised pin ID variable
+    [gs setUnsignedShort:pin_id forKey:@"gPinUp"];
+}
+
+- (void)_lowerTopographyPins:(uint16_t)pin_id {
+    [[g_world gameState] setUnsignedShort:0 forKey:@"gPinUp"];
+    [[g_world gameState] setUnsignedShort:0 forKey:@"gUpMoov"];
 }
 
 DEFINE_COMMAND(xgrotatepins) {
@@ -4468,20 +4522,61 @@ DEFINE_COMMAND(xgrotatepins) {
 DEFINE_COMMAND(xgpincontrols) {
     RXGameState* gs = [g_world gameState];
     
+    NSPoint mouse_pos = [_current_hotspot event].location;
+    rx_core_rect_t core_pos = RXTransformRectWorldToCore(NSMakeRect(mouse_pos.x, mouse_pos.y, 0.0f, 0.0f));
+    printf("core mouse pos = <%d, %d>\n", core_pos.left, core_pos.top);
     
-}
-
-DEFINE_COMMAND(xglowerpins) {
-
-}
-
-DEFINE_COMMAND(xgraisepins) {
-
+    // get the base index of the selected pin
+    int16_t pin_x = (core_pos.left - pin_control_grid_origin.x) / 9.8;
+    int16_t pin_y = (core_pos.top - pin_control_grid_origin.y) / 10.8;
+    
+    // based on the pin position (the rotational position), figure out the pin control grid position we hit
+    uint32_t pin_pos = [gs unsigned32ForKey:@"gPinPos"];
+    if (pin_pos == 1) {
+        pin_x = 5 - pin_x;
+        pin_y = (4 - pin_y) * 5;
+    } else if (pin_pos == 2) {
+        pin_x = (4 - pin_x) * 5;
+        pin_y = 1 - pin_y;
+    } else if (pin_pos == 3) {
+        pin_x = 1 + pin_x;
+        pin_y = pin_y * 5;
+    } else if (pin_pos == 4) {
+        pin_x = pin_x * 5;
+        pin_y = 5 - pin_y;
+    } else
+        abort();
+    
+    uint32_t island_index = [gs unsigned32ForKey:@"gLkBtns"];
+    uint16_t pin_id = pin_x + pin_y;
+    uint16_t up_pin_id = [gs unsignedShortForKey:@"gPinUp"];
+    
+    printf("island = %u, pin_x = %hu, pin_y = %hu, pin_id = %hu\n", island_index, pin_x, pin_y, pin_id);
+    
+    // determine if we've hit a valid pin control by going over the pin IDs for the current island
+    uint16_t const* islan_pin_ids = pin_ids[island_index - 1];
+    uint16_t pin_count = pin_id_counts[island_index - 1];
+    uint16_t pin_index = 0;
+    for (; pin_index < pin_count; pin_index++) {
+        if (islan_pin_ids[pin_index] == pin_id)
+            break;
+    }
+    if (pin_index == pin_count)
+        return;
+    
+    // if there are raised pins, lower them now
+    if (up_pin_id)
+        [self _lowerTopographyPins:up_pin_id];
+    
+    // if the selected pins are different than the (previously) raised pins, raise the selected pins
+    if (pin_id != up_pin_id)
+        [self _raiseTopographyPins:pin_id];
 }
 
 DEFINE_COMMAND(xgresetpins) {
-    uint16_t pin_up = [[g_world gameState] unsignedShortForKey:@"gPinUp"];
-    rx_dispatch_external1(self, @"xglowerpins", pin_up);
+    uint16_t up_pin_id = [[g_world gameState] unsignedShortForKey:@"gPinUp"];
+    if (up_pin_id)
+        [self _lowerTopographyPins:up_pin_id];
 }
 
 @end
