@@ -68,6 +68,9 @@
     
     // set the movie's volume
     [_movie setVolume:_volume];
+    
+    // finally reset the movie to respect the contract of the movie activation opcodes (since we override -reset to make it do nothing)
+    [_movie reset];
 }
 
 + (BOOL)instancesRespondToSelector:(SEL)aSelector {
