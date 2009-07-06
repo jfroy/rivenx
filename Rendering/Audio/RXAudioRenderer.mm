@@ -91,7 +91,7 @@ busNodeVector(0),
 busAllocationVector(0)
 {
     CreateGraph();
-    RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("<RX::AudioRenderer: 0x%x> initialized with %u mixer inputs}"), this, sourceLimit);
+    RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("<RX::AudioRenderer: 0x%x> initialized with %u mixer inputs"), this, sourceLimit);
 }
 
 AudioRenderer::AudioRenderer(const AudioRenderer &c) {
