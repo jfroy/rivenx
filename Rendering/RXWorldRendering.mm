@@ -52,17 +52,17 @@
     NSScreen* mainScreen = [NSScreen mainScreen];
     NSRect screenRect = [mainScreen frame];
     NSWindow* renderWindow;
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"]) {
-        // create fullscreen, borderless window
-        renderWindow = [[NSWindow alloc] initWithContentRect:screenRect
-                                                   styleMask:NSBorderlessWindowMask
-                                                     backing:NSBackingStoreBuffered
-                                                       defer:NO
-                                                      screen:mainScreen];
-        [renderWindow setLevel:NSTornOffMenuWindowLevel];
-        if ([renderWindow respondsToSelector:@selector(setCollectionBehavior:)])
-            [renderWindow setCollectionBehavior:NSWindowCollectionBehaviorDefault];
-    } else {
+//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"]) {
+//        // create fullscreen, borderless window
+//        renderWindow = [[NSWindow alloc] initWithContentRect:screenRect
+//                                                   styleMask:NSBorderlessWindowMask
+//                                                     backing:NSBackingStoreBuffered
+//                                                       defer:NO
+//                                                      screen:mainScreen];
+//        [renderWindow setLevel:NSTornOffMenuWindowLevel];
+//        if ([renderWindow respondsToSelector:@selector(setCollectionBehavior:)])
+//            [renderWindow setCollectionBehavior:NSWindowCollectionBehaviorDefault];
+//    } else {
         // regular window
         renderWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0.0f, 0.0f, kRXRendererViewportSize.width, kRXRendererViewportSize.height)
                                                    styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask
@@ -73,7 +73,7 @@
         [renderWindow setLevel:NSNormalWindowLevel];
         [renderWindow setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - (kRXRendererViewportSize.width / 2),
                                                  (screenRect.size.height / 2) - (kRXRendererViewportSize.height / 2))];
-    }
+//    }
     
     [renderWindow setAcceptsMouseMovedEvents:YES];
     [renderWindow setCanHide:YES];
@@ -102,8 +102,8 @@
     [_worldView release];
     
     // if we're in fullscreen mode, hide the menu bar now
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"])
-        [NSMenu setMenuBarVisible:NO];
+//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"])
+//        [NSMenu setMenuBarVisible:NO];
     
     // show the window
     [renderWindow makeKeyAndOrderFront:self];

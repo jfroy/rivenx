@@ -42,12 +42,12 @@
     [_aboutBox center];
     [_preferences center];
     
-    NSBundle* mainBundle = [NSBundle mainBundle];
+    NSBundle* bundle = [NSBundle mainBundle];
     NSString* versionFormat = NSLocalizedStringFromTable(@"VERSION_FORMAT", @"About", nil);
-    [_versionField setStringValue:[NSString stringWithFormat:versionFormat, [mainBundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], [mainBundle objectForInfoDictionaryKey:@"CFBundleVersion"]]];
-    [_copyrightField setStringValue:[[NSBundle mainBundle] objectForInfoDictionaryKey:@"NSHumanReadableCopyright"]];
+    [_versionField setStringValue:[NSString stringWithFormat:versionFormat, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], [bundle objectForInfoDictionaryKey:@"CFBundleVersion"]]];
+    [_copyrightField setStringValue:NSLocalizedStringFromTable(@"LONG_COPYRIGHT", @"About", nil)];
     
-    _fullscreen = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"];
+//    _fullscreen = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"];
 }
 
 - (void)dealloc {
@@ -204,10 +204,10 @@
 }
 
 - (IBAction)toggleStretchToFit:(id)sender {
-    BOOL stretchToFit = [[NSUserDefaults standardUserDefaults] boolForKey:@"StretchToFit"];
-    [[NSUserDefaults standardUserDefaults] setBool:!stretchToFit forKey:@"StretchToFit"];
-    
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"RXOpenGLDidReshapeNotification" object:self];
+//    BOOL stretchToFit = [[NSUserDefaults standardUserDefaults] boolForKey:@"StretchToFit"];
+//    [[NSUserDefaults standardUserDefaults] setBool:!stretchToFit forKey:@"StretchToFit"];
+//    
+//    [[NSNotificationCenter defaultCenter] postNotificationName:@"RXOpenGLDidReshapeNotification" object:self];
 }
 
 - (IBAction)openDocument:(id)sender {

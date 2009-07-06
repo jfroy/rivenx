@@ -136,18 +136,18 @@ CF_INLINE rx_rect_t RXEffectiveRendererFrame() {
     rx_size_t viewportSize = RXGetGLViewportSize();
     rx_size_t contentSize = kRXRendererViewportSize;
     
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"] && [[NSUserDefaults standardUserDefaults] boolForKey:@"StretchToFit"]) {
-        float viewportAR = (float)viewportSize.width / (float)viewportSize.height;
-        float contentAR = (float)contentSize.width / (float)contentSize.height;
-        
-        if (viewportAR > 0) {
-            contentSize.height = viewportSize.height;
-            contentSize.width = contentSize.height * contentAR;
-        } else {
-            contentSize.width = viewportSize.width;
-            contentSize.height = viewportSize.width / contentAR;
-        }
-    }
+//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"] && [[NSUserDefaults standardUserDefaults] boolForKey:@"StretchToFit"]) {
+//        float viewportAR = (float)viewportSize.width / (float)viewportSize.height;
+//        float contentAR = (float)contentSize.width / (float)contentSize.height;
+//        
+//        if (viewportAR > 0) {
+//            contentSize.height = viewportSize.height;
+//            contentSize.width = contentSize.height * contentAR;
+//        } else {
+//            contentSize.width = viewportSize.width;
+//            contentSize.height = viewportSize.width / contentAR;
+//        }
+//    }
     
     return RXRectMake((viewportSize.width / 2) - (contentSize.width / 2), (viewportSize.height / 2) - (contentSize.height / 2), contentSize.width, contentSize.height);
 }
