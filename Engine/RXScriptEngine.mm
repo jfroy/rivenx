@@ -4689,4 +4689,90 @@ DEFINE_COMMAND(xbaitplate) {
     }
 }
 
+- (void)_catchFrog:(NSTimer*)timer {
+    RXGameState* gs = [g_world gameState];
+    
+    [event_timer invalidate];
+    event_timer = nil;
+    
+    // if bytramtime is 0, we're too late (or the trap has been raised) and we just exit
+    if ([gs unsigned64ForKey:@"bytramtime"] == 0)
+        return;
+    
+    // reset the trap time to 0
+    [[g_world gameState] setUnsigned64:0 forKey:@"bytramtime"];
+    
+    // increment bytram (the specific frog movie we'll play) and clamp to 3
+    uint16_t frog_movie = [gs unsignedShortForKey:@"bytram"];
+    frog_movie++;
+    if (frog_movie > 3)
+        frog_movie = 3;
+    [[g_world gameState] setUnsignedShort:frog_movie forKey:@"bytram"];
+    
+    // set bytrapped to 1
+    [[g_world gameState] setUnsigned32:1 forKey:@"bytrapped"];
+    
+    // set bbait to 0 (frog took the bait)
+    [[g_world gameState] setUnsigned32:0 forKey:@"bbait"];
+    
+    // set bytrap to 0 (which indicates that the trap is down and closed)
+    [[g_world gameState] setUnsigned32:0 forKey:@"bytrap"];
+    
+    // play the catch sound effect
+    uint16_t trap_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_bYTCaught_1",
+                                                             [[card descriptor] ID]]];
+    [self _playDataSoundWithID:trap_sound gain:1.0f duration:NULL];
+}
+
+DEFINE_COMMAND(xbsettrap) {
+    // compute a random catch delay
+    NSTimeInterval catch_delay = ((random() % 180) + 1) + 36;
+    
+    // schedule the event timer
+    [event_timer invalidate];
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:catch_delay
+                                                       target:self
+                                                     selector:@selector(_catchFrog:)
+                                                     userInfo:nil
+                                                      repeats:NO];
+    
+    // set the trap time to the catch delay in usecs
+    [[g_world gameState] setUnsigned64:catch_delay * 1E6 forKey:@"bytramtime"];
+}
+
+DEFINE_COMMAND(xbfreeytram) {
+    // this is basically used to play a random frog movie based on bytram
+    uint16_t frog_movie = [[g_world gameState] unsignedShortForKey:@"bytram"];
+    uint16_t mlst_index;
+    
+    // pick a random MLST for the trap open with frog inside movie
+    if (frog_movie == 1)
+        mlst_index = 11;
+    else if (frog_movie == 2)
+        mlst_index = 12;
+    else
+        mlst_index = (random() % 3) + 13;
+    
+    // activate the chosen MLST
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, mlst_index);
+    
+    // all the above movies have code 11, so play and wait on code 11
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 11);
+    
+    // each of the trap open with frog inside movie has a corresponding closeup movie at index + 5, so play that now;
+    // those those closeup movies all have code 12
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, mlst_index + 5);
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 12);
+    
+    // paint picture 3 (no bait on the plate)
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 3);
+    
+    // disable all movies
+    DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
+}
+
+DEFINE_COMMAND(xbcheckcatch) {
+    // don't need to do anything here in Riven X
+}
+
 @end
