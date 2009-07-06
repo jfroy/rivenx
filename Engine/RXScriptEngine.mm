@@ -3187,7 +3187,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
         // coordinate to be inside the hotspot (we ignore cursor height
         // when dragging a slider)
         if (active_hotspot)
-            mouse_position.y = [hotspot worldFrame].origin.y;
+            mouse_position.y = [hotspot worldFrame].origin.y + 1;
         
         if (NSMouseInRect(mouse_position, [hotspot worldFrame], NO)) {
             // we found the hotspot over which the mouse currently is; this ends
