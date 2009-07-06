@@ -4715,7 +4715,7 @@ DEFINE_COMMAND(xbaitplate) {
 
 DEFINE_COMMAND(xbsettrap) {
     // compute a random catch delay - up to 1 minute, and no sooner than within 10 seconds
-    NSTimeInterval catch_delay = 10 + ((random() % 50) + 1);
+    NSTimeInterval catch_delay = 10 + (((random() % 3000) + 1) / 60.0);
     
     // remember the frog trap card ID, because we need to abort the catch frog event if we've switched to a different card
     frog_trap_card = [[card descriptor] ID];
