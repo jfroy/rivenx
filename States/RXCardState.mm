@@ -1761,11 +1761,20 @@ exit_render:
     NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
     RXCard* front_card = nil;
     
+    BOOL render_hotspots = RXEngineGetBool(@"rendering.hotspots_info");
+    BOOL render_cardinfo = RXEngineGetBool(@"rendering.card_info");
+    BOOL render_mouseinfo = RXEngineGetBool(@"rendering.mouse_info");
+    BOOL render_movieinfo = RXEngineGetBool(@"rendering.movie_info");
+    
+    // early bail out if there's nothing to be done
+    if (!render_hotspots && !render_cardinfo && !render_mouseinfo && !render_movieinfo)
+        return;
+    
     // bind the debug rendering VAO
     [gl_state bindVertexArrayObject:_debugRenderVAO];
     
     // render hotspots
-    if (RXEngineGetBool(@"rendering.hotspots_info")) {
+    if (render_hotspots) {
         // need to take the render lock to avoid a race condition with the script thread executing a card swap
         if (!front_card) {
             OSSpinLockLock(&_state_swap_lock);
@@ -1900,7 +1909,7 @@ exit_render:
     glVertexPointer(3, GL_FLOAT, 0, background_strip);
     
     // card info
-    if (RXEngineGetBool(@"rendering.card_info")) {
+    if (render_cardinfo) {
         // need to take the render lock to avoid a race condition with the script thread executing a card swap
         if (!front_card) {
             OSSpinLockLock(&_state_swap_lock);
@@ -1934,7 +1943,7 @@ exit_render:
     }
     
     // mouse info
-    if (RXEngineGetBool(@"rendering.mouse_info")) {
+    if (render_mouseinfo) {
         NSRect mouse = [self mouseVector];
         
         float theta = 180.0f * atan2f(mouse.size.height, mouse.size.width) * M_1_PI;
@@ -1964,7 +1973,7 @@ exit_render:
     }
     
     // hotspots info (part 2)
-    if (RXEngineGetBool(@"rendering.hotspots_info")) {
+    if (render_hotspots) {
         OSSpinLockLock(&_state_swap_lock);
         RXHotspot* hotspot = (_current_hotspot >= (RXHotspot*)0x1000) ? [_current_hotspot retain] : _current_hotspot;
         OSSpinLockUnlock(&_state_swap_lock);
@@ -2000,7 +2009,7 @@ exit_render:
     }
     
     // movie info
-    if (RXEngineGetBool(@"rendering.movie_info")) {
+    if (render_movieinfo) {
         if ([_active_movies count]) {
             RXMovie* movie = [_active_movies objectAtIndex:0];
             NSTimeInterval ct;
