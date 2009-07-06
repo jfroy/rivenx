@@ -2404,6 +2404,9 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 }
 
 DEFINE_COMMAND(xicon) {
+    if (argc < 1)
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+    
     // this command sets the variable atemp to 1 if the specified icon is depressed, 0 otherwise; 
     // sets atemp to 2 if the icon cannot be depressed
     
@@ -2435,7 +2438,11 @@ DEFINE_COMMAND(xcheckicons) {
 }
 
 DEFINE_COMMAND(xtoggleicon) {
+    if (argc < 1)
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+    
     // this command toggles the state of a particular icon for the rebel tunnel puzzle
+    
     uint32_t icon_sequence = [[g_world gameState] unsigned32ForKey:@"jiconorder"];
     uint32_t correct_icon_sequence = [[g_world gameState] unsigned32ForKey:@"jiconcorrectorder"];
     uint32_t icon_bitfield = [[g_world gameState] unsigned32ForKey:@"jicons"];
@@ -2813,8 +2820,12 @@ DEFINE_COMMAND(xbupdateboiler) {
 }
 
 DEFINE_COMMAND(xbchangeboiler) {
+    if (argc < 1)
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+    
     // when xbchangeboiler gets called, the boiler state variables have not yet been updated
     // the following variables therefore represent the *previous* state
+    
     uint16_t heat = [[g_world gameState] unsignedShortForKey:@"bheat"];
     uint16_t water = [[g_world gameState] unsignedShortForKey:@"bblrwtr"];
     uint16_t platform = [[g_world gameState] unsignedShortForKey:@"bblrgrt"];
@@ -4690,10 +4701,41 @@ DEFINE_COMMAND(xbaitplate) {
 }
 
 - (void)_catchFrog:(NSTimer*)timer {
-    RXGameState* gs = [g_world gameState];
-    
     [event_timer invalidate];
     event_timer = nil;
+    
+    // if we're no longer in the frog trap card, bail out
+    if ([[card descriptor] ID] != frog_trap_card)
+        return;
+    
+    // dispatch xbcheckcatch with 1 (e.g. play the trap sound)
+    rx_dispatch_external1(self, @"xbcheckcatch", 1);
+}
+
+DEFINE_COMMAND(xbsettrap) {
+    // compute a random catch delay - up to 2 minutes, and no sooner than within 20 seconds
+    NSTimeInterval catch_delay = 20 + ((random() % 100) + 1);
+    
+    // remember the frog trap card ID, because we need to abort the catch frog event if we've switched to a different card
+    frog_trap_card = [[card descriptor] ID];
+    
+    // schedule the event timer
+    [event_timer invalidate];
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:catch_delay
+                                                       target:self
+                                                     selector:@selector(_catchFrog:)
+                                                     userInfo:nil
+                                                      repeats:NO];
+    
+    // set the trap time to the catch delay in usecs
+    [[g_world gameState] setUnsigned64:catch_delay * 1E6 forKey:@"bytramtime"];
+}
+
+DEFINE_COMMAND(xbcheckcatch) {
+    if (argc < 1)
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+    
+    RXGameState* gs = [g_world gameState];
     
     // if bytramtime is 0, we're too late (or the trap has been raised) and we just exit
     if ([gs unsigned64ForKey:@"bytramtime"] == 0)
@@ -4718,26 +4760,12 @@ DEFINE_COMMAND(xbaitplate) {
     // set bytrap to 0 (which indicates that the trap is down and closed)
     [[g_world gameState] setUnsigned32:0 forKey:@"bytrap"];
     
-    // play the catch sound effect
-    uint16_t trap_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_bYTCaught_1",
-                                                             [[card descriptor] ID]]];
-    [self _playDataSoundWithID:trap_sound gain:1.0f duration:NULL];
-}
-
-DEFINE_COMMAND(xbsettrap) {
-    // compute a random catch delay
-    NSTimeInterval catch_delay = ((random() % 180) + 1) + 36;
-    
-    // schedule the event timer
-    [event_timer invalidate];
-    event_timer = [NSTimer scheduledTimerWithTimeInterval:catch_delay
-                                                       target:self
-                                                     selector:@selector(_catchFrog:)
-                                                     userInfo:nil
-                                                      repeats:NO];
-    
-    // set the trap time to the catch delay in usecs
-    [[g_world gameState] setUnsigned64:catch_delay * 1E6 forKey:@"bytramtime"];
+    // play the catch sound effect if argv[0] is 1
+    if (argv[0]) {
+        uint16_t trap_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_bYTCaught_1",
+                                                                 [[card descriptor] ID]]];
+        [self _playDataSoundWithID:trap_sound gain:1.0f duration:NULL];
+    }
 }
 
 DEFINE_COMMAND(xbfreeytram) {
@@ -4769,10 +4797,6 @@ DEFINE_COMMAND(xbfreeytram) {
     
     // disable all movies
     DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
-}
-
-DEFINE_COMMAND(xbcheckcatch) {
-    // don't need to do anything here in Riven X
 }
 
 @end

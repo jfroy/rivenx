@@ -51,6 +51,7 @@
     
     // gameplay support
     RXHotspot* _current_hotspot;
+    NSTimer* event_timer;
     
     uint32_t sliders_state;
     rx_point_t dome_slider_background_position;
@@ -68,11 +69,12 @@
     uint16_t yellow_marble_tBMP;
     rx_core_rect_t yellow_marble_initial_rect;
     
-    NSTimer* event_timer;
     uint16_t whark_solo_card;
     BOOL played_one_whark_solo;
     
     NSRect trapeze_rect;
+    
+    uint16_t frog_trap_card;
 }
 
 - (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr;
