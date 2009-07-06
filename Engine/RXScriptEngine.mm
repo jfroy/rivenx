@@ -3969,7 +3969,8 @@ DEFINE_COMMAND(xglview_prisonon) {
     } else if (prison_mlst == 15) {
         turnon_code = 7;
         cath_state = 1;
-    }
+    } else
+        abort();
     
     // set catherine's current state
     [gs setUnsigned32:cath_state forKey:@"gCathState"];
