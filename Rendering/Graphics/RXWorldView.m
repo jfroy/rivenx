@@ -205,16 +205,17 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
         return nil;
     }
     
-    // disable the MT engine as it is a significant performance hit for Riven X
+    // disable the MT engine as it is a significant performance hit for Riven X; note that we ignore kCGLBadEnumeration
+    // as those will be returned on Tiger
     cgl_err = CGLDisable(_render_context_cgl, kCGLCEMPEngine);
-    if (cgl_err != kCGLNoError) {
+    if (cgl_err != kCGLNoError && cgl_err != kCGLBadEnumeration) {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLEnable for kCGLCEMPEngine failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
         [self release];
         return nil;
     }
     cgl_err = CGLDisable(_load_context_cgl, kCGLCEMPEngine);
-    if (cgl_err != kCGLNoError) {
+    if (cgl_err != kCGLNoError && cgl_err != kCGLBadEnumeration) {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLEnable for kCGLCEMPEngine failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
         [self release];
@@ -457,8 +458,9 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
         return;
     
     // configure our new window
-	[w setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
-	[w useOptimizedDrawing:YES];
+    if ([w respondsToSelector:@selector(setPreferredBackingLocation:)])
+        [w setPreferredBackingLocation:NSWindowBackingLocationVideoMemory];
+    [w useOptimizedDrawing:YES];
     
     // register for color profile changes and trigger one artificially
     [center addObserver:self selector:@selector(_handleColorProfileChange:) name:NSWindowDidChangeScreenProfileNotification object:w];

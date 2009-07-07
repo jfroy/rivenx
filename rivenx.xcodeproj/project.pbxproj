@@ -42,7 +42,7 @@
 		312D9ECD0D4D81A3006E384C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9EC70D4D81A3006E384C /* InfoPlist.strings */; };
 		312D9ECE0D4D81A3006E384C /* Extras.MHK in Resources */ = {isa = PBXBuildFile; fileRef = 312D9EC90D4D81A3006E384C /* Extras.MHK */; };
 		312D9ECF0D4D81A3006E384C /* About.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9ECB0D4D81A3006E384C /* About.strings */; };
-		312EBAA40FD1FB2800D65E22 /* Python.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 312EBAA30FD1FB2800D65E22 /* Python.framework */; };
+		312EBAA40FD1FB2800D65E22 /* Python.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 312EBAA30FD1FB2800D65E22 /* Python.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
 		312EBAC80FD202ED00D65E22 /* debug_init.py in Resources */ = {isa = PBXBuildFile; fileRef = 312EBAC70FD202ED00D65E22 /* debug_init.py */; };
 		312EDC730A2E3B80005D26AF /* RXHotspot.m in Sources */ = {isa = PBXBuildFile; fileRef = 312EDC710A2E3B80005D26AF /* RXHotspot.m */; };
 		312F4D8F0DC2639C00B3AF0D /* RXRendering.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D8C0DC2639C00B3AF0D /* RXRendering.m */; };
@@ -750,7 +750,6 @@
 				31C357220D92A6C700EDEF81 /* Tests */,
 				08FB779DFE84155DC02AAC07 /* Frameworks */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
-				316D273C10004B23003579F9 /* MainMenu.xib */,
 			);
 			name = rivenx;
 			sourceTree = "<group>";
@@ -971,9 +970,10 @@
 			isa = PBXGroup;
 			children = (
 				317ACC8D0F285BE10040FFFD /* main.m */,
-				317ACC7E0F285B780040FFFD /* MHKMoviePlayer-Info.plist */,
 				317ACC8E0F285BE10040FFFD /* MHKQTPlayerController.h */,
 				317ACC8F0F285BE10040FFFD /* MHKQTPlayerController.m */,
+				317ACC7E0F285B780040FFFD /* MHKMoviePlayer-Info.plist */,
+				316D273C10004B23003579F9 /* MainMenu.xib */,
 			);
 			name = MHKMoviePlayer;
 			sourceTree = "<group>";
@@ -2142,7 +2142,6 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -2163,7 +2162,6 @@
 			baseConfigurationReference = 31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
 				SDKROOT = macosx10.5;
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -2330,7 +2328,6 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"DEBUG=1",

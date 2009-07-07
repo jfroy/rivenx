@@ -15,6 +15,8 @@
 
 #import "States/RXCardState.h"
 
+PyAPI_FUNC(void) Py_InitializeEx(int) __attribute__((weak_import));
+
 
 @interface RXDebugWindowController (RXDebugConsolePythonIO)
 - (IBAction)runPythonCmd:(id)sender;
@@ -71,16 +73,21 @@ static PyMethodDef rivenx_methods[] = {
 }
 
 - (void)awakeFromNib {
-    //[cli notifyUser:@"Riven X debug shell v3. Type help for commands. Type a command for usage information."];
-    
-    rx_debug_window_controller = self;
-    
     [consoleView setRichText: NO];
     _consoleFont = [NSFont fontWithName:@"Menlo" size:11];
     if (!_consoleFont)
         _consoleFont = [NSFont fontWithName:@"Monaco" size:11];
     [consoleView setFont:_consoleFont];
     [_consoleFont retain];
+    
+    // Python is weakly linked because Tiger only has 2.3 and we don't support that version
+    if (!&Py_InitializeEx) {
+        [self pythonOut:@"Debug shell not supported in Mac OS X 10.4."];
+        return;
+    }
+    
+    // set ourselves as the global debug window controller
+    rx_debug_window_controller = self;
     
     // initialize Python (skipping signal initialization)
     Py_InitializeEx(0);
@@ -99,6 +106,9 @@ static PyMethodDef rivenx_methods[] = {
 }
 
 - (IBAction)runPythonCmd:(id)sender {
+    if (!rx_debug_window_controller)
+        return;
+    
     NSFont* bold_console_font = [[NSFontManager sharedFontManager] convertFont:_consoleFont toHaveTrait:NSBoldFontMask];
     NSAttributedString* attr_str = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@">> %@\n", [sender stringValue]]
                                                                    attributes:[NSDictionary dictionaryWithObject:bold_console_font forKey:NSFontAttributeName]];
@@ -140,10 +150,6 @@ static PyMethodDef rivenx_methods[] = {
 }
 
 #pragma mark debug commands
-
-- (void)cmd_help:(NSArray*)arguments {
-    [self print:@"you're on your own, sorry"];
-}
 
 - (void)cmd_card:(NSArray*)arguments {
     if ([arguments count] < 2)

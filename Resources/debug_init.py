@@ -47,4 +47,4 @@ def exec_cmd(cmd):
         exec cmd in globals()
 
 # greet the user
-print "Riven X debug shell v4. Type help for commands. Type a command for usage information.\n"
+print "Riven X debug shell v4.\n"
