@@ -8,9 +8,14 @@
  */
 
 #import <Foundation/Foundation.h>
-#import "VirtualRingBuffer.h"
 
-int test_normal_buffer() {
+#import "Utilities/VirtualRingBuffer.h"
+
+#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)buffer + (bytes))
+#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)buffer - (bytes))
+
+
+static int test_normal_buffer() {
     VirtualRingBuffer* buffer;
     
     const uint32_t data = 0xDECAFBAD;
@@ -30,39 +35,39 @@ int test_normal_buffer() {
     UInt32 copy_byte_count;
     
     // test normal ring buffer
-    RXLog(@"-- Testing a normal ring buffer --");
+    NSLog(@"-- Testing a normal ring buffer --");
     
     buffer = [[VirtualRingBuffer alloc] initWithLength:1];
     if (!buffer) {
-        RXLog(@"Could not allocate and init the buffer!");
+        NSLog(@"Could not allocate and init the buffer!");
         return 1;
     }
     
-    RXLog(@"%@", buffer);
+    NSLog(@"%@", buffer);
     
     // buffer should be empty
     if (![buffer isEmpty]) {
-        RXLog(@"Buffer wasn't empty after initialization.");
+        NSLog(@"Buffer wasn't empty after initialization.");
         return 1;
     }
     
     // buffer should have 0 bytes available for reading
     available_read = [buffer lengthAvailableToReadReturningPointer:&read_pointer];
     if (available_read != 0) {
-        RXLog(@"Buffer reported bytes available for reading before after initialization.");
+        NSLog(@"Buffer reported bytes available for reading before after initialization.");
         return 1;
     }
     
     // buffer should have one VM page of free space
     available_write = [buffer lengthAvailableToWriteReturningPointer:&write_pointer];
     if(available_write != 0x1000) {
-        RXLog(@"Buffer reported an incorrect number of bytes available for writing after initialization.");
+        NSLog(@"Buffer reported an incorrect number of bytes available for writing after initialization.");
     }
     
     // buffer should still have 0 bytes available for reading
     available_read = [buffer lengthAvailableToReadReturningPointer:&read_pointer];
     if (available_read != 0) {
-        RXLog(@"Buffer reported bytes available for reading before first write was committed.");
+        NSLog(@"Buffer reported bytes available for reading before first write was committed.");
         return 1;
     }
     
@@ -72,14 +77,14 @@ int test_normal_buffer() {
     
     // buffer should not be empty
     if ([buffer isEmpty]) {
-        RXLog(@"Buffer reported empty after first write was committed.");
+        NSLog(@"Buffer reported empty after first write was committed.");
         return 1;
     }
     
     // buffer should have sizeof(data) bytes available for reading
     available_read = [buffer lengthAvailableToReadReturningPointer:&read_pointer];
     if (available_read != sizeof(data)) {
-        RXLog(@"Buffer reported an incorrect number of bytes available for reading after first write was committed.");
+        NSLog(@"Buffer reported an incorrect number of bytes available for reading after first write was committed.");
         return 1;
     }
     
@@ -87,7 +92,7 @@ int test_normal_buffer() {
     old_available_write = available_write;
     available_write = [buffer lengthAvailableToWriteReturningPointer:&write_pointer];
     if(available_write != old_available_write - sizeof(data)) {
-        RXLog(@"Buffer reported an incorrect number of bytes available for writing after first write was committed.");
+        NSLog(@"Buffer reported an incorrect number of bytes available for writing after first write was committed.");
         return 1;
     }
     
@@ -97,13 +102,13 @@ int test_normal_buffer() {
     
     // check for data integrity
     if (read_data != data) {
-        RXLog(@"Incorrect data read back from the buffer.");
+        NSLog(@"Incorrect data read back from the buffer.");
         return 1;
     }
     
     // buffer should be empty again
     if (![buffer isEmpty]) {
-        RXLog(@"Buffer reported not empty after first read was committed.");
+        NSLog(@"Buffer reported not empty after first read was committed.");
         return 1;
     }
     
@@ -111,7 +116,7 @@ int test_normal_buffer() {
     old_available_read = available_read;
     available_read = [buffer lengthAvailableToReadReturningPointer:&read_pointer];
     if(available_read != old_available_read - sizeof(data)) {
-        RXLog(@"Buffer reported an incorrect number of bytes available for reading after first read was committed.");
+        NSLog(@"Buffer reported an incorrect number of bytes available for reading after first read was committed.");
         return 1;
     }
     
@@ -119,7 +124,7 @@ int test_normal_buffer() {
     old_available_write = available_write;
     available_write = [buffer lengthAvailableToWriteReturningPointer:&write_pointer];
     if(available_write != old_available_write + sizeof(data)) {
-        RXLog(@"Buffer reported an incorrect number of bytes available for writing after first read was committed.");
+        NSLog(@"Buffer reported an incorrect number of bytes available for writing after first read was committed.");
         return 1;
     }
     
@@ -132,14 +137,14 @@ int test_normal_buffer() {
     
     // buffer should be empty again
     if (![buffer isEmpty]) {
-        RXLog(@"Buffer reported not empty after explicit empty.");
+        NSLog(@"Buffer reported not empty after explicit empty.");
         return 1;
     }
     
     // let's fill the buffer
     available_write = [buffer lengthAvailableToWriteReturningPointer:&write_pointer];
     if(available_write != 0x1000) {
-        RXLog(@"Buffer reported an incorrect number of bytes available for writing after empty.");
+        NSLog(@"Buffer reported an incorrect number of bytes available for writing after empty.");
     }
     
     copy_count_for_fill = 0x1000 / sizeof(data);
@@ -148,7 +153,7 @@ int test_normal_buffer() {
     // write!
     for(copy_counter = 0; copy_counter < copy_count_for_fill; copy_counter++) {
         memcpy(write_pointer, &data, sizeof(data));
-        write_pointer += sizeof(data);
+        write_pointer = BUFFER_OFFSET(write_pointer, sizeof(data));
         copy_byte_count += sizeof(data);
     }
     
@@ -161,7 +166,7 @@ int test_normal_buffer() {
     
     // sanity check...
     if (copy_byte_count != 0x1000) {
-        RXLog(@"Did not copy nominal buffer length bytes!");
+        NSLog(@"Did not copy nominal buffer length bytes!");
         return 1;
     }
     
@@ -171,14 +176,14 @@ int test_normal_buffer() {
     // buffer should not have any space left for writing
     available_write = [buffer lengthAvailableToWriteReturningPointer:&write_pointer];
     if(available_write != 0) {
-        RXLog(@"Buffer reported bytes available for writing after buffer fill was committed.");
+        NSLog(@"Buffer reported bytes available for writing after buffer fill was committed.");
         return 1;
     }
     
     // buffer should have full buffer size available for reading
     available_read = [buffer lengthAvailableToReadReturningPointer:&read_pointer];
     if (available_read != 0x1000) {
-        RXLog(@"Buffer reported an incorrect number of bytes available for reading after buffer fill was committed.");
+        NSLog(@"Buffer reported an incorrect number of bytes available for reading after buffer fill was committed.");
         return 1;
     }
     
@@ -197,14 +202,14 @@ int test_normal_buffer() {
     // buffer should have 0x800 bytes available for reading and writing
     available_read = [buffer lengthAvailableToReadReturningPointer:&read_pointer];
     if (available_read != 0x800) {
-        RXLog(@"Buffer reported an incorrect number of bytes available for reading after reading half the buffer fill bytes. 0x%x bytes", available_read);
+        NSLog(@"Buffer reported an incorrect number of bytes available for reading after reading half the buffer fill bytes. 0x%x bytes", available_read);
         return 1;
     }
     
     // buffer should have one VM page of free space
     available_write = [buffer lengthAvailableToWriteReturningPointer:&write_pointer];
     if(available_write != 0x800) {
-        RXLog(@"Buffer reported an incorrect number of bytes available for writing after reading half the buffer fill bytes.");
+        NSLog(@"Buffer reported an incorrect number of bytes available for writing after reading half the buffer fill bytes.");
     }
     
     // write half the nominal length
@@ -214,7 +219,7 @@ int test_normal_buffer() {
     // write!
     for(copy_counter = 0; copy_counter < copy_count_for_fill; copy_counter++) {
         memcpy(write_pointer, &data, sizeof(data));
-        write_pointer += sizeof(data);
+        write_pointer = BUFFER_OFFSET(write_pointer, sizeof(data));
         copy_byte_count += sizeof(data);
     }
     
@@ -227,7 +232,7 @@ int test_normal_buffer() {
     
     // sanity check...
     if (copy_byte_count != 0x800) {
-        RXLog(@"Did not copy half the nominal buffer length bytes!");
+        NSLog(@"Did not copy half the nominal buffer length bytes!");
         return 1;
     }
     
@@ -237,14 +242,14 @@ int test_normal_buffer() {
     // buffer should have nominal length bytes available
     available_read = [buffer lengthAvailableToReadReturningPointer:&read_pointer];
     if (available_read != 0x1000) {
-        RXLog(@"Buffer reported an incorrect number of bytes available for reading after wrap around write was committed.");
+        NSLog(@"Buffer reported an incorrect number of bytes available for reading after wrap around write was committed.");
         return 1;
     }
     
     // sample first value and check that it's sane
     memcpy(&read_data, read_pointer, sizeof(data));
     if (read_data != data) {
-        RXLog(@"Incorrect data read back from the buffer after wrap around write.");
+        NSLog(@"Incorrect data read back from the buffer after wrap around write.");
         return 1;
     }
     
@@ -253,13 +258,13 @@ int test_normal_buffer() {
     
     // buffer should be empty
     if (![buffer isEmpty]) {
-        RXLog(@"Buffer reported not empty after reading all wrap around bytes.");
+        NSLog(@"Buffer reported not empty after reading all wrap around bytes.");
         return 1;
     }
     
     // test successful
     [buffer release];
-    RXLog(@"-- Normal ring buffer test passed --\n");
+    NSLog(@"-- Normal ring buffer test passed --\n");
     return 0;
 }
 
