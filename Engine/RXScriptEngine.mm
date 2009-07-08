@@ -320,7 +320,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #pragma mark -
 #pragma mark script execution
 
-- (size_t)_executeRivenProgram:(const void*)program count:(uint16_t)opcodeCount {
+- (size_t)_executeRivenProgram:(const void*)program_buffer count:(uint16_t)optcode_count {
     if (!controller)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO RIVEN SCRIPT HANDLER" userInfo:nil];
     
@@ -335,23 +335,23 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // bump the execution depth
     _programExecutionDepth++;
     
-    size_t programOffset = 0;
-    const uint16_t* shortedProgram = (uint16_t *)program;
+    size_t program_off = 0;
+    const uint16_t* program = (uint16_t*)program_buffer;
     
     uint16_t pc = 0;
-    for (; pc < opcodeCount; pc++) {
+    for (; pc < optcode_count; pc++) {
         if (_abortProgramExecution)
             break;
         
-        if (*shortedProgram == 8) {
+        if (*program == 8) {
             // parameters for the conditional branch opcode
-            uint16_t argc = *(shortedProgram + 1);
-            uint16_t varID = *(shortedProgram + 2);
-            uint16_t caseCount = *(shortedProgram + 3);
+            uint16_t argc = *(program + 1);
+            uint16_t varID = *(program + 2);
+            uint16_t caseCount = *(program + 3);
             
             // adjust the shorted program
-            programOffset += 8;
-            shortedProgram = (uint16_t*)BUFFER_OFFSET(program, programOffset);
+            program_off += 8;
+            program = (uint16_t*)BUFFER_OFFSET(program_buffer, program_off);
             
             // argc should always be 2 for a conditional branch
             if (argc != 2)
@@ -372,11 +372,11 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
             uint16_t caseValue;
             size_t defaultCaseOffset = 0;
             for (; caseIndex < caseCount; caseIndex++) {
-                caseValue = *shortedProgram;
+                caseValue = *program;
                 
                 // record the address of the default case in case we need to execute it if we don't find a matching case
                 if (caseValue == 0xffff)
-                    defaultCaseOffset = programOffset;
+                    defaultCaseOffset = program_off;
                 
                 // matching case
                 if (caseValue == varValue) {
@@ -386,19 +386,19 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #endif
                     
                     // execute the switch statement program
-                    programOffset += [self _executeRivenProgram:(shortedProgram + 2) count:*(shortedProgram + 1)];
+                    program_off += [self _executeRivenProgram:(program + 2) count:*(program + 1)];
                     
 #if defined(DEBUG)
                     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
                     RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
                 } else {
-                    programOffset += rx_compute_riven_script_length((shortedProgram + 2), *(shortedProgram + 1), false); // skip over the case
+                    program_off += rx_compute_riven_script_length((program + 2), *(program + 1), false); // skip over the case
                 }
                 
                 // adjust the shorted program
-                programOffset += 4; // account for the case value and case instruction count
-                shortedProgram = (uint16_t*)BUFFER_OFFSET(program, programOffset);
+                program_off += 4; // account for the case value and case instruction count
+                program = (uint16_t*)BUFFER_OFFSET(program_buffer, program_off);
                 
                 // bail out if we executed a matching case
                 if (caseValue == varValue)
@@ -413,8 +413,8 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #endif
                 
                 // execute the switch statement program
-                [self _executeRivenProgram:((uint16_t*)BUFFER_OFFSET(program, defaultCaseOffset)) + 2
-                                     count:*(((uint16_t*)BUFFER_OFFSET(program, defaultCaseOffset)) + 1)];
+                [self _executeRivenProgram:((uint16_t*)BUFFER_OFFSET(program_buffer, defaultCaseOffset)) + 2
+                                     count:*(((uint16_t*)BUFFER_OFFSET(program_buffer, defaultCaseOffset)) + 1)];
                 
 #if defined(DEBUG)
                 [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
@@ -424,20 +424,20 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
                 // skip over the instructions of the remaining cases
                 caseIndex++;
                 for (; caseIndex < caseCount; caseIndex++) {
-                    programOffset += rx_compute_riven_script_length((shortedProgram + 2), *(shortedProgram + 1), false) + 4;
-                    shortedProgram = (uint16_t*)BUFFER_OFFSET(program, programOffset);
+                    program_off += rx_compute_riven_script_length((program + 2), *(program + 1), false) + 4;
+                    program = (uint16_t*)BUFFER_OFFSET(program_buffer, program_off);
                 }
             }
         } else {
             // execute the command
-            _riven_command_dispatch_table[*shortedProgram].imp(self, _riven_command_dispatch_table[*shortedProgram].sel,
-                                                               *(shortedProgram + 1), shortedProgram + 2);
+            _riven_command_dispatch_table[*program].imp(self, _riven_command_dispatch_table[*program].sel,
+                                                        *(program + 1), program + 2);
             _previous_opcodes[1] = _previous_opcodes[0];
-            _previous_opcodes[0] = *shortedProgram;
+            _previous_opcodes[0] = *program;
             
             // adjust the shorted program
-            programOffset += 4 + (*(shortedProgram + 1) * sizeof(uint16_t));
-            shortedProgram = (uint16_t*)BUFFER_OFFSET(program, programOffset);          
+            program_off += 4 + (*(program + 1) * sizeof(uint16_t));
+            program = (uint16_t*)BUFFER_OFFSET(program_buffer, program_off);          
         }
     }
     
@@ -449,7 +449,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     if (_programExecutionDepth == 0)
         _abortProgramExecution = NO;
     
-    return programOffset;
+    return program_off;
 }
 
 - (void)_runScreenUpdatePrograms {

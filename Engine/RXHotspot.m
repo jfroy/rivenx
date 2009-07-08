@@ -6,8 +6,9 @@
 //  Copyright 2006 MacStorm. All rights reserved.
 //
 
-#import "RXHotspot.h"
-
+#import "Engine/RXHotspot.h"
+#import "Engine/RXScriptCommandAliases.h"
+#import "Engine/RXScriptDecoding.h"
 #import "Rendering/RXRendering.h"
 
 
@@ -20,16 +21,36 @@
 }
 
 - (void)_updateWorldFrame:(NSNotification*)notification {
-    rx_rect_t render_frame = RXEffectiveRendererFrame();
-    float scale_x = (float)render_frame.size.width / (float)kRXRendererViewportSize.width;
-    float scale_y = (float)render_frame.size.height / (float)kRXRendererViewportSize.height;
+    _world_frame = RXTransformRectCoreToWorld(_rect);
+}
+
+- (void)_scanMouseInsidePrograms {
+    NSArray* programs = [_script objectForKey:RXMouseInsideScriptKey];
+    assert(programs);
     
-    NSRect composite_rect = RXMakeCompositeDisplayRectFromCoreRect(_rect);
+    uint32_t p_count = [programs count];
+    if (p_count == 0 || p_count > 1)
+        return;
     
-    _world_frame.origin.x = render_frame.origin.x + (composite_rect.origin.x + kRXCardViewportOriginOffset.x) * scale_x;
-    _world_frame.origin.y = render_frame.origin.y + (composite_rect.origin.y + kRXCardViewportOriginOffset.y) * scale_y;
-    _world_frame.size.width = composite_rect.size.width * scale_x;
-    _world_frame.size.height = composite_rect.size.height * scale_y;
+    NSDictionary* program_dict = [programs objectAtIndex:0];
+    uint16_t i_count = [[program_dict objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
+    if (i_count == 0 || i_count > 1)
+        return;
+    
+    const uint16_t* program = (uint16_t*)[[program_dict objectForKey:RXScriptProgramKey] bytes];
+    if (program[0] != RX_COMMAND_SET_CURSOR)
+        return;
+    if (program[1] != 1)
+        return;
+    
+    // our "mouse inside" script consist of a single "set cursor" command, so we'll just override our cursor
+    _cursor_id = program[2];
+    
+    // and scrap our mouse inside program
+    NSMutableDictionary* mut_script = [_script mutableCopy];
+    [mut_script setObject:[NSArray array] forKey:RXMouseInsideScriptKey];
+    [_script release];
+    _script = mut_script;
 }
 
 - (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID rect:(rx_core_rect_t)rect cursorID:(uint16_t)cursorID script:(NSDictionary*)script {
@@ -45,8 +66,12 @@
     
     _description = [[NSString alloc] initWithFormat: @"{ID=%hu, rect=<%hu, %hu, %hu, %hu>}", _ID, _rect.left, _rect.top, _rect.right, _rect.bottom];
     
+    // register for reshape notifications so we can update our world frame and do an update immediately to initialize the world frame
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_updateWorldFrame:) name:@"RXOpenGLDidReshapeNotification" object:nil];
     [self _updateWorldFrame:nil];
+    
+    // scan if we have a "mouse inside" script, and is so whether that script only sets a cursor
+    [self _scanMouseInsidePrograms];
     
 #if defined(DEBUG) && DEBUG > 1
     NSMutableString* hotspot_handlers = [NSMutableString new];
