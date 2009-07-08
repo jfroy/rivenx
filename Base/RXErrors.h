@@ -13,8 +13,6 @@
 
 __BEGIN_DECLS
 
-#if defined(__OBJC__)
-
 #import <Foundation/Foundation.h>
 #import "PHSErrorMacros.h"
 
@@ -29,8 +27,6 @@ enum {
 extern NSString* const RXErrorDomain;
 
 extern NSException* RXArchiveManagerArchiveNotFoundExceptionWithArchiveName(NSString* name);
-
-#endif // __OBJC__
 
 __END_DECLS
 

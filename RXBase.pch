@@ -10,36 +10,23 @@
 // FIXME: must include system's mach/machine.h because the 10.5 SDK has been seen with an empty version of that file
 #include </usr/include/mach/machine.h>
 
-#include <CoreFoundation/CoreFoundation.h>
-#include <ApplicationServices/ApplicationServices.h>
-
+// include GLee first and everywhere in order for CGLMacro to work correctly
 #include "Rendering/Graphics/GL/GLee.h"
 
 #define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) + (bytes))
 #define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) - (bytes))
 
-#include "RXErrors.h"
 #include "RXLogging.h"
-#if defined(DEBUG)
-#include "RXDebug.h"
-#endif // DEBUG
 
 #if defined(__OBJC__)
 #import <Cocoa/Cocoa.h>
-#import "InterThreadMessaging.h"
+
+#import "Base/RXErrors.h"
+#import "Utilities/InterThreadMessaging.h"
 
 #if defined(DEBUG)
 #import <Foundation/NSDebug.h>
+#import "Debug/RXDebug.h"
 #endif // DEBUG
 
 #endif // __OBJC__
-
-#ifndef NSUInteger
-#define NSUInteger uint32_t
-#endif
-#ifndef NSInteger
-#define NSInteger int32_t
-#endif
-#ifndef CGFloat
-#define CGFloat float
-#endif

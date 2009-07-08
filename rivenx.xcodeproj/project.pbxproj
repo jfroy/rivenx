@@ -1845,7 +1845,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_PREFIX_HEADER = mhk/MHKBase.pch;
+				GCC_PREFIX_HEADER = RXBase.pch;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/ffmpeg/$(CURRENT_ARCH)\"",
@@ -1868,7 +1868,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_PREFIX_HEADER = mhk/MHKBase.pch;
+				GCC_PREFIX_HEADER = RXBase.pch;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/ffmpeg/$(CURRENT_ARCH)\"",
@@ -1891,7 +1891,7 @@
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_PREFIX_HEADER = mhk/MHKBase.pch;
+				GCC_PREFIX_HEADER = RXBase.pch;
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/ffmpeg/$(CURRENT_ARCH)\"",

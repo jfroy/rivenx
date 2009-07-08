@@ -8,7 +8,7 @@
  */
 
 
-#if defined(__OBJC__)
 #import <ExceptionHandling/NSExceptionHandler.h>
+
+
 extern void rx_print_exception_backtrace(NSException* e);
-#endif
