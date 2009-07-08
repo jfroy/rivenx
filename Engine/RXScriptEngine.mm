@@ -3567,7 +3567,15 @@ DEFINE_COMMAND(xt7600_setupmarbles) {
         
         size_t width = CGImageGetWidth(image);
         size_t height = CGImageGetHeight(image);
-        CFDataRef data = CGDataProviderCopyData(CGImageGetDataProvider(image));
+        
+        void* data = malloc(width * height * 4);
+        CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
+        CGContextRef context = CGBitmapContextCreate(data, width, height, 8, width * 4, color_space, kCGImageAlphaPremultipliedLast);
+        
+        CGContextDrawImage(context, CGRectMake(0, 0, width, height), image);        
+        
+        CFRelease(context);
+        CFRelease(color_space);
         CFRelease(image);
         
         // get the load context and lock it
@@ -3587,14 +3595,14 @@ DEFINE_COMMAND(xt7600_setupmarbles) {
         
         // unpack the texture
         glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 16, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL); glReportError();
-        glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, CFDataGetBytePtr(data)); glReportError();
+        glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data); glReportError();
         glFlush();
         
         // re-enable client storage
         glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
         
         CGLUnlockContext(cgl_ctx);
-        CFRelease(data);
+        free(data);
     }
     
     RXGameState* gs = [g_world gameState];

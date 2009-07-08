@@ -93,8 +93,6 @@ __END_DECLS
 
 // world view protocol
 @protocol RXWorldViewProtocol <NSCoding>
-- (NSWindow*)window;
-
 - (void)tearDown;
 
 - (CGLContextObj)renderContext;
@@ -159,8 +157,8 @@ CF_INLINE NSRect RXRenderScaleRect() {
     return NSMakeRect(render_frame.origin.x, render_frame.origin.y, scale_x, scale_y);
 }
 
-CF_INLINE id <RXWorldViewProtocol> RXGetWorldView() {
-    return g_worldView;
+CF_INLINE NSView<RXWorldViewProtocol>* RXGetWorldView() {
+    return (NSView<RXWorldViewProtocol>*)g_worldView;
 }
 
 #pragma mark -

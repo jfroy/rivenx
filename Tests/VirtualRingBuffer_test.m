@@ -11,8 +11,8 @@
 
 #import "Utilities/VirtualRingBuffer.h"
 
-#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)buffer + (bytes))
-#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)buffer - (bytes))
+#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) + (bytes))
+#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) - (bytes))
 
 
 static int test_normal_buffer() {

@@ -286,7 +286,6 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     if (_displayLink)
         CVDisplayLinkRelease(_displayLink);
     
-    [_render_context release];
     [_load_context release];
     
     CGColorSpaceRelease(_workingColorSpace);
@@ -475,6 +474,10 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     // generate an update so we look at the OpenGL capabilities
     [self update];
     
+    // on Tiger, we need to manually send a reshape notification now
+    if ([GTMSystemVersion isTiger])
+        [self reshape];
+    
     // cache the imp for world render methods
     _renderTarget = [g_world stateCompositor];
     _renderDispatch = RXGetRenderImplementation([_renderTarget class], RXRenderingRenderSelector);
@@ -521,8 +524,8 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     
     // calculate the pixel-aligned rectangle in which OpenGL will render. convertRect converts to/from window coordinates when the view argument is nil
     glRect.size = NSIntegralRect([self convertRect:[self bounds] toView:nil]).size;
-    glRect.origin = NSPointFromCGPoint(CGPointMake(([self bounds].size.width - glRect.size.width)/2.0,
-                                                   ([self bounds].size.height - glRect.size.height)/2.0));
+    glRect.origin.x = ([self bounds].size.width - glRect.size.width) / 2.0;
+    glRect.origin.y = ([self bounds].size.height - glRect.size.height) / 2.0;
     
     // compute the viewport origin
     viewportLeft = glRect.origin.x > 0 ? -glRect.origin.x * uiScale : 0;

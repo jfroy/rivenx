@@ -7,6 +7,7 @@
  *
  */
 
+#import <unistd.h>
 #import <Foundation/Foundation.h>
 
 #import "Base/RXLogging.h"

@@ -173,16 +173,21 @@ static void rx_release_owner_applier(const void* value, void* context) {
     size_t cache_line_size = [[RXHardwareProfiler sharedHardwareProfiler] cacheLineSize];
     
     // allocate enough cache lines to store 2 render states without overlap (to avoid false sharing)
-    uint32_t render_state_cache_line_count = sizeof(struct rx_card_state_render_state) / cache_line_size;
-    if (sizeof(struct rx_card_state_render_state) % cache_line_size)
-        render_state_cache_line_count++;
+    uint32_t render_state_cache_line_count = cache_line_size / sizeof(struct rx_card_state_render_state);
+    if (render_state_cache_line_count == 0)
+        // our render state structure is larger than a cache line
+        render_state_cache_line_count = (sizeof(struct rx_card_state_render_state) / cache_line_size) +
+                                        ((sizeof(struct rx_card_state_render_state) % cache_line_size) ? 1 : 0);
     
     // allocate the cache lines
-    _render_states_buffer = malloc((render_state_cache_line_count * 2 + 1) * cache_line_size);
+    size_t states_buffer_size = (render_state_cache_line_count * 2 + 1) * cache_line_size;
+    assert(states_buffer_size > sizeof(struct rx_card_state_render_state) * 2);
+    _render_states_buffer = malloc(states_buffer_size);
     
     // point each render state pointer at the beginning of a cache line
-    _front_render_state = (struct rx_card_state_render_state*)BUFFER_OFFSET(((uintptr_t)_render_states_buffer & ~(cache_line_size - 1)), cache_line_size);
-    _back_render_state = (struct rx_card_state_render_state*)BUFFER_OFFSET(((uintptr_t)_front_render_state & ~(cache_line_size - 1)), cache_line_size);
+    _front_render_state = (struct rx_card_state_render_state*)BUFFER_OFFSET((uintptr_t)_render_states_buffer & ~(cache_line_size - 1),
+                                                                            cache_line_size);
+    _back_render_state = BUFFER_OFFSET(_front_render_state, render_state_cache_line_count* cache_line_size);
     
     // zero-fill the render states to be extra-safe
     bzero((void*)_front_render_state, sizeof(struct rx_card_state_render_state));
@@ -2442,7 +2447,7 @@ exit_flush_tasks:
     // FIXME: there may be a time-sensitive crash lurking around here
 
     NSWindow* window = [notification object];
-    if (window == [g_worldView window]) {
+    if (window == [RXGetWorldView() window]) {
         // update the mouse vector
         OSSpinLockLock(&_mouse_state_lock);
         _mouse_vector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];

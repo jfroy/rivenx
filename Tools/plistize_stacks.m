@@ -1,8 +1,8 @@
 #import <Foundation/Foundation.h>
 #import <MHKKit/MHKKit.h>
 
-#define BUFFER_OFFSET(buffer, bytes) ((uint8_t *)buffer + (bytes))
-#define BUFFER_NOFFSET(buffer, bytes) ((uint8_t *)buffer - (bytes))
+#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) + (bytes))
+#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) - (bytes))
 
 static const NSString* k_eventSelectors[] = {
     @"mouseDown",

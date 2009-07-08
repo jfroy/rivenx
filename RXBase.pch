@@ -15,8 +15,8 @@
 
 #include "Rendering/Graphics/GL/GLee.h"
 
-#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)buffer + (bytes))
-#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)buffer - (bytes))
+#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) + (bytes))
+#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) - (bytes))
 
 #include "RXErrors.h"
 #include "RXLogging.h"
@@ -33,3 +33,13 @@
 #endif // DEBUG
 
 #endif // __OBJC__
+
+#ifndef NSUInteger
+#define NSUInteger uint32_t
+#endif
+#ifndef NSInteger
+#define NSInteger int32_t
+#endif
+#ifndef CGFloat
+#define CGFloat float
+#endif
