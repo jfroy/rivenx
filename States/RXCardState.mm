@@ -2400,9 +2400,6 @@ exit_flush_tasks:
     if (_hotspot_handling_disable_counter > 0)
         return;
     
-    // set the event of the current hotspot so that the script engine knows where the mouse down occurred
-    [_current_hotspot setEvent:_last_mouse_down_event];
-    
     // cannot use the front card during state swaps
     OSSpinLockLock(&_state_swap_lock);
     
@@ -2410,6 +2407,9 @@ exit_flush_tasks:
     if (_current_hotspot >= (RXHotspot*)0x1000) {
         // remember the last hotspot for which we've sent a "mouse down" message
         _mouse_down_hotspot = [_current_hotspot retain];
+        
+        // set the event of the current hotspot so that the script engine knows where the mouse down occurred
+        [_current_hotspot setEvent:_last_mouse_down_event];
         
         // disable hotspot handling; the script engine is responsible for re-enabling it
         [self disableHotspotHandling];
