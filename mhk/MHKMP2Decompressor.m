@@ -211,13 +211,17 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         _ffmpeg_state.avutil_handle = dlopen([[resource_path stringByAppendingPathComponent:@"libavutil.dylib"] fileSystemRepresentation], RTLD_LAZY | RTLD_GLOBAL);
         error_string = dlerror();
         if (error_string)
-            printf("%s\n", error_string);
+            fprintf(stderr, "%s\n", error_string);
+        if (!_ffmpeg_state.avutil_handle)
+            return;
         
         // load libavcodec
         _ffmpeg_state.avcodec_handle = dlopen([[resource_path stringByAppendingPathComponent:@"libavcodec.dylib"] fileSystemRepresentation], RTLD_LAZY | RTLD_GLOBAL);
         error_string = dlerror();
         if (error_string)
             fprintf(stderr, "%s\n", error_string);
+        if (!_ffmpeg_state.avcodec_handle)
+            return;
         
         // load ffmpeg if we were able to link libavcodec
         if (_ffmpeg_state.avcodec_handle) {
