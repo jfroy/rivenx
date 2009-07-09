@@ -1,14 +1,15 @@
 import sys
 import objc
 
+import Foundation
 import rivenx
 
 # intercept stderr and stdout
-class StdoutCatcher:
+class StdoutCatcher(object):
     def write(self, str):
         rivenx.CaptureStdout(str)
 
-class StderrCatcher:
+class StderrCatcher(object):
     def write(self, str):
         rivenx.CaptureStderr(str)
 
@@ -20,6 +21,22 @@ debug = objc.lookUpClass('RXDebugWindowController').globalDebugWindowController(
 
 # get RXWorld
 world = objc.lookUpClass('RXWorld').sharedWorld()
+renderer = None
+engine = None
+
+class DebugNotificationHandler(Foundation.NSObject):
+    
+    def _handleStackDidLoad_(self, notification):
+        global renderer
+        global engine
+        renderer = world.cardRenderState()
+        engine = renderer.scriptEngine()
+        
+        print "Global objects initialized:\n    world=%s\n    renderer=%s\n    engine=%s" % (world, renderer, engine)
+
+notification_handler = DebugNotificationHandler.alloc().init()
+Foundation.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
+    notification_handler, '_handleStackDidLoad:', "RXStackDidLoadNotification", None)
 
 # alias native debug commands
 try:

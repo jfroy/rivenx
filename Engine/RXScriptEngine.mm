@@ -195,7 +195,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
                                                                                                   first_colon_range.location - [(NSString*)@"_external_" length])]
                                            lowercaseString];
 #if defined(DEBUG) && DEBUG > 1
-                RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"registering external command: %@", external_name);
+                RXLog(kRXLoggingEngine, kRXLoggingLevelDebug, @"registering external command: %@", external_name);
 #endif
                 rx_command_dispatch_entry_t* command_dispatch = (rx_command_dispatch_entry_t*)malloc(sizeof(rx_command_dispatch_entry_t));
                 command_dispatch->sel = m->method_name;
@@ -299,17 +299,12 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [super dealloc];
 }
 
-- (NSString*)description {
-    // this is mostly a hack to avoid printing anything in the script log
-    return @"";
-}
-
 - (void)setCard:(RXCard*)c {
     if (c == card)
         return;
     
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"setting card to %@", c);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"setting card to %@", c);
 #endif
     
     id old = card;
@@ -364,7 +359,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
             uint16_t varValue = [[g_world gameState] unsignedShortForKey:name];
             
 #if defined(DEBUG)
-            RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@switch statement on variable %@=%hu", logPrefix, name, varValue);
+            RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@switch statement on variable %@=%hu", logPrefix, name, varValue);
 #endif
             
             // evaluate each branch
@@ -381,7 +376,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
                 // matching case
                 if (caseValue == varValue) {
 #if defined(DEBUG)
-                    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@executing matching case {", logPrefix);
+                    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@executing matching case {", logPrefix);
                     [logPrefix appendString:@"    "];
 #endif
                     
@@ -390,7 +385,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
                     
 #if defined(DEBUG)
                     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-                    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+                    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
                 } else {
                     program_off += rx_compute_riven_script_length((program + 2), *(program + 1), false); // skip over the case
@@ -408,7 +403,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
             // if we didn't match any case, execute the default case
             if (caseIndex == caseCount && defaultCaseOffset != 0) {
 #if defined(DEBUG)
-                RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@no case matched variable value, executing default case {", logPrefix);
+                RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@no case matched variable value, executing default case {", logPrefix);
                 [logPrefix appendString:@"    "];
 #endif
                 
@@ -418,7 +413,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
                 
 #if defined(DEBUG)
                 [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-                RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+                RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
             } else {
                 // skip over the instructions of the remaining cases
@@ -454,7 +449,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 - (void)_runScreenUpdatePrograms {
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@screen update {", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@screen update {", logPrefix);
     [logPrefix appendString:@"    "];
 #endif
     
@@ -476,7 +471,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 }
 
@@ -487,7 +482,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     if (_screen_update_disable_counter > 0) {
 #if defined(DEBUG)
         if (!_doing_screen_update)
-            RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    screen update command dropped because updates are disabled", logPrefix);
+            RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    screen update command dropped because updates are disabled", logPrefix);
 #endif
         return;
     }
@@ -498,7 +493,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         [self _runScreenUpdatePrograms];
         _doing_screen_update = NO;
     } else
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@screen update (programs disabled)", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@screen update (programs disabled)", logPrefix);
     
     // some cards disable screen updates during screen update programs, so we
     // need to decrement the counter here to function properly; see tspit 229
@@ -516,7 +511,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 - (void)openCard {
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@opening card {", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@opening card {", logPrefix);
     [logPrefix appendString:@"    "];
 #endif
 
@@ -565,7 +560,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // activate the first picture if none has been enabled already
     if ([card pictureCount] > 0 && !_did_activate_plst) {
 #if defined(DEBUG)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first plst record", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first plst record", logPrefix);
 #endif
         DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
     }
@@ -592,7 +587,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
      
 #if defined(DEBUG)
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
     
     // release the card if it no longer is executing programs
@@ -609,7 +604,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 - (void)startRendering {
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting rendering {", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting rendering {", logPrefix);
     [logPrefix appendString:@"    "];
 #endif
 
@@ -634,7 +629,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // activate the first sound group if none has been enabled already
     if ([[card soundGroups] count] > 0 && !_did_activate_slst) {
 #if defined(DEBUG)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first slst record", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first slst record", logPrefix);
 #endif
         [controller activateSoundGroup:[[card soundGroups] objectAtIndex:0]];
         _did_activate_slst = YES;
@@ -642,7 +637,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 
     // release the card if it no longer is executing programs
@@ -663,7 +658,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         return;
 
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing card {", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing card {", logPrefix);
     [logPrefix appendString:@"    "];
 #endif
     
@@ -687,7 +682,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 
     // release the card if it no longer is executing programs
@@ -721,7 +716,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 #if defined(DEBUG)
 #if DEBUG > 2
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse inside %@ {", logPrefix, hotspot);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse inside %@ {", logPrefix, hotspot);
     [logPrefix appendString:@"    "];
 #endif
     _disableScriptLogging = YES;
@@ -752,7 +747,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     _disableScriptLogging = NO;
 #if DEBUG > 2
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 #endif
 
@@ -774,7 +769,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
 
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse exited %@ {", logPrefix, hotspot);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse exited %@ {", logPrefix, hotspot);
     [logPrefix appendString:@"    "];
 #endif
     
@@ -801,7 +796,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 
     // release the card if it no longer is executing programs
@@ -822,7 +817,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
 
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse down in %@ {", logPrefix, hotspot);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse down in %@ {", logPrefix, hotspot);
     [logPrefix appendString:@"    "];
 #endif
     
@@ -849,7 +844,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 
     // release the card if it no longer is executing programs
@@ -873,7 +868,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"hotspot CANNOT BE NIL" userInfo:nil];
 
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse up in %@ {", logPrefix, hotspot);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@mouse up in %@ {", logPrefix, hotspot);
     [logPrefix appendString:@"    "];
 #endif
 
@@ -900,7 +895,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 
     // release the card if it no longer is executing programs
@@ -937,7 +932,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // case we need to defer the reset until the movie is played or enabled
     if ([controller isMovieEnabled:movie]) {
 #if defined(DEBUG)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@deferring reset of movie %@ because it is enabled", logPrefix, movie);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@deferring reset of movie %@ because it is enabled", logPrefix, movie);
 #endif
         [_movies_to_reset addObject:movie];
     } else
@@ -1167,7 +1162,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         fmt_str = [fmt_str stringByAppendingFormat:@"%hu", argv[argi]];
     
     fmt_str = [fmt_str stringByAppendingString:@"}"];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", logPrefix, fmt_str);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", logPrefix, fmt_str);
 }
 
 - (void)_opcode_noop:(const uint16_t)argc arguments:(const uint16_t*)argv {
@@ -1184,7 +1179,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@drawing dynamic picture ID %hu in rect {{%f, %f}, {%f, %f}}", 
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@drawing dynamic picture ID %hu in rect {{%f, %f}, {%f, %f}}", 
             logPrefix, argv[0], display_rect.origin.x, display_rect.origin.y, display_rect.size.width, display_rect.size.height);
 #endif
     
@@ -1195,7 +1190,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (void)_opcode_goToCard:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to card ID %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to card ID %hu", logPrefix, argv[0]);
 #endif
 
     RXStack* parent = [[card descriptor] parent];
@@ -1206,7 +1201,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (void)_opcode_activateSynthesizedSLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling a synthesized slst record", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling a synthesized slst record", logPrefix);
 #endif
 
     RXSoundGroup* oldSoundGroup = _synthesizedSoundGroup;
@@ -1227,7 +1222,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource id=%hu, volume=%hu, blocking=%hu",
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing local sound resource id=%hu, volume=%hu, blocking=%hu",
             logPrefix, argv[0], argv[1], argv[2]);
 #endif
     
@@ -1258,7 +1253,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating synthesized MLST [movie_id=%hu, code=%hu]",
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating synthesized MLST [movie_id=%hu, code=%hu]",
             logPrefix, mlst_r->movie_id, mlst_r->code);
 #endif
     
@@ -1287,7 +1282,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting variable %@ to %hu", logPrefix, name, argv[1]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting variable %@ to %hu", logPrefix, name, argv[1]);
 #endif
     
     [[g_world gameState] setUnsignedShort:argv[1] forKey:name];
@@ -1299,7 +1294,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling hotspot %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling hotspot %hu", logPrefix, argv[0]);
 #endif
     
     uintptr_t k = argv[0];
@@ -1325,7 +1320,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling hotspot %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling hotspot %hu", logPrefix, argv[0]);
 #endif
     
     uintptr_t k = argv[0];
@@ -1354,7 +1349,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@clearing sounds with options %hu", logPrefix, options);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@clearing sounds with options %hu", logPrefix, options);
 #endif
     
     if ((options & 2) || !options) {
@@ -1380,7 +1375,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting cursor to %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@setting cursor to %hu", logPrefix, argv[0]);
 #endif
     
     [controller setMouseCursor:argv[0]];
@@ -1392,7 +1387,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@pausing for %d msec", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@pausing for %d msec", logPrefix, argv[0]);
 #endif
     
     // in case the pause delay is 0, just return immediatly
@@ -1431,7 +1426,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         fmt = [fmt stringByAppendingFormat:@"%hu", argv[2 + argi]];
     
     fmt = [fmt stringByAppendingString:@") {"];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", logPrefix, fmt);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@%@", logPrefix, fmt);
     
     // augment script log indentation for the external command
     [logPrefix appendString:@"    "];
@@ -1441,11 +1436,11 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     rx_command_dispatch_entry_t* command_dispatch = (rx_command_dispatch_entry_t*)NSMapGet(_riven_external_command_dispatch_map,
                                                                                            external_name);
     if (!command_dispatch) {
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    WARNING: external command '%@' is not implemented!",
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@    WARNING: external command '%@' is not implemented!",
                 logPrefix, external_name);
 #if defined(DEBUG)
         [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
         return;
     }
@@ -1454,7 +1449,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 }
 
@@ -1475,13 +1470,13 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@scheduling transition %@", logPrefix, transition);
+        RXLog(kRXLoggingScript, kRXLoggingLevelMessage, @"%@scheduling transition %@", logPrefix, transition);
 #endif
     
     // queue the transition
     // FIXME: need to review this dropping mechanism and see if we could just clear the transition queue at certain points
     if (transition->type == RXTransitionDissolve && (_previous_opcodes[0] == 18 || _previous_opcodes[1] == 18) && _queuedAPushTransition)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because of recently scheduled push transition");
+        RXLog(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because of recently scheduled push transition");
     else
         [controller queueTransition:transition];
     
@@ -1499,7 +1494,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (void)_opcode_reloadCard:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@reloading card", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@reloading card", logPrefix);
 #endif
     
     // this command reloads whatever is the current card
@@ -1512,7 +1507,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     _screen_update_disable_counter++;
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling screen updates (%d)", logPrefix, _screen_update_disable_counter);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling screen updates (%d)", logPrefix, _screen_update_disable_counter);
 #endif
 }
 
@@ -1523,7 +1518,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling screen updates (%d)", logPrefix, _screen_update_disable_counter);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling screen updates (%d)", logPrefix, _screen_update_disable_counter);
 #endif
     
     // this command also triggers a screen update (which may be dropped if the counter is still not 0)
@@ -1541,7 +1536,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@incrementing variable %@ by %hu", logPrefix, name, argv[1]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@incrementing variable %@ by %hu", logPrefix, name, argv[1]);
 #endif
     
     uint16_t v = [[g_world gameState] unsignedShortForKey:name];
@@ -1559,7 +1554,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@decrementing variable %@ by %hu", logPrefix, name, argv[1]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@decrementing variable %@ by %hu", logPrefix, name, argv[1]);
 #endif
     
     uint16_t v = [[g_world gameState] unsignedShortForKey:name];
@@ -1570,7 +1565,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (void)_opcode_closeAllMovies:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing all movies", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing all movies", logPrefix);
 #endif
 }
 
@@ -1592,7 +1587,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to stack %@ on card ID %hu", logPrefix, stackKey, card_id);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to stack %@ on card ID %hu", logPrefix, stackKey, card_id);
 #endif
     
     [controller setActiveCardWithStack:stackKey ID:card_id waitUntilDone:YES];
@@ -1605,7 +1600,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling movie with code %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling movie with code %hu", logPrefix, argv[0]);
 #endif
     
     // get the movie object
@@ -1627,7 +1622,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling all movies", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling all movies", logPrefix);
 #endif
     
     // disable all movies in the renderer
@@ -1638,7 +1633,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (void)_opcode_enableMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling movie with code %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@enabling movie with code %hu", logPrefix, argv[0]);
 #endif
     
     // get the movie object
@@ -1666,7 +1661,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu and waiting until done", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu and waiting until done", logPrefix, argv[0]);
 #endif
     
     // get the movie object
@@ -1693,7 +1688,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu", logPrefix, argv[0]);
 #endif
     
     // get the movie object
@@ -1717,7 +1712,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@stopping movie with code %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@stopping movie with code %hu", logPrefix, argv[0]);
 #endif
     
     // get the movie object
@@ -1736,7 +1731,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (void)_opcode_fadeAmbientSounds:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@fading out ambient sounds", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@fading out ambient sounds", logPrefix, argv[0]);
 #endif
     
     // synthesize and activate an empty sound group
@@ -1762,7 +1757,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     if (!_disableScriptLogging) {
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu, waiting %u ms, and executing command %d with argument %d {",
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu, waiting %u ms, and executing command %d with argument %d {",
             logPrefix, movie_code, delay, delayed_command, delayed_command_arg);
         [logPrefix appendString:@"    "];
     }
@@ -1790,7 +1785,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #if defined(DEBUG)
     if (!_disableScriptLogging) {
         [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
     }
 #endif
 }
@@ -1801,7 +1796,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating plst record at index %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating plst record at index %hu", logPrefix, argv[0]);
 #endif
     
     // create an RXPicture for the PLST record and queue it for rendering
@@ -1826,7 +1821,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu", logPrefix, argv[0]);
 #endif
     
     // the script handler is responsible for this
@@ -1843,7 +1838,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     if (!_disableScriptLogging) {
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelMessage, @"%@activating mlst record %hu [code=%hu] and starting movie {", logPrefix, argv[0], code);
+        RXLog(kRXLoggingScript, kRXLoggingLevelMessage, @"%@activating mlst record %hu [code=%hu] and starting movie {", logPrefix, argv[0], code);
         [logPrefix appendString:@"    "];
     }
 #endif
@@ -1854,7 +1849,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #if defined(DEBUG)
     if (!_disableScriptLogging) {
         [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
     }
 #endif
 }
@@ -1865,7 +1860,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating blst record at index %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating blst record at index %hu", logPrefix, argv[0]);
 #endif
     
     struct rx_blst_record* record = [card hotspotControlRecords] + (argv[0] - 1);
@@ -1896,7 +1891,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating flst record at index %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating flst record at index %hu", logPrefix, argv[0]);
 #endif
 
     [controller queueSpecialEffect:[card sfxes] + (argv[0] - 1) owner:card];
@@ -1910,7 +1905,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record %hu [code=%hu]", logPrefix, argv[0], k);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record %hu [code=%hu]", logPrefix, argv[0], k);
 #endif
     
     // update the code to movie map
@@ -1930,7 +1925,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu and overriding volunme to %hu",
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu and overriding volunme to %hu",
             logPrefix, argv[0], argv[1]);
 #endif
     
@@ -2558,7 +2553,7 @@ DEFINE_COMMAND(xjtunnel106_pictfix) {
 DEFINE_COMMAND(xreseticons) {
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@xreseticons was called, resetting the entire rebel icon puzzle state", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@xreseticons was called, resetting the entire rebel icon puzzle state", logPrefix);
 #endif
 
     [[g_world gameState] setUnsigned32:0 forKey:@"jiconorder"];
@@ -2951,7 +2946,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     uint16_t the_number = random() % 9 + 1;
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@rolled a %hu", logPrefix, the_number);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@rolled a %hu", logPrefix, the_number);
 #endif
 
     NSString* villager_position_variable;
@@ -3056,7 +3051,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     // did we hit the golden eye frame?
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@movie_position=%f, event_delay=%f, position-delay=%f",
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@movie_position=%f, event_delay=%f, position-delay=%f",
         logPrefix, movie_position, event_delay, movie_position - event_delay);
 #endif
     // if (time > 2780 || time < 200)
@@ -3733,7 +3728,7 @@ DEFINE_COMMAND(xtakeit) {
     // update the marble's position
     rx_core_rect_t core_position = RXTransformRectWorldToCore(mouse_vector);
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingScript, kRXLoggingLevelDebug, @"%@core position of mouse is <%u, %u>",
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@core position of mouse is <%u, %u>",
         logPrefix, core_position.left, core_position.top);
 #endif
     
@@ -4023,7 +4018,7 @@ DEFINE_COMMAND(xglview_prisonoff) {
     // set gLView to indicate the viewer is off
     [[g_world gameState] setUnsigned32:0 forKey:@"gLView"];
     
-    // invalidate the prison viewer timer
+    // invalidate the event timer
     [event_timer invalidate];
     event_timer = nil;
     

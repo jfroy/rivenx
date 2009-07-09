@@ -162,6 +162,10 @@ static void rx_release_owner_applier(const void* value, void* context) {
     }
 }
 
++ (BOOL)accessInstanceVariablesDirectly {
+    return NO;
+}
+
 - (id)init {
     self = [super init];
     if (!self)
@@ -264,6 +268,10 @@ init_failure:
     [sengine release];
     
     [super dealloc];
+}
+
+- (RXScriptEngine*)scriptEngine {
+    return sengine;
 }
 
 #pragma mark -
