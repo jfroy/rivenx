@@ -8,15 +8,17 @@
 
 #import <Python/Python.h>
 
-#import "RXDebugWindowController.h"
+#import "Debug/RXDebugWindowController.h"
 
 #import "Engine/RXWorldProtocol.h"
 #import "Engine/RXEditionManager.h"
 
 #import "States/RXCardState.h"
 
-PyAPI_FUNC(void) Py_InitializeEx(int) __attribute__((weak_import));
+#import "Utilities/GTMSystemVersion.h"
 
+
+PyAPI_FUNC(void) Py_InitializeEx(int) __attribute__((weak_import));
 
 @interface RXDebugWindowController (RXDebugConsolePythonIO)
 - (IBAction)runPythonCmd:(id)sender;
@@ -24,7 +26,6 @@ PyAPI_FUNC(void) Py_InitializeEx(int) __attribute__((weak_import));
 
 - (void)print:(NSString*)msg;
 @end
-
 
 // pointer to python controller
 static RXDebugWindowController* rx_debug_window_controller;
@@ -81,7 +82,7 @@ static PyMethodDef rivenx_methods[] = {
     [_consoleFont retain];
     
     // Python is weakly linked because Tiger only has 2.3 and we don't support that version
-    if (!&Py_InitializeEx) {
+    if (!&Py_InitializeEx || [GTMSystemVersion isTiger]) {
         [self pythonOut:@"Debug shell not supported in Mac OS X 10.4."];
         return;
     }
