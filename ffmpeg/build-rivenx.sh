@@ -21,11 +21,12 @@ install_name_tool -id libavutil.dylib "$DSTROOT/i386/lib/libavutil.dylib"
 install_name_tool -id libavcodec.dylib "$DSTROOT/i386/lib/libavcodec.dylib"
 install_name_tool -change "$DSTROOT/i386/lib/libavutil.dylib" @loader_path/libavutil.dylib "$DSTROOT/i386/lib/libavcodec.dylib"
 
+install_name_tool -id libavutil.dylib "$DSTROOT/ppc/lib/libavutil.dylib"
+install_name_tool -id libavcodec.dylib "$DSTROOT/ppc/lib/libavcodec.dylib"
+install_name_tool -change "$DSTROOT/ppc/lib/libavutil.dylib" @loader_path/libavutil.dylib "$DSTROOT/ppc/lib/libavcodec.dylib"
+
 lipo "$DSTROOT/i386/lib/libavutil.dylib" "$DSTROOT/ppc/lib/libavutil.dylib" -create -output "$DSTROOT/staging/libavutil.dylib"
 lipo "$DSTROOT/i386/lib/libavcodec.dylib" "$DSTROOT/ppc/lib/libavcodec.dylib" -create -output "$DSTROOT/staging/libavcodec.dylib"
-
-#dsymutil "$DSTROOT/staging/libavutil.dylib"
-#dsymutil "$DSTROOT/staging/libavcodec.dylib"
 
 strip -x "$DSTROOT/staging/libavutil.dylib"
 strip -x "$DSTROOT/staging/libavcodec.dylib"
