@@ -55,7 +55,7 @@ except Exception, e:
     print str(e)
 
 def exec_cmd(cmd):
-    # ok, if may be a "simple command" of the formd <command> <foo> <bar>
+    # ok, it may be a "simple command" of the formd <command> <foo> <bar>
     cmd_parts = cmd.split(' ')
     try:
         cmd_func = globals()[cmd_parts[0]]
