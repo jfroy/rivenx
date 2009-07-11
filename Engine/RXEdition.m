@@ -16,7 +16,7 @@
 @implementation RXEdition
 
 + (BOOL)_saneDescriptor:(NSDictionary*)descriptor {
-    // a valid edition descriptor must have 4 root keys, "Edition", "Stacks", "Stack switch table" and "Card LUT"
+    // check that all the required root keys are present
     if (![descriptor objectForKey:@"Edition"])
         return NO;
     if (![descriptor objectForKey:@"Stacks"])
@@ -32,7 +32,7 @@
     if (![descriptor objectForKey:@"tWAV LUT"])
         return NO;
     
-    // the Edtion sub-directionary must have a Key, a Discs and a Install Directives key
+    // check that the Edition dictionary has all the required keys
     id edition = [descriptor objectForKey:@"Edition"];
     if (![edition isKindOfClass:[NSDictionary class]])
         return NO;
@@ -52,7 +52,7 @@
     if ([discs count] == 0)
         return NO;
     
-    // directories must be a dictionary and contain at least Data, Sound and All keys
+    // Directories must be a dictionary and contain at least a Data, Sound and All key
     id directories = [edition objectForKey:@"Directories"];
     if (![directories isKindOfClass:[NSDictionary class]])
         return NO;
@@ -63,7 +63,7 @@
     if (![directories objectForKey:@"All"])
         return NO;
     
-    // journals must be a dictionary and contain at least a "Card ID Map" key
+    // Journals must be a dictionary and contain at least a "Card ID Map" key
     id journals = [descriptor objectForKey:@"Journals"];
     if (![journals isKindOfClass:[NSDictionary class]])
         return NO;
@@ -105,14 +105,18 @@
     NSString* userDataPath = [userBase stringByAppendingPathComponent:@"User Data.plist"];
     if (BZFSFileExists(userDataPath)) {
         NSData* userRawData = [NSData dataWithContentsOfFile:userDataPath options:0 error:&error];
-        // FIXME: should be nicer than blower up, say by offering to create a new user data file and moving the old one aside, heck asking to go in Time Machine
+        // FIXME: be nicer than blowing up, say by offering to create a new user data file and moving the old one aside
         if (!userRawData)
-            @throw [NSException exceptionWithName:@"RXCorruptedEditionUserDataException" reason:[NSString stringWithFormat:@"Your data for the %@ is corrupted.", name] userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
-        _userData = [[NSPropertyListSerialization propertyListFromData:userRawData mutabilityOption:NSPropertyListMutableContainers format:NULL errorDescription:NULL] retain];
-    } else {
+            @throw [NSException exceptionWithName:@"RXCorruptedEditionUserDataException"
+                                           reason:[NSString stringWithFormat:@"Your data for the %@ is corrupted.", name]
+                                         userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+        _userData = [[NSPropertyListSerialization propertyListFromData:userRawData
+                                                      mutabilityOption:NSPropertyListMutableContainers
+                                                                format:NULL
+                                                      errorDescription:NULL] retain];
+    } else
         // create a new user data directionary
         _userData = [NSMutableDictionary new];
-    }
 }
 
 - (id)init {
