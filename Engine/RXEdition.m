@@ -144,18 +144,12 @@
     // load edition information
     NSDictionary* edition = [_descriptor objectForKey:@"Edition"];
     key = [edition objectForKey:@"Key"];
+    discs = [edition objectForKey:@"Discs"];
     name = [NSLocalizedStringFromTable(key, @"Editions", nil) retain];
     directories = [edition objectForKey:@"Directories"];
     installDirectives = [edition objectForKey:@"Install Directives"];
     
     NSEnumerator* enumerator;
-    
-    // process the list of discs to lowercase the names
-    discs = [NSMutableArray new];
-    enumerator = [[edition objectForKey:@"Discs"] objectEnumerator];
-    NSString* disc;
-    while ((disc = [enumerator nextObject]))
-        [(NSMutableArray*)discs addObject:[disc lowercaseString]];
     
     // process the stack switch table to store simple card descriptors instead of strings as the keys and values
     NSDictionary* textSwitchTable = [_descriptor objectForKey:@"Stack switch table"];
@@ -294,16 +288,32 @@
 }
 
 - (BOOL)canBecomeCurrent {
-    if ([self mustBeInstalled] && ![self isInstalled])
-        return NO;
-    return YES;
+    return !([self mustBeInstalled] && ![self isInstalled]);
 }
 
 - (BOOL)isValidMountPath:(NSString*)path {
-    if ([discs containsObject:[path lastPathComponent]] == NO)
+    NSString* path_disc = [[path lastPathComponent] lowercaseString];
+    
+    NSEnumerator* enumerator = [discs objectEnumerator];
+    NSString* disc;
+    while ((disc = [enumerator nextObject]))
+        if ([path_disc caseInsensitiveCompare:path_disc] == NSOrderedSame)
+            break;
+    if (!disc)
         return NO;
-    if (BZFSDirectoryExists([path stringByAppendingPathComponent:@"Data"]) == NO)
+    
+    NSArray* content = BZFSContentsOfDirectory(path, NULL);
+    if (!content)
         return NO;
+    
+    enumerator = [content objectEnumerator];
+    NSString* item;
+    while ((item = [enumerator nextObject]))
+        if ([item caseInsensitiveCompare:@"Data"] == NSOrderedSame)
+            break;
+    if (!item)
+        return NO;
+    
     return YES;
 }
 
