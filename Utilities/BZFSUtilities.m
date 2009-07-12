@@ -70,6 +70,24 @@ NSArray* BZFSContentsOfDirectoryURL(NSURL* url, NSError** error) {
     return BZFSContentsOfDirectory([url path], error);
 }
 
+NSString* BZFSSearchDirectoryForItem(NSString* name, BOOL case_insensitive, NSError** error) {
+    NSArray* content = BZFSContentsOfDirectory(path, error);
+    if (!content)
+        return NO;
+    
+    NSEnumerator* enumerator = [content objectEnumerator];
+    NSString* item;
+    while ((item = [enumerator nextObject]))
+        if (case_insensitive)
+            if ([item caseInsensitiveCompare:name] == NSOrderedSame)
+                break;
+        else
+            if ([item compare:name] == NSOrderedSame)
+                break;
+    
+    return item;
+}
+
 NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error) {
     NSDictionary* attributes;
     NSFileManager* fm = [NSFileManager defaultManager];

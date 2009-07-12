@@ -423,9 +423,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 - (MHKArchive*)_archiveWithFilename:(NSString*)filename directoryKey:(NSString*)dirKey stackKey:(NSString*)stackKey error:(NSError**)error {
     NSString* archive_path;
     MHKArchive* archive = nil;
-    
-    // FIXME: this method needs to track opened archives when the time comes to eject a disc
-    
+        
     // if there is no current edition, throw a tantrum
     if (!current_edition)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException

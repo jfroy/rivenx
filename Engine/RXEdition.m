@@ -302,19 +302,7 @@
     if (!disc)
         return NO;
     
-    NSArray* content = BZFSContentsOfDirectory(path, NULL);
-    if (!content)
-        return NO;
-    
-    enumerator = [content objectEnumerator];
-    NSString* item;
-    while ((item = [enumerator nextObject]))
-        if ([item caseInsensitiveCompare:@"Data"] == NSOrderedSame)
-            break;
-    if (!item)
-        return NO;
-    
-    return YES;
+    return (BZFSSearchDirectoryForItem(@"Data", YES, NULL)) ? YES : NO;
 }
 
 @end
