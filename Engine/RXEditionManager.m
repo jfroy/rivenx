@@ -8,8 +8,8 @@
 
 #import <Carbon/Carbon.h>
 
-#import "RXEditionManager.h"
-#import "RXWorld.h"
+#import "Engine/RXEditionManager.h"
+#import "Engine/RXWorld.h"
 
 #import "Utilities/BZFSUtilities.h"
 #import "Utilities/GTMObjectSingleton.h"
@@ -71,8 +71,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 #pragma mark -
 
 - (BOOL)_writeSettings {
-    NSString* serializationError;
-    NSData* settingsData = [NSPropertyListSerialization dataFromPropertyList:_editionManagerSettings format:NSPropertyListBinaryFormat_v1_0 errorDescription:&serializationError];
+    NSData* settingsData = [NSPropertyListSerialization dataFromPropertyList:_editionManagerSettings
+                                                                      format:NSPropertyListBinaryFormat_v1_0
+                                                            errorDescription:NULL];
     if (!settingsData)
         return NO;
     
@@ -98,7 +99,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     // find the Editions directory
     NSString* editionsDirectory = [[NSBundle mainBundle] pathForResource:@"Editions" ofType:nil];
     if (!editionsDirectory)
-        @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Riven X could not find the Editions bundle resource directory." userInfo:nil];
+        @throw [NSException exceptionWithName:@"RXMissingResourceException"
+                                       reason:@"Riven X could not find the Editions bundle resource directory."
+                                     userInfo:nil];
     
     // cache the path to the Patches directory
     _patches_directory = [[editionsDirectory stringByAppendingPathComponent:@"Patches"] retain];
@@ -112,7 +115,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     else
         editionPlists = [fm directoryContentsAtPath:editionsDirectory];
     if (!editionPlists)
-        @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Riven X could not iterate the Editions bundle resource directory." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        @throw [NSException exceptionWithName:@"RXMissingResourceException"
+                                       reason:@"Riven X could not iterate the Editions bundle resource directory."
+                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     
     // iterate over its content
     NSEnumerator* e = [editionPlists objectEnumerator];
@@ -168,17 +173,25 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     if (BZFSFileExists(editionManagerSettingsPath)) {
         NSData* settingsData = [NSData dataWithContentsOfFile:editionManagerSettingsPath options:0 error:&error];
         if (settingsData == nil)
-            @throw [NSException exceptionWithName:@"RXIOException" reason:@"Riven X could not load the existing edition manager settings." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+            @throw [NSException exceptionWithName:@"RXIOException"
+                                           reason:@"Riven X could not load the existing edition manager settings."
+                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
         
-        NSString* serializationError;
-        _editionManagerSettings = [[NSPropertyListSerialization propertyListFromData:settingsData mutabilityOption:NSPropertyListMutableContainers format:NULL errorDescription:&serializationError] retain];
+        NSString* error_string = nil;
+        _editionManagerSettings = [[NSPropertyListSerialization propertyListFromData:settingsData
+                                                                    mutabilityOption:NSPropertyListMutableContainers
+                                                                              format:NULL errorDescription:&error_string] retain];
         if (_editionManagerSettings == nil)
-            @throw [NSException exceptionWithName:@"RXIOException" reason:@"Riven X could not load the existing edition manager settings." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:serializationError, @"RXErrorString", nil]];
+            @throw [NSException exceptionWithName:@"RXIOException"
+                                           reason:@"Riven X could not load the existing edition manager settings."
+                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error_string, @"RXErrorString", nil]];
+        [error_string release];
     } else
         _editionManagerSettings = [NSMutableDictionary new];
     
     // if we have an edition selection saved in the settings, try to use it; otherwise, display the edition manager; 
-    // we use a performSelector because the world is not done initializing when the edition manager is initialized and we must defer the edition changed notification until the next run loop cycle
+    // we use a performSelector because the world is not done initializing when the edition manager is initialized
+    // and we must defer the edition changed notification until the next run loop cycle
     RXEdition* defaultEdition = [self defaultEdition];
     BOOL optKeyDown = ((GetCurrentKeyModifiers() & (optionKey | rightOptionKey)) != 0) ? YES : NO;
     if (defaultEdition && !optKeyDown)
@@ -373,7 +386,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     
     // if there is no current edition, throw a tantrum
     if (!currentEdition)
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Riven X tried to load an archive without having made an edition current first." userInfo:nil];
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                       reason:@"Riven X tried to load an archive without having made an edition current first."
+                                     userInfo:nil];
     
     // first look in the local data store
     if (_localDataStore) {
@@ -438,7 +453,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 - (NSArray*)dataPatchArchivesForStackKey:(NSString*)stackKey error:(NSError**)error {
     // if there is no current edition, throw a tantrum
     if (!currentEdition)
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Riven X tried to load a patch archive without having made an edition current first." userInfo:nil];
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                       reason:@"Riven X tried to load a patch archive without having made an edition current first."
+                                     userInfo:nil];
     
     NSString* edition_patches_directory = [_patches_directory stringByAppendingPathComponent:[currentEdition valueForKey:@"key"]];
     NSDictionary* patch_archives = [currentEdition valueForKey:@"patchArchives"];
@@ -515,7 +532,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     // get the stack descriptor from the current edition
     NSDictionary* stackDescriptor = [[[RXEditionManager sharedEditionManager] currentEdition] valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@", stackKey]];
     if (!stackDescriptor || ![stackDescriptor isKindOfClass:[NSDictionary class]])
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Stack descriptor object is nil or of the wrong type." userInfo:stackDescriptor];
+        @throw [NSException exceptionWithName:NSInvalidArgumentException
+                                       reason:@"Stack descriptor object is nil or of the wrong type."
+                                     userInfo:stackDescriptor];
     
     // initialize the stack
     stack = [[RXStack alloc] initWithStackDescriptor:stackDescriptor key:stackKey error:&error];
