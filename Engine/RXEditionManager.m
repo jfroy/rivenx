@@ -20,6 +20,8 @@
 GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
 - (void)_scanMountPath:(NSString*)mp {
+    NSAutoreleasePool* p = [NSAutoreleasePool new];
+    
 #if defined(DEBUG)
     RXOLog(@"scanning %@", mp);
 #endif
@@ -29,24 +31,33 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     RXEdition* ed;
     while ((ed = [e nextObject])) {
         if ([ed isValidMountPath:mp]) {
-            if (![_valid_mount_paths containsObject:mp])
+            if (![_valid_mount_paths containsObject:mp]) {
                 [_valid_mount_paths addObject:mp];
+                [self performSelectorOnMainThread:@selector(_handleNewValidMountPath:) withObject:mp waitUntilDone:NO];
+            }
             return;
         }
+    }
+    
+    [p release];
+}
+
+- (void)_handleNewValidMountPath:(NSString*)path {
+    // were we waiting for this disc?
+    if (_waiting_disc_name) {
+        if ([[path lastPathComponent] isEqualToString:_waiting_disc_name]) {
+            [_waiting_disc_name release];
+            _waiting_disc_name = nil;
+        } else
+            [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:self withObject:path];
     }
 }
 
 - (void)_removableMediaMounted:(NSNotification*)notification {
     NSString* path = [[notification userInfo] objectForKey:@"NSDevicePath"];
     
-    // scan the new mount path
-    [self _scanMountPath:path];
-    
-    // were we waiting for this disc?
-    if (_waiting_disc_name && [[path lastPathComponent] isEqualToString:_waiting_disc_name]) {
-        [_waiting_disc_name release];
-        _waiting_disc_name = nil;
-    }
+    // scan the new mount path in a thread since RXEdition -isValidMountPath can take a long time
+    [NSThread detachNewThreadSelector:@selector(_scanMountPath:) toTarget:self withObject:path];
 }
 
 - (void)_removableMediaUnmounted:(NSNotification*)notification {
@@ -59,6 +70,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 }
 
 - (void)_initialMediaScan {
+    NSAutoreleasePool* p = [NSAutoreleasePool new];
+    
     NSArray* mounted_media = [[NSWorkspace sharedWorkspace] mountedRemovableMedia];
     
     // search for Riven data stores
@@ -66,6 +79,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     NSString* path;
     while ((path = [media_enum nextObject]))
         [self _scanMountPath:path];
+    
+    [p release];
 }
 
 #pragma mark -
@@ -160,8 +175,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 #endif
     }
     
-    // do an initial scan of mounted media
-    [self _initialMediaScan];
+    // do an initial scan of mounted media on a background thread so we don't block the UI
+    [NSThread detachNewThreadSelector:@selector(_initialMediaScan) toTarget:self withObject:nil];
     
     // register for removable media notifications
     NSNotificationCenter* ws_notification_center = [[NSWorkspace sharedWorkspace] notificationCenter];
@@ -330,8 +345,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 #endif
     
     // as a convenience, try to eject the last known valid mount path we know about
+    // do this on a background thread because it can take a while
     if ([_valid_mount_paths count])
-        [self ejectMountPath:[_valid_mount_paths lastObject]];
+        [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:self withObject:[_valid_mount_paths lastObject]];
     
     _waiting_disc_name = [disc retain];
     while (_waiting_disc_name) {
@@ -367,8 +383,12 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 }
 
 - (void)ejectMountPath:(NSString*)mountPath {
+    NSAutoreleasePool* p = [NSAutoreleasePool new];
+    
     // don't ask questions, someone doesn't like it
     [[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:mountPath];
+    
+    [p release];
 }
 
 - (RXSimpleCardDescriptor*)lookupCardWithKey:(NSString*)lookup_key {
