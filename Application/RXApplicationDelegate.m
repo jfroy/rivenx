@@ -6,11 +6,10 @@
 //  Copyright 2005 MacStorm. All rights reserved.
 //
 
-#import "RXApplicationDelegate.h"
-
 #import <ExceptionHandling/NSExceptionHandler.h>
-
 #import <Sparkle/SUUpdater.h>
+
+#import "Application/RXApplicationDelegate.h"
 
 #import "Engine/RXWorld.h"
 #import "Engine/RXEditionManagerWindowController.h"
@@ -18,7 +17,6 @@
 #import "Rendering/Graphics/RXWorldView.h"
 
 #import "Debug/RXDebugWindowController.h"
-//#import "Debug/RXCardInspectorController.h"
 
 #import "Utilities/GTMSystemVersion.h"
 
@@ -63,9 +61,7 @@
 }
 
 - (void)_showCardInspector:(id)sender {
-//  if (!_card_inspector_controller)
-//      _card_inspector_controller = [[RXCardInspectorController alloc] initWithWindowNibName:@"CardInspector"];
-//  [_card_inspector_controller showWindow:sender];
+
 }
 
 - (void)_initDebugUI {
@@ -73,7 +69,6 @@
     
     NSMenu* debugMenu = [[NSMenu alloc] initWithTitle:@"Debug"];
     [debugMenu addItemWithTitle:@"Console" action:@selector(_showDebugConsole:) keyEquivalent:@""];
-//  [debugMenu addItemWithTitle:@"Card Inspector" action:@selector(_showCardInspector:) keyEquivalent:@""];
     
     NSMenuItem* debugMenuItem = [[NSMenuItem alloc] initWithTitle:@"Debug" action:NULL keyEquivalent:@""];
     [debugMenuItem setSubmenu:debugMenu];
@@ -99,6 +94,14 @@
             case kRXErrSavedGameCantBeLoaded:
                 if (recoveryOptionIndex == 0)
                     [[RXEditionManager sharedEditionManager] showEditionManagerWindow];
+                break;
+            case kRXErrQuickTimeTooOld:
+                if (recoveryOptionIndex == 0) {
+                    // once to launch SU, and another time to make sure it becomes the active application
+                    [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:@"com.apple.SoftwareUpdate" options:0 additionalEventParamDescriptor:nil launchIdentifier:NULL];
+                    [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:@"com.apple.SoftwareUpdate" options:0 additionalEventParamDescriptor:nil launchIdentifier:NULL];
+                }
+                [NSApp terminate:self];
                 break;
             case kRXErrArchiveUnavailable:
                 // this is fatal right now
@@ -149,6 +152,46 @@
     return NO;
 }
 
+- (BOOL)_checkQuickTime {
+    // check that the user has QuickTime 7.6.2 or later
+    NSArray* qtkit_vers = [[[NSBundle bundleWithIdentifier:@"com.apple.QTKit"] objectForInfoDictionaryKey:@"CFBundleShortVersionString"] componentsSeparatedByString:@"."];
+    if (!qtkit_vers || [qtkit_vers count] == 0)
+        qtkit_vers = [NSArray arrayWithObjects:@"0", nil];
+    
+//    qtkit_vers = [NSArray arrayWithObjects:@"7", @"6", @"1", nil];
+    
+    BOOL quicktime_too_old = NO;
+    if ([qtkit_vers count] > 0)
+        if ([[qtkit_vers objectAtIndex:0] intValue] < 7)
+            quicktime_too_old = YES;
+    
+    if ([qtkit_vers count] > 1) {
+        if ([[qtkit_vers objectAtIndex:1] intValue] < 6)
+            quicktime_too_old = YES;
+    } else
+        quicktime_too_old = YES;
+    
+    if ([qtkit_vers count] > 2) {
+        if ([[qtkit_vers objectAtIndex:2] intValue] < 2)
+            quicktime_too_old = YES;
+    } else
+        quicktime_too_old = YES;
+    
+    if (!quicktime_too_old)
+        return YES;
+    
+    // if QuickTime is too old, tell the user about the Cinepak problem and offer them to launch SU
+    NSError* error = [NSError errorWithDomain:RXErrorDomain code:kRXErrQuickTimeTooOld userInfo:
+                      [NSDictionary dictionaryWithObjectsAndKeys:
+                       [NSString stringWithFormat:@"Riven X requires QuickTime 7.6.2 or later."], NSLocalizedDescriptionKey,
+                       @"Prior versions of QuickTime have compatibility problems with Riven X. You can use Software Update to update QuickTime.", NSLocalizedRecoverySuggestionErrorKey,
+                       [NSArray arrayWithObjects:@"Update QuickTime", @"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
+                       self, NSRecoveryAttempterErrorKey,
+                       nil]];
+    [NSApp presentError:error];
+    return NO;
+}
+
 #pragma mark -
 #pragma mark delegation and UI
 
@@ -159,17 +202,18 @@
         NSLogUncaughtSystemExceptionMask | NSHandleUncaughtSystemExceptionMask |
         NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
     
+    if (![self _checkQuickTime])
+        return;
+    
     // and a flower shall blossom
     [RXWorld sharedWorld];
-    
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification *)notification {
 #if defined(DEBUG)
     [self _initDebugUI];
     [self _showDebugConsole:self];
 #endif
-}
-
-- (void)applicationWillTerminate:(NSNotification *)notification {
-    
 }
 
 - (BOOL)application:(NSApplication*)theApplication openFile:(NSString*)filename {

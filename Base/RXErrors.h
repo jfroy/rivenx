@@ -22,6 +22,7 @@ enum {
     kRXErrSavedGameCantBeLoaded,
     kRXErrArchiveUnavailable,
     kRXErrNoCurrentEdition,
+    kRXErrQuickTimeTooOld,
 };
 
 extern NSString* const RXErrorDomain;
