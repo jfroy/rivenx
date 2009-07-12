@@ -48,7 +48,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 - (void)_handleNewValidMountPath:(NSString*)path {
     // were we waiting for this disc?
     if (_waiting_disc_name) {
-        if ([[path lastPathComponent] isEqualToString:_waiting_disc_name]) {
+        if ([[path lastPathComponent] caseInsensitiveCompare:_waiting_disc_name] == NSOrderedSame) {
             [_waiting_disc_name release];
             _waiting_disc_name = nil;
         } else
@@ -376,22 +376,22 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
 - (NSString*)mountPathForDisc:(NSString*)disc waitingInModalSession:(NSModalSession)session {
     OSSpinLockLock(&_valid_mount_paths_lock);
-    NSEnumerator* disc_enum = [[NSArray arrayWithArray:_valid_mount_paths] objectEnumerator];
+    NSEnumerator* mout_path_enum = [[NSArray arrayWithArray:_valid_mount_paths] objectEnumerator];
     OSSpinLockUnlock(&_valid_mount_paths_lock);
     
-    NSString* mount;
-    while ((mount = [disc_enum nextObject])) {
-        if ([[mount lastPathComponent] isEqualToString:disc])
-            return mount;
+    NSString* mount_path;
+    while ((mount_path = [mout_path_enum nextObject])) {
+        if ([[mount_path lastPathComponent] caseInsensitiveCompare:disc] == NSOrderedSame)
+            return mount_path;
     }
     
     // if there's a modal session, wait for the disc while driving the session
     if (session) {
         [self _actuallyWaitForDisc:disc inModalSession:session];
-        mount = [self mountPathForDisc:disc waitingInModalSession:NULL];
+        mount_path = [self mountPathForDisc:disc waitingInModalSession:NULL];
     }
     
-    return mount;
+    return mount_path;
 }
 
 - (void)ejectMountPath:(NSString*)mountPath {
