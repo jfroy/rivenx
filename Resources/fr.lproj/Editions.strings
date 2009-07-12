@@ -7,12 +7,6 @@
 "NOT_INSTALLED" = "Not installed. Can be used without installation.";
 "MUST_INSTALL" = "Not installed. Must be installed on disk to play.";
 
-"INSTALL_ALERT_TITLE" = "The %@ requires minimal installation in order to play.";
-"INSTALL_ALERT_MESSAGE" = "Do you wish to install it for all users or for yourself only. Installing for all users will require authorization.";
-"INSTALL_ALERT_INSTALL_SELF" = "Install for Myself";
-"INSTALL_ALERT_INSTALL_ALL" = "Install for All Users";
-"INSTALL_ALERT_DONT_INSTALL" = "Don't Install";
-
 "INSTALLER_PREPARING" = "Preparing to install";
 "INSTALLER_INSERT_DISC" = "Please insert the disc labeled \"%@\"";
 "INSTALLER_CHECKING_DISC" = "Checking disc";

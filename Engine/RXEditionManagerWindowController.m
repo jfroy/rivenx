@@ -237,13 +237,10 @@
 
 - (IBAction)choose:(id)sender {
     RXEdition* ed = [[_editionsArrayController selection] valueForKey:@"edition"];
-    if (ed == NSNoSelectionMarker)
+    if (ed == NSNoSelectionMarker || ![ed canBecomeCurrent])
         return;
     
-    if (![ed canBecomeCurrent] && [ed mustBeInstalled])
-        [self _displayMustInstallSheet:ed];
-    else if ([ed canBecomeCurrent])
-        [self _makeEditionCurrent:ed];
+    [self _makeEditionCurrent:ed];
 }
 
 - (IBAction)install:(id)sender {
