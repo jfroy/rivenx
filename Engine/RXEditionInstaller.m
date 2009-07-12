@@ -46,7 +46,7 @@
     [self didChangeValueForKey:@"progress"];
 }
 
-- (BOOL)_performInstallSystemWide:(BOOL)systemWide fullInstall:(BOOL)full session:(NSModalSession)session error:(NSError**)error {
+- (BOOL)_performInstallSystemWide:(BOOL)systemWide session:(NSModalSession)session error:(NSError**)error {
     // we're one-shot
     if (_didRun)
         ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
@@ -65,10 +65,6 @@
     NSEnumerator* directives = [[edition valueForKeyPath:@"installDirectives"] objectEnumerator];
     NSDictionary* directive;
     while ((directive = [directives nextObject])) {
-        // a minimal install is only concerned with required directives
-        if (!full && [[directive objectForKey:@"Required"] boolValue] == NO)
-            continue;
-        
         // check that we can execute this directive
         SEL directiveSelector = NSSelectorFromString([NSString stringWithFormat:@"_perform%@:destination:modalSession:error:", [directive objectForKey:@"Directive"]]);
         if (![self respondsToSelector:directiveSelector]) {
@@ -83,10 +79,6 @@
     _currentDirective = 0;
     directives = [[edition valueForKeyPath:@"installDirectives"] objectEnumerator];
     while ((directive = [directives nextObject])) {
-        // a minimal install is only concerned with required directives
-        if (!full && [[directive objectForKey:@"Required"] boolValue] == NO)
-            continue;
-        
         SEL directiveSelector = NSSelectorFromString([NSString stringWithFormat:@"_perform%@:destination:modalSession:error:", [directive objectForKey:@"Directive"]]);
         NSInvocation* directiveInv = [NSInvocation invocationWithMethodSignature:[self methodSignatureForSelector:directiveSelector]];
         [directiveInv setSelector:directiveSelector];
@@ -109,7 +101,7 @@
 }
 
 - (BOOL)fullUserInstallInModalSession:(NSModalSession)session error:(NSError**)error {
-    BOOL success = [self _performInstallSystemWide:NO fullInstall:YES session:session error:error];
+    BOOL success = [self _performInstallSystemWide:NO session:session error:error];
     if (!success)
         return NO;
     
@@ -196,10 +188,6 @@
     
     // step 4: process the stacks of each disc
     
-    // update the progress
-//  _directiveProgress = 0.0;
-//  [self _updateInstallerProgress:YES];
-    
     // process the discs
     discIndex = 0;
     discStacksEnum = [stacksForDiscs objectEnumerator];
@@ -210,58 +198,21 @@
             continue;
         }
         
-        // step 4.1: determine the list of files to copy from that disc
-        NSMutableArray* files = [NSMutableArray array];
-        NSEnumerator* stackKeyEnum = [discStacks objectEnumerator];
-        NSString* stackKey;
-        while ((stackKey = [stackKeyEnum nextObject])) {
-            BOOL doCopy;
-            
-            // get the stack descriptor
-            NSDictionary* stackDescriptor = [stackDescriptors objectForKey:stackKey];
-            
-            // data archives
-            doCopy = ([directive objectForKey:@"Copy Data"]) ? [[directive objectForKey:@"Copy Data"] boolValue] : YES;
-            if (doCopy) {
-                NSString* directory = ([stackKey isEqualToString:@"aspit"]) ? [directories objectForKey:@"All"] : [directories objectForKey:@"Data"];
-                id archives = [stackDescriptor objectForKey:@"Data Archives"];
-                if ([archives isKindOfClass:[NSString class]])
-                    [files addObject:[directory stringByAppendingPathComponent:archives]];
-                else {
-                    NSEnumerator* filesEnum = [archives objectEnumerator];
-                    NSString* file;
-                    while ((file = [filesEnum nextObject]))
-                        [files addObject:[directory stringByAppendingPathComponent:file]];
-                }
-            }
-            
-            // sound archives
-            doCopy = ([directive objectForKey:@"Copy Sound"]) ? [[directive objectForKey:@"Copy Sound"] boolValue] : YES;
-            if (doCopy) {
-                NSString* directory = [directories objectForKey:@"Sound"];
-                id archives = [stackDescriptor objectForKey:@"Sound Archives"];
-                if ([archives isKindOfClass:[NSString class]])
-                    [files addObject:[directory stringByAppendingPathComponent:archives]];
-                else {
-                    NSEnumerator* filesEnum = [archives objectEnumerator];
-                    NSString* file;
-                    while ((file = [filesEnum nextObject]))
-                        [files addObject:[directory stringByAppendingPathComponent:file]];
-                }
-            }
-        }
+        // allocate the list of files to copy from that disc
+        NSMutableArray* files_to_copy = [NSMutableArray array];
         
         // reset the byte counters
         _totalBytesToCopy = 0;
         _totalBytesCopied = 0;
         
-        // step 4.2: wait for the right disc
+        // step 4.1: wait for the right disc
         NSString* disc = [discs objectAtIndex:discIndex];
-        NSString* mountPath = nil;
+        NSString* mount_path = nil;
         
+        // we will have 0 bytes to copy until we find the right disc
         while (_totalBytesToCopy == 0) {
-            mountPath = [self _waitForDisc:disc inModalSession:session error:error];
-            if (!mountPath)
+            mount_path = [self _waitForDisc:disc inModalSession:session error:error];
+            if (!mount_path)
                 return NO;
             
             // check that every file we need is on that disc, and count the number of bytes to copy at the same time
@@ -270,40 +221,102 @@
             if (session && [NSApp runModalSession:session] != NSRunContinuesResponse)
                 ReturnValueWithError(NO, RXErrorDomain, 0, nil, error);
             
-            NSEnumerator* fileEnum = [files objectEnumerator];
-            NSString* filename;
-            while ((filename = [fileEnum nextObject])) {
-                NSString* filePath = [mountPath stringByAppendingPathComponent:filename];
+            // look for the edition directories on the mount path
+            NSString* all_directory = BZFSSearchDirectoryForItem(mount_path, [directories objectForKey:@"All"], YES, NULL);
+            NSString* data_directory = BZFSSearchDirectoryForItem(mount_path, [directories objectForKey:@"Data"], YES, NULL);
+            NSString* sound_directory = BZFSSearchDirectoryForItem(mount_path, [directories objectForKey:@"Sound"], YES, NULL);
+            
+            // build list of files to copy from the disc
+            NSEnumerator* stack_key_enum = [discStacks objectEnumerator];
+            NSString* stack_key;
+            while ((stack_key = [stack_key_enum nextObject])) {
+                BOOL do_copy;
                 
-                if (!BZFSFileExists(filePath)) {
-                    // this is not the right disc, even though it has the right name
-                    [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:[RXEditionManager sharedEditionManager] withObject:mountPath];
-                    mountPath = nil;
-                    break;
+                // get the stack descriptor
+                NSDictionary* stack_descriptor = [stackDescriptors objectForKey:stack_key];
+                
+                // data archives
+                do_copy = ([directive objectForKey:@"Copy Data"]) ? [[directive objectForKey:@"Copy Data"] boolValue] : YES;
+                if (do_copy) {
+                    NSString* directory = ([stack_key isEqualToString:@"aspit"]) ? all_directory : data_directory;
+                    
+                    id archives = [stack_descriptor objectForKey:@"Data Archives"];
+                    if ([archives isKindOfClass:[NSString class]])
+                        archives = [NSArray arrayWithObject:archives];
+                    
+                    NSEnumerator* file_enum = [archives objectEnumerator];
+                    NSString* file;
+                    while ((file = [file_enum nextObject])) {
+                        NSString* archive_path = BZFSSearchDirectoryForItem(directory, file, YES, NULL);
+                        if (!archive_path) {
+                            // this is not the right disc, even though it has the right name
+                            [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:[RXEditionManager sharedEditionManager] withObject:mount_path];
+                            mount_path = nil;
+                            _totalBytesToCopy = 0;
+                            break;
+                        }
+                        
+                        // add the actual path of the archive to the list of files to copy
+                        [files_to_copy addObject:archive_path];
+                        
+                        // get the archive's size and add it to the total byte count
+                        NSDictionary* attributes = BZFSAttributesOfItemAtPath(archive_path, NULL);
+                        if (attributes)
+                            _totalBytesToCopy += [attributes fileSize];
+                    }
+                    
+                    if (!mount_path)
+                        break;
                 }
                 
-                // get the file size
-                // FIXME: handle errors
-                NSDictionary* attributes = BZFSAttributesOfItemAtPath(filePath, error);
-                if (attributes)
-                    _totalBytesToCopy += [attributes fileSize];
+                // sound archives
+                do_copy = ([directive objectForKey:@"Copy Sound"]) ? [[directive objectForKey:@"Copy Sound"] boolValue] : YES;
+                if (do_copy) {
+                    NSString* directory = sound_directory;
+                    
+                    id archives = [stack_descriptor objectForKey:@"Sound Archives"];
+                    if ([archives isKindOfClass:[NSString class]])
+                        archives = [NSArray arrayWithObject:archives];
+                    
+                    NSEnumerator* file_enum = [archives objectEnumerator];
+                    NSString* file;
+                    while ((file = [file_enum nextObject])) {
+                        NSString* archive_path = BZFSSearchDirectoryForItem(directory, file, YES, NULL);
+                        if (!archive_path) {
+                            // this is not the right disc, even though it has the right name
+                            [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:[RXEditionManager sharedEditionManager] withObject:mount_path];
+                            mount_path = nil;
+                            _totalBytesToCopy = 0;
+                            break;
+                        }
+                        
+                        // add the actual path of the archive to the list of files to copy
+                        [files_to_copy addObject:archive_path];
+                        
+                        // get the archive's size and add it to the total byte count
+                        NSDictionary* attributes = BZFSAttributesOfItemAtPath(archive_path, NULL);
+                        if (attributes)
+                            _totalBytesToCopy += [attributes fileSize];
+                    }
+                    
+                    if (!mount_path)
+                        break;
+                }
             }
         }
         
-        // step 4.3: copy each file
+        // step 4.2: copy each file
         
         // update the progress
         _directiveProgress = (double)_discsProcessed / _discsToProcess;
         [self _updateInstallerProgress:YES];
         
-        NSEnumerator* fileEnum = [files objectEnumerator];
-        NSString* filename;
-        while ((filename = [fileEnum nextObject])) {
-            NSString* filePath = [mountPath stringByAppendingPathComponent:filename];
+        NSEnumerator* file_enum = [files_to_copy objectEnumerator];
+        NSString* file_path;
+        while ((file_path = [file_enum nextObject])) {
+            [self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_FILE_COPY", @"Editions", NULL), [file_path lastPathComponent]] forKey:@"stage"];
             
-            [self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_FILE_COPY", @"Editions", NULL), [filename lastPathComponent]] forKey:@"stage"];
-            
-            BZFSOperation* copyOp = [[BZFSOperation alloc] initCopyOperationWithSource:filePath destination:destination];
+            BZFSOperation* copyOp = [[BZFSOperation alloc] initCopyOperationWithSource:file_path destination:destination];
             [copyOp setAllowOverwriting:YES];
             if (![copyOp scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode error:error]) {
                 [copyOp release];
