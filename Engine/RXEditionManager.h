@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import <MHKKit/MHKKit.h>
+#import <libkern/OSAtomic.h>
 
 #import "Engine/RXEdition.h"
 #import "Engine/RXEditionManagerWindowController.h"
@@ -26,6 +27,7 @@
     RXEditionManagerWindowController* _window_controller;
     BOOL _torn_down;
     
+    OSSpinLock _valid_mount_paths_lock;
     NSMutableArray* _valid_mount_paths;
     NSString* _waiting_disc_name;
     

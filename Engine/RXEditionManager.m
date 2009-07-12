@@ -32,7 +32,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     while ((ed = [e nextObject])) {
         if ([ed isValidMountPath:mp]) {
             if (![_valid_mount_paths containsObject:mp]) {
+                OSSpinLockLock(&_valid_mount_paths_lock);
                 [_valid_mount_paths addObject:mp];
+                OSSpinLockUnlock(&_valid_mount_paths_lock);
+                
                 [self performSelectorOnMainThread:@selector(_handleNewValidMountPath:) withObject:mp waitUntilDone:NO];
             }
             return;
@@ -66,7 +69,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     RXOLog(@"removable media mounted at %@ is gone", path);
 #endif
     
+    OSSpinLockLock(&_valid_mount_paths_lock);
     [_valid_mount_paths removeObject:path];
+    OSSpinLockUnlock(&_valid_mount_paths_lock);
 }
 
 - (void)_initialMediaScan {
@@ -108,6 +113,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     
     active_stacks = [NSMutableDictionary new];
     
+    _valid_mount_paths_lock = OS_SPINLOCK_INIT;
     _valid_mount_paths = [NSMutableArray new];
     _waiting_disc_name = nil;
     
@@ -346,8 +352,11 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     
     // as a convenience, try to eject the last known valid mount path we know about
     // do this on a background thread because it can take a while
-    if ([_valid_mount_paths count])
-        [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:self withObject:[_valid_mount_paths lastObject]];
+    OSSpinLockLock(&_valid_mount_paths_lock);
+    NSString* last_valid_mount_path = [_valid_mount_paths lastObject];
+    OSSpinLockUnlock(&_valid_mount_paths_lock);
+    if (last_valid_mount_path)
+        [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:self withObject:last_valid_mount_path];
     
     _waiting_disc_name = [disc retain];
     while (_waiting_disc_name) {
@@ -366,7 +375,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 }
 
 - (NSString*)mountPathForDisc:(NSString*)disc waitingInModalSession:(NSModalSession)session {
-    NSEnumerator* disc_enum = [_valid_mount_paths objectEnumerator];
+    OSSpinLockLock(&_valid_mount_paths_lock);
+    NSEnumerator* disc_enum = [[NSArray arrayWithArray:_valid_mount_paths] objectEnumerator];
+    OSSpinLockUnlock(&_valid_mount_paths_lock);
+    
     NSString* mount;
     while ((mount = [disc_enum nextObject])) {
         if ([[mount lastPathComponent] isEqualToString:disc])
@@ -384,6 +396,11 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
 - (void)ejectMountPath:(NSString*)mountPath {
     NSAutoreleasePool* p = [NSAutoreleasePool new];
+    
+    // don't wait for the unmount to occur to remove the disc from the known valid mount paths
+    OSSpinLockLock(&_valid_mount_paths_lock);
+    [_valid_mount_paths removeObject:mountPath];
+    OSSpinLockUnlock(&_valid_mount_paths_lock);
     
     // don't ask questions, someone doesn't like it
     [[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:mountPath];

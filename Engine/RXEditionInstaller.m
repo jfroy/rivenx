@@ -292,8 +292,8 @@
                 NSString* filePath = [mountPath stringByAppendingPathComponent:filename];
                 
                 if (!BZFSFileExists(filePath)) {
-                    // this is not the right disc
-                    [[RXEditionManager sharedEditionManager] ejectMountPath:mountPath];
+                    // this is not the right disc, even though it has the right name
+                    [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:[RXEditionManager sharedEditionManager] withObject:mountPath];
                     mountPath = nil;
                     break;
                 }
