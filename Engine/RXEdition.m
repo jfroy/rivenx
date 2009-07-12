@@ -192,7 +192,9 @@
     if (!BZFSDirectoryExists(userBase)) {
         success = BZFSCreateDirectory(userBase, &error);
         if (!success)
-            @throw [NSException exceptionWithName:@"RXFilesystemException" reason:[NSString stringWithFormat:@"Riven X was unable to create a support folder for the %@.", name] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+            @throw [NSException exceptionWithName:@"RXFilesystemException"
+                                           reason:[NSString stringWithFormat:@"Riven X was unable to create a support folder for the %@.", name]
+                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     
     // sub-directory in the edition user base for data files
@@ -201,7 +203,9 @@
     if (!BZFSDirectoryExists(userDataBase)) {
         success = BZFSCreateDirectory(userDataBase, &error);
         if (!success)
-            @throw [NSException exceptionWithName:@"RXFilesystemException" reason:[NSString stringWithFormat:@"Riven X was unable to create the Data folder for the %@.", name] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+            @throw [NSException exceptionWithName:@"RXFilesystemException"
+                                           reason:[NSString stringWithFormat:@"Riven X was unable to create the Data folder for the %@.", name]
+                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     
     stackDescriptors = [_descriptor objectForKey:@"Stacks"];
@@ -214,7 +218,8 @@
     
     openArchives = [NSMutableArray new];
     
-    RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"loaded (base=%@, installed=%d, full install=%d, must install=%d", userDataBase, [self isInstalled], [self isFullInstalled], [self mustBeInstalled]);
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"loaded (base=%@, installed=%d, full install=%d, must install=%d",
+        userDataBase, [self isInstalled], [self isFullInstalled], [self mustBeInstalled]);
     return self;
 }
 
