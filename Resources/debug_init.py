@@ -33,6 +33,7 @@ class DebugNotificationHandler(Foundation.NSObject):
         engine = renderer.scriptEngine()
         
         print "Global objects initialized:\n    world=%s\n    renderer=%s\n    engine=%s" % (world, renderer, engine)
+        Foundation.NSNotificationCenter.defaultCenter().removeObserver_(self)
 
 notification_handler = DebugNotificationHandler.alloc().init()
 Foundation.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
