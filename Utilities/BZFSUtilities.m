@@ -85,7 +85,7 @@ NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_i
             if ([item compare:name] == NSOrderedSame)
                 break;
     
-    return item;
+    return [path stringByAppendingPathComponent:item];
 }
 
 NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error) {
