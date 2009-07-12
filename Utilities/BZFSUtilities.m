@@ -77,13 +77,15 @@ NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_i
     
     NSEnumerator* enumerator = [content objectEnumerator];
     NSString* item;
-    while ((item = [enumerator nextObject]))
-        if (case_insensitive)
+    while ((item = [enumerator nextObject])) {
+        if (case_insensitive) {
             if ([item caseInsensitiveCompare:name] == NSOrderedSame)
                 break;
-        else
+        } else {
             if ([item compare:name] == NSOrderedSame)
                 break;
+        }
+    }
     
     return [path stringByAppendingPathComponent:item];
 }

@@ -432,7 +432,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     
     // first look in the local data store
     if (_local_data_store) {
-        archive_path = [_local_data_store stringByAppendingPathComponent:filename];
+        archive_path = BZFSSearchDirectoryForItem(_local_data_store, filename, YES, error);
         if (BZFSFileExists(archive_path)) {
             archive = [[[MHKArchive alloc] initWithPath:archive_path error:error] autorelease];
             if (!archive)
@@ -443,7 +443,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     }
     
     // then look in the edition user data base
-    archive_path = [[current_edition valueForKey:@"userDataBase"] stringByAppendingPathComponent:filename];
+    archive_path = BZFSSearchDirectoryForItem([current_edition valueForKey:@"userDataBase"], filename, YES, error);
     if (BZFSFileExists(archive_path)) {
         archive = [[[MHKArchive alloc] initWithPath:archive_path error:error] autorelease];
         if (!archive)
@@ -475,7 +475,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
             error);
     
     // compute the final on-disc archive path
-    archive_path = [[mount_path stringByAppendingPathComponent:directory] stringByAppendingPathComponent:filename];
+    archive_path = BZFSSearchDirectoryForItem([mount_path stringByAppendingPathComponent:directory], filename, YES, error);
     if (BZFSFileExists(archive_path)) {
         archive = [[[MHKArchive alloc] initWithPath:archive_path error:error] autorelease];
         if (!archive)
