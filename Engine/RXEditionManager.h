@@ -17,21 +17,21 @@
 
 @interface RXEditionManager : NSObject {
     NSMutableDictionary* editions;
-    NSMutableArray* editionProxies;
+    NSMutableArray* edition_proxies;
     NSString* _patches_directory;
     
-    RXEdition* currentEdition;
-    NSMutableDictionary* activeStacks;
+    RXEdition* current_edition;
+    NSMutableDictionary* active_stacks;
     
-    RXEditionManagerWindowController* _windowController;
-    BOOL _tornDown;
+    RXEditionManagerWindowController* _window_controller;
+    BOOL _torn_down;
     
-    NSMutableArray* _validMountPaths;
-    NSString* _waitingForThisDisc;
+    NSMutableArray* _valid_mount_paths;
+    NSString* _waiting_disc_name;
     
-    NSString* _localDataStore;
+    NSString* _local_data_store;
     
-    NSMutableDictionary* _editionManagerSettings;
+    NSMutableDictionary* _settings;
 }
 
 + (RXEditionManager*)sharedEditionManager;
@@ -40,6 +40,7 @@
 
 - (void)showEditionManagerWindow;
 
+- (NSArray*)editionProxies;
 - (RXEdition*)editionForKey:(NSString*)editionKey;
 
 - (RXEdition*)currentEdition;

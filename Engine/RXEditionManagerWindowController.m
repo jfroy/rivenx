@@ -30,7 +30,7 @@
     [_editionsArrayController setSortDescriptors:[NSArray arrayWithObject:sd]];
     [sd release];
     
-    [_editionsArrayController setContent:[[RXEditionManager sharedEditionManager] valueForKey:@"editionProxies"]];
+    [_editionsArrayController setContent:[[RXEditionManager sharedEditionManager] editionProxies]];
 }
 
 - (void)dealloc {
