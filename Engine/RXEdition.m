@@ -145,17 +145,25 @@
     NSDictionary* edition = [_descriptor objectForKey:@"Edition"];
     key = [edition objectForKey:@"Key"];
     name = [NSLocalizedStringFromTable(key, @"Editions", nil) retain];
-    discs = [edition objectForKey:@"Discs"];
     directories = [edition objectForKey:@"Directories"];
     installDirectives = [edition objectForKey:@"Install Directives"];
+    
+    NSEnumerator* enumerator;
+    
+    // process the list of discs to lowercase the names
+    discs = [NSMutableArray new];
+    enumerator = [[edition objectForKey:@"Discs"] objectEnumerator];
+    NSString* disc;
+    while ((disc = [enumerator nextObject]))
+        [(NSMutableArray*)discs addObject:[disc lowercaseString]];
     
     // process the stack switch table to store simple card descriptors instead of strings as the keys and values
     NSDictionary* textSwitchTable = [_descriptor objectForKey:@"Stack switch table"];
     stackSwitchTables = [NSMutableDictionary new];
     
-    NSEnumerator* key_enum = [textSwitchTable keyEnumerator];
+    enumerator = [textSwitchTable keyEnumerator];
     NSString* k;
-    while ((k = [key_enum nextObject])) {
+    while ((k = [enumerator nextObject])) {
         RXSimpleCardDescriptor* from = [[RXSimpleCardDescriptor alloc] initWithString:k];
         RXSimpleCardDescriptor* to = [[RXSimpleCardDescriptor alloc] initWithString:[textSwitchTable objectForKey:k]];
         [(NSMutableDictionary*)stackSwitchTables setObject:to forKey:from];
@@ -170,8 +178,8 @@
     NSDictionary* text_lut = [_descriptor objectForKey:@"Card LUT"];
     cardLUT = [NSMutableDictionary new];
     
-    key_enum = [text_lut keyEnumerator];
-    while ((k = [key_enum nextObject])) {
+    enumerator = [text_lut keyEnumerator];
+    while ((k = [enumerator nextObject])) {
         RXSimpleCardDescriptor* to = [[RXSimpleCardDescriptor alloc] initWithString:[text_lut objectForKey:k]];
         [(NSMutableDictionary*)cardLUT setObject:to forKey:k];
         [to release];
