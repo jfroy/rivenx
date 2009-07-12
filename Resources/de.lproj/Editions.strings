@@ -3,10 +3,9 @@
 "DVD2_EDITION" = "Original DVD Edition";
 "DVD3_EDITION" = "Myst Trilogy Edition";
 
-"INSTALLED" = "Installed. Requires optical media to play. REQUIRES FULL INSTALL AT THE MOMENT";
-"FULL_INSTALLED" = "Installed fully on disk. Does not require optical media to play.";
-"NOT_INSTALLED" = "Not installed. Can be played without installation.";
-"MUST_INSTALL" = "Not installed. Will require minimal installation to play. REQUIRES FULL INSTALL AT THE MOMENT";
+"INSTALLED" = "Installed fully on disk. Does not require optical media to play.";
+"NOT_INSTALLED" = "Not installed. Can be used without installation.";
+"MUST_INSTALL" = "Not installed. Must be installed on disk to play.";
 
 "INSTALL_ALERT_TITLE" = "The %@ requires minimal installation in order to play.";
 "INSTALL_ALERT_MESSAGE" = "Do you wish to install it for all users or for yourself only. Installing for all users will require authorization.";

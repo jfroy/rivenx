@@ -45,14 +45,13 @@
     [icon setSize:_thumbnailSize];
     
     [cell setTitle:[value valueForKey:@"name"]];
-    if ([[value valueForKey:@"isInstalled"] boolValue]) {
-        if ([[value valueForKey:@"isFullInstalled"] boolValue])
-            [cell setSubTitle:NSLocalizedStringFromTable(@"FULL_INSTALLED", @"Editions", NULL)];
-        else
-            [cell setSubTitle:NSLocalizedStringFromTable(@"INSTALLED", @"Editions", NULL)];
-    } else if ([[value valueForKey:@"mustBeInstalled"] boolValue])
+    if ([[value valueForKey:@"isInstalled"] boolValue])
+        [cell setSubTitle:NSLocalizedStringFromTable(@"INSTALLED", @"Editions", NULL)];
+    else if ([[value valueForKey:@"mustBeInstalled"] boolValue])
         [cell setSubTitle:NSLocalizedStringFromTable(@"MUST_INSTALL", @"Editions", NULL)];
-    else [cell setSubTitle:NSLocalizedStringFromTable(@"NOT_INSTALLED", @"Editions", NULL)];
+    else
+        [cell setSubTitle:NSLocalizedStringFromTable(@"NOT_INSTALLED", @"Editions", NULL)];
+    
     [cell setImage:icon];
 }
 

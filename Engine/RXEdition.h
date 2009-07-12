@@ -51,7 +51,6 @@
 
 - (BOOL)mustBeInstalled;
 - (BOOL)isInstalled;
-- (BOOL)isFullInstalled;
 
 - (BOOL)canBecomeCurrent;
 

@@ -136,7 +136,7 @@
 				<key>Exclude</key>
 				<string>aspit</string>
 				<key>Required</key>
-				<false/>
+				<true/>
 			</dict>
 		</array>
 		<key>Key</key>

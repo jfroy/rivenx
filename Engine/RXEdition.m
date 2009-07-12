@@ -226,8 +226,8 @@
     
     openArchives = [NSMutableArray new];
     
-    RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"loaded (base=%@, installed=%d, full install=%d, must install=%d",
-        userDataBase, [self isInstalled], [self isFullInstalled], [self mustBeInstalled]);
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"loaded (base=%@, installed=%d, must install=%d",
+        userDataBase, [self isInstalled], [self mustBeInstalled]);
     return self;
 }
 
@@ -287,20 +287,14 @@
 }
 
 - (BOOL)isInstalled {
-    return ([_userData objectForKey:@"Installation Domain"]) ? YES : NO;
-}
-
-- (BOOL)isFullInstalled {
-    if (![self isInstalled])
+    NSNumber* installed = [_userData objectForKey:@"Installed"];
+    if (!installed)
         return NO;
-    NSString* type = [_userData objectForKey:@"Installation Type"];
-    if (!type)
-        return NO;
-    return ([type isEqualToString:@"Full"]) ? YES : NO;
+    return [installed boolValue];
 }
 
 - (BOOL)canBecomeCurrent {
-    if ([self mustBeInstalled] && ![self isFullInstalled])
+    if ([self mustBeInstalled] && ![self isInstalled])
         return NO;
     return YES;
 }
