@@ -302,7 +302,7 @@
     if (!disc)
         return NO;
     
-    return (BZFSSearchDirectoryForItem(@"Data", YES, NULL)) ? YES : NO;
+    return (BZFSSearchDirectoryForItem(path, @"Data", YES, NULL)) ? YES : NO;
 }
 
 @end

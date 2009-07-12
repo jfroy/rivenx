@@ -23,7 +23,7 @@ extern BOOL BZFSCreateDirectoryURL(NSURL* url, NSError** error);
 extern NSArray* BZFSContentsOfDirectory(NSString* path, NSError** error);
 extern NSArray* BZFSContentsOfDirectoryURL(NSURL* url, NSError** error);
 
-extern NSString* BZFSSearchDirectoryForItem(NSString* name, BOOL case_insensitive, NSError** error);
+extern NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_insensitive, NSError** error);
 
 extern NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error);
 extern NSDictionary* BZFSAttributesOfItemAtURL(NSURL* url, NSError** error);

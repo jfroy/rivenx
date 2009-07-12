@@ -70,7 +70,7 @@ NSArray* BZFSContentsOfDirectoryURL(NSURL* url, NSError** error) {
     return BZFSContentsOfDirectory([url path], error);
 }
 
-NSString* BZFSSearchDirectoryForItem(NSString* name, BOOL case_insensitive, NSError** error) {
+NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_insensitive, NSError** error) {
     NSArray* content = BZFSContentsOfDirectory(path, error);
     if (!content)
         return NO;
