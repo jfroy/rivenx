@@ -35,7 +35,6 @@
 
 - (id)initWithEdition:(RXEdition*)ed;
 
-- (BOOL)minimalUserInstallInModalSession:(NSModalSession)session error:(NSError**)error;
 - (BOOL)fullUserInstallInModalSession:(NSModalSession)session error:(NSError**)error;
 
 @end

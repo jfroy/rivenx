@@ -145,42 +145,6 @@
     [_installingProgress startAnimation:self];
 }
 
-- (void)_minimumInstallForUser:(RXEdition*)ed {
-    // create an installer
-    RXEditionInstaller* installer = [[RXEditionInstaller alloc] initWithEdition:ed];
-    
-    // setup the basic installation UI
-    [self _initializeInstallationUI:installer];
-    
-    // show the installation panel
-    [NSApp beginSheet:_installingSheet modalForWindow:[self window] modalDelegate:nil didEndSelector:NULL contextInfo:installer];
-    _installerSession = [NSApp beginModalSessionForWindow:_installingSheet];
-    
-    // observe the installer
-    [installer addObserver:self forKeyPath:@"progress" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:NULL];
-    [_installingTitleField bind:@"value" toObject:installer withKeyPath:@"stage" options:nil];
-    
-    // install away
-    BOOL didInstall = [installer minimalUserInstallInModalSession:_installerSession error:NULL];
-    
-    // dismiss the sheet
-    [NSApp endModalSession:_installerSession];
-    _installerSession = NULL;
-    
-    [NSApp endSheet:_installingSheet returnCode:0];
-    [_installingSheet orderOut:self];
-    [_installingProgress stopAnimation:self];
-    
-    // we're done with the installer
-    [_installingTitleField unbind:@"value"];
-    [installer removeObserver:self forKeyPath:@"progress"];
-    [installer release];
-    
-    // if the edition was installed, make it current
-    if (didInstall)
-        [self _makeEditionCurrent:ed];
-}
-
 - (void)_fullInstallForUser:(RXEdition*)ed {
     // create an installer
     RXEditionInstaller* installer = [[RXEditionInstaller alloc] initWithEdition:ed];
@@ -215,24 +179,6 @@
     // if the edition was installed, make it current
     if (didInstall)
         [self _makeEditionCurrent:ed];
-}
-
-- (void)_mustInstallAlertDidEnd:(NSAlert *)alert returnCode:(int)returnCode contextInfo:(void *)contextInfo {
-    [[alert window] orderOut:self];
-    
-    if (returnCode == NSAlertAlternateReturn)
-        return;
-    else if (returnCode == NSAlertDefaultReturn)
-        [self _minimumInstallForUser:contextInfo];
-}
-
-- (void)_displayMustInstallSheet:(RXEdition*)ed {
-    NSAlert* alert = [NSAlert alertWithMessageText:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALL_ALERT_TITLE", @"Editions", NULL), [ed valueForKey:@"name"]] 
-                                     defaultButton:NSLocalizedStringFromTable(@"INSTALL_ALERT_INSTALL_SELF", @"Editions", NULL) 
-                                   alternateButton:NSLocalizedStringFromTable(@"INSTALL_ALERT_DONT_INSTALL", @"Editions", NULL) 
-                                       otherButton:NSLocalizedStringFromTable(@"INSTALL_ALERT_INSTALL_ALL", @"Editions", NULL) 
-                         informativeTextWithFormat:NSLocalizedStringFromTable(@"INSTALL_ALERT_MESSAGE", @"Editions", NULL)];
-    [alert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:@selector(_mustInstallAlertDidEnd:returnCode:contextInfo:) contextInfo:ed];
 }
 
 - (IBAction)choose:(id)sender {

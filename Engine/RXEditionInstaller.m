@@ -108,29 +108,13 @@
     return YES;
 }
 
-- (BOOL)minimalUserInstallInModalSession:(NSModalSession)session error:(NSError**)error {
-    BOOL success = [self _performInstallSystemWide:NO fullInstall:NO session:session error:error];
-    if (!success)
-        return NO;
-    
-    // all done, mark the edition as installed
-    [[edition userData] setValue:@"User" forKey:@"Installation Domain"];
-    [[edition userData] setValue:@"Minimal" forKey:@"Installation Type"];
-    
-    // write the edition's user data to disk
-    if (![edition writeUserData:error])
-        return NO;
-    return YES;
-}
-
 - (BOOL)fullUserInstallInModalSession:(NSModalSession)session error:(NSError**)error {
     BOOL success = [self _performInstallSystemWide:NO fullInstall:YES session:session error:error];
     if (!success)
         return NO;
     
     // all done, mark the edition as installed
-    [[edition userData] setValue:@"User" forKey:@"Installation Domain"];
-    [[edition userData] setValue:@"Full" forKey:@"Installation Type"];
+    [[edition userData] setValue:[NSNumber numberWithBool:YES] forKey:@"Installed"];
     
     // write the edition's user data to disk
     if (![edition writeUserData:error])
