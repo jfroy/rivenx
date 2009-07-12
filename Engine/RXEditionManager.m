@@ -520,7 +520,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     NSEnumerator* archive_enumerator = [data_patch_archives objectEnumerator];
     NSString* archive_name;
     while ((archive_name = [archive_enumerator nextObject])) {
-        NSString* archive_path = [edition_patches_directory stringByAppendingPathComponent:archive_name];
+        NSString* archive_path = BZFSSearchDirectoryForItem(edition_patches_directory, archive_name, YES, error);
         if (!BZFSFileExists(archive_path))
             continue;
         
