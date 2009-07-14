@@ -44,7 +44,7 @@ try:
     _methods = dir(debug.pyobjc_instanceMethods)
     for m in _methods:
         if m.startswith('cmd_'):
-            cmd_name = m[4:].split('_', 1)[0]
+            cmd_name = 'cmd_' + m[4:].split('_', 1)[0]
             def make_cmd():
                 cmd = getattr(debug, m)
                 def g(*args):
@@ -59,10 +59,18 @@ def exec_cmd(cmd):
     # ok, it may be a "simple command" of the formd <command> <foo> <bar>
     cmd_parts = cmd.split(' ')
     try:
-        cmd_func = globals()[cmd_parts[0]]
+        cmd_func = globals()['cmd_' + cmd_parts[0]]
         cmd_func(*cmd_parts[1:])
     except KeyError:
         exec cmd in globals()
 
 # greet the user
 print "Riven X debug shell v4.\n"
+
+def cmd_help(*args):
+    for a in sorted(globals()):
+        if a.startswith('cmd_') and callable(globals()[a]):
+            print a[4:]
+
+def cmd_missing_externals(*args):
+    pass
