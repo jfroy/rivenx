@@ -69,7 +69,6 @@ struct rx_card_picture_record {
     // retain our parent stack, since RXCardDescriptor only keeps a weak reference to it
     _parent = [[cardDescriptor parent] retain];
     
-
     return self;
 }
 
