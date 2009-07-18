@@ -23,14 +23,17 @@ debug = objc.lookUpClass('RXDebugWindowController').globalDebugWindowController(
 world = objc.lookUpClass('RXWorld').sharedWorld()
 renderer = None
 engine = None
+edition_manager = None
 
 class DebugNotificationHandler(Foundation.NSObject):
     
     def _handleStackDidLoad_(self, notification):
         global renderer
         global engine
+        global edition_manager
         renderer = world.cardRenderState()
         engine = renderer.scriptEngine()
+        edition_manager = objc.lookUpClass('RXEditionManager').sharedEditionManager()
         
         print "Global objects initialized:\n    world=%s\n    renderer=%s\n    engine=%s" % (world, renderer, engine)
         Foundation.NSNotificationCenter.defaultCenter().removeObserver_(self)
@@ -63,6 +66,8 @@ def exec_cmd(cmd):
         cmd_func(*cmd_parts[1:])
     except KeyError:
         exec cmd in globals()
+    except Exception, e:
+        print str(e)
 
 # greet the user
 print "Riven X debug shell v4.\n"
@@ -73,4 +78,24 @@ def cmd_help(*args):
             print a[4:]
 
 def cmd_missing_externals(*args):
-    pass
+    RXCardDescriptor = objc.lookUpClass('RXCardDescriptor')
+    RXCard = objc.lookUpClass('RXCard')
+    RXScriptOpcodeStream = objc.lookUpClass('RXScriptOpcodeStream')
+
+    edition = edition_manager.currentEdition()
+    stacks = edition.valueForKey_("stackDescriptors").allKeys()
+    print stacks
+    for stack_key in sorted(stacks)[:2]:
+        stack = edition_manager.loadStackWithKey_(stack_key)
+        card_i = 0
+        card_id = 1
+        card_count = stack.cardCount()
+        while card_i < card_count:
+            desc = RXCardDescriptor.alloc().initWithStack_ID_(stack, card_id)
+            card_id += 1
+            if not desc:
+                continue
+
+            card_i += 1
+            card = RXCard.alloc().initWithCardDescriptor_(desc)
+            print card
