@@ -119,6 +119,7 @@
 		315BD41C0D85B64D007A3BFA /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		315D438C0E328582003F7EDD /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 315D438B0E328582003F7EDD /* Sparkle.framework */; };
 		315D43B50E328591003F7EDD /* Sparkle.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 315D438B0E328582003F7EDD /* Sparkle.framework */; };
+		316038FA100EE54600052849 /* RXScriptOpcodeStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 316038F9100EE54600052849 /* RXScriptOpcodeStream.m */; };
 		3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */ = {isa = PBXBuildFile; fileRef = 3160E1810FD3075300F18E86 /* tiny_marbles.png */; };
 		316721AB0D27F5F700FB2C0E /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
 		316721AD0D27F60A00FB2C0E /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
@@ -463,6 +464,8 @@
 		3158CD16094F7BEB004D5D00 /* RXCreditsState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXCreditsState.m; path = States/RXCreditsState.m; sourceTree = "<group>"; usesTabs = 0; };
 		315A129708F1C3E500566B20 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = /System/Library/Frameworks/Accelerate.framework; sourceTree = "<absolute>"; };
 		315D438B0E328582003F7EDD /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
+		316038F8100EE54600052849 /* RXScriptOpcodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptOpcodeStream.h; sourceTree = "<group>"; };
+		316038F9100EE54600052849 /* RXScriptOpcodeStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptOpcodeStream.m; sourceTree = "<group>"; };
 		3160E1810FD3075300F18E86 /* tiny_marbles.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = tiny_marbles.png; sourceTree = "<group>"; };
 		316721D80D27FB3200FB2C0E /* integer_pair_hash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = integer_pair_hash.h; sourceTree = "<group>"; usesTabs = 0; };
 		316721D90D27FB3200FB2C0E /* integer_pair_hash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = integer_pair_hash.c; sourceTree = "<group>"; usesTabs = 0; };
@@ -1141,6 +1144,8 @@
 				31F4EFE80F35312700A68652 /* RXScriptEngine.h */,
 				31F4EFE90F35312700A68652 /* RXScriptEngine.mm */,
 				31327B640DCF509E00280D8F /* RXScriptEngineProtocols.h */,
+				316038F8100EE54600052849 /* RXScriptOpcodeStream.h */,
+				316038F9100EE54600052849 /* RXScriptOpcodeStream.m */,
 				31225ABC08C4216D0055628F /* RXStack.h */,
 				31225ABD08C4216D0055628F /* RXStack.m */,
 				31F3095508BE5FA200417394 /* RXWorld.h */,
@@ -1723,6 +1728,7 @@
 				31F4F0020F3533EF00A68652 /* RXScriptDecoding.m in Sources */,
 				31F4F03C0F35461C00A68652 /* RXMovieProxy.mm in Sources */,
 				316C38D70F46B22300EFB7FB /* CAAUParameter.cpp in Sources */,
+				316038FA100EE54600052849 /* RXScriptOpcodeStream.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
