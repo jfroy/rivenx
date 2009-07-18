@@ -32,7 +32,7 @@
     NSString* userBase;
     NSString* userDataBase;
     
-    NSArray* stackDescriptors;
+    NSDictionary* stackDescriptors;
     
     NSMutableArray* openArchives;
     

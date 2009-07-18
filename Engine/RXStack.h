@@ -34,6 +34,8 @@
 - (NSString*)key;
 - (uint16_t)entryCardID;
 
+- (NSUInteger)cardCount;
+
 - (NSString*)cardNameAtIndex:(uint32_t)index;
 - (NSString*)hotspotNameAtIndex:(uint32_t)index;
 - (NSString*)externalNameAtIndex:(uint32_t)index;

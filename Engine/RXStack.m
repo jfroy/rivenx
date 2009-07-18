@@ -71,9 +71,6 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     if (!self)
         return nil;
     
-    if (pthread_main_np())
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"DO NOT INITIALIZE STACK ON MAIN THREAD" userInfo:nil];
-    
     // check that we have a descriptor object
     if (!descriptor)
         @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Descriptor dictionary cannot be nil." userInfo:nil];
@@ -230,6 +227,15 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return _entryCardID;
 }
 
+- (NSUInteger)cardCount {
+    NSUInteger count = 0;
+    NSEnumerator* enumerator = [_dataArchives objectEnumerator];
+    MHKArchive* archive;
+    while ((archive = [enumerator nextObject]))
+        count += [[archive valueForKeyPath:@"CARD.@count"] intValue];
+    return count;
+}
+
 #pragma mark -
 
 - (NSString*)cardNameAtIndex:(uint32_t)index {
@@ -267,10 +273,10 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 
 - (id <MHKAudioDecompression>)audioDecompressorWithID:(uint16_t)soundID {
     id <MHKAudioDecompression> decompressor = nil;
-    NSEnumerator* archiveEnum = [_soundArchives objectEnumerator];
+    
+    NSEnumerator* enumerator = [_soundArchives objectEnumerator];
     MHKArchive* archive;
-    while ((archive = [archiveEnum nextObject])) {
-        // try to get the decompressor from the archive...
+    while ((archive = [enumerator nextObject])) {
         decompressor = [archive decompressorWithSoundID:soundID error:NULL];
         if (decompressor)
             break;
@@ -280,10 +286,10 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 
 - (id <MHKAudioDecompression>)audioDecompressorWithDataID:(uint16_t)soundID {
     id <MHKAudioDecompression> decompressor = nil;
-    NSEnumerator* archiveEnum = [_dataArchives objectEnumerator];
+    
+    NSEnumerator* enumerator = [_dataArchives objectEnumerator];
     MHKArchive* archive;
-    while ((archive = [archiveEnum nextObject])) {
-        // try to get the decompressor from the archive...
+    while ((archive = [enumerator nextObject])) {
         decompressor = [archive decompressorWithSoundID:soundID error:NULL];
         if (decompressor)
             break;
@@ -292,9 +298,9 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 }
 
 - (uint16_t)dataSoundIDForName:(NSString*)sound_name {
-    NSEnumerator* archive_enum = [_dataArchives objectEnumerator];
+    NSEnumerator* enumerator = [_dataArchives objectEnumerator];
     MHKArchive* archive;
-    while ((archive = [archive_enum nextObject])) {
+    while ((archive = [enumerator nextObject])) {
         NSDictionary* desc = [archive resourceDescriptorWithResourceType:@"tWAV" name:sound_name];
         if (desc)
             return [[desc objectForKey:@"ID"] unsignedShortValue];
@@ -303,9 +309,9 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 }
 
 - (MHKFileHandle*)fileWithResourceType:(NSString*)type ID:(uint16_t)ID {
-    NSEnumerator* archive_enumerator = [_dataArchives objectEnumerator];
-    MHKArchive* archive = nil;
-    while ((archive = [archive_enumerator nextObject])) {
+    NSEnumerator* enumerator = [_dataArchives objectEnumerator];
+    MHKArchive* archive;
+    while ((archive = [enumerator nextObject])) {
         MHKFileHandle* file = [archive openResourceWithResourceType:type ID:ID];
         if (file)
             return file;

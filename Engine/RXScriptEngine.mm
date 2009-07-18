@@ -387,9 +387,8 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
                     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
                     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
-                } else {
+                } else
                     program_off += rx_compute_riven_script_length((program + 2), *(program + 1), false); // skip over the case
-                }
                 
                 // adjust the shorted program
                 program_off += 4; // account for the case value and case instruction count
