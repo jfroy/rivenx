@@ -47,167 +47,6 @@ struct rx_card_picture_record {
     return nil;
 }
 
-- (void)_loadMovies {
-    NSError* error;
-    MHKFileHandle* fh;
-    void* listData;
-    size_t listDataLength;
-    uint16_t currentListIndex;
-    
-    uint16_t resourceID = [_descriptor ID];
-    
-    fh = [_parent fileWithResourceType:@"MLST" ID:resourceID];
-    if (!fh)
-        @throw [NSException exceptionWithName:@"RXMissingResourceException"
-                                       reason:@"Could not open the card's corresponding MLST resource."
-                                     userInfo:nil];
-    
-    listDataLength = (size_t)[fh length];
-    listData = malloc(listDataLength);
-    
-    // read the data from the archive
-    if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
-        @throw [NSException exceptionWithName:@"RXRessourceIOException"
-                                       reason:@"Could not read the card's corresponding MLST ressource."
-                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-    
-    // how many movies do we have?
-    uint16_t movieCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
-    struct rx_mlst_record* mlstRecords = (struct rx_mlst_record*)BUFFER_OFFSET(listData, sizeof(uint16_t));
-    
-    // allocate movie management objects
-    _movies = [NSMutableArray new];
-    _mlstCodes = new uint16_t[movieCount];
-    
-    // swap the records if needed
-#if defined(__LITTLE_ENDIAN__)
-    for (currentListIndex = 0; currentListIndex < movieCount; currentListIndex++) {
-        mlstRecords[currentListIndex].index = CFSwapInt16(mlstRecords[currentListIndex].index);
-        mlstRecords[currentListIndex].movie_id = CFSwapInt16(mlstRecords[currentListIndex].movie_id);
-        mlstRecords[currentListIndex].code = CFSwapInt16(mlstRecords[currentListIndex].code);
-        mlstRecords[currentListIndex].left = CFSwapInt16(mlstRecords[currentListIndex].left);
-        mlstRecords[currentListIndex].top = CFSwapInt16(mlstRecords[currentListIndex].top);
-        mlstRecords[currentListIndex].selection_start = CFSwapInt16(mlstRecords[currentListIndex].selection_start);
-        mlstRecords[currentListIndex].selection_current = CFSwapInt16(mlstRecords[currentListIndex].selection_current);
-        mlstRecords[currentListIndex].selection_end = CFSwapInt16(mlstRecords[currentListIndex].selection_end);
-        mlstRecords[currentListIndex].loop = CFSwapInt16(mlstRecords[currentListIndex].loop);
-        mlstRecords[currentListIndex].volume = CFSwapInt16(mlstRecords[currentListIndex].volume);
-        mlstRecords[currentListIndex].rate = CFSwapInt16(mlstRecords[currentListIndex].rate);
-    }
-#endif
-    
-    for (currentListIndex = 0; currentListIndex < movieCount; currentListIndex++) {
-#if defined(DEBUG) && DEBUG > 1
-        RXOLog(@"loading mlst entry: {movie ID: %hu, code: %hu, left: %hu, top: %hu, loop: %hu, volume: %hu}",
-            mlstRecords[currentListIndex].movie_id,
-            mlstRecords[currentListIndex].code,
-            mlstRecords[currentListIndex].left,
-            mlstRecords[currentListIndex].top,
-            mlstRecords[currentListIndex].loop,
-            mlstRecords[currentListIndex].volume);
-#endif
-        
-        // sometimes volume > 256, so fix it up here
-        if (mlstRecords[currentListIndex].volume > 256)
-            mlstRecords[currentListIndex].volume = 256;
-        
-        // load the movie up
-        CGPoint origin = CGPointMake(mlstRecords[currentListIndex].left, kRXCardViewportSize.height - mlstRecords[currentListIndex].top);
-        MHKArchive* archive = [[_parent fileWithResourceType:@"tMOV" ID:mlstRecords[currentListIndex].movie_id] archive];
-        RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive
-                                                                       ID:mlstRecords[currentListIndex].movie_id
-                                                                   origin:origin
-                                                                   volume:mlstRecords[currentListIndex].volume / 256.0f
-                                                                     loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO)
-                                                                    owner:self];
-        
-        // add the movie to the movies array
-        [_movies addObject:movie_proxy];
-        [movie_proxy release];
-        
-        // set the movie code in the mlst to code array
-        _mlstCodes[currentListIndex] = mlstRecords[currentListIndex].code;
-    }
-    
-    // don't need the MLST data anymore
-    free(listData);
-}
-
-- (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slst_record soundCount:(uint16_t)sound_count swapBytes:(BOOL)swap {
-    RXSoundGroup* group = [RXSoundGroup new];
-    
-    // some useful pointers
-    const uint16_t* group_parameters = slst_record + sound_count;
-    const uint16_t* gain_parameters = group_parameters + 5;
-    const uint16_t* pan_parameters = gain_parameters + sound_count;
-    
-    // fade flags
-    uint16_t fade_flags = *group_parameters;
-    if (swap)
-        fade_flags = CFSwapInt16BigToHost(fade_flags);
-    group->fadeOutRemovedSounds = (fade_flags & 0x0001) ? YES : NO;
-    group->fadeInNewSounds = (fade_flags & 0x0002) ? YES : NO;
-    
-    // loop flag
-    uint16_t loop = *(group_parameters + 1);
-    if (swap)
-        loop = CFSwapInt16BigToHost(loop);
-    group->loop = (loop) ? YES : NO;
-    
-    // group gain
-    uint16_t integer_gain = *(group_parameters + 2);
-    if (swap)
-        integer_gain = CFSwapInt16BigToHost(integer_gain);
-    float gain = (float)integer_gain / kRXSoundGainDivisor;
-    group->gain = gain;
-    
-    uint16_t sound_index = 0;
-    for (; sound_index < sound_count; sound_index++) {
-        uint16_t sound_id = *(slst_record + sound_index);
-        if (swap)
-            sound_id = CFSwapInt16BigToHost(sound_id);
-        
-        integer_gain = *(gain_parameters + sound_index);
-        if (swap)
-            integer_gain = CFSwapInt16BigToHost(integer_gain);
-        gain = (float)integer_gain / kRXSoundGainDivisor;
-        
-        int16_t integer_pan = *((int16_t*)(pan_parameters + sound_index));
-        if (swap)
-            integer_pan = (int16_t)CFSwapInt16BigToHost(integer_pan);
-        float pan = 0.5f + ((float)integer_pan / 200.0f);
-        
-        [group addSoundWithStack:_parent ID:sound_id gain:gain pan:pan];
-    }
-    
-#if defined(DEBUG) && DEBUG > 1
-    RXOLog(@"created sound group: %@", group);
-#endif
-    return group;
-}
-
-- (RXMovie*)loadMovieWithMLSTRecord:(struct rx_mlst_record*)mlst {
-    // sometimes volume > 256, so fix it up here
-    if (mlst->volume > 256)
-        mlst->volume = 256;
-    
-    // load the movie up
-    CGPoint origin = CGPointMake(mlst->left, kRXCardViewportSize.height - mlst->top);
-    MHKArchive* archive = [[_parent fileWithResourceType:@"tMOV" ID:mlst->movie_id] archive];
-    RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive
-                                                                   ID:mlst->movie_id
-                                                               origin:origin
-                                                               volume:mlst->volume / 256.0f
-                                                                 loop:((mlst->loop == 1) ? YES : NO)
-                                                                owner:self];
-
-    // add the movie to the movies array
-    [_movies addObject:movie_proxy];
-    [movie_proxy release];
-    
-    return (RXMovie*)movie_proxy;
-}
-
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor {
     self = [super init];
     if (!self)
@@ -230,219 +69,87 @@ struct rx_card_picture_record {
     // retain our parent stack, since RXCardDescriptor only keeps a weak reference to it
     _parent = [[cardDescriptor parent] retain];
     
-#if defined(DEBUG)
-    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"initializing card");
+
+    return self;
+}
+
+- (void)dealloc {
+#if defined(DEBUG) && DEBUG > 1
+    RXOLog(@"deallocating");
 #endif
+
+    // stop receiving notifications
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    // lock the GL context and clean up textures and GL buffers
+    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+    CGLLockContext(cgl_ctx);
+    {
+        if (_pictureVertexArrayBuffer != 0)
+            glDeleteBuffers(1, &_pictureVertexArrayBuffer);
+        if (_pictureTextures)
+            glDeleteTextures(_pictureCount, _pictureTextures);
+
+        // objects have gone away, so we flush
+        glFlush();
+    }
+    CGLUnlockContext(cgl_ctx);
+    
+    // movies
+    [_movies release];
+    if (_mlstCodes)
+        delete[] _mlstCodes;
+    
+    // pictures
+    if (_pictureTextures)
+        delete[] _pictureTextures;
+    if (_pictureTextureStorage)
+        free(_pictureTextureStorage);
+    
+    // sounds
+    [_soundGroups release];
+    
+    // hotspots
+    if (_hotspotsIDMap)
+        NSFreeMapTable(_hotspotsIDMap);
+    if (_hotspots_name_map)
+        NSFreeMapTable(_hotspots_name_map);
+    [_hotspots release];
+    
+    // sfxe
+    if (_sfxes) {
+        for (uint16_t i = 0; i < _flstCount; i++) {
+            free(_sfxes[i].record);
+        }
+        free(_sfxes);
+    }
+    
+    // misc resources
+    if (_blstData)
+        free(_blstData);
+    [_card_scripts release];
+    
+    [_parent release];
+    [_descriptor release];
+    
+    [super dealloc];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat: @"%@ {%@}", [super description], [_descriptor description]];
+}
+
+#pragma mark -
+#pragma mark loading
+
+- (void)_loadPictures {
     NSError* error;
+    MHKFileHandle* fh;
+    void* listData;
+    size_t listDataLength;
+    uint16_t currentListIndex;
     
-    NSData* cardData = [cardDescriptor data];
-    uint16_t resourceID = [cardDescriptor ID];
-    
-    // basic CARD information
-    /*int16_t nameIndex = (int16_t)CFSwapInt16BigToHost(*(const int16_t *)[cardData bytes]);
-    NSString* cardName = (nameIndex > -1) ? [_cardNames objectAtIndex:nameIndex] : nil;*/
-    
-    /*uint16_t zipCard = CFSwapInt16BigToHost(*(const uint16_t *)([cardData bytes] + 2));
-    NSNumber* zipCardNumber = [NSNumber numberWithBool:(zipCard) ? YES : NO];*/
-    
-    // card events
-    _card_scripts = rx_decode_riven_script(BUFFER_OFFSET([cardData bytes], 4), NULL);
-    
-    // get the current edition
-    RXEdition* ce = [[RXEditionManager sharedEditionManager] currentEdition];
-    
-    // WORKAROUND: there is a legitimate bug in the CD edition's tspit 155 open card program;
-    // it executes activate SLST record 2 command after the introduction sequence, which is the mute SLST; patch it up to activate SLST 1
-    if ([_descriptor ID] == 155 && [[[_descriptor parent] key] isEqualToString:@"tspit"] && [[ce valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
-        NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndex:0];
-        
-        const uint16_t* base_program = (const uint16_t*)[[start_rendering_program objectForKey:RXScriptProgramKey] bytes];
-        uint16_t opcode_count = [[start_rendering_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
-        uint32_t switch_opcode_offset;
-        if (opcode_count > 0 && rx_get_riven_script_opcode(base_program, opcode_count, 0, &switch_opcode_offset) == 8) {
-            uint32_t case_program_offset = 0;
-            uint16_t case_opcode_count = rx_get_riven_script_case_opcode_count(BUFFER_OFFSET(base_program, switch_opcode_offset), 0, &case_program_offset);
-            
-            uint32_t slst_opcode_offset;
-            if (case_program_offset > 0 && rx_get_riven_script_opcode(BUFFER_OFFSET(base_program, switch_opcode_offset + case_program_offset),
-                                                                      case_opcode_count,
-                                                                      case_opcode_count - 3,
-                                                                      &slst_opcode_offset) == RX_COMMAND_ACTIVATE_SLST) {
-                NSMutableData* program = [[start_rendering_program objectForKey:RXScriptProgramKey] mutableCopy];
-                uint16_t* slst_index = BUFFER_OFFSET((uint16_t*)[program mutableBytes], switch_opcode_offset + case_program_offset + slst_opcode_offset + 4);
-                if (*slst_index == 2) {
-                    *slst_index = 1;
-                    start_rendering_program = [[NSDictionary alloc] initWithObjectsAndKeys:
-                        program, RXScriptProgramKey,
-                        [start_rendering_program objectForKey:RXScriptOpcodeCountKey], RXScriptOpcodeCountKey,
-                        nil];
-                    
-                    NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
-                    [mutable_script setObject:[NSArray arrayWithObject:start_rendering_program] forKey:RXStartRenderingScriptKey];
-                    [start_rendering_program release];
-                    
-                    [_card_scripts release];
-                    _card_scripts = mutable_script;
-                }
-                
-                [program release];
-            }
-        }
-    }
-    
-    // list resources
-    MHKFileHandle* fh = nil;
-    void* listData = NULL;
-    size_t listDataLength = 0;
-    uint16_t currentListIndex = 0;
-    
-#pragma mark MLST
-
-    // we don't need to load movies on the main thread anymore since we actually create movie proxies
-    [self _loadMovies];
-    
-#pragma mark HSPT
-    
-    fh = [_parent fileWithResourceType:@"HSPT" ID:resourceID];
-    if (!fh)
-        @throw [NSException exceptionWithName:@"RXMissingResourceException"
-                                       reason:@"Could not open the card's corresponding HSPT resource."
-                                     userInfo:nil];
-    
-    listDataLength = (size_t)[fh length];
-    listData = malloc(listDataLength);
-    
-    // read the data from the archive
-    if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
-        @throw [NSException exceptionWithName:@"RXRessourceIOException"
-                                       reason:@"Could not read the card's corresponding HSPT ressource."
-                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-    
-    // how many hotspots do we have?
-    uint16_t hotspotCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
-    uint8_t* hsptRecordPointer = (uint8_t*)BUFFER_OFFSET(listData, sizeof(uint16_t));
-    _hotspots = [[NSMutableArray alloc] initWithCapacity:hotspotCount];
-    
-    _hotspotsIDMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
-    _hotspots_name_map = NSCreateMapTable(NSObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
-    
-    // load the hotspots
-    for (currentListIndex = 0; currentListIndex < hotspotCount; currentListIndex++) {
-        struct rx_hspt_record* hspt_record = (struct rx_hspt_record*)hsptRecordPointer;
-        hsptRecordPointer += sizeof(struct rx_hspt_record);
-        
-        // byte order swap if needed
-#if defined(__LITTLE_ENDIAN__)
-        hspt_record->blst_id = CFSwapInt16(hspt_record->blst_id);
-        hspt_record->name_rec = (int16_t)CFSwapInt16(hspt_record->name_rec);
-        hspt_record->rect = rx_swap_core_rect(hspt_record->rect);
-        hspt_record->u0 = CFSwapInt16(hspt_record->u0);
-        hspt_record->mouse_cursor = CFSwapInt16(hspt_record->mouse_cursor);
-        hspt_record->index = CFSwapInt16(hspt_record->index);
-        hspt_record->u1 = (int16_t)CFSwapInt16(hspt_record->u1);
-        hspt_record->zip = CFSwapInt16(hspt_record->zip);
-#endif
-
-#if defined(DEBUG) && DEBUG > 1
-        RXOLog(@"hotspot record %u: index=%hd, blst_id=%hd, zip=%hu", currentListIndex, hspt_record->index, hspt_record->blst_id, hspt_record->zip);
-#endif
-        
-        // decode the hotspot's script
-        uint32_t script_size = 0;
-        NSDictionary* hotspot_scripts = rx_decode_riven_script(hsptRecordPointer, &script_size);
-        hsptRecordPointer += script_size;
-        
-        // if this is a zip hotspot, skip it if Zip mode is disabled
-        // FIXME: Zip mode is always disabled currently
-        if (hspt_record->zip == 1)
-            continue;
-        
-        // WORKAROUND: there is a legitimate bug in aspit's "start new game" hotspot; it executes a command 12 at the very end,
-        // which kills ambient sound after the introduction sequence; we remove that command here
-        if ([_descriptor ID] == 1 && [[[_descriptor parent] key] isEqualToString:@"aspit"] && hspt_record->blst_id == 16) {
-            NSDictionary* mouse_down_program = [[hotspot_scripts objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
-            
-            uint16_t opcode_count = [[mouse_down_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
-            if (opcode_count > 0 && rx_get_riven_script_opcode([[mouse_down_program objectForKey:RXScriptProgramKey] bytes],
-                                                               opcode_count,
-                                                               opcode_count - 1,
-                                                               NULL) == RX_COMMAND_CLEAR_SLST) {
-                mouse_down_program = [[NSDictionary alloc] initWithObjectsAndKeys:
-                    [mouse_down_program objectForKey:RXScriptProgramKey], RXScriptProgramKey,
-                    [NSNumber numberWithUnsignedShort:opcode_count - 1], RXScriptOpcodeCountKey,
-                    nil];
-                
-                NSMutableDictionary* mutable_script = [hotspot_scripts mutableCopy];
-                [mutable_script setObject:[NSArray arrayWithObject:mouse_down_program] forKey:RXMouseDownScriptKey];
-                [mouse_down_program release];
-                
-                [hotspot_scripts release];
-                hotspot_scripts = mutable_script;
-            }
-        }
-        
-        // allocate the hotspot object
-        RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index
-                                                      ID:hspt_record->blst_id
-                                                    rect:hspt_record->rect
-                                                cursorID:hspt_record->mouse_cursor
-                                                  script:hotspot_scripts];
-        if (hspt_record->name_rec >= 0) {
-            [hs setName:[[[_descriptor parent] hotspotNameAtIndex:hspt_record->name_rec] lowercaseString]];
-            NSMapInsert(_hotspots_name_map, [hs name], hs);
-        }
-        
-        uintptr_t key = hspt_record->blst_id;
-        NSMapInsert(_hotspotsIDMap, (void*)key, hs);
-        [_hotspots addObject:hs];
-        
-        [hs release];
-        [hotspot_scripts release];
-    }
-    
-    // don't need the HSPT data anymore
-    free(listData);
-    
-#pragma mark BLST
-    
-    fh = [_parent fileWithResourceType:@"BLST" ID:resourceID];
-    if (!fh)
-        @throw [NSException exceptionWithName:@"RXMissingResourceException"
-                                       reason:@"Could not open the card's corresponding BLST resource."
-                                     userInfo:nil];
-    
-    listDataLength = (size_t)[fh length];
-    _blstData = malloc(listDataLength);
-    
-    // read the data from the archive
-    if ([fh readDataToEndOfFileInBuffer:_blstData error:&error] == -1)
-        @throw [NSException exceptionWithName:@"RXRessourceIOException"
-                                       reason:@"Could not read the card's corresponding BLST ressource."
-                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-    
-    _hotspotControlRecords = (struct rx_blst_record*)BUFFER_OFFSET(_blstData, sizeof(uint16_t));
-    
-    // byte order (and debug)
-#if defined(__LITTLE_ENDIAN__) || (defined(DEBUG) && DEBUG > 1)
-    uint16_t blstCount = CFSwapInt16BigToHost(*(uint16_t*)_blstData);
-    for (currentListIndex = 0; currentListIndex < blstCount; currentListIndex++) {
-        struct rx_blst_record* record = _hotspotControlRecords + currentListIndex;
-        
-#if defined(__LITTLE_ENDIAN__)
-        record->index = CFSwapInt16(record->index);
-        record->enabled = CFSwapInt16(record->enabled);
-        record->hotspot_id = CFSwapInt16(record->hotspot_id);
-#endif // defined(__LITTLE_ENDIAN__)
-        
-#if defined(DEBUG) && DEBUG > 1
-        RXOLog(@"blst record %u: index=%hd, enabled=%hd, hotspot_id=%hd", currentListIndex, record->index, record->enabled, record->hotspot_id);
-#endif // defined(DEBUG)
-    }
-#endif // defined(__LITTLE_ENDIAN__) || defined(DEBUG)
-    
-#pragma mark PLST
-    
-    fh = [_parent fileWithResourceType:@"PLST" ID:resourceID];
+    fh = [_parent fileWithResourceType:@"PLST" ID:[_descriptor ID]];
     if (!fh)
         @throw [NSException exceptionWithName:@"RXMissingResourceException"
                                        reason:@"Could not open the card's corresponding PLST resource."
@@ -493,7 +200,7 @@ struct rx_card_picture_record {
     // allocate one big chunk of memory for all the textures
     _pictureTextureStorage = malloc(textureStorageSize);
     
-    // get the load context
+    // get the load context and lock it
     CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
     CGLLockContext(cgl_ctx);
     NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
@@ -633,13 +340,252 @@ struct rx_card_picture_record {
     // disable texture range
     glTextureRangeAPPLE(GL_TEXTURE_RECTANGLE_ARB, 0, 0); glReportError();
     
+    // new textures, buffer and program objects
+    glFlush();
+    
+    // done with the load context
+    CGLUnlockContext(cgl_ctx);
+    
     // we don't need the picture records and the PLST data anymore
     delete[] pictureRecords;
     free(listData);
+}
+
+- (void)_loadMovies {
+    NSError* error;
+    MHKFileHandle* fh;
+    void* listData;
+    size_t listDataLength;
+    uint16_t currentListIndex;
     
-#pragma mark FLST
+    fh = [_parent fileWithResourceType:@"MLST" ID:[_descriptor ID]];
+    if (!fh)
+        @throw [NSException exceptionWithName:@"RXMissingResourceException"
+                                       reason:@"Could not open the card's corresponding MLST resource."
+                                     userInfo:nil];
     
-    fh = [_parent fileWithResourceType:@"FLST" ID:resourceID];
+    listDataLength = (size_t)[fh length];
+    listData = malloc(listDataLength);
+    
+    // read the data from the archive
+    if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
+        @throw [NSException exceptionWithName:@"RXRessourceIOException"
+                                       reason:@"Could not read the card's corresponding MLST ressource."
+                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+    
+    // how many movies do we have?
+    uint16_t movieCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
+    struct rx_mlst_record* mlstRecords = (struct rx_mlst_record*)BUFFER_OFFSET(listData, sizeof(uint16_t));
+    
+    // allocate movie management objects
+    _movies = [NSMutableArray new];
+    _mlstCodes = new uint16_t[movieCount];
+    
+    // swap the records if needed
+#if defined(__LITTLE_ENDIAN__)
+    for (currentListIndex = 0; currentListIndex < movieCount; currentListIndex++) {
+        mlstRecords[currentListIndex].index = CFSwapInt16(mlstRecords[currentListIndex].index);
+        mlstRecords[currentListIndex].movie_id = CFSwapInt16(mlstRecords[currentListIndex].movie_id);
+        mlstRecords[currentListIndex].code = CFSwapInt16(mlstRecords[currentListIndex].code);
+        mlstRecords[currentListIndex].left = CFSwapInt16(mlstRecords[currentListIndex].left);
+        mlstRecords[currentListIndex].top = CFSwapInt16(mlstRecords[currentListIndex].top);
+        mlstRecords[currentListIndex].selection_start = CFSwapInt16(mlstRecords[currentListIndex].selection_start);
+        mlstRecords[currentListIndex].selection_current = CFSwapInt16(mlstRecords[currentListIndex].selection_current);
+        mlstRecords[currentListIndex].selection_end = CFSwapInt16(mlstRecords[currentListIndex].selection_end);
+        mlstRecords[currentListIndex].loop = CFSwapInt16(mlstRecords[currentListIndex].loop);
+        mlstRecords[currentListIndex].volume = CFSwapInt16(mlstRecords[currentListIndex].volume);
+        mlstRecords[currentListIndex].rate = CFSwapInt16(mlstRecords[currentListIndex].rate);
+    }
+#endif
+    
+    for (currentListIndex = 0; currentListIndex < movieCount; currentListIndex++) {
+#if defined(DEBUG) && DEBUG > 1
+        RXOLog(@"loading mlst entry: {movie ID: %hu, code: %hu, left: %hu, top: %hu, loop: %hu, volume: %hu}",
+            mlstRecords[currentListIndex].movie_id,
+            mlstRecords[currentListIndex].code,
+            mlstRecords[currentListIndex].left,
+            mlstRecords[currentListIndex].top,
+            mlstRecords[currentListIndex].loop,
+            mlstRecords[currentListIndex].volume);
+#endif
+        
+        // sometimes volume > 256, so fix it up here
+        if (mlstRecords[currentListIndex].volume > 256)
+            mlstRecords[currentListIndex].volume = 256;
+        
+        // load the movie up
+        CGPoint origin = CGPointMake(mlstRecords[currentListIndex].left, kRXCardViewportSize.height - mlstRecords[currentListIndex].top);
+        MHKArchive* archive = [[_parent fileWithResourceType:@"tMOV" ID:mlstRecords[currentListIndex].movie_id] archive];
+        RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive
+                                                                       ID:mlstRecords[currentListIndex].movie_id
+                                                                   origin:origin
+                                                                   volume:mlstRecords[currentListIndex].volume / 256.0f
+                                                                     loop:((mlstRecords[currentListIndex].loop == 1) ? YES : NO)
+                                                                    owner:self];
+        
+        // add the movie to the movies array
+        [_movies addObject:movie_proxy];
+        [movie_proxy release];
+        
+        // set the movie code in the mlst to code array
+        _mlstCodes[currentListIndex] = mlstRecords[currentListIndex].code;
+    }
+    
+    // don't need the MLST data anymore
+    free(listData);
+}
+
+- (void)_loadHotspots {
+    NSError* error;
+    MHKFileHandle* fh;
+    void* listData;
+    size_t listDataLength;
+    uint16_t currentListIndex;
+    
+    fh = [_parent fileWithResourceType:@"HSPT" ID:[_descriptor ID]];
+    if (!fh)
+        @throw [NSException exceptionWithName:@"RXMissingResourceException"
+                                       reason:@"Could not open the card's corresponding HSPT resource."
+                                     userInfo:nil];
+    
+    listDataLength = (size_t)[fh length];
+    listData = malloc(listDataLength);
+    
+    // read the data from the archive
+    if ([fh readDataToEndOfFileInBuffer:listData error:&error] == -1)
+        @throw [NSException exceptionWithName:@"RXRessourceIOException"
+                                       reason:@"Could not read the card's corresponding HSPT ressource."
+                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+    
+    // how many hotspots do we have?
+    uint16_t hotspotCount = CFSwapInt16BigToHost(*(uint16_t*)listData);
+    uint8_t* hsptRecordPointer = (uint8_t*)BUFFER_OFFSET(listData, sizeof(uint16_t));
+    _hotspots = [[NSMutableArray alloc] initWithCapacity:hotspotCount];
+    
+    _hotspotsIDMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
+    _hotspots_name_map = NSCreateMapTable(NSObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
+    
+    // load the hotspots
+    for (currentListIndex = 0; currentListIndex < hotspotCount; currentListIndex++) {
+        struct rx_hspt_record* hspt_record = (struct rx_hspt_record*)hsptRecordPointer;
+        hsptRecordPointer += sizeof(struct rx_hspt_record);
+        
+        // byte order swap if needed
+#if defined(__LITTLE_ENDIAN__)
+        hspt_record->blst_id = CFSwapInt16(hspt_record->blst_id);
+        hspt_record->name_rec = (int16_t)CFSwapInt16(hspt_record->name_rec);
+        hspt_record->rect = rx_swap_core_rect(hspt_record->rect);
+        hspt_record->u0 = CFSwapInt16(hspt_record->u0);
+        hspt_record->mouse_cursor = CFSwapInt16(hspt_record->mouse_cursor);
+        hspt_record->index = CFSwapInt16(hspt_record->index);
+        hspt_record->u1 = (int16_t)CFSwapInt16(hspt_record->u1);
+        hspt_record->zip = CFSwapInt16(hspt_record->zip);
+#endif
+
+#if defined(DEBUG) && DEBUG > 1
+        RXOLog(@"hotspot record %u: index=%hd, blst_id=%hd, zip=%hu", currentListIndex, hspt_record->index, hspt_record->blst_id, hspt_record->zip);
+#endif
+        
+        // decode the hotspot's script
+        uint32_t script_size = 0;
+        NSDictionary* hotspot_scripts = rx_decode_riven_script(hsptRecordPointer, &script_size);
+        hsptRecordPointer += script_size;
+        
+        // if this is a zip hotspot, skip it if Zip mode is disabled
+        // FIXME: Zip mode is always disabled currently
+        if (hspt_record->zip == 1)
+            continue;
+        
+        // WORKAROUND: there is a legitimate bug in aspit's "start new game" hotspot; it executes a command 12 at the very end,
+        // which kills ambient sound after the introduction sequence; we remove that command here
+        if ([_descriptor ID] == 1 && [[[_descriptor parent] key] isEqualToString:@"aspit"] && hspt_record->blst_id == 16) {
+            NSDictionary* mouse_down_program = [[hotspot_scripts objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
+            
+            uint16_t opcode_count = [[mouse_down_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
+            if (opcode_count > 0 && rx_get_riven_script_opcode([[mouse_down_program objectForKey:RXScriptProgramKey] bytes],
+                                                               opcode_count,
+                                                               opcode_count - 1,
+                                                               NULL) == RX_COMMAND_CLEAR_SLST) {
+                mouse_down_program = [[NSDictionary alloc] initWithObjectsAndKeys:
+                    [mouse_down_program objectForKey:RXScriptProgramKey], RXScriptProgramKey,
+                    [NSNumber numberWithUnsignedShort:opcode_count - 1], RXScriptOpcodeCountKey,
+                    nil];
+                
+                NSMutableDictionary* mutable_script = [hotspot_scripts mutableCopy];
+                [mutable_script setObject:[NSArray arrayWithObject:mouse_down_program] forKey:RXMouseDownScriptKey];
+                [mouse_down_program release];
+                
+                [hotspot_scripts release];
+                hotspot_scripts = mutable_script;
+            }
+        }
+        
+        // allocate the hotspot object
+        RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index
+                                                      ID:hspt_record->blst_id
+                                                    rect:hspt_record->rect
+                                                cursorID:hspt_record->mouse_cursor
+                                                  script:hotspot_scripts];
+        if (hspt_record->name_rec >= 0) {
+            [hs setName:[[[_descriptor parent] hotspotNameAtIndex:hspt_record->name_rec] lowercaseString]];
+            NSMapInsert(_hotspots_name_map, [hs name], hs);
+        }
+        
+        uintptr_t key = hspt_record->blst_id;
+        NSMapInsert(_hotspotsIDMap, (void*)key, hs);
+        [_hotspots addObject:hs];
+        
+        [hs release];
+        [hotspot_scripts release];
+    }
+    
+    // don't need the HSPT data anymore
+    free(listData);
+    
+    fh = [_parent fileWithResourceType:@"BLST" ID:[_descriptor ID]];
+    if (!fh)
+        @throw [NSException exceptionWithName:@"RXMissingResourceException"
+                                       reason:@"Could not open the card's corresponding BLST resource."
+                                     userInfo:nil];
+    
+    listDataLength = (size_t)[fh length];
+    _blstData = malloc(listDataLength);
+    
+    // read the data from the archive
+    if ([fh readDataToEndOfFileInBuffer:_blstData error:&error] == -1)
+        @throw [NSException exceptionWithName:@"RXRessourceIOException"
+                                       reason:@"Could not read the card's corresponding BLST ressource."
+                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+    
+    _hotspotControlRecords = (struct rx_blst_record*)BUFFER_OFFSET(_blstData, sizeof(uint16_t));
+    
+    // byte order (and debug)
+#if defined(__LITTLE_ENDIAN__) || (defined(DEBUG) && DEBUG > 1)
+    uint16_t blstCount = CFSwapInt16BigToHost(*(uint16_t*)_blstData);
+    for (currentListIndex = 0; currentListIndex < blstCount; currentListIndex++) {
+        struct rx_blst_record* record = _hotspotControlRecords + currentListIndex;
+        
+#if defined(__LITTLE_ENDIAN__)
+        record->index = CFSwapInt16(record->index);
+        record->enabled = CFSwapInt16(record->enabled);
+        record->hotspot_id = CFSwapInt16(record->hotspot_id);
+#endif // defined(__LITTLE_ENDIAN__)
+        
+#if defined(DEBUG) && DEBUG > 1
+        RXOLog(@"blst record %u: index=%hd, enabled=%hd, hotspot_id=%hd", currentListIndex, record->index, record->enabled, record->hotspot_id);
+#endif // defined(DEBUG)
+    }
+#endif // defined(__LITTLE_ENDIAN__) || defined(DEBUG)
+}
+
+- (void)_loadSpecialEffects {
+    NSError* error;
+    MHKFileHandle* fh;
+    void* listData;
+    size_t listDataLength;
+    uint16_t currentListIndex;
+    
+    fh = [_parent fileWithResourceType:@"FLST" ID:[_descriptor ID]];
     if (!fh)
         @throw [NSException exceptionWithName:@"RXMissingResourceException"
                                        reason:@"Could not open the card's corresponding FLST resource."
@@ -736,16 +682,16 @@ struct rx_card_picture_record {
     
     // don't need the FLST data anymore
     free(listData);
+}
+
+- (void)_loadSounds {
+    NSError* error;
+    MHKFileHandle* fh;
+    void* listData;
+    size_t listDataLength;
+    uint16_t currentListIndex;
     
-    // new textures, buffer and program objects
-    glFlush();
-    
-    // done with the GL context
-    CGLUnlockContext(cgl_ctx);
-    
-#pragma mark SLST
-    
-    fh = [_parent fileWithResourceType:@"SLST" ID:resourceID];
+    fh = [_parent fileWithResourceType:@"SLST" ID:[_descriptor ID]];
     if (!fh)
         @throw [NSException exceptionWithName:@"RXMissingResourceException"
                                        reason:@"Could not open the card's corresponding SLST resource."
@@ -785,15 +731,158 @@ struct rx_card_picture_record {
     
     // don't need the SLST data anymore
     free(listData);
-    
-    // end of list records loading
-    
-    // we're done preparing the card
-#if defined(DEBUG)
-    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"initialized card");
-#endif
-    return self;
 }
+
+- (void)load {
+    if (_loaded)
+        return;
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"loading card");
+#endif
+    
+    NSData* card_data = [_descriptor data];
+    
+    // basic CARD information
+    /*int16_t nameIndex = (int16_t)CFSwapInt16BigToHost(*(const int16_t *)[card_data bytes]);
+    NSString* cardName = (nameIndex > -1) ? [_cardNames objectAtIndex:nameIndex] : nil;*/
+    
+    /*uint16_t zipCard = CFSwapInt16BigToHost(*(const uint16_t *)([card_data bytes] + 2));
+    NSNumber* zipCardNumber = [NSNumber numberWithBool:(zipCard) ? YES : NO];*/
+    
+    // card events
+    _card_scripts = rx_decode_riven_script(BUFFER_OFFSET([card_data bytes], 4), NULL);
+    
+    // get the current edition
+    RXEdition* ce = [[RXEditionManager sharedEditionManager] currentEdition];
+    
+    // WORKAROUND: there is a legitimate bug in the CD edition's tspit 155 open card program;
+    // it executes activate SLST record 2 command after the introduction sequence, which is the mute SLST; patch it up to activate SLST 1
+    if ([_descriptor ID] == 155 && [[[_descriptor parent] key] isEqualToString:@"tspit"] && [[ce valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
+        NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndex:0];
+        
+        const uint16_t* base_program = (const uint16_t*)[[start_rendering_program objectForKey:RXScriptProgramKey] bytes];
+        uint16_t opcode_count = [[start_rendering_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
+        uint32_t switch_opcode_offset;
+        if (opcode_count > 0 && rx_get_riven_script_opcode(base_program, opcode_count, 0, &switch_opcode_offset) == 8) {
+            uint32_t case_program_offset = 0;
+            uint16_t case_opcode_count = rx_get_riven_script_case_opcode_count(BUFFER_OFFSET(base_program, switch_opcode_offset), 0, &case_program_offset);
+            
+            uint32_t slst_opcode_offset;
+            if (case_program_offset > 0 && rx_get_riven_script_opcode(BUFFER_OFFSET(base_program, switch_opcode_offset + case_program_offset),
+                                                                      case_opcode_count,
+                                                                      case_opcode_count - 3,
+                                                                      &slst_opcode_offset) == RX_COMMAND_ACTIVATE_SLST) {
+                NSMutableData* program = [[start_rendering_program objectForKey:RXScriptProgramKey] mutableCopy];
+                uint16_t* slst_index = BUFFER_OFFSET((uint16_t*)[program mutableBytes], switch_opcode_offset + case_program_offset + slst_opcode_offset + 4);
+                if (*slst_index == 2) {
+                    *slst_index = 1;
+                    start_rendering_program = [[NSDictionary alloc] initWithObjectsAndKeys:
+                        program, RXScriptProgramKey,
+                        [start_rendering_program objectForKey:RXScriptOpcodeCountKey], RXScriptOpcodeCountKey,
+                        nil];
+                    
+                    NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
+                    [mutable_script setObject:[NSArray arrayWithObject:start_rendering_program] forKey:RXStartRenderingScriptKey];
+                    [start_rendering_program release];
+                    
+                    [_card_scripts release];
+                    _card_scripts = mutable_script;
+                }
+                
+                [program release];
+            }
+        }
+    }
+    
+    [self _loadPictures];
+    [self _loadMovies];
+    [self _loadHotspots];
+    [self _loadSpecialEffects];
+    [self _loadSounds];
+    
+    _loaded = YES;
+}
+
+#pragma mark -
+#pragma mark dynamic loading
+
+- (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slst_record soundCount:(uint16_t)sound_count swapBytes:(BOOL)swap {
+    RXSoundGroup* group = [RXSoundGroup new];
+    
+    // some useful pointers
+    const uint16_t* group_parameters = slst_record + sound_count;
+    const uint16_t* gain_parameters = group_parameters + 5;
+    const uint16_t* pan_parameters = gain_parameters + sound_count;
+    
+    // fade flags
+    uint16_t fade_flags = *group_parameters;
+    if (swap)
+        fade_flags = CFSwapInt16BigToHost(fade_flags);
+    group->fadeOutRemovedSounds = (fade_flags & 0x0001) ? YES : NO;
+    group->fadeInNewSounds = (fade_flags & 0x0002) ? YES : NO;
+    
+    // loop flag
+    uint16_t loop = *(group_parameters + 1);
+    if (swap)
+        loop = CFSwapInt16BigToHost(loop);
+    group->loop = (loop) ? YES : NO;
+    
+    // group gain
+    uint16_t integer_gain = *(group_parameters + 2);
+    if (swap)
+        integer_gain = CFSwapInt16BigToHost(integer_gain);
+    float gain = (float)integer_gain / kRXSoundGainDivisor;
+    group->gain = gain;
+    
+    uint16_t sound_index = 0;
+    for (; sound_index < sound_count; sound_index++) {
+        uint16_t sound_id = *(slst_record + sound_index);
+        if (swap)
+            sound_id = CFSwapInt16BigToHost(sound_id);
+        
+        integer_gain = *(gain_parameters + sound_index);
+        if (swap)
+            integer_gain = CFSwapInt16BigToHost(integer_gain);
+        gain = (float)integer_gain / kRXSoundGainDivisor;
+        
+        int16_t integer_pan = *((int16_t*)(pan_parameters + sound_index));
+        if (swap)
+            integer_pan = (int16_t)CFSwapInt16BigToHost(integer_pan);
+        float pan = 0.5f + ((float)integer_pan / 200.0f);
+        
+        [group addSoundWithStack:_parent ID:sound_id gain:gain pan:pan];
+    }
+    
+#if defined(DEBUG) && DEBUG > 1
+    RXOLog(@"created sound group: %@", group);
+#endif
+    return group;
+}
+
+- (RXMovie*)loadMovieWithMLSTRecord:(struct rx_mlst_record*)mlst {
+    // sometimes volume > 256, so fix it up here
+    if (mlst->volume > 256)
+        mlst->volume = 256;
+    
+    // load the movie up
+    CGPoint origin = CGPointMake(mlst->left, kRXCardViewportSize.height - mlst->top);
+    MHKArchive* archive = [[_parent fileWithResourceType:@"tMOV" ID:mlst->movie_id] archive];
+    RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive
+                                                                   ID:mlst->movie_id
+                                                               origin:origin
+                                                               volume:mlst->volume / 256.0f
+                                                                 loop:((mlst->loop == 1) ? YES : NO)
+                                                                owner:self];
+
+    // add the movie to the movies array
+    [_movies addObject:movie_proxy];
+    [movie_proxy release];
+    
+    return (RXMovie*)movie_proxy;
+}
+
+#pragma mark -
+#pragma mark accessors
 
 - (RXCardDescriptor*)descriptor {
     return _descriptor;
@@ -849,72 +938,6 @@ struct rx_card_picture_record {
 
 - (rx_card_sfxe*)sfxes {
     return _sfxes;
-}
-
-- (void)dealloc {
-#if defined(DEBUG) && DEBUG > 1
-    RXOLog(@"deallocating");
-#endif
-
-    // stop receiving notifications
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-
-    // lock the GL context and clean up textures and GL buffers
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
-    CGLLockContext(cgl_ctx);
-    {
-        if (_pictureVertexArrayBuffer != 0)
-            glDeleteBuffers(1, &_pictureVertexArrayBuffer);
-        if (_pictureTextures)
-            glDeleteTextures(_pictureCount, _pictureTextures);
-
-        // objects have gone away, so we flush
-        glFlush();
-    }
-    CGLUnlockContext(cgl_ctx);
-    
-    // movies
-    [_movies release];
-    if (_mlstCodes)
-        delete[] _mlstCodes;
-    
-    // pictures
-    if (_pictureTextures)
-        delete[] _pictureTextures;
-    if (_pictureTextureStorage)
-        free(_pictureTextureStorage);
-    
-    // sounds
-    [_soundGroups release];
-    
-    // hotspots
-    if (_hotspotsIDMap)
-        NSFreeMapTable(_hotspotsIDMap);
-    if (_hotspots_name_map)
-        NSFreeMapTable(_hotspots_name_map);
-    [_hotspots release];
-    
-    // sfxe
-    if (_sfxes) {
-        for (uint16_t i = 0; i < _flstCount; i++) {
-            free(_sfxes[i].record);
-        }
-        free(_sfxes);
-    }
-    
-    // misc resources
-    if (_blstData)
-        free(_blstData);
-    [_card_scripts release];
-    
-    [_parent release];
-    [_descriptor release];
-    
-    [super dealloc];
-}
-
-- (NSString *)description {
-    return [NSString stringWithFormat: @"%@ {%@}", [super description], [_descriptor description]];
 }
 
 @end

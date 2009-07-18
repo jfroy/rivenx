@@ -24,6 +24,7 @@
 @interface RXCard : NSObject {
     RXCardDescriptor* _descriptor;
     RXStack* _parent;
+    BOOL _loaded;
     
     // scripts
     NSDictionary* _card_scripts;
@@ -58,6 +59,8 @@
 
 - (RXCardDescriptor*)descriptor;
 - (RXStack*)parent;
+
+- (void)load;
 
 - (NSDictionary*)events;
 - (NSArray*)hotspots;

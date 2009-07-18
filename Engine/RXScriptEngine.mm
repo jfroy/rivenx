@@ -519,6 +519,9 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     if (_programExecutionDepth == 0) {
         [executing_card retain];
     }
+    
+    // load the card
+    [card load];
 
     // disable screen updates
     DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
