@@ -100,7 +100,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
         // if the length don't match, set it to the packed file length (e.g. as determined by the offsets)
         if (file_length != stored_file_length) {
 #if defined(DEBUG) && DEBUG > 2
-            fprintf(stderr, "file entry %03d -> packed file size: %u, stored file size: %u, delta: %d\n", file_table_index - 1, file_length, stored_file_length, (int32_t)file_length - stored_file_length);
+            fprintf(stderr, "file entry %03d -> packed file size: %u, stored file size: %u, delta: %d\n",
+                    file_table_index - 1, file_length, stored_file_length, (int32_t)file_length - stored_file_length);
             
             NSEnumerator* types_enum = [file_descriptor_arrays keyEnumerator];
             NSString* type;
@@ -112,7 +113,9 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
                 while ((file_desc = [files_enum nextObject])) {
                     uint32_t file_index = [[file_desc objectForKey:@"Index"] unsignedIntValue] - 1;
                     if (file_index == file_table_index - 1)
-                        fprintf(stderr, "    %s %d (%s)\n", [type UTF8String], [[file_desc objectForKey:@"ID"] intValue], [[file_desc objectForKey:@"Name"] UTF8String]);
+                        fprintf(stderr, "    %s %d (%s)\n",
+                                [type UTF8String], [[file_desc objectForKey:@"ID"] intValue],
+                                [[file_desc objectForKey:@"Name"] UTF8String]);
                 }
             }
 #endif
@@ -129,7 +132,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     // if the length don't match, set it to the packed file length (e.g. as determined by the offsets)
     if (file_length != stored_file_length) {
 #if defined(DEBUG) && DEBUG > 2
-        fprintf(stderr, "file entry %03d -> packed file size: %u, stored file size: %u, delta: %d\n", file_table_count - 1, file_length, stored_file_length, (int32_t)file_length - stored_file_length);
+        fprintf(stderr, "file entry %03d -> packed file size: %u, stored file size: %u, delta: %d\n",
+                file_table_count - 1, file_length, stored_file_length, (int32_t)file_length - stored_file_length);
         
         NSEnumerator* types_enum = [file_descriptor_arrays keyEnumerator];
         NSString* type;
@@ -141,7 +145,9 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
             while ((file_desc = [files_enum nextObject])) {
                 uint32_t file_index = [[file_desc objectForKey:@"Index"] unsignedIntValue] - 1;
                 if (file_index == file_table_count - 1)
-                    fprintf(stderr, "    %s %d (%s)\n", [type UTF8String], [[file_desc objectForKey:@"ID"] intValue], [[file_desc objectForKey:@"Name"] UTF8String]);
+                    fprintf(stderr, "    %s %d (%s)\n",
+                            [type UTF8String], [[file_desc objectForKey:@"ID"] intValue],
+                            [[file_desc objectForKey:@"Name"] UTF8String]);
             }
         }
 #endif
@@ -331,7 +337,9 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     mergesort(descriptor_tree, rsrc_table_header.count, sizeof(struct descriptor_binary_tree), &__descriptor_binary_tree_compare);
     
     // store the sorted array in a NSData, then associate to type with the trees dictionary
-    NSMutableData* descriptor_tree_data = [[NSMutableData alloc] initWithBytesNoCopy:descriptor_tree length:rsrc_table_header.count * sizeof(struct descriptor_binary_tree) freeWhenDone:YES];
+    NSMutableData* descriptor_tree_data = [[NSMutableData alloc] initWithBytesNoCopy:descriptor_tree
+                                                                              length:rsrc_table_header.count * sizeof(struct descriptor_binary_tree)
+                                                                        freeWhenDone:YES];
     [file_descriptor_trees setObject:descriptor_tree_data forKey:type_key];
     [descriptor_tree_data release];
     
