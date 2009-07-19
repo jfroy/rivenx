@@ -157,8 +157,12 @@ struct _RXCardDescriptorPrimer {
     return _ID;
 }
 
+- (NSString*)name {
+    return [[_name retain] autorelease];
+}
+
 - (NSData*)data {
-    return _data;
+    return [[_data retain] autorelease];
 }
 
 - (RXSimpleCardDescriptor*)simpleDescriptor {

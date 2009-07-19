@@ -59,10 +59,11 @@
 
 - (RXCardDescriptor*)descriptor;
 - (RXStack*)parent;
+- (NSString*)name;
 
 - (void)load;
 
-- (NSDictionary*)events;
+- (NSDictionary*)scripts;
 - (NSArray*)hotspots;
 - (NSMapTable*)hotspotsIDMap;
 - (NSMapTable*)hotspotsNameMap;

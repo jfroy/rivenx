@@ -69,6 +69,11 @@ struct rx_card_picture_record {
     // retain our parent stack, since RXCardDescriptor only keeps a weak reference to it
     _parent = [[cardDescriptor parent] retain];
     
+//    NSData* card_data = [_descriptor data];
+//    
+//    uint16_t zipCard = CFSwapInt16BigToHost(*(const uint16_t *)([card_data bytes] + 2));
+//    NSNumber* zipCardNumber = [NSNumber numberWithBool:(zipCard) ? YES : NO];
+    
     return self;
 }
 
@@ -134,12 +139,65 @@ struct rx_card_picture_record {
     [super dealloc];
 }
 
-- (NSString *)description {
+- (NSString*)name {
+    return [_descriptor name];
+}
+
+- (NSString*)description {
     return [NSString stringWithFormat: @"%@ {%@}", [super description], [_descriptor description]];
 }
 
 #pragma mark -
 #pragma mark loading
+
+- (void)_loadScripts {
+    NSData* card_data = [_descriptor data];
+    
+    // card events
+    _card_scripts = rx_decode_riven_script(BUFFER_OFFSET([card_data bytes], 4), NULL);
+    
+    // get the current edition
+    RXEdition* ce = [[RXEditionManager sharedEditionManager] currentEdition];
+    
+    // WORKAROUND: there is a legitimate bug in the CD edition's tspit 155 open card program;
+    // it executes activate SLST record 2 command after the introduction sequence, which is the mute SLST; patch it up to activate SLST 1
+    if ([_descriptor ID] == 155 && [[[_descriptor parent] key] isEqualToString:@"tspit"] && [[ce valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
+        NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndex:0];
+        
+        const uint16_t* base_program = (const uint16_t*)[[start_rendering_program objectForKey:RXScriptProgramKey] bytes];
+        uint16_t opcode_count = [[start_rendering_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
+        uint32_t switch_opcode_offset;
+        if (opcode_count > 0 && rx_get_riven_script_opcode(base_program, opcode_count, 0, &switch_opcode_offset) == 8) {
+            uint32_t case_program_offset = 0;
+            uint16_t case_opcode_count = rx_get_riven_script_case_opcode_count(BUFFER_OFFSET(base_program, switch_opcode_offset), 0, &case_program_offset);
+            
+            uint32_t slst_opcode_offset;
+            if (case_program_offset > 0 && rx_get_riven_script_opcode(BUFFER_OFFSET(base_program, switch_opcode_offset + case_program_offset),
+                                                                      case_opcode_count,
+                                                                      case_opcode_count - 3,
+                                                                      &slst_opcode_offset) == RX_COMMAND_ACTIVATE_SLST) {
+                NSMutableData* program = [[start_rendering_program objectForKey:RXScriptProgramKey] mutableCopy];
+                uint16_t* slst_index = BUFFER_OFFSET((uint16_t*)[program mutableBytes], switch_opcode_offset + case_program_offset + slst_opcode_offset + 4);
+                if (*slst_index == 2) {
+                    *slst_index = 1;
+                    start_rendering_program = [[NSDictionary alloc] initWithObjectsAndKeys:
+                        program, RXScriptProgramKey,
+                        [start_rendering_program objectForKey:RXScriptOpcodeCountKey], RXScriptOpcodeCountKey,
+                        nil];
+                    
+                    NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
+                    [mutable_script setObject:[NSArray arrayWithObject:start_rendering_program] forKey:RXStartRenderingScriptKey];
+                    [start_rendering_program release];
+                    
+                    [_card_scripts release];
+                    _card_scripts = mutable_script;
+                }
+                
+                [program release];
+            }
+        }
+    }
+}
 
 - (void)_loadPictures {
     NSError* error;
@@ -459,9 +517,15 @@ struct rx_card_picture_record {
     // how many hotspots do we have?
     uint16_t hotspotCount = CFSwapInt16BigToHost(*(uint16_t*)list_data);
     uint8_t* hsptRecordPointer = (uint8_t*)BUFFER_OFFSET(list_data, sizeof(uint16_t));
+    if (_hotspots)
+        [_hotspots release];
     _hotspots = [[NSMutableArray alloc] initWithCapacity:hotspotCount];
     
+    if (_hotspotsIDMap)
+        NSFreeMapTable(_hotspotsIDMap);
     _hotspotsIDMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
+    if (_hotspots_name_map)
+        NSFreeMapTable(_hotspots_name_map);
     _hotspots_name_map = NSCreateMapTable(NSObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
     
     // load the hotspots
@@ -548,6 +612,8 @@ struct rx_card_picture_record {
                                      userInfo:nil];
     
     list_data_size = (size_t)[fh length];
+    if (_blstData)
+        free(_blstData);
     _blstData = malloc(list_data_size);
     
     // read the data from the archive
@@ -572,9 +638,9 @@ struct rx_card_picture_record {
         
 #if defined(DEBUG) && DEBUG > 1
         RXOLog(@"blst record %u: index=%hd, enabled=%hd, hotspot_id=%hd", list_index, record->index, record->enabled, record->hotspot_id);
-#endif // defined(DEBUG)
+#endif // defined(DEBUG) && DEBUG > 1
     }
-#endif // defined(__LITTLE_ENDIAN__) || defined(DEBUG)
+#endif // defined(__LITTLE_ENDIAN__) || (defined(DEBUG) && DEBUG > 1)
 }
 
 - (void)_loadSpecialEffects {
@@ -739,60 +805,7 @@ struct rx_card_picture_record {
     RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"loading card");
 #endif
     
-    NSData* card_data = [_descriptor data];
-    
-    // basic CARD information
-    /*int16_t nameIndex = (int16_t)CFSwapInt16BigToHost(*(const int16_t *)[card_data bytes]);
-    NSString* cardName = (nameIndex > -1) ? [_cardNames objectAtIndex:nameIndex] : nil;*/
-    
-    /*uint16_t zipCard = CFSwapInt16BigToHost(*(const uint16_t *)([card_data bytes] + 2));
-    NSNumber* zipCardNumber = [NSNumber numberWithBool:(zipCard) ? YES : NO];*/
-    
-    // card events
-    _card_scripts = rx_decode_riven_script(BUFFER_OFFSET([card_data bytes], 4), NULL);
-    
-    // get the current edition
-    RXEdition* ce = [[RXEditionManager sharedEditionManager] currentEdition];
-    
-    // WORKAROUND: there is a legitimate bug in the CD edition's tspit 155 open card program;
-    // it executes activate SLST record 2 command after the introduction sequence, which is the mute SLST; patch it up to activate SLST 1
-    if ([_descriptor ID] == 155 && [[[_descriptor parent] key] isEqualToString:@"tspit"] && [[ce valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
-        NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndex:0];
-        
-        const uint16_t* base_program = (const uint16_t*)[[start_rendering_program objectForKey:RXScriptProgramKey] bytes];
-        uint16_t opcode_count = [[start_rendering_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
-        uint32_t switch_opcode_offset;
-        if (opcode_count > 0 && rx_get_riven_script_opcode(base_program, opcode_count, 0, &switch_opcode_offset) == 8) {
-            uint32_t case_program_offset = 0;
-            uint16_t case_opcode_count = rx_get_riven_script_case_opcode_count(BUFFER_OFFSET(base_program, switch_opcode_offset), 0, &case_program_offset);
-            
-            uint32_t slst_opcode_offset;
-            if (case_program_offset > 0 && rx_get_riven_script_opcode(BUFFER_OFFSET(base_program, switch_opcode_offset + case_program_offset),
-                                                                      case_opcode_count,
-                                                                      case_opcode_count - 3,
-                                                                      &slst_opcode_offset) == RX_COMMAND_ACTIVATE_SLST) {
-                NSMutableData* program = [[start_rendering_program objectForKey:RXScriptProgramKey] mutableCopy];
-                uint16_t* slst_index = BUFFER_OFFSET((uint16_t*)[program mutableBytes], switch_opcode_offset + case_program_offset + slst_opcode_offset + 4);
-                if (*slst_index == 2) {
-                    *slst_index = 1;
-                    start_rendering_program = [[NSDictionary alloc] initWithObjectsAndKeys:
-                        program, RXScriptProgramKey,
-                        [start_rendering_program objectForKey:RXScriptOpcodeCountKey], RXScriptOpcodeCountKey,
-                        nil];
-                    
-                    NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
-                    [mutable_script setObject:[NSArray arrayWithObject:start_rendering_program] forKey:RXStartRenderingScriptKey];
-                    [start_rendering_program release];
-                    
-                    [_card_scripts release];
-                    _card_scripts = mutable_script;
-                }
-                
-                [program release];
-            }
-        }
-    }
-    
+    [self _loadScripts];
     [self _loadPictures];
     [self _loadMovies];
     [self _loadHotspots];
@@ -903,7 +916,7 @@ struct rx_card_picture_record {
     return _pictureTextures;
 }
 
-- (NSDictionary*)events {
+- (NSDictionary*)scripts {
     return _card_scripts;
 }
 

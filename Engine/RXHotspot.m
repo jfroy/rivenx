@@ -112,7 +112,7 @@
 }
 
 - (NSString*)description {
-    return _description;
+    return [[_description retain] autorelease];
 }
 
 - (NSString*)name {
@@ -147,7 +147,7 @@
     return _cursor_id;
 }
 
-- (NSDictionary*)script {
+- (NSDictionary*)scripts {
     return _script;
 }
 

@@ -455,7 +455,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // this is a bit of a hack, but disable screen updates while running screen update programs
     _screen_update_disable_counter++;
     
-    NSArray* programs = [[card events] objectForKey:RXScreenUpdateScriptKey];
+    NSArray* programs = [[card scripts] objectForKey:RXScreenUpdateScriptKey];
     uint32_t programCount = [programs count];
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
@@ -548,7 +548,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [controller disableAllMoviesOnNextScreenUpdate];
     
     // execute card open programs
-    NSArray* programs = [[card events] objectForKey:RXCardOpenScriptKey];
+    NSArray* programs = [[card scripts] objectForKey:RXCardOpenScriptKey];
     assert(programs);
     
     uint32_t programCount = [programs count];
@@ -617,7 +617,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     }
     
     // execute rendering programs (index 9)
-    NSArray* programs = [[card events] objectForKey:RXStartRenderingScriptKey];
+    NSArray* programs = [[card scripts] objectForKey:RXStartRenderingScriptKey];
     assert(programs);
     
     uint32_t programCount = [programs count];
@@ -671,7 +671,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     }
     
     // execute leaving programs (index 7)
-    NSArray* programs = [[card events] objectForKey:RXCardCloseScriptKey];
+    NSArray* programs = [[card scripts] objectForKey:RXCardCloseScriptKey];
     assert(programs);
     
     uint32_t programCount = [programs count];
@@ -734,7 +734,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     _current_hotspot = hotspot;
     
     // execute mouse moved programs (index 4)
-    NSArray* programs = [[hotspot script] objectForKey:RXMouseInsideScriptKey];
+    NSArray* programs = [[hotspot scripts] objectForKey:RXMouseInsideScriptKey];
     assert(programs);
     
     uint32_t programCount = [programs count];
@@ -785,7 +785,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     _current_hotspot = hotspot;
     
     // execute mouse leave programs (index 5)
-    NSArray* programs = [[hotspot script] objectForKey:RXMouseExitedScriptKey];
+    NSArray* programs = [[hotspot scripts] objectForKey:RXMouseExitedScriptKey];
     assert(programs);
     
     uint32_t programCount = [programs count];
@@ -833,7 +833,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     _current_hotspot = hotspot;
     
     // execute mouse down programs (index 0)
-    NSArray* programs = [[hotspot script] objectForKey:RXMouseDownScriptKey];
+    NSArray* programs = [[hotspot scripts] objectForKey:RXMouseDownScriptKey];
     assert(programs);
     
     uint32_t programCount = [programs count];
@@ -884,7 +884,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     _current_hotspot = hotspot;
     
     // execute mouse up programs (index 2)
-    NSArray* programs = [[hotspot script] objectForKey:RXMouseUpScriptKey];
+    NSArray* programs = [[hotspot scripts] objectForKey:RXMouseUpScriptKey];
     assert(programs);
     
     uint32_t programCount = [programs count];

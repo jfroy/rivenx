@@ -36,7 +36,7 @@
 
 - (uint16_t)ID;
 - (uint16_t)cursorID;
-- (NSDictionary*)script;
+- (NSDictionary*)scripts;
 
 - (rx_core_rect_t)coreFrame;
 - (void)setCoreFrame:(rx_core_rect_t)frame;
