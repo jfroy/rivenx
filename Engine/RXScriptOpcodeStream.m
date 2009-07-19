@@ -19,7 +19,7 @@
     return nil;
 }
 
-- (id)initWithProgram:(NSDictionary*)program {
+- (id)initWithScript:(NSDictionary*)program {
     self = [super init];
     if (!self)
         return nil;
@@ -41,15 +41,24 @@
 - (void)reset {
     [_substream release];
     _substream = nil;
+    case_index = 0;
     
     _pbuf = [[_program objectForKey:RXScriptProgramKey] bytes];
     pc = 0;
-    case_index = 0;
 }
 
 - (rx_opcode_t*)nextOpcode {
-    if (_substream)
-        return [_substream nextOpcode];
+    if (_substream) {
+        rx_opcode_t* opcode = [_substream nextOpcode];
+        if (opcode)
+            return opcode;
+        
+        [_substream release];
+        _substream = nil;
+        
+        return [self nextOpcode];
+    }
+    
     if (pc == _opcode_count)
         return NULL;
     
@@ -57,8 +66,11 @@
         uint16_t case_count = *(_pbuf + 3);
         
         if (case_index == case_count) {
+            case_index = 0;
+            
             _pbuf = _case_pbuf;
             pc++;
+            
             return [self nextOpcode];
         } else if (case_index == 0)
             _case_pbuf = BUFFER_OFFSET(_pbuf, 8); // argc, variable ID, case count
@@ -68,7 +80,7 @@
             [NSData dataWithBytesNoCopy:(void*)(_case_pbuf + 2) length:subprogram_size freeWhenDone:NO], RXScriptProgramKey,
             [NSNumber numberWithUnsignedShort:*(_case_pbuf + 1)], RXScriptOpcodeCountKey,
             nil];
-        _substream = [[RXScriptOpcodeStream alloc] initWithProgram:subprogram];
+        _substream = [[RXScriptOpcodeStream alloc] initWithScript:subprogram];
         
         _case_pbuf = BUFFER_OFFSET(_case_pbuf, subprogram_size);
         case_index++;

@@ -29,7 +29,7 @@ typedef struct {
     uint16_t case_index;
 }
 
-- (id)initWithProgram:(NSDictionary*)program;
+- (id)initWithScript:(NSDictionary*)program;
 
 - (void)reset;
 - (rx_opcode_t*)nextOpcode;
