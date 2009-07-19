@@ -12,6 +12,8 @@
 
 #import "Engine/RXWorldProtocol.h"
 #import "Engine/RXEditionManager.h"
+#import "Engine/RXScriptOpcodeStream.h"
+#import "Engine/RXScriptCommandAliases.h"
 
 #import "States/RXCardState.h"
 
@@ -58,8 +60,6 @@ static PyMethodDef rivenx_methods[] = {
     {"CaptureStderr", rivenx_CaptureStderr, METH_VARARGS, "Logs stderr"},
     {NULL, NULL, 0, NULL}
 };
-
-
 
 
 @interface NSObject (CLIViewPrivate)
@@ -124,20 +124,7 @@ static PyMethodDef rivenx_methods[] = {
     [sender setStringValue:@""];
 }
 
-- (void)print:(NSString*)msg { 
-//  NSString* cmd = [NSString stringWithFormat:@"print '%@'\n", [msg stringByReplacingOccurrencesOfString:@"'" withString:@"\\'"]];
-//  const char* c_cmd = [cmd cStringUsingEncoding:NSASCIIStringEncoding];
-//  if (c_cmd)
-//      PyRun_SimpleString(c_cmd);
-//  else {
-//      size_t cmd_size = [cmd lengthOfBytesUsingEncoding:NSASCIIStringEncoding];
-//      char* cmd_buf = (char*)malloc(cmd_size);
-//      [cmd getCString:cmd_buf maxLength:cmd_size encoding:NSASCIIStringEncoding];
-//      PyRun_SimpleString(cmd_buf);
-//      free(cmd_buf);
-//  }
-
-    // FIXME: workaround until I figure out why calling back into Python crashes
+- (void)print:(NSString*)msg {
     [self pythonOut:[msg stringByAppendingString:@"\n"]];
 }
 
@@ -148,9 +135,38 @@ static PyMethodDef rivenx_methods[] = {
     [[consoleView textStorage] appendAttributedString:attr_str];
     [[consoleView textStorage] endEditing];
     [attr_str release];
+    
+#if defined(DEBUG)
+    fprintf(stderr, "%s", [str UTF8String]);
+#endif
 }
 
 #pragma mark debug commands
+
+- (void)cmd_reload:(NSArray*)arguments {
+    // initialize the debug console
+    NSString* init_file = [[NSBundle mainBundle] pathForResource:@"debug_init" ofType:@"py"];
+    FILE* fp = fopen([init_file fileSystemRepresentation], "r");
+    PyRun_SimpleFileEx(fp, [[init_file lastPathComponent] cStringUsingEncoding:NSASCIIStringEncoding], 1);
+}
+
+- (NSMutableSet*)_findExternalCommands:(NSDictionary*)script card:(RXCard*)card {
+    RXScriptOpcodeStream* ostream = [[RXScriptOpcodeStream alloc] initWithScript:script];
+    NSMutableSet* command_names = [NSMutableSet set];
+    rx_opcode_t* opcode;
+    while ((opcode = [ostream nextOpcode])) {
+        if (opcode->command != RX_COMMAND_CALL_EXTERNAL)
+            continue;
+        
+        uint16_t external_id = opcode->arguments[0];
+        NSString* external_name = [[[[card descriptor] parent] externalNameAtIndex:external_id] lowercaseString];
+        if (!external_name)
+            @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID EXTERNAL COMMAND ID" userInfo:nil];
+        [command_names addObject:external_name];
+    }
+    
+    return command_names;
+}
 
 - (void)cmd_card:(NSArray*)arguments {
     if ([arguments count] < 2)
