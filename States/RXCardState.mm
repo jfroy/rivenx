@@ -1168,7 +1168,7 @@ init_failure:
     // dequeue the top transition
     if ([_transitionQueue count] > 0 && !_disable_transition_dequeueing) {
         _back_render_state->transition = [[_transitionQueue objectAtIndex:0] retain];
-        [_transitionQueue removeObjectAtIndex:0];
+        [_transitionQueue removeAllObjects];
         
 #if defined(DEBUG)
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"dequeued transition %@ [queue depth=%lu]",
