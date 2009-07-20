@@ -457,9 +457,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     NSString* disc = [[current_edition valueForKey:@"discs"] objectAtIndex:(disc_index) ? [disc_index unsignedIntValue] : 0];
     NSString* mount_path = [self mountPathForDisc:disc];
     
-    // FIXME: need to setup waiting for the disc
     if (!mount_path) {
-        RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"[WARNING] waiting for discs is not implemented yet, please do full installs or put the proper disc before choosing an edition");
         ReturnValueWithError(nil, 
             RXErrorDomain, kRXErrArchiveUnavailable,
             ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data file \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
