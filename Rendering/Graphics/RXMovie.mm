@@ -112,7 +112,11 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     [pixelBufferAttributes setObject:[NSNumber numberWithInt:_current_size.height] forKey:(NSString*)kCVPixelBufferHeightKey];
     [pixelBufferAttributes setObject:[NSNumber numberWithInt:4] forKey:(NSString*)kCVPixelBufferBytesPerRowAlignmentKey];
     [pixelBufferAttributes setObject:[NSNumber numberWithBool:YES] forKey:(NSString*)kCVPixelBufferOpenGLCompatibilityKey];
-    [pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_422YpCbCr8] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
+#if defined(__LITTLE_ENDIAN__)
+    [pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_32BGRA] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
+#else
+    [pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_32ARGB] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
+#endif
 
     CFMutableDictionaryRef visualContextOptions = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     CFDictionarySetValue(visualContextOptions, kQTVisualContextPixelBufferAttributesKey, pixelBufferAttributes);
@@ -144,8 +148,8 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         }
         
         // allocate a texture storage buffer and setup a texture object
-        _texture_storage = malloc(MAX((int)_current_size.width, 128) * (int)_current_size.height * 2);
-        bzero(_texture_storage, MAX((int)_current_size.width, 128) * (int)_current_size.height * 2);
+        _texture_storage = malloc(MAX((int)_current_size.width, 128) * (int)_current_size.height << 2);
+        bzero(_texture_storage, MAX((int)_current_size.width, 128) * (int)_current_size.height << 2);
         
         glGenTextures(1, &_texture); glReportError();
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _texture); glReportError();
@@ -159,15 +163,15 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         
         glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
                      0,
-                     GL_RGB8,
+                     GL_RGBA8,
                      MAX(_current_size.width, 128),
                      _current_size.height,
                      0,
-                     GL_YCBCR_422_APPLE,
+                     GL_BGRA,
 #if defined(__LITTLE_ENDIAN__)
-                     GL_UNSIGNED_SHORT_8_8_APPLE,
+                     GL_UNSIGNED_INT_8_8_8_8_REV,
 #else
-                     GL_UNSIGNED_SHORT_8_8_REV_APPLE,
+                     GL_UNSIGNED_INT_8_8_8_8_REV,
 #endif
                      _texture_storage); glReportError();
     } else {
@@ -612,9 +616,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
                 CVPixelBufferLockBaseAddress(_image_buffer, 0);
                 void* baseAddress = CVPixelBufferGetBaseAddress(_image_buffer);
                 for (GLint row = 0; row < height; row++)
-                    memcpy(BUFFER_OFFSET(_texture_storage, (row * MAX((GLint)_current_size.width, 128)) << 1),
+                    memcpy(BUFFER_OFFSET(_texture_storage, (row * MAX((GLint)_current_size.width, 128)) << 2),
                            BUFFER_OFFSET(baseAddress, row * bpr),
-                           width << 1);
+                           width << 2);
                 CVPixelBufferUnlockBaseAddress(_image_buffer, 0);
                 
                 // bind the texture object and update the texture data
@@ -626,11 +630,11 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
                                 0,
                                 MAX(_current_size.width, 128),
                                 height,
-                                GL_YCBCR_422_APPLE,
+                                GL_BGRA,
 #if defined(__LITTLE_ENDIAN__)
-                                GL_UNSIGNED_SHORT_8_8_APPLE,
+                                GL_UNSIGNED_INT_8_8_8_8_REV,
 #else
-                                GL_UNSIGNED_SHORT_8_8_REV_APPLE,
+                                GL_UNSIGNED_INT_8_8_8_8_REV,
 #endif
                                 _texture_storage); glReportError();
             }
