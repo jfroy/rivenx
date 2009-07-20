@@ -359,8 +359,6 @@
 		3124F2A509C36782009BA3CF /* RXSoundGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXSoundGroup.h; sourceTree = "<group>"; usesTabs = 0; };
 		3124F2A609C36782009BA3CF /* RXSoundGroup.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXSoundGroup.mm; sourceTree = "<group>"; usesTabs = 0; };
 		312876F80F2972E900A114FF /* CardInspector.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CardInspector.xib; sourceTree = "<group>"; };
-		312877220F2985DE00A114FF /* RXCardCollectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardCollectionView.h; sourceTree = "<group>"; usesTabs = 0; };
-		312877230F2985DE00A114FF /* RXCardCollectionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardCollectionView.m; sourceTree = "<group>"; usesTabs = 0; };
 		312A895E0D57B25600FCDF91 /* RXEdition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXEdition.h; sourceTree = "<group>"; usesTabs = 0; };
 		312A895F0D57B25600FCDF91 /* RXEdition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXEdition.m; sourceTree = "<group>"; usesTabs = 0; };
 		312A89600D57B25600FCDF91 /* RXEditionManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXEditionManager.h; sourceTree = "<group>"; usesTabs = 0; };
@@ -550,8 +548,6 @@
 		31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */ = {isa = PBXFileReference; lastKnownFileType = file.bplist; path = Cursors.plist; sourceTree = "<group>"; };
 		31DAAF0C0DDE21EF00D06D0C /* cursors */ = {isa = PBXFileReference; lastKnownFileType = folder; path = cursors; sourceTree = "<group>"; };
 		31DAAF210DDE21EF00D06D0C /* sounds */ = {isa = PBXFileReference; lastKnownFileType = folder; path = sounds; sourceTree = "<group>"; };
-		31DBC9640F2AE1DB004B9277 /* RXCardInspectorController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardInspectorController.h; sourceTree = "<group>"; usesTabs = 0; };
-		31DBC9650F2AE1DB004B9277 /* RXCardInspectorController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardInspectorController.m; sourceTree = "<group>"; usesTabs = 0; };
 		31DC67FF09CB879B00BFF447 /* VirtualRingBuffer_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = VirtualRingBuffer_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VirtualRingBuffer_test.m; sourceTree = "<group>"; };
 		31DCF72F08CB855C00E351D9 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
@@ -1017,10 +1013,6 @@
 				93FDAD45098A78DE00D94CD0 /* RXDebugWindowController.mm */,
 				311B7C810BCC4D0500653D2D /* RXDebug.h */,
 				311B7C820BCC4D0500653D2D /* RXDebug.m */,
-				312877220F2985DE00A114FF /* RXCardCollectionView.h */,
-				312877230F2985DE00A114FF /* RXCardCollectionView.m */,
-				31DBC9640F2AE1DB004B9277 /* RXCardInspectorController.h */,
-				31DBC9650F2AE1DB004B9277 /* RXCardInspectorController.m */,
 			);
 			path = Debug;
 			sourceTree = "<group>";
@@ -1199,7 +1191,6 @@
 				3149598B0E327B2D00E49C83 /* Resources */,
 				314959DA0E327D2800E49C83 /* copy_ffmpeg_license */,
 				314959D90E327D0800E49C83 /* copy_ffmpeg */,
-				314959DC0E327D3100E49C83 /* bzrversion */,
 			);
 			buildRules = (
 			);
@@ -1323,8 +1314,7 @@
 				31F3092F08BE43C100417394 /* Resources */,
 				31506B2A0F3E941000FAC3DB /* Copy Shaders */,
 				314EF26409E45958002124D5 /* Copy Frameworks */,
-				314A02EE0B6E53D5003E92A1 /* bzrversion */,
-				31D109DE0E7C914100220991 /* set_appcast_url */,
+				314A02EE0B6E53D5003E92A1 /* Set Build Info and SU Feed */,
 			);
 			buildRules = (
 			);
@@ -1469,34 +1459,19 @@
 			shellScript = "COPY_TOOL=\"${DEVELOPER_LIBRARY_DIR}/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nif [ ! -f \"${COPY_TOOL}\" ]; then\n\tCOPY_TOOL=\"/System/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nfi\n\n# libavutil\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcodec\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		314959DC0E327D3100E49C83 /* bzrversion */ = {
+		314A02EE0B6E53D5003E92A1 /* Set Build Info and SU Feed */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = bzrversion;
+			name = "Set Build Info and SU Feed";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/usr/bin/env python";
-			shellScript = "# Xcode auto-versioning script for Bazaar\n\nimport os\nimport plistlib\nimport re\nimport subprocess\nimport sys\nfrom os import path\n\nif not \"BUILT_PRODUCTS_DIR\" in os.environ:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# MACOSX_DEPLOYMENT_TARGET plays badly with Python\nif \"MACOSX_DEPLOYMENT_TARGET\" in os.environ:\n\tdel os.environ[\"MACOSX_DEPLOYMENT_TARGET\"]\n\n# add a few common directories to PATH\npath_entries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in path_entries: path_entries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in path_entries: path_entries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in path_entries: path_entries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(path_entries)\n\n# output a build strings file\nbuild_strings_format = r'--template=\"BUILD_VERSION\" = \"{revno}\";\\n\"BUILD_DATE\" = \"{build_date}\";\\n\"BUILD_BRANCH\" = \"{branch_nick}\";\\n'\nbuild_strings_command = ['bzr', 'version-info', '--custom', build_strings_format]\np = subprocess.Popen(build_strings_command, stdout=subprocess.PIPE, shell=False, close_fds=True)\nbuild_strings = p.communicate()[0].decode('utf8')\n\nresources_path = path.join(os.environ['TARGET_BUILD_DIR'], os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH'])\nbuild_strings_file = open(path.join(resources_path, u\"build.strings\"), 'w')\nbuild_strings_file.write(build_strings.encode('utf16'))\nbuild_strings_file.close()\n\n# get the current bzr revision number and use it to set the CFBundleVersion value\nrevision_command = ['bzr', 'revno']\np = subprocess.Popen(revision_command, stdout=subprocess.PIPE, shell=False, close_fds=True)\nrevision_string = p.communicate()[0].decode('utf8')[:-1]\n\ninfo_plist_path = path.join(os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\ninfo_plist = plistlib. readPlist(info_plist_path)\n\ninfo_plist['CFBundleVersion'] = 'bzr %s' % revision_string\n\nplistlib.writePlist(info_plist, info_plist_path)\n";
-			showEnvVarsInLog = 0;
-		};
-		314A02EE0B6E53D5003E92A1 /* bzrversion */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = bzrversion;
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = "/usr/bin/env python";
-			shellScript = "# Xcode auto-versioning script for Bazaar\n\nimport os\nimport plistlib\nimport re\nimport subprocess\nimport sys\nfrom os import path\n\nif not \"BUILT_PRODUCTS_DIR\" in os.environ:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# MACOSX_DEPLOYMENT_TARGET plays badly with Python\nif \"MACOSX_DEPLOYMENT_TARGET\" in os.environ:\n\tdel os.environ[\"MACOSX_DEPLOYMENT_TARGET\"]\n\n# add a few common directories to PATH\npath_entries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in path_entries: path_entries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in path_entries: path_entries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in path_entries: path_entries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(path_entries)\n\n# output a build strings file\nbuild_strings_format = r'--template=\"BUILD_VERSION\" = \"{revno}\";\\n\"BUILD_DATE\" = \"{build_date}\";\\n\"BUILD_BRANCH\" = \"{branch_nick}\";\\n'\nbuild_strings_command = ['bzr', 'version-info', '--custom', build_strings_format]\np = subprocess.Popen(build_strings_command, stdout=subprocess.PIPE, shell=False, close_fds=True)\nbuild_strings = p.communicate()[0].decode('utf8')\n\nresources_path = path.join(os.environ['TARGET_BUILD_DIR'], os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH'])\nbuild_strings_file = open(path.join(resources_path, u\"build.strings\"), 'w')\nbuild_strings_file.write(build_strings.encode('utf16'))\nbuild_strings_file.close()\n\n# get the current bzr revision number and use it to set the CFBundleVersion value\nrevision_command = ['bzr', 'revno']\np = subprocess.Popen(revision_command, stdout=subprocess.PIPE, shell=False, close_fds=True)\nrevision_string = p.communicate()[0].decode('utf8')[:-1]\n\ninfo_plist_path = path.join(os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\ninfo_plist = plistlib. readPlist(info_plist_path)\n\ninfo_plist['CFBundleVersion'] = 'bzr %s' % revision_string\n\nplistlib.writePlist(info_plist, info_plist_path)\n";
+			shellScript = "import os\nimport plistlib\nimport re\nimport subprocess\nimport sys\nfrom os import path\n\nif not \"BUILT_PRODUCTS_DIR\" in os.environ:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# MACOSX_DEPLOYMENT_TARGET plays badly with Python\nif \"MACOSX_DEPLOYMENT_TARGET\" in os.environ:\n\tdel os.environ[\"MACOSX_DEPLOYMENT_TARGET\"]\n\n# add a few common directories to PATH\npath_entries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in path_entries: path_entries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in path_entries: path_entries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in path_entries: path_entries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(path_entries)\n\n# output a build strings file\nbuild_strings_format = r'--template=\"BUILD_VERSION\" = \"{revno}\";\\n\"BUILD_DATE\" = \"{build_date}\";\\n\"BUILD_BRANCH\" = \"{branch_nick}\";\\n'\nbuild_strings_command = ['bzr', 'version-info', '--custom', build_strings_format]\np = subprocess.Popen(build_strings_command, stdout=subprocess.PIPE, shell=False, close_fds=True)\nbuild_strings = p.communicate()[0].decode('utf8')\n\nresources_path = path.join(os.environ['TARGET_BUILD_DIR'], os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH'])\nbuild_strings_file = open(path.join(resources_path, u\"build.strings\"), 'w')\nbuild_strings_file.write(build_strings.encode('utf16'))\nbuild_strings_file.close()\n\n# process the Info.plist to include the bzr build number and the Sparkle feed URL\ninfo_plist_path = path.join(os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\ninfo_plist = plistlib. readPlist(info_plist_path)\n\ninfo_plist['CFBundleVersion'] = 'bzr %s' % build_strings.splitlines()[0].split('=')[1].strip()[1:-2]\ninfo_plist['SUFeedURL'] = os.environ['APPCAST_URL']\n\nplistlib.writePlist(info_plist, info_plist_path)\n";
 			showEnvVarsInLog = 0;
 		};
 		31C3571A0D92A6A700EDEF81 /* RunUnitTests */ = {
@@ -1512,21 +1487,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# Run the unit tests in this test bundle.\n\"${SYSTEM_DEVELOPER_DIR}/Tools/RunUnitTests\"\n";
-			showEnvVarsInLog = 0;
-		};
-		31D109DE0E7C914100220991 /* set_appcast_url */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = set_appcast_url;
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /usr/bin/python2.5;
-			shellScript = "# -*- coding: utf-8 -*-\n\"\"\"Script to insert property list values because the preprocessor is broken\"\"\"\nimport os, re\n\nif not \"BUILT_PRODUCTS_DIR\" in os.environ:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\nINFO = \"%s/%s\" % (os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\nAPPCAST = os.environ['APPCAST_URL']\n\nFH = open(INFO, 'a+')\nFH.seek(0)\n\ninfo = FH.read()\ninfo_re = re.compile(\"([\\t ]+<key>SUFeedURL</key>\\n[\\t ]+<string>).*?(</string>)\", re.S | re.M)\ninfo = info_re.sub(r'\\g<1>%s\\g<2>' % APPCAST, info)\n\nFH.truncate(0)\nFH.write(info)\nFH.close()\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */

@@ -321,12 +321,6 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     RXStack* parent = [[card descriptor] parent];
     
-    // if this is a top-level execution, reset the previous opcodes array
-    if (_programExecutionDepth == 0) {
-        _previous_opcodes[0] = UINT16_MAX;
-        _previous_opcodes[1] = UINT16_MAX;
-    }
-    
     // bump the execution depth
     _programExecutionDepth++;
     
@@ -427,8 +421,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
             // execute the command
             _riven_command_dispatch_table[*program].imp(self, _riven_command_dispatch_table[*program].sel,
                                                         *(program + 1), program + 2);
-            _previous_opcodes[1] = _previous_opcodes[0];
-            _previous_opcodes[0] = *program;
+            
             
             // adjust the shorted program
             program_off += 4 + (*(program + 1) * sizeof(uint16_t));
@@ -517,10 +510,9 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
     // retain the card while it executes programs
     RXCard* executing_card = card;
-    if (_programExecutionDepth == 0) {
+    if (_programExecutionDepth == 0)
         [executing_card retain];
-    }
-
+    
     // disable screen updates
     DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
     
@@ -535,9 +527,6 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // reset auto-activation states
     _did_activate_plst = NO;
     _did_activate_slst = NO;
-    
-    // reset the transition queue flag
-    _queuedAPushTransition = NO;
     
     // reset water animation
     [controller queueSpecialEffect:NULL owner:card];
@@ -1474,20 +1463,10 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #endif
     
     // queue the transition
-    // FIXME: need to review this dropping mechanism and see if we could just clear the transition queue at certain points
-    if (transition->type == RXTransitionDissolve && (_previous_opcodes[0] == 18 || _previous_opcodes[1] == 18) && _queuedAPushTransition)
-        RXLog(kRXLoggingScript, kRXLoggingLevelMessage, @"WARNING: dropping dissolve transition because of recently scheduled push transition");
-    else
-        [controller queueTransition:transition];
+    [controller queueTransition:transition];
     
-    // transition is now owned by the transitionq queue
+    // transition is now owned by the transition queue
     [transition release];
-    
-    // leave a note if we queued a push transition
-    if (transition->type == RXTransitionSlide)
-        _queuedAPushTransition = YES;
-    else
-        _queuedAPushTransition = NO;    
 }
 
 // 19
