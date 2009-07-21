@@ -43,7 +43,7 @@
     NSBundle* bundle = [NSBundle mainBundle];
     
     NSString* version_format = NSLocalizedStringFromTable(@"VERSION_FORMAT", @"About", nil);
-    NSString* version = [NSString stringWithFormat:@"%@ %@", NSLocalizedStringFromTable(@"BUILD_BRANCH", @"build", nil), NSLocalizedStringFromTable(@"BUILD_VERSION", @"build", nil)];
+    NSString* version = [NSString stringWithFormat:@"branch '%@' r%@", NSLocalizedStringFromTable(@"BUILD_BRANCH", @"build", nil), NSLocalizedStringFromTable(@"BUILD_VERSION", @"build", nil)];
     
     [_versionField setStringValue:[NSString stringWithFormat:version_format, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], version]];
     [_copyrightField setStringValue:NSLocalizedStringFromTable(@"LONG_COPYRIGHT", @"About", nil)];
