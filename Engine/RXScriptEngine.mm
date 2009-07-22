@@ -3193,8 +3193,8 @@ DEFINE_COMMAND(xschool280_playwhark) {
                         // by doing a backward scan from the active hotspot to
                         // the current hotspot
                         boundary_hotspot_id = 0;
-                        uintptr_t reverse_scan_limit = [hotspot ID] - min_id;
-                        for (uintptr_t k2 = [active_hotspot ID] - 1 - min_id; k2 >= reverse_scan_limit; k2--) {
+                        intptr_t reverse_scan_limit = [hotspot ID] - min_id;
+                        for (intptr_t k2 = [active_hotspot ID] - 1 - min_id; k2 >= reverse_scan_limit; k2--) {
                             if ((sliders_state & (1 << (24 - k2)))) {
                                 boundary_hotspot_id = k2 + min_id;
                                 break;
