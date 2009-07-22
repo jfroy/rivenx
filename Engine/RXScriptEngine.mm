@@ -2986,6 +2986,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
         DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, snak_mlst);
         DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
         DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, overlay_plst);
+        DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1 + the_number);
         DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
         
         [state setUnsignedShort:0 forKey:villager_position_variable];
