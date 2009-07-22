@@ -428,10 +428,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 - (void)setPlaybackSelection:(QTTimeRange)selection {
     OSSpinLockLock(&_render_lock);
     
-    // release and clear the current image buffer
-    CVPixelBufferRelease(_image_buffer);
-    _image_buffer = NULL;
+    // this method does not clear the current movie image, because it is often
+    // used to play a movie in segments (village school, gspit viewer)
     
+    // set the movie's current time and selection
     [_movie setCurrentTime:selection.time];
     [_movie setSelection:selection];
     
@@ -441,7 +441,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     QTVisualContextTask(_vc);
     CGLUnlockContext(load_ctx);
     
+    // disable looping (not sure this is required or desired, but right now selection playback cannot be mixed with looping)
     [self setLooping:NO];
+    
+    // enable selection playback
     [_movie setAttribute:[NSNumber numberWithBool:YES] forKey:QTMoviePlaysSelectionOnlyAttribute];
     _playing_selection = YES;
     
