@@ -2922,7 +2922,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     RXGameState* state = [g_world gameState];
 
     // generate a random number between 1 and 10
-    uint16_t the_number = random() % 9 + 1;
+    uint16_t the_number = random() % 10 + 1;
 #if defined(DEBUG)
     if (!_disableScriptLogging)
         RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@rolled a %hu", logPrefix, the_number);
