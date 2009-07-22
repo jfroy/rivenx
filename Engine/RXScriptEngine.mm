@@ -4141,7 +4141,7 @@ DEFINE_COMMAND(xgrviewer) {
     
     if (play_solo)
         // schedule the next one within the next 5 minutes but no sooner than in 2 minutes
-        event_timer = [NSTimer scheduledTimerWithTimeInterval:120 + (random() % 180) + 1
+        event_timer = [NSTimer scheduledTimerWithTimeInterval:120 + (random() % 181)
                                                        target:self
                                                      selector:@selector(_playWharkSolo:)
                                                      userInfo:nil
