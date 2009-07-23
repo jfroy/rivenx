@@ -514,7 +514,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // load the card
     [card load];
-
+    
     // disable screen updates
     DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
     
@@ -2924,7 +2924,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     RXGameState* state = [g_world gameState];
 
     // generate a random number between 1 and 10
-    uint16_t the_number = random() % 9 + 1;
+    uint16_t the_number = random() % 10 + 1;
 #if defined(DEBUG)
     if (!_disableScriptLogging)
         RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@rolled a %hu", logPrefix, the_number);
@@ -2988,6 +2988,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
         DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, snak_mlst);
         DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
         DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, overlay_plst);
+        DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1 + the_number);
         DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
         
         [state setUnsignedShort:0 forKey:villager_position_variable];
@@ -3194,8 +3195,8 @@ DEFINE_COMMAND(xschool280_playwhark) {
                         // by doing a backward scan from the active hotspot to
                         // the current hotspot
                         boundary_hotspot_id = 0;
-                        uintptr_t reverse_scan_limit = [hotspot ID] - min_id;
-                        for (uintptr_t k2 = [active_hotspot ID] - 1 - min_id; k2 >= reverse_scan_limit; k2--) {
+                        intptr_t reverse_scan_limit = [hotspot ID] - min_id;
+                        for (intptr_t k2 = [active_hotspot ID] - 1 - min_id; k2 >= reverse_scan_limit; k2--) {
                             if ((sliders_state & (1 << (24 - k2)))) {
                                 boundary_hotspot_id = k2 + min_id;
                                 break;
@@ -4142,7 +4143,7 @@ DEFINE_COMMAND(xgrviewer) {
     
     if (play_solo)
         // schedule the next one within the next 5 minutes but no sooner than in 2 minutes
-        event_timer = [NSTimer scheduledTimerWithTimeInterval:120 + (random() % 180) + 1
+        event_timer = [NSTimer scheduledTimerWithTimeInterval:120 + (random() % 181)
                                                        target:self
                                                      selector:@selector(_playWharkSolo:)
                                                      userInfo:nil
