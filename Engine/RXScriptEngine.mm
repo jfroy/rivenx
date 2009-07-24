@@ -3488,7 +3488,7 @@ static uint32_t const tiny_marble_receptable_position_vectors[2][6] = {
 
 static float const marble_size = 13.5f;
 
-- (void)_drawTinyMarbleWithPosition:(uint32_t)marble_pos index:(uint32_t)index {
+- (void)_drawTinyMarbleWithPosition:(uint32_t)marble_pos index:(uint32_t)index waffle:(uint32_t)waffle {
     uint32_t marble_x = (marble_pos >> 16) - 1;
     uint32_t marble_y = (marble_pos & 0xFFFF) - 1;
     
@@ -3500,8 +3500,8 @@ static float const marble_size = 13.5f;
         core_display_rect.left = tiny_marble_receptable_position_vectors[0][index];
         core_display_rect.top = tiny_marble_receptable_position_vectors[1][index];
     } else {
-        // special exception rule: we draw nothing if the marble is in the last column
-        if (marble_y == 24)
+        // if the waffle is not up, we must not draw the tiny marble
+        if (waffle != 0)
             return;
         
         NSPoint p1 = NSMakePoint(11834.f/39.f, 4321.f/39.f);
@@ -3581,12 +3581,13 @@ DEFINE_COMMAND(xt7600_setupmarbles) {
     }
     
     RXGameState* gs = [g_world gameState];
-    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tred"] index:0];
-    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"torange"] index:1];
-    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tyellow"] index:2];
-    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tgreen"] index:3];
-    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tblue"] index:4];
-    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tviolet"] index:5];
+    uint32_t waffle = [gs unsigned32ForKey:@"twaffle"];
+    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tred"] index:0 waffle:waffle];
+    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"torange"] index:1 waffle:waffle];
+    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tyellow"] index:2 waffle:waffle];
+    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tgreen"] index:3 waffle:waffle];
+    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tblue"] index:4 waffle:waffle];
+    [self _drawTinyMarbleWithPosition:[gs unsigned32ForKey:@"tviolet"] index:5 waffle:waffle];
 }
 
 - (void)_initializeMarbleHotspotWithVariable:(NSString*)marble_var initialRectPointer:(rx_core_rect_t*)initial_rect_ptr {
