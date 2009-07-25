@@ -2163,9 +2163,8 @@ DEFINE_COMMAND(xtatrusgivesbooks) {
 DEFINE_COMMAND(xtchotakesbook) {
     // FIXME: implement xtchotakesbook
 
-    // WORKAROUND as a side-effect of this command, we'll silence the ambient
-    // sound before the last introduction movie plays; a active SLST command
-    // comes after the movie
+    // WORKAROUND: silence the ambient sounds before the last introduction movie plays;
+    // an activate SLST command comes after the movie and the movie itself contains ambient sounds
     DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 1);
 }
 
