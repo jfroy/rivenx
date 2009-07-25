@@ -99,7 +99,10 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     // set the rebel icon order variable (always the same value)
     [self setUnsigned32:12068577 forKey:@"jIconCorrectOrder"];
     
+    // FIXME: generate prison combination
     [self setShort:-2 forKey:@"pCorrectOrder"];
+    
+    // FIXME: generate telescope combination
     [self setShort:-2 forKey:@"tCorrectOrder"];
 }
 
