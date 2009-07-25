@@ -101,7 +101,6 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     
     [self setShort:-2 forKey:@"pCorrectOrder"];
     [self setShort:-2 forKey:@"tCorrectOrder"];
-    [self setShort:-2 forKey:@"pCorrectOrder"];
 }
 
 - (id)init {
