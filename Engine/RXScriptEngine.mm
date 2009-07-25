@@ -4761,4 +4761,33 @@ DEFINE_COMMAND(xbfreeytram) {
     DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
 }
 
+#pragma mark -
+#pragma mark telescope
+
+DEFINE_COMMAND(xtexterior300_telescopeup) {
+    RXGameState* gs = [g_world gameState];
+    
+    // play the telescope button movie (code 3)
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 3);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 3);
+    
+    // if the telescope has no power, we're done
+    uint16_t ttelevalve = [gs unsignedShortForKey:@"ttelevalve"];
+    if (!ttelevalve)
+        return;
+}
+
+DEFINE_COMMAND(xtexterior300_telescopedown) {
+    RXGameState* gs = [g_world gameState];
+    
+    // play the telescope button movie (code 3)
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 3);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 3);
+    
+    // if the telescope has no power, we're done
+    uint16_t ttelevalve = [gs unsignedShortForKey:@"ttelevalve"];
+    if (!ttelevalve)
+        return;
+}
+
 @end
