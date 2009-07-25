@@ -2156,10 +2156,6 @@ DEFINE_COMMAND(xtrapbookback) {
 #pragma mark -
 #pragma mark introduction sequence
 
-DEFINE_COMMAND(xtatrusgivesbooks) {
-    // FIXME: implement xtatrusgivesbooks
-}
-
 DEFINE_COMMAND(xtchotakesbook) {
     // FIXME: implement xtchotakesbook
 
