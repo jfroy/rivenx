@@ -11,6 +11,8 @@
 
 static const int RX_GAME_STATE_CURRENT_VERSION = 1;
 
+// 1-2-3-4-5
+static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 << 21) | (1 << 20);
 
 @implementation RXGameState
 
@@ -54,8 +56,7 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
     return gameState;
 }
 
-- (void)_initializeState {
-    // generate a dome combination
+- (uint32_t)_generateDomeCombination {
     uint8_t domecombo1 = random() % 25;
     
     uint8_t domecombo2 = random() % 25;
@@ -74,7 +75,22 @@ static const int RX_GAME_STATE_CURRENT_VERSION = 1;
     while (domecombo5 == domecombo1 || domecombo5 == domecombo2 || domecombo5 == domecombo3 || domecombo5 == domecombo4)
         domecombo5 = random() % 25;
     
-    uint32_t domecombo = (1 << (24 - domecombo1)) | (1 << (24 - domecombo2)) | (1 << (24 - domecombo3)) | (1 << (24 - domecombo4)) | (1 << (24 - domecombo5));
+    return (1 << (24 - domecombo1)) | (1 << (24 - domecombo2)) | (1 << (24 - domecombo3)) | (1 << (24 - domecombo4)) | (1 << (24 - domecombo5));
+}
+
+- (void)_initializeState {
+    // generate a dome combination
+    uint32_t domecombo = 0;
+    while (1) {
+        domecombo = [self _generateDomeCombination];
+        
+        // disallow a certain number of "bad combinations"
+        if (domecombo == domecombo_bad1)
+            continue;
+        
+        // valid combination, break out
+        break;
+    }
     [self setUnsigned32:domecombo forKey:@"aDomeCombo"];
     
     // set the rebel icon order variable (always the same value)
