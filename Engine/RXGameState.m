@@ -6,13 +6,15 @@
 //  Copyright 2007 MacStorm. All rights reserved.
 //
 
-#import "RXGameState.h"
-#import "RXEditionManager.h"
+#import "Engine/RXGameState.h"
+#import "Engine/RXEditionManager.h"
 
-static const int RX_GAME_STATE_CURRENT_VERSION = 1;
+
+static const int RX_GAME_STATE_CURRENT_VERSION = 2;
 
 // 1-2-3-4-5
 static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 << 21) | (1 << 20);
+
 
 @implementation RXGameState
 
@@ -90,7 +92,7 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     return combo;
 }
 
-- (void)_initializeState {
+- (void)_generateCombinations {
     // generate a dome combination
     uint32_t domecombo = 0;
     while (1) {
@@ -144,19 +146,21 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
                                      userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
     }
     
-    NSString* errorString = nil;
-    _variables = [[NSPropertyListSerialization propertyListFromData:defaultVarData mutabilityOption:NSPropertyListMutableContainers format:NULL errorDescription:&errorString] retain];
+    NSString* error_str = nil;
+    _variables = [[NSPropertyListSerialization propertyListFromData:defaultVarData mutabilityOption:NSPropertyListMutableContainers format:NULL errorDescription:&error_str] retain];
     if (!_variables) {
         [self release];
         @throw [NSException exceptionWithName:@"RXInvalidDefaultEngineVariablesException"
                                        reason:@"Unable to load the default engine variables."
-                                     userInfo:[NSDictionary dictionaryWithObject:errorString forKey:@"RXErrorString"]];
+                                     userInfo:[NSDictionary dictionaryWithObject:error_str forKey:@"RXErrorString"]];
     }
-    [errorString release];
+    [error_str release];
     
+    // retain our parent edition
     _edition = [edition retain];
     
-    [self _initializeState];
+    // generate random combinations for the game
+    [self _generateCombinations];
     
     // no URL for new game states
     _URL = nil;
@@ -178,6 +182,7 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     int32_t version = [decoder decodeInt32ForKey:@"VERSION"];
     
     switch (version) {
+        case 2:
         case 1:
             if (![decoder containsValueForKey:@"returnCard"]) {
                 [self release];
@@ -194,8 +199,8 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
                                                reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
                                              userInfo:nil];
             }
-            NSString* editionKey = [decoder decodeObjectForKey:@"editionKey"];
-            _edition = [[[RXEditionManager sharedEditionManager] editionForKey:editionKey] retain];
+            NSString* edition_key = [decoder decodeObjectForKey:@"editionKey"];
+            _edition = [[[RXEditionManager sharedEditionManager] editionForKey:edition_key] retain];
             if (!_edition) {
                 [self release];
                 @throw [NSException exceptionWithName:@"RXUnknownEditionKeyException"
@@ -226,6 +231,10 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
                                            reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
                                          userInfo:nil];
     }
+    
+    // version below 2 do not have valid combinations, so generate them now
+    if (version < 2)
+        [self _generateCombinations];
     
     return self;
 }
