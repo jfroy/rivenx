@@ -499,7 +499,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 - (void)openCard {
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@opening card %@ {", card, logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@opening card %@ {", logPrefix, card);
     [logPrefix appendString:@"    "];
 #endif
 
@@ -591,7 +591,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 - (void)startRendering {
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting rendering for card %@ {", card, logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting rendering for card %@ {", logPrefix, card);
     [logPrefix appendString:@"    "];
 #endif
 
@@ -644,7 +644,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         return;
 
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing card %@ {", card, logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing card %@ {", logPrefix, card);
     [logPrefix appendString:@"    "];
 #endif
     
