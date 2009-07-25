@@ -162,6 +162,4 @@ def cmd_missing_externals(*args):
 
 def cmd_tcombo(*args):
     tcombo = world.gameState().unsigned32ForKey_("tCorrectOrder")
-    print type(tcombo)
-    combo = [(tcombo << (3 * i)) & 0x7 for i in xrange(5)]
-    print "dome combination: %d %d %d %d %d" % combo
+    print "dome combination: %d %d %d %d %d" % tuple((tcombo >> (3 * i)) & 0x7 for i in xrange(5))
