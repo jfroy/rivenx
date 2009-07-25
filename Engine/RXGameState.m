@@ -81,6 +81,15 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     return (1 << (24 - domecombo1)) | (1 << (24 - domecombo2)) | (1 << (24 - domecombo3)) | (1 << (24 - domecombo4)) | (1 << (24 - domecombo5));
 }
 
+- (uint32_t)_generateTelescopeCombination {
+    uint32_t combo = random() % 5;
+    combo = (combo << 3) | (random() % 5);
+    combo = (combo << 3) | (random() % 5);
+    combo = (combo << 3) | (random() % 5);
+    combo = (combo << 3) | (random() % 5);
+    return combo;
+}
+
 - (void)_initializeState {
     // generate a dome combination
     uint32_t domecombo = 0;
@@ -102,8 +111,8 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     // FIXME: generate prison combination
     [self setShort:-2 forKey:@"pCorrectOrder"];
     
-    // FIXME: generate telescope combination
-    [self setShort:-2 forKey:@"tCorrectOrder"];
+    // generate a telescope combination
+    [self setUnsigned32:[self _generateTelescopeCombination] forKey:@"tCorrectOrder"];
 }
 
 - (id)init {
