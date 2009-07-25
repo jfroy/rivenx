@@ -34,7 +34,10 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     @try {
         gameState = [NSKeyedUnarchiver unarchiveObjectWithData:archive];
         if (!gameState)
-            ReturnNILWithError(RXErrorDomain, 0, ([NSDictionary dictionaryWithObject:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." forKey:NSLocalizedDescriptionKey]), error);
+            ReturnNILWithError(RXErrorDomain,
+                               0,
+                               ([NSDictionary dictionaryWithObject:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." forKey:NSLocalizedDescriptionKey]),
+                               error);
         
         // set the write URL on the game state to indicate it has an existing location on the file system
         gameState->_URL = [url retain];
