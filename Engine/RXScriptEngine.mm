@@ -303,10 +303,6 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     if (c == card)
         return;
     
-#if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"setting card to %@", c);
-#endif
-    
     id old = card;
     card = [c retain];
     [old release];
@@ -503,7 +499,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 - (void)openCard {
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@opening card {", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@opening card %@ {", card, logPrefix);
     [logPrefix appendString:@"    "];
 #endif
 
@@ -595,15 +591,14 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 - (void)startRendering {
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting rendering {", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting rendering for card %@ {", card, logPrefix);
     [logPrefix appendString:@"    "];
 #endif
 
     // retain the card while it executes programs
     RXCard* executing_card = card;
-    if (_programExecutionDepth == 0) {
+    if (_programExecutionDepth == 0)
         [executing_card retain];
-    }
     
     // execute rendering programs (index 9)
     NSArray* programs = [[card scripts] objectForKey:RXStartRenderingScriptKey];
@@ -649,15 +644,14 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         return;
 
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing card {", logPrefix);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing card %@ {", card, logPrefix);
     [logPrefix appendString:@"    "];
 #endif
     
     // retain the card while it executes programs
     RXCard* executing_card = card;
-    if (_programExecutionDepth == 0) {
+    if (_programExecutionDepth == 0)
         [executing_card retain];
-    }
     
     // execute leaving programs (index 7)
     NSArray* programs = [[card scripts] objectForKey:RXCardCloseScriptKey];
