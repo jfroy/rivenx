@@ -6,6 +6,8 @@ import warnings
 import Foundation
 import rivenx
 
+import debug_notification
+
 # ignore all warnings
 warnings.simplefilter("ignore")
 
@@ -31,28 +33,29 @@ console = code.InteractiveConsole(globals())
 debug = objc.lookUpClass('RXDebugWindowController').globalDebugWindowController()
 
 # get a number of useful global objects
-world = objc.lookUpClass('RXWorld').sharedWorld()
+world = None
 renderer = None
 engine = None
 edition_manager = None
 
-class DebugNotificationHandler(Foundation.NSObject):
-    
-    def _handleStackDidLoad_(self, notification):
-        global renderer
-        global engine
-        global edition_manager
-        renderer = world.cardRenderState()
-        engine = renderer.scriptEngine()
-        edition_manager = objc.lookUpClass('RXEditionManager').sharedEditionManager()
-        
-        print "Global objects initialized:\n    world=%s\n    renderer=%s\n    engine=%s" % (world, renderer, engine)
-        Foundation.NSNotificationCenter.defaultCenter().removeObserver_(self)
+load_notification_handler = None
 
-# register for stack did load notifications because some global objects do not exist until then
-notification_handler = DebugNotificationHandler.alloc().init()
-Foundation.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-    notification_handler, '_handleStackDidLoad:', "RXStackDidLoadNotification", None)
+def _load_globals():
+    global world, renderer, engine, edition_manager, load_notification_handler
+    world = objc.lookUpClass('RXWorld').sharedWorld()
+    if world:
+        renderer = world.cardRenderState()
+    if renderer:
+        engine = renderer.scriptEngine()
+    edition_manager = objc.lookUpClass('RXEditionManager').sharedEditionManager()
+
+    if load_notification_handler:
+        del load_notification_handler
+
+_load_globals()
+if not renderer:
+    load_notification_handler = debug_notification.OneShotNotificationHandler("RXStackDidLoadNotification")
+    load_notification_handler.add_callable(_load_globals)
 
 # alias native debug commands
 try:
@@ -91,6 +94,10 @@ def cmd_help(*args):
     for a in sorted(globals()):
         if a.startswith('cmd_') and callable(globals()[a]):
             print a[4:]
+
+def cmd_reload(*args):
+    fp = Foundation.NSBundle.mainBundle().pathForResource_ofType_("debug_init", "py")
+    execfile(fp, globals())
 
 def _find_missing_externals(card):
     card._loadHotspots()
@@ -152,3 +159,9 @@ def cmd_missing_externals(*args):
                 external_cards.append(card.name())
 
         print ('    ' if len(external_card_map) else '') + '\n    '.join('%s - %s' % (e, str(external_card_map[e])) for e in external_card_map)
+
+def cmd_tcombo(*args):
+    tcombo = world.gameState().unsigned32ForKey_("tCorrectOrder")
+    print type(tcombo)
+    combo = [(tcombo << (3 * i)) & 0x7 for i in xrange(5)]
+    print "dome combination: %d %d %d %d %d" % combo

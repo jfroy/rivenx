@@ -39,8 +39,7 @@ PyObject* rivenx_CaptureStdout(PyObject* self, PyObject* pArgs) {
     
     [rx_debug_window_controller pythonOut:[NSString stringWithCString:log_string encoding:NSASCIIStringEncoding]];
     
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 PyObject* rivenx_CaptureStderr(PyObject* self, PyObject* pArgs) {
@@ -50,8 +49,7 @@ PyObject* rivenx_CaptureStderr(PyObject* self, PyObject* pArgs) {
 
     [rx_debug_window_controller pythonOut:[NSString stringWithCString:log_string encoding:NSASCIIStringEncoding]];
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 // methods for the 'rivenx' module
@@ -90,6 +88,9 @@ static PyMethodDef rivenx_methods[] = {
     // set ourselves as the global debug window controller
     rx_debug_window_controller = self;
     
+    // add the resources directory to the Python path
+    setenv("PYTHONPATH", [[[NSBundle mainBundle] resourcePath] fileSystemRepresentation], 1);
+    
     // initialize Python (skipping signal initialization)
     Py_InitializeEx(0);
     
@@ -100,6 +101,10 @@ static PyMethodDef rivenx_methods[] = {
     NSString* init_file = [[NSBundle mainBundle] pathForResource:@"debug_init" ofType:@"py"];
     FILE* fp = fopen([init_file fileSystemRepresentation], "r");
     PyRun_SimpleFileEx(fp, [[init_file lastPathComponent] cStringUsingEncoding:NSASCIIStringEncoding], 1);
+    
+    // get the main module
+    PyObject* main_mod = PyImport_AddModule("__main__");
+    assert(main_mod);
 }
 
 - (NSString*)windowFrameAutosaveName {
@@ -142,13 +147,6 @@ static PyMethodDef rivenx_methods[] = {
 }
 
 #pragma mark debug commands
-
-- (void)cmd_reload:(NSArray*)arguments {
-    // initialize the debug console
-    NSString* init_file = [[NSBundle mainBundle] pathForResource:@"debug_init" ofType:@"py"];
-    FILE* fp = fopen([init_file fileSystemRepresentation], "r");
-    PyRun_SimpleFileEx(fp, [[init_file lastPathComponent] cStringUsingEncoding:NSASCIIStringEncoding], 1);
-}
 
 - (NSMutableSet*)_findExternalCommands:(NSDictionary*)script card:(RXCard*)card {
     RXScriptOpcodeStream* ostream = [[RXScriptOpcodeStream alloc] initWithScript:script];

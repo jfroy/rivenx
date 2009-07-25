@@ -221,6 +221,7 @@
 		31F4F0020F3533EF00A68652 /* RXScriptDecoding.m in Sources */ = {isa = PBXBuildFile; fileRef = 31F4F0010F3533EF00A68652 /* RXScriptDecoding.m */; };
 		31F4F03C0F35461C00A68652 /* RXMovieProxy.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31F4F03B0F35461C00A68652 /* RXMovieProxy.mm */; };
 		31FA569F0C5AD15D005DE22F /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
+		31FE33AC101BBC4100C30CD1 /* debug_notification.py in Resources */ = {isa = PBXBuildFile; fileRef = 31FE33AB101BBC4100C30CD1 /* debug_notification.py */; };
 		31FF295E0D4198EE00E3B5FF /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3158857A0C8729D800204DDD /* MHKKit.framework */; };
 		31FF295F0D4198F400E3B5FF /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
 		31FF29660D41993C00E3B5FF /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3158857A0C8729D800204DDD /* MHKKit.framework */; };
@@ -573,6 +574,7 @@
 		31F4F03B0F35461C00A68652 /* RXMovieProxy.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXMovieProxy.mm; sourceTree = "<group>"; usesTabs = 0; };
 		31FA569D0C5AD15D005DE22F /* RXErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXErrors.h; path = Base/RXErrors.h; sourceTree = "<group>"; usesTabs = 0; };
 		31FA569E0C5AD15D005DE22F /* RXErrors.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXErrors.m; path = Base/RXErrors.m; sourceTree = "<group>"; usesTabs = 0; };
+		31FE33AB101BBC4100C30CD1 /* debug_notification.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = debug_notification.py; sourceTree = "<group>"; };
 		31FF29670D41996E00E3B5FF /* dump_save.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = dump_save.m; sourceTree = "<group>"; };
 		31FF29D40D425BFE00E3B5FF /* GameVariables.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = GameVariables.plist; sourceTree = "<group>"; };
 		8DD76FA10486AA7600D96B5E /* plistize_stacks */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = plistize_stacks; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1076,6 +1078,7 @@
 		31F3093C08BE43D500417394 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				31FE33AB101BBC4100C30CD1 /* debug_notification.py */,
 				31DAAF0C0DDE21EF00D06D0C /* cursors */,
 				31DAAF210DDE21EF00D06D0C /* sounds */,
 				312D9EC90D4D81A3006E384C /* Extras.MHK */,
@@ -1443,6 +1446,7 @@
 				3185C43B0E06027800528220 /* sparkle.pem in Resources */,
 				312EBAC80FD202ED00D65E22 /* debug_init.py in Resources */,
 				3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */,
+				31FE33AC101BBC4100C30CD1 /* debug_notification.py in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

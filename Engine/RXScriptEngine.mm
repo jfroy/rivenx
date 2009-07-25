@@ -2075,41 +2075,27 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
             DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 51);
     }
     
-    // draw the telescope combination
-    // FIXME: actually generate a combination per game...
-    if (page == 28) {
-        NSPoint combination_display_origin = NSMakePoint(156.0f, 120.0f);
-        NSPoint combination_sampling_origin = NSMakePoint(32.0f * 3, 0.0f);
-        NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 25.0f);
+    // draw the telescope combination on page 28
+    if (page != 28)
+        return;
+    
+    // the display origin was determined empirically; the base rect is based on the size of the number overlay pictures
+    NSPoint combination_display_origin = NSMakePoint(156.0f, 120.0f);
+    NSRect combination_base_rect = NSMakeRect(0.0f, 0.0f, 32.0f, 25.0f);
+    
+    uint32_t telescope_combo = [[g_world gameState] unsigned32ForKey:@"tCorrectOrder"];
+    NSPoint combination_sampling_origin = NSMakePoint(32.0f, 0.0f);
+    
+    for (int i = 0; i < 5; i++) {
+        combination_sampling_origin.x = 32.0f * (telescope_combo & 0x7);
         
-        [self _drawPictureWithID:13
+        [self _drawPictureWithID:13 + i
                            stack:[card parent]
                      displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
                     samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+        
         combination_display_origin.x += combination_base_rect.size.width;
-        
-        [self _drawPictureWithID:14
-                           stack:[card parent]
-                     displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
-                    samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
-        combination_display_origin.x += combination_base_rect.size.width;
-        
-        [self _drawPictureWithID:15
-                           stack:[card parent]
-                     displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
-                    samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
-        combination_display_origin.x += combination_base_rect.size.width;
-        
-        [self _drawPictureWithID:16
-                           stack:[card parent]
-                     displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
-                    samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
-        combination_display_origin.x += combination_base_rect.size.width;
-        
-        [self _drawPictureWithID:17
-                           stack:[card parent]
-                     displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
-                    samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
+        telescope_combo >>= 3;
     }
 }
 
