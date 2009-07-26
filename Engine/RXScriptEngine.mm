@@ -2008,9 +2008,9 @@ DEFINE_COMMAND(xaatrusbookprevpage) {
     [[g_world gameState] setUnsignedShort:page - 1 forKey:@"aatruspage"];
     
     if (page == 2)
-        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 8, 256, 0);
+        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 8, (uint16_t)kRXSoundGainDivisor, 0);
     else
-        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 3, 256, 0);
+        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 3, (uint16_t)kRXSoundGainDivisor, 0);
     
     RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
                                                         direction:RXTransitionRight
@@ -2027,9 +2027,9 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
         [[g_world gameState] setUnsignedShort:page + 1 forKey:@"aatruspage"];
         
         if (page == 1)
-            DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 8, 256, 0);
+            DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 8, (uint16_t)kRXSoundGainDivisor, 0);
         else
-            DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 5, 256, 0);
+            DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 5, (uint16_t)kRXSoundGainDivisor, 0);
         
         RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
                                                             direction:RXTransitionLeft
@@ -2113,9 +2113,9 @@ DEFINE_COMMAND(xacathbookprevpage) {
     [[g_world gameState] setUnsignedShort:page - 1 forKey:@"acathpage"];
     
     if (page == 2)
-        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 9, 256, 0);
+        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 9, (uint16_t)kRXSoundGainDivisor, 0);
     else
-        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 4, 256, 0);
+        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 4, (uint16_t)kRXSoundGainDivisor, 0);
     
     RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
                                                         direction:RXTransitionBottom
@@ -2132,9 +2132,9 @@ DEFINE_COMMAND(xacathbooknextpage) {
         [[g_world gameState] setUnsignedShort:page + 1 forKey:@"acathpage"];
         
         if (page == 1)
-            DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 9, 256, 0);
+            DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 9, (uint16_t)kRXSoundGainDivisor, 0);
         else
-            DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 6, 256, 0);
+            DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 6, (uint16_t)kRXSoundGainDivisor, 0);
         
         RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
                                                             direction:RXTransitionTop
@@ -2250,7 +2250,7 @@ DEFINE_COMMAND(xblabbookprevpage) {
     assert(page > 1);
     [[g_world gameState] setUnsignedShort:page - 1 forKey:@"blabpage"];
     
-    DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 22, 256, 0);
+    DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 22, (uint16_t)kRXSoundGainDivisor, 0);
     
     RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
                                                         direction:RXTransitionRight
@@ -2266,7 +2266,7 @@ DEFINE_COMMAND(xblabbooknextpage) {
     if (page < 22) {
         [[g_world gameState] setUnsignedShort:page + 1 forKey:@"blabpage"];
         
-        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 23, 256, 0);
+        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 23, (uint16_t)kRXSoundGainDivisor, 0);
         
         RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
                                                             direction:RXTransitionLeft
@@ -2299,7 +2299,7 @@ DEFINE_COMMAND(xogehnbookprevpage) {
     
     [[g_world gameState] setUnsignedShort:page - 1 forKey:@"ogehnpage"];
     
-    DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 12, 256, 0);
+    DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 12, (uint16_t)kRXSoundGainDivisor, 0);
     
     RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
                                                         direction:RXTransitionRight
@@ -2317,7 +2317,7 @@ DEFINE_COMMAND(xogehnbooknextpage) {
 
     [[g_world gameState] setUnsignedShort:page + 1 forKey:@"ogehnpage"];
     
-    DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 13, 256, 0);
+    DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 13, (uint16_t)kRXSoundGainDivisor, 0);
     
     RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
                                                         direction:RXTransitionLeft
@@ -2384,7 +2384,7 @@ DEFINE_COMMAND(xcheckicons) {
         [[g_world gameState] setUnsigned32:0 forKey:@"jicons"];
         [[g_world gameState] setUnsigned32:0 forKey:@"jiconorder"];
         
-        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 46, 256, 1);
+        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 46, (uint16_t)kRXSoundGainDivisor, 1);
     }
 }
 
