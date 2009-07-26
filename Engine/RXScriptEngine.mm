@@ -4809,6 +4809,13 @@ static int64_t const telescope_lower_timevals[] = {4320LL, 3440LL, 2660LL, 1760L
     [gs setUnsigned32:tele_position - 1 forKey:@"ttelescope"];
 }
 
+- (void)_playFissureEndgame {
+#if defined(DEBUG)
+    if (!_disableScriptLogging)
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@END OF THE WORLD", logPrefix);
+#endif
+}
+
 DEFINE_COMMAND(xtexterior300_telescopeup) {
     RXGameState* gs = [g_world gameState];
     
@@ -4869,7 +4876,8 @@ DEFINE_COMMAND(xtexterior300_telescopedown) {
         if (fissure_hatch && [gs unsignedShortForKey:@"ttelepin"]) {
             DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, blocked_sound, (uint16_t)kRXSoundGainDivisor, 0);
             
-            // FIXME: trigger the appropriate ending movie
+            // the end!
+            [self _playFissureEndgame];
         } else
             DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, blocked_sound, (uint16_t)kRXSoundGainDivisor, 1);
         
@@ -4890,6 +4898,37 @@ DEFINE_COMMAND(xtexterior300_telescopedown) {
     
     // refresh the card (which is going to disable the telescope lower movie)
     DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+}
+
+DEFINE_COMMAND(xtisland390_covercombo) {
+    uint16_t button = argv[0];
+    RXGameState* gs = [g_world gameState];
+    
+    // update the current combination with the new button
+    uint32_t combo = [gs unsigned32ForKey:@"tcovercombo"];
+    uint32_t digits_set = 0;
+    for (int i = 0; i < 5; i++) {
+        if (!((combo >> (3 * i)) & 0x7))
+            break;
+        digits_set++;
+    }
+    
+    // the first digit of the combination is stored in the lsb; we use 3 bits per digit
+    combo = combo | ((button & 0x7) << (3 * digits_set));
+    [gs setUnsigned32:combo forKey:@"tcovercombo"];
+    
+    // if the current combination matches the correct order, enable the opencover hotspot, otherwise disable it
+    RXHotspot* cover_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], @"opencover");
+    if (combo == [gs unsigned32ForKey:@"tcorrectorder"])
+        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [cover_hotspot ID]);
+    else {
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [cover_hotspot ID]);
+        
+        // if 5 digits have been pressed and they did not form the right
+        // combination, reset tcovercombo to the button that was just pressed
+        if (digits_set == 5)
+            [gs setUnsigned32:(button & 0x7) forKey:@"tcovercombo"];
+    }
 }
 
 @end
