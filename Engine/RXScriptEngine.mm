@@ -4810,9 +4810,46 @@ static int64_t const telescope_lower_timevals[] = {4320LL, 3440LL, 2660LL, 1760L
 }
 
 - (void)_playFissureEndgame {
+    RXGameState* gs = [g_world gameState];
+    
+    // there are 4 endings possible at the fissure
+    // 1: Gehn trapped and Catherine freed
+    // 2: Gehn trapped but Catherine still imprisoned
+    // 3: Ghen free (and obviously Catherine still imprisoned)
+    // 4: Trap book not recovered (which is the ending where Atrus does not link to Riven)
+    
+    uint16_t catherine_state = [gs unsignedShortForKey:@"pcage"];
+    uint16_t gehn_state = [gs unsignedShortForKey:@"agehn"];
+    uint16_t has_trap_book = [gs unsignedShortForKey:@"atrapbook"];
+    
+    uint16_t movie_mlst;
+    if (catherine_state == 2)
+        // catherine is free
+        movie_mlst = 8;
+    else if (gehn_state == 4)
+        // gehn is trapped
+        movie_mlst = 9;
+    else if (has_trap_book == 1)
+        movie_mlst = 10;
+    else
+        movie_mlst = 11;
+    
+    // stop all ambient sound
+    DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 0);
+    
+    // begin playback of the ending movie
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, movie_mlst);
+    
+    // sleep for the duration of the video track (the ending movies also include the credit music)
+    NSTimeInterval video_duration;
+    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)movie_mlst);
+    QTGetTimeInterval([movie videoDuration], &video_duration);
+    usleep((video_duration + 4.5) * 1E6);
+    
+    // start the credits
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@END OF THE WORLD", logPrefix);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@beginning credits", logPrefix);
 #endif
 }
 
