@@ -51,6 +51,7 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
 
 - (CGSize)currentSize;
 - (QTTime)duration;
+- (QTTime)videoDuration;
 
 - (BOOL)looping;
 - (void)setLooping:(BOOL)flag;

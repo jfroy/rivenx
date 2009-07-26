@@ -326,6 +326,11 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     return _original_duration;
 }
 
+- (QTTime)videoDuration {
+    QTTimeRange track_range = [[[[_movie tracksOfMediaType:QTMediaTypeVideo] objectAtIndex:0] attributeForKey:QTTrackRangeAttribute] QTTimeRangeValue];
+    return track_range.duration;
+}
+
 - (BOOL)looping {
     return _looping;
 }
