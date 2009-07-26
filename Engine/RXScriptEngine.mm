@@ -2161,7 +2161,7 @@ DEFINE_COMMAND(xtchotakesbook) {
 
     // WORKAROUND: silence the ambient sounds before the last introduction movie plays;
     // an activate SLST command comes after the movie and the movie itself contains ambient sounds
-    DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 1);
+    DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 0);
 }
 
 #pragma mark -
