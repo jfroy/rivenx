@@ -13,7 +13,7 @@
 
 #import <sys/cdefs.h>
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 #import <MHKKit/MHKKit.h>
 
 #import "Engine/RXStack.h"
@@ -26,15 +26,11 @@
 - (NSThread*)scriptThread;
 - (NSThread*)animationThread;
 
-- (MHKArchive*)extraBitmapsArchive;
 - (NSDictionary*)extraBitmapsDescriptor;
 
 - (RXStateCompositor*)stateCompositor;
 - (void*)audioRenderer;
-
-- (RXRenderState*)cyanMovieRenderState;
 - (RXRenderState*)cardRenderState;
-- (RXRenderState*)creditsRenderState;
 
 - (RXGameState*)gameState;
 

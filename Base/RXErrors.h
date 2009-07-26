@@ -23,6 +23,7 @@ enum {
     kRXErrArchiveUnavailable,
     kRXErrNoCurrentEdition,
     kRXErrQuickTimeTooOld,
+    kRXErrUnableToLoadExtrasArchive,
 };
 
 extern NSString* const RXErrorDomain;

@@ -23,6 +23,7 @@
     
     RXEdition* current_edition;
     NSMutableDictionary* active_stacks;
+    MHKArchive* _extras_archive;
     
     RXEditionManagerWindowController* _window_controller;
     BOOL _torn_down;
@@ -65,6 +66,7 @@
 
 - (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error;
 - (MHKArchive*)soundArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error;
+- (MHKArchive*)extrasArchive;
 
 - (RXStack*)activeStackWithKey:(NSString*)stackKey;
 - (RXStack*)loadStackWithKey:(NSString*)stackKey;

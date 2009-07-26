@@ -3619,7 +3619,7 @@ DEFINE_COMMAND(xt7800_setup) {
     
     NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
     [self _drawPictureWithID:bitmap_id
-                     archive:[g_world extraBitmapsArchive]
+                     archive:[[RXEditionManager sharedEditionManager] extrasArchive]
                  displayRect:display_rect
                 samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 }

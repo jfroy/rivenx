@@ -7,21 +7,13 @@
 //
 
 #import <mach/semaphore.h>
-
 #import <pthread.h>
-
 #import <Cocoa/Cocoa.h>
-#import <MHKKit/MHKKit.h>
 
-#import "RXWorldProtocol.h"
-
-#import "RXGameState.h"
-#import "RXEditionManager.h"
-
-#import "RXRendering.h"
-#import "RXRenderState.h"
-
-#import "RXStack.h"
+#import "Engine/RXWorldProtocol.h"
+#import "Engine/RXGameState.h"
+#import "Rendering/RXRendering.h"
+#import "States/RXRenderState.h"
 
 
 @interface RXWorld : NSObject <RXWorldProtocol> {
@@ -32,7 +24,6 @@
     NSURL* _worldUserBase;
     
     // extras data store
-    MHKArchive* _extraBitmapsArchive;
     NSDictionary* _extrasDescriptor;
     
     // cursors
@@ -51,8 +42,6 @@
     
     // rendering states
     RXRenderState* _cardState;
-    RXRenderState* _cyanMovieState;
-    RXRenderState* _creditsState;
     
     // game state
     RXGameState* _gameState;

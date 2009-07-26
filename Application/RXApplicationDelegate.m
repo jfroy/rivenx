@@ -12,6 +12,7 @@
 #import "Application/RXApplicationDelegate.h"
 
 #import "Engine/RXWorld.h"
+#import "Engine/RXEditionManager.h"
 #import "Engine/RXEditionManagerWindowController.h"
 
 #import "Rendering/Graphics/RXWorldView.h"

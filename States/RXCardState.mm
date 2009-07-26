@@ -359,7 +359,7 @@ init_failure:
 // inventory textures
     
     // get a reference to the extra bitmaps archive, and get the inventory texture descriptors
-    MHKArchive* extraBitmapsArchive = [g_world extraBitmapsArchive];
+    MHKArchive* extras_archive = [[RXEditionManager sharedEditionManager] extrasArchive];
     NSDictionary* journalDescriptors = [[g_world extraBitmapsDescriptor] objectForKey:@"Journals"];
     
     // get the texture descriptors for the inventory textures and compute the total byte size of those textures (packed BGRA format)
@@ -367,7 +367,7 @@ init_failure:
     NSDictionary* inventoryTextureDescriptors[3];
     uint32_t inventoryTotalTextureSize = 0;
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-        inventoryTextureDescriptors[inventory_i] = [[g_world extraBitmapsArchive]
+        inventoryTextureDescriptors[inventory_i] = [extras_archive
                                                     bitmapDescriptorWithID:[[journalDescriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue]
                                                     error:&error];
         if (!inventoryTextureDescriptors[inventory_i]) {
@@ -397,10 +397,11 @@ init_failure:
     // decompress the textures into the buffer
     // FIXME: we need actual error handling beyond just logging...
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-        if (![extraBitmapsArchive loadBitmapWithID:[[journalDescriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue]
-                                            buffer:inventoryBuffer
-                                            format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
-                                             error:&error]) {
+        if (![extras_archive loadBitmapWithID:[[journalDescriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue]
+                                       buffer:inventoryBuffer
+                                       format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
+                                        error:&error])
+        {
             RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to load inventory texture for item \"%@\": %@", RX_INVENTORY_KEYS[inventory_i], error);
             continue;
         }

@@ -19,6 +19,7 @@
 
 #import "Engine/RXWorld.h"
 #import "Engine/RXCursors.h"
+#import "Engine/RXEditionManager.h"
 
 #import "Utilities/GTMObjectSingleton.h"
 #import "Utilities/BZFSUtilities.h"
@@ -162,17 +163,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         // bootstrap the edition manager
         [RXEditionManager sharedEditionManager];
         
-        // load Extras.MHK archive
-        _extraBitmapsArchive = [[MHKArchive alloc] initWithURL:[NSURL URLWithString:@"Extras.MHK" relativeToURL:_worldBase] error:&error];
-        if (!_extraBitmapsArchive)
-            _extraBitmapsArchive = [[MHKArchive alloc] initWithURL:[NSURL URLWithString:@"Extras.MHK"] error:&error];
-        if (!_extraBitmapsArchive)
-            _extraBitmapsArchive = [[MHKArchive alloc] initWithPath:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"MHK"] error:&error];
-        if (!_extraBitmapsArchive)
-            @throw [NSException exceptionWithName:@"RXMissingResourceException"
-                                           reason:@"Unable to find Extras.MHK."
-                                         userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
-        
         // load Extras.plist
         _extrasDescriptor = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"plist"]];
         if (!_extrasDescriptor)
@@ -282,23 +272,23 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     if (RXGetWorldView())
         [[RXGetWorldView() window] setDelegate:nil];
     
-    // tear the world view down
-    [RXGetWorldView() tearDown];
-    
-    // stop audio rendering
-    if (_audioRenderer)
-        reinterpret_cast<RX::AudioRenderer*>(_audioRenderer)->Stop();
-    
     // rendering states
-    [_cardState release]; _cardState = nil;
-    [_creditsState release]; _creditsState = nil;
-    [_cyanMovieState release]; _cyanMovieState = nil;
+    [_cardState release];
+    _cardState = nil;    
     
     // state compositor
     [_stateCompositor release];
+    _stateCompositor = nil;
     
-    // audio renderer
-    delete reinterpret_cast<RX::AudioRenderer*>(_audioRenderer);
+    // tear the world view down
+    [RXGetWorldView() tearDown];
+    
+    // tear the audoo renderer down
+    if (_audioRenderer) {
+        reinterpret_cast<RX::AudioRenderer*>(_audioRenderer)->Stop();
+        delete reinterpret_cast<RX::AudioRenderer*>(_audioRenderer);
+        _audioRenderer = 0;
+    }
     
     // terminate threads
     if (_scriptThread)
@@ -310,25 +300,32 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     semaphore_destroy(mach_task_self(), _threadInitSemaphore);
     
     // extras archive
-    [_extrasDescriptor release]; _extrasDescriptor = nil;
-    [_extraBitmapsArchive release]; _extraBitmapsArchive = nil;
+    [_extrasDescriptor release];
+    _extrasDescriptor = nil;
     
     // cursors
     if (_cursors)
         NSFreeMapTable(_cursors);
+    _cursors = nil;
     
     // game state
-    [_gameState release]; _gameState = nil;
+    [_gameState release];
+    _gameState = nil;
     
     // edition manager
     [[RXEditionManager sharedEditionManager] tearDown];
     
     // world locations
-    [_worldBase release]; _worldBase = nil;
-    [_worldUserBase release]; _worldUserBase = nil;
+    [_worldBase release];
+    _worldBase = nil;
+    
+    [_worldUserBase release];
+    _worldUserBase = nil;
     
     // engine variables
-    [_engineVariables release]; _engineVariables = nil;
+    [_engineVariables release];
+    _engineVariables = nil;
+    
     pthread_mutex_destroy(&_engineVariablesMutex);
 }
 
@@ -379,10 +376,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     return _worldUserBase;
 }
 
-- (MHKArchive*)extraBitmapsArchive {
-    return _extraBitmapsArchive;
-}
-
 - (NSDictionary*)extraBitmapsDescriptor {
     return _extrasDescriptor;
 }
@@ -420,16 +413,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 #pragma mark -
 
-- (RXRenderState*)cyanMovieRenderState {
-    return _cyanMovieState;
-}
-
 - (RXRenderState*)cardRenderState {
     return _cardState;
-}
-
-- (RXRenderState*)creditsRenderState {
-    return _creditsState;
 }
 
 #pragma mark -

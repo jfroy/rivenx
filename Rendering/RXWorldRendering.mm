@@ -7,6 +7,7 @@
 //
 
 #import "Engine/RXWorld.h"
+#import "Engine/RXEditionManager.h"
 
 #import "Rendering/Audio/RXAudioRenderer.h"
 #import "Rendering/Graphics/RXDynamicPicture.h"
