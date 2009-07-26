@@ -85,11 +85,11 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
 
 - (uint32_t)_generateTelescopeCombination {
     // first digit of the combination is stored in the lsb (3 bits per number)
-    uint32_t combo = random() % 5;
-    combo = (combo << 3) | (random() % 5);
-    combo = (combo << 3) | (random() % 5);
-    combo = (combo << 3) | (random() % 5);
-    combo = (combo << 3) | (random() % 5);
+    uint32_t combo = (random() % 5) + 1;
+    combo = (combo << 3) | ((random() % 5) + 1);
+    combo = (combo << 3) | ((random() % 5) + 1);
+    combo = (combo << 3) | ((random() % 5) + 1);
+    combo = (combo << 3) | ((random() % 5) + 1);
     return combo;
 }
 
