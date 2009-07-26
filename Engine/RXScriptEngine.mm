@@ -4020,7 +4020,7 @@ static int64_t const left_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 
     // determine the playback selection for the viewer spin movie
     RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)1);
     QTTime duration = [movie duration];
-
+    
     QTTime start_time = QTMakeTime(left_viewer_spin_timevals[old_pos], duration.timeScale);
     QTTimeRange movie_range = QTMakeTimeRange(start_time,
                                               QTMakeTime(left_viewer_spin_timevals[new_pos] - start_time.timeValue, duration.timeScale));
@@ -4058,7 +4058,7 @@ static int64_t const right_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL,
     // determine the playback selection for the viewer spin movie
     RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)1);
     QTTime duration = [movie duration];
-
+    
     QTTime start_time = QTMakeTime(right_viewer_spin_timevals[old_pos], duration.timeScale);
     QTTimeRange movie_range = QTMakeTimeRange(start_time,
                                               QTMakeTime(right_viewer_spin_timevals[new_pos] - start_time.timeValue,
