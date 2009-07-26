@@ -35,14 +35,22 @@ void rx_print_exception_backtrace(NSException* e) {
         
         [args addObject:@"-p"];
         [args addObject:pid];
-        [args addObjectsFromArray:stack];
+        
+        NSEnumerator* stack_enum = [stack objectEnumerator];
+        id stack_p;
+        while ((stack_p = [stack_enum nextObject])) {
+            if ([stack_p isKindOfClass:[NSString class]])
+                [args addObject:stack_p];
+            else
+                [args addObject:[NSString stringWithFormat:@"0x%x", [stack_p unsignedLongValue]]];
+        }
         
         [ls setLaunchPath:@"/usr/bin/atos"];
         [ls setArguments:args];
         @try {
             [ls launch];
         } @catch (NSException* e) {
-            RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"FAILED TO LAUNCH atos TO SYMBOLIFICATE EXCEPTION BACKTRACE");
+            RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"FAILED TO LAUNCH atos TO SYMBOLIFICATE EXCEPTION BACKTRACE: %@", [e description]);
         }
         [ls release];
     } else
