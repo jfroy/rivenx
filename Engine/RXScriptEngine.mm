@@ -4764,6 +4764,29 @@ DEFINE_COMMAND(xbfreeytram) {
 #pragma mark -
 #pragma mark telescope
 
+static int64_t const telescope_raise_timevals[] = {0LL, 800LL, 1680LL, 2560LL, 3440LL, 4320LL};
+
+- (void)_configureTelescopeRaiseMovie {
+    RXGameState* gs = [g_world gameState];
+    
+    // get the current telescope position
+    uint32_t tele_position = [gs unsignedShortForKey:@"ttelescope"];
+    
+    // determine the playback selection for the telescope raise movie
+    uintptr_t movie_code = ([gs unsignedShortForKey:@"ttelecover"] == 1) ? 4 : 5;
+    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)movie_code);
+    QTTime duration = [movie duration];
+    
+    QTTime start_time = QTMakeTime(telescope_raise_timevals[tele_position - 1], duration.timeScale);
+    QTTimeRange movie_range = QTMakeTimeRange(start_time,
+                                              QTMakeTime(telescope_raise_timevals[tele_position] - start_time.timeValue + 7,
+                                                         duration.timeScale));
+    [movie setPlaybackSelection:movie_range];
+    
+    // update the telescope position
+    [gs setUnsigned32:tele_position + 1 forKey:@"ttelescope"];
+}
+
 DEFINE_COMMAND(xtexterior300_telescopeup) {
     RXGameState* gs = [g_world gameState];
     
@@ -4775,6 +4798,29 @@ DEFINE_COMMAND(xtexterior300_telescopeup) {
     uint16_t ttelevalve = [gs unsignedShortForKey:@"ttelevalve"];
     if (!ttelevalve)
         return;
+    
+    // if the telescope is fully raised, play the "can't move" sound effect
+    if ([gs unsignedShortForKey:@"ttelescope"] == 5) {
+        uint16_t blocked_sound = [[card parent] dataSoundIDForName:
+                                  [NSString stringWithFormat:@"%hu_tTelDnMore_1", [[card descriptor] ID]]];
+        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, blocked_sound, (uint16_t)kRXSoundGainDivisor, 1);
+        return;
+    }
+    
+    // configure telescope raise movie
+    [self performSelectorOnMainThread:@selector(_configureTelescopeRaiseMovie) withObject:nil waitUntilDone:YES];
+    
+    // play the telescope raise movie (there's 2 of them based on the state of the telescope fissure hatch)
+    uint16_t movie_code = ([gs unsignedShortForKey:@"ttelecover"] == 1) ? 4 : 5;
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, movie_code);
+    
+    // play the telescope move sound effect and block on it (it's longer thsn the movie)
+    uint16_t move_sound = [[card parent] dataSoundIDForName:
+                           [NSString stringWithFormat:@"%hu_tTeleMove_1", [[card descriptor] ID]]];
+    DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, move_sound, (uint16_t)kRXSoundGainDivisor, 1);
+    
+    // refresh the card (which is going to disable the telescope raise movie)
+    DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
 }
 
 DEFINE_COMMAND(xtexterior300_telescopedown) {
