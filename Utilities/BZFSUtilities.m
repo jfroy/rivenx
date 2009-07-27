@@ -80,14 +80,14 @@ NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_i
     while ((item = [enumerator nextObject])) {
         if (case_insensitive) {
             if ([item caseInsensitiveCompare:name] == NSOrderedSame)
-                break;
+                return [path stringByAppendingPathComponent:item];
         } else {
             if ([item compare:name] == NSOrderedSame)
-                break;
+                return [path stringByAppendingPathComponent:item];
         }
     }
     
-    return [path stringByAppendingPathComponent:item];
+    return nil;
 }
 
 NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error) {
