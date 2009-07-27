@@ -19,77 +19,6 @@
 
 GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
-- (void)_scanMountPath:(NSString*)mp {
-    NSAutoreleasePool* p = [NSAutoreleasePool new];
-    
-#if defined(DEBUG)
-    RXOLog(@"scanning %@", mp);
-#endif
-
-    // the goal of this method is to check if at least one edition is interested in the new mount path
-    NSEnumerator* e = [editions objectEnumerator];
-    RXEdition* ed;
-    while ((ed = [e nextObject])) {
-        if ([ed isValidMountPath:mp]) {
-            if (![_valid_mount_paths containsObject:mp]) {
-                OSSpinLockLock(&_valid_mount_paths_lock);
-                [_valid_mount_paths addObject:mp];
-                OSSpinLockUnlock(&_valid_mount_paths_lock);
-                
-                [self performSelectorOnMainThread:@selector(_handleNewValidMountPath:) withObject:mp waitUntilDone:NO];
-            }
-            return;
-        }
-    }
-    
-    [p release];
-}
-
-- (void)_handleNewValidMountPath:(NSString*)path {
-    // were we waiting for this disc?
-    if (_waiting_disc_name) {
-        if ([[path lastPathComponent] caseInsensitiveCompare:_waiting_disc_name] == NSOrderedSame) {
-            [_waiting_disc_name release];
-            _waiting_disc_name = nil;
-        } else
-            [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:self withObject:path];
-    }
-}
-
-- (void)_removableMediaMounted:(NSNotification*)notification {
-    NSString* path = [[notification userInfo] objectForKey:@"NSDevicePath"];
-    
-    // scan the new mount path in a thread since RXEdition -isValidMountPath can take a long time
-    [NSThread detachNewThreadSelector:@selector(_scanMountPath:) toTarget:self withObject:path];
-}
-
-- (void)_removableMediaUnmounted:(NSNotification*)notification {
-    NSString* path = [[notification userInfo] objectForKey:@"NSDevicePath"];
-#if defined(DEBUG)
-    RXOLog(@"removable media mounted at %@ is gone", path);
-#endif
-    
-    OSSpinLockLock(&_valid_mount_paths_lock);
-    [_valid_mount_paths removeObject:path];
-    OSSpinLockUnlock(&_valid_mount_paths_lock);
-}
-
-- (void)_initialMediaScan {
-    NSAutoreleasePool* p = [NSAutoreleasePool new];
-    
-    NSArray* mounted_media = [[NSWorkspace sharedWorkspace] mountedRemovableMedia];
-    
-    // search for Riven data stores
-    NSEnumerator* media_enum = [mounted_media objectEnumerator];
-    NSString* path;
-    while ((path = [media_enum nextObject]))
-        [self _scanMountPath:path];
-    
-    [p release];
-}
-
-#pragma mark -
-
 - (BOOL)_writeSettings {
     NSData* settings_data = [NSPropertyListSerialization dataFromPropertyList:_settings
                                                                        format:NSPropertyListBinaryFormat_v1_0
@@ -100,8 +29,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     NSString* settings_path = [[[[RXWorld sharedWorld] worldUserBase] path] stringByAppendingPathComponent:@"Edtion Manager.plist"];
     return [settings_data writeToFile:settings_path options:NSAtomicWrite error:NULL];
 }
-
-#pragma mark -
 
 - (id)init  {
     self = [super init];
@@ -115,6 +42,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     
     _valid_mount_paths_lock = OS_SPINLOCK_INIT;
     _valid_mount_paths = [NSMutableArray new];
+    _validated_mount_paths = [NSMutableArray new];
     _waiting_disc_name = nil;
     
     // find the Editions directory
@@ -181,9 +109,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 #endif
     }
     
-    // do an initial scan of mounted media on a background thread so we don't block the UI
-    [NSThread detachNewThreadSelector:@selector(_initialMediaScan) toTarget:self withObject:nil];
-    
     // register for removable media notifications
     NSNotificationCenter* ws_notification_center = [[NSWorkspace sharedWorkspace] notificationCenter];
     [ws_notification_center addObserver:self selector:@selector(_removableMediaMounted:) name:NSWorkspaceDidMountNotification object:nil];
@@ -218,8 +143,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     BOOL option_pressed = ((GetCurrentKeyModifiers() & (optionKey | rightOptionKey)) != 0) ? YES : NO;
     if (default_edition && !option_pressed)
         [self performSelectorOnMainThread:@selector(_makeEditionChoiceMemoryCurrent) withObject:nil waitUntilDone:NO];
-    else
+    else {
+        // show the edition manager
         [self showEditionManagerWindow];
+    }
     
     return self;
 }
@@ -239,6 +166,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     [self tearDown];
     
     [_valid_mount_paths release];
+    [_validated_mount_paths release];
     [_waiting_disc_name release];
     
     [_local_data_store release];
@@ -253,6 +181,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     
     [super dealloc];
 }
+
+#pragma mark -
+#pragma mark edition management
 
 - (NSArray*)editionProxies {
     return [[edition_proxies retain] autorelease];
@@ -326,6 +257,12 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     // change the current edition ivar
     current_edition = edition;
     
+    // remove all mount paths from the validated and valid lists because they depend on the current edition
+    OSSpinLockLock(&_valid_mount_paths_lock);
+    [_validated_mount_paths removeAllObjects];
+    [_valid_mount_paths removeAllObjects];
+    OSSpinLockUnlock(&_valid_mount_paths_lock);
+    
     // try to load the extras archive for the edition
     if (![self extrasArchive]) {
         if (error) {
@@ -351,31 +288,77 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 - (void)_makeEditionChoiceMemoryCurrent {
     // NOTE: WILL RUN ON THE MAIN THREAD
     NSError* error;
-    
-    RXEdition* default_edition = [self defaultEdition];
-    if (!default_edition)
-        [self showEditionManagerWindow];
-    
-    if (![self makeEditionCurrent:default_edition rememberChoice:YES error:&error]) {
+    if (![self makeEditionCurrent:[self defaultEdition] rememberChoice:YES error:&error]) {
         [self resetDefaultEdition];
         [NSApp presentError:error];
     }
 }
 
 #pragma mark -
+#pragma mark mount paths
+
+- (void)_clearMountPath:(NSString*)mount_path {
+    OSSpinLockLock(&_valid_mount_paths_lock);
+    [_validated_mount_paths removeObject:mount_path];
+    [_valid_mount_paths removeObject:mount_path];
+    OSSpinLockUnlock(&_valid_mount_paths_lock);
+}
+
+- (BOOL)_validateMountPath:(NSString*)mount_path {
+    BOOL valid = NO;
+    
+    NSAutoreleasePool* p = [NSAutoreleasePool new];
+    OSSpinLockLock(&_valid_mount_paths_lock);
+    
+    if (![_validated_mount_paths containsObject:mount_path]) {
+        [_validated_mount_paths addObject:mount_path];
+        
+        if ([current_edition isValidMountPath:mount_path]) {
+            [_valid_mount_paths addObject:mount_path];
+            valid = YES;
+        }
+    } else
+        valid = [_valid_mount_paths containsObject:mount_path];
+    
+    OSSpinLockUnlock(&_valid_mount_paths_lock);
+    [p release];
+    
+    return valid;
+}
+
+- (void)_checkIfWaitedForDisc:(NSString*)mount_path {
+    if ([[mount_path lastPathComponent] caseInsensitiveCompare:_waiting_disc_name] == NSOrderedSame) {
+        [_waiting_disc_name release];
+        _waiting_disc_name = nil;
+    } else
+        [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:self withObject:mount_path];
+}
+
+- (void)_removableMediaMounted:(NSNotification*)notification {
+    NSString* path = [[notification userInfo] objectForKey:@"NSDevicePath"];
+    
+    // scan the new mount path in a thread since RXEdition -isValidMountPath can take a long time
+    if (current_edition)
+        [NSThread detachNewThreadSelector:@selector(_validateMountPath:) toTarget:self withObject:path];
+    
+    // check if we are waiting for that disc
+    if (_waiting_disc_name)
+        [self _checkIfWaitedForDisc:path];
+}
+
+- (void)_removableMediaUnmounted:(NSNotification*)notification {
+    NSString* path = [[notification userInfo] objectForKey:@"NSDevicePath"];
+#if defined(DEBUG)
+    RXOLog(@"removable media mounted at %@ is gone", path);
+#endif
+    
+    [self _clearMountPath:path];
+}
 
 - (void)_actuallyWaitForDisc:(NSString*)disc inModalSession:(NSModalSession)session {
 #if defined(DEBUG)
     RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"waiting for disc %@", disc);
 #endif
-    
-    // as a convenience, try to eject the last known valid mount path we know about
-    // do this on a background thread because it can take a while
-    OSSpinLockLock(&_valid_mount_paths_lock);
-    NSString* last_valid_mount_path = [_valid_mount_paths lastObject];
-    OSSpinLockUnlock(&_valid_mount_paths_lock);
-    if (last_valid_mount_path)
-        [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:self withObject:last_valid_mount_path];
     
     _waiting_disc_name = [disc retain];
     while (_waiting_disc_name) {
@@ -389,17 +372,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     }
 }
 
-- (NSString*)mountPathForDisc:(NSString*)disc {
-    return [self mountPathForDisc:disc waitingInModalSession:NULL];
-}
-
 - (NSString*)mountPathForDisc:(NSString*)disc waitingInModalSession:(NSModalSession)session {
-    OSSpinLockLock(&_valid_mount_paths_lock);
-    NSEnumerator* mout_path_enum = [[NSArray arrayWithArray:_valid_mount_paths] objectEnumerator];
-    OSSpinLockUnlock(&_valid_mount_paths_lock);
-    
+    NSEnumerator* mount_path_enum = [[[NSWorkspace sharedWorkspace] mountedRemovableMedia] objectEnumerator];
     NSString* mount_path;
-    while ((mount_path = [mout_path_enum nextObject])) {
+    while ((mount_path = [mount_path_enum nextObject])) {
         if ([[mount_path lastPathComponent] caseInsensitiveCompare:disc] == NSOrderedSame)
             return mount_path;
     }
@@ -413,30 +389,29 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     return mount_path;
 }
 
-- (void)ejectMountPath:(NSString*)mountPath {
+- (void)ejectMountPath:(NSString*)mount_path {
     NSAutoreleasePool* p = [NSAutoreleasePool new];
     
-    // don't wait for the unmount to occur to remove the disc from the known valid mount paths
-    OSSpinLockLock(&_valid_mount_paths_lock);
-    [_valid_mount_paths removeObject:mountPath];
-    OSSpinLockUnlock(&_valid_mount_paths_lock);
+    // don't wait for the unmount to occur to remove the disc from the lists of mount paths
+    [self _clearMountPath:mount_path];
     
     // don't ask questions, someone doesn't like it
-    [[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:mountPath];
+    [[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:mount_path];
     
     [p release];
 }
 
-- (RXSimpleCardDescriptor*)lookupCardWithKey:(NSString*)lookup_key {
-    return [[current_edition valueForKey:@"cardLUT"] objectForKey:lookup_key];
-}
+#pragma mark -
+#pragma mark archive lookup
 
-- (uint16_t)lookupBitmapWithKey:(NSString*)lookup_key {
-    return [[[current_edition valueForKey:@"bitmapLUT"] objectForKey:lookup_key] unsignedShortValue];
-}
-
-- (uint16_t)lookupSoundWithKey:(NSString*)lookup_key {
-    return [[[current_edition valueForKey:@"soundLUT"] objectForKey:lookup_key] unsignedShortValue];
+- (NSString*)_validMountPathForDisc:(NSString*)disc {
+    NSString* mount_path = [self mountPathForDisc:disc waitingInModalSession:nil];
+    if (!mount_path)
+        return nil;
+    
+    if ([self _validateMountPath:mount_path])
+        return mount_path;
+    return nil;
 }
 
 - (MHKArchive*)_archiveWithFilename:(NSString*)filename directoryKey:(NSString*)dir_key stackKey:(NSString*)stack_key error:(NSError**)error {
@@ -467,6 +442,18 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
             return archive;
     }
     
+    // if the stack key is the special value "EXTRAS", check if the edition know where to look on the optical media for the Extras archive
+    if ([stack_key isEqualToString:@"EXTRAS"]) {
+        NSString* disc = [[current_edition valueForKey:@"discs"] objectAtIndex:0];
+        NSString* mount_path = [self _validMountPathForDisc:disc];
+        archive_path = [current_edition searchForExtrasArchiveInMountPath:mount_path];
+        if (archive_path) {
+            archive = [[[MHKArchive alloc] initWithPath:archive_path error:error] autorelease];
+            if (archive)
+                return archive;
+        }
+    }
+    
     // then look inside Riven X
     archive_path = [[NSBundle mainBundle] pathForResource:[filename stringByDeletingPathExtension] ofType:[filename pathExtension]];
     if (BZFSFileExists(archive_path)) {
@@ -476,18 +463,18 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     }
     
     // if we have no stack key or no directory key, we can't go any further
-    if (!stack_key || ! dir_key)
+    if (!stack_key || !dir_key)
         return nil;
     
     // then look on optical media
     NSNumber* disc_index = [current_edition valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@.Disc", stack_key]];
     NSString* disc = [[current_edition valueForKey:@"discs"] objectAtIndex:(disc_index) ? [disc_index unsignedIntValue] : 0];
-    NSString* mount_path = [self mountPathForDisc:disc];
+    NSString* mount_path = [self _validMountPathForDisc:disc];
     
     if (!mount_path) {
         ReturnValueWithError(nil, 
             RXErrorDomain, kRXErrArchiveUnavailable,
-            ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data file \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
+            ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data archive \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
             error);
     }
     
@@ -575,13 +562,16 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
 - (MHKArchive*)extrasArchive {
     if (!_extras_archive) {
-        _extras_archive = [[self _archiveWithFilename:@"Extras.MHK" directoryKey:nil stackKey:nil error:NULL] retain];
+        _extras_archive = [[self _archiveWithFilename:@"Extras.MHK" directoryKey:nil stackKey:@"EXTRAS" error:NULL] retain];
 #if defined(DEBUG)
-        RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"loaded Extras archive from %@", [_extras_archive url]);
+        RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"loaded Extras archive from %@", [[_extras_archive url] path]);
 #endif
     }
     return [[_extras_archive retain] autorelease];
 }
+
+#pragma mark -
+#pragma mark stack management
 
 - (RXStack*)activeStackWithKey:(NSString*)stack_key {
     return [active_stacks objectForKey:stack_key];
@@ -636,6 +626,21 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     
     // return the stack
     return stack;
+}
+
+#pragma mark -
+#pragma mark resource lookup
+
+- (RXSimpleCardDescriptor*)lookupCardWithKey:(NSString*)lookup_key {
+    return [[current_edition valueForKey:@"cardLUT"] objectForKey:lookup_key];
+}
+
+- (uint16_t)lookupBitmapWithKey:(NSString*)lookup_key {
+    return [[[current_edition valueForKey:@"bitmapLUT"] objectForKey:lookup_key] unsignedShortValue];
+}
+
+- (uint16_t)lookupSoundWithKey:(NSString*)lookup_key {
+    return [[[current_edition valueForKey:@"soundLUT"] objectForKey:lookup_key] unsignedShortValue];
 }
 
 @end

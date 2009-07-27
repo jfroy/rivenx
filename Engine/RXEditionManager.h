@@ -30,6 +30,7 @@
     
     OSSpinLock _valid_mount_paths_lock;
     NSMutableArray* _valid_mount_paths;
+    NSMutableArray* _validated_mount_paths;
     NSString* _waiting_disc_name;
     
     NSString* _local_data_store;
@@ -53,7 +54,6 @@
 - (void)setDefaultEdition:(RXEdition*)edition;
 - (void)resetDefaultEdition;
 
-- (NSString*)mountPathForDisc:(NSString*)disc;
 - (NSString*)mountPathForDisc:(NSString*)disc waitingInModalSession:(NSModalSession)session;
 
 - (void)ejectMountPath:(NSString*)mountPath;
