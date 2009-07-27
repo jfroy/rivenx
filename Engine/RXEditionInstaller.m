@@ -200,6 +200,7 @@
         // step 4.1: wait for the right disc
         NSString* disc = [discs objectAtIndex:discIndex];
         NSString* mount_path = nil;
+        NSString* extras_path = nil;
         
         // we will have 0 bytes to copy until we find the right disc
         while (_totalBytesToCopy == 0) {
@@ -294,6 +295,15 @@
                     if (!mount_path)
                         break;
                 }
+            }
+            
+            // try to find Extras.MHK
+            extras_path = [edition searchForExtrasArchiveInMountPath:mount_path];
+            if (extras_path) {
+                [files_to_copy addObject:extras_path];
+                NSDictionary* attributes = BZFSAttributesOfItemAtPath(extras_path, NULL);
+                if (attributes)
+                    _totalBytesToCopy += [attributes fileSize];
             }
         }
         
