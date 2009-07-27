@@ -110,6 +110,7 @@
             @throw [NSException exceptionWithName:@"RXCorruptedEditionUserDataException"
                                            reason:[NSString stringWithFormat:@"Your data for the %@ is corrupted.", name]
                                          userInfo:[NSDictionary dictionaryWithObject:error forKey:NSUnderlyingErrorKey]];
+        
         _userData = [[NSPropertyListSerialization propertyListFromData:userRawData
                                                       mutabilityOption:NSPropertyListMutableContainers
                                                                 format:NULL
@@ -265,7 +266,7 @@
 }
 
 - (NSMutableDictionary*)userData {
-    return _userData;
+    return [[_userData retain] autorelease];
 }
 
 - (BOOL)writeUserData:(NSError**)error {
@@ -291,14 +292,30 @@
     return !([self mustBeInstalled] && ![self isInstalled]);
 }
 
+- (NSString*)searchForExtrasArchiveInMountPath:(NSString*)path {    
+    NSArray* content = BZFSContentsOfDirectory(path, NULL);
+    NSEnumerator* content_enum = [content objectEnumerator];
+    NSString* item;
+    while ((item = [content_enum nextObject])) {
+        NSString* item_path = [path stringByAppendingPathComponent:item];
+        
+        NSString* extras_path = BZFSSearchDirectoryForItem(item_path, @"Extras.MHK", YES, NULL);
+        if (extras_path)
+            return extras_path;
+    }
+    
+    return nil;
+}
+
 - (BOOL)isValidMountPath:(NSString*)path {
     NSString* path_disc = [[path lastPathComponent] lowercaseString];
     
     NSEnumerator* enumerator = [discs objectEnumerator];
     NSString* disc;
-    while ((disc = [enumerator nextObject]))
-        if ([path_disc caseInsensitiveCompare:path_disc] == NSOrderedSame)
+    while ((disc = [enumerator nextObject])) {
+        if ([path_disc caseInsensitiveCompare:disc] == NSOrderedSame)
             break;
+    }
     if (!disc)
         return NO;
     

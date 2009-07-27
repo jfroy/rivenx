@@ -54,6 +54,7 @@
 
 - (BOOL)canBecomeCurrent;
 
+- (NSString*)searchForExtrasArchiveInMountPath:(NSString*)path;
 - (BOOL)isValidMountPath:(NSString*)path;
 
 @end
