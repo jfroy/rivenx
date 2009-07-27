@@ -26,42 +26,57 @@ static NSString* _kRXTransitionDirectionNames[4] = {
 }
 
 - (id)initWithCode:(uint16_t)code region:(NSRect)rect {
-    self = [super init];
-    if (!self)
-        return nil;
+    RXTransitionType t;
+    RXTransitionDirection d = 0;
+    RXTransitionOptions o = 0;
     
     if (code <= 15) {
-        type = RXTransitionSlide;
-        direction = code & 0x3;
-        pushNew = (code & 0x4) ? YES : NO;
-        pushOld = (code & 0x8) ? YES : NO;
+        t = RXTransitionSlide;
+        d = code & 0x3;
+        o = ((code & 0x4) ? RXTransitionPushNew : 0) | ((code & 0x8) ? RXTransitionPushOld : 0);
     } else if (code == 16 || code == 17)
-        type = RXTransitionDissolve;
+        t = RXTransitionDissolve;
     else {
         [self release];
         @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"INVALID TRANSITION CODE" userInfo:nil];
     }
     
-    region = rect;
-    
-    startTime = 0;
-    duration = kRXTransitionDuration;
-    
-    return self;
+    return [self initWithType:t direction:d options:o region:rect];
 }
 
-- (id)initWithType:(RXTransitionType)transitionType direction:(RXTransitionDirection)transitionDirection region:(NSRect)rect {
+- (id)initWithType:(RXTransitionType)t direction:(RXTransitionDirection)d region:(NSRect)rect {
+    return [self initWithType:t direction:d options:0 region:rect];
+}
+
+- (id)initWithType:(RXTransitionType)t direction:(RXTransitionDirection)d {
+    return [self initWithType:t direction:d options:0 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+}
+
+- (id)initWithType:(RXTransitionType)t direction:(RXTransitionDirection)d options:(RXTransitionOptions)options {
+    return [self initWithType:t direction:d options:options region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+}
+
+- (id)initWithType:(RXTransitionType)t direction:(RXTransitionDirection)d options:(RXTransitionOptions)options region:(NSRect)rect {
     self = [super init];
     if (!self)
         return nil;
     
-    type = transitionType;
-    direction = transitionDirection;
+    type = t;
+    direction = d;
+    
+    pushNew = (options & RXTransitionPushNew) ? YES : NO;
+    pushOld = (options & RXTransitionPushOld) ? YES : NO;
     
     region = rect;
     
     startTime = 0;
     duration = kRXTransitionDuration;
+    
+    // by default, linear for dissolves, square sine for slides
+    if (type == RXTransitionDissolve)
+        curve = RXTransitionCurveLinear;
+    else
+        curve = RXTransitionCurveSquareSine;
     
     return self;
 }
@@ -99,11 +114,15 @@ static NSString* _kRXTransitionDirectionNames[4] = {
 }
 
 - (float)applyAnimationCurve:(float)t {
-    if (type == RXTransitionDissolve)
-        return t; // linear for dissolves
-    else {
-        double sine = sin(M_PI_2 * t);
-        return sine * sine;
+    switch (curve) {
+        case RXTransitionCurveSquareSine:
+        {
+            double sine = sin(M_PI_2 * t);
+            return sine * sine;
+        }
+        case RXTransitionCurveLinear:
+        default:
+            return t;
     }
 }
 
