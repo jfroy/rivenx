@@ -1599,6 +1599,114 @@ init_failure:
     }
 }
 
+- (void)_renderCredits:(const CVTimeStamp*)output_time inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
+    NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+    
+    if (!_credit_texture) {
+        MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive];
+        _credit_texture_buffer = malloc(360 * 784 * 4);
+        
+        [archive loadBitmapWithID:304
+                           buffer:_credit_texture_buffer
+                           format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
+                            error:NULL];
+        [archive loadBitmapWithID:305
+                           buffer:BUFFER_OFFSET(_credit_texture_buffer, 360 * 392 * 4)
+                           format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
+                            error:NULL];
+        
+        glGenTextures(1, &_credit_texture);
+        
+        glActiveTexture(GL_TEXTURE0); glReportError();
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _credit_texture); glReportError();
+        
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glReportError();
+        
+        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                     0,
+                     GL_RGBA8,
+                     360,
+                     784,
+                     0,
+                     GL_BGRA,
+                     GL_UNSIGNED_INT_8_8_8_8_REV,
+                     _credit_texture_buffer); glReportError();
+    } else {
+        glActiveTexture(GL_TEXTURE0); glReportError();
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _credit_texture); glReportError();
+    }
+    
+    [gl_state bindVertexArrayObject:0]; glReportError();
+    glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
+    
+    CVTimeStamp out_time = *output_time;
+    if (!(output_time->flags & kCVTimeStampHostTimeValid)) {
+        memset(&out_time, 0, sizeof(CVTimeStamp));
+        out_time.flags = kCVTimeStampHostTimeValid;
+        CVDisplayLinkTranslateTime([RXGetWorldView() displayLink], output_time, &out_time);
+    }
+    
+    float t = RXTimingTimestampDelta(out_time.hostTime, _credits_start_time) / 30.0;
+    if (_credit_state > 0)
+        t += 0.5f;
+    if (t < 0.0f)
+        t = 0.0f;
+    else if (t > 1.0f) {
+        _credits_start_time = out_time.hostTime;
+        t = 0.5f;
+        
+        memcpy(_credit_texture_buffer, BUFFER_OFFSET(_credit_texture_buffer, 360 * 392 * 4), 360 * 392 * 4);
+        
+        MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive];
+        [archive loadBitmapWithID:306 + _credit_state
+                           buffer:BUFFER_OFFSET(_credit_texture_buffer, 360 * 392 * 4)
+                           format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
+                            error:NULL];
+        
+        glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                     0,
+                     0,
+                     0,
+                     360,
+                     784,
+                     GL_BGRA,
+                     GL_UNSIGNED_INT_8_8_8_8_REV,
+                     _credit_texture_buffer); glReportError();
+        
+        _credit_state++;
+    }
+    
+    float positions[] = {
+        124.f, kRXCardViewportOriginOffset.y + -784.f + t * 784.f,
+        124.f + 360.f, kRXCardViewportOriginOffset.y + -784.f + t * 784.f,
+        124.f, kRXCardViewportOriginOffset.y + t * 784.f,
+        124.f + 360.f, kRXCardViewportOriginOffset.y + t * 784.f};
+    float tex_coords[] = {
+        0.f, 784.f,
+        360.f, 784.f,
+        0.f, 0.f,
+        360.f, 0.f};
+    
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(kRXCardViewportOriginOffset.x, kRXCardViewportOriginOffset.y, kRXCardViewportSize.width, kRXCardViewportSize.height);
+    
+    glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 0, positions); glReportError();
+    
+    glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 0, tex_coords); glReportError();
+    
+    glUseProgram(_card_program); glReportError();
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
+    
+    glDisable(GL_SCISSOR_TEST);
+}
+
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
     OSSpinLockLock(&_render_lock);
@@ -1610,6 +1718,19 @@ init_failure:
     // of autoreleased enumerators causing objects that should be deallocated on
     // the main thread not to be
     NSAutoreleasePool* p = [NSAutoreleasePool new];
+    
+    // HACK: always rendering credits
+    if (!_render_credits) {
+        _render_credits = YES;
+        _credit_state = 0;
+        _credits_start_time = outputTime->hostTime;
+    }
+    
+    // end credits mode
+    if (_render_credits) {
+        [self _renderCredits:outputTime inContext:cgl_ctx framebuffer:fbo];
+        goto exit_render;
+    }
     
     // do nothing if there is no front card
     if (!_front_render_state->card)

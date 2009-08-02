@@ -123,6 +123,13 @@ struct rx_transition_program {
     
     uint32_t _inventoryItemCount;
     float _inventoryAlphaFactor;
+    
+    // credits
+    BOOL _render_credits;
+    int _credit_state;
+    uint64_t _credits_start_time;
+    void* _credit_texture_buffer;
+    GLuint _credit_texture;
 }
 
 - (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;
