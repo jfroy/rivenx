@@ -508,16 +508,17 @@ init_failure:
 // shaders
     
     // card shader
-    _single_rect_texture_program = [[GLShaderProgramManager sharedManager] standardProgramWithFragmentShaderName:@"card"
-                                                                                                    extraSources:nil
-                                                                                                   epilogueIndex:0
-                                                                                                         context:cgl_ctx
-                                                                                                           error:&error];
-    if (!_single_rect_texture_program)
+    _card_program = [[GLShaderProgramManager sharedManager]
+                     standardProgramWithFragmentShaderName:@"card"
+                     extraSources:nil
+                     epilogueIndex:0
+                     context:cgl_ctx
+                     error:&error];
+    if (!_card_program)
         [self _reportShaderProgramError:error];
     
-    GLint destinationCardTextureUniform = glGetUniformLocation(_single_rect_texture_program, "destination_card"); glReportError();
-    glUseProgram(_single_rect_texture_program); glReportError();
+    GLint destinationCardTextureUniform = glGetUniformLocation(_card_program, "destination_card"); glReportError();
+    glUseProgram(_card_program); glReportError();
     glUniform1i(destinationCardTextureUniform, 0); glReportError();
     
     // transition shaders
@@ -1162,9 +1163,9 @@ init_failure:
         [self hideMouseCursor];
     
     // if a transition is ongoing, wait until its done
-    mach_timespec_t waitTime = {0, kRXTransitionDuration * 1e9};
+    mach_timespec_t wait_time = {0, kRXTransitionDuration * 1e9};
     while (_front_render_state->transition != nil)
-        semaphore_timedwait(_transitionSemaphore, waitTime);
+        semaphore_timedwait(_transitionSemaphore, wait_time);
     
     // dequeue the top transition
     if ([_transitionQueue count] > 0 && !_disable_transition_dequeueing) {
@@ -1403,9 +1404,6 @@ init_failure:
     // read the front render state pointer once and alias it for this method
     struct rx_card_state_render_state* r = _front_render_state;
     
-    // alias the global render context state object
-//  NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
-    
     // render object enumeration variables
     NSEnumerator* renderListEnumerator;
     id<RXRenderingProtocol> renderObject;
@@ -1414,7 +1412,7 @@ init_failure:
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
     
     // use the rect texture program
-    glUseProgram(_single_rect_texture_program); glReportError();
+    glUseProgram(_card_program); glReportError();
     
     // flip the y axis
     glMatrixMode(GL_MODELVIEW);
@@ -1677,7 +1675,7 @@ init_failure:
             [self showMouseCursor];
             
             // use the regular rect texture program
-            glUseProgram(_single_rect_texture_program); glReportError();
+            glUseProgram(_card_program); glReportError();
         } else {
             // determine which transition shading program to use based on the transition type
             struct rx_transition_program* transition = NULL;
@@ -1707,7 +1705,7 @@ init_failure:
             glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _front_render_state->transition->sourceTexture); glReportError();
         }
     } else {
-        glUseProgram(_single_rect_texture_program); glReportError();
+        glUseProgram(_card_program); glReportError();
     }
     
     // bind the dynamic card content texture to unit 0
@@ -1731,7 +1729,7 @@ init_failure:
             glEnable(GL_BLEND);
         }
         
-        glUseProgram(_single_rect_texture_program); glReportError();
+        glUseProgram(_card_program); glReportError();
         for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
             glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[inventory_i]); glReportError();
             glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inventory_i, 4); glReportError();

@@ -107,8 +107,7 @@ struct rx_transition_program {
     void* _water_readback_buffer;
     BOOL _water_sfx_disabled;
     
-    GLuint _waterProgram;
-    GLuint _single_rect_texture_program;
+    GLuint _card_program;
     
     GLuint _debugRenderVAO;
     
