@@ -1138,7 +1138,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 0);
     
     // begin playback of the endgame movie
-    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, movie_mlst);
+//    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, movie_mlst);
     NSTimeInterval movie_start_ts = CFAbsoluteTimeGetCurrent();
     
     // get the endgame movie object
@@ -1152,7 +1152,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     QTGetTimeInterval([movie videoDuration], &video_duration);
     
     // sleep for the duration of the video track (the ending movies also include the credit music)    
-    usleep((video_duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts)) * 1E6);
+//    usleep((video_duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts)) * 1E6);
     
     // start the credits
 #if defined(DEBUG)
@@ -1207,7 +1207,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // scroll from 304 to 320 (17 pictures)
     for (int i = 0; i < 17; i++) {
         transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionTop options:RXTransitionPushNew | RXTransitionPushOld];
-        transition->duration = 10.0;
+        transition->duration = 15.0;
         transition->curve = RXTransitionCurveLinear;
         [controller queueTransition:transition];
         [transition release];
