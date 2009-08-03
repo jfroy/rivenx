@@ -1678,7 +1678,7 @@ init_failure:
     else if (_credits_state == 2 || _credits_state == 5)
         duration = 4.;
     else
-        duration = 30.;
+        duration = 20.;
     
     // compute the time interpolation parameter for the current credit state
     float t = RXTimingTimestampDelta(out_time.hostTime, _credits_start_time) / duration;

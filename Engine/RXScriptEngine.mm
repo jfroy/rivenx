@@ -1148,8 +1148,8 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     NSTimeInterval video_duration;
     QTGetTimeInterval([movie videoDuration], &video_duration);
     
-    // sleep for the duration of the video track (the ending movies also include the credit music)    
-    usleep((video_duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts)) * 1E6);
+    // sleep for the duration of the video track (the ending movies also include the credit music) plus some offset
+    usleep((video_duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts) + 8.) * 1E6);
     
     // start the credits
 #if defined(DEBUG)
