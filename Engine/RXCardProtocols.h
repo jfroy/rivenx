@@ -38,6 +38,8 @@
 - (BOOL)isMovieEnabled:(RXMovie*)movie;
 
 - (void)update;
+
+- (void)beginEndCredits;
 @end
 
 

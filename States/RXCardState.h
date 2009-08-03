@@ -108,6 +108,7 @@ struct rx_transition_program {
     BOOL _water_sfx_disabled;
     
     GLuint _card_program;
+    GLint _module_color_uniform;
     
     GLuint _debugRenderVAO;
     
@@ -126,10 +127,10 @@ struct rx_transition_program {
     
     // credits
     BOOL _render_credits;
-    int _credit_state;
+    int _credits_state;
     uint64_t _credits_start_time;
-    void* _credit_texture_buffer;
-    GLuint _credit_texture;
+    void* _credits_texture_buffer;
+    GLuint _credits_texture;
 }
 
 - (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait;

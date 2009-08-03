@@ -441,7 +441,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [logPrefix appendString:@"    "];
 #endif
     
-    // this is a bit of a hack, but disable screen updates while running screen update programs
+    // disable screen updates while running screen update programs
     _screen_update_disable_counter++;
     
     NSArray* programs = [[card scripts] objectForKey:RXScreenUpdateScriptKey];
@@ -1131,14 +1131,11 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #pragma mark endgame
 
 - (void)_endgameWithMLST:(uint16_t)movie_mlst {
-    // disable all screen update programs because we're taking over the active card
-    _disable_screen_update_programs = YES;
-    
     // stop all ambient sound
     DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 0);
     
     // begin playback of the endgame movie
-//    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, movie_mlst);
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, movie_mlst);
     NSTimeInterval movie_start_ts = CFAbsoluteTimeGetCurrent();
     
     // get the endgame movie object
@@ -1152,7 +1149,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     QTGetTimeInterval([movie videoDuration], &video_duration);
     
     // sleep for the duration of the video track (the ending movies also include the credit music)    
-//    usleep((video_duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts)) * 1E6);
+    usleep((video_duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts)) * 1E6);
     
     // start the credits
 #if defined(DEBUG)
@@ -1160,68 +1157,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@beginning credits", logPrefix);
 #endif
     
-    RXTransition* transition;
-    MHKArchive* extras_archive = [[RXEditionManager sharedEditionManager] extrasArchive];
-    NSRect display_rect = NSMakeRect(124, 0, 360, 392);
-    NSRect sampling_rect = NSMakeRect(0, 0, 0, 0);
-    
-    // HACK 
-    [self _drawPictureWithID:401 archive:extras_archive displayRect:NSMakeRect(0, 0, 608, 392) samplingRect:sampling_rect];
-    
-    // fade in 302
-    transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0];
-    transition->duration = 1.0;
-    transition->curve = RXTransitionCurveLinear;
-    [controller queueTransition:transition];
-    [transition release];
-    [self _drawPictureWithID:302 archive:extras_archive displayRect:display_rect samplingRect:sampling_rect];
-    
-    sleep(4);
-    
-    // fade to black
-    transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0];
-    transition->duration = 1.0;
-    transition->curve = RXTransitionCurveLinear;
-    [controller queueTransition:transition];
-    [transition release];
-    [self _drawPictureWithID:401 archive:extras_archive displayRect:NSMakeRect(0, 0, 608, 392) samplingRect:sampling_rect];
-    
-    // fade in 303
-    transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0];
-    transition->duration = 1.0;
-    transition->curve = RXTransitionCurveLinear;
-    [controller queueTransition:transition];
-    [transition release];
-    [self _drawPictureWithID:303 archive:extras_archive displayRect:display_rect samplingRect:sampling_rect];
-    
-    sleep(4);
-    
-    // fade to black
-    transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0];
-    transition->duration = 1.0;
-    transition->curve = RXTransitionCurveLinear;
-    [controller queueTransition:transition];
-    [transition release];
-    [self _drawPictureWithID:401 archive:extras_archive displayRect:NSMakeRect(0, 0, 608, 392) samplingRect:sampling_rect];
-    
-    // scroll from 304 to 320 (17 pictures)
-    for (int i = 0; i < 17; i++) {
-        transition = [[RXTransition alloc] initWithType:RXTransitionSlide direction:RXTransitionTop options:RXTransitionPushNew | RXTransitionPushOld];
-        transition->duration = 15.0;
-        transition->curve = RXTransitionCurveLinear;
-        [controller queueTransition:transition];
-        [transition release];
-        
-        [self _drawPictureWithID:304 + i archive:extras_archive displayRect:display_rect samplingRect:sampling_rect];
-    }
-    
-    // wait until the movie ends
-    NSTimeInterval movie_remaining = duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts);
-    if (movie_remaining > 0.0)
-        usleep(movie_remaining * 1E6);
-    
-    // re-enable screen update programs
-    _disable_screen_update_programs = NO;
+    [controller beginEndCredits];
 }
 
 #pragma mark -

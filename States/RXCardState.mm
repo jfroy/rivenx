@@ -246,6 +246,9 @@ init_failure:
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
+    if (_credits_texture_buffer)
+        free(_credits_texture_buffer);
+    
     if (_transitionSemaphore)
         semaphore_destroy(mach_task_self(), _transitionSemaphore);
     if (_audioTaskThreadExitSemaphore)
@@ -517,9 +520,13 @@ init_failure:
     if (!_card_program)
         [self _reportShaderProgramError:error];
     
-    GLint destinationCardTextureUniform = glGetUniformLocation(_card_program, "destination_card"); glReportError();
     glUseProgram(_card_program); glReportError();
-    glUniform1i(destinationCardTextureUniform, 0); glReportError();
+    
+    GLint uniform_loc = glGetUniformLocation(_card_program, "destination_card"); glReportError();
+    glUniform1i(uniform_loc, 0); glReportError();
+    
+    _module_color_uniform = glGetUniformLocation(_card_program, "modulate_color"); glReportError();
+    glUniform4f(_module_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
     
     // transition shaders
     _dissolve = [self _loadTransitionShaderWithName:@"transition_crossfade" direction:0 context:cgl_ctx];
@@ -1246,6 +1253,15 @@ init_failure:
     }
 }
 
+- (void)beginEndCredits {
+    OSSpinLockLock(&_render_lock);
+    _render_credits = YES;
+    _credits_state = 0;
+    OSSpinLockUnlock(&_render_lock);
+    
+    [self hideMouseCursor];
+}
+
 #pragma mark -
 #pragma mark card switching
 
@@ -1602,23 +1618,26 @@ init_failure:
 - (void)_renderCredits:(const CVTimeStamp*)output_time inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
     NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
     
-    if (!_credit_texture) {
+    if (_credits_state == 0) {
+        // initialize the credits
+        
+        // start time is now
+        _credits_start_time = output_time->hostTime;
+        
+        // allocate the credit texture buffer
+        _credits_texture_buffer = malloc(360 * 784 * 4);
+        
+        // create the credits texture and load the first credits picture in it
         MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive];
-        _credit_texture_buffer = malloc(360 * 784 * 4);
-        
-        [archive loadBitmapWithID:304
-                           buffer:_credit_texture_buffer
-                           format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
-                            error:NULL];
-        [archive loadBitmapWithID:305
-                           buffer:BUFFER_OFFSET(_credit_texture_buffer, 360 * 392 * 4)
+        [archive loadBitmapWithID:302
+                           buffer:_credits_texture_buffer
                            format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
                             error:NULL];
         
-        glGenTextures(1, &_credit_texture);
+        glGenTextures(1, &_credits_texture);
         
         glActiveTexture(GL_TEXTURE0); glReportError();
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _credit_texture); glReportError();
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _credits_texture); glReportError();
         
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_CACHED_APPLE);
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1635,14 +1654,15 @@ init_failure:
                      0,
                      GL_BGRA,
                      GL_UNSIGNED_INT_8_8_8_8_REV,
-                     _credit_texture_buffer); glReportError();
+                     _credits_texture_buffer); glReportError();
+        
+        // set credits state to 1 (first fade-in picture)
+        _credits_state = 1;
     } else {
+        // bind the credits texture on image unit 0
         glActiveTexture(GL_TEXTURE0); glReportError();
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _credit_texture); glReportError();
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _credits_texture); glReportError();
     }
-    
-    [gl_state bindVertexArrayObject:0]; glReportError();
-    glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
     
     CVTimeStamp out_time = *output_time;
     if (!(output_time->flags & kCVTimeStampHostTimeValid)) {
@@ -1651,63 +1671,208 @@ init_failure:
         CVDisplayLinkTranslateTime([RXGetWorldView() displayLink], output_time, &out_time);
     }
     
-    float t = RXTimingTimestampDelta(out_time.hostTime, _credits_start_time) / 30.0;
-    if (_credit_state > 0)
+    // perform fades over 1 second, stills over 4 seconds, scrolling over 30 seconds
+    double duration;
+    if (_credits_state == 1 || _credits_state == 3 || _credits_state == 4 || _credits_state == 6)
+        duration = 1.;
+    else if (_credits_state == 2 || _credits_state == 5)
+        duration = 4.;
+    else
+        duration = 30.;
+    
+    // compute the time interpolation parameter for the current credit state
+    float t = RXTimingTimestampDelta(out_time.hostTime, _credits_start_time) / duration;
+    
+    // start using the card program (we need to do this now because some state
+    // transition code needs to set uniforms
+    glUseProgram(_card_program); glReportError();
+    
+    // if the credit state is > 7, we need to offset time by 0.5 because we
+    // begin with the new top page (or the previous bottom page) in the middle
+    if (_credits_state > 7)
         t += 0.5f;
+    
+    // clamp t to [0.0, 1.0], run state transition code on t > 1.0
     if (t < 0.0f)
         t = 0.0f;
     else if (t > 1.0f) {
+        // set start time to now and reset t to 0.0
         _credits_start_time = out_time.hostTime;
-        t = 0.5f;
+        t = 0.0f;
         
-        memcpy(_credit_texture_buffer, BUFFER_OFFSET(_credit_texture_buffer, 360 * 392 * 4), 360 * 392 * 4);
+        if (_credits_state == 1) {
+            // next: display 302
+            
+            // reset the modulate color on the card program to white
+            glUniform4f(_module_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
+        } else if (_credits_state == 2) {
+            // next: fade-out 302
+        } else if (_credits_state == 3) {
+            // next: load 303 and fade-in
+            
+            // load 303
+            MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive];
+            [archive loadBitmapWithID:303
+                               buffer:_credits_texture_buffer
+                               format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
+                                error:NULL];
+            
+            glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                         0,
+                         0,
+                         0,
+                         360,
+                         392,
+                         GL_BGRA,
+                         GL_UNSIGNED_INT_8_8_8_8_REV,
+                         _credits_texture_buffer); glReportError();
+        } else if (_credits_state == 4) {
+            // next: display 303
+            
+            // reset the modulate color on the card program to white
+            glUniform4f(_module_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
+        } else if (_credits_state == 5) {
+            // next: fade-out 303
+        } else if (_credits_state == 6) {
+            // next: load 304 and 305 and beging scrolling credits
+            
+            // load 304 and 305
+            MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive];
+            [archive loadBitmapWithID:304
+                               buffer:_credits_texture_buffer
+                               format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
+                                error:NULL];
+            [archive loadBitmapWithID:305
+                               buffer:BUFFER_OFFSET(_credits_texture_buffer, 360 * 392 * 4)
+                               format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
+                                error:NULL];
+            
+            glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                         0,
+                         0,
+                         0,
+                         360,
+                         784,
+                         GL_BGRA,
+                         GL_UNSIGNED_INT_8_8_8_8_REV,
+                         _credits_texture_buffer); glReportError();
+            
+            // reset the modulate color on the card program to white
+            glUniform4f(_module_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
+        } else if (_credits_state >= 7) {
+            // next: load next scrolling credits page
+            
+            // we need to set t to 0.5 (see the comment on if (_credit_state > 7) above)
+            t = 0.5f;
+            
+            // copy the previous bottom page to the top page
+            memcpy(_credits_texture_buffer, BUFFER_OFFSET(_credits_texture_buffer, 360 * 392 * 4), 360 * 392 * 4);
+            
+            // load the new bottom page
+            if (_credits_state < 22) {
+                MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive];
+                [archive loadBitmapWithID:299 + _credits_state
+                                   buffer:BUFFER_OFFSET(_credits_texture_buffer, 360 * 392 * 4)
+                                   format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
+                                    error:NULL];
+            } else
+                memset(BUFFER_OFFSET(_credits_texture_buffer, 360 * 392 * 4), 0, 360 * 392 * 4);
+
+            
+            glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                         0,
+                         0,
+                         0,
+                         360,
+                         784,
+                         GL_BGRA,
+                         GL_UNSIGNED_INT_8_8_8_8_REV,
+                         _credits_texture_buffer); glReportError();
+        } else
+            abort();
         
-        MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive];
-        [archive loadBitmapWithID:306 + _credit_state
-                           buffer:BUFFER_OFFSET(_credit_texture_buffer, 360 * 392 * 4)
-                           format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
-                            error:NULL];
+        // increment the credit state
+        _credits_state++;
         
-        glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                     0,
-                     0,
-                     0,
-                     360,
-                     784,
-                     GL_BGRA,
-                     GL_UNSIGNED_INT_8_8_8_8_REV,
-                     _credit_texture_buffer); glReportError();
-        
-        _credit_state++;
+        // if we've reached the end of the last credits state, free credits
+        // resources and go back to aspit 1 in a new game
+        if (_credits_state == 24) {
+            // FIXME: hook up the new document action and use that instead
+            [self setActiveCardWithStack:@"aspit"
+                                      ID:[[[RXEditionManager sharedEditionManager] activeStackWithKey:@"aspit"] entryCardID]
+                           waitUntilDone:NO];
+            
+            // show the mouse cursor again
+            [self performSelectorOnMainThread:@selector(showMouseCursor) withObject:nil waitUntilDone:NO];
+            
+            // delete credits resources
+            glDeleteTextures(1, &_credits_texture);
+            free(_credits_texture_buffer);
+            _credits_texture_buffer = nil;
+            
+            // disable credits rendering and return
+            _render_credits = NO;
+            return;
+        }
     }
     
-    float positions[] = {
-        124.f, kRXCardViewportOriginOffset.y + -784.f + t * 784.f,
-        124.f + 360.f, kRXCardViewportOriginOffset.y + -784.f + t * 784.f,
-        124.f, kRXCardViewportOriginOffset.y + t * 784.f,
-        124.f + 360.f, kRXCardViewportOriginOffset.y + t * 784.f};
-    float tex_coords[] = {
-        0.f, 784.f,
-        360.f, 784.f,
+    float bottom, top, height;
+    if (_credits_state >= 7) {
+        height = 784.f;
+        top = kRXCardViewportOriginOffset.y + t * 784.f;
+        bottom = top - 784.f;
+    } else {
+        height = 392.f;
+        bottom = kRXCardViewportOriginOffset.y;
+        top = bottom + height;
+    }
+    
+    float positions[8] = {
+        124.f, bottom,
+        124.f + 360.f, bottom,
+        124.f, top,
+        124.f + 360.f, top
+    };
+    float tex_coords[8] = {
+        0.f, height,
+        360.f, height,
         0.f, 0.f,
-        360.f, 0.f};
+        360.f, 0.f
+    };
     
-    glEnable(GL_SCISSOR_TEST);
-    glScissor(kRXCardViewportOriginOffset.x, kRXCardViewportOriginOffset.y, kRXCardViewportSize.width, kRXCardViewportSize.height);
+    // if we're in one of the fade-in states, we need to set the modulate
+    // color to t; conversly, if we're in one of the fade-out states, we need
+    // to set the modulate color to 1 - t
+    if (_credits_state == 1 || _credits_state == 4) {
+        glUniform4f(_module_color_uniform, t, t, t, 1.f); glReportError();
+    } else if (_credits_state == 3 || _credits_state == 6) {
+        float one_minus_t = 1.f - t;
+        glUniform4f(_module_color_uniform, one_minus_t, one_minus_t, one_minus_t, 1.f); glReportError();
+    }
     
+    // bind VAO 0 and 0 to ARRAY_BUFFER
+    [gl_state bindVertexArrayObject:0]; glReportError();
+    glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
+    
+    // configure the vertex arrays
     glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
     glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 0, positions); glReportError();
     
     glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
     glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 0, tex_coords); glReportError();
     
-    glUseProgram(_card_program); glReportError();
+    // enable and configure the scissor test (to clip rendering to the card viewport)
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(kRXCardViewportOriginOffset.x, kRXCardViewportOriginOffset.y, kRXCardViewportSize.width, kRXCardViewportSize.height);
+    
+    // draw the credits quad
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
     
+    // disable the scissor test (Riven X assumption)
     glDisable(GL_SCISSOR_TEST);
 }
 
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
+- (void)render:(const CVTimeStamp*)output_time inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
     OSSpinLockLock(&_render_lock);
     
@@ -1719,16 +1884,9 @@ init_failure:
     // the main thread not to be
     NSAutoreleasePool* p = [NSAutoreleasePool new];
     
-    // HACK: always rendering credits
-    if (!_render_credits) {
-        _render_credits = YES;
-        _credit_state = 0;
-        _credits_start_time = outputTime->hostTime;
-    }
-    
     // end credits mode
     if (_render_credits) {
-        [self _renderCredits:outputTime inContext:cgl_ctx framebuffer:fbo];
+        [self _renderCredits:output_time inContext:cgl_ctx framebuffer:fbo];
         goto exit_render;
     }
     
@@ -1765,11 +1923,11 @@ init_failure:
         glCopyTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, 0); glReportError();
         
         // give ownership of that texture to the transition
-        [_front_render_state->transition primeWithSourceTexture:transitionSourceTexture outputTime:outputTime];
+        [_front_render_state->transition primeWithSourceTexture:transitionSourceTexture outputTime:output_time];
     }
     
     // render the front card
-    render_card_imp(self, render_card_sel, outputTime, cgl_ctx);
+    render_card_imp(self, render_card_sel, output_time, cgl_ctx);
     
     // final composite (active card + transitions + other special effects)
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo); glReportError();
@@ -1777,7 +1935,7 @@ init_failure:
     
     if (_front_render_state->transition && [_front_render_state->transition isPrimed]) {
         // compute the parametric transition parameter based on current time, start time and duration
-        float t = RXTimingTimestampDelta(outputTime->hostTime, _front_render_state->transition->startTime) / _front_render_state->transition->duration;
+        float t = RXTimingTimestampDelta(output_time->hostTime, _front_render_state->transition->startTime) / _front_render_state->transition->duration;
         if (t > 1.0f)
             t = 1.0f;
         
@@ -1840,7 +1998,7 @@ init_failure:
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
     
     // update and draw the inventory
-    [self _updateInventoryWithTimestamp:outputTime context:cgl_ctx];
+    [self _updateInventoryWithTimestamp:output_time context:cgl_ctx];
     
     if (_inventoryAlphaFactor > 0.f && _inventoryItemCount > 0) {
         if (_inventoryAlphaFactor < 1.f) {
