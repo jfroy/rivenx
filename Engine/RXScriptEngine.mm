@@ -1148,8 +1148,8 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     NSTimeInterval video_duration;
     QTGetTimeInterval([movie videoDuration], &video_duration);
     
-    // sleep for the duration of the video track (the ending movies also include the credit music) plus some offset
-    usleep((video_duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts) + 8.) * 1E6);
+    // sleep for the duration of the video track (the ending movies also include the credit music)
+    usleep((video_duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts) + 5.) * 1E6);
     
     // start the credits
 #if defined(DEBUG)
@@ -4846,7 +4846,7 @@ static int64_t const telescope_lower_timevals[] = {4320LL, 3440LL, 2660LL, 1760L
 - (void)_playFissureEndgame {
     RXGameState* gs = [g_world gameState];
     
-    // there are 4 endings possible at the fissure
+    // there are 4 possible endings at the fissure
     // 1: Gehn trapped and Catherine freed
     // 2: Gehn trapped but Catherine still imprisoned
     // 3: Ghen free (and obviously Catherine still imprisoned)

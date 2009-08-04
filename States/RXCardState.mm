@@ -1671,14 +1671,14 @@ init_failure:
         CVDisplayLinkTranslateTime([RXGetWorldView() displayLink], output_time, &out_time);
     }
     
-    // perform fades over 1 second, stills over 4 seconds, scrolling over 30 seconds
+    // perform fades over 1.5 seconds, stills over 5 seconds, scrolling over 22 seconds per pair
     double duration;
     if (_credits_state == 1 || _credits_state == 3 || _credits_state == 4 || _credits_state == 6)
-        duration = 1.;
+        duration = 1.5;
     else if (_credits_state == 2 || _credits_state == 5)
-        duration = 4.;
+        duration = 5.;
     else
-        duration = 20.;
+        duration = 22.;
     
     // compute the time interpolation parameter for the current credit state
     float t = RXTimingTimestampDelta(out_time.hostTime, _credits_start_time) / duration;
@@ -1687,10 +1687,13 @@ init_failure:
     // transition code needs to set uniforms
     glUseProgram(_card_program); glReportError();
     
-    // if the credit state is > 7, we need to offset time by 0.5 because we
-    // begin with the new top page (or the previous bottom page) in the middle
     if (_credits_state > 7)
+        // if the credit state is > 7, we need to offset time by 0.5 because we
+        // begin with the new top page (or the previous bottom page) in the middle
         t += 0.5f;
+    else if (_credits_state == 1 || _credits_state == 4)
+        // add a negative 1/3 offset to t to delay the beginning of the fade-ins
+        t -= 0.33333333f;
     
     // clamp t to [0.0, 1.0], run state transition code on t > 1.0
     if (t < 0.0f)
@@ -1718,14 +1721,14 @@ init_failure:
                                 error:NULL];
             
             glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                         0,
-                         0,
-                         0,
-                         360,
-                         392,
-                         GL_BGRA,
-                         GL_UNSIGNED_INT_8_8_8_8_REV,
-                         _credits_texture_buffer); glReportError();
+                            0,
+                            0,
+                            0,
+                            360,
+                            392,
+                            GL_BGRA,
+                            GL_UNSIGNED_INT_8_8_8_8_REV,
+                            _credits_texture_buffer); glReportError();
         } else if (_credits_state == 4) {
             // next: display 303
             
