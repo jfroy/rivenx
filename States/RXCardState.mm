@@ -1671,14 +1671,14 @@ init_failure:
         CVDisplayLinkTranslateTime([RXGetWorldView() displayLink], output_time, &out_time);
     }
     
-    // perform fades over 1.5 seconds, stills over 5 seconds, scrolling over 22 seconds per pair
+    // perform fades over 1.5 seconds, stills over 5 seconds, scrolling over 20.5 seconds per pair
     double duration;
     if (_credits_state == 1 || _credits_state == 3 || _credits_state == 4 || _credits_state == 6)
         duration = 1.5;
     else if (_credits_state == 2 || _credits_state == 5)
         duration = 5.;
     else
-        duration = 22.;
+        duration = 20.5;
     
     // compute the time interpolation parameter for the current credit state
     float t = RXTimingTimestampDelta(out_time.hostTime, _credits_start_time) / duration;
