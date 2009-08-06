@@ -59,7 +59,7 @@ static const NSString* RX_INVENTORY_KEYS[3] = {
 };
 static const int RX_INVENTORY_ATRUS = 0;
 static const int RX_INVENTORY_CATHERINE = 1;
-static const int RX_INVENTORY_PRISON = 2;
+static const int RX_INVENTORY_TRAP = 2;
 static const float RX_INVENTORY_MARGIN = 20.f;
 
 #pragma mark -
@@ -219,6 +219,7 @@ static void rx_release_owner_applier(const void* value, void* context) {
     
     _render_lock = OS_SPINLOCK_INIT;
     _state_swap_lock = OS_SPINLOCK_INIT;
+    _inventory_update_lock = OS_SPINLOCK_INIT;
     
     // initialize all the rendering stuff (shaders, textures, buffers, VAOs)
     [self _initializeRendering];
@@ -364,7 +365,7 @@ init_failure:
     
     // get a reference to the extra bitmaps archive, and get the inventory texture descriptors
     MHKArchive* extras_archive = [[RXEditionManager sharedEditionManager] extrasArchive];
-    NSDictionary* journalDescriptors = [[g_world extraBitmapsDescriptor] objectForKey:@"Journals"];
+    NSDictionary* journal_descriptors = [[g_world extraBitmapsDescriptor] objectForKey:@"Journals"];
     
     // get the texture descriptors for the inventory textures and compute the total byte size of those textures (packed BGRA format)
     // FIXME: we need actual error handling beyond just logging...
@@ -372,7 +373,7 @@ init_failure:
     uint32_t inventoryTotalTextureSize = 0;
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
         inventoryTextureDescriptors[inventory_i] = [extras_archive
-                                                    bitmapDescriptorWithID:[[journalDescriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue]
+                                                    bitmapDescriptorWithID:[[journal_descriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue]
                                                     error:&error];
         if (!inventoryTextureDescriptors[inventory_i]) {
             RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get inventory texture descriptor for item \"%@\": %@", RX_INVENTORY_KEYS[inventory_i], error);
@@ -380,10 +381,10 @@ init_failure:
         }
         
         // cache the dimensions of the inventory item textures in the inventory regions
-        _inventoryRegions[inventory_i].size.width = [[inventoryTextureDescriptors[inventory_i] objectForKey:@"Width"] floatValue];
-        _inventoryRegions[inventory_i].size.height = [[inventoryTextureDescriptors[inventory_i] objectForKey:@"Height"] floatValue];
+        _inventory_frames[inventory_i].size.width = [[inventoryTextureDescriptors[inventory_i] objectForKey:@"Width"] floatValue];
+        _inventory_frames[inventory_i].size.height = [[inventoryTextureDescriptors[inventory_i] objectForKey:@"Height"] floatValue];
         
-        inventoryTotalTextureSize += (uint32_t)(_inventoryRegions[inventory_i].size.width * _inventoryRegions[inventory_i].size.height) << 2;
+        inventoryTotalTextureSize += (uint32_t)(_inventory_frames[inventory_i].size.width * _inventory_frames[inventory_i].size.height) << 2;
     }
     
     // load the journal inventory textures in an unpack buffer object
@@ -401,7 +402,7 @@ init_failure:
     // decompress the textures into the buffer
     // FIXME: we need actual error handling beyond just logging...
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-        if (![extras_archive loadBitmapWithID:[[journalDescriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue]
+        if (![extras_archive loadBitmapWithID:[[journal_descriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue]
                                        buffer:inventoryBuffer
                                        format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
                                         error:&error])
@@ -410,7 +411,7 @@ init_failure:
             continue;
         }
         
-        inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventoryRegions[inventory_i].size.width * _inventoryRegions[inventory_i].size.height) << 2);
+        inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventory_frames[inventory_i].size.width * _inventory_frames[inventory_i].size.height) << 2);
     }
     
     // unmap the pixel unpack buffer to begin the DMA transfer
@@ -573,13 +574,13 @@ init_failure:
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, inventory_unpack_buffer); glReportError();
     
     // create the textures and reset inventoryBuffer which we'll use as a buffer offset
-    glGenTextures(RX_MAX_INVENTORY_ITEMS, _inventoryTextures);
+    glGenTextures(RX_MAX_INVENTORY_ITEMS, _inventory_textures);
     inventoryBuffer = 0;
     
     // decompress the textures into the buffer
     // FIXME: we need actual error handling beyond just logging...
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[inventory_i]); glReportError();
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventory_textures[inventory_i]); glReportError();
         
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -590,18 +591,18 @@ init_failure:
         glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
                      0,
                      GL_RGBA8,
-                     (GLsizei)_inventoryRegions[inventory_i].size.width,
-                     (GLsizei)_inventoryRegions[inventory_i].size.height,
+                     (GLsizei)_inventory_frames[inventory_i].size.width,
+                     (GLsizei)_inventory_frames[inventory_i].size.height,
                      0,
                      GL_BGRA,
                      GL_UNSIGNED_INT_8_8_8_8_REV,
                      inventoryBuffer); glReportError();
         
-        inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventoryRegions[inventory_i].size.width * _inventoryRegions[inventory_i].size.height) << 2);
+        inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventory_frames[inventory_i].size.width * _inventory_frames[inventory_i].size.height) << 2);
     }
     
     // the inventory begins at half opacity
-    _inventoryAlphaFactor = 0.5f;
+    _inventory_alpha = 0.5f;
     
 // restore state to Riven X assumptions
     
@@ -1496,73 +1497,121 @@ init_failure:
 }
 
 - (void)_updateInventoryWithTimestamp:(const CVTimeStamp*)outputTime context:(CGLContextObj)cgl_ctx {
-    RXGameState* game_state = [g_world gameState];
+    RXGameState* gs = [g_world gameState];
     
     // if the engine says the inventory should not be shown, set the number of inventory items to 0 and return
-    if (![game_state unsigned32ForKey:@"ainventory"]) {
-        // FIXME: we want to add fade-in and fade-out animation for the inventory art, while immediately disabling the hotspots
-        _inventoryItemCount = 0;
+    if (![gs unsigned32ForKey:@"ainventory"]) {
+        OSSpinLockLock(&_inventory_update_lock);
+        _inventory_active = 0;
+        OSSpinLockUnlock(&_inventory_update_lock);
+        
+        _inventory_flags[RX_INVENTORY_ATRUS] = NO;
+        _inventory_flags[RX_INVENTORY_CATHERINE] = NO;
+        _inventory_flags[RX_INVENTORY_TRAP] = NO;
+        
         return;
     }
     
-    // FIXME: right now we set the number of items to the maximum, irrespective of game state
-    _inventoryItemCount = RX_MAX_INVENTORY_ITEMS;
+    // build a new set of inventory item flags
+    BOOL new_flags[3];
+    new_flags[RX_INVENTORY_ATRUS] = [gs unsigned32ForKey:@"aatrusbook"];
+    new_flags[RX_INVENTORY_CATHERINE] = [gs unsigned32ForKey:@"acathbook"];
+    new_flags[RX_INVENTORY_TRAP] = [gs unsigned32ForKey:@"atrapbook"];
+    
+    // do we have nothing to update, bail out early
+    if (new_flags[RX_INVENTORY_ATRUS] == _inventory_flags[RX_INVENTORY_ATRUS] &&
+        new_flags[RX_INVENTORY_CATHERINE] == _inventory_flags[RX_INVENTORY_CATHERINE] &&
+        new_flags[RX_INVENTORY_TRAP] == _inventory_flags[RX_INVENTORY_TRAP])
+        return;
+    
+    OSSpinLockLock(&_inventory_update_lock);
+    _inventory_active = 0;
+    
+    // update the inventory flags
+    _inventory_flags[RX_INVENTORY_ATRUS] = new_flags[RX_INVENTORY_ATRUS];
+    _inventory_flags[RX_INVENTORY_CATHERINE] = new_flags[RX_INVENTORY_CATHERINE];
+    _inventory_flags[RX_INVENTORY_TRAP] = new_flags[RX_INVENTORY_TRAP];
+    
+    // count the number of items that are active
+    for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+        if (new_flags[inventory_i])
+            _inventory_active++;
+    }
+    
+    // if there is no active inventory item, we can do an early exit
+    if (_inventory_active == 0) {
+        OSSpinLockUnlock(&_inventory_update_lock);
+        return;
+    }
     
     GLfloat* buffer = (GLfloat*)_card_composite_va;
     GLfloat* positions = buffer + 16;
     GLfloat* tex_coords0 = positions + 2;
     
-    // compute the total inventory region width based on the number of items in the inventory
-    float total_inventory_width = _inventoryRegions[0].size.width;
-    for (GLuint inventory_i = 1; inventory_i < _inventoryItemCount; inventory_i++)
-        total_inventory_width += _inventoryRegions[inventory_i].size.width + RX_INVENTORY_MARGIN;
-    
-    // compute the first item's position
-    _inventoryRegions[0].origin.x = kRXCardViewportOriginOffset.x + (kRXCardViewportSize.width / 2.0f) - (total_inventory_width / 2.0f);
-    _inventoryRegions[0].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[0].size.height / 2.0f);
-    
-    // compute the position of any additional item based on the position of the previous item
-    for (GLuint inventory_i = 1; inventory_i < _inventoryItemCount; inventory_i++) {
-        _inventoryRegions[inventory_i].origin.x = _inventoryRegions[inventory_i - 1].origin.x + _inventoryRegions[inventory_i - 1].size.width + RX_INVENTORY_MARGIN;
-        _inventoryRegions[inventory_i].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventoryRegions[inventory_i].size.height / 2.0f);
+    // compute the total inventory region width
+    float total_inventory_width = 0.0f;
+    for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+        if (new_flags[inventory_i])
+            total_inventory_width += _inventory_frames[inventory_i].size.width + RX_INVENTORY_MARGIN;
     }
     
-    // compute vertex positions and texture coordinates for the items
-    for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
-        positions[0] = _inventoryRegions[inventory_i].origin.x; positions[1] = _inventoryRegions[inventory_i].origin.y;
+    // compute the x position of the items
+    float x_offset = kRXCardViewportOriginOffset.x + (kRXCardViewportSize.width / 2.0f) - (total_inventory_width / 2.0f);
+    for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+        if (!new_flags[inventory_i])
+            continue;
+        
+        _inventory_frames[inventory_i].origin.x = x_offset;
+        x_offset = _inventory_frames[inventory_i].origin.x + _inventory_frames[inventory_i].size.width + RX_INVENTORY_MARGIN;
+    }
+    
+    // we'll compute the hotspot frames by scaling the rendering frames
+    rx_rect_t content_frame = RXEffectiveRendererFrame();
+    float scale_x = (float)content_frame.size.width / (float)kRXRendererViewportSize.width;
+    float scale_y = (float)content_frame.size.height / (float)kRXRendererViewportSize.height;
+    
+    // process the active items
+    for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+        if (!new_flags[inventory_i])
+            continue;
+    
+        // compute the y position of the items
+        _inventory_frames[inventory_i].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventory_frames[inventory_i].size.height / 2.0f);
+    
+        // compute the hotspot frame
+        _inventory_hotspot_frames[inventory_i].origin.x = content_frame.origin.x + _inventory_frames[inventory_i].origin.x * scale_x;
+        _inventory_hotspot_frames[inventory_i].origin.y = content_frame.origin.y + _inventory_frames[inventory_i].origin.y * scale_y;
+        _inventory_hotspot_frames[inventory_i].size.width = _inventory_frames[inventory_i].size.width * scale_x;
+        _inventory_hotspot_frames[inventory_i].size.height = _inventory_frames[inventory_i].size.height * scale_y;
+    }
+    
+    // we can unlock the inventory update lock now since the rest of the work only affects the rendering thread
+    OSSpinLockUnlock(&_inventory_update_lock);
+    
+    // compute the vertex positions and texture coordinates of the items
+    for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+        positions[0] = _inventory_frames[inventory_i].origin.x; positions[1] = _inventory_frames[inventory_i].origin.y;
         tex_coords0[0] = 0.0f;
-        tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
+        tex_coords0[1] = _inventory_frames[inventory_i].size.height;
         positions += 4; tex_coords0 += 4;
         
-        positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width;
-        positions[1] = _inventoryRegions[inventory_i].origin.y;
-        tex_coords0[0] = _inventoryRegions[inventory_i].size.width;
-        tex_coords0[1] = _inventoryRegions[inventory_i].size.height;
+        positions[0] = _inventory_frames[inventory_i].origin.x + _inventory_frames[inventory_i].size.width;
+        positions[1] = _inventory_frames[inventory_i].origin.y;
+        tex_coords0[0] = _inventory_frames[inventory_i].size.width;
+        tex_coords0[1] = _inventory_frames[inventory_i].size.height;
         positions += 4; tex_coords0 += 4;
         
-        positions[0] = _inventoryRegions[inventory_i].origin.x;
-        positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
+        positions[0] = _inventory_frames[inventory_i].origin.x;
+        positions[1] = _inventory_frames[inventory_i].origin.y + _inventory_frames[inventory_i].size.height;
         tex_coords0[0] = 0.0f;
         tex_coords0[1] = 0.0f;
         positions += 4; tex_coords0 += 4;
         
-        positions[0] = _inventoryRegions[inventory_i].origin.x + _inventoryRegions[inventory_i].size.width;
-        positions[1] = _inventoryRegions[inventory_i].origin.y + _inventoryRegions[inventory_i].size.height;
-        tex_coords0[0] = _inventoryRegions[inventory_i].size.width;
+        positions[0] = _inventory_frames[inventory_i].origin.x + _inventory_frames[inventory_i].size.width;
+        positions[1] = _inventory_frames[inventory_i].origin.y + _inventory_frames[inventory_i].size.height;
+        tex_coords0[0] = _inventory_frames[inventory_i].size.width;
         tex_coords0[1] = 0.0f;
         positions += 4; tex_coords0 += 4;
-    }
-    
-    // compute the hotspot regions by scaling the rendering regions
-    rx_rect_t contentRect = RXEffectiveRendererFrame();
-    float scale_x = (float)contentRect.size.width / (float)kRXRendererViewportSize.width;
-    float scale_y = (float)contentRect.size.height / (float)kRXRendererViewportSize.height;
-    
-    for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
-        _inventoryHotspotRegions[inventory_i].origin.x = contentRect.origin.x + _inventoryRegions[inventory_i].origin.x * scale_x;
-        _inventoryHotspotRegions[inventory_i].origin.y = contentRect.origin.y + _inventoryRegions[inventory_i].origin.y * scale_y;
-        _inventoryHotspotRegions[inventory_i].size.width = _inventoryRegions[inventory_i].size.width * scale_x;
-        _inventoryHotspotRegions[inventory_i].size.height = _inventoryRegions[inventory_i].size.height * scale_y;
     }
 }
 
@@ -1954,24 +2003,28 @@ init_failure:
     // update and draw the inventory
     [self _updateInventoryWithTimestamp:output_time context:cgl_ctx];
     
-    if (_inventoryAlphaFactor > 0.f && _inventoryItemCount > 0) {
-        if (_inventoryAlphaFactor < 1.f) {
-            glBlendColor(1.f, 1.f, 1.f, _inventoryAlphaFactor);
+    if (_inventory_alpha > 0.f && _inventory_active > 0) {
+        if (_inventory_alpha < 1.f) {
+            glBlendColor(1.f, 1.f, 1.f, _inventory_alpha);
             glBlendFuncSeparate(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
             glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
             glEnable(GL_BLEND);
         }
         
         glUseProgram(_card_program); glReportError();
-        for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
-            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventoryTextures[inventory_i]); glReportError();
+        for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+            if (!_inventory_flags[inventory_i])
+                continue;
+            
+            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventory_textures[inventory_i]); glReportError();
             glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inventory_i, 4); glReportError();
         }
         
-        if (_inventoryAlphaFactor < 1.f)
+        if (_inventory_alpha < 1.f)
             glDisable(GL_BLEND);
     }
     
+#if defined(DEBUG)
     if (RXEngineGetBool(@"rendering.marble_lines")) {
         GLfloat attribs[] = {
             226.f + 16.f, 392.f - 316.f + 66.f,
@@ -1995,6 +2048,7 @@ init_failure:
         
         [gl_state bindVertexArrayObject:0]; glReportError();
     }
+#endif
     
 exit_render:
     [p release];
@@ -2079,11 +2133,14 @@ exit_render:
             primitive_index++;
         }
         
-        for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
+        for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+            if (!_inventory_flags[inventory_i])
+                continue;
+            
             _hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
             _hotspotDebugRenderElementCountArray[primitive_index] = 4;
             
-            NSRect frame = _inventoryHotspotRegions[inventory_i];
+            NSRect frame = _inventory_hotspot_frames[inventory_i];
             
             attribs[0] = frame.origin.x;
             attribs[1] = frame.origin.y;
@@ -2133,7 +2190,7 @@ exit_render:
         glMultiDrawArrays(GL_LINE_LOOP,
                           _hotspotDebugRenderFirstElementArray,
                           _hotspotDebugRenderElementCountArray,
-                          [activeHotspots count] + _inventoryItemCount); glReportError();
+                          [activeHotspots count] + _inventory_active); glReportError();
         
         glDisableClientState(GL_COLOR_ARRAY); glReportError();
     }
@@ -2475,9 +2532,9 @@ exit_flush_tasks:
 
     // if the mouse is below the game viewport, bring up the alpha of the inventory to 1; otherwise set it to 0.5
     if (NSMouseInRect(mouse_vector.origin, [(NSView*)g_worldView bounds], NO) && mouse_vector.origin.y < kRXCardViewportOriginOffset.y)
-        _inventoryAlphaFactor = 1.f;
+        _inventory_alpha = 1.f;
     else
-        _inventoryAlphaFactor = 0.5f;
+        _inventory_alpha = 0.5f;
     
     // find over which hotspot the mouse is
     NSEnumerator* hotspots_enum = [active_hotspots objectEnumerator];
@@ -2489,14 +2546,21 @@ exit_flush_tasks:
     
     // now check if we're over one of the inventory regions
     if (!hotspot) {
-        for (GLuint inventory_i = 0; inventory_i < _inventoryItemCount; inventory_i++) {
-            if (NSMouseInRect(mouse_vector.origin, _inventoryHotspotRegions[inventory_i], NO)) {
-                // set hotspot to the inventory item index (plus one to avoid the value 0); the following block of code
-                // will check if hotspot is not 0 and below PAGEZERO, and act accordingly
-                hotspot = (RXHotspot*)(inventory_i + 1);
-                break;
+        OSSpinLockLock(&_inventory_update_lock);
+        if (_inventory_active > 0) {
+            for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+                if (!_inventory_flags[inventory_i])
+                    continue;
+                
+                if (NSMouseInRect(mouse_vector.origin, _inventory_hotspot_frames[inventory_i], NO)) {
+                    // set hotspot to the inventory item index (plus one to avoid the value 0); the following block of code
+                    // will check if hotspot is not 0 and below PAGEZERO, and act accordingly
+                    hotspot = (RXHotspot*)(inventory_i + 1);
+                    break;
+                }
             }
         }
+        OSSpinLockUnlock(&_inventory_update_lock);
     }
     
     // if the new current hotspot is valid, matches the mouse down hotspot and the mouse is not dragging, we need to send

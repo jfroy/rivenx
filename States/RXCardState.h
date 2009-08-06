@@ -117,13 +117,13 @@ struct rx_transition_program {
     GLint* _hotspotDebugRenderElementCountArray;
     
     // inventory
-    CGRect _inventoryRegions[3];
-    NSRect _inventoryHotspotRegions[3];
-    uint16_t _inventoryDestinationCardID[3];
-    GLuint _inventoryTextures[3];
-    
-    uint32_t _inventoryItemCount;
-    float _inventoryAlphaFactor;
+    CGRect _inventory_frames[3];
+    GLuint _inventory_textures[3];
+    float _inventory_alpha;
+    NSRect _inventory_hotspot_frames[3];
+    uint32_t _inventory_active;
+    BOOL _inventory_flags[3];
+    OSSpinLock _inventory_update_lock;
     
     // credits
     BOOL _render_credits;
