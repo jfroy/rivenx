@@ -98,8 +98,8 @@ struct rx_transition_program {
     struct rx_transition_program _swipe[4];
     
     // rendering
-    GLuint _cardCompositeVAO;
-    GLuint _cardCompositeVBO;
+    GLuint _card_composite_vao;
+    void* _card_composite_va;
     
     GLuint _fbos[1];
     GLuint _textures[1];

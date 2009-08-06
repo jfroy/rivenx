@@ -458,23 +458,15 @@ init_failure:
             RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"FBO not complete, status 0x%04x\n", (unsigned int)fboStatus);
     }
     
-    // create the compositing VAO and vertex attrib VBO
-    glGenVertexArraysAPPLE(1, &_cardCompositeVAO); glReportError();
-    glGenBuffers(1, &_cardCompositeVBO); glReportError();
-    
-    // bind the VAO and the VBO
-    [gl_state bindVertexArrayObject:_cardCompositeVAO];
-    glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
-    
-    // enable sub-range flushing if available
-    if (GLEE_APPLE_flush_buffer_range)
-        glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+    // create the card compositing VAO and bind it
+    glGenVertexArraysAPPLE(1, &_card_composite_vao); glReportError();
+    [gl_state bindVertexArrayObject:_card_composite_vao];
     
     // 4 triangle strip primitives, 4 vertices per strip, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
-    glBufferData(GL_ARRAY_BUFFER, 64 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); glReportError();
+    _card_composite_va = malloc(64 * sizeof(GLfloat));
     
-    // map the VBO and write the vertex attributes
-    GLfloat* positions = reinterpret_cast<GLfloat*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)); glReportError();
+    // write the vertex attributes
+    GLfloat* positions = (GLfloat*)_card_composite_va;
     GLfloat* tex_coords0 = positions + 2;
     
     // main card composite
@@ -495,18 +487,13 @@ init_failure:
         tex_coords0[0] = kRXCardViewportSize.width; tex_coords0[1] = kRXCardViewportSize.height;
         positions += 4; tex_coords0 += 4;
     }
-        
-    // unmap and flush the card composite VBO
-    if (GLEE_APPLE_flush_buffer_range)
-        glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 16 * sizeof(GLfloat));
-    glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
     
     // configure the VAs
     glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
-    glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)0); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), _card_composite_va); glReportError();
     
     glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
-    glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat))); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), BUFFER_OFFSET(_card_composite_va, 2 * sizeof(GLfloat))); glReportError();
     
 // shaders
     
@@ -621,8 +608,9 @@ init_failure:
     // reset the current VAO to 0
     [gl_state bindVertexArrayObject:0];
     
-    // bind 0 to the unpack buffer (e.g. client memory unpacking)
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    // bind 0 to the unpack buffer (e.g. client memory unpacking) and array buffer
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
+    glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
     
     // re-enable client storage
     glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
@@ -1550,9 +1538,7 @@ init_failure:
     // FIXME: right now we set the number of items to the maximum, irrespective of game state
     _inventoryItemCount = RX_MAX_INVENTORY_ITEMS;
     
-    glBindBuffer(GL_ARRAY_BUFFER, _cardCompositeVBO); glReportError();
-    GLfloat* buffer = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-    
+    GLfloat* buffer = (GLfloat*)_card_composite_va;
     GLfloat* positions = buffer + 16;
     GLfloat* tex_coords0 = positions + 2;
     
@@ -1596,11 +1582,6 @@ init_failure:
         tex_coords0[1] = 0.0f;
         positions += 4; tex_coords0 += 4;
     }
-    
-    // unmap and flush the card composite VBO
-    if (GLEE_APPLE_flush_buffer_range)
-        glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), _inventoryItemCount * 16 * sizeof(GLfloat));
-    glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
     
     // compute the hotspot regions by scaling the rendering regions
     rx_rect_t contentRect = RXEffectiveRendererFrame();
@@ -1995,7 +1976,7 @@ init_failure:
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
     
     // bind the card composite VAO
-    [gl_state bindVertexArrayObject:_cardCompositeVAO];
+    [gl_state bindVertexArrayObject:_card_composite_vao];
     
     // draw the card composite
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
