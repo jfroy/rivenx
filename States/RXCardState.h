@@ -103,7 +103,7 @@ struct rx_transition_program {
     
     GLuint _fbos[1];
     GLuint _textures[1];
-    GLuint _water_buffer;
+    void* _water_draw_buffer;
     void* _water_readback_buffer;
     BOOL _water_sfx_disabled;
     

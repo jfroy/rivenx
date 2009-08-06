@@ -353,11 +353,9 @@ init_failure:
     
 // water sfxe
     
-    // create the water unpack buffer and the water readback buffer
-    glGenBuffers(1, &_water_buffer); glReportError();
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _water_buffer); glReportError();
-    glBufferData(GL_PIXEL_UNPACK_BUFFER, (kRXRendererViewportSize.width * kRXRendererViewportSize.height) << 2, NULL, GL_DYNAMIC_DRAW); glReportError();
-    _water_readback_buffer = malloc((kRXRendererViewportSize.width * kRXRendererViewportSize.height) << 2);
+    // create the water draw and readback buffers
+    _water_draw_buffer = malloc((kRXRendererViewportSize.width * kRXRendererViewportSize.height) << 3);
+    _water_readback_buffer = BUFFER_OFFSET(_water_draw_buffer, (kRXRendererViewportSize.width * kRXRendererViewportSize.height) << 2);
     
 // inventory textures
     
@@ -1432,47 +1430,20 @@ init_failure:
     }
     
     if (r->water_fx.sfxe && !_water_sfx_disabled) {
-        // map pointer for the water buffer
-        void* water_draw_ptr = NULL;
-        
         // if we refreshed pictures, we need to reset the special effect and copy the RT back to main memory
         if (r->refresh_static) {
             r->water_fx.current_frame = 0;
             r->water_fx.frame_timestamp = 0;
             
-            // we need to immediately readback the dynamic RT into the water readback buffer
-#if defined(RX_USE_PBO_WATER_READBACK)
-            glFlush();
-            glBindBuffer(GL_PIXEL_PACK_BUFFER, _water_buffer); glReportError();
-            glReadPixels(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
-            
-            // copy the water buffer into the water readback buffer
-            glFinishObjectAPPLE(GL_BUFFER_OBJECT_APPLE, _water_buffer);
-            water_draw_ptr = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_WRITE); glReportError();
-            memcpy(_water_readback_buffer, water_draw_ptr, kRXCardViewportSize.width * kRXCardViewportSize.height << 2);
-            
-            glBindBuffer(GL_PIXEL_PACK_BUFFER, 0); glReportError();
-#else
+            // we need to immediately readback the dynamic RT into the water readback buffer and copy the content into the water draw buffer
             glFlush();
             glReadPixels(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, _water_readback_buffer); glReportError();
-            
-            glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _water_buffer); glReportError();
-            water_draw_ptr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
-            memcpy(water_draw_ptr, _water_readback_buffer, kRXCardViewportSize.width * kRXCardViewportSize.height << 2);
-#endif
+            memcpy(_water_draw_buffer, _water_readback_buffer, kRXCardViewportSize.width * kRXCardViewportSize.height << 2);
         }
         
         // if the special effect frame timestamp is 0 or expired, update the special effect texture
         double fps_inverse = 1.0 / r->water_fx.sfxe->record->fps;
         if (r->water_fx.frame_timestamp == 0 || RXTimingTimestampDelta(outputTime->hostTime, r->water_fx.frame_timestamp) >= fps_inverse) {
-            // bind the water buffer on the unpack buffer target
-            glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _water_buffer); glReportError();
-            
-            // if the water buffer has not been mapped yet, do so now
-            if (!water_draw_ptr) {
-                water_draw_ptr = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
-            }
-            
             // run the water microprogram for the current sfxe frame
             uint16_t* mp = (uint16_t*)BUFFER_OFFSET(r->water_fx.sfxe->record, r->water_fx.sfxe->offsets[r->water_fx.current_frame]);
             uint16_t draw_row = r->water_fx.sfxe->record->rect.top;
@@ -1480,7 +1451,7 @@ init_failure:
                 if (*mp == 1) {
                     draw_row++;
                 } else if (*mp == 3) {
-                    memcpy(BUFFER_OFFSET(water_draw_ptr, (draw_row * kRXCardViewportSize.width + mp[1]) << 2),
+                    memcpy(BUFFER_OFFSET(_water_draw_buffer, (draw_row * kRXCardViewportSize.width + mp[1]) << 2),
                            BUFFER_OFFSET(_water_readback_buffer, (mp[3] * kRXCardViewportSize.width + mp[2]) << 2),
                            mp[4] << 2);
                     mp += 4;
@@ -1490,15 +1461,9 @@ init_failure:
                 mp++;
             }
             
-            // unmap the water buffer to commit the update to GL
-            glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-            
-            // update the dynamic RT texture with the unpack buffer
+            // update the dynamic RT texture from the water draw buffer
             glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
-            glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
-            
-            // bind 0 to the unpack buffer target
-            glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
+            glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, _water_draw_buffer); glReportError();
             
             // increment the special effect frame counter
             r->water_fx.current_frame = (r->water_fx.current_frame + 1) % r->water_fx.sfxe->record->frame_count;
