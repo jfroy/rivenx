@@ -538,7 +538,8 @@ init_failure:
     _swipe[RXTransitionRight] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionRight context:cgl_ctx];
     _swipe[RXTransitionTop] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionTop context:cgl_ctx];
     _swipe[RXTransitionBottom] = [self _loadTransitionShaderWithName:@"transition_swipe" direction:RXTransitionBottom context:cgl_ctx];
-    
+
+#if defined(DEBUG)
 // debug rendering
 
     // create a VAO for all debug rendering
@@ -564,6 +565,7 @@ init_failure:
     // allocate the first element and element count arrays
     _hotspotDebugRenderFirstElementArray = new GLint[RX_MAX_RENDER_HOTSPOT + RX_MAX_INVENTORY_ITEMS];
     _hotspotDebugRenderElementCountArray = new GLint[RX_MAX_RENDER_HOTSPOT + RX_MAX_INVENTORY_ITEMS];
+#endif
     
 // alright, we've done all the work we could, let's now make those inventory textures
     
@@ -2000,6 +2002,7 @@ exit_render:
 }
 
 - (void)_renderInGlobalContext:(CGLContextObj)cgl_ctx {
+#if defined(DEBUG)
     // alias the render context state object pointer
     NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
     RXCard* front_card = nil;
@@ -2291,6 +2294,7 @@ exit_render:
     
     // release front_card
     [front_card release];
+#endif
 }
 
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
