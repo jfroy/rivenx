@@ -11,16 +11,6 @@
 		<key>Prison</key>
 		<integer>100</integer>
 	</dict>
-	<key>Credits</key>
-	<dict>
-		<key>Scrolling Frames Range</key>
-		<string>{304, 17}</string>
-		<key>Still Frames</key>
-		<array>
-			<integer>302</integer>
-			<integer>303</integer>
-		</array>
-	</dict>
 	<key>Marbles</key>
 	<dict>
 		<key>Blue</key>
