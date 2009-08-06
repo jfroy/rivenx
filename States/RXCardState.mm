@@ -268,6 +268,9 @@ init_failure:
         free(_render_states_buffer);
     }
     
+    if (_water_draw_buffer)
+        free(_water_draw_buffer);
+    
     [sengine release];
     
     [super dealloc];
