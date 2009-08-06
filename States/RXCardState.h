@@ -121,8 +121,7 @@ struct rx_transition_program {
     GLuint _inventory_textures[3];
     float _inventory_alpha;
     NSRect _inventory_hotspot_frames[3];
-    uint32_t _inventory_active;
-    BOOL _inventory_flags[3];
+    uint32_t _inventory_flags;
     OSSpinLock _inventory_update_lock;
     
     // credits

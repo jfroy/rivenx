@@ -1502,44 +1502,31 @@ init_failure:
     // if the engine says the inventory should not be shown, set the number of inventory items to 0 and return
     if (![gs unsigned32ForKey:@"ainventory"]) {
         OSSpinLockLock(&_inventory_update_lock);
-        _inventory_active = 0;
+        _inventory_flags = 0;
         OSSpinLockUnlock(&_inventory_update_lock);
-        
-        _inventory_flags[RX_INVENTORY_ATRUS] = NO;
-        _inventory_flags[RX_INVENTORY_CATHERINE] = NO;
-        _inventory_flags[RX_INVENTORY_TRAP] = NO;
-        
         return;
     }
     
     // build a new set of inventory item flags
-    BOOL new_flags[3];
-    new_flags[RX_INVENTORY_ATRUS] = [gs unsigned32ForKey:@"aatrusbook"];
-    new_flags[RX_INVENTORY_CATHERINE] = [gs unsigned32ForKey:@"acathbook"];
-    new_flags[RX_INVENTORY_TRAP] = [gs unsigned32ForKey:@"atrapbook"];
+    uint32_t new_flags = 0;
+    if ([gs unsigned32ForKey:@"aatrusbook"])
+        new_flags |= 1 << RX_INVENTORY_ATRUS;
+    if ([gs unsigned32ForKey:@"acathbook"])
+        new_flags |= 1 << RX_INVENTORY_CATHERINE;
+    if ([gs unsigned32ForKey:@"atrapbook"])
+        new_flags |= 1 << RX_INVENTORY_TRAP;
     
-    // do we have nothing to update, bail out early
-    if (new_flags[RX_INVENTORY_ATRUS] == _inventory_flags[RX_INVENTORY_ATRUS] &&
-        new_flags[RX_INVENTORY_CATHERINE] == _inventory_flags[RX_INVENTORY_CATHERINE] &&
-        new_flags[RX_INVENTORY_TRAP] == _inventory_flags[RX_INVENTORY_TRAP])
+    // if we have nothing to update, bail out early
+    if (new_flags == _inventory_flags)
         return;
     
     OSSpinLockLock(&_inventory_update_lock);
-    _inventory_active = 0;
     
     // update the inventory flags
-    _inventory_flags[RX_INVENTORY_ATRUS] = new_flags[RX_INVENTORY_ATRUS];
-    _inventory_flags[RX_INVENTORY_CATHERINE] = new_flags[RX_INVENTORY_CATHERINE];
-    _inventory_flags[RX_INVENTORY_TRAP] = new_flags[RX_INVENTORY_TRAP];
+    _inventory_flags = new_flags;
     
-    // count the number of items that are active
-    for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-        if (new_flags[inventory_i])
-            _inventory_active++;
-    }
-    
-    // if there is no active inventory item, we can do an early exit
-    if (_inventory_active == 0) {
+    // if there are no active inventory items, we can return now
+    if (_inventory_flags == 0) {
         OSSpinLockUnlock(&_inventory_update_lock);
         return;
     }
@@ -1551,14 +1538,14 @@ init_failure:
     // compute the total inventory region width
     float total_inventory_width = 0.0f;
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-        if (new_flags[inventory_i])
+        if ((new_flags & (1 << inventory_i)))
             total_inventory_width += _inventory_frames[inventory_i].size.width + RX_INVENTORY_MARGIN;
     }
     
     // compute the x position of the items
     float x_offset = kRXCardViewportOriginOffset.x + (kRXCardViewportSize.width / 2.0f) - (total_inventory_width / 2.0f);
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-        if (!new_flags[inventory_i])
+        if (!(new_flags & (1 << inventory_i)))
             continue;
         
         _inventory_frames[inventory_i].origin.x = x_offset;
@@ -1572,7 +1559,7 @@ init_failure:
     
     // process the active items
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-        if (!new_flags[inventory_i])
+        if (!(new_flags & (1 << inventory_i)))
             continue;
     
         // compute the y position of the items
@@ -2003,7 +1990,7 @@ init_failure:
     // update and draw the inventory
     [self _updateInventoryWithTimestamp:output_time context:cgl_ctx];
     
-    if (_inventory_alpha > 0.f && _inventory_active > 0) {
+    if (_inventory_alpha > 0.f && _inventory_flags) {
         if (_inventory_alpha < 1.f) {
             glBlendColor(1.f, 1.f, 1.f, _inventory_alpha);
             glBlendFuncSeparate(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
@@ -2013,7 +2000,7 @@ init_failure:
         
         glUseProgram(_card_program); glReportError();
         for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-            if (!_inventory_flags[inventory_i])
+            if (!(_inventory_flags & (1 << inventory_i)))
                 continue;
             
             glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventory_textures[inventory_i]); glReportError();
@@ -2133,13 +2120,15 @@ exit_render:
             primitive_index++;
         }
         
+        uint32_t inv_count = 0;
         for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-            if (!_inventory_flags[inventory_i])
+            if (!(_inventory_flags & (1 << inventory_i)))
                 continue;
             
             _hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
             _hotspotDebugRenderElementCountArray[primitive_index] = 4;
             
+            inv_count++;
             NSRect frame = _inventory_hotspot_frames[inventory_i];
             
             attribs[0] = frame.origin.x;
@@ -2190,7 +2179,7 @@ exit_render:
         glMultiDrawArrays(GL_LINE_LOOP,
                           _hotspotDebugRenderFirstElementArray,
                           _hotspotDebugRenderElementCountArray,
-                          [activeHotspots count] + _inventory_active); glReportError();
+                          [activeHotspots count] + inv_count); glReportError();
         
         glDisableClientState(GL_COLOR_ARRAY); glReportError();
     }
@@ -2547,9 +2536,9 @@ exit_flush_tasks:
     // now check if we're over one of the inventory regions
     if (!hotspot) {
         OSSpinLockLock(&_inventory_update_lock);
-        if (_inventory_active > 0) {
+        if (_inventory_flags) {
             for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-                if (!_inventory_flags[inventory_i])
+                if (!(_inventory_flags & (1 << inventory_i)))
                     continue;
                 
                 if (NSMouseInRect(mouse_vector.origin, _inventory_hotspot_frames[inventory_i], NO)) {
