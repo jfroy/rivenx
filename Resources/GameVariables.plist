@@ -9,9 +9,9 @@
 	<key>newpos</key>
 	<integer>0</integer>
 	<key>aatrusbook</key>
-	<integer>1</integer>
+	<integer>0</integer>
 	<key>acathbook</key>
-	<integer>1</integer>
+	<integer>0</integer>
 	<key>acathstate</key>
 	<integer>0</integer>
 	<key>adoit</key>
@@ -21,7 +21,7 @@
 	<key>agehn</key>
 	<integer>0</integer>
 	<key>ainventory</key>
-	<integer>1</integer>
+	<integer>0</integer>
 	<key>aova</key>
 	<integer>0</integer>
 	<key>apower</key>
