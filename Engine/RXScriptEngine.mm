@@ -34,9 +34,18 @@
 
 static NSTimeInterval const k_mouse_tracking_loop_period = 0.001;
 
-struct rx_card_dynamic_picture {
+struct _rx_card_dynamic_picture {
     GLuint texture;
 };
+typedef struct _rx_card_dynamic_picture rx_card_dynamic_picture_t;
+
+static void rx_destroy_dynamic_picture(const void* key, const void* value, void* context) {
+    CGLContextObj cgl_ctx = (CGLContextObj)context;
+    rx_card_dynamic_picture_t* picture = (rx_card_dynamic_picture_t*)value;
+    glDeleteTextures(1, &picture->texture);
+    free(picture);
+}
+
 
 typedef void (*rx_command_imp_t)(id, SEL, const uint16_t, const uint16_t*);
 struct _rx_command_dispatch_entry {
@@ -48,6 +57,7 @@ typedef struct _rx_command_dispatch_entry rx_command_dispatch_entry_t;
 static uint32_t const rx_command_count = 48;
 static rx_command_dispatch_entry_t _riven_command_dispatch_table[rx_command_count];
 static NSMapTable* _riven_external_command_dispatch_map;
+
 
 #define DEFINE_COMMAND(NAME) - (void)_external_ ## NAME:(const uint16_t)argc arguments:(const uint16_t*)argv
 #define COMMAND_SELECTOR(NAME) @selector(_external_ ## NAME:arguments:)
@@ -232,7 +242,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     _active_hotspots = [NSMutableArray new];
     
     code2movieMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
-    _dynamicPictureMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSOwnedPointerMapValueCallBacks, 0);
+    _dynamic_picture_map = [NSMutableDictionary new];
     
     _movies_to_reset = [NSMutableSet new];
     
@@ -269,14 +279,13 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
     CGLLockContext(cgl_ctx);
     
-    if (_dynamicPictureMap) {
-        NSMapEnumerator dynamicPictureEnum = NSEnumerateMapTable(_dynamicPictureMap);
-        uintptr_t key;
-        struct rx_card_dynamic_picture* value;
-        while (NSNextMapEnumeratorPair(&dynamicPictureEnum, (void**)&key, (void**)&value))
-            glDeleteTextures(1, &value->texture);
+    if (_dynamic_picture_map) {
+        NSEnumerator* picture_maps_enum = [_dynamic_picture_map objectEnumerator];
+        CFMutableDictionaryRef picture_map;
+        while ((picture_map = (CFMutableDictionaryRef)[picture_maps_enum nextObject]))        
+            CFDictionaryApplyFunction(picture_map, rx_destroy_dynamic_picture, cgl_ctx);
         
-        NSFreeMapTable(_dynamicPictureMap);
+        [_dynamic_picture_map release];
     }
     
     glFlush();
@@ -1032,11 +1041,23 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     GLsizeiptr picture_size = picture_width * picture_height * 4;
     
     // check if we have a cache for the tBMP ID; create a dynamic picture structure otherwise and map it to the tBMP ID
-    uintptr_t dynamic_picture_key = ID;
-    struct rx_card_dynamic_picture* dynamic_picture = (struct rx_card_dynamic_picture*)NSMapGet(_dynamicPictureMap,
-                                                                                                (const void*)dynamic_picture_key);
+    NSString* archive_key = [[[[archive url] path] lastPathComponent] stringByDeletingPathExtension];
+    CFMutableDictionaryRef picture_map = (CFMutableDictionaryRef)[_dynamic_picture_map objectForKey:archive_key];
+    if (!picture_map) {
+        picture_map = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, NULL, NULL);
+        [_dynamic_picture_map setObject:(id)picture_map forKey:archive_key];
+        CFRelease(picture_map);
+    }
+    
+    uintptr_t dynamic_picture_key = (uintptr_t)ID << 2;
+    rx_card_dynamic_picture_t* dynamic_picture = (rx_card_dynamic_picture_t*)CFDictionaryGetValue(picture_map, (void*)dynamic_picture_key);
     if (dynamic_picture == NULL) {
-        dynamic_picture = (struct rx_card_dynamic_picture*)malloc(sizeof(struct rx_card_dynamic_picture*));
+#if defined(DEBUG)
+        RXLog(kRXLoggingGraphics, kRXLoggingLevelDebug, @"loading dynamic picture %hu from archive %@", ID, archive_key);
+#endif
+        
+        // allocate a dynamic picture structure
+        dynamic_picture = (rx_card_dynamic_picture_t*)malloc(sizeof(rx_card_dynamic_picture_t*));
         
         // get the load context and lock it
         CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
@@ -1090,7 +1111,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         CGLUnlockContext(cgl_ctx);
         
         // map the tBMP ID to the dynamic picture
-        NSMapInsert(_dynamicPictureMap, (void*)dynamic_picture_key, dynamic_picture);
+        CFDictionarySetValue(picture_map, (void*)dynamic_picture_key, dynamic_picture);
     }
     
     // create a RXDynamicPicture object and queue it for rendering

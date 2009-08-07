@@ -258,9 +258,9 @@ static void free_dynamic_picture_index(GLuint index) {
     [super dealloc];
 }
 
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
+- (void)render:(const CVTimeStamp*)output_time inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
     OSSpinLockLock(&dynamic_picture_lock);
-    [super render:outputTime inContext:cgl_ctx framebuffer:fbo];
+    [super render:output_time inContext:cgl_ctx framebuffer:fbo];
     OSSpinLockUnlock(&dynamic_picture_lock);
 }
 

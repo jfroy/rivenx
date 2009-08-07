@@ -32,7 +32,7 @@
     BOOL _did_hide_mouse;
     
     // rendering support
-    NSMapTable* _dynamicPictureMap;
+    NSMutableDictionary* _dynamic_picture_map;
     NSMapTable* code2movieMap;
     semaphore_t _moviePlaybackSemaphore;
     RXSoundGroup* _synthesizedSoundGroup;

@@ -1469,7 +1469,12 @@ init_failure:
             
             // update the dynamic RT texture from the water draw buffer
             glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
-            glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, _water_draw_buffer); glReportError();
+            glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
+                            0,
+                            0, 0,
+                            kRXCardViewportSize.width, kRXCardViewportSize.height,
+                            GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
+                            _water_draw_buffer); glReportError();
             
             // increment the special effect frame counter
             r->water_fx.current_frame = (r->water_fx.current_frame + 1) % r->water_fx.sfxe->record->frame_count;

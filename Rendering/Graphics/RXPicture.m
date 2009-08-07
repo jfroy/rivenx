@@ -40,7 +40,7 @@
     return _owner;
 }
 
-- (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
+- (void)render:(const CVTimeStamp*)output_time inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
     
     // alias the render context state object pointer
@@ -56,7 +56,7 @@
     glDrawArrays(GL_TRIANGLE_STRIP, _index, 4); glReportError();
 }
 
-- (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
+- (void)performPostFlushTasks:(const CVTimeStamp*)output_time {
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD    
 }
 
