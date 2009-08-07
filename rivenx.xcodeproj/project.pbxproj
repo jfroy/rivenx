@@ -1356,6 +1356,9 @@
 /* Begin PBXProject section */
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				ORGANIZATIONNAME = MacStorm;
+			};
 			buildConfigurationList = 31CB99BA08B29A4100609EB5 /* Build configuration list for PBXProject "rivenx" */;
 			compatibilityVersion = "Xcode 3.1";
 			hasScannedForEncodings = 1;
