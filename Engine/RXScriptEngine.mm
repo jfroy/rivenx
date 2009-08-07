@@ -2142,7 +2142,7 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
     NSPoint combination_sampling_origin = NSMakePoint(32.0f, 0.0f);
     
     for (int i = 0; i < 5; i++) {
-        combination_sampling_origin.x = 32.0f * (telescope_combo & 0x7);
+        combination_sampling_origin.x = 32.0f * ((telescope_combo & 0x7) - 1);
         
         [self _drawPictureWithID:13 + i
                            stack:[card parent]
