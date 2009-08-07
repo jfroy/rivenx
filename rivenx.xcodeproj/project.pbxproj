@@ -734,6 +734,9 @@
 			);
 			name = rivenx;
 			sourceTree = "<group>";
+			indentWidth = 4;
+			tabWidth = 4;
+			usesTabs = 0;
 		};
 		08FB7795FE84155DC02AAC07 /* Tools */ = {
 			isa = PBXGroup;
