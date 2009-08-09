@@ -3246,14 +3246,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     return nil;
 }
 
-- (void)handleSliderDragForDome:(NSString*)dome {
-    // cache the tic sound
-    RXDataSound* tic_sound = [RXDataSound new];
-    tic_sound->parent = [[card descriptor] parent];
-    tic_sound->ID = [[RXEditionManager sharedEditionManager] lookupSoundWithKey:[dome stringByAppendingString:@" slider tic"]];
-    tic_sound->gain = 1.0f;
-    tic_sound->pan = 0.5f;
-    
+- (void)handleSliderDragForDome:(NSString*)dome {    
     // cache the minimum slider hotspot ID
     RXHotspot* min_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], @"s1");
     assert(min_hotspot);
@@ -3270,6 +3263,13 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     // set the cursor to the closed hand cursor
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
+    
+    // cache the tic sound
+    RXDataSound* tic_sound = [RXDataSound new];
+    tic_sound->parent = [[card descriptor] parent];
+    tic_sound->twav_id = [[RXEditionManager sharedEditionManager] lookupSoundWithKey:[dome stringByAppendingString:@" slider tic"]];
+    tic_sound->gain = 1.0f;
+    tic_sound->pan = 0.5f;
     
     // track the mouse, updating the position of the slider as appropriate
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
@@ -3970,7 +3970,7 @@ DEFINE_COMMAND(xglview_prisonon) {
     // now need to select the correct viewer turn on movie and catherine state based on the selection above
     uintptr_t turnon_code;
     uint16_t cath_state;
-    if (prison_mlst == 8 || prison_mlst == 10 || prison_mlst == 13 || prison_mlst >= 16 && prison_mlst <= 18 || prison_mlst == 20) {
+    if (prison_mlst == 8 || prison_mlst == 10 || prison_mlst == 13 || (prison_mlst >= 16 && prison_mlst <= 18) || prison_mlst == 20) {
         turnon_code = 4;
         cath_state = 1;
     } else if (prison_mlst == 19 || prison_mlst == 21 || prison_mlst == 23) {
