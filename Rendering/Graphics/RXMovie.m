@@ -9,12 +9,8 @@
 #import <pthread.h>
 #import <limits.h>
 
-#import <OpenGL/CGLMacro.h>
-
+#import "Rendering/Graphics/RXMovie.h"
 #import "Engine/RXWorldProtocol.h"
-
-#import "RXMovie.h"
-#import "Rendering/Audio/RXAudioRenderer.h"
 
 
 NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotification";
@@ -423,7 +419,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"setting volume to %f", volume);
 #endif
     
-    [_movie setVolume:volume * reinterpret_cast<RX::AudioRenderer*>([g_world audioRenderer])->Gain()];
+    [_movie setVolume:volume];
 }
 
 - (BOOL)isPlayingSelection {

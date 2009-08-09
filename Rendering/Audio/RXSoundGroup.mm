@@ -20,26 +20,34 @@
 - (BOOL)isEqual:(id)anObject {
     if (![anObject isKindOfClass:[self class]])
         return NO;
+    
     RXSound* sound = (RXSound*)anObject;
-    if (sound->ID == self->ID && sound->parent == self->parent)
+    if (sound->twav_id == self->twav_id && sound->parent == self->parent)
         return YES;
+    
     return NO;
 }
 
 - (NSUInteger)hash {
     // WARNING: WILL BREAK ON 64-BIT
-    return integer_pair_hash((int)parent, (int)ID);
+    return integer_pair_hash((int)parent, (int)twav_id);
 }
 
 - (NSString*)description {
     return [NSString stringWithFormat:@"%@ {parent=%@, ID=%hu, gain=%f, pan=%f, detach_timestamp=%qu, source=%p}",
-        [super description], parent, ID, gain, pan, detach_timestamp, source];
+        [super description], parent, twav_id, gain, pan, detach_timestamp, source];
 }
 
 - (id <MHKAudioDecompression>)audioDecompressor {
     if (!_decompressor)
-        _decompressor = [[parent audioDecompressorWithID:ID] retain];
+        _decompressor = [[parent audioDecompressorWithID:twav_id] retain];
     return _decompressor;
+}
+
+- (double)duration {
+    if (!source)
+        return 0.0;
+    return source->Duration();
 }
 
 @end
@@ -49,7 +57,7 @@
 
 - (id <MHKAudioDecompression>)audioDecompressor {
     if (!_decompressor)
-        _decompressor = [[parent audioDecompressorWithDataID:ID] retain];
+        _decompressor = [[parent audioDecompressorWithDataID:twav_id] retain];
     return _decompressor;
 }
 
@@ -90,15 +98,15 @@
         [super description], fadeOutRemovedSounds, fadeInNewSounds, loop, gain, [_sounds count]];
 }
 
-- (void)addSoundWithStack:(RXStack*)parent ID:(uint16_t)ID gain:(float)g pan:(float)p {
-    RXSound* source = [RXSound new];
-    source->parent = parent;
-    source->ID = ID;
-    source->gain = g;
-    source->pan = p;
+- (void)addSoundWithStack:(RXStack*)parent ID:(uint16_t)twav_id gain:(float)g pan:(float)p {
+    RXSound* sound = [RXSound new];
+    sound->parent = parent;
+    sound->twav_id = twav_id;
+    sound->gain = g;
+    sound->pan = p;
     
-    [_sounds addObject:source];
-    [source release];
+    [_sounds addObject:sound];
+    [sound release];
 }
 
 - (NSSet*)sounds {

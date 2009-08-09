@@ -20,17 +20,22 @@
 
 @public
     RXStack* parent;
-    uint16_t ID;
+    uint16_t twav_id;
     
     float gain;
     float pan;
     
     uint64_t detach_timestamp;
     
+#if defined(__cplusplus)
     RX::CardAudioSource* source;
+#else
+    void* source;
+#endif
 }
 
 - (id <MHKAudioDecompression>)audioDecompressor;
+- (double)duration;
 
 @end
 
@@ -49,7 +54,7 @@
     NSMutableSet* _sounds;
 }
 
-- (void)addSoundWithStack:(RXStack*)parent ID:(uint16_t)ID gain:(float)g pan:(float)p;
+- (void)addSoundWithStack:(RXStack*)parent ID:(uint16_t)twav_id gain:(float)g pan:(float)p;
 - (NSSet*)sounds;
 
 @end

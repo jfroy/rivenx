@@ -93,11 +93,11 @@ struct rx_card_picture_record {
     // movies
     [_movies release];
     if (_mlstCodes)
-        delete[] _mlstCodes;
+        free(_mlstCodes);
     
     // pictures
     if (_pictureTextures)
-        delete[] _pictureTextures;
+        free(_pictureTextures);
     if (_pictureTextureStorage)
         free(_pictureTextureStorage);
     
@@ -226,7 +226,7 @@ struct rx_card_picture_record {
 #endif
     
     // temporary storage for picture resource IDs and dimensions
-    struct rx_card_picture_record* pictureRecords = new struct rx_card_picture_record[_pictureCount];
+    struct rx_card_picture_record* pictureRecords = malloc(sizeof(struct rx_card_picture_record) * _pictureCount);
     
     // precompute the total texture storage to hint OpenGL
     size_t textureStorageSize = 0;
@@ -272,7 +272,7 @@ struct rx_card_picture_record {
     GLfloat* vertex_attributes = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY); glReportError();
     
     // allocate the texture object ID array
-    _pictureTextures = new GLuint[_pictureCount];
+    _pictureTextures = malloc(sizeof(GLuint) * _pictureCount);
     glGenTextures(_pictureCount, _pictureTextures); glReportError();
     
     // for each PLST entry, load and upload the picture, compute needed coords
@@ -395,7 +395,7 @@ struct rx_card_picture_record {
     CGLUnlockContext(cgl_ctx);
     
     // we don't need the picture records and the PLST data anymore
-    delete[] pictureRecords;
+    free(pictureRecords);
     free(list_data);
 }
 
@@ -427,7 +427,7 @@ struct rx_card_picture_record {
     
     // allocate movie management objects
     _movies = [NSMutableArray new];
-    _mlstCodes = new uint16_t[movieCount];
+    _mlstCodes = malloc(sizeof(uint16_t) * movieCount);
     
     // swap the records if needed
 #if defined(__LITTLE_ENDIAN__)

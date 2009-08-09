@@ -54,8 +54,8 @@ struct _rx_command_dispatch_entry {
 };
 typedef struct _rx_command_dispatch_entry rx_command_dispatch_entry_t;
 
-static uint32_t const rx_command_count = 48;
-static rx_command_dispatch_entry_t _riven_command_dispatch_table[rx_command_count];
+#define RX_COMMAND_COUNT 48
+static rx_command_dispatch_entry_t _riven_command_dispatch_table[RX_COMMAND_COUNT];
 static NSMapTable* _riven_external_command_dispatch_map;
 
 
@@ -184,7 +184,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     _riven_command_dispatch_table[46].sel = @selector(_opcode_activateMLST:arguments:);
     _riven_command_dispatch_table[47].sel = @selector(_opcode_activateSLSTWithVolume:arguments:);
     
-    for (unsigned char selectorIndex = 0; selectorIndex < rx_command_count; selectorIndex++)
+    for (unsigned char selectorIndex = 0; selectorIndex < RX_COMMAND_COUNT; selectorIndex++)
         _riven_command_dispatch_table[selectorIndex].imp =
             (rx_command_imp_t)[self instanceMethodForSelector:_riven_command_dispatch_table[selectorIndex].sel];
     
@@ -1137,14 +1137,14 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (void)_playDataSoundWithID:(uint16_t)ID gain:(float)gain duration:(double*)duration_ptr {
     RXDataSound* sound = [RXDataSound new];
     sound->parent = [[card descriptor] parent];
-    sound->ID = ID;
+    sound->twav_id = ID;
     sound->gain = gain;
     sound->pan = 0.5f;
     
     [controller playDataSound:sound];
     
     if (duration_ptr)
-        *duration_ptr = sound->source->Duration();
+        *duration_ptr = [sound duration];
     [sound release];
 }
 
@@ -3118,7 +3118,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     // cache the tic sound
     RXDataSound* tic_sound = [RXDataSound new];
     tic_sound->parent = [[card descriptor] parent];
-    tic_sound->ID = [[RXEditionManager sharedEditionManager] lookupSoundWithKey:[dome stringByAppendingString:@" slider tic"]];
+    tic_sound->twav_id = [[RXEditionManager sharedEditionManager] lookupSoundWithKey:[dome stringByAppendingString:@" slider tic"]];
     tic_sound->gain = 1.0f;
     tic_sound->pan = 0.5f;
     

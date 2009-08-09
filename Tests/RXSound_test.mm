@@ -20,13 +20,13 @@
     
     s1 = [RXSound new];
     STAssertNotNil(s1, @"s1 should not be nil");
-    s1->ID = 1;
+    s1->twav_id = 1;
     s1->parent = a;
     
     // test inequality based on parent
     s2 = [RXSound new];
     STAssertNotNil(s2, @"s2 should not be nil");
-    s2->ID = 1;
+    s2->twav_id = 1;
     s2->parent = b;
     
     STAssertFalse([s1 isEqual:s2], @"s1 should not be equal to s2");
@@ -36,7 +36,7 @@
     // test inequality based on parent pointer
     s2 = [RXSound new];
     STAssertNotNil(s2, @"s2 should not be nil");
-    s2->ID = 1;
+    s2->twav_id = 1;
     s2->parent = (RXStack*)[NSString stringWithFormat:@"%@", @"astack"];
     
     STAssertFalse([s1 isEqual:s2], @"s1 should not be equal to s2");
@@ -46,7 +46,7 @@
     // test inequality based on ID
     s2 = [RXSound new];
     STAssertNotNil(s2, @"s2 should not be nil");
-    s2->ID = 2;
+    s2->twav_id = 2;
     s2->parent = a;
     
     STAssertFalse([s1 isEqual:s2], @"s1 should not be equal to s2");
@@ -59,7 +59,7 @@
     // test ID and parent equality
     s2 = [RXSound new];
     STAssertNotNil(s2, @"s2 should not be nil");
-    s2->ID = 1;
+    s2->twav_id = 1;
     s2->parent = a;
     
     STAssertTrue([s1 isEqual:s2], @"s1 should be equal to s2");
@@ -75,7 +75,7 @@
     
     s1 = [RXSound new];
     STAssertNotNil(s1, @"s1 should not be nil");
-    s1->ID = 1;
+    s1->twav_id = 1;
     s1->parent = a;
     
     // test self hash equality
@@ -84,7 +84,7 @@
     // test ID and parent equality
     s2 = [RXSound new];
     STAssertNotNil(s2, @"s2 should not be nil");
-    s2->ID = 1;
+    s2->twav_id = 1;
     s2->parent = a;
     
     STAssertTrue([s1 hash] == [s2 hash], @"s1's hash should be equal to s2's hash");

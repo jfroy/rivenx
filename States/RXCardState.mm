@@ -781,7 +781,7 @@ init_failure:
             // get a decompressor
             id <MHKAudioDecompression> decompressor = [sound audioDecompressor];
             if (!decompressor) {
-                RXOLog2(kRXLoggingAudio, kRXLoggingLevelError, @"failed to get audio decompressor for sound ID %hu", sound->ID);
+                RXOLog2(kRXLoggingAudio, kRXLoggingLevelError, @"failed to get audio decompressor for sound ID %hu", sound->twav_id);
                 continue;
             }
             
@@ -799,7 +799,7 @@ init_failure:
             CFArrayAppendValue(sourcesToAdd, sound->source);
             
 #if defined(DEBUG) && DEBUG > 1
-            RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    added new sound %hu to the active mix (source: %p)", sound->ID, sound->source);
+            RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    added new sound %hu to the active mix (source: %p)", sound->twav_id, sound->source);
 #endif
         } else {
             // UPDATE SOUND
@@ -824,7 +824,7 @@ init_failure:
             active_sound->source->SetNominalPan(active_sound->pan);
             
 #if defined(DEBUG) && DEBUG > 1
-            RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    updated sound %hu in the active mix (source: %p)", sound->ID, sound->source);
+            RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"    updated sound %hu in the active mix (source: %p)", sound->twav_id, sound->source);
 #endif
         }
     }
@@ -930,7 +930,7 @@ init_failure:
         // get a decompressor
         id <MHKAudioDecompression> decompressor = [sound audioDecompressor];
         if (!decompressor) {
-            RXOLog2(kRXLoggingAudio, kRXLoggingLevelError, @"failed to get audio decompressor for sound ID %hu", sound->ID);
+            RXOLog2(kRXLoggingAudio, kRXLoggingLevelError, @"failed to get audio decompressor for sound ID %hu", sound->twav_id);
             return;
         }
         
