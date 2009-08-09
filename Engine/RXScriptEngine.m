@@ -1248,7 +1248,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
     // argv + 1 is suitable for _createSoundGroupWithSLSTRecord
     uint16_t soundCount = argv[0];
-    _synthesizedSoundGroup = [card createSoundGroupWithSLSTRecord:(argv + 1) soundCount:soundCount swapBytes:NO];
+    _synthesizedSoundGroup = [card newSoundGroupWithSLSTRecord:(argv + 1) soundCount:soundCount swapBytes:NO];
     
     [controller activateSoundGroup:_synthesizedSoundGroup];
     _did_activate_slst = YES;

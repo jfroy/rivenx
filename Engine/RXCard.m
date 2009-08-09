@@ -776,7 +776,7 @@ struct rx_card_picture_record {
         slstRecordPointer++;
         
         // create a sound group for the record
-        RXSoundGroup* group = [self createSoundGroupWithSLSTRecord:slstRecordPointer soundCount:soundCount swapBytes:YES];
+        RXSoundGroup* group = [self newSoundGroupWithSLSTRecord:slstRecordPointer soundCount:soundCount swapBytes:YES];
         if (group)
             [_soundGroups addObject:group];
         [group release];
@@ -809,7 +809,7 @@ struct rx_card_picture_record {
 #pragma mark -
 #pragma mark dynamic loading
 
-- (RXSoundGroup*)createSoundGroupWithSLSTRecord:(const uint16_t*)slst_record soundCount:(uint16_t)sound_count swapBytes:(BOOL)swap {
+- (RXSoundGroup*)newSoundGroupWithSLSTRecord:(const uint16_t*)slst_record soundCount:(uint16_t)sound_count swapBytes:(BOOL)swap {
     RXSoundGroup* group = [RXSoundGroup new];
     
     // some useful pointers
