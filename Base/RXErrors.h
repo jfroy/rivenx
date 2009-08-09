@@ -24,9 +24,16 @@ enum {
     kRXErrNoCurrentEdition,
     kRXErrQuickTimeTooOld,
     kRXErrUnableToLoadExtrasArchive,
+    
+    kRXErrFailedToGetDisplayID,
+    kRXErrFailedToGetAcceleratorPerfStats,
+    kRXErrFailedToFindFreeVRAMInformation,
 };
 
 extern NSString* const RXErrorDomain;
+extern NSString* const RXIOKitErrorDomain;
+extern NSString* const RXCGLErrorDomain;
+extern NSString* const RXCGErrorDomain;
 
 extern NSException* RXArchiveManagerArchiveNotFoundExceptionWithArchiveName(NSString* name);
 

@@ -26,6 +26,8 @@
     GLuint _glslMajorVersion;
     GLuint _glslMinorVersion;
     
+    ssize_t _total_vram;
+    
     GLsizei _glWidth;
     GLsizei _glHeight;
     

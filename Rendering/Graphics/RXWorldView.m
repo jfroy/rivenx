@@ -31,6 +31,7 @@
 - (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx;
 - (void)_determineGLVersion:(CGLContextObj)cgl_ctx;
 - (void)_determineGLFeatures:(CGLContextObj)cgl_ctx;
+- (void)_updateTotalVRAM;
 
 - (void)_render:(const CVTimeStamp*)outputTime;
 @end
@@ -153,6 +154,10 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     }
 #endif
     
+    // set the pixel format on the view
+    [self setPixelFormat:format];
+    [format release];
+    
     // create the render context
     _render_context = [[NSOpenGLContext alloc] initWithFormat:format shareContext:nil];
     if (!_render_context) {
@@ -160,10 +165,6 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
         [self release];
         return nil;
     }
-    
-    // set the pixel format on the view
-    [self setPixelFormat:format];
-    [format release];
     
     // cache the underlying CGL pixel format
     _cglPixelFormat = [format CGLPixelFormatObj];
@@ -501,8 +502,11 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     
     GLint renderer;
     CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFARendererID, &renderer);
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"now using virtual screen %d driven by the \"%@\" renderer",
-        [_render_context currentVirtualScreen], [RXWorldView rendererNameForID:renderer]);
+    
+    [self _updateTotalVRAM];
+    
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"now using virtual screen %d driven by the \"%@\" renderer; VRAM: %ld MB total, %.2f MB free",
+        [_render_context currentVirtualScreen], [RXWorldView rendererNameForID:renderer], _total_vram / 1024 / 1024, [self currentFreeVRAM:NULL] / 1024.0 / 1024.0);
     
     // determine OpenGL version and features
     [self _determineGLVersion:_render_context_cgl];
@@ -563,7 +567,7 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
 #pragma mark -
 #pragma mark OpenGL initialization
 
-- (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx {  
+- (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx {
     // set background color to black
 #if defined(DEBUG)
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -601,6 +605,9 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     
     glReportError();
 }
+
+#pragma mark -
+#pragma mark capabilities
 
 - (void)_determineGLVersion:(CGLContextObj)cgl_ctx {
 /*
@@ -676,6 +683,140 @@ major_number.minor_number major_number.minor_number.release_number
     
     [extensions release];
     [features_message release];
+}
+
+extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, mach_port_t* accelerator, uint32_t* index);
+
+- (void)_updateTotalVRAM {
+    CGLError cglerr;
+    
+    // get the display mask for the current virtual screen
+    CGOpenGLDisplayMask display_mask;
+    cglerr = CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFADisplayMask, (GLint*)&display_mask);
+    if (cglerr != kCGLNoError) {
+        _total_vram = -1;
+        return;
+    }
+    
+    // get the renderer ID for the current virtual screen
+    GLint renderer;
+    cglerr = CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFARendererID, &renderer);
+    if (cglerr != kCGLNoError) {
+        _total_vram = -1;
+        return;
+    }
+    
+    // get the renderer info object for the display mask
+    CGLRendererInfoObj renderer_info;
+    GLint renderer_count;
+    cglerr = CGLQueryRendererInfo(display_mask, &renderer_info, &renderer_count);
+    if (cglerr != kCGLNoError) {
+        _total_vram = -1;
+        return;
+    }
+    
+    // find the renderer index for the current renderer
+    GLint renderer_index = 0;
+    if (renderer_count > 1) {
+        for (; renderer_index < renderer_count; renderer_index++) {
+            GLint renderer_id;
+            cglerr = CGLDescribeRenderer(renderer_info, 0, kCGLRPRendererID, &renderer_id);
+            if (cglerr != kCGLNoError) {
+                CGLDestroyRendererInfo(renderer_info);
+                _total_vram = -1;
+                return;
+            }
+            
+            if ((renderer_id & kCGLRendererIDMatchingMask) == (renderer & kCGLRendererIDMatchingMask))
+                break;
+        }
+    }
+    
+    if (renderer_index == renderer_count) {
+        CGLDestroyRendererInfo(renderer_info);
+        _total_vram = -1;
+        return;
+    }
+    
+    GLint total_vram = -1;
+    cglerr = CGLDescribeRenderer(renderer_info, renderer_index, kCGLRPVideoMemory, &total_vram);
+    if (cglerr != kCGLNoError) {
+        _total_vram = -1;
+        return;
+    }
+    CGLDestroyRendererInfo(renderer_info);
+    
+    _total_vram = total_vram;
+}
+
+- (ssize_t)currentFreeVRAM:(NSError**)error {
+    CGLError cglerr;
+    CGError cgerr;
+    
+    // get the display mask for the current virtual screen
+    CGOpenGLDisplayMask display_mask;
+    cglerr = CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFADisplayMask, (GLint*)&display_mask);
+    if (cglerr != kCGLNoError)
+        ReturnValueWithError(-1, RXCGLErrorDomain, cglerr, nil, error);
+    
+    // get the corresponding CG display ID
+    CGDirectDisplayID display_id = CGOpenGLDisplayMaskToDisplayID(display_mask);
+    if (display_id == kCGNullDirectDisplay)
+        ReturnValueWithError(-1, RXErrorDomain, kRXErrFailedToGetDisplayID, nil, error);
+    
+    // use a private CG function to get the accelerator for that display ID
+    io_service_t accelerator_service;
+    uint32_t accelerator_index;
+    cgerr = CGSAcceleratorForDisplayNumber(display_id, &accelerator_service, &accelerator_index);
+    if (cgerr != kCGErrorSuccess)
+        ReturnValueWithError(-1, RXCGErrorDomain, cgerr, nil, error);
+    
+    // get the performance statistics ditionary out of the IOAccelerator
+    CFDictionaryRef perf_stats = IORegistryEntryCreateCFProperty(accelerator_service, CFSTR("PerformanceStatistics"), kCFAllocatorDefault, 0);
+    if (!perf_stats)
+        ReturnValueWithError(-1, RXErrorDomain, kRXErrFailedToGetAcceleratorPerfStats, nil, error);
+    
+    // we're done with the accelerator service now
+    IOObjectRelease(accelerator_service);
+    
+    // look for a number of keys (this is mostly reverse engineering and best-guess effort)
+    CFNumberRef free_vram_number = NULL;
+    ssize_t free_vram;
+    BOOL free_number = NO;
+    
+    free_vram_number = CFDictionaryGetValue(perf_stats, CFSTR("vramLargestFreeBytes"));
+    if (!free_vram_number) {
+        free_vram_number = CFDictionaryGetValue(perf_stats, CFSTR("vramFreeBytes"));
+        if (!free_vram_number) {
+            free_vram_number = CFDictionaryGetValue(perf_stats, CFSTR("vramUsedBytes"));
+            if (free_vram_number) {
+                CFNumberGetValue(free_vram_number, kCFNumberLongType, &free_vram);
+                free_vram_number = NULL;
+                
+                [self _updateTotalVRAM];
+                
+                if (_total_vram != -1) {
+                    free_vram = _total_vram - free_vram;
+                    free_vram_number = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &free_vram);
+                    free_number = YES;
+                }
+            }
+        }
+    }
+    
+    // we're done with the perf stats
+    CFRelease(perf_stats);
+    
+    // if we did not find or compute a free VRAM number, return an error
+    if (!free_vram_number)
+        ReturnValueWithError(-1, RXErrorDomain, kRXErrFailedToFindFreeVRAMInformation, nil, error);
+    
+    // get its value out
+    CFNumberGetValue(free_vram_number, kCFNumberLongType, &free_vram);
+    if (free_number)
+        CFRelease(free_vram_number);
+    
+    return free_vram;
 }
 
 #pragma mark -

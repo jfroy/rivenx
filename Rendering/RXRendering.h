@@ -108,6 +108,8 @@ __END_DECLS
 
 - (NSCursor*)cursor;
 - (void)setCursor:(NSCursor*)cursor;
+
+- (ssize_t)currentFreeVRAM:(NSError**)error;
 @end
 
 __BEGIN_DECLS

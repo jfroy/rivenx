@@ -9,6 +9,9 @@
 #import "RXErrors.h"
 
 NSString* const RXErrorDomain = @"RXErrorDomain";
+NSString* const RXIOKitErrorDomain = @"RXIOKitErrorDomain";
+NSString* const RXCGLErrorDomain = @"RXCGLErrorDomain";
+NSString* const RXCGErrorDomain = @"RXCGErrorDomain";
 
 NSException* RXArchiveManagerArchiveNotFoundExceptionWithArchiveName(NSString* name) {
     return [NSException exceptionWithName:@"RXArchiveManagerArchiveNotFoundException" reason:[NSString stringWithFormat:@"RXArchiveManager could not find \"%@\".", name] userInfo:nil];
