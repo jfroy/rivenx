@@ -231,7 +231,9 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     }
 }
 
-- (BOOL)_build_packet_description_table_and_count_frames:(NSError**)errorPtr {
+- (BOOL)_build_packet_description_table_and_count_frames:(NSError**)error {
+    NSError* local_error = nil;
+    
     UInt8* read_buffer = malloc(READ_BUFFER_SIZE);
     ssize_t size_left_in_buffer = 0;
     UInt32 buffer_position = 0;
@@ -247,20 +249,20 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     _packet_table = calloc(packet_table_length, sizeof(AudioStreamPacketDescription));
     if (!_packet_table) {
         free(read_buffer);
-        ReturnValueWithPOSIXError(NO, nil, errorPtr);
+        ReturnValueWithPOSIXError(NO, nil, error);
     }
     
     // loop while we still have data left to process
     while (source_position < source_length) {
         // is the read buffer empty?
         if (size_left_in_buffer == 0) {
-            size_left_in_buffer = [_data_source readDataOfLength:READ_BUFFER_SIZE inBuffer:read_buffer error:errorPtr];
+            size_left_in_buffer = [_data_source readDataOfLength:READ_BUFFER_SIZE inBuffer:read_buffer error:&local_error];
             if (size_left_in_buffer == -1) {
                 free(read_buffer);
-                return NO;
+                ReturnValueWithError(NO, [local_error domain], [local_error code], [local_error userInfo], error);
             }
             
-            if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
+            if (size_left_in_buffer == 0 && [local_error code] == eofErr)
                 break;
             
             source_position = [_data_source offsetInFile];
@@ -280,7 +282,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
                     _packet_table = reallocf(_packet_table, packet_table_length * sizeof(AudioStreamPacketDescription));
                     if (!_packet_table) {
                         free(read_buffer);
-                        ReturnValueWithPOSIXError(NO, nil, errorPtr);
+                        ReturnValueWithPOSIXError(NO, nil, error);
                     }
                 }
                 
@@ -299,14 +301,14 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
                 // if the whole frame isn't in the buffer, fill it up
                 if (size_left_in_buffer < frame_length) {
                     memmove(read_buffer, read_buffer + buffer_position, size_left_in_buffer);
-            
-                    size_left_in_buffer += [_data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:errorPtr];
+                    
+                    size_left_in_buffer += [_data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:&local_error];
                     if (size_left_in_buffer == -1) {
                         free(read_buffer);
-                        return NO;
+                        ReturnValueWithError(NO, [local_error domain], [local_error code], [local_error userInfo], error);
                     }
                     
-                    if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
+                    if (size_left_in_buffer == 0 && [local_error code] == eofErr)
                         break;
             
                     source_position = [_data_source offsetInFile];
@@ -325,13 +327,13 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         if (size_left_in_buffer < 4 && size_left_in_buffer > 0) {
             memmove(read_buffer, read_buffer + buffer_position, size_left_in_buffer);
             
-            size_left_in_buffer += [_data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:errorPtr];
+            size_left_in_buffer += [_data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:&local_error];
             if (size_left_in_buffer == -1) {
                 free(read_buffer);
-                return NO;
+                ReturnValueWithError(NO, [local_error domain], [local_error code], [local_error userInfo], error);
             }
             
-            if (size_left_in_buffer == 0 && [*errorPtr code] == eofErr)
+            if (size_left_in_buffer == 0 && [local_error code] == eofErr)
                 break;
             
             source_position = [_data_source offsetInFile];
