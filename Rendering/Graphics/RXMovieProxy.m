@@ -140,7 +140,8 @@
     // if the movie has not been loaded yet, do that on the main thread
     if (!_movie)
         [self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
-    
+    if (!_movie)
+        return QTZeroTime;
     return [_movie duration];
 }
 
@@ -180,7 +181,8 @@
     // if the movie has not been loaded yet, do that on the main thread
     if (!_movie)
         [self performSelectorOnMainThread:@selector(_loadMovie) withObject:nil waitUntilDone:YES];
-    
+    if (!_movie)
+        return QTZeroTime;
     return [_movie _noLockCurrentTime];
 }
 
