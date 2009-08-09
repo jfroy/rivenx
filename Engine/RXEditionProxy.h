@@ -6,7 +6,7 @@
 //  Copyright 2008 MacStorm. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 #import "RXEdition.h"
 

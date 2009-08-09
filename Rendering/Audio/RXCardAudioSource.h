@@ -17,10 +17,11 @@
 #include <libkern/OSAtomic.h>
 #include <MHKKit/MHKAudioDecompression.h>
 
-#include "RXAudioSourceBase.h"
+#include "Rendering/Audio/RXAudioSourceBase.h"
 
-#include "RXAtomic.h"
-#include "VirtualRingBuffer.h"
+#include "Base/RXAtomic.h"
+#include "Utilities/VirtualRingBuffer.h"
+
 
 namespace RX {
 

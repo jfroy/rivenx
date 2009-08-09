@@ -6,18 +6,9 @@
 //  Copyright 2005 MacStorm. All rights reserved.
 //
 
-#import <assert.h>
-#import <limits.h>
-#import <stdbool.h>
-#import <unistd.h>
-
 #import <mach/task.h>
 #import <mach/thread_act.h>
 #import <mach/thread_policy.h>
-
-#import <OpenGL/CGLMacro.h>
-
-#import "Base/RXAtomic.h"
 
 #import "Engine/RXCard.h"
 #import "Engine/RXScriptDecoding.h"

@@ -10,11 +10,11 @@
 #import <errno.h>
 #import <asl.h>
 
-#import "RXLogCenter.h"
-#import "RXLogging.h"
+#import "Base/RXLogCenter.h"
+#import "Base/RXLogging.h"
 
-#import "GTMObjectSingleton.h"
-#import "BZFSUtilities.h"
+#import "Utilities/GTMObjectSingleton.h"
+#import "Utilities/BZFSUtilities.h"
 
 
 @implementation RXLogCenter

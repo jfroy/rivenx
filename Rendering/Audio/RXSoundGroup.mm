@@ -6,8 +6,8 @@
 //  Copyright 2006 MacStorm. All rights reserved.
 //
 
-#import "integer_pair_hash.h"
-#import "RXSoundGroup.h"
+#import "Rendering/Audio/RXSoundGroup.h"
+#import "Utilities/integer_pair_hash.h"
 
 
 @implementation RXSound

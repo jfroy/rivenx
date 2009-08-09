@@ -6,9 +6,9 @@
 //  Copyright 2008 MacStorm. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
-#import "RXPicture.h"
+#import "Rendering/Graphics/RXPicture.h"
 
 
 @interface RXDynamicPicture : RXPicture {

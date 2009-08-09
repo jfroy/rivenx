@@ -8,7 +8,7 @@
  */
 
 #import <unistd.h>
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 #import "Base/RXLogging.h"
 #import "RXDebug.h"

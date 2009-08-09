@@ -9,11 +9,11 @@
 #if !defined(RXERRORS_H)
 #define RXERRORS_H
 
-#include <sys/cdefs.h>
+#import <sys/cdefs.h>
 
 __BEGIN_DECLS
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 #import "PHSErrorMacros.h"
 
 

@@ -8,15 +8,15 @@
 
 #import <mach/semaphore.h>
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 #import "Base/RXAtomic.h"
 #import "Base/RXTiming.h"
 
-#import "RXCardDescriptor.h"
-#import "RXCoreStructures.h"
-#import "RXHotspot.h"
-#import "RXCardProtocols.h"
+#import "Engine/RXCardDescriptor.h"
+#import "Engine/RXCoreStructures.h"
+#import "Engine/RXHotspot.h"
+#import "Engine/RXCardProtocols.h"
 
 #import "Rendering/RXRendering.h"
 

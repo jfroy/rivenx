@@ -8,7 +8,7 @@
 
 #import <OpenGL/CGLMacro.h>
 
-#import "RXPicture.h"
+#import "Rendering/Graphics/RXPicture.h"
 
 
 @implementation RXPicture

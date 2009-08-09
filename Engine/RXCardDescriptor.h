@@ -6,7 +6,7 @@
 //  Copyright 2006 MacStorm. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 #import <MHKKit/MHKKit.h>
 
 

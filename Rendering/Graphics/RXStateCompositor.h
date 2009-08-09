@@ -10,8 +10,8 @@
 
 #import <pthread.h>
 
-#import "RXRendering.h"
-#import "RXRenderState.h"
+#import "Rendering/RXRendering.h"
+#import "States/RXRenderState.h"
 
 
 @interface RXStateCompositor : NSResponder <RXRenderingProtocol> {

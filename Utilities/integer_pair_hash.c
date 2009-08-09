@@ -7,10 +7,10 @@
  *
  */
 
-#include "integer_pair_hash.h"
+#include "Utilities/integer_pair_hash.h"
 
-size_t integer_pair_hash(int a, int b)
-{
+
+size_t integer_pair_hash(int a, int b) {
     uint64_t key = ((uint64_t)a << 32) | (uint64_t)b;
     
     key = (~key) + (key << 18); // key = (key << 18) - key - 1;

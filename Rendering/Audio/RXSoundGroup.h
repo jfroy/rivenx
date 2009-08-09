@@ -8,8 +8,11 @@
 
 #import <MHKKit/MHKAudioDecompression.h>
 
-#import "RXStack.h"
-#import "RXCardAudioSource.h"
+#import "Engine/RXStack.h"
+
+#if defined(__cplusplus)
+#import "Rendering/Audio/RXCardAudioSource.h"
+#endif
 
 
 @interface RXSound : NSObject {

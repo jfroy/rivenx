@@ -8,9 +8,8 @@
 
 #import <libkern/OSAtomic.h>
 
-#import <OpenGL/CGLMacro.h>
+#import "Rendering/Graphics/RXDynamicPicture.h"
 
-#import "RXDynamicPicture.h"
 
 static BOOL dynamic_picture_system_initialized = NO;
 

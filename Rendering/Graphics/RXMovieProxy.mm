@@ -6,10 +6,8 @@
 //  Copyright 2008 MacStorm. All rights reserved.
 //
 
-#import "RXMovieProxy.h"
-
+#import "Rendering/Graphics/RXMovieProxy.h"
 #import "Engine/RXWorldProtocol.h"
-#import "Rendering/Audio/RXAudioRenderer.h"
 
 
 @implementation RXMovieProxy

@@ -6,16 +6,14 @@
 //  Copyright 2007 Apple, Inc. All rights reserved.
 //
 
-#import <OpenGL/CGLMacro.h>
+#import "Base/RXAtomic.h"
 
-#import "RXAtomic.h"
-
-#import "RXStateCompositor.h"
-#import "RXWorldProtocol.h"
+#import "Rendering/Graphics/RXStateCompositor.h"
+#import "Engine/RXWorldProtocol.h"
 
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
 
-#import "RXRenderStateOpacityAnimation.h"
+#import "Rendering/Animation/RXRenderStateOpacityAnimation.h"
 
 
 @interface RXRenderStateCompositionDescriptor : NSObject {
@@ -159,7 +157,6 @@
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"reshaping OpenGL");
 #endif
     
-    rx_size_t viewportSize = RXGetGLViewportSize();
     rx_rect_t contentRect = RXEffectiveRendererFrame();
     
     vertex_coords[0] = contentRect.origin.x;                                            vertex_coords[1] = contentRect.origin.y;

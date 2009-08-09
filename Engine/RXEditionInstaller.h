@@ -6,7 +6,7 @@
 //  Copyright 2008 MacStorm. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 #import "RXEdition.h"
 
 
@@ -22,7 +22,6 @@
 @private
     uint32_t _directiveCount;
     uint32_t _currentDirective;
-    CFAbsoluteTime _startTime;
     double _directiveProgress;
     BOOL _didRun;
     
