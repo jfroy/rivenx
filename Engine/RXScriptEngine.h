@@ -8,12 +8,13 @@
 
 #import <mach/semaphore.h>
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
-#import "RXCard.h"
-#import "RXScriptEngineProtocols.h"
+#import "Engine/RXCard.h"
+#import "Engine/RXScriptEngineProtocols.h"
 
 #import "Rendering/Audio/RXSoundGroup.h"
+#import "Rendering/Graphics/RXTexture.h"
 
 
 @interface RXScriptEngine : NSObject <RXScriptEngineProtocol> {
@@ -45,7 +46,7 @@
     BOOL _did_activate_slst;
     BOOL _disable_screen_update_programs;
     
-    GLuint tiny_marble_atlas;
+    RXTexture* tiny_marble_atlas;
     
     // gameplay support
     RXHotspot* _current_hotspot;

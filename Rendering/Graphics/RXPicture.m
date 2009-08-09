@@ -23,17 +23,22 @@
     return nil;
 }
 
-- (id)initWithTexture:(GLuint)texid vao:(GLuint)vao index:(GLuint)index owner:(id)owner {
+- (id)initWithTexture:(RXTexture*)texture vao:(GLuint)vao index:(GLuint)index owner:(id)owner {
     self = [super init];
     if (!self)
         return nil;
     
     _owner = owner;
-    _tex = texid;
+    _texture = [texture retain];
     _vao = vao;
     _index = index;
     
     return self;
+}
+
+- (void)dealloc {
+    [_texture release];
+    [super dealloc];
 }
 
 - (id)owner {
@@ -49,8 +54,8 @@
     // bind the picture's VAO
     [gl_state bindVertexArrayObject:_vao];
     
-    // bind the picture's texture to TEXTURE_RECTANGLE_ARB
-    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _tex); glReportError();
+    // bind the picture's texture
+    [_texture bindWithContext:cgl_ctx lock:NO];
     
     // draw the picture using a tri-strip
     glDrawArrays(GL_TRIANGLE_STRIP, _index, 4); glReportError();

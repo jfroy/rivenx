@@ -6,20 +6,21 @@
 //  Copyright 2008 MacStorm. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import <Cocoa/Cocoa.h>
 
 #import "Rendering/RXRendering.h"
+#import "Rendering/Graphics/RXTexture.h"
 
 
 @interface RXPicture : NSObject <RXRenderingProtocol> {
     __weak id _owner;
     
-    GLuint _tex;
+    RXTexture* _texture;
     GLuint _vao;
     GLuint _index;
 }
 
-- (id)initWithTexture:(GLuint)texid vao:(GLuint)vao index:(GLuint)index owner:(id)owner;
+- (id)initWithTexture:(RXTexture*)texture vao:(GLuint)vao index:(GLuint)index owner:(id)owner;
 
 - (id)owner;
 

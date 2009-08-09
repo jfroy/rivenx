@@ -6,26 +6,20 @@
 //  Copyright 2007 MacStorm All rights reserved.
 //
 
-#import "RXRendering.h"
+#import <Cocoa/Cocoa.h>
 
+#import "Rendering/RXRendering.h"
+#import "Rendering/Graphics/RXTexture.h"
+
+
+#define RX_TEXTURE_BUCKET_LENGTH 32
 
 struct _rx_texture_bucket {
-    GLuint tex_ids[32];
+    GLuint tex_ids[RX_TEXTURE_BUCKET_LENGTH];
     GLsizei width;
     GLsizei height;
-    uint32_t allocated;
     uint32_t in_use;
 };
-
-struct _rx_texture {
-    GLuint texture;
-    GLenum target;
-    rx_size_t size;
-    
-    // private
-    int32_t _bucket;
-};
-typedef struct _rx_texture rx_texture_t;
 
 #if defined(DEBUG)
 struct _bucket_stat {
@@ -50,9 +44,11 @@ struct _bucket_stat {
 #endif
 }
 
-- (rx_texture_t)textureWithSize:(rx_size_t)size;
-- (rx_texture_t)textureWithWidth:(GLsizei)width height:(GLsizei)height;
++ (RXTextureBroker*)sharedTextureBroker;
 
-- (void)releaseTexture:(rx_texture_t)texture;
+- (RXTexture*)newTextureWithSize:(rx_size_t)size;
+- (RXTexture*)newTextureWithWidth:(GLsizei)width height:(GLsizei)height;
+
+- (void)_printDebugStats;
 
 @end

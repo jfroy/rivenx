@@ -17,6 +17,6 @@
 
 + (GLuint)sharedDynamicPictureUnpackBuffer;
 
-- (id)initWithTexture:(GLuint)texid samplingRect:(NSRect)samplingRect renderRect:(NSRect)renderRect owner:(id)owner;
+- (id)initWithTexture:(RXTexture*)texture samplingRect:(NSRect)sampling_rect renderRect:(NSRect)render_rect owner:(id)owner;
 
 @end

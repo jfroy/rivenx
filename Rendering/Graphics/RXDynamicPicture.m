@@ -189,7 +189,7 @@ static void free_dynamic_picture_index(GLuint index) {
     return dynamic_picture_unpack_buffer;
 }
 
-- (id)initWithTexture:(GLuint)texid samplingRect:(NSRect)sampling_rect renderRect:(NSRect)render_rect owner:(id)owner {
+- (id)initWithTexture:(RXTexture*)texture samplingRect:(NSRect)sampling_rect renderRect:(NSRect)render_rect owner:(id)owner {
     CGLContextObj cgl_ctx = [g_worldView loadContext];
     CGLLockContext(cgl_ctx);
     
@@ -240,7 +240,7 @@ static void free_dynamic_picture_index(GLuint index) {
     OSSpinLockUnlock(&dynamic_picture_lock);
     CGLUnlockContext(cgl_ctx);
     
-    self = [super initWithTexture:texid vao:dynamic_picture_vao index:index * 4 owner:owner];
+    self = [super initWithTexture:texture vao:dynamic_picture_vao index:index << 2 owner:owner];
     if (!self)
         return nil;
     
@@ -248,9 +248,14 @@ static void free_dynamic_picture_index(GLuint index) {
 }
 
 - (void)dealloc {
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"deallocating dynamic picture [texture=%@, index=%u]", _texture, _index);
+#endif
+    
     if (_index != UINT32_MAX) {
         OSSpinLockLock(&dynamic_picture_lock);
-        free_dynamic_picture_index(_index / 4);
+        free_dynamic_picture_index(_index >> 2);
+        _index = UINT32_MAX;
         OSSpinLockUnlock(&dynamic_picture_lock);
     }
     

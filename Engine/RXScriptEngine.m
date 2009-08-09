@@ -26,6 +26,7 @@
 #import "Engine/RXEditionManager.h"
 #import "Engine/RXCursors.h"
 
+#import "Rendering/Graphics/RXTextureBroker.h"
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXPicture.h"
 #import "Rendering/Graphics/RXDynamicPicture.h"
@@ -33,18 +34,6 @@
 
 
 static NSTimeInterval const k_mouse_tracking_loop_period = 0.001;
-
-struct _rx_card_dynamic_picture {
-    GLuint texture;
-};
-typedef struct _rx_card_dynamic_picture rx_card_dynamic_picture_t;
-
-static void rx_destroy_dynamic_picture(const void* key, const void* value, void* context) {
-    CGLContextObj cgl_ctx = (CGLContextObj)context;
-    rx_card_dynamic_picture_t* picture = (rx_card_dynamic_picture_t*)value;
-    glDeleteTextures(1, &picture->texture);
-    free(picture);
-}
 
 
 typedef void (*rx_command_imp_t)(id, SEL, const uint16_t, const uint16_t*);
@@ -275,21 +264,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 }
 
 - (void)dealloc {
-    // lock the GL context and clean up textures and GL buffers
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
-    CGLLockContext(cgl_ctx);
-    
-    if (_dynamic_picture_map) {
-        NSEnumerator* picture_maps_enum = [_dynamic_picture_map objectEnumerator];
-        CFMutableDictionaryRef picture_map;
-        while ((picture_map = (CFMutableDictionaryRef)[picture_maps_enum nextObject]))        
-            CFDictionaryApplyFunction(picture_map, rx_destroy_dynamic_picture, cgl_ctx);
-        
-        [_dynamic_picture_map release];
-    }
-    
-    glFlush();
-    CGLUnlockContext(cgl_ctx);
+    [_dynamic_picture_map release];
     
     [_movie_collection_timer invalidate];
     if (_moviePlaybackSemaphore)
@@ -1042,31 +1017,29 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // check if we have a cache for the tBMP ID; create a dynamic picture structure otherwise and map it to the tBMP ID
     NSString* archive_key = [[[[archive url] path] lastPathComponent] stringByDeletingPathExtension];
-    CFMutableDictionaryRef picture_map = (CFMutableDictionaryRef)[_dynamic_picture_map objectForKey:archive_key];
+    NSMutableDictionary* picture_map = [_dynamic_picture_map objectForKey:archive_key];
     if (!picture_map) {
-        picture_map = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, NULL, NULL);
-        [_dynamic_picture_map setObject:(id)picture_map forKey:archive_key];
-        CFRelease(picture_map);
+        picture_map = [NSMutableDictionary new];
+        [_dynamic_picture_map setObject:picture_map forKey:archive_key];
+        [picture_map release];
     }
     
-    uintptr_t dynamic_picture_key = (uintptr_t)ID << 2;
-    rx_card_dynamic_picture_t* dynamic_picture = (rx_card_dynamic_picture_t*)CFDictionaryGetValue(picture_map, (void*)dynamic_picture_key);
-    if (dynamic_picture == NULL) {
+    NSNumber* dynamic_picture_key = [NSNumber numberWithUnsignedInt:(unsigned int)ID << 2];
+    RXTexture* picture_texture = [picture_map objectForKey:dynamic_picture_key];
+    if (!picture_texture) {
 #if defined(DEBUG)
         RXLog(kRXLoggingGraphics, kRXLoggingLevelDebug, @"loading dynamic picture %hu from archive %@", ID, archive_key);
 #endif
-        
-        // allocate a dynamic picture structure
-        dynamic_picture = (rx_card_dynamic_picture_t*)malloc(sizeof(rx_card_dynamic_picture_t*));
         
         // get the load context and lock it
         CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
         CGLLockContext(cgl_ctx);
         
+        // bind and map the dynamic picture unpack buffer
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, [RXDynamicPicture sharedDynamicPictureUnpackBuffer]); glReportError();
         GLvoid* picture_buffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
         
-        // load the picture in the mapped picture buffer
+        // load the picture
         if (![archive loadBitmapWithID:ID buffer:picture_buffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
             @throw [NSException exceptionWithName:@"RXPictureLoadException"
                                            reason:@"Could not load a picture resource."
@@ -1078,8 +1051,9 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
         
         // create a texture object and bind it
-        glGenTextures(1, &dynamic_picture->texture); glReportError();
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, dynamic_picture->texture); glReportError();
+        GLuint texture;
+        glGenTextures(1, &texture); glReportError();
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture); glReportError();
         
         // texture parameters
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1110,12 +1084,16 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         // unlock the load context
         CGLUnlockContext(cgl_ctx);
         
-        // map the tBMP ID to the dynamic picture
-        CFDictionarySetValue(picture_map, (void*)dynamic_picture_key, dynamic_picture);
+        // create a RXTexture object around the GL texture
+        picture_texture = [[RXTexture alloc] initWithID:texture target:GL_TEXTURE_RECTANGLE_ARB size:RXSizeMake(picture_width, picture_height) deleteWhenDone:YES];
+        
+        // map the tBMP ID to the texture object
+        [picture_map setObject:picture_texture forKey:dynamic_picture_key];
+        [picture_texture release];
     }
     
     // create a RXDynamicPicture object and queue it for rendering
-    RXDynamicPicture* picture = [[RXDynamicPicture alloc] initWithTexture:dynamic_picture->texture
+    RXDynamicPicture* picture = [[RXDynamicPicture alloc] initWithTexture:picture_texture
                                                              samplingRect:sampling_rect
                                                                renderRect:display_rect
                                                                     owner:self];
@@ -1831,12 +1809,14 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // create an RXPicture for the PLST record and queue it for rendering
     GLuint index = argv[0] - 1;
-    RXPicture* picture = [[RXPicture alloc] initWithTexture:[card pictureTextures][index]
+    RXTexture* texture = [[RXTexture alloc] initWithID:[card pictureTextures][index] target:GL_TEXTURE_RECTANGLE_ARB size:RXSizeMake(0, 0) deleteWhenDone:NO];
+    RXPicture* picture = [[RXPicture alloc] initWithTexture:texture
                                                         vao:[card pictureVAO]
                                                       index:4 * index
                                                       owner:self];
     [controller queuePicture:picture];
     [picture release];
+    [texture release];
     
     // opcode 39 triggers a render state swap
     [self _updateScreen];
@@ -3590,8 +3570,9 @@ DEFINE_COMMAND(xt7600_setupmarbles) {
         CGLLockContext(cgl_ctx);
         
         // create, bind and configure the tiny marble texture atlas
-        glGenTextures(1, &tiny_marble_atlas);
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, tiny_marble_atlas); glReportError();
+        GLuint texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture); glReportError();
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST); glReportError();
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST); glReportError();
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); glReportError();
@@ -3610,6 +3591,8 @@ DEFINE_COMMAND(xt7600_setupmarbles) {
         
         CGLUnlockContext(cgl_ctx);
         free(data);
+        
+        tiny_marble_atlas = [[RXTexture alloc] initWithID:texture target:GL_TEXTURE_RECTANGLE_ARB size:RXSizeMake(width, height) deleteWhenDone:YES];
     }
     
     RXGameState* gs = [g_world gameState];
