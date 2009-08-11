@@ -85,13 +85,11 @@ extern const float kRXSoundGainDivisor;
 
 __END_DECLS
 
-// OpenGL engine protocol
 @protocol RXOpenGLStateProtocol
-- (GLuint)currentVertexArrayObject;
-- (void)bindVertexArrayObject:(GLuint)vao_id;
+- (GLuint)bindVertexArrayObject:(GLuint)vao_id;
+- (GLenum)setUnpackClientStorage:(GLenum)state;
 @end
 
-// world view protocol
 @protocol RXWorldViewProtocol <NSCoding>
 - (void)tearDown;
 

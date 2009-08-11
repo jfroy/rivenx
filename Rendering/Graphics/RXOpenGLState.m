@@ -8,18 +8,8 @@
 
 #import "RXOpenGLState.h"
 
-#import <OpenGL/CGLMacro.h>
-
 
 @implementation RXOpenGLState
-
-+ (BOOL)accessInstanceVariablesDirectly {
-    return NO;
-}
-
-- (void)_updateInternalState {
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING_APPLE, (GLint*)&_vao_binding);
-}
 
 - (id)init {
     [self doesNotRecognizeSelector:_cmd];
@@ -37,20 +27,27 @@
     return self;
 }
 
-- (void)dealloc {
-    [super dealloc];
-}
-
-- (GLuint)currentVertexArrayObject {
-    return _vao_binding;
-}
-
-- (void)bindVertexArrayObject:(GLuint)vao_id {
+- (GLuint)bindVertexArrayObject:(GLuint)vao_id {
     // WARNING: ASSUMES THE CALLER HAS LOCKED THE CONTEXT
-    if (vao_id != _vao_binding) {
-        _vao_binding = vao_id;
-        glBindVertexArrayAPPLE(vao_id); glReportError();
-    }
+    if (vao_id == _vao_binding)
+        return _vao_binding;
+    
+    GLuint old = _vao_binding;
+    _vao_binding = vao_id;
+    glBindVertexArrayAPPLE(vao_id); glReportError();
+    
+    return old;
+}
+
+- (GLenum)setUnpackClientStorage:(GLenum)state {
+    if (state == _unpack_client_storage)
+        return _unpack_client_storage;
+    
+    GLenum old = _unpack_client_storage;
+    _unpack_client_storage = state;
+    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, state); glReportError();
+    
+    return old;
 }
 
 @end
