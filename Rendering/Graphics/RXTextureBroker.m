@@ -153,12 +153,16 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXTextureBroker, sharedTextureBroker)
     if (!self)
         return nil;
     
-    cgl_ctx = [RXGetWorldView() loadContext];
+    cgl_ctx = [g_worldView loadContext];
     
     _buckets = calloc(8, sizeof(struct _rx_texture_bucket));
     _bucket_capacity = 8;
     
     // create a few standard buckets
+    for (int i = 5; i < 10; i++)
+        for (int j = 5; j < 10; j++)
+            [self _createBucketWithSize:RXSizeMake(1 << i, 1 << j)];
+    
     [self _createBucketWithSize:kRXCardViewportSize];
     
     return self;
