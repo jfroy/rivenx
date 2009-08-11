@@ -7,7 +7,10 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "RXRendering.h"
+
+
+#import "Rendering/RXRendering.h"
+#import "Engine/RXStack.h"
 
 
 @interface RXTexture : NSObject {
@@ -20,8 +23,13 @@
     BOOL _delete_when_done;
 }
 
++ (RXTexture*)newStandardTextureWithTarget:(GLenum)target size:(rx_size_t)s context:(CGLContextObj)cgl_ctx lock:(BOOL)lock;
+
 - (id)initWithID:(GLuint)texid target:(GLenum)t size:(rx_size_t)s deleteWhenDone:(BOOL)dwd;
 
 - (void)bindWithContext:(CGLContextObj)cgl_ctx lock:(BOOL)lock;
+
+- (void)updateWithBitmap:(uint16_t)tbmp_id archive:(MHKArchive*)archive;
+- (void)updateWithBitmap:(uint16_t)tbmp_id stack:(RXStack*)stack;
 
 @end
