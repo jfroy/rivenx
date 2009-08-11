@@ -158,10 +158,6 @@ CF_INLINE NSRect RXRenderScaleRect() {
     return NSMakeRect(render_frame.origin.x, render_frame.origin.y, scale_x, scale_y);
 }
 
-CF_INLINE NSView<RXWorldViewProtocol>* RXGetWorldView() {
-    return (NSView<RXWorldViewProtocol>*)g_worldView;
-}
-
 #pragma mark -
 
 CF_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) {
