@@ -561,6 +561,11 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
             DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
             DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
         }
+    } else if (ecsd->cardID == 2 && [ecsd->stackKey isEqualToString:@"aspit"]) {
+        // black card before introduction sequence - force hide the cursor to
+        // prevent it from re-appearing between the moment the cross-fade
+        // transition completes and the moment the first movie plays
+        [self _hideMouseCursor];
     }
     
     // force a screen update
