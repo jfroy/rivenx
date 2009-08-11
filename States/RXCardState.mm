@@ -1058,8 +1058,18 @@ init_failure:
 #pragma mark riven script protocol implementation
 
 - (void)queuePicture:(RXPicture*)picture {
+    uint32_t index = [_back_render_state->pictures indexOfObject:picture];
+    if (index != NSNotFound)
+        [_back_render_state->pictures removeObjectAtIndex:index];
+    
     [_back_render_state->pictures addObject:picture];
-    [[picture owner] retain];
+    
+    if (index == NSNotFound)
+        [[picture owner] retain];
+    
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"queued picture %@", picture);
+#endif
 }
 
 - (void)enableMovie:(RXMovie*)movie {
