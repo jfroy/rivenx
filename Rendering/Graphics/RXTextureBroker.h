@@ -10,15 +10,14 @@
 
 #import "Rendering/RXRendering.h"
 #import "Rendering/Graphics/RXTexture.h"
+#import "Base/RXDynamicBitfield.h"
 
-
-#define RX_TEXTURE_BUCKET_LENGTH 32
 
 struct _rx_texture_bucket {
-    GLuint tex_ids[RX_TEXTURE_BUCKET_LENGTH];
     GLsizei width;
     GLsizei height;
-    uint32_t in_use;
+    GLuint* tex_ids;
+    RXDynamicBitfield* in_use;
 };
 
 #if defined(DEBUG)
