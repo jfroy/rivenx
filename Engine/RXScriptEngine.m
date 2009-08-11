@@ -479,6 +479,20 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [controller update];
 }
 
+- (void)_showMouseCursor {
+    if (_did_hide_mouse) {
+        [controller showMouseCursor];
+        _did_hide_mouse = NO;
+    }
+}
+
+- (void)_hideMouseCursor {
+    if (!_did_hide_mouse) {
+        [controller hideMouseCursor];
+        _did_hide_mouse = YES;
+    }
+}
+
 #pragma mark -
 
 - (void)openCard {
@@ -566,10 +580,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         [executing_card release];
         
         // if the card hid the mouse cursor while executing programs, we can now show it again
-        if (_did_hide_mouse) {
-            [controller showMouseCursor];
-            _did_hide_mouse = NO;
-        }
+        [self _showMouseCursor];
     }
 }
 
@@ -615,10 +626,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         [executing_card release];
         
         // if the card hid the mouse cursor while executing programs, we can now show it again
-        if (_did_hide_mouse) {
-            [controller showMouseCursor];
-            _did_hide_mouse = NO;
-        }
+        [self _showMouseCursor];
     }
 }
 
@@ -659,10 +667,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         [executing_card release];
         
         // if the card hid the mouse cursor while executing programs, we can now show it again
-        if (_did_hide_mouse) {
-            [controller showMouseCursor];
-            _did_hide_mouse = NO;
-        }
+        [self _showMouseCursor];
     }
 }
 
@@ -726,10 +731,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         _current_hotspot = nil;
         
         // if the card hid the mouse cursor while executing programs, we can now show it again
-        if (_did_hide_mouse) {
-            [controller showMouseCursor];
-            _did_hide_mouse = NO;
-        }
+        [self _showMouseCursor];
     }
 }
 
@@ -774,10 +776,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         _current_hotspot = nil;
         
         // if the card hid the mouse cursor while executing programs, we can now show it again
-        if (_did_hide_mouse) {
-            [controller showMouseCursor];
-            _did_hide_mouse = NO;
-        }
+        [self _showMouseCursor];
     }
 }
 
@@ -822,10 +821,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         _current_hotspot = nil;
         
         // if the card hid the mouse cursor while executing programs, we can now show it again
-        if (_did_hide_mouse) {
-            [controller showMouseCursor];
-            _did_hide_mouse = NO;
-        }
+        [self _showMouseCursor];
     }
     
     // we need to enable hotspot handling at the end of mouse down messages
@@ -873,10 +869,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         _current_hotspot = nil;
         
         // if the card hid the mouse cursor while executing programs, we can now show it again
-        if (_did_hide_mouse) {
-            [controller showMouseCursor];
-            _did_hide_mouse = NO;
-        }
+        [self _showMouseCursor];
     }
     
     // we need to enable hotspot handling at the end of mouse up messages
@@ -935,12 +928,6 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
                                                  selector:@selector(_handleBlockingMovieFinishedPlaying:)
                                                      name:RXMoviePlaybackDidEndNotification
                                                    object:movie];
-    
-    // hide the mouse cursor
-    if (!_did_hide_mouse) {
-        _did_hide_mouse = YES;
-        [controller hideMouseCursor];
-    }
     
     // if the movie is scheduled for reset, do the reset now
     if ([_movies_to_reset containsObject:movie]) {
@@ -1251,10 +1238,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // argv[2] is a "wait for sound" boolean
     if (argv[2]) {
         // hide the mouse cursor
-        if (!_did_hide_mouse) {
-            _did_hide_mouse = YES;
-            [controller hideMouseCursor];
-        }
+        [self _hideMouseCursor];
         
         // sleep for the duration minus the time that has elapsed since we started the sound
         usleep((duration - (CFAbsoluteTimeGetCurrent() - now)) * 1E6);
@@ -1413,10 +1397,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         return;
     
     // hide the mouse cursor
-    if (!_did_hide_mouse) {
-        _did_hide_mouse = YES;
-        [controller hideMouseCursor];
-    }
+    [self _hideMouseCursor];
     
     // sleep for the specified amount of ms
     usleep(argv[0] * 1000);
@@ -1680,6 +1661,9 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     if (!movie)
         return;
     
+    // hide the mouse cursor
+    [self _hideMouseCursor];
+    
     // start the movie and register for rate change notifications
     [self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:movie waitUntilDone:YES];
     
@@ -1777,10 +1761,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // wait the specified delay
     if (delay > 0) {
         // hide the mouse cursor
-        if (!_did_hide_mouse) {
-            _did_hide_mouse = YES;
-            [controller hideMouseCursor];
-        }
+        [self _hideMouseCursor];
         
         // sleep for the specified amount of ms
         if (delay > 0)
@@ -4317,10 +4298,7 @@ DEFINE_COMMAND(xvga1300_carriage) {
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
     
     // show the cursor again (it was hidden by the play movie blocking commands)
-    if (_did_hide_mouse) {
-        [controller showMouseCursor];
-        _did_hide_mouse = NO;
-    }
+    [self _showMouseCursor];
     
     // if the gallows floor is open, the player can't hop on the trapeze and we
     // just sleep the thread for 5 seconds then have the trapeze go up
@@ -4384,10 +4362,7 @@ DEFINE_COMMAND(xvga1300_carriage) {
     }
     
     // hide the cursor (if it is not already hidden)
-    if (!_did_hide_mouse) {
-        [controller hideMouseCursor];
-        _did_hide_mouse = YES;
-    }
+    [self _hideMouseCursor];
     
     // schedule a forward transition
     transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
