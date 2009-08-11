@@ -17,6 +17,7 @@
 
 #import "Rendering/Graphics/RXWorldView.h"
 
+#import "Debug/RXDebug.h"
 #import "Debug/RXDebugWindowController.h"
 
 #import "Utilities/GTMSystemVersion.h"
@@ -122,10 +123,11 @@
     NSError* error = [[e userInfo] objectForKey:NSUnderlyingErrorKey];
     
     [[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:0];
+    
     rx_print_exception_backtrace(e);
+    
     [[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:
         NSLogUncaughtExceptionMask | NSHandleUncaughtExceptionMask |
-        NSLogUncaughtSystemExceptionMask | NSHandleUncaughtSystemExceptionMask |
         NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
 
     NSAlert* failureAlert = [NSAlert new];
@@ -203,7 +205,6 @@
     [[NSExceptionHandler defaultExceptionHandler] setDelegate:self];
     [[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:
         NSLogUncaughtExceptionMask | NSHandleUncaughtExceptionMask |
-        NSLogUncaughtSystemExceptionMask | NSHandleUncaughtSystemExceptionMask |
         NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
     
     if (![self _checkQuickTime])

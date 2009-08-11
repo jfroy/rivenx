@@ -26,7 +26,6 @@
 
 #if defined(DEBUG)
 #import <Foundation/NSDebug.h>
-#import "Debug/RXDebug.h"
 #endif // DEBUG
 
 #endif // __OBJC__

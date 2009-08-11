@@ -7,11 +7,11 @@
  *
  */
 
-#import <unistd.h>
 #import <Cocoa/Cocoa.h>
 
 #import "Base/RXLogging.h"
-#import "RXDebug.h"
+#import "Debug/RXDebug.h"
+
 
 void rx_print_exception_backtrace(NSException* e) {
     NSArray* stack = [[[e userInfo] objectForKey:NSStackTraceKey] componentsSeparatedByString:@"  "];
