@@ -41,6 +41,10 @@
     [super dealloc];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat: @"%@ {texture=%@, vao=%u, index=%d}", [super description], _texture, _vao, _index];
+}
+
 - (id)owner {
     return _owner;
 }
