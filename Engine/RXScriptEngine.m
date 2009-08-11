@@ -1405,7 +1405,6 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 // 17
 - (void)_opcode_callExternal:(const uint16_t)argc arguments:(const uint16_t*)argv {
-    uint16_t argi = 0;
     uint16_t external_id = argv[0];
     uint16_t external_argc = argv[1];
     
@@ -3013,7 +3012,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     NSTimeInterval movie_position;
     QTGetTimeInterval([movie _noLockCurrentTime], &movie_position);
-    double event_delay = RXTimingTimestampDelta(RXTimingNow(), RXTimingOffsetTimestamp(0, mouse_ts_s));
+    __attribute__((unused)) double event_delay = RXTimingTimestampDelta(RXTimingNow(), RXTimingOffsetTimestamp(0, mouse_ts_s));
     
     NSTimeInterval duration;
     QTGetTimeInterval([movie duration], &duration);
