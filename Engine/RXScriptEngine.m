@@ -3579,15 +3579,17 @@ DEFINE_COMMAND(xt7600_setupmarbles) {
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); glReportError();
         
         // disable client storage for this texture unpack operation (we just keep the texture alive in GL for ever)
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+        GLenum client_storage = [RXGetContextState(cgl_ctx) setUnpackClientStorage:GL_FALSE];
         
         // unpack the texture
         glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 16, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL); glReportError();
         glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data); glReportError();
-        glFlush();
         
-        // re-enable client storage
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
+        // restore client storage
+        [RXGetContextState(cgl_ctx) setUnpackClientStorage:client_storage];
+        
+        // synchronize the new texture object with the rendering context by flushing
+        glFlush();
         
         CGLUnlockContext(cgl_ctx);
         free(data);

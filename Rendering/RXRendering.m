@@ -6,7 +6,8 @@
 //  Copyright 2005 MacStorm. All rights reserved.
 //
 
-#import "RXRendering.h"
+#import "Rendering/RXRendering.h"
+
 
 const rx_size_t kRXRendererViewportSize = {640, 480};
 
@@ -17,7 +18,4 @@ const double kRXTransitionDuration = 0.4;
 
 const float kRXSoundGainDivisor = 256.0f;
 
-NSObject<RXWorldViewProtocol>* g_worldView = nil;
-
-NSObject<RXOpenGLStateProtocol>* g_renderContextState = nil;
-NSObject<RXOpenGLStateProtocol>* g_loadContextState = nil;
+NSView<RXWorldViewProtocol>* g_worldView = nil;

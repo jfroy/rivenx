@@ -119,14 +119,14 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     [pixelBufferAttributes release];
     
     // get the load context and the associated pixel format
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
-    CGLPixelFormatObj pixel_format = [RXGetWorldView() cglPixelFormat];
+    CGLContextObj cgl_ctx = [g_worldView loadContext];
+    CGLPixelFormatObj pixel_format = [g_worldView cglPixelFormat];
     
     // lock the load context
     CGLLockContext(cgl_ctx);
     
     // alias the load context state object pointer
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     // if the movie is smaller than 128 bytes in width, using a main-memory pixel buffer visual context and override the width to 128 bytes
     if (_current_size.width < 32) {
@@ -573,7 +573,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         return;
     
     // alias the render context state object pointer
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     OSSpinLockLock(&_render_lock);
     

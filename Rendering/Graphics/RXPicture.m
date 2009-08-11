@@ -49,7 +49,7 @@
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
     
     // alias the render context state object pointer
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     // bind the picture's VAO
     [gl_state bindVertexArrayObject:_vao];

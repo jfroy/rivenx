@@ -178,8 +178,15 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     assert(_render_context_cgl);
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"render context: %p", _render_context_cgl);
     
-    // create the state object for the rendering context
-    g_renderContextState = [[RXOpenGLState alloc] initWithContext:_render_context_cgl];
+    // create the state object for the rendering context and store it in the context's client context slot
+    NSObject<RXOpenGLStateProtocol>* state = [[RXOpenGLState alloc] initWithContext:_render_context_cgl];
+    cgl_err = CGLSetParameter(_render_context_cgl, kCGLCPClientStorage, (const GLint*)&state);
+    if (cgl_err != kCGLNoError) {
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s",
+            cgl_err, CGLErrorString(cgl_err));
+        [self release];
+        return nil;
+    }
     
     // create a load context and pair it with the render context
     _load_context = [[NSOpenGLContext alloc] initWithFormat:format shareContext:_render_context];
@@ -192,6 +199,16 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     // cache the underlying CGL context
     _load_context_cgl = [_load_context CGLContextObj];
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"load context: %p", _load_context_cgl);
+    
+    // create the state object for the loading context and store it in the context's client context slot
+    state = [[RXOpenGLState alloc] initWithContext:_load_context_cgl];
+    cgl_err = CGLSetParameter(_load_context_cgl, kCGLCPClientStorage, (const GLint*)&state);
+    if (cgl_err != kCGLNoError) {
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s",
+            cgl_err, CGLErrorString(cgl_err));
+        [self release];
+        return nil;
+    }
     
     // set a few context options
     GLint param;
@@ -223,25 +240,6 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
         [self release];
         return nil;
     }
-    
-    // set ourselves as the context data
-    cgl_err = CGLSetParameter(_render_context_cgl, kCGLCPClientStorage, (const GLint*)&self);
-    if (cgl_err != kCGLNoError) {
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s",
-            cgl_err, CGLErrorString(cgl_err));
-        [self release];
-        return nil;
-    }
-    cgl_err = CGLSetParameter(_load_context_cgl, kCGLCPClientStorage, (const GLint*)&self);
-    if (cgl_err != kCGLNoError) {
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s",
-            cgl_err, CGLErrorString(cgl_err));
-        [self release];
-        return nil;
-    }
-    
-    // create the state object for the loading context
-    g_loadContextState = [[RXOpenGLState alloc] initWithContext:_load_context_cgl];
     
     // configure the view's autoresizing behavior to resize itself to match its container
     [self setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
@@ -621,7 +619,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
         glDisable(GL_MULTISAMPLE_ARB);
     
     // pixel store state
-    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+    [RXGetContextState(cgl_ctx) setUnpackClientStorage:GL_TRUE];
     
     // framebuffer masks
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);

@@ -67,9 +67,9 @@
     _renderStates = [_states copy];
     
     // use the load context to set things up
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj cgl_ctx = [g_worldView loadContext];
     CGLLockContext(cgl_ctx);
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     // render state composition shader program
     _compositing_program = [[GLShaderProgramManager sharedManager]
@@ -220,7 +220,7 @@
     glReportError();
     
     // disable client storage because it's incompatible with allocating texture space with NULL (which is what we want to do for FBO color attachement textures)
-    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+    GLenum client_storage = [RXGetContextState(cgl_ctx) setUnpackClientStorage:GL_FALSE];
     
     // allocate memory for the texture
     glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXRendererViewportSize.width, kRXRendererViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
@@ -238,8 +238,11 @@
         return;
     }
     
-    // re-enable client storage
-    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+    // restore unpack client storage
+    [RXGetContextState(cgl_ctx) setUnpackClientStorage:client_storage];
+    
+    // synchronize new objects with the rendering context by flushing
+    glFlush();
     
     CGLUnlockContext(cgl_ctx);
     
@@ -366,7 +369,7 @@
 
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     NSArray* renderStates = [_renderStates retain];
     

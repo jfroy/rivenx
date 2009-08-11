@@ -344,16 +344,16 @@ init_failure:
     NSError* error;
     
     // use the load context to prepare our GL objects
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj cgl_ctx = [g_worldView loadContext];
     CGLLockContext(cgl_ctx);
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     // kick start the audio task thread
     [NSThread detachNewThreadSelector:@selector(_audioTaskThread:) toTarget:self withObject:nil];
     
     // disable client storage for the duration of this method, because we'll either be transferring textures
     // using a PBO or allocating RT textures (which are just surfaces)
-    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
+    GLenum client_storage = [gl_state setUnpackClientStorage:GL_FALSE];
     
 // water sfxe
     
@@ -616,8 +616,8 @@ init_failure:
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
     glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
     
-    // re-enable client storage
-    glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
+    // restore client storage
+    [gl_state setUnpackClientStorage:client_storage];
     
     // we're done with the inventory unpack buffer
     glDeleteBuffers(1, &inventory_unpack_buffer);
@@ -1608,7 +1608,7 @@ init_failure:
 }
 
 - (void)_renderCredits:(const CVTimeStamp*)output_time inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     if (_credits_state == 0) {
         // initialize the credits
@@ -1872,7 +1872,7 @@ init_failure:
     OSSpinLockLock(&_render_lock);
     
     // alias the render context state object pointer
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     // we need an inner pool within the scope of that lock, or we run the risk
     // of autoreleased enumerators causing objects that should be deallocated on
@@ -2050,7 +2050,7 @@ exit_render:
 - (void)_renderInGlobalContext:(CGLContextObj)cgl_ctx {
 #if defined(DEBUG)
     // alias the render context state object pointer
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_renderContextState;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     RXCard* front_card = nil;
     
     BOOL render_hotspots = RXEngineGetBool(@"rendering.hotspots_info");

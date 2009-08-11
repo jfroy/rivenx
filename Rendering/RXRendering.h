@@ -116,15 +116,16 @@ __BEGIN_DECLS
 #pragma mark rendering globals
 
 // the world view
-extern NSObject<RXWorldViewProtocol>* g_worldView;
-
-// the context state objects
-extern NSObject<RXOpenGLStateProtocol>* g_renderContextState;
-extern NSObject<RXOpenGLStateProtocol>* g_loadContextState;
+extern NSView<RXWorldViewProtocol>* g_worldView;
 
 #pragma mark -
 
-// convenience functions related to the world view
+CF_INLINE NSObject<RXOpenGLStateProtocol>* RXGetContextState(CGLContextObj cgl_ctx) {
+    NSObject<RXOpenGLStateProtocol>* state = nil;
+    CGLGetParameter(cgl_ctx, kCGLCPClientStorage, (GLint*)&state);
+    return state;
+}
+
 CF_INLINE rx_size_t RXGetGLViewportSize() {
     return [g_worldView viewportSize];
 }
