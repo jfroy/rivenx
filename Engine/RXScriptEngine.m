@@ -1091,18 +1091,18 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [self _updateScreen];
 }
 
-- (void)_drawPictureWithID:(uint16_t)ID stack:(RXStack*)stack displayRect:(NSRect)display_rect samplingRect:(NSRect)sampling_rect {
-    MHKArchive* archive = [[stack fileWithResourceType:@"tBMP" ID:ID] archive];
-    [self _drawPictureWithID:ID archive:archive displayRect:display_rect samplingRect:sampling_rect];
+- (void)_drawPictureWithID:(uint16_t)tbmp_id stack:(RXStack*)stack displayRect:(NSRect)display_rect samplingRect:(NSRect)sampling_rect {
+    MHKArchive* archive = [[stack fileWithResourceType:@"tBMP" ID:tbmp_id] archive];
+    [self _drawPictureWithID:tbmp_id archive:archive displayRect:display_rect samplingRect:sampling_rect];
 }
 
 #pragma mark -
 #pragma mark sound playback
 
-- (void)_playDataSoundWithID:(uint16_t)ID gain:(float)gain duration:(double*)duration_ptr {
+- (void)_playDataSoundWithID:(uint16_t)twav_id gain:(float)gain duration:(double*)duration_ptr {
     RXDataSound* sound = [RXDataSound new];
     sound->parent = [[card descriptor] parent];
-    sound->twav_id = ID;
+    sound->twav_id = twav_id;
     sound->gain = gain;
     sound->pan = 0.5f;
     
