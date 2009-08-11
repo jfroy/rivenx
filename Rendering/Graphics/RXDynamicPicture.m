@@ -178,7 +178,7 @@ static void free_dynamic_picture_index(GLuint index) {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dynamic_picture_unpack_buffer); glReportError();
     if (GLEE_APPLE_flush_buffer_range)
         glBufferParameteriAPPLE(GL_PIXEL_UNPACK_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
-    glBufferData(GL_PIXEL_UNPACK_BUFFER, kRXCardViewportSize.width * kRXCardViewportSize.height * 4, NULL, GL_DYNAMIC_DRAW); glReportError();
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, 1024 * 1024 * 4, NULL, GL_DYNAMIC_DRAW); glReportError();
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     
     // we created a new buffer object, so flush
