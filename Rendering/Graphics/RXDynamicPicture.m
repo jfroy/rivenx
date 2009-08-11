@@ -9,27 +9,29 @@
 #import <libkern/OSAtomic.h>
 
 #import "Rendering/Graphics/RXDynamicPicture.h"
+#import "Base/RXDynamicBitfield.h"
 
 
 static BOOL dynamic_picture_system_initialized = NO;
 
 static int32_t dynamic_picture_vertex_bo_picture_capacity = 0;
 static int32_t volatile active_dynamic_pictures = 0;
-static GLuint* dynamic_picture_allocated_indices = NULL;
+static RXDynamicBitfield* dynamic_picture_allocation_bitmap;
 
 static GLuint dynamic_picture_vao = UINT32_MAX;
 static GLuint dynamic_picture_vertex_bo = UINT32_MAX;
 
 static OSSpinLock dynamic_picture_lock = OS_SPINLOCK_INIT;
 
+
 static void initialize_dynamic_picture_system() {
     if (dynamic_picture_system_initialized)
         return;
     
     CGLContextObj cgl_ctx = [g_worldView loadContext];
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
-    dynamic_picture_vertex_bo_picture_capacity = 100;
+    dynamic_picture_vertex_bo_picture_capacity = 20;
     
     glGenBuffers(1, &dynamic_picture_vertex_bo);
     glGenVertexArraysAPPLE(1, &dynamic_picture_vao);
@@ -53,23 +55,17 @@ static void initialize_dynamic_picture_system() {
     glFlush();
     
     active_dynamic_pictures = 0;
-    dynamic_picture_allocated_indices = malloc(dynamic_picture_vertex_bo_picture_capacity * sizeof(GLuint));
-    memset(dynamic_picture_allocated_indices, 0xFF, dynamic_picture_vertex_bo_picture_capacity * sizeof(GLuint));
+    dynamic_picture_allocation_bitmap = [RXDynamicBitfield new];
     
     dynamic_picture_system_initialized = YES;
 }
 
 static void grow_dynamic_picture_vertex_bo() {
     CGLContextObj cgl_ctx = [g_worldView loadContext];
-    NSObject<RXOpenGLStateProtocol>* gl_state = g_loadContextState;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
-    // bump capacity by 100
-    GLuint old_capacity = dynamic_picture_vertex_bo_picture_capacity;
-    dynamic_picture_vertex_bo_picture_capacity += 100;
-    
-    // resize the index allocation array
-    dynamic_picture_allocated_indices = realloc(dynamic_picture_allocated_indices, dynamic_picture_vertex_bo_picture_capacity * sizeof(GLuint));
-    memset(dynamic_picture_allocated_indices + old_capacity, 0xFF, 100 * sizeof(GLuint));
+    // bump capacity by 20
+    dynamic_picture_vertex_bo_picture_capacity += 20;
     
     GLuint alternate_bo;
     glGenBuffers(1, &alternate_bo);
@@ -121,45 +117,24 @@ static void grow_dynamic_picture_vertex_bo() {
     dynamic_picture_vertex_bo = alternate_bo;
 }
 
-static void insert_dynamic_picture_index(GLuint index, uint32_t position) {
-    for (uint32_t i = active_dynamic_pictures - 1; i > position; i--)
-        dynamic_picture_allocated_indices[i + 1] = dynamic_picture_allocated_indices[i];
-    dynamic_picture_allocated_indices[position] = index;
-}
-
-static void remove_dynamic_picture_index(uint32_t position) {
-    assert(active_dynamic_pictures > 0);
-    
-    for (uint32_t i = position; i < active_dynamic_pictures - 1; i++)
-        dynamic_picture_allocated_indices[i] = dynamic_picture_allocated_indices[i + 1];
-    dynamic_picture_allocated_indices[active_dynamic_pictures - 1] = 0xFFFFFFFF;
-}
-
 static GLuint allocate_dynamic_picture_index() {
-    active_dynamic_pictures++;
-    
-    if (active_dynamic_pictures == dynamic_picture_vertex_bo_picture_capacity)
+    if ((active_dynamic_pictures + 1) == dynamic_picture_vertex_bo_picture_capacity)
         grow_dynamic_picture_vertex_bo();
     
-    GLuint index = 0;
-    for (uint32_t i = 0; i < active_dynamic_pictures; i++, index++) {
-        if (index < dynamic_picture_allocated_indices[i]) {
-            insert_dynamic_picture_index(index, i);
-            break;
+    size_t max_picture = [dynamic_picture_allocation_bitmap segmentCount] * [dynamic_picture_allocation_bitmap segmentBits];
+    for (uint32_t picture_index = 0; picture_index < max_picture; picture_index++) {
+        if (![dynamic_picture_allocation_bitmap isSet:picture_index]) {
+            [dynamic_picture_allocation_bitmap set:picture_index];
+            active_dynamic_pictures++;
+            return picture_index;
         }
     }
     
-    return index;
+    return max_picture;
 }
 
 static void free_dynamic_picture_index(GLuint index) {
-    for (uint32_t i = 0; i < active_dynamic_pictures; i++) {
-        if (index == dynamic_picture_allocated_indices[i]) {
-            remove_dynamic_picture_index(i);
-            break;
-        }
-    }
-    
+    [dynamic_picture_allocation_bitmap clear:index];
     active_dynamic_pictures--;
 }
 
@@ -250,13 +225,12 @@ static void free_dynamic_picture_index(GLuint index) {
 
 - (void)dealloc {
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"deallocating dynamic picture [texture=%@, index=%u]", _texture, _index);
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"deallocating");
 #endif
     
     if (_index != UINT32_MAX) {
         OSSpinLockLock(&dynamic_picture_lock);
         free_dynamic_picture_index(_index >> 2);
-        _index = UINT32_MAX;
         OSSpinLockUnlock(&dynamic_picture_lock);
     }
     
