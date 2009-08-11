@@ -26,6 +26,7 @@ enum {
     kRXErrUnableToLoadExtrasArchive,
     
     kRXErrFailedToGetDisplayID,
+    kRXErrNoAcceleratorService,
     kRXErrFailedToGetAcceleratorPerfStats,
     kRXErrFailedToFindFreeVRAMInformation,
 };

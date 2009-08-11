@@ -21,6 +21,8 @@
     CGLContextObj _render_context_cgl;
     CGLContextObj _load_context_cgl;
     
+    io_service_t _accelerator_service;
+    
     GLuint _glMajorVersion;
     GLuint _glMinorVersion;
     GLuint _glslMajorVersion;
