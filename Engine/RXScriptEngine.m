@@ -8,16 +8,16 @@
 
 #import <assert.h>
 #import <limits.h>
-#import <stdbool.h>
-#import <unistd.h>
 
 #import <mach/task.h>
 #import <mach/thread_act.h>
 #import <mach/thread_policy.h>
 
-#import <OpenGL/CGLMacro.h>
-
 #import <objc/runtime.h>
+
+#import "Rendering/RXRendering.h"
+
+#import "Base/RXTiming.h"
 
 #import "Engine/RXScriptDecoding.h"
 #import "Engine/RXScriptEngine.h"
@@ -28,7 +28,6 @@
 
 #import "Rendering/Graphics/RXTextureBroker.h"
 #import "Rendering/Graphics/RXTransition.h"
-#import "Rendering/Graphics/RXPicture.h"
 #import "Rendering/Graphics/RXDynamicPicture.h"
 #import "Rendering/Graphics/RXMovieProxy.h"
 
@@ -230,9 +229,10 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     _active_hotspots_lock = OS_SPINLOCK_INIT;
     _active_hotspots = [NSMutableArray new];
     
-    code2movieMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
-    _dynamic_picture_map = [NSMutableDictionary new];
+    _dynamic_texture_cache = [NSMutableDictionary new];
+    _picture_cache = [NSMutableDictionary new];
     
+    code2movieMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
     _movies_to_reset = [NSMutableSet new];
     
     kerr = semaphore_create(mach_task_self(), &_moviePlaybackSemaphore, SYNC_POLICY_FIFO, 0);
@@ -245,8 +245,6 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     }
     
     _screen_update_disable_counter = 0;
-    
-    _movie_collection_timer = [NSTimer scheduledTimerWithTimeInterval:10*60.0 target:self selector:@selector(_collectMovies:) userInfo:nil repeats:YES];
     
     // initialize gameplay support variables
     
@@ -263,25 +261,49 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     return self;
 }
 
-- (void)dealloc {
-    [_dynamic_picture_map release];
-    
-    [_movie_collection_timer invalidate];
+- (void)dealloc {    
     if (_moviePlaybackSemaphore)
         semaphore_destroy(mach_task_self(), _moviePlaybackSemaphore);
+    [_movies_to_reset release];
     if (code2movieMap)
         NSFreeMapTable(code2movieMap);
-    [_movies_to_reset release];
     
-    [_synthesizedSoundGroup release];
+    [_picture_cache release];
+    [_dynamic_texture_cache release];
     
-    [logPrefix release];
     [_active_hotspots release];
     
+    [_synthesizedSoundGroup release];
     [card release];
+    
+    [logPrefix release];
     
     [super dealloc];
 }
+
+#pragma mark -
+#pragma mark caches
+
+- (void)_emptyPictureCaches {
+    [_picture_cache removeAllObjects];
+    
+    NSEnumerator* archive_cache_enum = [_dynamic_texture_cache objectEnumerator];
+    NSMutableDictionary* archive_cache;
+    while ((archive_cache = [archive_cache_enum nextObject]))
+        [archive_cache removeAllObjects];
+}
+
+- (void)_resetMovieProxies {
+    NSMapEnumerator movie_enum = NSEnumerateMapTable(code2movieMap);
+    uintptr_t k;
+    RXMovieProxy* movie_proxy;
+    while (NSNextMapEnumeratorPair(&movie_enum, (void**)&k, (void**)&movie_proxy))
+        [movie_proxy deleteMovie];
+    NSEndMapTableEnumeration(&movie_enum);
+}
+
+#pragma mark -
+#pragma mark active card
 
 - (void)setCard:(RXCard*)c {
     if (c == card)
@@ -290,6 +312,9 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     id old = card;
     card = [c retain];
     [old release];
+    
+    [self _emptyPictureCaches];
+    [self _resetMovieProxies];
 }
 
 #pragma mark -
@@ -963,18 +988,13 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [(RXMovieProxy*)movie restoreMovieVolume];
 }
 
-- (void)_collectMovies:(NSTimer*)timer {
-    // iterate through the code2movie map and unload any movie that's not active
-    // FIXME: implement the movie collector
-}
-
 #pragma mark -
 #pragma mark dynamic pictures
 
-- (void)_drawPictureWithID:(uint16_t)ID archive:(MHKArchive*)archive displayRect:(NSRect)display_rect samplingRect:(NSRect)sampling_rect {
+- (void)_drawPictureWithID:(uint16_t)tbmp_id archive:(MHKArchive*)archive displayRect:(NSRect)display_rect samplingRect:(NSRect)sampling_rect {
     // get the resource descriptor for the tBMP resource
     NSError* error;
-    NSDictionary* picture_descriptor = [archive bitmapDescriptorWithID:ID error:&error];
+    NSDictionary* picture_descriptor = [archive bitmapDescriptorWithID:tbmp_id error:&error];
     if (!picture_descriptor)
         @throw [NSException exceptionWithName:@"RXPictureLoadException"
                                        reason:@"Could not get a picture resource's picture descriptor."
@@ -1003,84 +1023,23 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         display_rect.size.height = sampling_rect.size.height;
     }
     
-    // compute the size of the buffer needed to store the texture; we'll be using
-    // MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED as the texture format, which is 4 bytes per pixel
-    GLsizeiptr picture_size = picture_width * picture_height * 4;
-    
-    // check if we have a cache for the tBMP ID; create a dynamic picture structure otherwise and map it to the tBMP ID
+    // check if we have the texture in the dynamic texture cache
     NSString* archive_key = [[[[archive url] path] lastPathComponent] stringByDeletingPathExtension];
-    NSMutableDictionary* picture_map = [_dynamic_picture_map objectForKey:archive_key];
-    if (!picture_map) {
-        picture_map = [NSMutableDictionary new];
-        [_dynamic_picture_map setObject:picture_map forKey:archive_key];
-        [picture_map release];
+    NSMutableDictionary* archive_tex_cache = [_dynamic_texture_cache objectForKey:archive_key];
+    if (!archive_tex_cache) {
+        archive_tex_cache = [NSMutableDictionary new];
+        [_dynamic_texture_cache setObject:archive_tex_cache forKey:archive_key];
+        [archive_tex_cache release];
     }
     
-    NSNumber* dynamic_picture_key = [NSNumber numberWithUnsignedInt:(unsigned int)ID << 2];
-    RXTexture* picture_texture = [picture_map objectForKey:dynamic_picture_key];
+    NSNumber* dynamic_texture_key = [NSNumber numberWithUnsignedInt:(unsigned int)tbmp_id << 2];
+    RXTexture* picture_texture = [archive_tex_cache objectForKey:dynamic_texture_key];
     if (!picture_texture) {
-#if defined(DEBUG)
-        RXLog(kRXLoggingGraphics, kRXLoggingLevelDebug, @"loading dynamic picture %hu from archive %@", ID, archive_key);
-#endif
-        
-        // get the load context and lock it
-        CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
-        CGLLockContext(cgl_ctx);
-        
-        // bind and map the dynamic picture unpack buffer
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, [RXDynamicPicture sharedDynamicPictureUnpackBuffer]); glReportError();
-        GLvoid* picture_buffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
-        
-        // load the picture
-        if (![archive loadBitmapWithID:ID buffer:picture_buffer format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED error:&error])
-            @throw [NSException exceptionWithName:@"RXPictureLoadException"
-                                           reason:@"Could not load a picture resource."
-                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-        
-        // unmap the unpack buffer
-        if (GLEE_APPLE_flush_buffer_range)
-            glFlushMappedBufferRangeAPPLE(GL_PIXEL_UNPACK_BUFFER, 0, picture_size);
-        glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
-        
-        // create a texture object and bind it
-        GLuint texture;
-        glGenTextures(1, &texture); glReportError();
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture); glReportError();
-        
-        // texture parameters
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glReportError();
-        
-        // client storage is not compatible with PBO texture unpack
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-        
-        // unpack the texture
-        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                     0,
-                     GL_RGBA8,
-                     picture_width, picture_height,
-                     0,
-                     GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV,
-                     BUFFER_OFFSET((void*)NULL, 0)); glReportError();
-        
-        // reset the unpack buffer state and re-enable client storage
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE); glReportError();
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
-        
-        // we created a new texture object, so flush
-        glFlush();
-        
-        // unlock the load context
-        CGLUnlockContext(cgl_ctx);
-        
-        // create a RXTexture object around the GL texture
-        picture_texture = [[RXTexture alloc] initWithID:texture target:GL_TEXTURE_RECTANGLE_ARB size:RXSizeMake(picture_width, picture_height) deleteWhenDone:YES];
+        picture_texture = [[RXTextureBroker sharedTextureBroker] newTextureWithWidth:picture_width height:picture_height];
+        [picture_texture updateWithBitmap:tbmp_id archive:archive];
         
         // map the tBMP ID to the texture object
-        [picture_map setObject:picture_texture forKey:dynamic_picture_key];
+        [archive_tex_cache setObject:picture_texture forKey:dynamic_texture_key];
         [picture_texture release];
     }
     
@@ -1787,23 +1746,48 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (void)_opcode_activatePLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
     if (argc < 1)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
+    
+    // get the picture record from the card
+    unsigned int index = argv[0] - 1;
+    struct rx_plst_record* picture_record = [card pictureRecords] + index;
+    
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating plst record at index %hu", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating plst record at index %hu [tBMP=%hu]", logPrefix, argv[0], picture_record->bitmap_id);
 #endif
     
-    // create an RXPicture for the PLST record and queue it for rendering
-    GLuint index = argv[0] - 1;
-    RXTexture* texture = [[RXTexture alloc] initWithID:[card pictureTextures][index] target:GL_TEXTURE_RECTANGLE_ARB size:RXSizeMake(0, 0) deleteWhenDone:NO];
-    RXPicture* picture = [[RXPicture alloc] initWithTexture:texture
-                                                        vao:[card pictureVAO]
-                                                      index:4 * index
-                                                      owner:self];
-    [controller queuePicture:picture];
-    [picture release];
-    [texture release];
+    // lookup the picture in the current card picture cache
+    NSNumber* picture_key = [NSNumber numberWithUnsignedInt:index << 2];
+    RXPicture* picture = [_picture_cache objectForKey:picture_key];
+    if (!picture) {
+        // if VRAM gets below 32 MiB, empty the picture cache
+        if ([g_worldView currentFreeVRAM:NULL] < 32 * 1024 * 1024)
+            [self _emptyPictureCaches];
+        
+        // get a texture from the texture broker
+        rx_size_t picture_size = RXSizeMake(picture_record->rect.right - picture_record->rect.left, picture_record->rect.bottom - picture_record->rect.top);
+        RXTexture* picture_texture = [[RXTextureBroker sharedTextureBroker] newTextureWithSize:picture_size];
+        
+        // update the texture with the content of the picture
+        [picture_texture updateWithBitmap:picture_record->bitmap_id stack:[card parent]];
+        
+        // create suitable sampling and display rects
+        NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(picture_record->rect);
+        NSRect sampling_rect = NSMakeRect(0.0f, 0.0f, display_rect.size.width, display_rect.size.height);
+        
+        // create a dynamic picture around the texture
+        picture = [[RXDynamicPicture alloc] initWithTexture:picture_texture samplingRect:sampling_rect renderRect:display_rect owner:self];
+        [picture_texture release];
+        
+        // store the picture in the cache
+        [_picture_cache setObject:picture forKey:picture_key];
+        [picture release];
+    }
     
-    // opcode 39 triggers a render state swap
+    // queue the picture for display
+    [controller queuePicture:picture];
+    
+    // opcode 39 triggers a screen update
     [self _updateScreen];
     
     // indicate that an PLST record has been activated (to manage the automatic activation of PLST record 1 if none has been)

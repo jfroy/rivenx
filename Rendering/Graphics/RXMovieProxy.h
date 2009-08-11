@@ -30,4 +30,6 @@
 - (RXMovie*)proxiedMovie;
 - (void)restoreMovieVolume;
 
+- (void)deleteMovie;
+
 @end

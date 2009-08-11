@@ -10,15 +10,10 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "Base/RXAtomic.h"
-#import "Base/RXTiming.h"
-
 #import "Engine/RXCardDescriptor.h"
 #import "Engine/RXCoreStructures.h"
 #import "Engine/RXHotspot.h"
 #import "Engine/RXCardProtocols.h"
-
-#import "Rendering/RXRendering.h"
 
 
 @interface RXCard : NSObject {
@@ -37,11 +32,8 @@
     struct rx_blst_record* _hotspotControlRecords;
     
     // pictures
-    GLuint _pictureCount;
-    GLuint _pictureVertexArrayBuffer;
-    GLuint _pictureVAO;
-    GLuint* _pictureTextures;
-    void* _pictureTextureStorage;
+    struct rx_plst_record* _picture_records;
+    uint32_t _picture_count;
     
     // movies
     NSMutableArray* _movies;
@@ -70,8 +62,7 @@
 - (struct rx_blst_record*)hotspotControlRecords;
 
 - (GLuint)pictureCount;
-- (GLuint)pictureVAO;
-- (GLuint*)pictureTextures;
+- (struct rx_plst_record*)pictureRecords;
 
 - (NSArray*)movies;
 - (uint16_t*)movieCodes;

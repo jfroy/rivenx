@@ -33,12 +33,14 @@
     BOOL _did_hide_mouse;
     
     // rendering support
-    NSMutableDictionary* _dynamic_picture_map;
+    NSMutableDictionary* _dynamic_texture_cache;
+    NSMutableDictionary* _picture_cache;
+    
     NSMapTable* code2movieMap;
     semaphore_t _moviePlaybackSemaphore;
-    RXSoundGroup* _synthesizedSoundGroup;
     NSMutableSet* _movies_to_reset;
-    NSTimer* _movie_collection_timer;
+    
+    RXSoundGroup* _synthesizedSoundGroup;
     
     int32_t _screen_update_disable_counter;
     BOOL _doing_screen_update;

@@ -12,6 +12,19 @@
 
 @implementation RXMovieProxy
 
++ (BOOL)instancesRespondToSelector:(SEL)aSelector {
+    if ([super instancesRespondToSelector:aSelector])
+        return YES;
+    return [RXMovie instancesRespondToSelector:aSelector];
+}
+
++ (NSMethodSignature*)instanceMethodSignatureForSelector:(SEL)aSelector {
+    NSMethodSignature* signature = [super instanceMethodSignatureForSelector:aSelector];
+    if (signature)
+        return signature;
+    return [RXMovie instanceMethodSignatureForSelector:aSelector];
+}
+
 - (id)init {
     [self doesNotRecognizeSelector:_cmd];
     [self release];
@@ -71,17 +84,9 @@
     [_movie reset];
 }
 
-+ (BOOL)instancesRespondToSelector:(SEL)aSelector {
-    if ([super instancesRespondToSelector:aSelector])
-        return YES;
-    return [RXMovie instancesRespondToSelector:aSelector];
-}
-
-+ (NSMethodSignature*)instanceMethodSignatureForSelector:(SEL)aSelector {
-    NSMethodSignature* signature = [super instanceMethodSignatureForSelector:aSelector];
-    if (signature)
-        return signature;
-    return [RXMovie instanceMethodSignatureForSelector:aSelector];
+- (void)deleteMovie {
+    [_movie release];
+    _movie = nil;
 }
 
 - (BOOL)isKindOfClass:(Class)aClass {
