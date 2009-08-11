@@ -197,6 +197,7 @@ static void free_dynamic_picture_index(GLuint index) {
         initialize_dynamic_picture_system();
     
     OSSpinLockLock(&dynamic_picture_lock);
+    
     GLuint index = allocate_dynamic_picture_index();
     
     glBindBuffer(GL_ARRAY_BUFFER, dynamic_picture_vertex_bo); glReportError();
