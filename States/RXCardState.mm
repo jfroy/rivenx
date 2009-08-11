@@ -491,6 +491,8 @@ init_failure:
     }
     
     // configure the VAs
+    glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
+    
     glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
     glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), _card_composite_va); glReportError();
     
@@ -617,9 +619,8 @@ init_failure:
     // reset the current VAO to 0
     [gl_state bindVertexArrayObject:0];
     
-    // bind 0 to the unpack buffer (e.g. client memory unpacking) and array buffer
+    // bind 0 to the unpack buffer (e.g. client memory unpacking)
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
-    glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
     
     // restore client storage
     [gl_state setUnpackClientStorage:client_storage];
@@ -1860,11 +1861,12 @@ init_failure:
         glUniform4f(_module_color_uniform, one_minus_t, one_minus_t, one_minus_t, 1.f); glReportError();
     }
     
-    // bind VAO 0 and 0 to ARRAY_BUFFER
+    // bind VAO 0
     [gl_state bindVertexArrayObject:0]; glReportError();
-    glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
     
     // configure the vertex arrays
+    glBindBuffer(GL_ARRAY_BUFFER, 0); glReportError();
+    
     glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
     glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 0, positions); glReportError();
     
