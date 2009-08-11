@@ -31,7 +31,7 @@ static rx_render_dispatch_t _clear_dispatch;
     if (!self)
         return self;
     
-//  id <RXWorldViewProtocol> view = RXGetWorldView();
+//  id <RXWorldViewProtocol> view = g_worldView;
 //  
 //  // allocate the Cyan movie
 //  _cyanMovie = [[RXMovie alloc] initWithURL:[NSURL fileURLWithPath:[[NSBundle mainBundle] pathForResource:@"Cyan Worlds" ofType:@"mp4"]] owner:self];

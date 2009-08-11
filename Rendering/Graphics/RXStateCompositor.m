@@ -33,7 +33,7 @@
 
 - (void)dealloc {
     // WARNING: ASSUMES THE CONTEXT IS LOCKED
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj cgl_ctx = [g_worldView loadContext];
     
     glDeleteFramebuffersEXT(1, &fbo);
     glDeleteTextures(1, &texture);
@@ -128,7 +128,7 @@
     RXOLog(@"tearing down");
 #endif
     
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj cgl_ctx = [g_worldView loadContext];
     CGLLockContext(cgl_ctx);
     
     [_states removeAllObjects];
@@ -202,7 +202,7 @@
     descriptor->post_flush = RXGetPostFlushTasksImplementation([state class], RXRenderingPostFlushTasksSelector);
     
     // use the load context to prepare the state for the new render state
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj cgl_ctx = [g_worldView loadContext];
     CGLLockContext(cgl_ctx);
     
     glGenFramebuffersEXT(1, &(descriptor->fbo));

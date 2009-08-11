@@ -41,7 +41,7 @@
 #endif
 
     if (_delete_when_done) {
-        CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+        CGLContextObj cgl_ctx = [g_worldView loadContext];
         CGLLockContext(cgl_ctx);
         glDeleteTextures(1, &texture);
         CGLUnlockContext(cgl_ctx);

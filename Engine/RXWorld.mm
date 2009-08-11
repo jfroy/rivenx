@@ -269,8 +269,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     
     // cut window delegate messages
-    if (RXGetWorldView())
-        [[RXGetWorldView() window] setDelegate:nil];
+    if (g_worldView)
+        [[g_worldView window] setDelegate:nil];
     
     // rendering states
     [_cardState release];
@@ -281,7 +281,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     _stateCompositor = nil;
     
     // tear the world view down
-    [RXGetWorldView() tearDown];
+    [g_worldView tearDown];
     
     // tear the audoo renderer down
     if (_audioRenderer) {

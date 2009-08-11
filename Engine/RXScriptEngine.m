@@ -3566,7 +3566,7 @@ DEFINE_COMMAND(xt7600_setupmarbles) {
         CFRelease(image);
         
         // get the load context and lock it
-        CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+        CGLContextObj cgl_ctx = [g_worldView loadContext];
         CGLLockContext(cgl_ctx);
         
         // create, bind and configure the tiny marble texture atlas

@@ -32,7 +32,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj cgl_ctx = [g_worldView loadContext];
     CGLLockContext(cgl_ctx);
     
     [movie release];
@@ -275,7 +275,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     
     OSSpinLockLock(&_render_lock);
     
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj cgl_ctx = [g_worldView loadContext];
     CGLLockContext(cgl_ctx);
     
     if (_vao)
@@ -437,7 +437,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     [_movie setSelection:selection];
     
     // task the VC
-    CGLContextObj load_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj load_ctx = [g_worldView loadContext];
     CGLLockContext(load_ctx);
     QTVisualContextTask(_vc);
     CGLUnlockContext(load_ctx);
@@ -550,7 +550,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     OSSpinLockUnlock(&_current_time_lock);
     
     // task the VC
-    CGLContextObj load_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj load_ctx = [g_worldView loadContext];
     CGLLockContext(load_ctx);
     QTVisualContextTask(_vc);
     CGLUnlockContext(load_ctx);
@@ -584,7 +584,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
             CVPixelBufferRelease(_image_buffer);
         
         // get the new image
-        CGLContextObj load_ctx = [RXGetWorldView() loadContext];
+        CGLContextObj load_ctx = [g_worldView loadContext];
         CGLLockContext(load_ctx);
             QTVisualContextCopyImageForTime(_vc, kCFAllocatorDefault, outputTime, &_image_buffer);
         CGLUnlockContext(load_ctx);
@@ -669,7 +669,7 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime {
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
-    CGLContextObj load_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj load_ctx = [g_worldView loadContext];
     CGLLockContext(load_ctx);
     QTVisualContextTask(_vc);
     CGLUnlockContext(load_ctx);

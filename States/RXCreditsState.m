@@ -26,7 +26,7 @@ static const GLuint kCreditsTextureCount = 19;
     if (!self) return nil;
     
     // initialize a few things for animations
-    CVTime displayLinkRP = CVDisplayLinkGetNominalOutputVideoRefreshPeriod([RXGetWorldView() displayLink]);
+    CVTime displayLinkRP = CVDisplayLinkGetNominalOutputVideoRefreshPeriod([g_worldView displayLink]);
     _animationPeriod = displayLinkRP.timeValue / (CFTimeInterval)(displayLinkRP.timeScale);
     
     MHKArchive* archive = [g_world extraBitmapsArchive];
@@ -39,7 +39,7 @@ static const GLuint kCreditsTextureCount = 19;
     _textureStorage = malloc(textureStorageSize);
     
     // don't need to lock the context since this runs in the main thread
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj cgl_ctx = [g_worldView loadContext];
     
     // create the texture ID array and the textures themselves
     glGenTextures(kCreditsTextureCount, _creditsTextureObjects);
@@ -100,7 +100,7 @@ static const GLuint kCreditsTextureCount = 19;
 
 - (void)dealloc {
     // delete the OpenGL texture objects
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj cgl_ctx = [g_worldView loadContext];
 
     // delete the texture objects
     glDeleteTextures(kCreditsTextureCount, _creditsTextureObjects);

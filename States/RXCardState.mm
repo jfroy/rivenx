@@ -1660,7 +1660,7 @@ init_failure:
     if (!(output_time->flags & kCVTimeStampHostTimeValid)) {
         memset(&out_time, 0, sizeof(CVTimeStamp));
         out_time.flags = kCVTimeStampHostTimeValid;
-        CVDisplayLinkTranslateTime([RXGetWorldView() displayLink], output_time, &out_time);
+        CVDisplayLinkTranslateTime([g_worldView displayLink], output_time, &out_time);
     }
     
     // perform fades over 1.5 seconds, stills over 5 seconds, scrolling over 20.5 seconds per pair
@@ -2369,7 +2369,7 @@ exit_flush_tasks:
 }
 
 - (void)exportCompositeFramebuffer {
-    CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
+    CGLContextObj cgl_ctx = [g_worldView loadContext];
     CGLLockContext(cgl_ctx);
     
     NSBitmapImageRep* image_rep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
@@ -2747,7 +2747,7 @@ exit_flush_tasks:
     // FIXME: there may be a time-sensitive crash lurking around here
 
     NSWindow* window = [notification object];
-    if (window == [RXGetWorldView() window]) {
+    if (window == [g_worldView window]) {
         // update the mouse vector
         OSSpinLockLock(&_mouse_state_lock);
         _mouse_vector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
