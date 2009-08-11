@@ -85,9 +85,6 @@ static void grow_dynamic_picture_vertex_bo() {
     glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
     glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (GLvoid*)(2 * sizeof(GLfloat))); glReportError();
     
-    // reset the VAO state
-    [gl_state bindVertexArrayObject:0];
-    
     // map the alternate buffer object write-only
     GLfloat* destination = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY); glReportError();
     
@@ -106,6 +103,9 @@ static void grow_dynamic_picture_vertex_bo() {
     if (GLEE_APPLE_flush_buffer_range)
         glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, active_dynamic_pictures * 16 * sizeof(GLfloat));
     glUnmapBuffer(GL_ARRAY_BUFFER); glReportError();
+    
+    // reset the current vao to 0 (Riven X assumption)
+    [gl_state bindVertexArrayObject:0];
     
     // scrap the primary buffer object
     glDeleteBuffers(1, &dynamic_picture_vertex_bo);
