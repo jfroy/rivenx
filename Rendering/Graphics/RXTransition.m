@@ -82,13 +82,7 @@ static NSString* _kRXTransitionDirectionNames[4] = {
 }
 
 - (void)dealloc {
-    if (sourceTexture) {
-        CGLContextObj cgl_ctx = [RXGetWorldView() loadContext];
-        CGLLockContext(cgl_ctx);
-        glDeleteTextures(1, &sourceTexture);
-        CGLUnlockContext(cgl_ctx);
-    }
-    
+    [source_texture release];
     [super dealloc];
 }
 
@@ -102,14 +96,14 @@ static NSString* _kRXTransitionDirectionNames[4] = {
 }
 
 - (BOOL)isPrimed {
-    return (sourceTexture != 0) ? YES : NO;
+    return (source_texture != nil) ? YES : NO;
 }
 
-- (void)primeWithSourceTexture:(GLuint)texture outputTime:(const CVTimeStamp*)outputTime {
-    sourceTexture = texture;
-    startTime = outputTime->hostTime;
+- (void)primeWithSourceTexture:(RXTexture*)texture outputTime:(const CVTimeStamp*)output_time {
+    source_texture = [texture retain];
+    startTime = output_time->hostTime;
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"primed with texture ID %u at %lu", sourceTexture, startTime);
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"primed with texture %@ at %lu", source_texture, startTime);
 #endif
 }
 

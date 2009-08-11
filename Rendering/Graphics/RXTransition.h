@@ -8,7 +8,9 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "RXRendering.h"
+#import "Rendering/RXRendering.h"
+#import "Rendering/Graphics/RXTexture.h"
+
 
 enum {
     RXTransitionSlide,
@@ -45,7 +47,7 @@ typedef uint8_t RXTransitionCurves;
     
     NSRect region;
     
-    GLuint sourceTexture;
+    RXTexture* source_texture;
     
     uint64_t startTime;
     double duration;
@@ -61,7 +63,7 @@ typedef uint8_t RXTransitionCurves;
 - (id)initWithType:(RXTransitionType)t direction:(RXTransitionDirection)d options:(RXTransitionOptions)options region:(NSRect)rect;
 
 - (BOOL)isPrimed;
-- (void)primeWithSourceTexture:(GLuint)texture outputTime:(const CVTimeStamp*)outputTime;
+- (void)primeWithSourceTexture:(RXTexture*)texture outputTime:(const CVTimeStamp*)output_time;
 
 - (float)applyAnimationCurve:(float)t;
 

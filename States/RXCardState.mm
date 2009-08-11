@@ -497,6 +497,11 @@ init_failure:
     glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
     glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), BUFFER_OFFSET(_card_composite_va, 2 * sizeof(GLfloat))); glReportError();
     
+// transitions
+
+    // create the transition source texture
+    _transition_source_texture = [RXTexture newStandardTextureWithTarget:GL_TEXTURE_RECTANGLE_ARB size:kRXCardViewportSize context:cgl_ctx lock:NO];
+    
 // shaders
     
     // card shader
@@ -1890,35 +1895,18 @@ init_failure:
         goto exit_render;
     
     // transition priming
-    if (_front_render_state->transition && ![_front_render_state->transition isPrimed]) {
-        // render the current frame in a texture
-        GLuint transitionSourceTexture;
-        glGenTextures(1, &transitionSourceTexture);
-        
-        // disable client storage because it's incompatible with allocating texture space with NULL (which is what we want when copying a texture)
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-        
+    if (_front_render_state->transition && ![_front_render_state->transition isPrimed]) {        
         // bind the transition source texture
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, transitionSourceTexture); glReportError();
-        
-        // texture parameters
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glReportError();
-        
-        // re-enable client storage
-        glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
+        [_transition_source_texture bindWithContext:cgl_ctx lock:NO];
         
         // bind the dynamic render FBO
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
         
         // copy framebuffer
-        glCopyTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height, 0); glReportError();
+        glCopyTexSubImage2D(_transition_source_texture->target, 0, 0, 0, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height); glReportError();
         
         // give ownership of that texture to the transition
-        [_front_render_state->transition primeWithSourceTexture:transitionSourceTexture outputTime:output_time];
+        [_front_render_state->transition primeWithSourceTexture:_transition_source_texture outputTime:output_time];
     }
     
     // render the front card
@@ -1976,7 +1964,7 @@ init_failure:
             
             // bind the transition source texture on unit 1
             glActiveTexture(GL_TEXTURE1); glReportError();
-            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _front_render_state->transition->sourceTexture); glReportError();
+            [_front_render_state->transition->source_texture bindWithContext:cgl_ctx lock:NO];
         }
     } else {
         glUseProgram(_card_program); glReportError();
