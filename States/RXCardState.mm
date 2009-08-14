@@ -247,6 +247,14 @@ init_failure:
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
+    [_inventory_global_alpha_interpolator release];
+    [_inventory_alpha_interpolators[0] release];
+    [_inventory_alpha_interpolators[1] release];
+    [_inventory_alpha_interpolators[2] release];
+    [_inventory_position_interpolators[0] release];
+    [_inventory_position_interpolators[1] release];
+    [_inventory_position_interpolators[2] release];
+    
     if (_credits_texture_buffer)
         free(_credits_texture_buffer);
     
@@ -361,7 +369,7 @@ init_failure:
     _water_draw_buffer = malloc((kRXRendererViewportSize.width * kRXRendererViewportSize.height) << 3);
     _water_readback_buffer = BUFFER_OFFSET(_water_draw_buffer, (kRXRendererViewportSize.width * kRXRendererViewportSize.height) << 2);
     
-// inventory textures
+// inventory textures and interpolators
     
     // get a reference to the extra bitmaps archive, and get the inventory texture descriptors
     MHKArchive* extras_archive = [[RXEditionManager sharedEditionManager] extrasArchive];
@@ -418,6 +426,14 @@ init_failure:
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
     
+    // initialize the inventory global alpha interpolator
+    RXAnimation* animation = [[RXAnimation alloc] initWithDuration:0.25 curve:RXAnimationCurveSquareSine];
+    _inventory_global_alpha_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:0.75f end:0.75f];
+    [animation release];
+    
+    // initialize the initial target alpha to 0.75
+    _inventory_alpha = 0.75f;
+    
     // while we DMA the inventory textures, let's do some more work
     
 // card compositing
@@ -465,7 +481,7 @@ init_failure:
     [gl_state bindVertexArrayObject:_card_composite_vao];
     
     // 4 triangle strip primitives, 4 vertices per strip, [<position.x position.y> <texcoord0.s texcoord0.t>], floats
-    _card_composite_va = malloc(64 * sizeof(GLfloat));
+    _card_composite_va = calloc(64, sizeof(GLfloat));
     
     // write the vertex attributes
     GLfloat* positions = (GLfloat*)_card_composite_va;
@@ -607,9 +623,6 @@ init_failure:
         
         inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventory_frames[inventory_i].size.width * _inventory_frames[inventory_i].size.height) << 2);
     }
-    
-    // the inventory begins at half opacity
-    _inventory_alpha = 0.5f;
     
 // restore state to Riven X assumptions
     
@@ -1517,16 +1530,20 @@ init_failure:
         _movieFlushTasksDispatch.imp(movie, _movieFlushTasksDispatch.sel, outputTime);
 }
 
-- (void)_updateInventoryWithTimestamp:(const CVTimeStamp*)outputTime context:(CGLContextObj)cgl_ctx {
+- (void)_renderInventoryWithTimestamp:(const CVTimeStamp*)output_time context:(CGLContextObj)cgl_ctx {
     RXGameState* gs = [g_world gameState];
     
-    // if the engine says the inventory should not be shown, set the number of inventory items to 0 and return
-    if (![gs unsigned32ForKey:@"ainventory"]) {
-        OSSpinLockLock(&_inventory_update_lock);
-        _inventory_flags = 0;
-        OSSpinLockUnlock(&_inventory_update_lock);
-        return;
+    // update the global alpha interpolator (we do this now because we always want to update it, even if the inventory is disabled)
+    float target_alpha = _inventory_alpha;
+    if (target_alpha != _inventory_global_alpha_interpolator->end) {
+        _inventory_global_alpha_interpolator->start = [_inventory_global_alpha_interpolator value];
+        _inventory_global_alpha_interpolator->end = target_alpha;
+        [_inventory_global_alpha_interpolator->animation start];
     }
+    
+    // if the engine says the inventory should not be shown, we're done
+    if (![gs unsigned32ForKey:@"ainventory"])
+        return;
     
     // build a new set of inventory item flags
     uint32_t new_flags = 0;
@@ -1537,20 +1554,11 @@ init_failure:
     if ([gs unsigned32ForKey:@"atrapbook"])
         new_flags |= 1 << RX_INVENTORY_TRAP;
     
-    // if we have nothing to update, bail out early
-    if (new_flags == _inventory_flags)
-        return;
-    
     OSSpinLockLock(&_inventory_update_lock);
     
     // update the inventory flags
+    uint32_t old_flags = _inventory_flags;
     _inventory_flags = new_flags;
-    
-    // if there are no active inventory items, we can return now
-    if (_inventory_flags == 0) {
-        OSSpinLockUnlock(&_inventory_update_lock);
-        return;
-    }
     
     GLfloat* buffer = (GLfloat*)_card_composite_va;
     GLfloat* positions = buffer + 16;
@@ -1596,31 +1604,131 @@ init_failure:
     // we can unlock the inventory update lock now since the rest of the work only affects the rendering thread
     OSSpinLockUnlock(&_inventory_update_lock);
     
-    // compute the vertex positions and texture coordinates of the items
+    // configure blending for the inventory
+    glBlendFuncSeparate(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+    glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+    glEnable(GL_BLEND);
+    glReportError();
+    
+    // make sure we're using the standard card program
+    glUseProgram(_card_program); glReportError();
+    
+    // evaluate the global alpha interpolator once now
+    float global_alpha = [_inventory_global_alpha_interpolator value];
+    
+    // render each inventory item
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-        positions[0] = _inventory_frames[inventory_i].origin.x; positions[1] = _inventory_frames[inventory_i].origin.y;
-        tex_coords0[0] = 0.0f;
-        tex_coords0[1] = _inventory_frames[inventory_i].size.height;
-        positions += 4; tex_coords0 += 4;
+        float start;
+        double duration;
+        RXAnimation* animation;
         
-        positions[0] = _inventory_frames[inventory_i].origin.x + _inventory_frames[inventory_i].size.width;
+        // if the position has changed, setup a position interpolator
+        RXLinearInterpolator* pos_interpolator = (RXLinearInterpolator*)_inventory_position_interpolators[inventory_i];
+        float final_position = _inventory_frames[inventory_i].origin.x;
+        if ((pos_interpolator && pos_interpolator->end != final_position) ||
+            (!pos_interpolator && positions[0] != final_position && positions[0] >= kRXCardViewportOriginOffset.x))
+        {
+            duration = (pos_interpolator) ? 1.0 - [pos_interpolator->animation progress] : 1.0;
+            [pos_interpolator release];
+            
+            animation = [[RXAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
+            pos_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:positions[0] end:final_position];
+            [animation release];
+            
+            _inventory_position_interpolators[inventory_i] = pos_interpolator;
+        }
+        
+        // get the base X position of the item
+        float base_x = (pos_interpolator) ? [pos_interpolator value] : final_position;
+        
+        // update the current position of the item based on the base X position
+        positions[0] = base_x;
         positions[1] = _inventory_frames[inventory_i].origin.y;
+        positions += 4;
+        
+        positions[0] = base_x + _inventory_frames[inventory_i].size.width;
+        positions[1] = _inventory_frames[inventory_i].origin.y;
+        positions += 4;
+        
+        positions[0] = base_x;
+        positions[1] = _inventory_frames[inventory_i].origin.y + _inventory_frames[inventory_i].size.height;
+        positions += 4;
+        
+        positions[0] = base_x + _inventory_frames[inventory_i].size.width;
+        positions[1] = _inventory_frames[inventory_i].origin.y + _inventory_frames[inventory_i].size.height;
+        positions += 4;
+        
+        // tex coords are always the same
+        tex_coords0[0] = 0.0f;
+        tex_coords0[1] = _inventory_frames[inventory_i].size.height;
+        tex_coords0 += 4;
+        
         tex_coords0[0] = _inventory_frames[inventory_i].size.width;
         tex_coords0[1] = _inventory_frames[inventory_i].size.height;
-        positions += 4; tex_coords0 += 4;
+        tex_coords0 += 4;
         
-        positions[0] = _inventory_frames[inventory_i].origin.x;
-        positions[1] = _inventory_frames[inventory_i].origin.y + _inventory_frames[inventory_i].size.height;
         tex_coords0[0] = 0.0f;
         tex_coords0[1] = 0.0f;
-        positions += 4; tex_coords0 += 4;
+        tex_coords0 += 4;
         
-        positions[0] = _inventory_frames[inventory_i].origin.x + _inventory_frames[inventory_i].size.width;
-        positions[1] = _inventory_frames[inventory_i].origin.y + _inventory_frames[inventory_i].size.height;
         tex_coords0[0] = _inventory_frames[inventory_i].size.width;
         tex_coords0[1] = 0.0f;
-        positions += 4; tex_coords0 += 4;
+        tex_coords0 += 4;
+        
+        // now update the alpha of the item, which is used when the item gets deactivated or activated
+        RXLinearInterpolator* alpha_interpolator = (RXLinearInterpolator*)_inventory_alpha_interpolators[inventory_i];
+        
+        if ((new_flags & (1 << inventory_i)) && !(old_flags & (1 << inventory_i))) {
+            // item was activated, setup a fade-in
+            start = (alpha_interpolator) ? [alpha_interpolator value] : global_alpha;
+            duration = (alpha_interpolator) ? 1.0 - [alpha_interpolator->animation progress] : 1.0;
+            [alpha_interpolator release];
+            
+            animation = [[RXAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
+            alpha_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:start end:1.0f];
+            [animation release];
+            
+            _inventory_alpha_interpolators[inventory_i] = alpha_interpolator;
+        } else if (!(new_flags & (1 << inventory_i)) && (old_flags & (1 << inventory_i))) {
+            // item was deactivated, setup a fade-out
+            start = (alpha_interpolator) ? [alpha_interpolator value] : global_alpha;
+            duration = (alpha_interpolator) ? 1.0 - [alpha_interpolator->animation progress] : 1.0;
+            [alpha_interpolator release];
+            
+            animation = [[RXAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
+            alpha_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:start end:0.0f];
+            [animation release];
+            
+            _inventory_alpha_interpolators[inventory_i] = alpha_interpolator;
+        }
+        
+        // if the item is enabled or has active interpolators, draw it
+        if (pos_interpolator || alpha_interpolator || (new_flags & (1 << inventory_i))) {
+            glBlendColor(1.f, 1.f, 1.f, (alpha_interpolator) ? [alpha_interpolator value] : global_alpha); glReportError();
+            
+            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventory_textures[inventory_i]); glReportError();
+            glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inventory_i, 4); glReportError();
+        }
+        
+        // if the position interpolator is done, release it
+        if (pos_interpolator && [pos_interpolator->animation progress] >= 1.0f) {
+            [pos_interpolator release];
+            _inventory_position_interpolators[inventory_i] = nil;
+        }
+        
+        // if the alpha interpolator is done, release it
+        if (alpha_interpolator && [alpha_interpolator->animation progress] >= 1.0f) {
+            // reset the global alpha interpolator to smoothly transition
+            _inventory_global_alpha_interpolator->start = alpha_interpolator->end;
+            [_inventory_global_alpha_interpolator->animation start];
+            
+            [alpha_interpolator release];
+            _inventory_alpha_interpolators[inventory_i] = nil;
+        }
     }
+        
+    // finally disable blending
+    glDisable(GL_BLEND); glReportError();
 }
 
 - (void)_renderCredits:(const CVTimeStamp*)output_time inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
@@ -1981,7 +2089,6 @@ init_failure:
     } else {
         glUseProgram(_card_program); glReportError();
     }
-    
     // bind the dynamic card content texture to unit 0
     glActiveTexture(GL_TEXTURE0); glReportError();
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _textures[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
@@ -1992,29 +2099,8 @@ init_failure:
     // draw the card composite
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
     
-    // update and draw the inventory
-    [self _updateInventoryWithTimestamp:output_time context:cgl_ctx];
-    
-    if (_inventory_alpha > 0.f && _inventory_flags) {
-        if (_inventory_alpha < 1.f) {
-            glBlendColor(1.f, 1.f, 1.f, _inventory_alpha);
-            glBlendFuncSeparate(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-            glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-            glEnable(GL_BLEND);
-        }
-        
-        glUseProgram(_card_program); glReportError();
-        for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-            if (!(_inventory_flags & (1 << inventory_i)))
-                continue;
-            
-            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventory_textures[inventory_i]); glReportError();
-            glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inventory_i, 4); glReportError();
-        }
-        
-        if (_inventory_alpha < 1.f)
-            glDisable(GL_BLEND);
-    }
+    // draw the inventory
+    [self _renderInventoryWithTimestamp:output_time context:cgl_ctx];
     
 #if defined(DEBUG)
     if (RXEngineGetBool(@"rendering.marble_lines")) {
@@ -2126,49 +2212,51 @@ exit_render:
         }
         
         uint32_t inv_count = 0;
-        for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
-            if (!(_inventory_flags & (1 << inventory_i)))
-                continue;
-            
-            _hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
-            _hotspotDebugRenderElementCountArray[primitive_index] = 4;
-            
-            inv_count++;
-            NSRect frame = _inventory_hotspot_frames[inventory_i];
-            
-            attribs[0] = frame.origin.x;
-            attribs[1] = frame.origin.y;
-            attribs[2] = 0.0f;
-            attribs[3] = 1.0f;
-            attribs[4] = 0.0f;
-            attribs[5] = 1.0f;
-            attribs += 6;
-            
-            attribs[0] = frame.origin.x + frame.size.width;
-            attribs[1] = frame.origin.y;
-            attribs[2] = 0.0f;
-            attribs[3] = 1.0f;
-            attribs[4] = 0.0f;
-            attribs[5] = 1.0f;
-            attribs += 6;
-            
-            attribs[0] = frame.origin.x + frame.size.width;
-            attribs[1] = frame.origin.y + frame.size.height;
-            attribs[2] = 0.0f;
-            attribs[3] = 1.0f;
-            attribs[4] = 0.0f;
-            attribs[5] = 1.0f;
-            attribs += 6;
-            
-            attribs[0] = frame.origin.x;
-            attribs[1] = frame.origin.y + frame.size.height;
-            attribs[2] = 0.0f;
-            attribs[3] = 1.0f;
-            attribs[4] = 0.0f;
-            attribs[5] = 1.0f;
-            attribs += 6;
-            
-            primitive_index++;
+        if ([[g_world gameState] unsigned32ForKey:@"ainventory"]) {
+            for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+                if (!(_inventory_flags & (1 << inventory_i)))
+                    continue;
+                
+                _hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
+                _hotspotDebugRenderElementCountArray[primitive_index] = 4;
+                
+                inv_count++;
+                NSRect frame = _inventory_hotspot_frames[inventory_i];
+                
+                attribs[0] = frame.origin.x;
+                attribs[1] = frame.origin.y;
+                attribs[2] = 0.0f;
+                attribs[3] = 1.0f;
+                attribs[4] = 0.0f;
+                attribs[5] = 1.0f;
+                attribs += 6;
+                
+                attribs[0] = frame.origin.x + frame.size.width;
+                attribs[1] = frame.origin.y;
+                attribs[2] = 0.0f;
+                attribs[3] = 1.0f;
+                attribs[4] = 0.0f;
+                attribs[5] = 1.0f;
+                attribs += 6;
+                
+                attribs[0] = frame.origin.x + frame.size.width;
+                attribs[1] = frame.origin.y + frame.size.height;
+                attribs[2] = 0.0f;
+                attribs[3] = 1.0f;
+                attribs[4] = 0.0f;
+                attribs[5] = 1.0f;
+                attribs += 6;
+                
+                attribs[0] = frame.origin.x;
+                attribs[1] = frame.origin.y + frame.size.height;
+                attribs[2] = 0.0f;
+                attribs[3] = 1.0f;
+                attribs[4] = 0.0f;
+                attribs[5] = 1.0f;
+                attribs += 6;
+                
+                primitive_index++;
+            }
         }
         
         if (GLEE_APPLE_flush_buffer_range)
@@ -2524,11 +2612,11 @@ exit_flush_tasks:
     // get the front card's active hotspots
     NSArray* active_hotspots = [sengine activeHotspots];
 
-    // if the mouse is below the game viewport, bring up the alpha of the inventory to 1; otherwise set it to 0.5
+    // update the active status of the inventory based on the position of the mouse
     if (NSMouseInRect(mouse_vector.origin, [(NSView*)g_worldView bounds], NO) && mouse_vector.origin.y < kRXCardViewportOriginOffset.y)
-        _inventory_alpha = 1.f;
+        _inventory_alpha = 1.0f;
     else
-        _inventory_alpha = 0.5f;
+        _inventory_alpha = 0.75f;
     
     // find over which hotspot the mouse is
     NSEnumerator* hotspots_enum = [active_hotspots objectEnumerator];
@@ -2541,7 +2629,7 @@ exit_flush_tasks:
     // now check if we're over one of the inventory regions
     if (!hotspot) {
         OSSpinLockLock(&_inventory_update_lock);
-        if (_inventory_flags) {
+        if ([[g_world gameState] unsigned32ForKey:@"ainventory"] && _inventory_flags) {
             for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
                 if (!(_inventory_flags & (1 << inventory_i)))
                     continue;

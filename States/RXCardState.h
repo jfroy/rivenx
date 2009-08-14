@@ -119,8 +119,11 @@ struct rx_transition_program {
     // inventory
     CGRect _inventory_frames[3];
     GLuint _inventory_textures[3];
-    float _inventory_alpha;
+    RXInterpolator* _inventory_alpha_interpolators[3];
+    RXInterpolator* _inventory_position_interpolators[3];
     NSRect _inventory_hotspot_frames[3];
+    float _inventory_alpha;
+    RXLinearInterpolator* _inventory_global_alpha_interpolator;
     uint32_t _inventory_flags;
     OSSpinLock _inventory_update_lock;
     
