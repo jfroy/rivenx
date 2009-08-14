@@ -9,13 +9,13 @@
 #import "RXTransition.h"
 #import "RXTiming.h"
 
+
 static NSString* _kRXTransitionDirectionNames[4] = {
     @"RXTransitionLeft",
     @"RXTransitionRight",
     @"RXTransitionTop",
     @"RXTransitionBottom",
 };
-
 
 @implementation RXTransition
 
