@@ -22,6 +22,7 @@ typedef uint32_t RXAnimationCurve;
     double duration;
     uint64_t start_time;
     RXAnimationCurve curve;
+    BOOL done;
 }
 
 - (id)initWithDuration:(double)d curve:(RXAnimationCurve)c;

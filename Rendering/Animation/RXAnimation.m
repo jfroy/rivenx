@@ -36,10 +36,16 @@ static const double kDurationEpsilon = 0.000001;
 
 - (void)start {
     start_time = RXTimingNow();
+    done = NO;
 }
 
 - (float)progress {
-    return MIN(1.0, MAX(0.0, RXTimingTimestampDelta(RXTimingNow(), start_time) / duration));
+    if (done)
+        return 1.0f;
+    float t = MAX(0.0, MIN(1.0, RXTimingTimestampDelta(RXTimingNow(), start_time) / duration));
+    if (t >= 1.0f)
+        done = YES;
+    return t;
 }
 
 - (float)value {
