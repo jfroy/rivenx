@@ -29,7 +29,6 @@
     [(RXCardState*)_cardState setActiveCardWithStack:@"aspit"
                                                   ID:[[[RXEditionManager sharedEditionManager] activeStackWithKey:@"aspit"] entryCardID]
                                        waitUntilDone:NO];
-    [_stateCompositor setOpacity:1.0f ofState:_cardState];
 }
 
 - (void)_initializeRendering {

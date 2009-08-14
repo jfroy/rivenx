@@ -7,10 +7,11 @@
 //
 
 #import <Cocoa/Cocoa.h>
-
 #import <pthread.h>
+#import <libkern/OSAtomic.h>
 
 #import "Rendering/RXRendering.h"
+#import "Rendering/Animation/RXInterpolator.h"
 #import "States/RXRenderState.h"
 
 
@@ -32,22 +33,15 @@
     GLfloat tex_coords[8];
     GLfloat front_color[4];
     
-    NSAnimation* _currentFadeAnimation;
-    NSMapTable* _animationCompletionInvocations;
+    RXInterpolator* _fade_interpolator;
+    NSInvocation* _fade_animation_callback;
+    
+    OSSpinLock _render_lock;
 }
 
 - (void)addState:(RXRenderState*)state opacity:(GLfloat)opacity;
 
-- (GLfloat)opacityForState:(RXRenderState*)state;
-- (void)setOpacity:(GLfloat)opacity ofState:(RXRenderState*)state;
-
 - (void)fadeInState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector;
 - (void)fadeOutState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector;
-
-// event forwarding
-- (void)mouseDown:(NSEvent*)theEvent;
-- (void)mouseUp:(NSEvent*)theEvent;
-- (void)mouseMoved:(NSEvent*)theEvent;
-- (void)mouseDragged:(NSEvent*)theEvent;
 
 @end

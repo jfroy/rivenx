@@ -178,7 +178,6 @@
 		31A14C020F03F8EC006EFF93 /* CADebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C010F03F8EC006EFF93 /* CADebugger.cpp */; };
 		31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C070F03F912006EFF93 /* CAComponentDescription.cpp */; };
 		31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */; };
-		31A1FB210E0CA95200B2437A /* RXRenderStateOpacityAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FB200E0CA95200B2437A /* RXRenderStateOpacityAnimation.m */; };
 		31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A9F027094D2D0300C6A0AB /* RXRenderState.m */; };
 		31AE54570DE0ADD6000E71CF /* ExceptionHandling.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31AE54560DE0ADD6000E71CF /* ExceptionHandling.framework */; };
 		31B644BF10033A15008AD8E0 /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */; };
@@ -192,6 +191,7 @@
 		31BC739F09A57D4E001EC1E0 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
 		31C3572A0D92A72400EDEF81 /* RXSound_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31C357290D92A72400EDEF81 /* RXSound_test.mm */; };
 		31C545530D5D50620024B486 /* RXEditionInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 31C545520D5D50620024B486 /* RXEditionInstaller.m */; };
+		31CE92961033D576008B7717 /* RXInterpolator.m in Sources */ = {isa = PBXBuildFile; fileRef = 31CE92951033D576008B7717 /* RXInterpolator.m */; };
 		31D21B990DBC078E00E970E1 /* VariableEditor.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B980DBC078E00E970E1 /* VariableEditor.xib */; };
 		31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9A0DBC07A700E970E1 /* MainMenu.xib */; };
 		31D21B9D0DBC07B500E970E1 /* EditionManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9C0DBC07B500E970E1 /* EditionManager.xib */; };
@@ -524,8 +524,6 @@
 		31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXAnimation.m; sourceTree = "<group>"; };
 		31A1FA260E0B761500B2437A /* RXAnimation_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAnimation_test.h; sourceTree = "<group>"; };
 		31A1FA270E0B761500B2437A /* RXAnimation_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXAnimation_test.m; sourceTree = "<group>"; };
-		31A1FB1F0E0CA95200B2437A /* RXRenderStateOpacityAnimation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRenderStateOpacityAnimation.h; sourceTree = "<group>"; };
-		31A1FB200E0CA95200B2437A /* RXRenderStateOpacityAnimation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXRenderStateOpacityAnimation.m; sourceTree = "<group>"; };
 		31A9EC20094D242600C6A0AB /* RXCyanMovieState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXCyanMovieState.h; path = States/RXCyanMovieState.h; sourceTree = "<group>"; };
 		31A9EC21094D242600C6A0AB /* RXCyanMovieState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXCyanMovieState.m; path = States/RXCyanMovieState.m; sourceTree = "<group>"; };
 		31A9EF94094D285400C6A0AB /* RXBase.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXBase.pch; sourceTree = "<group>"; };
@@ -547,6 +545,8 @@
 		31C357290D92A72400EDEF81 /* RXSound_test.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXSound_test.mm; sourceTree = "<group>"; };
 		31C545510D5D50620024B486 /* RXEditionInstaller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXEditionInstaller.h; sourceTree = "<group>"; };
 		31C545520D5D50620024B486 /* RXEditionInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXEditionInstaller.m; sourceTree = "<group>"; };
+		31CE92941033D576008B7717 /* RXInterpolator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXInterpolator.h; sourceTree = "<group>"; };
+		31CE92951033D576008B7717 /* RXInterpolator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXInterpolator.m; sourceTree = "<group>"; };
 		31D21B980DBC078E00E970E1 /* VariableEditor.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = VariableEditor.xib; sourceTree = "<group>"; };
 		31D21B9A0DBC07A700E970E1 /* MainMenu.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainMenu.xib; sourceTree = "<group>"; };
 		31D21B9C0DBC07B500E970E1 /* EditionManager.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = EditionManager.xib; sourceTree = "<group>"; };
@@ -973,8 +973,8 @@
 			children = (
 				31A1FA1B0E0B4AB800B2437A /* RXAnimation.h */,
 				31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */,
-				31A1FB1F0E0CA95200B2437A /* RXRenderStateOpacityAnimation.h */,
-				31A1FB200E0CA95200B2437A /* RXRenderStateOpacityAnimation.m */,
+				31CE92941033D576008B7717 /* RXInterpolator.h */,
+				31CE92951033D576008B7717 /* RXInterpolator.m */,
 			);
 			path = Animation;
 			sourceTree = "<group>";
@@ -1692,7 +1692,6 @@
 				31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */,
 				3185C4730E06046D00528220 /* RXVersionComparator.m in Sources */,
 				31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */,
-				31A1FB210E0CA95200B2437A /* RXRenderStateOpacityAnimation.m in Sources */,
 				31D3D8600EEE36FD00F2D1C4 /* RXOpenGLState.m in Sources */,
 				3103D4DB0EF0D3D40025170A /* RXPicture.m in Sources */,
 				3103D4F40EF0DAF30025170A /* RXHardwareProfiler.m in Sources */,
@@ -1714,6 +1713,7 @@
 				3186C9C3102E3CE0004E81D2 /* RXTextureBroker.m in Sources */,
 				3186C9E5102E47F4004E81D2 /* RXTexture.m in Sources */,
 				31766E62102FAC02001762A9 /* RXDynamicBitfield.m in Sources */,
+				31CE92961033D576008B7717 /* RXInterpolator.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

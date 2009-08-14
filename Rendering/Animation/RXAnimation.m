@@ -6,43 +6,57 @@
 //  Copyright 2007 MacStorm. All rights reserved.
 //
 
-#import "RXAnimation.h"
+#import "Rendering/Animation/RXAnimation.h"
 
-#import "RXWorldProtocol.h"
 
+static const double kDurationEpsilon = 0.000001;
 
 @implementation RXAnimation
 
-- (id)initWithDuration:(NSTimeInterval)duration animationCurve:(NSAnimationCurve)animationCurve {
-    self = [super initWithDuration:duration animationCurve:animationCurve];
-    if (!self) return nil;
+- (id)init {
+    [self doesNotRecognizeSelector:_cmd];
+    [self release];
+    return nil;
+}
+
+- (id)initWithDuration:(double)d curve:(RXAnimationCurve)c {
+    self = [super init];
+    if (!self)
+        return nil;
     
-    // RXAnimation always runs on the animation thread in a non-blocking manner (but without creating its own thread)
-    [self setAnimationBlockingMode:NSAnimationNonblocking];
+    duration = d;
+    if (duration < kDurationEpsilon)
+        duration = kDurationEpsilon;
+    curve = c;
+    
+    [self start];
     
     return self;
 }
 
-- (void)setAnimationBlockingMode:(NSAnimationBlockingMode)animationBlockingMode {
-    // ignore animation blocking mode requests
+- (void)start {
+    start_time = RXTimingNow();
 }
 
-- (void)startAnimation {
-    if ([NSThread currentThread] != [g_world animationThread]) {
-        [self performSelector:_cmd inThread:[g_world animationThread] waitUntilDone:NO];
-        return;
-    }
-    
-    [super startAnimation];
+- (float)progress {
+    return MIN(1.0, MAX(0.0, RXTimingTimestampDelta(RXTimingNow(), start_time) / duration));
 }
 
-- (void)stopAnimation {
-    if ([NSThread currentThread] != [g_world animationThread]) {
-        [self performSelector:_cmd inThread:[g_world animationThread] waitUntilDone:NO];
-        return;
+- (float)value {
+    return [self applyCurve:[self progress]];
+}
+
+- (float)applyCurve:(float)t {
+    switch (curve) {
+        case RXAnimationCurveSquareSine:
+        {
+            double sine = sin(M_PI_2 * t);
+            return sine * sine;
+        }
+        case RXAnimationCurveLinear:
+        default:
+            return t;
     }
-    
-    [super stopAnimation];
 }
 
 @end

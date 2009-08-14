@@ -6,14 +6,10 @@
 //  Copyright 2007 Apple, Inc. All rights reserved.
 //
 
-#import "Base/RXAtomic.h"
-
 #import "Rendering/Graphics/RXStateCompositor.h"
 #import "Engine/RXWorldProtocol.h"
 
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
-
-#import "Rendering/Animation/RXRenderStateOpacityAnimation.h"
 
 
 @interface RXRenderStateCompositionDescriptor : NSObject {
@@ -62,7 +58,6 @@
     
     _states = [[NSMutableArray alloc] initWithCapacity:0x10];
     _state_map = NSCreateMapTable(NSNonRetainedObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, 0);
-    _animationCompletionInvocations = NSCreateMapTable(NSNonRetainedObjectMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
     
     _renderStates = [_states copy];
     
@@ -116,6 +111,8 @@
     // we need to listen for OpenGL reshape notifications
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_reshapeGL:) name:@"RXOpenGLDidReshapeNotification" object:nil];
     
+    _render_lock = OS_SPINLOCK_INIT;
+    
     return self;
 }
 
@@ -146,7 +143,9 @@
     [_states release];
     NSFreeMapTable(_state_map);
     [_renderStates release];
-    NSFreeMapTable(_animationCompletionInvocations);
+    
+    [_fade_interpolator release];
+    [_fade_animation_callback release];
     
     [super dealloc];
 }
@@ -255,48 +254,12 @@
     
     // swap
     NSArray* old = _renderStates;
+    OSSpinLockLock(&_render_lock);
     _renderStates = [_states copy];
+    OSSpinLockUnlock(&_render_lock);
     
     [old release];
     [descriptor release];
-}
-
-- (GLfloat)opacityForState:(RXRenderState*)state {
-    RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
-    if (!descriptor)
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
-    
-    return descriptor->opacity;
-}
-
-- (void)setOpacity:(GLfloat)opacity ofState:(RXRenderState *)state {
-    RXRenderStateCompositionDescriptor* descriptor = (RXRenderStateCompositionDescriptor*)NSMapGet(_state_map, state);
-    if (!descriptor)
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
-    
-    // change the opacity in the render state descriptor
-    descriptor->opacity = opacity;
-    
-    // update the texture blend weight
-    [self _updateTextureBlendWeightsUniform];
-}
-
-- (void)animationDidEnd:(NSAnimation*)animation {
-    [(NSInvocation*)NSMapGet(_animationCompletionInvocations, animation) invoke];
-    NSMapRemove(_animationCompletionInvocations, animation);
-    
-    if (_currentFadeAnimation == animation)
-        _currentFadeAnimation = nil;
-    [animation release];
-}
-
-- (void)animationDidStop:(NSAnimation*)animation {
-    [(NSInvocation*)NSMapGet(_animationCompletionInvocations, animation) invoke];
-    NSMapRemove(_animationCompletionInvocations, animation);
-    
-    if (_currentFadeAnimation == animation)
-        _currentFadeAnimation = nil;
-    [animation release];
 }
 
 - (void)fadeInState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector {
@@ -304,23 +267,23 @@
     if (!descriptor)
         @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
     
-    NSAnimation* animation = [[RXRenderStateOpacityAnimation alloc] initWithState:state targetOpacity:1.0f duration:duration];
-    if (!_currentFadeAnimation)
-        _currentFadeAnimation = animation;
-    else {
-        [animation startWhenAnimation:_currentFadeAnimation reachesProgress:1.0];
-        _currentFadeAnimation = animation;
-    }
-    
     NSMethodSignature* completionSignature = [delegate methodSignatureForSelector:completionSelector];
-    NSInvocation* completionInvocation = [NSInvocation invocationWithMethodSignature:completionSignature];
-    [completionInvocation setTarget:delegate];
-    [completionInvocation setSelector:completionSelector];
-    [completionInvocation setArgument:state atIndex:2];
-    NSMapInsert(_animationCompletionInvocations, _currentFadeAnimation, completionInvocation);
+    NSInvocation* callback = [[NSInvocation invocationWithMethodSignature:completionSignature] retain];
+    [callback setTarget:delegate];
+    [callback setSelector:completionSelector];
+    [callback setArgument:state atIndex:2];
     
-    [_currentFadeAnimation setDelegate:self];
-    [_currentFadeAnimation startAnimation];
+    RXAnimation* animation = [[RXAnimation alloc] initWithDuration:1.0 curve:RXAnimationCurveLinear];
+    RXInterpolator* interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:0.0f end:1.0f];
+    [animation release];
+    
+    OSSpinLockLock(&_render_lock);
+    [_fade_interpolator release];
+    _fade_interpolator = interpolator;
+    
+    [_fade_animation_callback release];
+    _fade_animation_callback = callback;
+    OSSpinLockUnlock(&_render_lock);
 }
 
 - (void)fadeOutState:(RXRenderState*)state over:(NSTimeInterval)duration completionDelegate:(id)delegate completionSelector:(SEL)completionSelector {
@@ -328,23 +291,23 @@
     if (!descriptor)
         @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"%@ is not composited by this compositor" userInfo:nil];
     
-    NSAnimation* animation = [[RXRenderStateOpacityAnimation alloc] initWithState:state targetOpacity:0.0f duration:duration];
-    if (!_currentFadeAnimation)
-        _currentFadeAnimation = animation;
-    else {
-        [animation startWhenAnimation:_currentFadeAnimation reachesProgress:1.0];
-        _currentFadeAnimation = animation;
-    }
-    
     NSMethodSignature* completionSignature = [delegate methodSignatureForSelector:completionSelector];
-    NSInvocation* completionInvocation = [NSInvocation invocationWithMethodSignature:completionSignature];
-    [completionInvocation setTarget:delegate];
-    [completionInvocation setSelector:completionSelector];
-    [completionInvocation setArgument:state atIndex:2];
-    NSMapInsert(_animationCompletionInvocations, _currentFadeAnimation, completionInvocation);
+    NSInvocation* callback = [[NSInvocation invocationWithMethodSignature:completionSignature] retain];
+    [callback setTarget:delegate];
+    [callback setSelector:completionSelector];
+    [callback setArgument:state atIndex:2];
     
-    [_currentFadeAnimation setDelegate:self];
-    [_currentFadeAnimation startAnimation];
+    RXAnimation* animation = [[RXAnimation alloc] initWithDuration:1.0 curve:RXAnimationCurveLinear];
+    RXInterpolator* interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:1.0f end:0.0f];
+    [animation release];
+    
+    OSSpinLockLock(&_render_lock);
+    [_fade_interpolator release];
+    _fade_interpolator = interpolator;
+    
+    [_fade_animation_callback release];
+    _fade_animation_callback = callback;
+    OSSpinLockUnlock(&_render_lock);
 }
 
 #pragma mark -
@@ -371,10 +334,16 @@
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
     NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
+    OSSpinLockLock(&_render_lock);
     NSArray* renderStates = [_renderStates retain];
+    RXInterpolator* fade_interpolator = [_fade_interpolator retain];
+    NSInvocation* fade_callback = [_fade_animation_callback retain];
+    OSSpinLockUnlock(&_render_lock);
     
     // if we have no state, we can exit immediately
     if ([renderStates count] == 0) {
+        [fade_callback release];
+        [fade_interpolator release];
         [renderStates release];
         return;
     }
@@ -404,6 +373,25 @@
     if (valid != GL_TRUE)
         RXOLog(@"program not valid: %u", _compositing_program);
 #endif
+    
+    // if we have a fade animation, apply it's value to the blend weight 0 and call its completion callback if it's reached its end
+    if (fade_interpolator) {
+        _texture_blend_weights[0] = [fade_interpolator value];
+        if ([fade_interpolator->animation progress] >= 1.0f) {
+            [fade_callback performSelectorOnMainThread:@selector(invoke) withObject:nil waitUntilDone:NO];
+            
+            OSSpinLockLock(&_render_lock);
+            if (fade_interpolator == _fade_interpolator) {
+                [_fade_interpolator release];
+                _fade_interpolator = nil;
+            }
+            if (fade_callback == _fade_animation_callback) {
+                [_fade_animation_callback release];
+                _fade_animation_callback = nil;
+            }
+            OSSpinLockUnlock(&_render_lock);
+        }
+    }
     
     // bind the compositor program and update the render state blend uniform
     glUseProgram(_compositing_program); glReportError();
@@ -437,6 +425,8 @@
         imp(descriptor->state, @selector(_renderInGlobalContext:), cgl_ctx);
     }
     
+    [fade_callback release];
+    [fade_interpolator release];
     [renderStates release];
 }
 
@@ -454,35 +444,35 @@
 
 - (void)mouseDown:(NSEvent *)theEvent {
     // do not dispatch events if an animation is running
-    if (_currentFadeAnimation)
+    if (_fade_interpolator)
         return;
     [((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseDown:theEvent];
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
     // do not dispatch events if an animation is running
-    if (_currentFadeAnimation)
+    if (_fade_interpolator)
         return;
     [((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseUp:theEvent];
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent {
     // do not dispatch events if an animation is running
-    if (_currentFadeAnimation)
+    if (_fade_interpolator)
         return;
     [((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseMoved:theEvent];
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent {
     // do not dispatch events if an animation is running
-    if (_currentFadeAnimation)
+    if (_fade_interpolator)
         return;
     [((RXRenderStateCompositionDescriptor*)[_states lastObject])->state mouseDragged:theEvent];
 }
 
 - (void)keyDown:(NSEvent *)theEvent {
     // do not dispatch events if an animation is running
-    if (_currentFadeAnimation)
+    if (_fade_interpolator)
         return;
 
 #if defined(DEBUG)
