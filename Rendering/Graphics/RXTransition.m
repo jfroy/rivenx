@@ -69,19 +69,14 @@ static NSString* _kRXTransitionDirectionNames[4] = {
     
     region = rect;
     
-    startTime = 0;
-    duration = kRXTransitionDuration;
-    
     // by default, linear for dissolves, square sine for slides
-    if (type == RXTransitionDissolve)
-        curve = RXTransitionCurveLinear;
-    else
-        curve = RXTransitionCurveSquareSine;
+    animation = [[RXAnimation alloc] initWithDuration:kRXTransitionDuration curve:(type == RXTransitionDissolve) ? RXAnimationCurveLinear : RXAnimationCurveSquareSine];
     
     return self;
 }
 
 - (void)dealloc {
+    [animation release];
     [source_texture release];
     [super dealloc];
 }
@@ -99,25 +94,13 @@ static NSString* _kRXTransitionDirectionNames[4] = {
     return (source_texture != nil) ? YES : NO;
 }
 
-- (void)primeWithSourceTexture:(RXTexture*)texture outputTime:(const CVTimeStamp*)output_time {
+- (void)primeWithSourceTexture:(RXTexture*)texture {
     source_texture = [texture retain];
-    startTime = output_time->hostTime;
-#if defined(DEBUG)
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"primed with texture %@ at %lu", source_texture, startTime);
-#endif
-}
+    [animation start];
 
-- (float)applyAnimationCurve:(float)t {
-    switch (curve) {
-        case RXTransitionCurveSquareSine:
-        {
-            double sine = sin(M_PI_2 * t);
-            return sine * sine;
-        }
-        case RXTransitionCurveLinear:
-        default:
-            return t;
-    }
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"primed with texture %@ at %llu", source_texture, animation->start_time);
+#endif
 }
 
 @end

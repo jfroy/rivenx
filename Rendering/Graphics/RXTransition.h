@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "Rendering/RXRendering.h"
+#import "Rendering/Animation/RXAnimation.h"
 #import "Rendering/Graphics/RXTexture.h"
 
 
@@ -32,12 +32,6 @@ enum {
 };
 typedef uint8_t RXTransitionOptions;
 
-enum {
-    RXTransitionCurveLinear = 0x1,
-    RXTransitionCurveSquareSine = 0x2,
-};
-typedef uint8_t RXTransitionCurves;
-
 @interface RXTransition : NSObject {
 @public
     RXTransitionType type;
@@ -48,10 +42,7 @@ typedef uint8_t RXTransitionCurves;
     NSRect region;
     
     RXTexture* source_texture;
-    
-    uint64_t startTime;
-    double duration;
-    RXTransitionCurves curve;
+    RXAnimation* animation;
 }
 
 - (id)initWithCode:(uint16_t)code region:(NSRect)rect;
@@ -63,8 +54,6 @@ typedef uint8_t RXTransitionCurves;
 - (id)initWithType:(RXTransitionType)t direction:(RXTransitionDirection)d options:(RXTransitionOptions)options region:(NSRect)rect;
 
 - (BOOL)isPrimed;
-- (void)primeWithSourceTexture:(RXTexture*)texture outputTime:(const CVTimeStamp*)output_time;
-
-- (float)applyAnimationCurve:(float)t;
+- (void)primeWithSourceTexture:(RXTexture*)texture;
 
 @end

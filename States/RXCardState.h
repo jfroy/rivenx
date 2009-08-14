@@ -13,8 +13,6 @@
 #import <mach/thread_act.h>
 #import <mach/thread_policy.h>
 
-#import "Base/RXAtomic.h"
-
 #import "States/RXRenderState.h"
 
 #import "Engine/RXCard.h"
@@ -22,6 +20,7 @@
 #import "Engine/RXScriptEngine.h"
 
 #import "Rendering/Graphics/RXTransition.h"
+#import "Rendering/Animation/RXInterpolator.h"
 
 struct rx_sfxe_render_state {
     rx_card_sfxe* sfxe;

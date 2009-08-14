@@ -1918,7 +1918,7 @@ init_failure:
         glCopyTexSubImage2D(_transition_source_texture->target, 0, 0, 0, 0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height); glReportError();
         
         // give ownership of that texture to the transition
-        [_front_render_state->transition primeWithSourceTexture:_transition_source_texture outputTime:output_time];
+        [_front_render_state->transition primeWithSourceTexture:_transition_source_texture];
     }
     
     // render the front card
@@ -1930,7 +1930,7 @@ init_failure:
     
     if (_front_render_state->transition && [_front_render_state->transition isPrimed]) {
         // compute the parametric transition parameter based on current time, start time and duration
-        float t = RXTimingTimestampDelta(output_time->hostTime, _front_render_state->transition->startTime) / _front_render_state->transition->duration;
+        float t = [_front_render_state->transition->animation progress];
         if (t > 1.0f)
             t = 1.0f;
         
@@ -1972,7 +1972,7 @@ init_failure:
             
             // use the transition's program and update its t and margin uniforms
             glUseProgram(transition->program); glReportError();
-            glUniform1f(transition->t_uniform, [_front_render_state->transition applyAnimationCurve:t]); glReportError();
+            glUniform1f(transition->t_uniform, [_front_render_state->transition->animation applyCurve:t]); glReportError();
             
             // bind the transition source texture on unit 1
             glActiveTexture(GL_TEXTURE1); glReportError();
