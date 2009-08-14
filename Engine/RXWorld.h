@@ -32,7 +32,6 @@
     // threading
     semaphore_t _threadInitSemaphore;
     NSThread* _scriptThread;
-    NSThread* _animationThread;
     
     // rendering
     BOOL _rendering_initialized;

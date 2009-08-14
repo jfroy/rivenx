@@ -24,7 +24,6 @@
 
 @protocol RXWorldProtocol <NSObject>
 - (NSThread*)scriptThread;
-- (NSThread*)animationThread;
 
 - (NSDictionary*)extraBitmapsDescriptor;
 

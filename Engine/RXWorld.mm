@@ -218,9 +218,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         
         // start threads
         [NSThread detachNewThreadSelector:@selector(_RXScriptThreadEntry:) toTarget:self withObject:nil];
-        [NSThread detachNewThreadSelector:@selector(_RXAnimationThreadEntry:) toTarget:self withObject:nil];
         
-        semaphore_wait(_threadInitSemaphore);
+        // wait for each thread to be running (this needs to be called the same number of times as the number of threads)
         semaphore_wait(_threadInitSemaphore);
         
         // initialize the render states
@@ -293,8 +292,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     // terminate threads
     if (_scriptThread)
         [self performSelector:@selector(_stopThreadRunloop) inThread:_scriptThread];
-    if (_animationThread)
-        [self performSelector:@selector(_stopThreadRunloop) inThread:_animationThread];
     
     // stack thread creation cond / mutex
     semaphore_destroy(mach_task_self(), _threadInitSemaphore);
@@ -331,17 +328,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 #pragma mark -
 
-- (void)_RXAnimationThreadEntry:(id)object {
-    // reference to the thread
-    _animationThread = [NSThread currentThread];
-    
-    // make the load CGL context default for the stack thread
-    CGLSetCurrentContext([_worldView loadContext]);
-    
-    // run the thread
-    RXThreadRunLoopRun(_threadInitSemaphore, @"Animation");
-}
-
 - (void)_RXScriptThreadEntry:(id)object {
     // reference to the thread
     _scriptThread = [NSThread currentThread];
@@ -359,10 +345,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (NSThread*)scriptThread {
     return _scriptThread;
-}
-
-- (NSThread*)animationThread {
-    return _animationThread;
 }
 
 #pragma mark -
