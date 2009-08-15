@@ -1379,7 +1379,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #if defined(DEBUG)
     NSString* fmt = [NSString stringWithFormat:@"calling external %@(", external_name];
     
-    uint16_t argi;
+    uint16_t argi = 0;
     if (external_argc > 1) {
         for (; argi < external_argc - 1; argi++)
             fmt = [fmt stringByAppendingFormat:@"%hu, ", argv[2 + argi]];

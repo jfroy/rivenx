@@ -220,7 +220,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXTextureBroker, sharedTextureBroker)
     // were created in the initializer
     int i = (int)ceilf(log2f(size.width)) - 5;
     int j = (int)ceilf(log2f(size.height)) - 5;
-    int32_t bucket_i = MIN((i * 5) + j, 5*5);
+    int32_t bucket_i = MIN((i * 5) + j, 5 * 5);
     
     for (; bucket_i < (int32_t)_bucket_count; bucket_i++) {
         bucket = _buckets + bucket_i;
@@ -233,6 +233,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXTextureBroker, sharedTextureBroker)
         [self _createBucketWithSize:size];
         bucket = &_buckets[_bucket_count - 1];
     }
+    
+    // if we don't have a bucket at this point, give up
+    if (!bucket)
+        return nil;
     
     // try to allocate a texture out of the bucket
     uint32_t bucket_index;

@@ -61,7 +61,7 @@
 }
 
 - (BOOL)isAllSet {
-    for (uintptr_t segment_index; segment_index < _segment_count; segment_index++) {
+    for (uintptr_t segment_index = 0; segment_index < _segment_count; segment_index++) {
         if (_segments[segment_index] != UINTPTR_MAX)
             return NO;
     }

@@ -812,8 +812,10 @@ major_number.minor_number major_number.minor_number.release_number
 //    }
     
     // if we did not find or compute a free VRAM number, return an error
-    if (!free_vram_number)
+    if (!free_vram_number) {
+        CFRelease(perf_stats);
         ReturnValueWithError(-1, RXErrorDomain, kRXErrFailedToFindFreeVRAMInformation, nil, error);
+    }
     
     // get its value out
     CFNumberGetValue(free_vram_number, kCFNumberLongType, &free_vram);
