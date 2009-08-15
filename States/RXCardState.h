@@ -117,13 +117,14 @@ struct rx_transition_program {
     GLint* _hotspotDebugRenderElementCountArray;
     
     // inventory
-    CGRect _inventory_frames[3];
     GLuint _inventory_textures[3];
-    RXInterpolator* _inventory_alpha_interpolators[3];
+    CGRect _inventory_frames[3];
     RXInterpolator* _inventory_position_interpolators[3];
+    float _inventory_alpha[3];
+    RXInterpolator* _inventory_alpha_interpolators[3];
+    uint32_t _inventory_alpha_interpolator_uninterruptible_flags;
     NSRect _inventory_hotspot_frames[3];
-    float _inventory_alpha;
-    RXLinearInterpolator* _inventory_global_alpha_interpolator;
+    BOOL _inventory_has_focus;
     uint32_t _inventory_flags;
     OSSpinLock _inventory_update_lock;
     

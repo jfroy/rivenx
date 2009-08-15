@@ -247,7 +247,6 @@ init_failure:
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
-    [_inventory_global_alpha_interpolator release];
     [_inventory_alpha_interpolators[0] release];
     [_inventory_alpha_interpolators[1] release];
     [_inventory_alpha_interpolators[2] release];
@@ -425,14 +424,6 @@ init_failure:
     // unmap the pixel unpack buffer to begin the DMA transfer
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0); glReportError();
-    
-    // initialize the inventory global alpha interpolator
-    RXAnimation* animation = [[RXAnimation alloc] initWithDuration:0.25 curve:RXAnimationCurveSquareSine];
-    _inventory_global_alpha_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:0.75f end:0.75f];
-    [animation release];
-    
-    // initialize the initial target alpha to 0.75
-    _inventory_alpha = 0.75f;
     
     // while we DMA the inventory textures, let's do some more work
     
@@ -1533,18 +1524,6 @@ init_failure:
 - (void)_renderInventoryWithTimestamp:(const CVTimeStamp*)output_time context:(CGLContextObj)cgl_ctx {
     RXGameState* gs = [g_world gameState];
     
-    // update the global alpha interpolator (we do this now because we always want to update it, even if the inventory is disabled)
-    float target_alpha = _inventory_alpha;
-    if (target_alpha != _inventory_global_alpha_interpolator->end) {
-        _inventory_global_alpha_interpolator->start = [_inventory_global_alpha_interpolator value];
-        _inventory_global_alpha_interpolator->end = target_alpha;
-        [_inventory_global_alpha_interpolator->animation start];
-    }
-    
-    // if the engine says the inventory should not be shown, we're done
-    if (![gs unsigned32ForKey:@"ainventory"])
-        return;
-    
     // build a new set of inventory item flags
     uint32_t new_flags = 0;
     if ([gs unsigned32ForKey:@"aatrusbook"])
@@ -1604,38 +1583,56 @@ init_failure:
     // we can unlock the inventory update lock now since the rest of the work only affects the rendering thread
     OSSpinLockUnlock(&_inventory_update_lock);
     
-    // configure blending for the inventory
-    glBlendFuncSeparate(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-    glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
-    glEnable(GL_BLEND);
-    glReportError();
+    // get the active state of the entire inventory HUD
+    BOOL inv_active = [gs unsigned32ForKey:@"ainventory"];
     
-    // make sure we're using the standard card program
-    glUseProgram(_card_program); glReportError();
+    // configure global rendering state for the inventory if we're going to be drawing it
+    if (inv_active) {
+        // configure blending to use a constant alpha as the blend factor
+        glBlendFuncSeparate(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+        glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+        glEnable(GL_BLEND);
+        glReportError();
     
-    // evaluate the global alpha interpolator once now
-    float global_alpha = [_inventory_global_alpha_interpolator value];
+        // make sure we're using the standard card program
+        glUseProgram(_card_program); glReportError();
+    }
     
-    // render each inventory item
-    for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+    // determine the desired global alpha value based on the inventory focus state
+    float global_alpha = (_inventory_has_focus) ? 1.0f : 0.75f;
+    
+    // update the animations of and render the items
+    for (uint32_t inv_i = 0; inv_i < RX_MAX_INVENTORY_ITEMS; inv_i++) {
         float start;
         double duration;
         RXAnimation* animation;
         
+        // inventory bit
+        uint32_t inv_bit = 1U << inv_i;
+        
+        // alias the current interpolators now
+        RXLinearInterpolator* pos_interpolator = (RXLinearInterpolator*)_inventory_position_interpolators[inv_i];
+        RXLinearInterpolator* alpha_interpolator = (RXLinearInterpolator*)_inventory_alpha_interpolators[inv_i];
+        
         // if the position has changed, setup a position interpolator
-        RXLinearInterpolator* pos_interpolator = (RXLinearInterpolator*)_inventory_position_interpolators[inventory_i];
-        float final_position = _inventory_frames[inventory_i].origin.x;
+        float final_position = _inventory_frames[inv_i].origin.x;
         if ((pos_interpolator && pos_interpolator->end != final_position) ||
             (!pos_interpolator && positions[0] != final_position && positions[0] >= kRXCardViewportOriginOffset.x))
         {
             duration = (pos_interpolator) ? 1.0 - [pos_interpolator->animation progress] : 1.0;
             [pos_interpolator release];
             
-            animation = [[RXAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
-            pos_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:positions[0] end:final_position];
-            [animation release];
+            // if the item has just been activated and has no interpolators, don't configure a position interpolator, which means
+            // that the item will start fading in at its final position
+            if ((new_flags & inv_bit) && !(old_flags & inv_bit) && !pos_interpolator && !alpha_interpolator)
+                pos_interpolator = nil;
+            else {
+                animation = [[RXAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
+                pos_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:positions[0] end:final_position];
+                [animation release];
+            }
             
-            _inventory_position_interpolators[inventory_i] = pos_interpolator;
+            _inventory_position_interpolators[inv_i] = pos_interpolator;
         }
         
         // get the base X position of the item
@@ -1643,92 +1640,107 @@ init_failure:
         
         // update the current position of the item based on the base X position
         positions[0] = base_x;
-        positions[1] = _inventory_frames[inventory_i].origin.y;
+        positions[1] = _inventory_frames[inv_i].origin.y;
         positions += 4;
         
-        positions[0] = base_x + _inventory_frames[inventory_i].size.width;
-        positions[1] = _inventory_frames[inventory_i].origin.y;
+        positions[0] = base_x + _inventory_frames[inv_i].size.width;
+        positions[1] = _inventory_frames[inv_i].origin.y;
         positions += 4;
         
         positions[0] = base_x;
-        positions[1] = _inventory_frames[inventory_i].origin.y + _inventory_frames[inventory_i].size.height;
+        positions[1] = _inventory_frames[inv_i].origin.y + _inventory_frames[inv_i].size.height;
         positions += 4;
         
-        positions[0] = base_x + _inventory_frames[inventory_i].size.width;
-        positions[1] = _inventory_frames[inventory_i].origin.y + _inventory_frames[inventory_i].size.height;
+        positions[0] = base_x + _inventory_frames[inv_i].size.width;
+        positions[1] = _inventory_frames[inv_i].origin.y + _inventory_frames[inv_i].size.height;
         positions += 4;
         
         // tex coords are always the same
         tex_coords0[0] = 0.0f;
-        tex_coords0[1] = _inventory_frames[inventory_i].size.height;
+        tex_coords0[1] = _inventory_frames[inv_i].size.height;
         tex_coords0 += 4;
         
-        tex_coords0[0] = _inventory_frames[inventory_i].size.width;
-        tex_coords0[1] = _inventory_frames[inventory_i].size.height;
+        tex_coords0[0] = _inventory_frames[inv_i].size.width;
+        tex_coords0[1] = _inventory_frames[inv_i].size.height;
         tex_coords0 += 4;
         
         tex_coords0[0] = 0.0f;
         tex_coords0[1] = 0.0f;
         tex_coords0 += 4;
         
-        tex_coords0[0] = _inventory_frames[inventory_i].size.width;
+        tex_coords0[0] = _inventory_frames[inv_i].size.width;
         tex_coords0[1] = 0.0f;
         tex_coords0 += 4;
         
-        // now update the alpha of the item, which is used when the item gets deactivated or activated
-        RXLinearInterpolator* alpha_interpolator = (RXLinearInterpolator*)_inventory_alpha_interpolators[inventory_i];
+        // figure out the alpha of the item based on the inventory state flags and the global alpha
+        float item_alpha;
+        if ((new_flags & inv_bit) && !(old_flags & inv_bit)) {
+            // item was activated, its destination alpha should be 1
+            item_alpha = 1.0f;
+            _inventory_alpha_interpolator_uninterruptible_flags |= inv_bit;
+        } else if (!(new_flags & inv_bit) && (old_flags & inv_bit)) {
+            // item was deactivated, its destination alpha should be 0
+            item_alpha = 0.0f;
+            _inventory_alpha_interpolator_uninterruptible_flags |= inv_bit;
+        } else if ((new_flags & inv_bit) && !(_inventory_alpha_interpolator_uninterruptible_flags & inv_bit)) {
+            // item is active and does not have an active uninterruptible alpha interpolator;
+            // alpha should be the global alpha
+            item_alpha = global_alpha;
+        } else {
+            // no change in target alpha
+            item_alpha = _inventory_alpha[inv_i];
+        }
         
-        if ((new_flags & (1 << inventory_i)) && !(old_flags & (1 << inventory_i))) {
-            // item was activated, setup a fade-in
-            start = (alpha_interpolator) ? [alpha_interpolator value] : global_alpha;
-            duration = (alpha_interpolator) ? 1.0 - [alpha_interpolator->animation progress] : 1.0;
-            [alpha_interpolator release];
+        // schedule an alpha animation if the new item alpha and the current item alpha differ
+        if (item_alpha != _inventory_alpha[inv_i]) {
+            // the start value of the alpha animation is either the current alpha value or the current value
+            // of the alpha interpolator if there is one
+            start = (alpha_interpolator) ? [alpha_interpolator value] : _inventory_alpha[inv_i];
             
+            // the duration of the animation is the duration of a full fade
+            // (from 0.0 to 1.0), which is 1.0 times the distance (which means
+            // that if the distance is shorter, the duration will be shorter;
+            // in order words we're aiming at a constant fade speed)
+            duration = 1.0 * fabs(item_alpha - start);
+            
+            // setup the alpha interpolator
+            [alpha_interpolator release];
             animation = [[RXAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
-            alpha_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:start end:1.0f];
+            alpha_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:start end:item_alpha];
             [animation release];
             
-            _inventory_alpha_interpolators[inventory_i] = alpha_interpolator;
-        } else if (!(new_flags & (1 << inventory_i)) && (old_flags & (1 << inventory_i))) {
-            // item was deactivated, setup a fade-out
-            start = (alpha_interpolator) ? [alpha_interpolator value] : global_alpha;
-            duration = (alpha_interpolator) ? 1.0 - [alpha_interpolator->animation progress] : 1.0;
-            [alpha_interpolator release];
-            
-            animation = [[RXAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
-            alpha_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:start end:0.0f];
-            [animation release];
-            
-            _inventory_alpha_interpolators[inventory_i] = alpha_interpolator;
+            // update the item's "desired" alpha and current alpha interpolator
+            _inventory_alpha_interpolators[inv_i] = alpha_interpolator;
+            _inventory_alpha[inv_i] = item_alpha;
         }
         
         // if the item is enabled or has active interpolators, draw it
-        if (pos_interpolator || alpha_interpolator || (new_flags & (1 << inventory_i))) {
-            glBlendColor(1.f, 1.f, 1.f, (alpha_interpolator) ? [alpha_interpolator value] : global_alpha); glReportError();
+        // (but only if the inventory as a whole is active)
+        if (inv_active && (pos_interpolator || alpha_interpolator || (new_flags & inv_bit))) {
+            glBlendColor(1.f, 1.f, 1.f, (alpha_interpolator) ? [alpha_interpolator value] : item_alpha); glReportError();
             
-            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventory_textures[inventory_i]); glReportError();
-            glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inventory_i, 4); glReportError();
+            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventory_textures[inv_i]); glReportError();
+            glDrawArrays(GL_TRIANGLE_STRIP, 4 + 4 * inv_i, 4); glReportError();
         }
         
         // if the position interpolator is done, release it
         if (pos_interpolator && [pos_interpolator->animation progress] >= 1.0f) {
             [pos_interpolator release];
-            _inventory_position_interpolators[inventory_i] = nil;
+            _inventory_position_interpolators[inv_i] = nil;
         }
         
         // if the alpha interpolator is done, release it
         if (alpha_interpolator && [alpha_interpolator->animation progress] >= 1.0f) {
-            // reset the global alpha interpolator to smoothly transition
-            _inventory_global_alpha_interpolator->start = alpha_interpolator->end;
-            [_inventory_global_alpha_interpolator->animation start];
-            
             [alpha_interpolator release];
-            _inventory_alpha_interpolators[inventory_i] = nil;
+            _inventory_alpha_interpolators[inv_i] = nil;
+            _inventory_alpha_interpolator_uninterruptible_flags &= ~inv_bit;
         }
     }
         
-    // finally disable blending
-    glDisable(GL_BLEND); glReportError();
+    // disable blending
+    if (inv_active) {
+        glDisable(GL_BLEND); glReportError();
+    }
 }
 
 - (void)_renderCredits:(const CVTimeStamp*)output_time inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
@@ -2614,9 +2626,9 @@ exit_flush_tasks:
 
     // update the active status of the inventory based on the position of the mouse
     if (NSMouseInRect(mouse_vector.origin, [(NSView*)g_worldView bounds], NO) && mouse_vector.origin.y < kRXCardViewportOriginOffset.y)
-        _inventory_alpha = 1.0f;
+        _inventory_has_focus = YES;
     else
-        _inventory_alpha = 0.75f;
+        _inventory_has_focus = NO;
     
     // find over which hotspot the mouse is
     NSEnumerator* hotspots_enum = [active_hotspots objectEnumerator];
