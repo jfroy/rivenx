@@ -2161,16 +2161,42 @@ DEFINE_COMMAND(xtrapbookback) {
 #pragma mark -
 #pragma mark introduction sequence
 
+- (void)_enableAtrusJournal {
+    [[g_world gameState] setUnsigned32:1 forKey:@"aatrusbook"];
+}
+
+- (void)_enableTrapBook {
+    [[g_world gameState] setUnsigned32:1 forKey:@"atrapbook"];
+}
+
+- (void)_disableTrapBook {
+    [[g_world gameState] setUnsigned32:0 forKey:@"atrapbook"];
+}
+
+- (void)_scheduleInventoryEnableMessages {
+    [self performSelector:@selector(_enableAtrusJournal) withObject:nil afterDelay:30.0];
+    [self performSelector:@selector(_enableTrapBook) withObject:nil afterDelay:68.0];
+}
+
+- (void)_scheduleChoTrapBookDisableMessage {
+    [self performSelector:@selector(_disableTrapBook) withObject:nil afterDelay:62.0];
+}
+
 DEFINE_COMMAND(xtatrusgivesbooks) {
+    // enable the inventory
+    [[g_world gameState] setUnsigned32:1 forKey:@"ainventory"];
     
+    // sneakily make Atrus's journal and the trap book appear during the movie
+    [self performSelectorOnMainThread:@selector(_scheduleInventoryEnableMessages) withObject:nil waitUntilDone:NO];
 }
 
 DEFINE_COMMAND(xtchotakesbook) {
-    // FIXME: implement xtchotakesbook
-
     // WORKAROUND: silence the ambient sounds before the last introduction movie plays;
     // an activate SLST command comes after the movie and the movie itself contains ambient sounds
     DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 0);
+    
+    // sneakily remove the trap book when Cho takes it
+    [self performSelectorOnMainThread:@selector(_scheduleChoTrapBookDisableMessage) withObject:nil waitUntilDone:NO];
 }
 
 #pragma mark -
