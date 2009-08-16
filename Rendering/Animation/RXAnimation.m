@@ -36,25 +36,22 @@ static const double kDurationEpsilon = 0.000001;
 - (id)copyWithZone:(NSZone*)zone {
     RXAnimation* copy = [[[self class] allocWithZone:zone] initWithDuration:duration];
     copy->start_time = start_time;
+    copy->done = done;
     return copy;
 }
 
 - (void)start {
     start_time = RXTimingNow();
-    _done = NO;
+    done = NO;
 }
 
 - (float)progress {
-    if (_done)
+    if (done)
         return 1.0f;
     float t = MAX(0.0, MIN(1.0, RXTimingTimestampDelta(RXTimingNow(), start_time) / duration));
     if (t >= 1.0f)
-        _done = YES;
+        done = YES;
     return t;
-}
-
-- (float)value {
-    return [self valueAt:[self progress]];
 }
 
 - (float)valueAt:(float)t {

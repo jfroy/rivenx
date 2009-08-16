@@ -23,6 +23,7 @@
         return nil;
     
     _animation = [a retain];
+    
     return self;
 }
 
@@ -36,11 +37,12 @@
 }
 
 - (float)value {
-    return [_animation value];
+    return [_animation valueAt:[_animation progress]];
 }
 
 - (BOOL)isDone {
-    return ([_animation progress] >= 1.0f) ? YES : NO;
+    [_animation progress];
+    return _animation->done;
 }
 
 @end
