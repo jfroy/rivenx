@@ -273,8 +273,8 @@
     [callback setSelector:completionSelector];
     [callback setArgument:state atIndex:2];
     
-    RXAnimation* animation = [[RXAnimation alloc] initWithDuration:1.0 curve:RXAnimationCurveLinear];
-    RXInterpolator* interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:0.0f end:1.0f];
+    RXAnimation* animation = [[RXCannedAnimation alloc] initWithDuration:1.0 curve:RXAnimationCurveLinear];
+    id<RXInterpolator> interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:0.0f end:1.0f];
     [animation release];
     
     OSSpinLockLock(&_render_lock);
@@ -297,8 +297,8 @@
     [callback setSelector:completionSelector];
     [callback setArgument:state atIndex:2];
     
-    RXAnimation* animation = [[RXAnimation alloc] initWithDuration:1.0 curve:RXAnimationCurveLinear];
-    RXInterpolator* interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:1.0f end:0.0f];
+    RXAnimation* animation = [[RXCannedAnimation alloc] initWithDuration:1.0 curve:RXAnimationCurveLinear];
+    id<RXInterpolator> interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:1.0f end:0.0f];
     [animation release];
     
     OSSpinLockLock(&_render_lock);
@@ -336,7 +336,7 @@
     
     OSSpinLockLock(&_render_lock);
     NSArray* renderStates = [_renderStates retain];
-    RXInterpolator* fade_interpolator = [_fade_interpolator retain];
+    id<RXInterpolator> fade_interpolator = [_fade_interpolator retain];
     NSInvocation* fade_callback = [_fade_animation_callback retain];
     OSSpinLockUnlock(&_render_lock);
     
@@ -377,7 +377,7 @@
     // if we have a fade animation, apply it's value to the blend weight 0 and call its completion callback if it's reached its end
     if (fade_interpolator) {
         _texture_blend_weights[0] = [fade_interpolator value];
-        if ([fade_interpolator->animation progress] >= 1.0f) {
+        if ([fade_interpolator isDone]) {
             [fade_callback performSelectorOnMainThread:@selector(invoke) withObject:nil waitUntilDone:NO];
             
             OSSpinLockLock(&_render_lock);

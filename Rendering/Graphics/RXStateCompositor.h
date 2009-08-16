@@ -33,7 +33,7 @@
     GLfloat tex_coords[8];
     GLfloat front_color[4];
     
-    RXInterpolator* _fade_interpolator;
+    id<RXInterpolator> _fade_interpolator;
     NSInvocation* _fade_animation_callback;
     
     OSSpinLock _render_lock;
