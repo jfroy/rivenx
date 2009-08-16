@@ -9,7 +9,7 @@
 #import "RXInterpolator.h"
 
 
-@implementation RXInterpolator
+@implementation RXAnimationInterpolator
 
 - (id)init {
     [self doesNotRecognizeSelector:_cmd];
@@ -22,17 +22,25 @@
     if (!self)
         return nil;
     
-    animation = [a retain];
+    _animation = [a retain];
     return self;
 }
 
 - (void)dealloc {
-    [animation release];
+    [_animation release];
     [super dealloc];
 }
 
+- (RXAnimation*)animation {
+    return [[_animation retain] autorelease];
+}
+
 - (float)value {
-    return [animation value];
+    return [_animation value];
+}
+
+- (BOOL)isDone {
+    return ([_animation progress] >= 1.0f) ? YES : NO;
 }
 
 @end
@@ -52,8 +60,65 @@
 }
 
 - (float)value {
-    float t = [animation value];
+    float t = [_animation value];
     return (end * t) + ((1.0f - t) * start);
+}
+
+@end
+
+
+@implementation RXChainingInterpolator
+
+- (id)init {
+    self = [super init];
+    if (!self)
+        return nil;
+    
+    _interpolators = [NSMutableArray new];
+    
+    return self;
+}
+
+- (void)dealloc {
+    [_interpolators release];
+    [_current release];
+    [super dealloc];
+}
+
+- (void)addInterpolator:(id<RXInterpolator>)interpolator {
+    [_interpolators insertObject:interpolator atIndex:0];
+}
+
+- (void)_updateCurrent {
+    if ([_interpolators count] < 1)
+        return;
+    
+    [_current release];
+    _current = [[_interpolators lastObject] retain];
+    [_interpolators removeLastObject];
+    [[_current animation] start];
+}
+
+- (RXAnimation*)animation {
+    if (!_current || [_current isDone])
+        [self _updateCurrent];
+    if (!_current)
+        return nil;
+    return [[[_current animation] retain] autorelease];
+}
+
+- (float)value {
+    if (!_current || [_current isDone])
+        [self _updateCurrent];
+    if (!_current)
+        return 0.0f;
+    return [_current value];
+}
+
+- (BOOL)isDone {
+    if (!_current || [_current isDone])
+        [self _updateCurrent];
+    return ([_interpolators count] == 0 && (!_current || [_current isDone])) ? YES : NO;
 }
 
 @end
