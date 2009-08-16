@@ -79,8 +79,8 @@ typedef struct {
 typedef struct {
     uint32_t absolute_offset;
     uint16_t size_low;
-    unsigned char size_high;
-    unsigned char flags;
+    uint8_t size_high;
+    uint8_t flags;
     uint16_t unknown1;
 } MHK_file_table_entry;
 #pragma pack(pop)
