@@ -130,10 +130,6 @@ static void rx_release_owner_applier(const void* value, void* context) {
     [[(id)value owner] release];
 }
 
-//static void rx_retain_owner_applier(const void* value, void* context) {
-//  [[(id)value owner] retain];
-//}
-
 #pragma mark -
 
 @interface RXCardState (RXCardStatePrivate)
