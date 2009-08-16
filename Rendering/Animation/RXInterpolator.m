@@ -62,7 +62,7 @@
 }
 
 - (float)value {
-    float t = [_animation value];
+    float t = [_animation valueAt:[_animation progress]];
     return (end * t) + ((1.0f - t) * start);
 }
 

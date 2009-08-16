@@ -116,7 +116,7 @@ static const double kDurationEpsilon = 0.000001;
 }
 
 - (id)copyWithZone:(NSZone*)zone {
-    RXCannedAnimation* copy = [super copyWithZone:zone];
+    RXCosineCurveAnimation* copy = [super copyWithZone:zone];
     copy->_omega = _omega;
     return copy;
 }
