@@ -59,6 +59,10 @@ static const int RX_INVENTORY_TRAP = 2;
 static const float RX_INVENTORY_MARGIN = 20.f;
 static const float RX_INVENTORY_UNFOCUSED_ALPHA = 0.75f;
 
+static const double RX_CREDITS_FADE_DURATION = 1.5;
+static const double RX_CREDITS_STILL_DURATION = 5.0;
+static const double RX_CREDITS_SCROLLING_DURATION = 20.5;
+
 #pragma mark -
 #pragma mark audio source array callbacks
 
@@ -1834,14 +1838,14 @@ init_failure:
         CVDisplayLinkTranslateTime([g_worldView displayLink], output_time, &out_time);
     }
     
-    // perform fades over 1.5 seconds, stills over 5 seconds, scrolling over 20.5 seconds per pair
+    // figure out the duration of the current credits state
     double duration;
     if (_credits_state == 1 || _credits_state == 3 || _credits_state == 4 || _credits_state == 6)
-        duration = 1.5;
+        duration = RX_CREDITS_FADE_DURATION;
     else if (_credits_state == 2 || _credits_state == 5)
-        duration = 5.;
+        duration = RX_CREDITS_STILL_DURATION;
     else
-        duration = 20.5;
+        duration = RX_CREDITS_SCROLLING_DURATION;
     
     // compute the time interpolation parameter for the current credit state
     float t = RXTimingTimestampDelta(out_time.hostTime, _credits_start_time) / duration;
