@@ -70,7 +70,7 @@ static NSString* _kRXTransitionDirectionNames[4] = {
     region = rect;
     
     // by default, linear for dissolves, square sine for slides
-    animation = [[RXAnimation alloc] initWithDuration:kRXTransitionDuration curve:(type == RXTransitionDissolve) ? RXAnimationCurveLinear : RXAnimationCurveSquareSine];
+    animation = [[RXCannedAnimation alloc] initWithDuration:kRXTransitionDuration curve:(type == RXTransitionDissolve) ? RXAnimationCurveLinear : RXAnimationCurveSquareSine];
     
     return self;
 }

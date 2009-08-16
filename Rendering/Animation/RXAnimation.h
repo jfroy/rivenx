@@ -11,27 +11,49 @@
 #import "Base/RXTiming.h"
 
 
-enum {
-    RXAnimationCurveLinear = 1,
-    RXAnimationCurveSquareSine,
-};
-typedef uint32_t RXAnimationCurve;
-
-@interface RXAnimation : NSObject <NSCopying> {
-        BOOL _done;
+@interface RXAnimation : NSObject {
+    BOOL _done;
+    
 @public
     double duration;
     uint64_t start_time;
-    RXAnimationCurve curve;
 }
 
-- (id)initWithDuration:(double)d curve:(RXAnimationCurve)c;
+- (id)initWithDuration:(double)d;
 
 - (void)start;
 
 - (float)progress;
 
 - (float)value;
-- (float)applyCurve:(float)t;
+- (float)valueAt:(float)t;
 
+@end
+
+
+enum {
+    RXAnimationCurveLinear = 1,
+    RXAnimationCurveSquareSine,
+};
+typedef uint32_t RXAnimationCurve;
+
+@interface RXCannedAnimation : RXAnimation {
+    RXAnimationCurve _curve;
+}
+
+- (id)initWithDuration:(double)d curve:(RXAnimationCurve)c;
+
+@end
+
+
+@interface RXCosineCurveAnimation : RXAnimation {
+    float _omega;
+}
+
+- (id)initWithDuration:(double)d frequency:(float)f;
+
+@end
+
+
+@interface RXSineCurveAnimation : RXCosineCurveAnimation
 @end

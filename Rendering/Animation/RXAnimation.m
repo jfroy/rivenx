@@ -19,7 +19,7 @@ static const double kDurationEpsilon = 0.000001;
     return nil;
 }
 
-- (id)initWithDuration:(double)d curve:(RXAnimationCurve)c {
+- (id)initWithDuration:(double)d {
     self = [super init];
     if (!self)
         return nil;
@@ -27,7 +27,6 @@ static const double kDurationEpsilon = 0.000001;
     duration = d;
     if (duration < kDurationEpsilon)
         duration = kDurationEpsilon;
-    curve = c;
     
     [self start];
     
@@ -35,7 +34,7 @@ static const double kDurationEpsilon = 0.000001;
 }
 
 - (id)copyWithZone:(NSZone*)zone {
-    RXAnimation* copy = [[[self class] allocWithZone:zone] initWithDuration:duration curve:curve];
+    RXAnimation* copy = [[[self class] allocWithZone:zone] initWithDuration:duration];
     copy->start_time = start_time;
     return copy;
 }
@@ -55,11 +54,40 @@ static const double kDurationEpsilon = 0.000001;
 }
 
 - (float)value {
-    return [self applyCurve:[self progress]];
+    return [self valueAt:[self progress]];
 }
 
-- (float)applyCurve:(float)t {
-    switch (curve) {
+- (float)valueAt:(float)t {
+    return t;
+}
+
+@end
+
+
+@implementation RXCannedAnimation
+
+- (id)initWithDuration:(double)d {
+    return [self initWithDuration:d curve:RXAnimationCurveLinear];
+}
+
+- (id)initWithDuration:(double)d curve:(RXAnimationCurve)c {
+    self = [super initWithDuration:d];
+    if (!self)
+        return nil;
+    
+    _curve = c;
+    
+    return self;
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    RXCannedAnimation* copy = [super copyWithZone:zone];
+    copy->_curve = _curve;
+    return copy;
+}
+
+- (float)valueAt:(float)t {
+    switch (_curve) {
         case RXAnimationCurveSquareSine:
         {
             double sine = sin(M_PI_2 * t);
@@ -69,6 +97,44 @@ static const double kDurationEpsilon = 0.000001;
         default:
             return t;
     }
+}
+
+@end
+
+
+@implementation RXCosineCurveAnimation
+
+- (id)initWithDuration:(double)d {
+    return [self initWithDuration:d frequency:1.0f];
+}
+
+- (id)initWithDuration:(double)d frequency:(float)f {
+    self = [super initWithDuration:d];
+    if (!self)
+        return nil;
+    
+    _omega = f * 2.0f * M_PI;
+    
+    return self;
+}
+
+- (id)copyWithZone:(NSZone*)zone {
+    RXCannedAnimation* copy = [super copyWithZone:zone];
+    copy->_omega = _omega;
+    return copy;
+}
+
+- (float)valueAt:(float)t {
+    return 0.5f * cosf(_omega * t) + 0.5f;
+}
+
+@end
+
+
+@implementation RXSineCurveAnimation
+
+- (float)valueAt:(float)t {
+    return -0.5f * cosf(_omega * t) + 0.5f;
 }
 
 @end
