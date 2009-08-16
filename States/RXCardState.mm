@@ -61,6 +61,7 @@ static const int RX_INVENTORY_ATRUS = 0;
 static const int RX_INVENTORY_CATHERINE = 1;
 static const int RX_INVENTORY_TRAP = 2;
 static const float RX_INVENTORY_MARGIN = 20.f;
+static const float RX_INVENTORY_UNFOCUSED_ALPHA = 0.75f;
 
 #pragma mark -
 #pragma mark audio source array callbacks
@@ -1599,7 +1600,7 @@ init_failure:
     }
     
     // determine the desired global alpha value based on the inventory focus state
-    float global_alpha = (_inventory_has_focus) ? 1.0f : 0.75f;
+    float global_alpha = (_inventory_has_focus) ? 1.0f : RX_INVENTORY_UNFOCUSED_ALPHA;
     
     // update the animations of and render the items
     for (uint32_t inv_i = 0; inv_i < RX_MAX_INVENTORY_ITEMS; inv_i++) {
@@ -1619,7 +1620,7 @@ init_failure:
         if ((pos_interpolator && pos_interpolator->end != final_position) ||
             (!pos_interpolator && positions[0] != final_position && positions[0] >= kRXCardViewportOriginOffset.x))
         {
-            duration = (pos_interpolator) ? 1.0 - [pos_interpolator->animation progress] : 1.0;
+            duration = (pos_interpolator) ? 1.0 - [[pos_interpolator animation] progress] : 1.0;
             [pos_interpolator release];
             
             // if the item has just been activated and has no interpolators, don't configure a position interpolator, which means
@@ -1627,7 +1628,7 @@ init_failure:
             if ((new_flags & inv_bit) && !(old_flags & inv_bit) && !pos_interpolator && !alpha_interpolator)
                 pos_interpolator = nil;
             else {
-                animation = [[RXAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
+                animation = [[RXCannedAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
                 pos_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:positions[0] end:final_position];
                 [animation release];
             }
@@ -1703,11 +1704,44 @@ init_failure:
             // in order words we're aiming at a constant fade speed)
             duration = 1.0 * fabs(item_alpha - start);
             
-            // setup the alpha interpolator
             [alpha_interpolator release];
-            animation = [[RXAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
-            alpha_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:start end:item_alpha];
-            [animation release];
+            
+            if ((new_flags & inv_bit) && !(old_flags & inv_bit)) {
+                // the fade-in animation a little bit more complex...
+                alpha_interpolator = [RXChainingInterpolator new];
+                RXLinearInterpolator* interpolator;
+                
+                // first add in the normal fade-in interpolator
+                animation = [[RXCannedAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
+                interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:start end:item_alpha];
+                [animation release];
+                
+                [(RXChainingInterpolator*)alpha_interpolator addInterpolator:interpolator];
+                [interpolator release];
+                
+                // then add the alpha strobing interpolator
+                animation = [[RXSineCurveAnimation alloc] initWithDuration:4.0 frequency:2.0f];
+                interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:1.0f end:0.6f];
+                [animation release];
+                
+                [(RXChainingInterpolator*)alpha_interpolator addInterpolator:interpolator];
+                [interpolator release];
+                
+                // then finally had a slower animation to the final value
+                animation = [[RXCannedAnimation alloc] initWithDuration:1.0 curve:RXAnimationCurveSquareSine];
+                interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:1.0f end:RX_INVENTORY_UNFOCUSED_ALPHA];
+                [animation release];
+                
+                [(RXChainingInterpolator*)alpha_interpolator addInterpolator:interpolator];
+                [interpolator release];
+                
+                // set the item alpha to the actual end alpha
+                item_alpha = RX_INVENTORY_UNFOCUSED_ALPHA;
+            } else {
+                animation = [[RXCannedAnimation alloc] initWithDuration:duration curve:RXAnimationCurveSquareSine];
+                alpha_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:start end:item_alpha];
+                [animation release];
+            }
             
             // update the item's "desired" alpha and current alpha interpolator
             _inventory_alpha_interpolators[inv_i] = alpha_interpolator;
@@ -1724,13 +1758,13 @@ init_failure:
         }
         
         // if the position interpolator is done, release it
-        if (pos_interpolator && [pos_interpolator->animation progress] >= 1.0f) {
+        if (pos_interpolator && [pos_interpolator isDone]) {
             [pos_interpolator release];
             _inventory_position_interpolators[inv_i] = nil;
         }
         
         // if the alpha interpolator is done, release it
-        if (alpha_interpolator && [alpha_interpolator->animation progress] >= 1.0f) {
+        if (alpha_interpolator && [alpha_interpolator isDone]) {
             [alpha_interpolator release];
             _inventory_alpha_interpolators[inv_i] = nil;
             _inventory_alpha_interpolator_uninterruptible_flags &= ~inv_bit;
@@ -2092,7 +2126,7 @@ init_failure:
             
             // use the transition's program and update its t and margin uniforms
             glUseProgram(transition->program); glReportError();
-            glUniform1f(transition->t_uniform, [_front_render_state->transition->animation applyCurve:t]); glReportError();
+            glUniform1f(transition->t_uniform, [_front_render_state->transition->animation valueAt:t]); glReportError();
             
             // bind the transition source texture on unit 1
             glActiveTexture(GL_TEXTURE1); glReportError();
