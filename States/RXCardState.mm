@@ -1578,9 +1578,16 @@ init_failure:
     
     // get the active state of the entire inventory HUD
     BOOL inv_active = [gs unsigned32ForKey:@"ainventory"];
+    BOOL active_interpolators = (_inventory_alpha_interpolators[0] ||
+                                 _inventory_alpha_interpolators[1] ||
+                                 _inventory_alpha_interpolators[2]) ? YES : NO;
+    BOOL visible_items = (_inventory_alpha[0] > 0.0f ||
+                          _inventory_alpha[1] > 0.0f ||
+                          _inventory_alpha[2] > 0.0f) ? YES : NO;
+    BOOL render_inv = (inv_active || active_interpolators || visible_items) ? YES : NO;
     
     // configure global rendering state for the inventory if we're going to be drawing it
-    if (inv_active) {
+    if (render_inv) {
         // configure blending to use a constant alpha as the blend factor
         glBlendFuncSeparate(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA, GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
         glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
@@ -1667,7 +1674,9 @@ init_failure:
         
         // figure out the alpha of the item based on the inventory state flags and the global alpha
         float item_alpha;
-        if ((new_flags & inv_bit) && !(old_flags & inv_bit)) {
+        if (!inv_active) {
+            item_alpha = 0.0f;
+        } else if ((new_flags & inv_bit) && !(old_flags & inv_bit)) {
             // item was activated, its destination alpha should be 1
             item_alpha = 1.0f;
             _inventory_alpha_interpolator_uninterruptible_flags |= inv_bit;
@@ -1742,7 +1751,7 @@ init_failure:
         
         // if the item is enabled or has active interpolators, draw it
         // (but only if the inventory as a whole is active)
-        if (inv_active && (pos_interpolator || alpha_interpolator || (new_flags & inv_bit))) {
+        if (render_inv && (pos_interpolator || alpha_interpolator || (new_flags & inv_bit))) {
             glBlendColor(1.f, 1.f, 1.f, (alpha_interpolator) ? [alpha_interpolator value] : item_alpha); glReportError();
             
             glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventory_textures[inv_i]); glReportError();
@@ -1764,7 +1773,7 @@ init_failure:
     }
         
     // disable blending
-    if (inv_active) {
+    if (render_inv) {
         glDisable(GL_BLEND); glReportError();
     }
 }
