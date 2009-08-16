@@ -1081,6 +1081,9 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #pragma mark endgame
 
 - (void)_endgameWithMLST:(uint16_t)movie_mlst {
+    // disable the inventory
+    [[g_world gameState] setUnsigned32:0 forKey:@"ainventory"];
+    
     // stop all ambient sound
     DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 0);
     
