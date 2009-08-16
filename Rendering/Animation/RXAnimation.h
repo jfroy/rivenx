@@ -12,6 +12,7 @@
 
 
 @interface RXAnimation : NSObject {
+@public
     double duration;
     uint64_t start_time;
     BOOL done;
