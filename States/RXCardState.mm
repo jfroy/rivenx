@@ -6,18 +6,9 @@
 //  Copyright 2006 MacStorm. All rights reserved.
 //
 
-#import <OpenGL/CGLMacro.h>
-
-#import <GLUT/glut.h>
-
-#import <mach/mach.h>
-#import <mach/mach_time.h>
-
 #import <MHKKit/MHKAudioDecompression.h>
 
 #import "States/RXCardState.h"
-
-#import "Base/RXTiming.h"
 
 #import "Application/RXApplicationDelegate.h"
 
@@ -29,6 +20,11 @@
 #import "Rendering/Audio/RXCardAudioSource.h"
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
 #import "Rendering/Graphics/RXMovieProxy.h"
+
+#if defined(DEBUG)
+#import <GLUT/glut.h>
+#endif
+
 
 typedef void (*RenderCardImp_t)(id, SEL, const CVTimeStamp*, CGLContextObj);
 static RenderCardImp_t render_card_imp;

@@ -22,6 +22,7 @@
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Animation/RXInterpolator.h"
 
+
 struct rx_sfxe_render_state {
     rx_card_sfxe* sfxe;
     id owner;

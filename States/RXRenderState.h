@@ -6,7 +6,7 @@
 //  Copyright 2005 MacStorm. All rights reserved.
 //
 
-#import "RXRendering.h"
+#import "Rendering/RXRendering.h"
 
 
 typedef struct __RXStateDelegateFlags {
