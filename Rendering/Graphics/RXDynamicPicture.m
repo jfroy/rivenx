@@ -130,6 +130,10 @@ static GLuint allocate_dynamic_picture_index() {
         }
     }
     
+    // fell off the current end of the dynamic bitfield, so use max_picture
+    // which is the next bit in line (this will grow the bitfield)
+    [dynamic_picture_allocation_bitmap set:max_picture];
+    active_dynamic_pictures++;
     return max_picture;
 }
 
