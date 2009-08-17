@@ -1077,6 +1077,14 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [sound release];
 }
 
+- (uint16_t)dataSoundIDWithCardID:(uint16_t)card_id name:(NSString*)name {
+    return [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_%@_1", card_id, name]];
+}
+
+- (uint16_t)dataSoundIDForCurrentCardWithName:(NSString*)name {
+    return [self dataSoundIDWithCardID:[[card descriptor] ID] name:name];
+}
+
 #pragma mark -
 #pragma mark endgame
 
@@ -4120,8 +4128,7 @@ DEFINE_COMMAND(xgrviewer) {
     if (viewer_light == 1) {
         [gs setUnsigned32:0 forKey:@"gRView"];
         
-        uint16_t button_up_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gScpBtnUp_1",
-                                                                      [[card descriptor] ID]]];
+        uint16_t button_up_sound = [self dataSoundIDForCurrentCardWithName:@"gScpBtnUp"];
         [self _playDataSoundWithID:button_up_sound gain:1.0f duration:NULL];
     
         DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
@@ -4156,8 +4163,7 @@ DEFINE_COMMAND(xgrviewer) {
     uint32_t whark_solo = (random() % 9) + 1;
     
     // play the solo
-    uint16_t solo_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gWharkSolo%d_1",
-                                                             whark_solo_card, whark_solo]];
+    uint16_t solo_sound = [self dataSoundIDWithCardID:whark_solo_card name:[NSString stringWithFormat:@"gWharkSolo%d", whark_solo]];
     [self _playDataSoundWithID:solo_sound gain:1.0f duration:NULL];
     
     if (play_solo)
@@ -4505,8 +4511,7 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     [self performSelectorOnMainThread:@selector(_configurePinMovieForRaise) withObject:nil waitUntilDone:YES];
     
     // get the pin raise sound
-    uint16_t pin_raise_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gPinsUp_1",
-                                                                  [[card descriptor] ID]]];
+    uint16_t pin_raise_sound = [self dataSoundIDForCurrentCardWithName:@"gPinsUp"];
     
     // play the pin raise sound and movie
     [self _playDataSoundWithID:pin_raise_sound gain:1.0f duration:NULL];
@@ -4529,8 +4534,7 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     [self performSelectorOnMainThread:@selector(_configurePinMovieForLower) withObject:nil waitUntilDone:YES];
     
     // get the pin lower sound
-    uint16_t pin_lower_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gPinsDn_1",
-                                                                  [[card descriptor] ID]]];
+    uint16_t pin_lower_sound = [self dataSoundIDForCurrentCardWithName:@"gPinsDn"];
     
     // play the pin lower sound and movie
     [self _playDataSoundWithID:pin_lower_sound gain:1.0f duration:NULL];
@@ -4554,8 +4558,7 @@ DEFINE_COMMAND(xgrotatepins) {
     uintptr_t pin_movie_code = [gs unsigned32ForKey:@"gUpMoov"];
     
     // get the pin rotation sound
-    uint16_t pin_rotation_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_gPinsRot_1",
-                                                                     [[card descriptor] ID]]];
+    uint16_t pin_rotation_sound = [self dataSoundIDForCurrentCardWithName:@"gPinsRot"];
     
     // play the pin rotate sound and movie
     [self _playDataSoundWithID:pin_rotation_sound gain:1.0f duration:NULL];
@@ -4761,8 +4764,7 @@ DEFINE_COMMAND(xbcheckcatch) {
     
     // play the catch sound effect if argv[0] is 1
     if (argv[0]) {
-        uint16_t trap_sound = [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_bYTCaught_1",
-                                                                 [[card descriptor] ID]]];
+        uint16_t trap_sound = [self dataSoundIDForCurrentCardWithName:@"bYTCaught"];
         [self _playDataSoundWithID:trap_sound gain:1.0f duration:NULL];
     }
 }
@@ -4888,8 +4890,7 @@ DEFINE_COMMAND(xtexterior300_telescopeup) {
     
     // if the telescope is fully raised, play the "can't move" sound effect
     if ([gs unsignedShortForKey:@"ttelescope"] == 5) {
-        uint16_t blocked_sound = [[card parent] dataSoundIDForName:
-                                  [NSString stringWithFormat:@"%hu_tTelDnMore_1", [[card descriptor] ID]]];
+        uint16_t blocked_sound = [self dataSoundIDForCurrentCardWithName:@"tTelDnMore"];
         DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, blocked_sound, (uint16_t)kRXSoundGainDivisor, 1);
         return;
     }
@@ -4902,8 +4903,7 @@ DEFINE_COMMAND(xtexterior300_telescopeup) {
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, movie_code);
     
     // play the telescope move sound effect and block on it (it's longer than the movie)
-    uint16_t move_sound = [[card parent] dataSoundIDForName:
-                           [NSString stringWithFormat:@"%hu_tTeleMove_1", [[card descriptor] ID]]];
+    uint16_t move_sound = [self dataSoundIDForCurrentCardWithName:@"tTeleMove"];
     DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, move_sound, (uint16_t)kRXSoundGainDivisor, 1);
     
     // refresh the card (which is going to disable the telescope raise movie)
@@ -4926,8 +4926,7 @@ DEFINE_COMMAND(xtexterior300_telescopedown) {
     
     // if the telescope is fully lowered, play the "can't move" sound effect and possibly trigger an ending
     if ([gs unsignedShortForKey:@"ttelescope"] == 1) {
-        uint16_t blocked_sound = [[card parent] dataSoundIDForName:
-                                  [NSString stringWithFormat:@"%hu_tTelDnMore_1", [[card descriptor] ID]]];
+        uint16_t blocked_sound = [self dataSoundIDForCurrentCardWithName:@"tTelDnMore"];
         
         // if the fissure hatch is open and the telescope pin is disengaged, play the sound effect in the
         // background and trigger the appropriate ending; otherwise, play the sound effect and block on it
@@ -4950,8 +4949,7 @@ DEFINE_COMMAND(xtexterior300_telescopedown) {
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, movie_code);
     
     // play the telescope move sound effect and block on it (it's longer than the movie)
-    uint16_t move_sound = [[card parent] dataSoundIDForName:
-                           [NSString stringWithFormat:@"%hu_tTeleMove_1", [[card descriptor] ID]]];
+    uint16_t move_sound = [self dataSoundIDForCurrentCardWithName:@"tTeleMove"];
     DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, move_sound, (uint16_t)kRXSoundGainDivisor, 1);
     
     // refresh the card (which is going to disable the telescope lower movie)
