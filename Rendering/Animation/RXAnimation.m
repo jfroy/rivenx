@@ -28,27 +28,40 @@ static const double kDurationEpsilon = 0.000001;
     if (duration < kDurationEpsilon)
         duration = kDurationEpsilon;
     
-    [self start];
+    [self startNow];
     
     return self;
 }
 
 - (id)copyWithZone:(NSZone*)zone {
     RXAnimation* copy = [[[self class] allocWithZone:zone] initWithDuration:duration];
-    copy->start_time = start_time;
+    copy->_start_time = _start_time;
     copy->done = done;
     return copy;
 }
 
-- (void)start {
-    start_time = RXTimingNow();
+- (void)startNow {
+    _start_time = RXTimingNow();
     done = NO;
+}
+
+- (void)startAt:(uint64_t)timestamp {
+    _start_time = timestamp;
+    done = NO;
+}
+
+- (uint64_t)startTimestamp {
+    return _start_time;
+}
+
+- (double)timeLeft {
+    return duration * (1.0 - [self progress]);
 }
 
 - (float)progress {
     if (done)
         return 1.0f;
-    float t = MAX(0.0, MIN(1.0, RXTimingTimestampDelta(RXTimingNow(), start_time) / duration));
+    float t = MAX(0.0, MIN(1.0, RXTimingTimestampDelta(RXTimingNow(), _start_time) / duration));
     if (t >= 1.0f)
         done = YES;
     return t;

@@ -96,10 +96,10 @@ static NSString* _kRXTransitionDirectionNames[4] = {
 
 - (void)primeWithSourceTexture:(RXTexture*)texture {
     source_texture = [texture retain];
-    [animation start];
+    [animation startNow];
 
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"primed with texture %@ at %llu", source_texture, animation->start_time);
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"primed with texture %@ at %llu", source_texture, [animation startTimestamp]);
 #endif
 }
 

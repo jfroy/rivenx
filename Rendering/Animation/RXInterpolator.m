@@ -88,17 +88,20 @@
 }
 
 - (void)addInterpolator:(id<RXInterpolator>)interpolator {
-    [_interpolators insertObject:interpolator atIndex:0];
+    if ([_interpolators count] == 0 && !_current)
+        _current = [interpolator retain];
+    else
+        [_interpolators insertObject:interpolator atIndex:0];
 }
 
 - (void)_updateCurrent {
-    if ([_interpolators count] < 1)
+    if ([_interpolators count] == 0)
         return;
     
     [_current release];
     _current = [[_interpolators lastObject] retain];
     [_interpolators removeLastObject];
-    [[_current animation] start];
+    [[_current animation] startNow];
 }
 
 - (RXAnimation*)animation {

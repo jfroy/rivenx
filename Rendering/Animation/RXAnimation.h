@@ -12,15 +12,19 @@
 
 
 @interface RXAnimation : NSObject {
+    uint64_t _start_time;
+
 @public
     double duration;
-    uint64_t start_time;
     BOOL done;
 }
 
 - (id)initWithDuration:(double)d;
 
-- (void)start;
+- (void)startNow;
+- (void)startAt:(uint64_t)timestamp;
+- (uint64_t)startTimestamp;
+- (double)timeLeft;
 
 - (float)progress;
 - (float)valueAt:(float)t;
