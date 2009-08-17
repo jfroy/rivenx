@@ -38,7 +38,8 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
         if (!gameState)
             ReturnNILWithError(RXErrorDomain,
                                0,
-                               ([NSDictionary dictionaryWithObject:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all." forKey:NSLocalizedDescriptionKey]),
+                               ([NSDictionary dictionaryWithObject:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
+                                                            forKey:NSLocalizedDescriptionKey]),
                                error);
         
         // set the write URL on the game state to indicate it has an existing location on the file system
@@ -118,6 +119,10 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     [self setUnsigned32:[self _generateTelescopeCombination] forKey:@"tCorrectOrder"];
 }
 
+- (void)_resetOldSave {
+    // rrebel = 0
+}
+
 - (id)init {
     [self doesNotRecognizeSelector:_cmd];
     [self release];
@@ -148,7 +153,10 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     }
     
     NSString* error_str = nil;
-    _variables = [[NSPropertyListSerialization propertyListFromData:defaultVarData mutabilityOption:NSPropertyListMutableContainers format:NULL errorDescription:&error_str] retain];
+    _variables = [[NSPropertyListSerialization propertyListFromData:defaultVarData
+                                                   mutabilityOption:NSPropertyListMutableContainers
+                                                             format:NULL
+                                                   errorDescription:&error_str] retain];
     if (!_variables) {
         [self release];
         @throw [NSException exceptionWithName:@"RXInvalidDefaultEngineVariablesException"
@@ -283,7 +291,11 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     // serialize ourselves as data
     NSData* gameStateData = [NSKeyedArchiver archivedDataWithRootObject:self];
     if (!gameStateData)
-        ReturnValueWithError(NO, RXErrorDomain, 0, ([NSDictionary dictionaryWithObject:@"Riven X was unable to prepare the game to be saved." forKey:NSLocalizedDescriptionKey]), error);
+        ReturnValueWithError(NO,
+                             RXErrorDomain,
+                             0,
+                             ([NSDictionary dictionaryWithObject:@"Riven X was unable to prepare the game to be saved." forKey:NSLocalizedDescriptionKey]),
+                             error);
     
     // write the data
     BOOL success = [gameStateData writeToURL:url options:NSAtomicWrite error:error];
@@ -487,7 +499,8 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     [old release];
     
     [self setUnsignedShort:descriptor->cardID forKey:@"currentcardid"];
-    [self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->stackKey] objectForKey:@"ID"] unsignedShortValue] forKey:@"currentstackid"];
+    [self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->stackKey] objectForKey:@"ID"] unsignedShortValue]
+                    forKey:@"currentstackid"];
     
     [_accessLock unlock];
 }
@@ -509,7 +522,8 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     
     if (descriptor) {
         [self setUnsignedShort:descriptor->cardID forKey:@"returncardid"];
-        [self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->stackKey] objectForKey:@"ID"] unsignedShortValue] forKey:@"returnstackid"];
+        [self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->stackKey] objectForKey:@"ID"] unsignedShortValue]
+                        forKey:@"returnstackid"];
     } else {
         [self setUnsignedShort:0 forKey:@"returncardid"];
         [self setUnsignedShort:0 forKey:@"returnstackid"];
