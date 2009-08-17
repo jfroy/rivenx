@@ -2937,7 +2937,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     RXGameState* state = [g_world gameState];
 
     // generate a random number between 1 and 10
-    uint16_t the_number = random() % 10 + 1;
+    uint16_t the_number = (random() % 10) + 1;
 #if defined(DEBUG)
     if (!_disableScriptLogging)
         RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@rolled a %hu", logPrefix, the_number);
@@ -3936,7 +3936,7 @@ static uint16_t const prison_activity_movies[3][8] = {
     NSTimeInterval delay;
     movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)30);
     QTGetTimeInterval([movie duration], &delay);
-    delay += (random() % 30) + (random() % 30) + 2;
+    delay += (random() % 31) + (random() % 31);
     
     [event_timer invalidate];
     event_timer = [NSTimer scheduledTimerWithTimeInterval:delay
@@ -3953,7 +3953,7 @@ DEFINE_COMMAND(xglview_prisonon) {
     [gs setUnsigned32:1 forKey:@"gLView"];
     
     // MLST 8 to 23 (16 movies) are the prison activity movies; pick one
-    uint16_t prison_mlst = random() % 16 + 8;
+    uint16_t prison_mlst = (random() % 16) + 8;
     
     // now need to select the correct viewer turn on movie and catherine state based on the selection above
     uintptr_t turnon_code;
@@ -4003,9 +4003,9 @@ DEFINE_COMMAND(xglview_prisonon) {
     NSTimeInterval delay;
     if (movie) {
         QTGetTimeInterval([movie duration], &delay);
-        delay += (random() % 30) + (random() % 30) + 2;
+        delay += (random() % 31) + (random() % 31);
     } else
-        delay = 10.0 + (random() % 5) + (random() % 5) + 2;
+        delay = 10.0 + (random() % 6) + (random() % 6);
     
     [event_timer invalidate];
     event_timer = [NSTimer scheduledTimerWithTimeInterval:delay
@@ -4194,13 +4194,13 @@ DEFINE_COMMAND(xgwharksnd) {
         return;
     
     if (!played_one_whark_solo)
-        event_timer = [NSTimer scheduledTimerWithTimeInterval:(random() % 5) + 1
+        event_timer = [NSTimer scheduledTimerWithTimeInterval:(random() % 6)
                                                        target:self
                                                      selector:@selector(_playWharkSolo:)
                                                      userInfo:nil
                                                       repeats:NO];
     else
-        event_timer = [NSTimer scheduledTimerWithTimeInterval:120 + (random() % 180) + 1
+        event_timer = [NSTimer scheduledTimerWithTimeInterval:120 + (random() % 181)
                                                        target:self
                                                      selector:@selector(_playWharkSolo:)
                                                      userInfo:nil
@@ -4713,7 +4713,7 @@ DEFINE_COMMAND(xbaitplate) {
 
 DEFINE_COMMAND(xbsettrap) {
     // compute a random catch delay - up to 1 minute, and no sooner than within 10 seconds
-    NSTimeInterval catch_delay = 10 + (((random() % 3000) + 1) / 60.0);
+    NSTimeInterval catch_delay = 10 + ((random() % 3001) / 60.0);
     
     // remember the frog trap card ID, because we need to abort the catch frog event if we've switched to a different card
     frog_trap_card = [[card descriptor] ID];
