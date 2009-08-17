@@ -1602,9 +1602,7 @@ init_failure:
     GLfloat* buffer = (GLfloat*)_card_composite_va;
     GLfloat* positions = buffer + 16;
     GLfloat* tex_coords0 = positions + 2;
-    
-    double min_pos_anim_duration = HUGE_VAL;
-    
+        
     // update position animations; new animations have UINT64_MAX as their start time
     for (uint32_t inv_i = 0; inv_i < RX_MAX_INVENTORY_ITEMS; inv_i++) {
         double duration;
@@ -1624,7 +1622,7 @@ init_failure:
         if ((pos_interpolator && pos_interpolator->end != final_position) ||
             (!pos_interpolator && pos_x != final_position && pos_x >= kRXCardViewportOriginOffset.x))
         {
-            duration = fabsf(pos_x - final_position) / 30.0;
+            duration = (pos_interpolator) ? [[pos_interpolator animation] progress] : 1.0;
             [pos_interpolator release];
             
             // if the item has just been activated and has no interpolators, don't configure a position interpolator, which means
@@ -1636,13 +1634,10 @@ init_failure:
                 [animation startAt:UINT64_MAX];
                 pos_interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:pos_x end:final_position];
                 [animation release];
-                
-                min_pos_anim_duration = MIN(min_pos_anim_duration, duration);
             }
             
             _inventory_position_interpolators[inv_i] = pos_interpolator;
-        } else if (_inventory_position_interpolators[inv_i])
-            min_pos_anim_duration = MIN(min_pos_anim_duration, [[_inventory_position_interpolators[inv_i] animation] timeLeft]);
+        }
     }
     
     // determine the desired global alpha value based on the inventory focus state
@@ -1699,11 +1694,10 @@ init_failure:
                 alpha_interpolator = [RXChainingInterpolator new];
                 RXLinearInterpolator* interpolator;
                 
-                // first add a 0->0 interpolator for 0.40 of the duration of
-                // the shortest position interpolator, but only if the item is
-                // not visible
-                if (start == 0.0f && min_pos_anim_duration > 0.0 && isfinite(min_pos_anim_duration)) {
-                    animation = [[RXCannedAnimation alloc] initWithDuration:min_pos_anim_duration * 0.40 curve:RXAnimationCurveSquareSine];
+                // first add a 0->0 interpolator for 0.5 seconds, but only if
+                // the item is not visible and there is another active item
+                if (start == 0.0f && (new_flags & ~inv_bit)) {
+                    animation = [[RXCannedAnimation alloc] initWithDuration:0.5 curve:RXAnimationCurveSquareSine];
                     [animation startAt:UINT64_MAX];
                     interpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:0.0f end:0.0f];
                     [animation release];
