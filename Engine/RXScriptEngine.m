@@ -4989,4 +4989,91 @@ DEFINE_COMMAND(xtisland390_covercombo) {
     }
 }
 
+#pragma mark -
+#pragma mark rebel age
+
+- (void)_playRebelPrisonWindowMovie:(NSTimer*)timer {
+    [event_timer invalidate];
+    event_timer = nil;
+    
+    // if we're no longer in the rebel prison card, bail out
+    if ([[card descriptor] ID] != rebel_prison_window_card)
+        return;
+    
+    // generate a random MLST index between 2 and 13 and activate it
+    uintptr_t mlst_index = (random() % 12) + 2;
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, mlst_index);
+    
+    // get the movie's duration (the codes are the same as the MLST in that card)
+    // and compute the next movie's delay
+    NSTimeInterval delay = 0.0;
+    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)mlst_index);
+    if (movie)
+        QTGetTimeInterval([movie duration], &delay);
+    delay += (random() % 21) + 38;
+    
+    // store the delay rvillagetime as µseconds
+    [[g_world gameState] setUnsigned64:delay * 1E6 forKey:@"rvillagetime"];
+    
+    // schedule the event timer
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:delay
+                                                       target:self
+                                                     selector:@selector(_playRebelPrisonWindowMovie:)
+                                                     userInfo:nil
+                                                      repeats:NO];
+}
+
+DEFINE_COMMAND(xrwindowsetup) {
+    RXGameState* gs = [g_world gameState];
+    
+    // remember the card ID, because we need to abort the periodic event if we've switched to a different card
+    rebel_prison_window_card = [[card descriptor] ID];
+    
+    // activate SLST 1 now as a work-around for the late activation by the script
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 1);
+    
+    // 1/3 times we'll schedule a random prison window movie
+    uint32_t initial_guard_roll = random() % 3;
+    NSTimeInterval next_movie_delay;
+    if (initial_guard_roll == 0 && ![gs unsigned32ForKey:@"rrichard"]) {
+        // set rrebelview to 0 which will cause the card to paint the guard initially and play MLST 1
+        [gs setUnsigned32:0 forKey:@"rrebelview"];
+        
+        // schedule the next movie in [0, 20] + 38 seconds
+        next_movie_delay = (random() % 21) + 38;
+    } else {
+        // normal picture without a guard
+        [gs setUnsigned32:1 forKey:@"rrebelview"];
+        
+        // schedule the next movie in [0, 20] seconds
+        next_movie_delay = random() % 21;
+    }
+    
+    // store the delay rvillagetime as µseconds
+    [[g_world gameState] setUnsigned64:next_movie_delay * 1E6 forKey:@"rvillagetime"];
+    
+    // schedule the event timer
+    [event_timer invalidate];
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:next_movie_delay
+                                                       target:self
+                                                     selector:@selector(_playRebelPrisonWindowMovie:)
+                                                     userInfo:nil
+                                                      repeats:NO];
+}
+
+DEFINE_COMMAND(xrcredittime) {
+
+}
+
+DEFINE_COMMAND(xrhideinventory) {
+
+}
+
+DEFINE_COMMAND(xrshowinventory) {
+    // workaround: set acathbook to 1 if atrapbook is set to 1
+    RXGameState* gs = [g_world gameState];
+    if ([gs unsigned32ForKey:@"atrapbook"])
+        [gs setUnsigned32:1 forKey:@"acathbook"];
+}
+
 @end
