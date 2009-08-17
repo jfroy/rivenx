@@ -221,7 +221,7 @@ int main(int argc, char *argv[]) {
     }
     
     if (arguments.inputs_num < 1) {
-        printf("no archive was provided");
+        printf("no archive was provided\n");
         exit(1);
     }
     
@@ -232,7 +232,7 @@ int main(int argc, char *argv[]) {
         
         MHKArchive *archive = [[MHKArchive alloc] initWithPath:[NSString stringWithUTF8String:arguments.inputs[archive_index]] error:&error];
         if (!archive) {
-            fprintf(stderr, "failed to open archive: %s", [[error description] UTF8String]);
+            fprintf(stderr, "failed to open archive: %s\n", [[error description] UTF8String]);
             continue;
         }
         
