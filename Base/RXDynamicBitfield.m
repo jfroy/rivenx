@@ -40,24 +40,24 @@
 }
 
 - (BOOL)isSet:(uintptr_t)index {
-    register uintptr_t segment_index = index / sizeof(uintptr_t);
+    register uintptr_t segment_index = index / (sizeof(uintptr_t) << 3);
     if (segment_index >= _segment_count)
         return NO;
-    return (_segments[segment_index] & (1U << (index % sizeof(uintptr_t)))) ? YES : NO;
+    return (_segments[segment_index] & (1U << (index % (sizeof(uintptr_t) << 3)))) ? YES : NO;
 }
 
 - (void)set:(uintptr_t)index {
-    register uintptr_t segment_index = index / sizeof(uintptr_t);
+    register uintptr_t segment_index = index / (sizeof(uintptr_t) << 3);
     if (segment_index >= _segment_count)
         [self _growTo:segment_index + 1];
-    _segments[segment_index] |= 1U << (index % sizeof(uintptr_t));
+    _segments[segment_index] |= 1U << (index % (sizeof(uintptr_t) << 3));
 }
 
 - (void)clear:(uintptr_t)index {
-    register uintptr_t segment_index = index / sizeof(uintptr_t);
+    register uintptr_t segment_index = index / (sizeof(uintptr_t) << 3);
     if (segment_index >= _segment_count)
         return;
-    _segments[segment_index] &= ~(1U << (index % sizeof(uintptr_t)));
+    _segments[segment_index] &= ~(1U << (index % (sizeof(uintptr_t) << 3)));
 }
 
 - (BOOL)isAllSet {
