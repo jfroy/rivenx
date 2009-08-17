@@ -281,8 +281,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXTextureBroker, sharedTextureBroker)
 #endif
     
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"reserved texture: %u [%ux%u] from [%ux%u] bucket",
-        texid, size.width, size.height, bucket->width, bucket->height);
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"reserved texture: %u [size=%ux%u] from <%ux%u> bucket [index=%u]",
+        texid, size.width, size.height, bucket->width, bucket->height, bucket_index);
 #endif
     return texture;
 }
