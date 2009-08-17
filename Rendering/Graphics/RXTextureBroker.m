@@ -51,6 +51,10 @@ static void grow_texture_bucket(struct _rx_texture_bucket* bucket) {
     size_t new_size = ([bucket->in_use segmentCount] + 1) * [bucket->in_use segmentBits] * sizeof(GLuint);
     bucket->tex_ids = realloc(bucket->tex_ids, new_size);
     bzero(BUFFER_OFFSET(bucket->tex_ids, old_size), new_size - old_size);
+
+#if defined(DEBUG)
+    RXLog(kRXLoggingGraphics, kRXLoggingLevelDebug, @"grew texture bucket (%ux%u)", bucket->width, bucket->height);
+#endif
 }
 
 static inline void free_texture_bucket(CGLContextObj cgl_ctx, struct _rx_texture_bucket* bucket) {
