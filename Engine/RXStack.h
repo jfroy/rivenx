@@ -43,6 +43,7 @@
 - (NSString*)stackNameAtIndex:(uint32_t)index;
 
 - (uint16_t)cardIDFromRMAPCode:(uint32_t)code;
+- (uint32_t)cardRMAPCodeFromID:(uint16_t)card_id;
 
 - (id <MHKAudioDecompression>)audioDecompressorWithID:(uint16_t)soundID;
 - (id <MHKAudioDecompression>)audioDecompressorWithDataID:(uint16_t)soundID;

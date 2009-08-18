@@ -265,10 +265,16 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 #if defined(__LITTLE_ENDIAN__)
     code = CFSwapInt32(code);
 #endif
-    while (*(rmap_data + card_id) != code && (rmap_data + card_id) < rmap_end) card_id++;
+    while (*(rmap_data + card_id) != code && (rmap_data + card_id) < rmap_end)
+        card_id++;
     if (rmap_data == rmap_end)
         return 0;
     return card_id;
+}
+
+- (uint32_t)cardRMAPCodeFromID:(uint16_t)card_id {
+    uint32_t* rmap_data = (uint32_t*)[_rmapData bytes];
+    return CFSwapInt32BigToHost(rmap_data[card_id]);
 }
 
 - (id <MHKAudioDecompression>)audioDecompressorWithID:(uint16_t)soundID {
