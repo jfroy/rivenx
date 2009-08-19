@@ -265,6 +265,9 @@
     _movies = [NSMutableArray new];
     _mlstCodes = malloc(sizeof(uint16_t) * movieCount);
     
+    BOOL fixup_rebel_end_loop = [[_descriptor parent] cardRMAPCodeFromID:[_descriptor ID]] == 13112 &&
+                                [[[_descriptor parent] key] isEqualToString:@"rspit"];
+    
     // swap the records if needed
 #if defined(__LITTLE_ENDIAN__)
     for (list_index = 0; list_index < movieCount; list_index++) {
@@ -293,9 +296,14 @@
             mlstRecords[list_index].volume);
 #endif
         
-        // sometimes volume > 256, so fix it up here
-        if (mlstRecords[list_index].volume > 256)
-            mlstRecords[list_index].volume = 256;
+        // sometimes volume > 255, so fix it up here
+        if (mlstRecords[list_index].volume > 255)
+            mlstRecords[list_index].volume = 255;
+        
+        // WORKAROUND: for some obscure reason, the endgame movies from the
+        // rebel age are set to loop and it screws up a lot of things...
+        if (fixup_rebel_end_loop)
+            mlstRecords[list_index].loop = 0;
         
         // load the movie up
         CGPoint origin = CGPointMake(mlstRecords[list_index].left, kRXCardViewportSize.height - mlstRecords[list_index].top);
@@ -303,7 +311,7 @@
         RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive
                                                                        ID:mlstRecords[list_index].movie_id
                                                                    origin:origin
-                                                                   volume:mlstRecords[list_index].volume / 256.0f
+                                                                   volume:mlstRecords[list_index].volume / 255.0f
                                                                      loop:((mlstRecords[list_index].loop == 1) ? YES : NO)
                                                                     owner:self];
         
@@ -699,9 +707,9 @@
 }
 
 - (RXMovie*)loadMovieWithMLSTRecord:(struct rx_mlst_record*)mlst {
-    // sometimes volume > 256, so fix it up here
-    if (mlst->volume > 256)
-        mlst->volume = 256;
+    // sometimes volume > 255, so fix it up here
+    if (mlst->volume > 255)
+        mlst->volume = 255;
     
     // load the movie up
     CGPoint origin = CGPointMake(mlst->left, kRXCardViewportSize.height - mlst->top);
@@ -709,7 +717,7 @@
     RXMovieProxy* movie_proxy = [[RXMovieProxy alloc] initWithArchive:archive
                                                                    ID:mlst->movie_id
                                                                origin:origin
-                                                               volume:mlst->volume / 256.0f
+                                                               volume:mlst->volume / 255.0f
                                                                  loop:((mlst->loop == 1) ? YES : NO)
                                                                 owner:self];
 
