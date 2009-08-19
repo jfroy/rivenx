@@ -1347,7 +1347,7 @@ init_failure:
     _back_render_state->transition = nil;
     
     // we have to update the current card in the game state now, otherwise refresh
-    // card commands in the prepare for rendering script will jump back to the old card
+    // card commands will jump back to the old card
     [[g_world gameState] setCurrentCard:[[new_card descriptor] simpleDescriptor]];
     [sengine setCard:new_card];
     

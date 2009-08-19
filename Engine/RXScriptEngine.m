@@ -535,8 +535,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
     // retain the card while it executes programs
     RXCard* executing_card = card;
-    if (_programExecutionDepth == 0)
-        [executing_card retain];
+    [executing_card retain];
     
     // load the card
     [card load];
@@ -620,13 +619,12 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
     
-    // release the card if it no longer is executing programs
-    if (_programExecutionDepth == 0) {
-        [executing_card release];
-        
-        // if the card hid the mouse cursor while executing programs, we can now show it again
+    // we can show the mouse again (if we hid it) if the execution depth is
+    // back to 0 (e.g. there are no more scripts running after this one)
+    if (_programExecutionDepth == 0)
         [self _showMouseCursor];
-    }
+    
+    [executing_card release];
 }
 
 - (void)startRendering {
@@ -637,8 +635,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
     // retain the card while it executes programs
     RXCard* executing_card = card;
-    if (_programExecutionDepth == 0)
-        [executing_card retain];
+    [executing_card retain];
     
     // execute rendering programs (index 9)
     NSArray* programs = [[card scripts] objectForKey:RXStartRenderingScriptKey];
@@ -666,13 +663,12 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 
-    // release the card if it no longer is executing programs
-    if (_programExecutionDepth == 0) {
-        [executing_card release];
-        
-        // if the card hid the mouse cursor while executing programs, we can now show it again
+    // we can show the mouse again (if we hid it) if the execution depth is
+    // back to 0 (e.g. there are no more scripts running after this one)
+    if (_programExecutionDepth == 0)
         [self _showMouseCursor];
-    }
+    
+    [executing_card release];
 }
 
 - (void)closeCard {
@@ -687,8 +683,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // retain the card while it executes programs
     RXCard* executing_card = card;
-    if (_programExecutionDepth == 0)
-        [executing_card retain];
+    [executing_card retain];
     
     // execute leaving programs (index 7)
     NSArray* programs = [[card scripts] objectForKey:RXCardCloseScriptKey];
@@ -707,13 +702,12 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 
-    // release the card if it no longer is executing programs
-    if (_programExecutionDepth == 0) {
-        [executing_card release];
-        
-        // if the card hid the mouse cursor while executing programs, we can now show it again
+    // we can show the mouse again (if we hid it) if the execution depth is
+    // back to 0 (e.g. there are no more scripts running after this one)
+    if (_programExecutionDepth == 0)
         [self _showMouseCursor];
-    }
+    
+    [executing_card release];
 }
 
 #pragma mark -
@@ -743,9 +737,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // retain the card while it executes programs
     RXCard* executing_card = card;
-    if (_programExecutionDepth == 0) {
-        [executing_card retain];
-    }
+    [executing_card retain];
     
     // keep a weak reference to the hotspot while executing within the context of this hotspot handler
     _current_hotspot = hotspot;
@@ -770,14 +762,15 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #endif
 #endif
 
-    // release the card if it no longer is executing programs
+    // we can show the mouse again (if we hid it) if the execution depth is
+    // back to 0 (e.g. there are no more scripts running after this one);
+    // in addition, set the current hotspot back to nil
     if (_programExecutionDepth == 0) {
-        [executing_card release];
         _current_hotspot = nil;
-        
-        // if the card hid the mouse cursor while executing programs, we can now show it again
         [self _showMouseCursor];
     }
+    
+    [executing_card release];
 }
 
 - (void)mouseExitedHotspot:(RXHotspot*)hotspot {
@@ -791,9 +784,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // retain the card while it executes programs
     RXCard* executing_card = card;
-    if (_programExecutionDepth == 0) {
-        [executing_card retain];
-    }
+    [executing_card retain];
     
     // keep a weak reference to the hotspot while executing within the context of this hotspot handler
     _current_hotspot = hotspot;
@@ -815,14 +806,15 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 
-    // release the card if it no longer is executing programs
+    // we can show the mouse again (if we hid it) if the execution depth is
+    // back to 0 (e.g. there are no more scripts running after this one);
+    // in addition, set the current hotspot back to nil
     if (_programExecutionDepth == 0) {
-        [executing_card release];
         _current_hotspot = nil;
-        
-        // if the card hid the mouse cursor while executing programs, we can now show it again
         [self _showMouseCursor];
     }
+    
+    [executing_card release];
 }
 
 - (void)mouseDownInHotspot:(RXHotspot*)hotspot {
@@ -836,9 +828,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // retain the card while it executes programs
     RXCard* executing_card = card;
-    if (_programExecutionDepth == 0) {
-        [executing_card retain];
-    }
+    [executing_card retain];
     
     // keep a weak reference to the hotspot while executing within the context of this hotspot handler
     _current_hotspot = hotspot;
@@ -860,14 +850,15 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 
-    // release the card if it no longer is executing programs
+    // we can show the mouse again (if we hid it) if the execution depth is
+    // back to 0 (e.g. there are no more scripts running after this one);
+    // in addition, set the current hotspot back to nil
     if (_programExecutionDepth == 0) {
-        [executing_card release];
         _current_hotspot = nil;
-        
-        // if the card hid the mouse cursor while executing programs, we can now show it again
         [self _showMouseCursor];
     }
+    
+    [executing_card release];
     
     // we need to enable hotspot handling at the end of mouse down messages
     [controller enableHotspotHandling];
@@ -884,9 +875,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
     // retain the card while it executes programs
     RXCard* executing_card = card;
-    if (_programExecutionDepth == 0) {
-        [executing_card retain];
-    }
+    [executing_card retain];
     
     // keep a weak reference to the hotspot while executing within the context of this hotspot handler
     _current_hotspot = hotspot;
@@ -908,14 +897,15 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
 
-    // release the card if it no longer is executing programs
+    // we can show the mouse again (if we hid it) if the execution depth is
+    // back to 0 (e.g. there are no more scripts running after this one);
+    // in addition, set the current hotspot back to nil
     if (_programExecutionDepth == 0) {
-        [executing_card release];
         _current_hotspot = nil;
-        
-        // if the card hid the mouse cursor while executing programs, we can now show it again
         [self _showMouseCursor];
     }
+    
+    [executing_card release];
     
     // we need to enable hotspot handling at the end of mouse up messages
     [controller enableHotspotHandling];
