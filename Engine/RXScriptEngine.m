@@ -1103,7 +1103,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #pragma mark -
 #pragma mark endgame
 
-- (void)_endgameWithMLST:(uint16_t)movie_mlst {
+- (void)_endgameWithCode:(uint16_t)movie_code delay:(double)delay {
     // disable the inventory
     [[g_world gameState] setUnsigned32:0 forKey:@"ainventory"];
     
@@ -1111,11 +1111,11 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     DISPATCH_COMMAND1(RX_COMMAND_CLEAR_SLST, 0);
     
     // begin playback of the endgame movie
-    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, movie_mlst);
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, movie_code);
     NSTimeInterval movie_start_ts = CFAbsoluteTimeGetCurrent();
     
     // get the endgame movie object
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)movie_mlst);
+    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)movie_code);
     
     // get its duration and video duration
     NSTimeInterval duration;
@@ -1125,7 +1125,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     QTGetTimeInterval([movie videoDuration], &video_duration);
     
     // sleep for the duration of the video track (the ending movies also include the credit music)
-    usleep((video_duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts) + 5.) * 1E6);
+    usleep((video_duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts) + delay) * 1E6);
     
     // start the credits
 #if defined(DEBUG)
@@ -1134,6 +1134,12 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #endif
     
     [controller beginEndCredits];
+}
+
+- (void)_endgameWithMLST:(uint16_t)movie_mlst delay:(double)delay {
+    uint16_t movie_code = [card movieCodes][movie_mlst - 1];
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, movie_mlst);
+    [self _endgameWithCode:movie_code delay:delay];
 }
 
 #pragma mark -
@@ -4860,7 +4866,7 @@ static int64_t const telescope_lower_timevals[] = {4320LL, 3440LL, 2660LL, 1760L
     else
         movie_mlst = 11;
     
-    [self _endgameWithMLST:movie_mlst];
+    [self _endgameWithMLST:movie_mlst delay:5.];
 }
 
 DEFINE_COMMAND(xtexterior300_telescopeup) {
