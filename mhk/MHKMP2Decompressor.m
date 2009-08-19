@@ -525,14 +525,17 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     // take the decompressor lock
     pthread_mutex_lock(&_decompressor_lock);
     
-    // bytes_to_decompress is a fixed quantity which is set to the total number of bytes to copy into the ABL
+    // bytes_to_decompress is a fixed quantity which is set to the total number
+    // of bytes to copy into the ABL
     UInt32 bytes_to_decompress = abl->mBuffers[0].mDataByteSize;
     assert(bytes_to_decompress % _decomp_absd.mBytesPerFrame == 0);
     
-    // decompressed_bytes tracks the number of bytes that have been copied into the ABL, and is essentially the ABL buffer offset
+    // decompressed_bytes tracks the number of bytes that have been copied into
+    // the ABL, and is essentially the ABL buffer offset
     UInt32 decompressed_bytes = 0;
     
-    // available_bytes is a volatile quatity used to track available bytes to copy into the ABL buffer
+    // available_bytes is a volatile quatity used to track available bytes to
+    // copy into the ABL buffer
     UInt32 bytes_to_copy = 0;
     
     // if we have frames left from the last fill, copy them in
@@ -543,7 +546,9 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
             bytes_to_copy = bytes_to_decompress - decompressed_bytes;
         
         // copy the bytes
-        memcpy(BUFFER_OFFSET(abl->mBuffers[0].mData, decompressed_bytes), BUFFER_OFFSET(_decompression_buffer, _decompression_buffer_position), bytes_to_copy);
+        memcpy(BUFFER_OFFSET(abl->mBuffers[0].mData, decompressed_bytes),
+               BUFFER_OFFSET(_decompression_buffer, _decompression_buffer_position),
+               bytes_to_copy);
         decompressed_bytes += bytes_to_copy;
         _decompression_buffer_position += bytes_to_copy;
         _decompression_buffer_available -= bytes_to_copy;
@@ -566,9 +571,14 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     
     // decompress until we have filled the ABL or ran out of packets
     while (bytes_to_decompress > decompressed_bytes && _packet_index < _packet_count) {
-        // at this point, we've exhausted the decompression buffer and we have to decompress a new packet; hence, this loop body never offsets the decompression buffer by its position
+        // at this point, we've exhausted the decompression buffer and we have
+        // to decompress a new packet; hence, this loop body never offsets the
+        // decompression buffer by its position
         
-        // as a corrolary to the above, we reset the decompression buffer position to 0 so that if this is the last iteration of the packet decompression loop, the position will be ready for the spill-over copy loop above
+        // as a corrolary to the above, we reset the decompression buffer
+        // position to 0 so that if this is the last iteration of the packet
+        // decompression loop, the position will be ready for the spill-over
+        // copy loop above
         _decompression_buffer_position = 0;
     
         // if we ran out of packets in memory, read some more
@@ -597,7 +607,12 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         // decompress a packet
         _decompression_buffer_available = _decompression_buffer_length;
         pthread_mutex_lock(&ffmpeg_mutex);
-        int used_bytes = _ffmpeg_state.avcodec_decode_audio2((AVCodecContext*)_mp2_codec_context, _decompression_buffer, (int*)&_decompression_buffer_available, _current_packet, _packet_table[_packet_index].mDataByteSize);
+        int used_bytes = _ffmpeg_state.avcodec_decode_audio2(
+            (AVCodecContext*)_mp2_codec_context,
+            _decompression_buffer,
+            (int*)&_decompression_buffer_available,
+            _current_packet,
+            _packet_table[_packet_index].mDataByteSize);
         pthread_mutex_unlock(&ffmpeg_mutex);
         assert(used_bytes > 0);
         
