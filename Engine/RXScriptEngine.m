@@ -5053,11 +5053,19 @@ DEFINE_COMMAND(xrwindowsetup) {
 }
 
 DEFINE_COMMAND(xrcredittime) {
-
+    // there are 2 possible endings when trapping yourself in the Rebel age
+    // 1: Gehn free and you get to watch rebels burn you
+    // 2: Gehn set loose upon the unsuspecting rebels. pew pew!
+    
+    // conveniently, the card activates the proper MLST; both endings use code 1
+    [self _endgameWithCode:1 delay:1.5];
+    
+    // re-enable the mouse cursor directly, since it was hidden by the trap book handler
+    [controller showMouseCursor];
 }
 
 DEFINE_COMMAND(xrhideinventory) {
-
+    // nothing to do here
 }
 
 DEFINE_COMMAND(xrshowinventory) {
