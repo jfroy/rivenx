@@ -47,6 +47,8 @@
     BOOL _did_activate_plst;
     BOOL _did_activate_slst;
     BOOL _disable_screen_update_programs;
+    BOOL _schedule_movie_proxy_reset;
+    BOOL _reset_movie_proxies;
     
     RXTexture* tiny_marble_atlas;
     

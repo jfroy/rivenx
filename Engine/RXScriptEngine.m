@@ -314,7 +314,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [old release];
     
     [self _emptyPictureCaches];
-    [self _resetMovieProxies];
+    _schedule_movie_proxy_reset = YES;
 }
 
 #pragma mark -
@@ -502,6 +502,11 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // state at the appropriate moment; when this returns, the swap has occured
     // (front == back)
     [controller update];
+    
+    if (_reset_movie_proxies) {
+        [self _resetMovieProxies];
+        _reset_movie_proxies = NO;
+    }
 }
 
 - (void)_showMouseCursor {
@@ -554,6 +559,10 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // disable all movies on the next screen refresh (bad drawing glitches occur if this is not done, see bspit 163)
     [controller disableAllMoviesOnNextScreenUpdate];
+    if (_schedule_movie_proxy_reset) {
+        _schedule_movie_proxy_reset = NO;
+        _reset_movie_proxies = YES;
+    }
     
     // execute card open programs
     NSArray* programs = [[card scripts] objectForKey:RXCardOpenScriptKey];
@@ -575,8 +584,8 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
     }
     
-    // workarounds
-    RXSimpleCardDescriptor* ecsd = [[executing_card descriptor] simpleDescriptor];
+    // workarounds that should execute after the open card scripts
+    RXSimpleCardDescriptor* ecsd = [[card descriptor] simpleDescriptor];
     
     // dome combination card - if the dome combination is 1-2-3-4-5, the opendome hotspot won't get enabled, so do it here
     if ([ecsd isEqual:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jdome combo"]]) {
