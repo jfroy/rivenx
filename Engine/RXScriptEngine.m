@@ -34,6 +34,8 @@
 
 static NSTimeInterval const k_mouse_tracking_loop_period = 0.001;
 
+static uint32_t const k_trap_book_card_rmap = 7940;
+
 
 typedef void (*rx_command_imp_t)(id, SEL, const uint16_t, const uint16_t*);
 struct _rx_command_dispatch_entry {
@@ -595,11 +597,15 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
             DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
             DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
         }
-    } else if (ecsd->cardID == 2 && [ecsd->stackKey isEqualToString:@"aspit"]) {
+    } else if ([ecsd->stackKey isEqualToString:@"aspit"] && ecsd->cardID == 2) {
         // black card before introduction sequence - force hide the cursor to
         // prevent it from re-appearing between the moment the cross-fade
         // transition completes and the moment the first movie plays
         [self _hideMouseCursor];
+    } else if ([ecsd->stackKey isEqualToString:@"aspit"] && ecsd->cardID == [[[card descriptor] parent] cardIDFromRMAPCode:k_trap_book_card_rmap]) {
+        // schedule a deferred execution of _handleTrapBookLink on ourselves; also hard-hide the mouse cursor for this sequence
+        [self performSelector:@selector(_handleTrapBookLink) withObject:nil afterDelay:5.0];
+        [controller hideMouseCursor];
     }
     
     // force a screen update
@@ -2161,6 +2167,28 @@ DEFINE_COMMAND(xatrapbookclose) {
     DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
     [self _flipPageWithTransitionDirection:RXTransitionRight];
     DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+}
+
+- (void)_handleTrapBookLink {
+    // get and reset the return card
+    RXSimpleCardDescriptor* return_card = [[[g_world gameState] returnCard] retain];
+    [[g_world gameState] setReturnCard:nil];
+    
+    // if the return stack is rspit, we go to a different card than otherwise
+    RXStack* stack;
+    uint32_t card_rmap;
+    if ([return_card->stackKey isEqualToString:@"rspit"]) {
+        card_rmap = 13112;
+        stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:@"rspit"];
+    } else {
+        card_rmap = 17581;
+        stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:@"ospit"];
+    }
+    
+    [return_card release];
+    
+    assert(stack);
+    [controller setActiveCardWithStack:[stack key] ID:[stack cardIDFromRMAPCode:card_rmap] waitUntilDone:YES];
 }
 
 #pragma mark -
