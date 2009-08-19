@@ -234,12 +234,12 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 - (BOOL)_build_packet_description_table_and_count_frames:(NSError**)error {
     NSError* local_error = nil;
     
-    UInt8* read_buffer = malloc(READ_BUFFER_SIZE);
+    uint8_t* read_buffer = malloc(READ_BUFFER_SIZE);
     ssize_t size_left_in_buffer = 0;
-    UInt32 buffer_position = 0;
+    uint32_t buffer_position = 0;
     
-    const SInt64 source_length = [_data_source length];
-    SInt64 source_position = [_data_source offsetInFile];
+    const off_t source_length = [_data_source length];
+    off_t source_position = [_data_source offsetInFile];
     
     // initialize the packet count
     _packet_count = 0;
@@ -272,55 +272,57 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         // find the next frame sync
         while (size_left_in_buffer >= 4) {
             uint32_t mpeg_header = CFSwapInt32BigToHost(*(uint32_t*)read_buffer);
-            if (_valid_mpeg_audio_frame_header_predicate(mpeg_header)) {
-                // compute the frame length to seek to the next frame
-                UInt32 frame_length = _compute_mpeg_audio_frame_length(mpeg_header);
-                
-                // do we need a bigger packet table?
-                if (packet_table_length < _packet_count) {
-                    packet_table_length *= 2;
-                    _packet_table = reallocf(_packet_table, packet_table_length * sizeof(AudioStreamPacketDescription));
-                    if (!_packet_table) {
-                        free(read_buffer);
-                        ReturnValueWithPOSIXError(NO, nil, error);
-                    }
-                }
-                
-                // load up the packet description entry
-                _packet_table[_packet_count].mStartOffset = source_position - size_left_in_buffer;
-                _packet_table[_packet_count].mDataByteSize = frame_length;
-                _packet_table[_packet_count].mVariableFramesInPacket = 0;
-                
-                // one packet for the team
-                _packet_count++;
-                
-                // update the maximum packet size
-                if (frame_length > _max_packet_size)
-                    _max_packet_size = frame_length;
-                
-                // if the whole frame isn't in the buffer, fill it up
-                if (size_left_in_buffer < frame_length) {
-                    memmove(read_buffer, read_buffer + buffer_position, size_left_in_buffer);
-                    
-                    size_left_in_buffer += [_data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:&local_error];
-                    if (size_left_in_buffer == -1) {
-                        free(read_buffer);
-                        ReturnValueWithError(NO, [local_error domain], [local_error code], [local_error userInfo], error);
-                    }
-                    
-                    if (size_left_in_buffer == 0 && [local_error code] == eofErr)
-                        break;
-            
-                    source_position = [_data_source offsetInFile];
-                    buffer_position = 0;
-                }
-                
-                buffer_position += frame_length;
-                size_left_in_buffer -= frame_length;
-            } else {
+            if (!_valid_mpeg_audio_frame_header_predicate(mpeg_header)) {
                 buffer_position++;
                 size_left_in_buffer--;
+                continue;
             }
+            
+            // compute the frame length to seek to the next frame
+            uint32_t frame_length = _compute_mpeg_audio_frame_length(mpeg_header);
+                            
+            // load up the packet description entry
+            _packet_table[_packet_count].mStartOffset = source_position - size_left_in_buffer;
+            _packet_table[_packet_count].mDataByteSize = frame_length;
+            _packet_table[_packet_count].mVariableFramesInPacket = 0;
+            
+            // one packet for the team
+            _packet_count++;
+            
+            // update the maximum packet size
+            if (frame_length > _max_packet_size)
+                _max_packet_size = frame_length;
+            
+            // do we need a bigger packet table?
+            if (packet_table_length == _packet_count) {
+                packet_table_length *= 2;
+                _packet_table = realloc(_packet_table, packet_table_length * sizeof(AudioStreamPacketDescription));
+                if (!_packet_table) {
+                    free(read_buffer);
+                    ReturnValueWithPOSIXError(NO, nil, error);
+                }
+            }
+            
+            // if the whole frame isn't in the buffer, fill it up
+            if (size_left_in_buffer < frame_length) {
+                memmove(read_buffer, read_buffer + buffer_position, size_left_in_buffer);
+                
+                size_left_in_buffer += [_data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:&local_error];
+                if (size_left_in_buffer == -1) {
+                    free(read_buffer);
+                    ReturnValueWithError(NO, [local_error domain], [local_error code], [local_error userInfo], error);
+                }
+                
+                if (size_left_in_buffer == 0 && [local_error code] == eofErr)
+                    break;
+        
+                source_position = [_data_source offsetInFile];
+                buffer_position = 0;
+            }
+            
+            // move past the frame in the read buffer
+            buffer_position += frame_length;
+            size_left_in_buffer -= frame_length;
         }
         
         // if we have 3 or less but not 0 bytes left in the buffer, move them up front and read some more bytes
