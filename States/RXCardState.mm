@@ -1835,12 +1835,13 @@ init_failure:
 
 - (void)_renderCredits:(const CVTimeStamp*)output_time inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
     NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
+    uint64_t now = RXTimingNow();
     
     if (_credits_state == 0) {
         // initialize the credits
         
         // start time is now
-        _credits_start_time = output_time->hostTime;
+        _credits_start_time = now;
         
         // allocate the credit texture buffer
         _credits_texture_buffer = malloc(360 * 784 * 4);
@@ -1882,13 +1883,6 @@ init_failure:
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _credits_texture); glReportError();
     }
     
-    CVTimeStamp out_time = *output_time;
-    if (!(output_time->flags & kCVTimeStampHostTimeValid)) {
-        memset(&out_time, 0, sizeof(CVTimeStamp));
-        out_time.flags = kCVTimeStampHostTimeValid;
-        CVDisplayLinkTranslateTime([g_worldView displayLink], output_time, &out_time);
-    }
-    
     // figure out the duration of the current credits state
     double duration;
     if (_credits_state == 1 || _credits_state == 3 || _credits_state == 4 || _credits_state == 6)
@@ -1899,7 +1893,7 @@ init_failure:
         duration = RX_CREDITS_SCROLLING_DURATION;
     
     // compute the time interpolation parameter for the current credit state
-    float t = RXTimingTimestampDelta(out_time.hostTime, _credits_start_time) / duration;
+    float t = RXTimingTimestampDelta(now, _credits_start_time) / duration;
     
     // start using the card program (we need to do this now because some state
     // transition code needs to set uniforms
@@ -1918,7 +1912,7 @@ init_failure:
         t = 0.0f;
     else if (t > 1.0f) {
         // set start time to now and reset t to 0.0
-        _credits_start_time = out_time.hostTime;
+        _credits_start_time = now;
         t = 0.0f;
         
         if (_credits_state == 1) {
