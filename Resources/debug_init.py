@@ -163,3 +163,11 @@ def cmd_missing_externals(*args):
 def cmd_tcombo(*args):
     tcombo = world.gameState().unsigned32ForKey_("tCorrectOrder")
     print "telescope combination: %d %d %d %d %d" % tuple((tcombo >> (3 * i)) & 0x7 for i in xrange(5))
+
+def cmd_dcombo(*args):
+    dcombo = world.gameState().unsigned32ForKey_("aDomeCombo")
+    def gen_dome_digit():
+        for i in xrange(25):
+            if (dcombo & (1 << (24 - i))):
+                yield i + 1
+    print "dome combination: %d %d %d %d %d" % tuple(gen_dome_digit())
