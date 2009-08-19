@@ -151,7 +151,7 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
         return 0;
     
     // shader source array
-    GLchar** shaderSources = malloc(sizeof(GLchar*) * (1 + [extraSources count]));
+    GLchar** shader_sources = malloc(sizeof(GLchar*) * (1 + [extraSources count]));
     
     // load up extra shader source
     size_t shaderSourceIndex = 0;
@@ -161,8 +161,8 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     NSEnumerator* sourceEnum = [extraSources objectEnumerator];
     NSString* source;
     while ((source = [sourceEnum nextObject])) {
-        *(shaderSources + shaderSourceIndex) = (GLchar*)[source cStringUsingEncoding:NSASCIIStringEncoding];
-        if (*(shaderSources + shaderSourceIndex) == NULL)
+        *(shader_sources + shaderSourceIndex) = (GLchar*)[source cStringUsingEncoding:NSASCIIStringEncoding];
+        if (*(shader_sources + shaderSourceIndex) == NULL)
             goto failure_delete_shader_sources;
         
         // need to skip over the slot for the main shader source
@@ -176,10 +176,10 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     if (fs == 0)
         goto failure_delete_fs;
     
-    shaderSources[epilogueIndex - 1] = (GLchar*)[fshader_source cStringUsingEncoding:NSASCIIStringEncoding];
-    if (!shaderSources[epilogueIndex - 1])
+    shader_sources[epilogueIndex - 1] = (GLchar*)[fshader_source cStringUsingEncoding:NSASCIIStringEncoding];
+    if (!shader_sources[epilogueIndex - 1])
         goto failure_delete_fs;
-    glShaderSource(fs, (1 + [extraSources count]), (const GLchar**)shaderSources, NULL); glReportError();
+    glShaderSource(fs, (1 + [extraSources count]), (const GLchar**)shader_sources, NULL); glReportError();
     
     // compile the fragment shader
     glCompileShader(fs); glReportError();
@@ -246,6 +246,7 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     // we don't need the shader objects anymore
     glDeleteShader(fs); glReportError();
     
+    free(shader_sources);
     return program;
     
 failure_delete_program:
@@ -255,7 +256,7 @@ failure_delete_fs:
     glDeleteShader(fs); glReportError();
     
 failure_delete_shader_sources:
-    free(shaderSources);
+    free(shader_sources);
     
     return 0;
 }
