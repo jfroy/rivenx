@@ -1560,8 +1560,8 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
     
     // get the stack for the given stack key
-    NSString* stackKey = [[[card descriptor] parent] stackNameAtIndex:argv[0]];
-    RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:stackKey];
+    NSString* k = [[[card descriptor] parent] stackNameAtIndex:argv[0]];
+    RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:k];
     if (!stack) {
         _abortProgramExecution = YES;
         return;
@@ -1572,10 +1572,10 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to stack %@ on card ID %hu", logPrefix, stackKey, card_id);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to stack %@ on card ID %hu", logPrefix, k, card_id);
 #endif
     
-    [controller setActiveCardWithStack:stackKey ID:card_id waitUntilDone:YES];
+    [controller setActiveCardWithStack:k ID:card_id waitUntilDone:YES];
 }
 
 // 28
