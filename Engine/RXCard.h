@@ -32,7 +32,7 @@
     struct rx_blst_record* _hotspotControlRecords;
     
     // pictures
-    struct rx_plst_record* _picture_records;
+    void* _plst_data;
     uint32_t _picture_count;
     
     // movies

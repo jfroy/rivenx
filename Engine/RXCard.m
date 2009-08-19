@@ -74,8 +74,8 @@
         free(_mlstCodes);
     
     // pictures
-    if (_picture_records)
-        free(BUFFER_NOFFSET(_picture_records, sizeof(uint16_t)));
+    if (_plst_data)
+        free(_plst_data);
     
     // sounds
     [_soundGroups release];
@@ -169,7 +169,6 @@
 - (void)_loadPictures {
     NSError* error;
     MHKFileHandle* fh;
-    void* list_data;
     size_t list_data_size;
     uint16_t list_index;
     
@@ -180,21 +179,21 @@
                                      userInfo:nil];
     
     list_data_size = (size_t)[fh length];
-    list_data = malloc(list_data_size);
+    _plst_data = malloc(list_data_size);
     
     // read the data from the archive
-    if ([fh readDataToEndOfFileInBuffer:list_data error:&error] == -1)
+    if ([fh readDataToEndOfFileInBuffer:_plst_data error:&error] == -1)
         @throw [NSException exceptionWithName:@"RXRessourceIOException"
                                        reason:@"Could not read the card's corresponding PLST ressource."
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     
     // how many pictures do we have?
-    _picture_count = CFSwapInt16BigToHost(*(uint16_t*)list_data);
-    _picture_records = (struct rx_plst_record*)BUFFER_OFFSET(list_data, sizeof(uint16_t));
+    _picture_count = CFSwapInt16BigToHost(*(uint16_t*)_plst_data);
+    struct rx_plst_record* picture_records = (struct rx_plst_record*)BUFFER_OFFSET(_plst_data, sizeof(uint16_t));
     
     // process the picture records
     for (list_index = 0; list_index < _picture_count; list_index++) {
-        struct rx_plst_record* picture_record = _picture_records + list_index;
+        struct rx_plst_record* picture_record = picture_records + list_index;
         
 #if defined(__LITTLE_ENDIAN__)
         picture_record->index = CFSwapInt16(picture_record->index);
@@ -744,7 +743,7 @@
 }
 
 - (struct rx_plst_record*)pictureRecords {
-    return _picture_records;
+    return (struct rx_plst_record*)BUFFER_OFFSET(_plst_data, sizeof(uint16_t));
 }
 
 - (NSDictionary*)scripts {
