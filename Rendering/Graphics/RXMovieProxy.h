@@ -27,6 +27,9 @@
 
 - (id)initWithArchive:(MHKArchive*)archive ID:(uint16_t)ID origin:(CGPoint)origin volume:(float)volume loop:(BOOL)loop owner:(id)owner;
 
+- (MHKArchive*)archive;
+- (uint16_t)ID;
+
 - (RXMovie*)proxiedMovie;
 - (void)restoreMovieVolume;
 

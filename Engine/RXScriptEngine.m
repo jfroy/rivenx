@@ -5069,15 +5069,28 @@ DEFINE_COMMAND(xrshowinventory) {
 #pragma mark gehn office
 
 DEFINE_COMMAND(xbookclick) {
-//    uint16_t movie_code = argv[0];
-//    int64_t start_timeval = argv[1];
-//    int64_t end_timeval = argv[2];
+    uintptr_t movie_code = argv[0];
+    int64_t start_timeval = argv[1];
+    int64_t end_timeval = argv[2];
     uint16_t touchbook_index = argv[3];
     
     // get the specified touchbook hotspot
     NSString* touchbook_hotspot_name = [NSString stringWithFormat:@"touchbook%hu", touchbook_index];
     RXHotspot* touchbook_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], touchbook_hotspot_name);
     assert(touchbook_hotspot);
+    
+    // ogr_b.mov is different from the other trap book movies because it leads
+    // to end credits if you don't link; we need to handle it differently
+    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)movie_code);
+    NSString* movie_name = [[[[(RXMovieProxy*)movie archive] valueForKey:@"tMOV"] objectAtIndex:[(RXMovieProxy*)movie ID]] objectForKey:@"Name"];
+    assert(movie_name);
+    
+    BOOL endgame_movie;
+    NSRange r = [movie_name rangeOfString:@"ogr_b.mov" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [movie_name length])];
+    if (r.location != NSNotFound)
+        endgame_movie = YES;
+    else
+        endgame_movie = NO;
     
     // we'll need to handle the mouse cursor ourselves since hotspot handling
     // is disabled during script execution
@@ -5097,14 +5110,16 @@ DEFINE_COMMAND(xbookclick) {
     // track the mouse until the link window expires, detecting if the player
     // clicks inside the link region and updating the cursor as it enters and
     // exits the link region
-    CFAbsoluteTime link_window_end = CFAbsoluteTimeGetCurrent() + 5.0;
     rx_event_t mouse_down_event = [controller lastMouseDownEvent];
     BOOL mouse_was_pressed = NO;
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
                                     beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]])
     {
-        // have we passed the link window?
-        if (link_window_end < CFAbsoluteTimeGetCurrent())
+        // get the current movie time
+        QTTime movie_time = [movie _noLockCurrentTime];
+        
+        // if we have gone beyond the link window, exit the mouse tracking loop
+        if (movie_time.timeValue > end_timeval)
             break;
         
         // if the mouse has been pressed, update the mouse down event
@@ -5113,8 +5128,11 @@ DEFINE_COMMAND(xbookclick) {
             mouse_down_event = event;
             
             // check where the mouse was pressed, and if it is inside the
-            // link region, set mouse_was_pressed to YES and exit the loop
-            if (NSMouseInRect(mouse_down_event.location, [touchbook_hotspot worldFrame], NO)) {
+            // link region and within the link window, set mouse_was_pressed to
+            // YES and exit the loop
+            if (NSMouseInRect(mouse_down_event.location, [touchbook_hotspot worldFrame], NO) &&
+                movie_time.timeValue > start_timeval)
+            {
                 mouse_was_pressed = YES;
                 break;
             }
@@ -5133,6 +5151,10 @@ DEFINE_COMMAND(xbookclick) {
     // hide the mouse cursor again and reset it to the forward cursor
     [self _hideMouseCursor];
     [controller setMouseCursor:RX_CURSOR_FORWARD];
+    
+    // if the mouse was not pressed and this is an endgame movie, start the endgame credits
+    if (!mouse_was_pressed && endgame_movie)
+        [self _endgameWithCode:movie_code delay:5.0];
 }
 
 @end

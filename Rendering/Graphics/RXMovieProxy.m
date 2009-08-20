@@ -51,6 +51,14 @@
     [super dealloc];
 }
 
+- (MHKArchive*)archive {
+    return [[_archive retain] autorelease];
+}
+
+- (uint16_t)ID {
+    return _ID;
+}
+
 - (void)_loadMovie {
     // WARNING: MUST RUN ON MAIN THREAD
     if (_movie)
