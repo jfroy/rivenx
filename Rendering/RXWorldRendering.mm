@@ -15,8 +15,6 @@
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
 
 #import "States/RXCardState.h"
-#import "States/RXCreditsState.h"
-#import "States/RXCyanMovieState.h"
 
 
 @implementation RXWorld (RXWorldRendering)
