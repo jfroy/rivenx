@@ -100,7 +100,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     _original_duration = [_movie duration];
     
     // register for rate change notifications
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleRateChange:) name:QTMovieRateDidChangeNotification object:_movie];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_handleRateChange:)
+                                                 name:QTMovieRateDidChangeNotification
+                                               object:_movie];
     
     // pixel buffer attributes
     NSMutableDictionary* pixelBufferAttributes = [NSMutableDictionary new];
@@ -114,7 +117,8 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     [pixelBufferAttributes setObject:[NSNumber numberWithInt:kCVPixelFormatType_32ARGB] forKey:(NSString*)kCVPixelBufferPixelFormatTypeKey];
 #endif
 
-    CFMutableDictionaryRef visualContextOptions = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    CFMutableDictionaryRef visualContextOptions = CFDictionaryCreateMutable(kCFAllocatorDefault, 0,
+                                                                            &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     CFDictionarySetValue(visualContextOptions, kQTVisualContextPixelBufferAttributesKey, pixelBufferAttributes);
     [pixelBufferAttributes release];
     
@@ -347,12 +351,14 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     [_movie setAttribute:[NSNumber numberWithBool:flag] forKey:QTMovieLoopsAttribute];
     
     if (flag && !_seamless_looping_hacked) {
-        // ladies and gentlemen, because QuickTime fails at life, here is the seamless movie hack
+        // ladies and gentlemen, because QuickTime fails at life, here is the
+        // seamless movie hack
         
         // get the movie's duration
         QTTime duration = [_movie duration];
         
-        // find the video and audio tracks; bail out if the movie doesn't have exactly one of each or only one video track
+        // find the video and audio tracks; bail out if the movie doesn't have
+        // exactly one of each or only one video track
         NSArray* tracks = [_movie tracksOfMediaType:QTMediaTypeVideo];
         if ([tracks count] != 1)
             return;
@@ -366,12 +372,14 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         TimeValue tv;
         
         // find the movie's last sample time
-        GetMovieNextInterestingTime([_movie quickTimeMovie], nextTimeStep | nextTimeEdgeOK, 0, NULL, (TimeValue)duration.timeValue, -1, &tv, NULL);
+        GetMovieNextInterestingTime([_movie quickTimeMovie], nextTimeStep | nextTimeEdgeOK,
+                                    0, NULL, (TimeValue)duration.timeValue, -1, &tv, NULL);
         assert(GetMoviesError() == noErr);
         
         // find the beginning time of the video track's last sample
         QTTimeRange track_range = [[video_track attributeForKey:QTTrackRangeAttribute] QTTimeRangeValue];
-        GetTrackNextInterestingTime([video_track quickTimeTrack], nextTimeStep | nextTimeEdgeOK, (TimeValue)track_range.duration.timeValue, -1, &tv, NULL);
+        GetTrackNextInterestingTime([video_track quickTimeTrack], nextTimeStep | nextTimeEdgeOK,
+                                    (TimeValue)track_range.duration.timeValue, -1, &tv, NULL);
         assert(GetMoviesError() == noErr);
         QTTime video_last_sample_time = QTMakeTime(tv, duration.timeScale);
         
@@ -389,7 +397,8 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         if (QTTimeCompare(last_sample_duration, second_last_sample_duration) == NSOrderedDescending)
             track_range = QTMakeTimeRange(QTZeroTime,
                                           QTTimeIncrement(video_last_sample_time,
-                                                          QTMakeTime((duration.timeValue - video_last_sample_time.timeValue) / 2, duration.timeScale)));
+                                                          QTMakeTime((duration.timeValue - video_last_sample_time.timeValue) / 2,
+                                                                     duration.timeScale)));
         for (int i = 0; i < 300; i++)
             [video_track insertSegmentOfTrack:video_track timeRange:track_range atTime:track_range.duration];
         
@@ -409,11 +418,14 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         // flag the movie as being hacked for looping
         _seamless_looping_hacked = YES;
         
+        // reset the movie to ensure we are at the beginning and all caches are flushed
+        [self reset];
+        
 #if defined(DEBUG)
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"used smooth movie looping hack for %@, original duration=%@",
             self, QTStringFromTime(_original_duration));
 #if DEBUG > 2
-        [_movie writeToFile:[[NSString stringWithFormat:@"~/Desktop/looping %p.mov", self] stringByExpandingTildeInPath] withAttributes:nil];
+        [_movie writeToFile:[[NSString stringWithFormat:@"~/Desktop/%p-looping.mov", self] stringByExpandingTildeInPath] withAttributes:nil];
 #endif
 #endif
     }
