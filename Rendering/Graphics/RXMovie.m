@@ -140,7 +140,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
             [self release];
             @throw [NSException exceptionWithName:@"RXMovieException"
                                            reason:@"QTPixelBufferContextCreate failed."
-                                         userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
+                                         userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain
+                                                                                                         code:err
+                                                                                                     userInfo:nil]
+                                                                              forKey:NSUnderlyingErrorKey]];
         }
         
         // allocate a texture storage buffer and setup a texture object
@@ -177,7 +180,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
             [self release];
             @throw [NSException exceptionWithName:@"RXMovieException"
                                            reason:@"QTOpenGLTextureContextCreate failed."
-                                         userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
+                                         userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain
+                                                                                                         code:err
+                                                                                                     userInfo:nil]
+                                                                              forKey:NSUnderlyingErrorKey]];
         }
     }
     
@@ -209,7 +215,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         [self release];
         @throw [NSException exceptionWithName:@"RXMovieException"
                                        reason:@"SetMovieVisualContext failed."
-                                     userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
+                                     userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain
+                                                                                                     code:err
+                                                                                                 userInfo:nil]
+                                                                          forKey:NSUnderlyingErrorKey]];
     }
     
     _current_time_lock = OS_SPINLOCK_INIT;
@@ -255,7 +264,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
         [self release];
         @throw [NSException exceptionWithName:@"RXMovieException"
                                        reason:@"NewMovieFromProperties failed."
-                                     userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
+                                     userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain
+                                                                                                     code:err
+                                                                                                 userInfo:nil]
+                                                                          forKey:NSUnderlyingErrorKey]];
     }
     
     @try {
