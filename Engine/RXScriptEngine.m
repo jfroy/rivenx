@@ -5065,4 +5065,74 @@ DEFINE_COMMAND(xrshowinventory) {
         [gs setUnsigned32:1 forKey:@"acathbook"];
 }
 
+#pragma mark -
+#pragma mark gehn office
+
+DEFINE_COMMAND(xbookclick) {
+//    uint16_t movie_code = argv[0];
+//    int64_t start_timeval = argv[1];
+//    int64_t end_timeval = argv[2];
+    uint16_t touchbook_index = argv[3];
+    
+    // get the specified touchbook hotspot
+    NSString* touchbook_hotspot_name = [NSString stringWithFormat:@"touchbook%hu", touchbook_index];
+    RXHotspot* touchbook_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], touchbook_hotspot_name);
+    assert(touchbook_hotspot);
+    
+    // we'll need to handle the mouse cursor ourselves since hotspot handling
+    // is disabled during script execution
+    
+    // get the current mouse vector
+    NSRect mouse_vector = [controller mouseVector];
+    
+    // set the initial cursor based on the current position of the mouse
+    if (NSMouseInRect(mouse_vector.origin, [touchbook_hotspot worldFrame], NO))
+        [controller setMouseCursor:RX_CURSOR_OPEN_HAND];
+    else
+        [controller setMouseCursor:RX_CURSOR_FORWARD];
+    
+    // show the mouse cursor
+    [self _showMouseCursor];
+    
+    // track the mouse until the link window expires, detecting if the player
+    // clicks inside the link region and updating the cursor as it enters and
+    // exits the link region
+    CFAbsoluteTime link_window_end = CFAbsoluteTimeGetCurrent() + 5.0;
+    rx_event_t mouse_down_event = [controller lastMouseDownEvent];
+    BOOL mouse_was_pressed = NO;
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]])
+    {
+        // have we passed the link window?
+        if (link_window_end < CFAbsoluteTimeGetCurrent())
+            break;
+        
+        // if the mouse has been pressed, update the mouse down event
+        rx_event_t event = [controller lastMouseDownEvent];
+        if (event.timestamp > mouse_down_event.timestamp) {
+            mouse_down_event = event;
+            
+            // check where the mouse was pressed, and if it is inside the
+            // link region, set mouse_was_pressed to YES and exit the loop
+            if (NSMouseInRect(mouse_down_event.location, [touchbook_hotspot worldFrame], NO)) {
+                mouse_was_pressed = YES;
+                break;
+            }
+        }
+        
+        // update the cursor based on the current position of the mouse
+        if (NSMouseInRect(mouse_vector.origin, [touchbook_hotspot worldFrame], NO))
+            [controller setMouseCursor:RX_CURSOR_OPEN_HAND];
+        else
+            [controller setMouseCursor:RX_CURSOR_FORWARD];
+        
+        // update the mouse vector
+        mouse_vector = [controller mouseVector];
+    }
+    
+    // hide the mouse cursor again and reset it to the forward cursor
+    [self _hideMouseCursor];
+    [controller setMouseCursor:RX_CURSOR_FORWARD];
+}
+
 @end
