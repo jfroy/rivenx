@@ -466,7 +466,8 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     QTVisualContextTask(_vc);
     CGLUnlockContext(load_ctx);
     
-    // disable looping (not sure this is required or desired, but right now selection playback cannot be mixed with looping)
+    // disable looping (not sure this is required or desired, but right now
+    // selection playback cannot be mixed with looping)
     [self setLooping:NO];
     
     // enable selection playback
