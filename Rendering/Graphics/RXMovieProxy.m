@@ -66,8 +66,8 @@
     _movie = [[RXMovie alloc] initWithMovie:movie disposeWhenDone:YES owner:_owner];
     
     // set movie attributes
-    [_movie setWorkingColorSpace:[g_worldView workingColorSpace]];
-    [_movie setOutputColorSpace:[g_worldView displayColorSpace]];
+//    [_movie setWorkingColorSpace:[g_worldView workingColorSpace]];
+//    [_movie setOutputColorSpace:[g_worldView displayColorSpace]];
     [_movie setExpectedReadAheadFromDisplayLink:[g_worldView displayLink]];
     [_movie setLooping:_loop];
     
