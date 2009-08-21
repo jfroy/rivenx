@@ -171,4 +171,8 @@ struct _RXCardDescriptorPrimer {
     return [[_simpleDescriptor retain] autorelease];
 }
 
+- (BOOL)isCardWithRMAP:(uint32_t)rmap stackName:(NSString*)stack_name {
+    return ([_parent cardRMAPCodeFromID:_ID] == rmap && [[_parent key] isEqualToString:stack_name]) ? YES : NO;
+}
+
 @end

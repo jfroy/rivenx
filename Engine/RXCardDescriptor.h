@@ -46,4 +46,6 @@
 
 - (RXSimpleCardDescriptor*)simpleDescriptor;
 
+- (BOOL)isCardWithRMAP:(uint32_t)rmap stackName:(NSString*)stack_name;
+
 @end

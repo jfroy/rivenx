@@ -601,7 +601,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         // prevent it from re-appearing between the moment the cross-fade
         // transition completes and the moment the first movie plays
         [self _hideMouseCursor];
-    } else if ([ecsd->stackKey isEqualToString:@"aspit"] && ecsd->cardID == [[[card descriptor] parent] cardIDFromRMAPCode:k_trap_book_card_rmap]) {
+    } else if ([[card descriptor] isCardWithRMAP:k_trap_book_card_rmap stackName:@"aspit"]) {
         // schedule a deferred execution of _handleTrapBookLink on ourselves; also hard-hide the mouse cursor for this sequence
         [self performSelector:@selector(_handleTrapBookLink) withObject:nil afterDelay:5.0];
         [controller hideMouseCursor];
@@ -2549,6 +2549,12 @@ DEFINE_COMMAND(xreseticons) {
 #pragma mark -
 #pragma mark jungle elevator
 
+static uint32_t const k_jungle_elevator_mid_rmap = 123764;
+static uint32_t const k_jungle_elevator_top_rmap = 124311;
+static uint32_t const k_jungle_elevator_bottom_rmap = 123548;
+
+static float const k_jungle_elevator_trigger_magnitude = 16.0f;
+
 - (void)_handleJungleElevatorMouth {
     // if the mouth is open, we need to close it before going up or down
     if ([[g_world gameState] unsignedShortForKey:@"jwmouth"]) {
@@ -2561,8 +2567,6 @@ DEFINE_COMMAND(xreseticons) {
         DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 8);
     }
 }
-
-static float const k_jungle_elevator_trigger_magnitude = 16.0f;
 
 DEFINE_COMMAND(xhandlecontrolup) {
     NSRect mouse_vector = [controller mouseVector];
@@ -2590,8 +2594,7 @@ DEFINE_COMMAND(xhandlecontrolup) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
             
             // go to the middle jungle elevator card
-            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator middle"]
-                                            waitUntilDone:YES];
+            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:k_jungle_elevator_mid_rmap]);
             
             // we're all done
             break;
@@ -2630,8 +2633,7 @@ DEFINE_COMMAND(xhandlecontrolmid) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 5);
             
             // go to the top jungle elevator card
-            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator top"]
-                                            waitUntilDone:YES];
+            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:k_jungle_elevator_top_rmap]);
             
             // we're all done
             break;
@@ -2645,8 +2647,7 @@ DEFINE_COMMAND(xhandlecontrolmid) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 4);
             
             // go to the bottom jungle elevator card
-            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator bottom"]
-                                            waitUntilDone:YES];
+            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:k_jungle_elevator_bottom_rmap]);
             
             // we're all done
             break;
@@ -2674,8 +2675,7 @@ DEFINE_COMMAND(xhandlecontroldown) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
             
             // go to the middle jungle elevator card
-            [controller setActiveCardWithSimpleDescriptor:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jungle elevator middle"]
-                                            waitUntilDone:YES];
+            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:k_jungle_elevator_mid_rmap]);
             
             // we're all done
             break;
