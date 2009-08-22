@@ -3,18 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>tWAV LUT</key>
-	<dict>
-		<key>gdome slider tic</key>
-		<integer>25</integer>
-		<key>bdome slider tic</key>
-		<integer>41</integer>
-		<key>pdome slider tic</key>
-		<integer>10</integer>
-		<key>jdome slider tic</key>
-		<integer>81</integer>
-		<key>tdome slider tic</key>
-		<integer>37</integer>
-	</dict>
+	<dict/>
 	<key>tBMP LUT</key>
 	<dict>
 		<key>gdome sliders</key>
@@ -39,16 +28,7 @@
 		<integer>549</integer>
 	</dict>
 	<key>Card LUT</key>
-	<dict>
-		<key>jdome combo</key>
-		<string>jspit 339</string>
-		<key>jungle elevator top</key>
-		<string>jspit 362</string>
-		<key>jungle elevator bottom</key>
-		<string>jspit 396</string>
-		<key>jungle elevator middle</key>
-		<string>jspit 393</string>
-	</dict>
+	<dict/>
 	<key>Patch Archives</key>
 	<dict>
 		<key>jspit</key>

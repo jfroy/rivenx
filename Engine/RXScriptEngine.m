@@ -589,7 +589,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     RXSimpleCardDescriptor* ecsd = [[card descriptor] simpleDescriptor];
     
     // dome combination card - if the dome combination is 1-2-3-4-5, the opendome hotspot won't get enabled, so do it here
-    if ([ecsd isEqual:[[RXEditionManager sharedEditionManager] lookupCardWithKey:@"jdome combo"]]) {
+    if ([[card descriptor] isCardWithRMAP:285212672 stackName:@"jspit"]) {
         // check if the sliders match the dome configuration
         uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
         if (sliders_state == domecombo) {
@@ -3092,7 +3092,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     // cache the tic sound
     RXDataSound* tic_sound = [RXDataSound new];
     tic_sound->parent = [[card descriptor] parent];
-    tic_sound->twav_id = [[RXEditionManager sharedEditionManager] lookupSoundWithKey:[dome stringByAppendingString:@" slider tic"]];
+    tic_sound->twav_id = [self dataSoundIDForCurrentCardWithName:@"aBigTic"];
     tic_sound->gain = 1.0f;
     tic_sound->pan = 0.5f;
     
@@ -3241,7 +3241,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     // cache the tic sound
     RXDataSound* tic_sound = [RXDataSound new];
     tic_sound->parent = [[card descriptor] parent];
-    tic_sound->twav_id = [[RXEditionManager sharedEditionManager] lookupSoundWithKey:[dome stringByAppendingString:@" slider tic"]];
+    tic_sound->twav_id = [self dataSoundIDForCurrentCardWithName:@"aBigTic"];
     tic_sound->gain = 1.0f;
     tic_sound->pan = 0.5f;
     
