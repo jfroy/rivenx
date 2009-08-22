@@ -589,7 +589,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     RXSimpleCardDescriptor* ecsd = [[card descriptor] simpleDescriptor];
     
     // dome combination card - if the dome combination is 1-2-3-4-5, the opendome hotspot won't get enabled, so do it here
-    if ([[card descriptor] isCardWithRMAP:285212672 stackName:@"jspit"]) {
+    if ([[card descriptor] isCardWithRMAP:85570 stackName:@"jspit"]) {
         // check if the sliders match the dome configuration
         uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
         if (sliders_state == domecombo) {
