@@ -5152,9 +5152,78 @@ DEFINE_COMMAND(xbookclick) {
     [self _hideMouseCursor];
     [controller setMouseCursor:RX_CURSOR_FORWARD];
     
-    // if the mouse was not pressed and this is an endgame movie, start the endgame credits
-    if (!mouse_was_pressed && endgame_movie)
+    // if the mouse was not pressed and this is an endgame movie, start the
+    // endgame credits; note tha the mouse cursor will be show again
+    // automatically when the program execution depth reaches 0
+    if (!mouse_was_pressed && endgame_movie) {
         [self _endgameWithCode:movie_code delay:5.0];
+        return;
+    }
+    // otherwise if the mouse was pressed over the link, go into the trap book
+    // and execute the trapping Gehn sequence
+    else if (mouse_was_pressed) {
+        // stop and hide the movie
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, movie_code);
+        
+        // start screen update transaction
+        DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
+        
+        // schedule a dissolve transition
+        RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0];
+        [controller queueTransition:transition];
+        [transition release];
+        
+        // enable PLST 3
+        DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 3);
+        
+        // end screen update transaction
+        DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+        
+        // play link sound (ID 0?)
+        DISPATCH_COMMAND1(RX_COMMAND_PLAY_DATA_SOUND, 0);
+        
+        // hide all movies
+        DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
+        
+        // wait 12 seconds
+        usleep(12 * 1E6);
+        
+        // set ocage to 1
+        [[g_world gameState] setUnsigned32:1 forKey:@"ocage"];
+        
+        // set aGehn to 4
+        [[g_world gameState] setUnsigned32:4 forKey:@"agehn"];
+        
+        // set aTrapBook to 1
+        [[g_world gameState] setUnsigned32:1 forKey:@"atrapbook"];
+        
+        // generate prison combination
+        // FIXME: implement prison combination generation
+        
+        // play movie with MLST 7 (code 1) and wait until end
+        DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, 7);
+        DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
+        
+        // hide all movies
+        DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
+        
+        // schedule a dissolve transition
+        transition = [[RXTransition alloc] initWithType:RXTransitionDissolve direction:0];
+        [controller queueTransition:transition];
+        [transition release];
+        
+        // play link sound (ID 0?)
+        DISPATCH_COMMAND1(RX_COMMAND_PLAY_DATA_SOUND, 0);
+        
+        // go to card RMAP 10373
+        DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:10373]);
+    }
+    // otherwise just wait for the movie to end
+    else
+        DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, movie_code);
+    
+    // show the mouse cursor again
+    [self _showMouseCursor];
 }
 
 @end
