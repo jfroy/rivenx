@@ -70,7 +70,8 @@ static NSString* _kRXTransitionDirectionNames[4] = {
     region = rect;
     
     // by default, linear for dissolves, square sine for slides
-    animation = [[RXCannedAnimation alloc] initWithDuration:kRXTransitionDuration curve:(type == RXTransitionDissolve) ? RXAnimationCurveLinear : RXAnimationCurveSquareSine];
+    animation = [[RXCannedAnimation alloc] initWithDuration:kRXTransitionDuration
+                                                      curve:(type == RXTransitionDissolve) ? RXAnimationCurveLinear : RXAnimationCurveSquareSine];
     
     return self;
 }
@@ -84,7 +85,8 @@ static NSString* _kRXTransitionDirectionNames[4] = {
 - (NSString*)description {
     if (type == RXTransitionSlide) {
         NSString* directionString = _kRXTransitionDirectionNames[direction];
-        return [NSString stringWithFormat: @"%@ {type = RXTransitionSlide, direction = %@, pushNew = %d, pushOld = %d}", [super description], directionString, pushNew, pushOld];
+        return [NSString stringWithFormat: @"%@ {type = RXTransitionSlide, direction = %@, pushNew = %d, pushOld = %d}",
+            [super description], directionString, pushNew, pushOld];
     } else {
         return [NSString stringWithFormat: @"%@ {type = RXTransitionDissolve}", [super description]];
     }
