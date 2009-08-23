@@ -5226,4 +5226,30 @@ DEFINE_COMMAND(xbookclick) {
     [self _showMouseCursor];
 }
 
+DEFINE_COMMAND(xorollcredittime) {
+    // there are 3 possible endings when trapping yourself in Riven
+    // 1: Gehn is free and you've never met him;
+    // 2: Gehn is free and you've talked to him some;
+    // 3: Gehn was trapped and is released
+    
+    // figure out the proper code based on agehn
+    uint32_t gehn_state = [[g_world gameState] unsigned32ForKey:@"agehn"];
+    uintptr_t movie_code;
+    if (gehn_state == 0)
+        // never spoke to Gehn
+        movie_code = 1;
+    else if (gehn_state == 4)
+        // Gehn was trapped
+        movie_code = 2;
+    else
+        // Spoke with Gehn at least once
+        movie_code = 3;
+    
+    // start the endgame credits; the MLST has already been activated
+    [self _endgameWithCode:movie_code delay:1.5];
+    
+    // re-enable the mouse cursor directly, since it was hidden by the trap book handler
+    [controller showMouseCursor];
+}
+
 @end
