@@ -10,7 +10,7 @@
 #import "Engine/RXEditionManager.h"
 
 
-static const int RX_GAME_STATE_CURRENT_VERSION = 2;
+static const int RX_GAME_STATE_CURRENT_VERSION = 3;
 
 // 1-2-3-4-5
 static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 << 21) | (1 << 20);
@@ -94,8 +94,18 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     return combo;
 }
 
+- (uint32_t)_generatePrisonCombination {
+    // first digit of the combination is stored in the lsb (2 bits per number)
+    uint32_t combo = (random() % 3) + 1;
+    combo = (combo << 2) | ((random() % 3) + 1);
+    combo = (combo << 2) | ((random() % 3) + 1);
+    combo = (combo << 2) | ((random() % 3) + 1);
+    combo = (combo << 2) | ((random() % 3) + 1);
+    return combo;
+}
+
 - (void)_generateCombinations {
-    // generate a dome combination
+    // generate a dome combination (we need to try until we get a valid one)
     uint32_t domecombo = 0;
     while (1) {
         domecombo = [self _generateDomeCombination];
@@ -107,20 +117,23 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
         // valid combination, break out
         break;
     }
-    [self setUnsigned32:domecombo forKey:@"aDomeCombo"];
+    [self setUnsigned32:domecombo forKey:@"adomecombo"];
     
     // set the rebel icon order variable (always the same value)
-    [self setUnsigned32:12068577 forKey:@"jIconCorrectOrder"];
+    [self setUnsigned32:12068577 forKey:@"jiconcorrectorder"];
     
-    // FIXME: generate prison combination
-    [self setShort:-2 forKey:@"pCorrectOrder"];
+    // generate a prison combination
+    [self setUnsigned32:[self _generatePrisonCombination] forKey:@"pcorrectorder"];
     
     // generate a telescope combination
-    [self setUnsigned32:[self _generateTelescopeCombination] forKey:@"tCorrectOrder"];
+    [self setUnsigned32:[self _generateTelescopeCombination] forKey:@"tcorrectorder"];
 }
 
 - (void)_resetOldSave {
     // rrebel = 0
+    
+    // old saves didn't have valid combinations
+    [self _generateCombinations];
 }
 
 - (id)init {
@@ -191,6 +204,7 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     int32_t version = [decoder decodeInt32ForKey:@"VERSION"];
     
     switch (version) {
+        case 3:
         case 2:
         case 1:
             if (![decoder containsValueForKey:@"returnCard"]) {
@@ -241,9 +255,10 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
                                          userInfo:nil];
     }
     
-    // version below 2 do not have valid combinations, so generate them now
-    if (version < 2)
-        [self _generateCombinations];
+    // save versions below 3 need to be partially reset to have correct
+    // inventory and combinations
+    if (version < 3)
+        [self _resetOldSave];
     
     return self;
 }

@@ -5197,9 +5197,6 @@ DEFINE_COMMAND(xbookclick) {
         // set aTrapBook to 1
         [[g_world gameState] setUnsigned32:1 forKey:@"atrapbook"];
         
-        // generate prison combination
-        // FIXME: implement prison combination generation
-        
         // play movie with MLST 7 (code 1) and wait until end
         DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, 7);
         DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
