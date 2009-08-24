@@ -23,6 +23,8 @@
 - (void)mouseExitedHotspot:(RXHotspot*)hotspot;
 - (void)mouseDownInHotspot:(RXHotspot*)hotspot;
 - (void)mouseUpInHotspot:(RXHotspot*)hotspot;
+
+- (void)skipBlockingMovie;
 @end
 
 

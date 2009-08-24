@@ -14,6 +14,7 @@
 #import "Engine/RXScriptEngineProtocols.h"
 
 #import "Rendering/Audio/RXSoundGroup.h"
+#import "Rendering/Graphics/RXMovieProxy.h"
 #import "Rendering/Graphics/RXTexture.h"
 
 
@@ -39,6 +40,7 @@
     NSMapTable* code2movieMap;
     semaphore_t _moviePlaybackSemaphore;
     NSMutableSet* _movies_to_reset;
+    RXMovieProxy* _blocking_movie;
     
     RXSoundGroup* _synthesizedSoundGroup;
     

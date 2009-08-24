@@ -29,7 +29,6 @@
 #import "Rendering/Graphics/RXTextureBroker.h"
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXDynamicPicture.h"
-#import "Rendering/Graphics/RXMovieProxy.h"
 
 
 static NSTimeInterval const k_mouse_tracking_loop_period = 0.001;
@@ -260,10 +259,18 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // the trapeze rect is emcompasses the bottom part of the trapeze on jspit 276
     trapeze_rect = NSMakeRect(310, 172, 16, 36);
     
+    // register for movie rate change notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_handleBlockingMovieFinishedPlaying:)
+                                                 name:RXMoviePlaybackDidEndNotification
+                                               object:nil];
+    
     return self;
 }
 
-- (void)dealloc {    
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
     if (_moviePlaybackSemaphore)
         semaphore_destroy(mach_task_self(), _moviePlaybackSemaphore);
     [_movies_to_reset release];
@@ -915,11 +922,14 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 #pragma mark movie playback
 
 - (void)_handleBlockingMovieFinishedPlaying:(NSNotification*)notification {
-    // WARNING: MUST RUN ON MAIN THREAD
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:RXMoviePlaybackDidEndNotification object:[notification object]];
+    // WARNING: WILL RUN ON MAIN THREAD
+    if (_blocking_movie && [_blocking_movie proxiedMovie] == [notification object]) {
+        [_blocking_movie release];
+        _blocking_movie = nil;
         
-    // signal the movie playback semaphore to unblock the script thread
-    semaphore_signal(_moviePlaybackSemaphore);
+        // signal the movie playback semaphore to unblock the script thread
+        semaphore_signal_all(_moviePlaybackSemaphore);
+    }
 }
 
 - (void)_resetMovie:(RXMovie*)movie {
@@ -952,17 +962,8 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // WARNING: MUST RUN ON MAIN THREAD
     
     // register for rate notifications on the blocking movie handler
-    // FIXME: remove exposed movie proxy implementation detail
-    if ([movie isKindOfClass:[RXMovieProxy class]])
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(_handleBlockingMovieFinishedPlaying:)
-                                                     name:RXMoviePlaybackDidEndNotification
-                                                   object:[(RXMovieProxy*)movie proxiedMovie]];
-    else
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(_handleBlockingMovieFinishedPlaying:)
-                                                     name:RXMoviePlaybackDidEndNotification
-                                                   object:movie];
+    assert([movie isKindOfClass:[RXMovieProxy class]]);
+    _blocking_movie = (RXMovieProxy*)[movie retain];
     
     // if the movie is scheduled for reset, do the reset now
     if ([_movies_to_reset containsObject:movie]) {
@@ -991,6 +992,18 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // WARNING: MUST RUN ON MAIN THREAD
     // FIXME: remove exposed movie proxy implementation detail
     [(RXMovieProxy*)movie restoreMovieVolume];
+}
+
+- (void)skipBlockingMovie {
+    if (_blocking_movie) {
+        [(RXMovie*)_blocking_movie stop];
+        
+        [_blocking_movie release];
+        _blocking_movie = nil;
+        
+        // signal the movie playback semaphore to unblock the script thread
+        semaphore_signal_all(_moviePlaybackSemaphore);
+    }
 }
 
 #pragma mark -

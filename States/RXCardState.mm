@@ -2927,6 +2927,12 @@ exit_flush_tasks:
     [self updateHotspotState];
 }
 
+- (void)keyDown:(NSEvent*)event {
+    NSString* characters = [event charactersIgnoringModifiers];
+    if (![event isARepeat] && [characters isEqualToString:@" "])
+        [sengine skipBlockingMovie];
+}
+
 - (void)_handleWindowDidBecomeKey:(NSNotification*)notification {
     // FIXME: there may be a time-sensitive crash lurking around here
 
