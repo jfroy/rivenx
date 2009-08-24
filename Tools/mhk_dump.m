@@ -193,7 +193,7 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
         
         // audio data chunk
         cch.mChunkType = CFSwapInt32HostToBig(kCAF_AudioDataChunkID);
-        cch.mChunkSize = (SInt64)CFSwapInt64HostToBig(samples_size);
+        cch.mChunkSize = (SInt64)CFSwapInt64HostToBig(samples_size + sizeof(UInt32));
         write(fd, &cch.mChunkType, sizeof(cch.mChunkType));
         write(fd, &cch.mChunkSize, sizeof(cch.mChunkSize));
         
