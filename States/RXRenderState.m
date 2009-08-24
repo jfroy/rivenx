@@ -11,20 +11,6 @@
 
 @implementation RXRenderState
 
-- (id)init {
-    self = [super init];
-    if (!self) return nil;
-    
-    return self;
-}
-
-- (void)dealloc {
-#if defined(DEBUG)
-    RXOLog(@"deallocating");
-#endif
-    [super dealloc];
-}
-
 - (id)delegate {
     return _delegate;
 }
@@ -57,13 +43,8 @@
 
 #if defined(DEBUG)
 
-- (void)keyDown:(NSEvent *)theEvent {
-    NSString* characters = [theEvent charactersIgnoringModifiers];
-    unichar firstCharacter = [characters characterAtIndex:0];
-    
-#if defined(DEBUG)
-    RXOLog(@"caught keyDown: 0x%x", firstCharacter);
-#endif
+- (void)keyDown:(NSEvent*)event {
+    RXOLog2(kRXLoggingEvents, kRXLoggingLevelDebug, @"caught keyDown: 0x%x", [[event charactersIgnoringModifiers] characterAtIndex:0]);
 }
 
 #endif
