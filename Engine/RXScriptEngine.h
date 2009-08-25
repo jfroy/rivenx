@@ -18,6 +18,12 @@
 #import "Rendering/Graphics/RXTexture.h"
 
 
+typedef struct {
+    NSTimeInterval time;
+    uint16_t command[2];
+    uint16_t code;
+} rx_scheduled_movie_command_t;
+
 @interface RXScriptEngine : NSObject <RXScriptEngineProtocol> {
     __weak id<RXScriptEngineControllerProtocol> controller;
     RXCard* card;
@@ -39,11 +45,8 @@
     
     NSMapTable* code_movie_map;
     NSMutableSet* _movies_to_reset;
-    RXMovieProxy* _blocking_movie;
-    semaphore_t _blocking_movie_semaphore;
-    uint16_t _scheduled_movie_command_code;
-    NSData* _scheduled_movie_command_data;
-    
+    RXMovieProxy* volatile _blocking_movie;
+    rx_scheduled_movie_command_t _scheduled_movie_command;
     RXSoundGroup* _synthesizedSoundGroup;
     
     int32_t _screen_update_disable_counter;

@@ -76,6 +76,8 @@ extern NSString* const RXMoviePlaybackDidEndNotification;
 - (float)rate;
 - (void)setRate:(float)rate;
 
+- (void)gotoEnd;
+
 - (QTTime)_noLockCurrentTime;
 
 - (void)reset;

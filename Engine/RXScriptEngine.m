@@ -31,7 +31,7 @@
 #import "Rendering/Graphics/RXDynamicPicture.h"
 
 
-static NSTimeInterval const k_mouse_tracking_loop_period = 0.001;
+static NSTimeInterval const kRunloopPeriod = 0.001;
 
 static uint32_t const k_trap_book_card_rmap = 7940;
 
@@ -162,7 +162,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     _riven_command_dispatch_table[35].sel = @selector(_opcode_unimplemented:arguments:); // activate SFXE (arg0 is the SFXE ID)
     _riven_command_dispatch_table[36].sel = @selector(_opcode_noop:arguments:);
     _riven_command_dispatch_table[37].sel = @selector(_opcode_fadeAmbientSounds:arguments:);
-    _riven_command_dispatch_table[38].sel = @selector(_opcode_complexStartMovie:arguments:);
+    _riven_command_dispatch_table[38].sel = @selector(_opcode_scheduleMovieCommand:arguments:);
     _riven_command_dispatch_table[39].sel = @selector(_opcode_activatePLST:arguments:);
     _riven_command_dispatch_table[40].sel = @selector(_opcode_activateSLST:arguments:);
     _riven_command_dispatch_table[41].sel = @selector(_opcode_activateMLSTAndStartMovie:arguments:);
@@ -216,9 +216,6 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 }
 
 - (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr {
-    NSError* error;
-    kern_return_t kerr;
-    
     self = [super init];
     if (!self)
         return nil;
@@ -235,15 +232,6 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     code_movie_map = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
     _movies_to_reset = [NSMutableSet new];
-    
-    kerr = semaphore_create(mach_task_self(), &_blocking_movie_semaphore, SYNC_POLICY_FIFO, 0);
-    if (kerr != 0) {
-        [self release];
-        error = [NSError errorWithDomain:NSMachErrorDomain code:kerr userInfo:nil];
-        @throw [NSException exceptionWithName:@"RXSystemResourceException"
-                                       reason:@"Could not create the movie playback semaphore."
-                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-    }
     
     _screen_update_disable_counter = 0;
     
@@ -271,8 +259,6 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
-    if (_blocking_movie_semaphore)
-        semaphore_destroy(mach_task_self(), _blocking_movie_semaphore);
     [_movies_to_reset release];
     if (code_movie_map)
         NSFreeMapTable(code_movie_map);
@@ -926,9 +912,6 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     if (_blocking_movie && [_blocking_movie proxiedMovie] == [notification object]) {
         [_blocking_movie release];
         _blocking_movie = nil;
-        
-        // signal the movie playback semaphore to unblock the script thread
-        semaphore_signal_all(_blocking_movie_semaphore);
     }
 }
 
@@ -948,6 +931,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 - (void)_playMovie:(RXMovie*)movie {
     // WARNING: MUST RUN ON MAIN THREAD
+    assert([movie isKindOfClass:[RXMovieProxy class]]);
     
     // if the movie is scheduled for reset, do the reset now
     if ([_movies_to_reset containsObject:movie]) {
@@ -955,15 +939,13 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         [_movies_to_reset removeObject:movie];
     }
     
+    // start playing the movie
     [movie play];
 }
 
 - (void)_playBlockingMovie:(RXMovie*)movie {
     // WARNING: MUST RUN ON MAIN THREAD
-    
-    // register for rate notifications on the blocking movie handler
     assert([movie isKindOfClass:[RXMovieProxy class]]);
-    _blocking_movie = (RXMovieProxy*)[movie retain];
     
     // if the movie is scheduled for reset, do the reset now
     if ([_movies_to_reset containsObject:movie]) {
@@ -975,7 +957,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [movie setLooping:NO];
     
     // start playing the movie
-    [movie setRate:1.0f];
+    [movie play];
 }
 
 - (void)_stopMovie:(RXMovie*)movie {
@@ -990,19 +972,16 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 - (void)_unmuteMovie:(RXMovie*)movie {
     // WARNING: MUST RUN ON MAIN THREAD
-    // FIXME: remove exposed movie proxy implementation detail
+    assert([movie isKindOfClass:[RXMovieProxy class]]);
     [(RXMovieProxy*)movie restoreMovieVolume];
 }
 
 - (void)skipBlockingMovie {
     if (_blocking_movie) {
-        [(RXMovie*)_blocking_movie stop];
+        [(RXMovie*)_blocking_movie gotoEnd];
         
         [_blocking_movie release];
         _blocking_movie = nil;
-        
-        // signal the movie playback semaphore to unblock the script thread
-        semaphore_signal_all(_blocking_movie_semaphore);
     }
 }
 
@@ -1642,6 +1621,33 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [controller enableMovie:movie];
 }
 
+- (void)_checkScheduledMovieCommandWithCode:(uint16_t)code movie:(RXMovie*)movie {
+    if (_scheduled_movie_command.code != code) {
+        memset(&_scheduled_movie_command, 0, sizeof(rx_scheduled_movie_command_t));
+        return;
+    }
+    
+    NSTimeInterval movie_position;
+    QTGetTimeInterval([movie _noLockCurrentTime], &movie_position);
+    if (movie_position > _scheduled_movie_command.time) {
+#if defined(DEBUG)
+        if (!_disableScriptLogging) {
+            RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@executing scheduled movie command {", logPrefix);
+            [logPrefix appendString:@"    "];
+        }
+#endif
+        DISPATCH_COMMAND1(_scheduled_movie_command.command[0], _scheduled_movie_command.command[1]);
+#if defined(DEBUG)
+        if (!_disableScriptLogging) {
+            [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
+            RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+        }
+#endif
+            
+        memset(&_scheduled_movie_command, 0, sizeof(rx_scheduled_movie_command_t));
+    }
+}
+
 // 32
 - (void)_opcode_startMovieAndWaitUntilDone:(const uint16_t)argc arguments:(const uint16_t*)argv {
     if (argc < 1)
@@ -1663,14 +1669,23 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // hide the mouse cursor
     [self _hideMouseCursor];
     
-    // start the movie and register for rate change notifications
+    // start the movie
+    _blocking_movie = (RXMovieProxy*)[movie retain];
     [self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:movie waitUntilDone:YES];
     
     // enable the movie in the renderer
     [controller enableMovie:movie];
     
     // wait until the movie is done playing
-    semaphore_wait(_blocking_movie_semaphore);
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]]) {        
+        [self _checkScheduledMovieCommandWithCode:argv[0] movie:movie];
+        
+        if (!_blocking_movie)
+            break;
+    }
+    
+    // check for the scheduled movie command one more time
+    [self _checkScheduledMovieCommandWithCode:argv[0] movie:movie];
 }
 
 // 33
@@ -1737,27 +1752,32 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 }
 
 // 38
-- (void)_opcode_complexStartMovie:(const uint16_t)argc arguments:(const uint16_t*)argv {
+- (void)_opcode_scheduleMovieCommand:(const uint16_t)argc arguments:(const uint16_t*)argv {
     if (argc < 5)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
     
-    uint32_t delay = (argv[1] << 16) | argv[2];
-    uintptr_t movie_code = argv[0];
-    uint16_t delayed_command = argv[3];
-    uint16_t delayed_command_arg = argv[4];
+    uint32_t command_time = (argv[1] << 16) | argv[2];
+    uint16_t movie_code = argv[0];
+    uint16_t command = argv[3];
+    uint16_t command_arg = argv[4];
     
 #if defined(DEBUG)
     if (!_disableScriptLogging) {
-        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@scheduling command %d with argument %d in %u ms tied to movie code %lu",
-            logPrefix, delayed_command, delayed_command_arg, delay, movie_code);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@scheduling command %d with argument %d at %u ms tied to movie code %hu",
+            logPrefix, command, command_arg, command_time, movie_code);
     }
 #endif
     
     // schedule the command
-    if (delay > 0) {
-        
-    } else
-        DISPATCH_COMMAND1(delayed_command, delayed_command_arg);
+    if (command_time > 0) {
+        _scheduled_movie_command.code = movie_code;
+        _scheduled_movie_command.time = command_time / 1000.0;
+        _scheduled_movie_command.command[0] = command;
+        _scheduled_movie_command.command[1] = command_arg;
+    } else {
+        memset(&_scheduled_movie_command, 0, sizeof(rx_scheduled_movie_command_t));
+        DISPATCH_COMMAND1(command, command_arg);
+    }
 }
 
 // 39
@@ -2569,7 +2589,7 @@ DEFINE_COMMAND(xhandlecontrolup) {
     
     // track the mouse until the mouse button is released
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
            isfinite(mouse_vector.size.width))
     {
         if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
@@ -2606,7 +2626,7 @@ DEFINE_COMMAND(xhandlecontrolmid) {
     
     // track the mouse until the mouse button is released
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
            isfinite(mouse_vector.size.width))
     {
         if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
@@ -2659,7 +2679,7 @@ DEFINE_COMMAND(xhandlecontroldown) {
     
     // track the mouse until the mouse button is released
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
            isfinite(mouse_vector.size.width))
     {
         if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
@@ -2692,7 +2712,7 @@ DEFINE_COMMAND(xvalvecontrol) {
     
     // track the mouse until the mouse button is released
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
            isfinite(mouse_vector.size.width))
     {
         float theta = 180.0f * atan2f(mouse_vector.size.height, mouse_vector.size.width) * M_1_PI;
@@ -3242,7 +3262,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     // track the mouse, updating the position of the slider as appropriate
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
            isfinite(mouse_vector.size.width))
     {
         // where are we now?
@@ -3706,7 +3726,7 @@ DEFINE_COMMAND(xtakeit) {
     // track the mouse until the mouse button is released
     NSRect mouse_vector = [controller mouseVector];
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
            isfinite(mouse_vector.size.width))
     {
         mouse_vector = [controller mouseVector];
@@ -4331,7 +4351,7 @@ DEFINE_COMMAND(xvga1300_carriage) {
     rx_event_t mouse_down_event = [controller lastMouseDownEvent];
     BOOL mouse_was_pressed = NO;
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]])
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]])
     {
         // have we passed the trapeze window?
         if (trapeze_window_end < CFAbsoluteTimeGetCurrent())
@@ -4616,7 +4636,7 @@ DEFINE_COMMAND(xbait) {
     // track the mouse until the mouse button is released
     NSRect mouse_vector = [controller mouseVector];
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
            isfinite(mouse_vector.size.width))
     {
         [controller setMouseCursor:RX_CURSOR_BAIT];
@@ -4650,7 +4670,7 @@ DEFINE_COMMAND(xbaitplate) {
     // track the mouse until the mouse button is released
     NSRect mouse_vector = [controller mouseVector];
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]] &&
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
            isfinite(mouse_vector.size.width))
     {
         [controller setMouseCursor:RX_CURSOR_BAIT];
@@ -5092,7 +5112,7 @@ DEFINE_COMMAND(xbookclick) {
     
     // busy-wait until we reach the start timestamp
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]])
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]])
     {
         // get the current movie time
         QTTime movie_time = [movie _noLockCurrentTime];
@@ -5120,7 +5140,7 @@ DEFINE_COMMAND(xbookclick) {
     rx_event_t mouse_down_event = [controller lastMouseDownEvent];
     BOOL mouse_was_pressed = NO;
     while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]])
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]])
     {
         // get the current movie time
         QTTime movie_time = [movie _noLockCurrentTime];

@@ -548,6 +548,10 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     [_movie setRate:rate];
 }
 
+- (void)gotoEnd {
+    [_movie gotoEnd];
+}
+
 - (void)_handleRateChange:(NSNotification*)notification {
     // WARNING: MUST RUN ON MAIN THREAD
     float rate = [[[notification userInfo] objectForKey:QTMovieRateDidChangeNotificationParameter] floatValue];
