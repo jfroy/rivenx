@@ -233,10 +233,10 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     _dynamic_texture_cache = [NSMutableDictionary new];
     _picture_cache = [NSMutableDictionary new];
     
-    code2movieMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
+    code_movie_map = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
     _movies_to_reset = [NSMutableSet new];
     
-    kerr = semaphore_create(mach_task_self(), &_moviePlaybackSemaphore, SYNC_POLICY_FIFO, 0);
+    kerr = semaphore_create(mach_task_self(), &_blocking_movie_semaphore, SYNC_POLICY_FIFO, 0);
     if (kerr != 0) {
         [self release];
         error = [NSError errorWithDomain:NSMachErrorDomain code:kerr userInfo:nil];
@@ -271,11 +271,11 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
-    if (_moviePlaybackSemaphore)
-        semaphore_destroy(mach_task_self(), _moviePlaybackSemaphore);
+    if (_blocking_movie_semaphore)
+        semaphore_destroy(mach_task_self(), _blocking_movie_semaphore);
     [_movies_to_reset release];
-    if (code2movieMap)
-        NSFreeMapTable(code2movieMap);
+    if (code_movie_map)
+        NSFreeMapTable(code_movie_map);
     
     [_picture_cache release];
     [_dynamic_texture_cache release];
@@ -303,7 +303,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 }
 
 - (void)_resetMovieProxies {
-    NSMapEnumerator movie_enum = NSEnumerateMapTable(code2movieMap);
+    NSMapEnumerator movie_enum = NSEnumerateMapTable(code_movie_map);
     uintptr_t k;
     RXMovieProxy* movie_proxy;
     while (NSNextMapEnumeratorPair(&movie_enum, (void**)&k, (void**)&movie_proxy))
@@ -928,7 +928,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         _blocking_movie = nil;
         
         // signal the movie playback semaphore to unblock the script thread
-        semaphore_signal_all(_moviePlaybackSemaphore);
+        semaphore_signal_all(_blocking_movie_semaphore);
     }
 }
 
@@ -1002,7 +1002,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         _blocking_movie = nil;
         
         // signal the movie playback semaphore to unblock the script thread
-        semaphore_signal_all(_moviePlaybackSemaphore);
+        semaphore_signal_all(_blocking_movie_semaphore);
     }
 }
 
@@ -1118,7 +1118,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     NSTimeInterval movie_start_ts = CFAbsoluteTimeGetCurrent();
     
     // get the endgame movie object
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)movie_code);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)(uintptr_t)movie_code);
     
     // get its duration and video duration
     NSTimeInterval duration;
@@ -1263,7 +1263,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // update the code to movie map
     uintptr_t k = mlst_r->code;
-    NSMapInsert(code2movieMap, (const void*)k, movie);
+    NSMapInsert(code_movie_map, (const void*)k, movie);
     
     // reset the movie
     [self performSelectorOnMainThread:@selector(_resetMovie:) withObject:movie waitUntilDone:YES];
@@ -1593,7 +1593,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // get the movie object
     uintptr_t k = argv[0];
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
     
     // it is legal to disable a code that has no movie associated with it
     if (!movie)
@@ -1626,7 +1626,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // get the movie object
     uintptr_t k = argv[0];
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
     
     // it is legal to disable a code that has no movie associated with it
     if (!movie)
@@ -1654,7 +1654,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // get the movie object
     uintptr_t k = argv[0];
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
     
     // it is legal to play a code that has no movie associated with it; it's a no-op
     if (!movie)
@@ -1670,7 +1670,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     [controller enableMovie:movie];
     
     // wait until the movie is done playing
-    semaphore_wait(_moviePlaybackSemaphore);
+    semaphore_wait(_blocking_movie_semaphore);
 }
 
 // 33
@@ -1684,7 +1684,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // get the movie object
     uintptr_t k = argv[0];
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
 
     // it is legal to play a code that has no movie associated with it; it's a no-op
     if (!movie)
@@ -1708,7 +1708,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // get the movie object
     uintptr_t k = argv[0];
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
 
     // it is legal to stop a code that has no movie associated with it; it's a no-op
     if (!movie)
@@ -1742,40 +1742,22 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
     
     uint32_t delay = (argv[1] << 16) | argv[2];
-    uint16_t movie_code = argv[0];
+    uintptr_t movie_code = argv[0];
     uint16_t delayed_command = argv[3];
     uint16_t delayed_command_arg = argv[4];
     
 #if defined(DEBUG)
     if (!_disableScriptLogging) {
-        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting movie with code %hu, waiting %u ms, and executing command %d with argument %d {",
-            logPrefix, movie_code, delay, delayed_command, delayed_command_arg);
-        [logPrefix appendString:@"    "];
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@scheduling command %d with argument %d in %u ms tied to movie code %lu",
+            logPrefix, delayed_command, delayed_command_arg, delay, movie_code);
     }
 #endif
     
-    // play the movie
-    [self _opcode_startMovie:1 arguments:&movie_code];
-    
-    // wait the specified delay
+    // schedule the command
     if (delay > 0) {
-        // hide the mouse cursor
-        [self _hideMouseCursor];
         
-        // sleep for the specified amount of ms
-        if (delay > 0)
-            usleep(delay * 1000);
-    }
-    
-    // execute the delayed command
-    DISPATCH_COMMAND1(delayed_command, delayed_command_arg);
-    
-#if defined(DEBUG)
-    if (!_disableScriptLogging) {
-        [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
-    }
-#endif
+    } else
+        DISPATCH_COMMAND1(delayed_command, delayed_command_arg);
 }
 
 // 39
@@ -1925,7 +1907,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // update the code to movie map
     RXMovie* movie = [[card movies] objectAtIndex:argv[0] - 1];
-    NSMapInsert(code2movieMap, (const void*)k, movie);
+    NSMapInsert(code_movie_map, (const void*)k, movie);
     
     // reset the movie
     [self performSelectorOnMainThread:@selector(_resetMovie:) withObject:movie waitUntilDone:YES];
@@ -2924,7 +2906,7 @@ DEFINE_COMMAND(xjschool280_resetright) {
         k = 5;
     }
     
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
     
     // compute the duration per tick
     QTTime duration = [movie duration];
@@ -3023,7 +3005,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     uint16_t dome_state = [[g_world gameState] unsignedShortForKey:dome];
     if (dome_state == 3) {
         uintptr_t k = 2;
-        RXMovie* button_movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+        RXMovie* button_movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
         [self performSelectorOnMainThread:@selector(_unmuteMovie:) withObject:button_movie waitUntilDone:NO];
         DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
     }
@@ -3035,7 +3017,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     // when was the movie at the time?
     uintptr_t k = 1;
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
     
     NSTimeInterval movie_position;
     QTGetTimeInterval([movie _noLockCurrentTime], &movie_position);
@@ -3046,7 +3028,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     // get the button movie
     k = 2;
-    RXMovie* button_movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+    RXMovie* button_movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
     
     // did we hit the golden eye frame?
 #if defined(DEBUG)
@@ -3931,14 +3913,14 @@ static uint16_t const prison_activity_movies[3][8] = {
     [gs setUnsigned32:cath_state forKey:@"gCathState"];
     
     // play the movie
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)30);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)(uintptr_t)30);
     DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, prison_mlst);
     if (movie)
         [controller disableMovie:movie];
     
     // schedule the next prison activity movie
     NSTimeInterval delay;
-    movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)30);
+    movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)(uintptr_t)30);
     QTGetTimeInterval([movie duration], &delay);
     delay += (random() % 31) + (random() % 31);
     
@@ -3996,14 +3978,14 @@ DEFINE_COMMAND(xglview_prisonon) {
     if (prison_mlst == 8 || (prison_mlst >= 13 && prison_mlst <= 16))
         DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, prison_mlst);
     else
-        NSMapRemove(code2movieMap, (const void*)(uintptr_t)30);
+        NSMapRemove(code_movie_map, (const void*)(uintptr_t)30);
     
     // enable screen updates
     DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
     
     // schedule the next prison activity movie
     uintptr_t k = 30;
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)k);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
     NSTimeInterval delay;
     if (movie) {
         QTGetTimeInterval([movie duration], &delay);
@@ -4065,7 +4047,7 @@ static int64_t const left_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL, 
     uint32_t new_pos = old_pos + [[hn substringFromIndex:[hn length] - 1] intValue];
     
     // determine the playback selection for the viewer spin movie
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)1);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)(uintptr_t)1);
     QTTime duration = [movie duration];
     
     QTTime start_time = QTMakeTime(left_viewer_spin_timevals[old_pos], duration.timeScale);
@@ -4103,7 +4085,7 @@ static int64_t const right_viewer_spin_timevals[] = {0LL, 816LL, 1617LL, 2416LL,
     uint32_t new_pos = old_pos + [[hn substringFromIndex:[hn length] - 1] intValue];
     
     // determine the playback selection for the viewer spin movie
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)(uintptr_t)1);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)(uintptr_t)1);
     QTTime duration = [movie duration];
     
     QTTime start_time = QTMakeTime(right_viewer_spin_timevals[old_pos], duration.timeScale);
@@ -4452,7 +4434,7 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
         [gs setUnsigned32:old_pos + 1 forKey:@"gPinPos"];
     
     // configure the playback selection for the pin movie
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)pin_movie_code);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)pin_movie_code);
     if (!movie)
         return;
     
@@ -4468,7 +4450,7 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     uint32_t pin_pos = [gs unsigned32ForKey:@"gPinPos"];
     
     // configure the playback selection for the pin movie
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)pin_movie_code);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)pin_movie_code);
     if (!movie)
         return;
     
@@ -4484,7 +4466,7 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     uint32_t pin_pos = [gs unsigned32ForKey:@"gPinPos"];
     
     // configure the playback selection for the pin movie
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)pin_movie_code);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)pin_movie_code);
     if (!movie)
         return;
     
@@ -4810,7 +4792,7 @@ static int64_t const telescope_lower_timevals[] = {4320LL, 3440LL, 2660LL, 1760L
     
     // determine the playback selection for the telescope raise movie
     uintptr_t movie_code = ([gs unsignedShortForKey:@"ttelecover"] == 1) ? 4 : 5;
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)movie_code);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)movie_code);
     QTTime duration = [movie duration];
     
     QTTime start_time = QTMakeTime(telescope_raise_timevals[tele_position - 1], duration.timeScale);
@@ -4831,7 +4813,7 @@ static int64_t const telescope_lower_timevals[] = {4320LL, 3440LL, 2660LL, 1760L
     
     // determine the playback selection for the telescope lower movie
     uintptr_t movie_code = ([gs unsignedShortForKey:@"ttelecover"] == 1) ? 1 : 2;
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)movie_code);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)movie_code);
     QTTime duration = [movie duration];
     
     QTTime start_time = QTMakeTime(telescope_lower_timevals[tele_position], duration.timeScale);
@@ -5001,7 +4983,7 @@ DEFINE_COMMAND(xtisland390_covercombo) {
     // get the movie's duration (the codes are the same as the MLST in that card)
     // and compute the next movie's delay
     NSTimeInterval delay = 0.0;
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)mlst_index);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)mlst_index);
     if (movie)
         QTGetTimeInterval([movie duration], &delay);
     delay += (random() % 21) + 38;
@@ -5094,7 +5076,7 @@ DEFINE_COMMAND(xbookclick) {
     
     // ogr_b.mov is different from the other trap book movies because it leads
     // to end credits if you don't link; we need to handle it differently
-    RXMovie* movie = (RXMovie*)NSMapGet(code2movieMap, (const void*)movie_code);
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)movie_code);
     NSString* movie_name = [[[[(RXMovieProxy*)movie archive] valueForKey:@"tMOV"] objectAtIndex:[(RXMovieProxy*)movie ID]] objectForKey:@"Name"];
     assert(movie_name);
     

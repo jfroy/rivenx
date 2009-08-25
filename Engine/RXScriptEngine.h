@@ -37,10 +37,12 @@
     NSMutableDictionary* _dynamic_texture_cache;
     NSMutableDictionary* _picture_cache;
     
-    NSMapTable* code2movieMap;
-    semaphore_t _moviePlaybackSemaphore;
+    NSMapTable* code_movie_map;
     NSMutableSet* _movies_to_reset;
     RXMovieProxy* _blocking_movie;
+    semaphore_t _blocking_movie_semaphore;
+    uint16_t _scheduled_movie_command_code;
+    NSData* _scheduled_movie_command_data;
     
     RXSoundGroup* _synthesizedSoundGroup;
     
