@@ -912,6 +912,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     if (_blocking_movie && [_blocking_movie proxiedMovie] == [notification object]) {
         [_blocking_movie release];
         _blocking_movie = nil;
+        OSMemoryBarrier();
     }
 }
 
@@ -982,6 +983,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         
         [_blocking_movie release];
         _blocking_movie = nil;
+        OSMemoryBarrier();
     }
 }
 
@@ -1544,10 +1546,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     // get the stack for the given stack key
     NSString* k = [[[card descriptor] parent] stackNameAtIndex:argv[0]];
     RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:k];
-    if (!stack) {
-        _abortProgramExecution = YES;
-        return;
-    }
+    assert(stack);
     
     uint32_t card_rmap = (argv[1] << 16) | argv[2];
     uint16_t card_id = [stack cardIDFromRMAPCode:card_rmap];
@@ -5242,6 +5241,9 @@ DEFINE_COMMAND(xbookclick) {
         
         // go to card RMAP 10373
         DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:10373]);
+        
+        // abort the current line of script execution at this point (brings us back to a depth of 0)
+        _abortProgramExecution = YES;
     }
     // otherwise just wait for the movie to end
     else
