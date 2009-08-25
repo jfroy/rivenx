@@ -718,7 +718,8 @@ init_failure:
         return;
     }
 #if defined(DEBUG) && DEBUG > 1
-    else RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"updated active sources by removing %@", soundsToRemove);
+    else
+        RXOLog2(kRXLoggingAudio, kRXLoggingLevelDebug, @"updated active sources by removing %@", soundsToRemove);
 #endif
     
     // remove the sources for all expired sounds from the sound to source map and prepare the detach and delete array
