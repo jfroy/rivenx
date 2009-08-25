@@ -5090,6 +5090,18 @@ DEFINE_COMMAND(xbookclick) {
     // we'll need to handle the mouse cursor ourselves since hotspot handling
     // is disabled during script execution
     
+    // busy-wait until we reach the start timestamp
+    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:k_mouse_tracking_loop_period]])
+    {
+        // get the current movie time
+        QTTime movie_time = [movie _noLockCurrentTime];
+        
+        // if we have gone beyond the link window, exit the mouse tracking loop
+        if (movie_time.timeValue > start_timeval)
+            break;
+    }
+    
     // get the current mouse vector
     NSRect mouse_vector = [controller mouseVector];
     
@@ -5159,6 +5171,7 @@ DEFINE_COMMAND(xbookclick) {
     else if (mouse_was_pressed) {
         // stop and hide the movie
         DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, movie_code);
+        DISPATCH_COMMAND1(RX_COMMAND_STOP_MOVIE, movie_code);
         
         // start screen update transaction
         DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
@@ -5175,7 +5188,7 @@ DEFINE_COMMAND(xbookclick) {
         DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
         
         // play link sound (ID 0?)
-        DISPATCH_COMMAND1(RX_COMMAND_PLAY_DATA_SOUND, 0);
+        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 0, (uint16_t)kRXSoundGainDivisor, 0);
         
         // hide all movies
         DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
@@ -5205,7 +5218,7 @@ DEFINE_COMMAND(xbookclick) {
         [transition release];
         
         // play link sound (ID 0?)
-        DISPATCH_COMMAND1(RX_COMMAND_PLAY_DATA_SOUND, 0);
+        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 0, (uint16_t)kRXSoundGainDivisor, 0);
         
         // go to card RMAP 10373
         DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:10373]);
