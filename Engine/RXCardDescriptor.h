@@ -42,6 +42,8 @@
 - (RXStack*)parent;
 - (uint16_t)ID;
 - (NSString*)name;
+- (uint32_t)rmap;
+
 - (NSData*)data;
 
 - (RXSimpleCardDescriptor*)simpleDescriptor;

@@ -2400,8 +2400,11 @@ exit_render:
         }
         
         if (front_card) {       
-            RXSimpleCardDescriptor* scd = [[front_card descriptor] simpleDescriptor];
-            snprintf(debug_buffer, 100, "card: %s %d", [scd->stackKey cStringUsingEncoding:NSASCIIStringEncoding], scd->cardID);
+            RXCardDescriptor* desc = [front_card descriptor];
+            snprintf(debug_buffer, 100, "card: %s %d [rmap=%u]",
+                [[[desc parent] key] cStringUsingEncoding:NSASCIIStringEncoding],
+                [desc ID],
+                [desc rmap]);
             
             background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
             background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
