@@ -61,6 +61,11 @@
 
 - (void)_loadMovie {
     // WARNING: MUST RUN ON MAIN THREAD
+    if (!pthread_main_np())
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                       reason:@"[RXMovieProxy _loadMovie] MAIN THREAD ONLY"
+                                     userInfo:nil];
+    
     if (_movie)
         return;
     
