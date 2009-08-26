@@ -2430,7 +2430,8 @@ DEFINE_COMMAND(xcheckicons) {
         [[g_world gameState] setUnsigned32:0 forKey:@"jicons"];
         [[g_world gameState] setUnsigned32:0 forKey:@"jiconorder"];
         
-        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 46, (uint16_t)kRXSoundGainDivisor, 1);
+        uint16_t sfx = [self dataSoundIDForCurrentCardWithName:@"jfiveicdn"];
+        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, sfx, (uint16_t)kRXSoundGainDivisor, 1);
     }
 }
 
@@ -5209,7 +5210,7 @@ DEFINE_COMMAND(xbookclick) {
         // end screen update transaction
         DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
         
-        // play link sound (ID 0?)
+        // play link sound (which is always available as ID 0)
         DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 0, (uint16_t)kRXSoundGainDivisor, 0);
         
         // hide all movies
@@ -5239,7 +5240,7 @@ DEFINE_COMMAND(xbookclick) {
         [controller queueTransition:transition];
         [transition release];
         
-        // play link sound (ID 0?)
+        // play link sound (which is always available as ID 0)
         DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 0, (uint16_t)kRXSoundGainDivisor, 0);
         
         // go to card RMAP 10373
