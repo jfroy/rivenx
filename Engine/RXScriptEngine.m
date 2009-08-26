@@ -1685,6 +1685,9 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     
     // check for the scheduled movie command one more time
     [self _checkScheduledMovieCommandWithCode:argv[0] movie:movie];
+    
+    // wipe any scheduled movie command
+    memset(&_scheduled_movie_command, 0, sizeof(rx_scheduled_movie_command_t));
 }
 
 // 33
@@ -5277,6 +5280,35 @@ DEFINE_COMMAND(xorollcredittime) {
     
     // re-enable the mouse cursor directly, since it was hidden by the trap book handler
     [controller showMouseCursor];
+}
+
+DEFINE_COMMAND(xooffice30_closebook) {
+    uint32_t desk_book = [[g_world gameState] unsigned32ForKey:@"odeskbook"];
+    if (desk_book != 1)
+        return;
+    
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
+    
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"closebook") ID]);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"null") ID]);
+    DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"openbook") ID]);
+    
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 1);
+    
+    [[g_world gameState] setUnsigned32:0 forKey:@"odeskbook"];
+}
+
+DEFINE_COMMAND(xobedroom5_closedrawer) {
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, 2);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 1);
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 2);
+    
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"closedrawer") ID]);
+    DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendrawer") ID]);
+    
+    [[g_world gameState] setUnsigned32:0 forKey:@"ostanddrawer"];
 }
 
 @end
