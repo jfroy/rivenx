@@ -5312,4 +5312,27 @@ DEFINE_COMMAND(xobedroom5_closedrawer) {
     [[g_world gameState] setUnsigned32:0 forKey:@"ostanddrawer"];
 }
 
+DEFINE_COMMAND(xgwatch) {
+    uint32_t prison_combo = [[g_world gameState] unsigned32ForKey:@"pcorrectorder"];
+    
+    uint16_t combo_sounds[3];
+    combo_sounds[0] = [self dataSoundIDForCurrentCardWithName:@"aelev1"];
+    combo_sounds[1] = [self dataSoundIDForCurrentCardWithName:@"aelev2"];
+    combo_sounds[2] = [self dataSoundIDForCurrentCardWithName:@"aelev3"];
+    
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)1);
+    [(RXMovieProxy*)movie proxiedMovie];
+    
+    [self _hideMouseCursor];
+    
+    for (uint32_t i = 0; i < 5; i++) {
+        DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, combo_sounds[(prison_combo & 0x3) - 1], (uint16_t)kRXSoundGainDivisor, 0);
+        prison_combo >>= 2;
+        usleep(500 * 1E3);
+    }
+    
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
+    DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
+}
+
 @end
