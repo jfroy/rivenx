@@ -4885,7 +4885,7 @@ static int64_t const telescope_lower_timevals[] = {4320LL, 3440LL, 2660LL, 1760L
     
     uint16_t catherine_state = [gs unsignedShortForKey:@"pcage"];
     uint16_t gehn_state = [gs unsignedShortForKey:@"agehn"];
-    uint16_t has_trap_book = [gs unsignedShortForKey:@"atrapbook"];
+    uint16_t trap_book = [gs unsignedShortForKey:@"atrapbook"];
     
     uint16_t movie_mlst;
     if (catherine_state == 2)
@@ -4894,9 +4894,11 @@ static int64_t const telescope_lower_timevals[] = {4320LL, 3440LL, 2660LL, 1760L
     else if (gehn_state == 4)
         // gehn is trapped
         movie_mlst = 9;
-    else if (has_trap_book == 1)
+    else if (trap_book == 1)
+        // gehn is free, what have you done!
         movie_mlst = 10;
     else
+        // lucky guess
         movie_mlst = 11;
     
     [self _endgameWithMLST:movie_mlst delay:5.];
@@ -5247,10 +5249,10 @@ DEFINE_COMMAND(xbookclick) {
         // set ocage to 1
         [[g_world gameState] setUnsigned32:1 forKey:@"ocage"];
         
-        // set aGehn to 4
+        // set agehn to 4 (which indicates that Gehn is trapped)
         [[g_world gameState] setUnsigned32:4 forKey:@"agehn"];
         
-        // set aTrapBook to 1
+        // set atrapbook to 1 (giving the player the trap book)
         [[g_world gameState] setUnsigned32:1 forKey:@"atrapbook"];
         
         // play movie with MLST 7 (code 1) and wait until end
