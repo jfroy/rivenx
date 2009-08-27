@@ -651,6 +651,21 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
         _did_activate_slst = YES;
     }
     
+    // workarounds that should execute after the start rendering programs
+    RXSimpleCardDescriptor* ecsd = [[card descriptor] simpleDescriptor];
+    
+    // Catherine prison card - need to schedule the periodic movie event timer
+    if ([[card descriptor] isCardWithRMAP:14981 stackName:@"pspit"]) {
+        if (!cath_prison_card)
+            cath_prison_card = [ecsd retain];
+        [event_timer invalidate];
+        event_timer = [NSTimer scheduledTimerWithTimeInterval:(random() % 33) + 1
+                                                       target:self
+                                                     selector:@selector(_playCatherinePrisonMovie:)
+                                                     userInfo:nil
+                                                      repeats:NO];
+    }
+    
 #if defined(DEBUG)
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
@@ -3959,10 +3974,10 @@ static uint16_t const prison_activity_movies[3][8] = {
     
     [event_timer invalidate];
     event_timer = [NSTimer scheduledTimerWithTimeInterval:delay
-                                                           target:self
-                                                         selector:@selector(_playRandomPrisonActivityMovie:)
-                                                         userInfo:nil
-                                                          repeats:NO];
+                                                   target:self
+                                                 selector:@selector(_playRandomPrisonActivityMovie:)
+                                                 userInfo:nil
+                                                  repeats:NO];
 }
 
 DEFINE_COMMAND(xglview_prisonon) {
@@ -4028,10 +4043,10 @@ DEFINE_COMMAND(xglview_prisonon) {
     
     [event_timer invalidate];
     event_timer = [NSTimer scheduledTimerWithTimeInterval:delay
-                                                           target:self
-                                                         selector:@selector(_playRandomPrisonActivityMovie:)
-                                                         userInfo:nil
-                                                          repeats:NO];
+                                                   target:self
+                                                 selector:@selector(_playRandomPrisonActivityMovie:)
+                                                 userInfo:nil
+                                                  repeats:NO];
 }
 
 DEFINE_COMMAND(xglview_prisonoff) {
@@ -4735,10 +4750,10 @@ DEFINE_COMMAND(xbsettrap) {
     // schedule the event timer
     [event_timer invalidate];
     event_timer = [NSTimer scheduledTimerWithTimeInterval:catch_delay
-                                                       target:self
-                                                     selector:@selector(_catchFrog:)
-                                                     userInfo:nil
-                                                      repeats:NO];
+                                                   target:self
+                                                 selector:@selector(_catchFrog:)
+                                                 userInfo:nil
+                                                  repeats:NO];
     
     // set the trap time to the catch delay in usecs
     [[g_world gameState] setUnsigned64:catch_delay * 1E6 forKey:@"bytramtime"];
@@ -5026,10 +5041,10 @@ DEFINE_COMMAND(xtisland390_covercombo) {
     
     // schedule the event timer
     event_timer = [NSTimer scheduledTimerWithTimeInterval:delay
-                                                       target:self
-                                                     selector:@selector(_playRebelPrisonWindowMovie:)
-                                                     userInfo:nil
-                                                      repeats:NO];
+                                                   target:self
+                                                 selector:@selector(_playRebelPrisonWindowMovie:)
+                                                 userInfo:nil
+                                                  repeats:NO];
 }
 
 DEFINE_COMMAND(xrwindowsetup) {
@@ -5064,10 +5079,10 @@ DEFINE_COMMAND(xrwindowsetup) {
     // schedule the event timer
     [event_timer invalidate];
     event_timer = [NSTimer scheduledTimerWithTimeInterval:next_movie_delay
-                                                       target:self
-                                                     selector:@selector(_playRebelPrisonWindowMovie:)
-                                                     userInfo:nil
-                                                      repeats:NO];
+                                                   target:self
+                                                 selector:@selector(_playRebelPrisonWindowMovie:)
+                                                 userInfo:nil
+                                                  repeats:NO];
 }
 
 DEFINE_COMMAND(xrcredittime) {
@@ -5368,6 +5383,60 @@ DEFINE_COMMAND(xpisland990_elevcombo) {
         [gs setUnsigned32:correct_digits + 1 forKey:@"pelevcombo"];
     else
         [gs setUnsigned32:0 forKey:@"pelevcombo"];
+}
+
+static const uint16_t cath_prison_movie_mlsts0[] = {5, 6, 7, 8};
+static const uint16_t cath_prison_movie_mlsts1[] = {11, 14};
+static const uint16_t cath_prison_movie_mlsts2[] = {9, 10, 12, 13};
+
+- (void)_playCatherinePrisonMovie:(NSTimer*)timer {
+    [event_timer invalidate];
+    event_timer = nil;
+    
+    // if we're no longer in the catherine prison card, bail out
+    if (![[[card descriptor] simpleDescriptor] isEqual:cath_prison_card])
+        return;
+    
+    RXGameState* gs = [g_world gameState];
+    
+    // pick a random movie based on catherine's state
+    uint16_t movie_mlst;
+    if ([gs unsignedShortForKey:@"pcathcheck"] == 0) {
+        [gs setUnsigned32:1 forKey:@"pcathcheck"];
+        movie_mlst = cath_prison_movie_mlsts0[random() % 4];
+    } else if ([gs unsignedShortForKey:@"acathstate"] == 1)
+        movie_mlst = cath_prison_movie_mlsts1[random() % 2];
+    else
+        movie_mlst = cath_prison_movie_mlsts2[random() % 4];
+
+    // update catherine's state based on the selected movie (so that the
+    // next selected movie is spacially coherent)
+    if (movie_mlst == 5 || movie_mlst == 7 || movie_mlst == 11 || movie_mlst == 14)
+        [gs setUnsigned32:2 forKey:@"acathstate"];
+    else
+        [gs setUnsigned32:1 forKey:@"acathstate"];
+    
+    // hide all movies, play the selected movie blocking, then hide all movies again
+    DISPATCH_COMMAND0(RX_COMMAND_DISABLE_ALL_MOVIES);
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, movie_mlst);
+    
+    // get the movie's duration and compute the next movie's delay
+    NSTimeInterval delay = 0.0;
+    uintptr_t movie_code = [card movieCodes][movie_mlst - 1];
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)movie_code);
+    if (movie)
+        QTGetTimeInterval([movie duration], &delay);
+    delay += random() % 121;
+    
+    // store the delay pcathtime as µseconds
+    [[g_world gameState] setUnsigned64:delay * 1E6 forKey:@"pcathtime"];
+    
+    // schedule the event timer
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:delay
+                                                   target:self
+                                                 selector:@selector(_playCatherinePrisonMovie:)
+                                                 userInfo:nil
+                                                  repeats:NO];
 }
 
 @end

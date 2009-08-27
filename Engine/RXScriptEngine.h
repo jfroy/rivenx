@@ -82,6 +82,7 @@ typedef struct {
     uint16_t frog_trap_card;
     uint16_t rebel_prison_window_card;
     uint16_t whark_solo_card;
+    RXSimpleCardDescriptor* cath_prison_card;
     
     BOOL played_one_whark_solo;
     NSRect trapeze_rect;
