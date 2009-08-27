@@ -1805,11 +1805,21 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
             [self _emptyPictureCaches];
         
         // get a texture from the texture broker
-        rx_size_t picture_size = RXSizeMake(picture_record->rect.right - picture_record->rect.left, picture_record->rect.bottom - picture_record->rect.top);
+        MHKArchive* archive = [[[card parent] fileWithResourceType:@"tBMP" ID:picture_record->bitmap_id] archive];
+        assert(archive);
+        
+        NSError* error;
+        NSDictionary* picture_descriptor = [archive bitmapDescriptorWithID:picture_record->bitmap_id error:&error];
+        if (!picture_descriptor)
+            @throw [NSException exceptionWithName:@"RXPictureLoadException"
+                                           reason:@"Could not get a picture resource's picture descriptor."
+                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        
+        rx_size_t picture_size = RXSizeMake([[picture_descriptor objectForKey:@"Width"] intValue], [[picture_descriptor objectForKey:@"Height"] intValue]);
         RXTexture* picture_texture = [[RXTextureBroker sharedTextureBroker] newTextureWithSize:picture_size];
         
         // update the texture with the content of the picture
-        [picture_texture updateWithBitmap:picture_record->bitmap_id stack:[card parent]];
+        [picture_texture updateWithBitmap:picture_record->bitmap_id archive:archive];
         
         // create suitable sampling and display rects
         NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(picture_record->rect);
