@@ -1522,13 +1522,15 @@ init_failure:
 - (void)_renderInventoryWithTimestamp:(const CVTimeStamp*)output_time context:(CGLContextObj)cgl_ctx {
     RXGameState* gs = [g_world gameState];
     
-    // build a new set of inventory item flags
+    // build a new set of inventory item flags; note that for the trap book,
+    // the variable has to be exactly set to 1; in particular, atrapbook can be
+    // 3 when Gehn takes it from the player but the player refuses to use it
     uint32_t new_flags = 0;
     if ([gs unsigned32ForKey:@"aatrusbook"])
         new_flags |= 1 << RX_INVENTORY_ATRUS;
     if ([gs unsigned32ForKey:@"acathbook"])
         new_flags |= 1 << RX_INVENTORY_CATHERINE;
-    if ([gs unsigned32ForKey:@"atrapbook"])
+    if ([gs unsigned32ForKey:@"atrapbook"] == 1)
         new_flags |= 1 << RX_INVENTORY_TRAP;
     
     OSSpinLockLock(&_inventory_update_lock);
