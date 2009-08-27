@@ -79,14 +79,14 @@ struct _RXCardDescriptorPrimer {
 }
 
 - (NSUInteger)hash {
-    // WARNING: WILL BREAK ON 64-BIT
     return integer_pair_hash((int)[stackKey hash], (int)cardID);
 }
 
 - (BOOL)isEqual:(id)object {
     if ([self class] != [object class])
         return NO;
-    return ([stackKey isEqual:((RXSimpleCardDescriptor*)object)->stackKey] && cardID == ((RXSimpleCardDescriptor*)object)->cardID) ? YES : NO;
+    return ([stackKey isEqualToString:((RXSimpleCardDescriptor*)object)->stackKey] &&
+            cardID == ((RXSimpleCardDescriptor*)object)->cardID) ? YES : NO;
 }
 
 - (NSString*)stackKey {
