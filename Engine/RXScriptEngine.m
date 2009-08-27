@@ -5335,4 +5335,29 @@ DEFINE_COMMAND(xgwatch) {
     DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
 }
 
+#pragma mark -
+#pragma mark prison
+
+DEFINE_COMMAND(xpisland990_elevcombo) {
+    RXGameState* gs = [g_world gameState];
+    uint16_t button = argv[0];
+    
+    // play the specified combination sound
+    uint16_t combo_sound = [self dataSoundIDForCurrentCardWithName:[NSString stringWithFormat:@"aelev%d", argv[0]]];
+    DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, combo_sound, (uint16_t)kRXSoundGainDivisor, 0);
+    usleep(500 * 1E3);
+    
+    // if Gehn is not trapped, basically pretend nothing happened
+    if ([gs unsigned32ForKey:@"agehn"] != 4)
+        return;
+    
+    // pelevcombo stores the number of correct digits in the current sequence
+    uint32_t correct_digits = [gs unsigned32ForKey:@"pelevcombo"];
+    uint32_t prison_combo = [[g_world gameState] unsigned32ForKey:@"pcorrectorder"];
+    if (button == ((prison_combo >> (correct_digits << 1)) & 0x3))
+        [gs setUnsigned32:correct_digits + 1 forKey:@"pelevcombo"];
+    else
+        [gs setUnsigned32:0 forKey:@"pelevcombo"];
+}
+
 @end
