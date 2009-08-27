@@ -222,8 +222,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXTextureBroker, sharedTextureBroker)
     
     // this quick index calculation if possbile because of the way the buckets
     // were created in the initializer
-    int i = (int)ceilf(log2f(size.width)) - 5;
-    int j = (int)ceilf(log2f(size.height)) - 5;
+    int i = MAX(0, (int)ceilf(log2f(size.width)) - 5);
+    int j = MAX(0, (int)ceilf(log2f(size.height)) - 5);
     int32_t bucket_i = MIN((i * 5) + j, 5 * 5);
     
     for (; bucket_i < (int32_t)_bucket_count; bucket_i++) {
