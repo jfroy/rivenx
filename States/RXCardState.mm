@@ -1078,7 +1078,15 @@ init_failure:
 - (void)enableMovie:(RXMovie*)movie {
     OSSpinLockLock(&_render_lock);
     
-    uint32_t index = [_active_movies indexOfObject:movie];
+    uint32_t index;
+    
+    if (_movies_to_disable_on_next_update) {
+        index = [_movies_to_disable_on_next_update indexOfObject:movie];
+        if (index != NSNotFound)
+            [_movies_to_disable_on_next_update removeObjectAtIndex:index];
+    }
+    
+    index = [_active_movies indexOfObject:movie];
     if (index != NSNotFound)
         [_active_movies removeObjectAtIndex:index];
     
@@ -1110,23 +1118,30 @@ init_failure:
 #endif
 }
 
-- (void)_disableAllMoviesNoLock {
+- (void)disableAllMovies {
     CFArrayApplyFunction((CFArrayRef)_active_movies, CFRangeMake(0, [_active_movies count]), rx_release_owner_applier, self);
     [_active_movies removeAllObjects];
     
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled all movies [%d active movies]", [_active_movies count]);
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled all movies");
 #endif
 }
 
-- (void)disableAllMovies {
-    OSSpinLockLock(&_render_lock);
-    [self _disableAllMoviesNoLock];
-    OSSpinLockUnlock(&_render_lock);
+- (void)_disableMoviesToDisableOnNextUpdate {
+    CFArrayApplyFunction((CFArrayRef)_movies_to_disable_on_next_update, CFRangeMake(0, [_movies_to_disable_on_next_update count]), rx_release_owner_applier, self);
+    [_active_movies removeObjectsInArray:_movies_to_disable_on_next_update];
+    
+    [_movies_to_disable_on_next_update release];
+    _movies_to_disable_on_next_update = nil;
+    
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"disabled movies to disable on next update [%d active movies]", [_active_movies count]);
+#endif
 }
 
 - (void)disableAllMoviesOnNextScreenUpdate {
-    _disable_movies_next_update = YES;
+    [_movies_to_disable_on_next_update release];
+    _movies_to_disable_on_next_update = [_active_movies copy];
 }
 
 - (BOOL)isMovieEnabled:(RXMovie*)movie {
@@ -1226,9 +1241,8 @@ init_failure:
     // release the state swap lock
     OSSpinLockUnlock(&_state_swap_lock);
     
-    if (_disable_movies_next_update)
-        [self _disableAllMoviesNoLock];
-    _disable_movies_next_update = NO;
+    if (_movies_to_disable_on_next_update)
+        [self _disableMoviesToDisableOnNextUpdate];
     
     // we can resume rendering now
     OSSpinLockUnlock(&_render_lock);

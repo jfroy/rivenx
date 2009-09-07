@@ -58,7 +58,7 @@ struct rx_transition_program {
     NSMutableArray* _active_movies;
     OSSpinLock _render_lock;
     OSSpinLock _state_swap_lock;
-    BOOL _disable_movies_next_update;
+    NSMutableArray* _movies_to_disable_on_next_update;
     
     // mouse event and hotspot handling
     NSRect _mouse_vector;
