@@ -555,6 +555,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 - (void)_handleRateChange:(NSNotification*)notification {
     // WARNING: MUST RUN ON MAIN THREAD
     float rate = [[[notification userInfo] objectForKey:QTMovieRateDidChangeNotificationParameter] floatValue];
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"rate has changed to %f", rate);
+#endif
     if (fabsf(rate) < 0.001f)
         [[NSNotificationCenter defaultCenter] postNotificationName:RXMoviePlaybackDidEndNotification object:self];
 }
