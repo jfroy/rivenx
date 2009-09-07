@@ -85,7 +85,7 @@
         _case_pbuf = BUFFER_OFFSET(_case_pbuf, subprogram_size);
         case_index++;
         
-        return [_substream nextOpcode];
+        return [self nextOpcode];
     } else {
         _opcode.command = *_pbuf;
         _opcode.argc = *(_pbuf + 1);
