@@ -187,7 +187,6 @@
 		31B644ED10033B57008AD8E0 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		31B644F210033B7E008AD8E0 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384B08C6A73E004B7FD0 /* CoreServices.framework */; };
 		31B741C10B8414EA00D1A247 /* Cyan Worlds.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 31B741C00B8414EA00D1A247 /* Cyan Worlds.mp4 */; };
-		31BC2E840D6DD0F3008FA476 /* RXVariableEditorWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 31BC2E830D6DD0F3008FA476 /* RXVariableEditorWindowController.m */; };
 		31BC739F09A57D4E001EC1E0 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
 		31C3572A0D92A72400EDEF81 /* RXSound_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31C357290D92A72400EDEF81 /* RXSound_test.mm */; };
 		31C545530D5D50620024B486 /* RXEditionInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 31C545520D5D50620024B486 /* RXEditionInstaller.m */; };
@@ -1668,7 +1667,6 @@
 				311400640D58F5CA0099AF69 /* RXEditionProxy.m in Sources */,
 				3133D9AF0D5CDDC1004DAD5E /* BZFSOperation.m in Sources */,
 				31C545530D5D50620024B486 /* RXEditionInstaller.m in Sources */,
-				31BC2E840D6DD0F3008FA476 /* RXVariableEditorWindowController.m in Sources */,
 				3105EC330D74844900609273 /* RXLogCenter.m in Sources */,
 				3105EC610D74922500609273 /* RXLogging.m in Sources */,
 				3196B9360D945CC100BC818E /* RXTiming.c in Sources */,
