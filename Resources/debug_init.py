@@ -106,14 +106,11 @@ def _find_missing_externals(card):
 
     scripts = card.scripts()
     for event in scripts.allKeys():
-        #print event
         for script in scripts[event]:
             externals.update(debug._findExternalCommands_card_(script, card))
     for hotspot in card.hotspots():
-        #print hotspot.name()
         scripts = hotspot.scripts()
         for event in scripts.allKeys():
-            #print event
             for script in scripts[event]:
                 externals.update(debug._findExternalCommands_card_(script, card))
 
@@ -123,10 +120,10 @@ def cmd_missing_externals(*args):
     edition = edition_manager.currentEdition()
     stacks = edition.valueForKey_("stackDescriptors").allKeys()
 
-    stack = edition_manager.loadStackWithKey_('bspit')
-    desc = RXCardDescriptor.alloc().initWithStack_ID_(stack, 284)
-    card = RXCard.alloc().initWithCardDescriptor_(desc)
-    _find_missing_externals(card)
+#    stack = edition_manager.loadStackWithKey_('jspit')
+#    desc = RXCardDescriptor.alloc().initWithStack_ID_(stack, 628)
+#    card = RXCard.alloc().initWithCardDescriptor_(desc)
+#    _find_missing_externals(card)
 
     for stack_key in sorted(stacks):
         stack = edition_manager.loadStackWithKey_(stack_key)
