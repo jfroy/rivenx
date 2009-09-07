@@ -149,10 +149,10 @@ static PyMethodDef rivenx_methods[] = {
 #pragma mark debug commands
 
 - (NSMutableSet*)_findExternalCommands:(NSDictionary*)script card:(RXCard*)card {
-    RXScriptOpcodeStream* ostream = [[RXScriptOpcodeStream alloc] initWithScript:script];
+    RXScriptOpcodeStream* opstream = [[RXScriptOpcodeStream alloc] initWithScript:script];
     NSMutableSet* command_names = [NSMutableSet set];
     rx_opcode_t* opcode;
-    while ((opcode = [ostream nextOpcode])) {
+    while ((opcode = [opstream nextOpcode])) {
         if (opcode->command != RX_COMMAND_CALL_EXTERNAL)
             continue;
         
