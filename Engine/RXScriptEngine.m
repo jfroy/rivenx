@@ -109,6 +109,11 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
     rx_dispatch_externalv(target, external_name, 1, args);
 }
 
+CF_INLINE double rx_rnd_range(double lower, double upper) {
+    long r = random();
+    return ((double)r / INT32_MAX) * (upper - lower) + lower;
+}
+
 
 @interface RXScriptEngine (RXScriptOpcodes)
 - (void)_opcode_activateSLST:(const uint16_t)argc arguments:(const uint16_t*)argv;
