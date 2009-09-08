@@ -599,15 +599,11 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         // prevent it from re-appearing between the moment the cross-fade
         // transition completes and the moment the first movie plays
         [self _hideMouseCursor];
-    } else if ([[card descriptor] isCardWithRMAP:k_trap_book_card_rmap stackName:@"aspit"]) {
-        // schedule a deferred execution of _handleTrapBookLink on ourselves; also hard-hide the mouse cursor for this sequence
-        [self performSelector:@selector(_handleTrapBookLink) withObject:nil afterDelay:5.0];
-        [controller hideMouseCursor];
     }
     
     // force a screen update
     _screen_update_disable_counter = 1;
-     DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
+    DISPATCH_COMMAND0(RX_COMMAND_ENABLE_SCREEN_UPDATES);
      
      // now run the start rendering programs
      [self startRendering];
