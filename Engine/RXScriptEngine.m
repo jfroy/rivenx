@@ -927,6 +927,17 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #pragma mark -
 #pragma mark movie playback
 
+- (void)skipBlockingMovie {
+    // WARNING: WILL RUN ON MAIN THREAD
+    if (_blocking_movie) {
+        [(RXMovie*)_blocking_movie gotoEnd];
+        
+        [_blocking_movie release];
+        _blocking_movie = nil;
+        OSMemoryBarrier();
+    }
+}
+
 - (void)_handleBlockingMovieFinishedPlaying:(NSNotification*)notification {
     // WARNING: WILL RUN ON MAIN THREAD
     if (_blocking_movie && [_blocking_movie proxiedMovie] == [notification object]) {
@@ -934,20 +945,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         _blocking_movie = nil;
         OSMemoryBarrier();
     }
-}
-
-- (void)_resetMovie:(RXMovie*)movie {
-    // WARNING: MUST RUN ON MAIN THREAD
-    
-    // the movie could be enabled (the bspit 279 book shows this), in which
-    // case we need to defer the reset until the movie is played or enabled
-    if ([controller isMovieEnabled:movie]) {
-#if defined(DEBUG)
-        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@deferring reset of movie %@ because it is enabled", logPrefix, movie);
-#endif
-        [_movies_to_reset addObject:movie];
-    } else
-        [movie reset];
 }
 
 - (void)_playMovie:(RXMovie*)movie {
@@ -964,26 +961,23 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     [movie play];
 }
 
-- (void)_playBlockingMovie:(RXMovie*)movie {
-    // WARNING: MUST RUN ON MAIN THREAD
-    assert([movie isKindOfClass:[RXMovieProxy class]]);
-    
-    // if the movie is scheduled for reset, do the reset now
-    if ([_movies_to_reset containsObject:movie]) {
-        [movie reset];
-        [_movies_to_reset removeObject:movie];
-    }
-    
-    // disable looping to make sure we don't deadlock by never finishing playback
-    [movie setLooping:NO];
-    
-    // start playing the movie
-    [movie play];
-}
-
 - (void)_stopMovie:(RXMovie*)movie {
     // WARNING: MUST RUN ON MAIN THREAD
     [movie stop];
+}
+
+- (void)_resetMovie:(RXMovie*)movie {
+    // WARNING: MUST RUN ON MAIN THREAD
+    
+    // the movie could be enabled (the bspit 279 book shows this), in which
+    // case we need to defer the reset until the movie is played or enabled
+    if ([controller isMovieEnabled:movie]) {
+#if defined(DEBUG)
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@deferring reset of movie %@ because it is enabled", logPrefix, movie);
+#endif
+        [_movies_to_reset addObject:movie];
+    } else
+        [movie reset];
 }
 
 - (void)_muteMovie:(RXMovie*)movie {
@@ -997,13 +991,35 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     [(RXMovieProxy*)movie restoreMovieVolume];
 }
 
-- (void)skipBlockingMovie {
-    if (_blocking_movie) {
-        [(RXMovie*)_blocking_movie gotoEnd];
-        
-        [_blocking_movie release];
-        _blocking_movie = nil;
-        OSMemoryBarrier();
+- (void)_disableLoopingOnMovie:(RXMovie*)movie {
+    // WARNING: MUST RUN ON MAIN THREAD
+    [movie setLooping:NO];
+}
+
+- (void)_checkScheduledMovieCommandWithCode:(uint16_t)code movie:(RXMovie*)movie {
+    if (_scheduled_movie_command.code != code) {
+        memset(&_scheduled_movie_command, 0, sizeof(rx_scheduled_movie_command_t));
+        return;
+    }
+    
+    NSTimeInterval movie_position;
+    QTGetTimeInterval([movie _noLockCurrentTime], &movie_position);
+    if (movie_position > _scheduled_movie_command.time) {
+#if defined(DEBUG)
+        if (!_disableScriptLogging) {
+            RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@executing scheduled movie command {", logPrefix);
+            [logPrefix appendString:@"    "];
+        }
+#endif
+        DISPATCH_COMMAND1(_scheduled_movie_command.command[0], _scheduled_movie_command.command[1]);
+#if defined(DEBUG)
+        if (!_disableScriptLogging) {
+            [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
+            RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+        }
+#endif
+            
+        memset(&_scheduled_movie_command, 0, sizeof(rx_scheduled_movie_command_t));
     }
 }
 
@@ -1266,8 +1282,8 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     uintptr_t k = mlst_r->code;
     NSMapInsert(code_movie_map, (const void*)k, movie);
     
-    // reset the movie
-    [self performSelectorOnMainThread:@selector(_resetMovie:) withObject:movie waitUntilDone:YES];
+    // schedule the movie for reset
+    [_movies_to_reset addObject:movie];
     
     // should re-apply the MLST settings to the movie here, but because of the way RX is setup, we don't need to do that
     // in particular, _resetMovie will reset the movie back to the beginning and invalidate any decoded frame it may have
@@ -1640,33 +1656,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     [controller enableMovie:movie];
 }
 
-- (void)_checkScheduledMovieCommandWithCode:(uint16_t)code movie:(RXMovie*)movie {
-    if (_scheduled_movie_command.code != code) {
-        memset(&_scheduled_movie_command, 0, sizeof(rx_scheduled_movie_command_t));
-        return;
-    }
-    
-    NSTimeInterval movie_position;
-    QTGetTimeInterval([movie _noLockCurrentTime], &movie_position);
-    if (movie_position > _scheduled_movie_command.time) {
-#if defined(DEBUG)
-        if (!_disableScriptLogging) {
-            RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@executing scheduled movie command {", logPrefix);
-            [logPrefix appendString:@"    "];
-        }
-#endif
-        DISPATCH_COMMAND1(_scheduled_movie_command.command[0], _scheduled_movie_command.command[1]);
-#if defined(DEBUG)
-        if (!_disableScriptLogging) {
-            [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
-            RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
-        }
-#endif
-            
-        memset(&_scheduled_movie_command, 0, sizeof(rx_scheduled_movie_command_t));
-    }
-}
-
 // 32
 - (void)_opcode_startMovieAndWaitUntilDone:(const uint16_t)argc arguments:(const uint16_t*)argv {
     if (argc < 1)
@@ -1690,17 +1679,20 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // start the movie
     _blocking_movie = (RXMovieProxy*)[movie retain];
-    [self performSelectorOnMainThread:@selector(_playBlockingMovie:) withObject:movie waitUntilDone:YES];
+    [self performSelectorOnMainThread:@selector(_disableLoopingOnMovie:) withObject:movie waitUntilDone:NO];
+    [self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
     
     // enable the movie in the renderer
     [controller enableMovie:movie];
     
     // wait until the movie is done playing
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]]) {        
+    while (1) {        
         [self _checkScheduledMovieCommandWithCode:argv[0] movie:movie];
         
         if (!_blocking_movie)
             break;
+        
+        usleep(kRunloopPeriod * 1E6);
     }
     
     // check for the scheduled movie command one more time
@@ -1961,11 +1953,11 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     RXMovie* movie = [[card movies] objectAtIndex:argv[0] - 1];
     NSMapInsert(code_movie_map, (const void*)k, movie);
     
-    // reset the movie
-    [self performSelectorOnMainThread:@selector(_resetMovie:) withObject:movie waitUntilDone:YES];
+    // schedule the movie for reset
+    [_movies_to_reset addObject:movie];
     
     // should re-apply the MLST settings to the movie here, but because of the way RX is setup, we don't need to do that
-    // in particular, _resetMovie will reset the movie back to the beginning and invalidate any decoded frame it may have
+    // in particular, movie reset will put the movie back to its beginning and invalidate any decoded frame it may have
 }
 
 // 47
