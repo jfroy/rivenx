@@ -2005,6 +2005,10 @@ DEFINE_COMMAND(xasetupcomplete) {
     DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, 1);
 }
 
+DEFINE_COMMAND(xastartupbtnhide) {
+    // not implementing this for Riven X
+}
+
 #pragma mark -
 #pragma mark inventory
 
