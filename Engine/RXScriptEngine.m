@@ -5348,9 +5348,6 @@ DEFINE_COMMAND(xgwatch) {
     combo_sounds[1] = [self dataSoundIDForCurrentCardWithName:@"aelev2"];
     combo_sounds[2] = [self dataSoundIDForCurrentCardWithName:@"aelev3"];
     
-    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)1);
-    [(RXMovieProxy*)movie proxiedMovie];
-    
     [self _hideMouseCursor];
     
     for (uint32_t i = 0; i < 5; i++) {
