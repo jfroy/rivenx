@@ -35,6 +35,11 @@ static NSTimeInterval const kRunloopPeriod = 0.001;
 
 static uint32_t const k_trap_book_card_rmap = 7940;
 
+static uint32_t const sunners_upper_stairs_rmap = 30678;
+static uint32_t const sunners_mid_stairs_rmap = 31165;
+static uint32_t const sunners_lower_stairs_rmap = 31723;
+static uint32_t const sunners_beach_rmap = 46794;
+
 
 typedef void (*rx_command_imp_t)(id, SEL, const uint16_t, const uint16_t*);
 struct _rx_command_dispatch_entry {
@@ -653,18 +658,36 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     }
     
     // workarounds that should execute after the start rendering programs
-    RXSimpleCardDescriptor* ecsd = [[card descriptor] simpleDescriptor];
+    RXCardDescriptor* cdesc = [card descriptor];
     
-    // Catherine prison card - need to schedule the periodic movie event timer
-    if ([[card descriptor] isCardWithRMAP:14981 stackName:@"pspit"]) {
+    // Catherine prison card - need to schedule periodic movie events
+    if ([cdesc isCardWithRMAP:14981 stackName:@"pspit"]) {
         if (!cath_prison_card)
-            cath_prison_card = [ecsd retain];
+            cath_prison_card = [[cdesc simpleDescriptor] retain];
         [event_timer invalidate];
         event_timer = [NSTimer scheduledTimerWithTimeInterval:(random() % 33) + 1
                                                        target:self
                                                      selector:@selector(_playCatherinePrisonMovie:)
                                                      userInfo:nil
                                                       repeats:NO];
+    }
+    // schedule a deferred execution of _handleTrapBookLink on ourselves; also hard-hide the mouse cursor for this sequence
+    else if ([cdesc isCardWithRMAP:k_trap_book_card_rmap stackName:@"aspit"]) {
+        [self performSelector:@selector(_handleTrapBookLink) withObject:nil afterDelay:5.0];
+        [controller hideMouseCursor];
+    }
+    // schedule sunners events if we're on one of the sunners cards
+    else if ([cdesc isCardWithRMAP:sunners_upper_stairs_rmap stackName:@"jspit"] ||
+             [cdesc isCardWithRMAP:sunners_mid_stairs_rmap stackName:@"jspit"] ||
+             [cdesc isCardWithRMAP:sunners_lower_stairs_rmap stackName:@"jspit"] ||
+             [cdesc isCardWithRMAP:sunners_beach_rmap stackName:@"jspit"])
+    {
+        if (![[g_world gameState] unsigned64ForKey:@"jsunners"] && !event_timer)
+            event_timer = [NSTimer scheduledTimerWithTimeInterval:0.5
+                                                           target:self
+                                                         selector:@selector(_handleSunnersIdleEvent:)
+                                                         userInfo:nil
+                                                          repeats:YES];
     }
     
 #if defined(DEBUG)
@@ -5433,6 +5456,347 @@ static const uint16_t cath_prison_movie_mlsts2[] = {9, 10, 12, 13};
                                                  selector:@selector(_playCatherinePrisonMovie:)
                                                  userInfo:nil
                                                   repeats:NO];
+}
+
+#pragma mark -
+#pragma mark jungle beetles
+
+- (void)_setPlayBeetleRandomly {
+    // play a beetle movie 1 out of 4 times
+    [[g_world gameState] setUnsigned32:(random() % 4) ? 0 : 1 forKey:@"jplaybeetle"];
+}
+
+DEFINE_COMMAND(xjplaybeetle_550) {
+    [self _setPlayBeetleRandomly];
+}
+
+DEFINE_COMMAND(xjplaybeetle_600) {
+    [self _setPlayBeetleRandomly];
+}
+
+DEFINE_COMMAND(xjplaybeetle_950) {
+    [self _setPlayBeetleRandomly];
+}
+
+DEFINE_COMMAND(xjplaybeetle_1050) {
+    [self _setPlayBeetleRandomly];
+}
+
+DEFINE_COMMAND(xjplaybeetle_1450) {
+    if ([[g_world gameState] unsigned32ForKey:@"jgirl"] != 1)
+        [self _setPlayBeetleRandomly];
+    else
+        [[g_world gameState] setUnsigned32:0 forKey:@"jplaybeetle"];
+}
+
+#pragma mark -
+#pragma mark jungle lagoon
+
+- (void)_playSunnersMovieWaitingForMouseClick:(RXMovie*)movie setSunnersOnClick:(BOOL)set_sunners {
+    // reset and start the movie if it is not currently playing
+    if ([movie rate] == 0.0f) {
+        [_movies_to_reset addObject:movie];
+        [self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
+    }
+    
+    // enable the movie in the renderer
+    [controller enableMovie:movie];
+    
+    // block until the movie ends or the player presses the mouse button
+    rx_event_t mouse_down_event = [controller lastMouseDownEvent];
+    BOOL mouse_was_pressed = NO;
+    RXHotspot* hotspot;
+    while (1) {
+        // if the movie is over, bail out of the loop
+        if ([movie rate] == 0.0f)
+            break;
+        
+        // if the mouse has been pressed, bail out of the loop if we hit a hotspot
+        rx_event_t event = [controller lastMouseDownEvent];
+        if (event.timestamp > mouse_down_event.timestamp) {
+            NSEnumerator* hotspots_enum = [[self activeHotspots] objectEnumerator];
+            while ((hotspot = [hotspots_enum nextObject])) {
+                if (NSMouseInRect(event.location, [hotspot worldFrame], NO))
+                    break;
+            }
+            
+            if (hotspot) {
+                mouse_was_pressed = YES;
+                break;
+            }
+        }
+        
+        usleep(kRunloopPeriod * 1E6);
+    }
+    
+    // if the mouse was pressed, stop the movie and update jsunners if requested
+    if (mouse_was_pressed) {
+        [self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
+        
+        if (set_sunners) {            
+            // only set jsunners if the hotspot was one of the "forward" hotspots
+            if (hotspot && [[hotspot name] hasPrefix:@"forward"])
+                [[g_world gameState] setUnsigned32:1 forKey:@"jsunners"];
+        }
+    }
+    // otherwise, disable the movie in the renderer
+    else
+        [controller disableMovie:movie];
+}
+
+- (void)_handleSunnersUpperStairsEvent {
+    RXGameState* gs = [g_world gameState];
+    RXMovie* movie;
+    
+    // if the sunners are gone, we're done
+    if ([gs unsigned64ForKey:@"jsunners"])
+        return;
+    
+    // the upper stairs card plays the movie with code 1 in the background, so
+    // if that's still playing, we're done
+    movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)1);
+    if ([(RXMovieProxy*)movie proxiedMovie] && [movie rate] > 0.0f)
+        return;
+    
+    uint64_t sunners_time = [gs unsigned64ForKey:@"jsunnertime"];
+    
+    // if we haven't set a sunner movie delay yet, do so now
+    if (sunners_time == 0) {
+        sunners_time = RXTimingOffsetTimestamp(RXTimingNow(), rx_rnd_range(2.0, 15.0));
+        [gs setUnsigned64:sunners_time forKey:@"jsunnertime"];
+    }
+    
+    // if the time has not come yet, bail out
+    if (sunners_time > RXTimingNow())
+        return;
+    
+#if defined(DEBUG)
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing upper stairs sunners movie {", logPrefix, card);
+    [logPrefix appendString:@"    "];
+#endif
+    
+    // select a random movie code between 1 and 3 and get the corresponding movie object
+    uint16_t movie_code = (random() % 3) + 1;
+    movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)(uintptr_t)movie_code);
+    
+    // block on the movie or until the mouse is pressed
+    [self _playSunnersMovieWaitingForMouseClick:movie setSunnersOnClick:NO];
+    
+    // set a new sunner movie time
+    [gs setUnsigned64:RXTimingOffsetTimestamp(RXTimingNow(), rx_rnd_range(2.0, 15.0)) forKey:@"jsunnertime"];
+    
+#if defined(DEBUG)
+    [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+#endif
+}
+
+- (void)_handleSunnersMidStairsEvent {
+    RXGameState* gs = [g_world gameState];
+    RXMovie* movie;
+    
+    // xjlagoon700_alert plays the movie with code 1 in the background, so if
+    // that's still playing, we're done
+    movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)1);
+    if ([(RXMovieProxy*)movie proxiedMovie] && [movie rate] > 0.0f)
+        return;
+    
+    uint64_t sunners_time = [gs unsigned64ForKey:@"jsunnertime"];
+    
+    // if we haven't set a sunner movie delay yet, do so now
+    if (sunners_time == 0) {
+        sunners_time = RXTimingOffsetTimestamp(RXTimingNow(), rx_rnd_range(1.0, 10.0));
+        [gs setUnsigned64:sunners_time forKey:@"jsunnertime"];
+    }
+    
+    // if the time has not come yet, bail out
+    if (sunners_time > RXTimingNow())
+        return;
+    
+#if defined(DEBUG)
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing mid stairs sunners movie {", logPrefix, card);
+    [logPrefix appendString:@"    "];
+#endif
+    
+    // select a random movie code between 2 and 4 and get the corresponding movie object
+    long r = random() % 6;
+    uint16_t movie_code;
+    if (r == 4)
+        movie_code = 2;
+    else if (r == 5)
+        movie_code = 3;
+    else
+        movie_code = 4;
+    movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)(uintptr_t)movie_code);
+    
+    // block on the movie or until the mouse is pressed
+    [self _playSunnersMovieWaitingForMouseClick:movie setSunnersOnClick:NO];
+    
+    // set a new sunner movie time
+    [gs setUnsigned64:RXTimingOffsetTimestamp(RXTimingNow(), rx_rnd_range(1.0, 10.0)) forKey:@"jsunnertime"];
+    
+#if defined(DEBUG)
+    [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+#endif
+}
+
+- (void)_handleSunnersLowerStairsEvent {
+    RXGameState* gs = [g_world gameState];
+    RXMovie* movie;
+    
+    // xjlagoon800_alert plays the movie with code 1 in the background, so if
+    // that's still playing, we're done
+    movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)1);
+    if ([(RXMovieProxy*)movie proxiedMovie] && [movie rate] > 0.0f)
+        return;
+    
+    uint64_t sunners_time = [gs unsigned64ForKey:@"jsunnertime"];
+    
+    // if we haven't set a sunner movie delay yet, do so now
+    if (sunners_time == 0) {
+        sunners_time = RXTimingOffsetTimestamp(RXTimingNow(), rx_rnd_range(1.0, 30.0));
+        [gs setUnsigned64:sunners_time forKey:@"jsunnertime"];
+    }
+    
+    // if the time has not come yet, bail out
+    if (sunners_time > RXTimingNow())
+        return;
+    
+#if defined(DEBUG)
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing lower stairs sunners movie {", logPrefix, card);
+    [logPrefix appendString:@"    "];
+#endif
+    
+    // select a random movie code between 3 and 5 and get the corresponding movie object
+    uint16_t movie_code = (random() % 3) + 3;
+    movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)(uintptr_t)movie_code);
+    
+    // block on the movie or until the mouse is pressed
+    [self _playSunnersMovieWaitingForMouseClick:movie setSunnersOnClick:NO];
+    
+    // set a new sunner movie time
+    [gs setUnsigned64:RXTimingOffsetTimestamp(RXTimingNow(), rx_rnd_range(1.0, 30.0)) forKey:@"jsunnertime"];
+    
+#if defined(DEBUG)
+    [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+#endif
+}
+
+- (void)_handleSunnersBeachEvent {
+    RXGameState* gs = [g_world gameState];
+    RXMovie* movie;
+    
+    // xjlagoon1500_alert plays the movie with code 3 in the background, so if
+    // that's still playing, we're done
+    movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)3);
+    if ([(RXMovieProxy*)movie proxiedMovie] && [movie rate] > 0.0f)
+        return;
+    
+    uint64_t sunners_time = [gs unsigned64ForKey:@"jsunnertime"];
+    
+    // if we haven't set a sunner movie delay yet, do so now
+    if (sunners_time == 0) {
+        sunners_time = RXTimingOffsetTimestamp(RXTimingNow(), rx_rnd_range(1.0, 30.0));
+        [gs setUnsigned64:sunners_time forKey:@"jsunnertime"];
+    }
+    
+    // if the time has not come yet, bail out
+    if (sunners_time > RXTimingNow())
+        return;
+    
+#if defined(DEBUG)
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing beach sunners movie {", logPrefix, card);
+    [logPrefix appendString:@"    "];
+#endif
+    
+    // select a random MLST between 3 and 8 and play the movie blocking (the movie
+    // codes match the MLST index)
+    uint16_t movie_mlst = (random() % 6) + 3;
+    DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, movie_mlst);
+    DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, movie_mlst);
+    
+    // show the mouse cursor again (since the movie blocking command will have hidden it)
+    [self _showMouseCursor];
+    
+    // set a new sunner movie time
+    [gs setUnsigned64:RXTimingOffsetTimestamp(RXTimingNow(), rx_rnd_range(1.0, 30.0)) forKey:@"jsunnertime"];
+    
+#if defined(DEBUG)
+    [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
+#endif
+}
+
+- (void)_handleSunnersIdleEvent:(NSTimer*)timer {
+    // if the sunners are gone, we're done
+    if ([[g_world gameState] unsigned64ForKey:@"jsunners"]) {
+        [event_timer invalidate];
+        event_timer = nil;
+        return;
+    }
+    
+    RXCardDescriptor* cdesc = [card descriptor];
+    if ([cdesc isCardWithRMAP:sunners_upper_stairs_rmap stackName:@"jspit"])
+        [self _handleSunnersUpperStairsEvent];
+    else if ([cdesc isCardWithRMAP:sunners_mid_stairs_rmap stackName:@"jspit"])
+        [self _handleSunnersMidStairsEvent];
+    else if ([cdesc isCardWithRMAP:sunners_lower_stairs_rmap stackName:@"jspit"])
+        [self _handleSunnersLowerStairsEvent];
+    else if ([cdesc isCardWithRMAP:sunners_beach_rmap stackName:@"jspit"])
+        [self _handleSunnersBeachEvent];
+    else {
+        [event_timer invalidate];
+        event_timer = nil;
+    }
+}
+
+DEFINE_COMMAND(xjlagoon700_alert) {
+    if ([[g_world gameState] unsigned32ForKey:@"jsunners"])
+        return;
+    
+    // re-enable hotspot processing in the controller at this time
+    [controller enableHotspotHandling];
+    
+    // play movie with code 1 and block until the end of the movie or the player
+    // moves; if the player moves, we'll update jsunners
+    RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)1);
+    [self _playSunnersMovieWaitingForMouseClick:movie setSunnersOnClick:YES];
+    
+    // disable hotspot processing to balance the counter
+    [controller disableHotspotHandling];
+}
+
+DEFINE_COMMAND(xjlagoon800_alert) {
+    uint32_t sunners = [[g_world gameState] unsigned32ForKey:@"jsunners"];
+    if (!sunners) {
+        // re-enable hotspot processing in the controller at this time
+        [controller enableHotspotHandling];
+        
+        // play movie with code 1 and block until the end of the movie or the player
+        // moves; if the player moves, we'll update jsunners
+        RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)1);
+        [self _playSunnersMovieWaitingForMouseClick:movie setSunnersOnClick:YES];
+        
+        // disable hotspot processing to balance the counter
+        [controller disableHotspotHandling];
+    } else if (sunners == 1) {
+        DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
+        DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 6);
+        
+        [[g_world gameState] setUnsigned32:2 forKey:@"jsunners"];
+    }
+}
+
+DEFINE_COMMAND(xjlagoon1500_alert) {
+    uint32_t sunners = [[g_world gameState] unsigned32ForKey:@"jsunners"];
+    if (!sunners) {
+        DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 3);
+    } else if (sunners == 1) {
+        DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
+        [[g_world gameState] setUnsigned32:2 forKey:@"jsunners"];
+    }
 }
 
 @end
