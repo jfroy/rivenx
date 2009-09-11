@@ -530,8 +530,6 @@
 		31B78EC50C88F25F00227E0F /* Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 		31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = DebugRelease.xcconfig; sourceTree = "<group>"; };
 		31B78EC70C88F25F00227E0F /* RivenX.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = RivenX.xcconfig; sourceTree = "<group>"; };
-		31BC2E820D6DD0F3008FA476 /* RXVariableEditorWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVariableEditorWindowController.h; sourceTree = "<group>"; };
-		31BC2E830D6DD0F3008FA476 /* RXVariableEditorWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVariableEditorWindowController.m; sourceTree = "<group>"; };
 		31BC739C09A57D4E001EC1E0 /* RXAudioSourceBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAudioSourceBase.h; sourceTree = "<group>"; };
 		31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RXAudioSourceBase.cpp; sourceTree = "<group>"; };
 		31C356F80D92A38500EDEF81 /* UnitTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "UnitTests-Info.plist"; sourceTree = "<group>"; };
@@ -1015,8 +1013,6 @@
 		31BC2E600D6DC3B6008FA476 /* Debug */ = {
 			isa = PBXGroup;
 			children = (
-				31BC2E820D6DD0F3008FA476 /* RXVariableEditorWindowController.h */,
-				31BC2E830D6DD0F3008FA476 /* RXVariableEditorWindowController.m */,
 				93FDAD44098A78DE00D94CD0 /* RXDebugWindowController.h */,
 				93FDAD45098A78DE00D94CD0 /* RXDebugWindowController.mm */,
 				311B7C810BCC4D0500653D2D /* RXDebug.h */,
