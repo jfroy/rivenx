@@ -5131,6 +5131,8 @@ DEFINE_COMMAND(xbookclick) {
     int64_t end_timeval = argv[2];
     uint16_t touchbook_index = argv[3];
     
+    RXGameState* gs = [g_world gameState];
+    
     // get the specified touchbook hotspot
     NSString* touchbook_hotspot_name = [NSString stringWithFormat:@"touchbook%hu", touchbook_index];
     RXHotspot* touchbook_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], touchbook_hotspot_name);
@@ -5142,12 +5144,16 @@ DEFINE_COMMAND(xbookclick) {
     NSString* movie_name = [[[[(RXMovieProxy*)movie archive] valueForKey:@"tMOV"] objectAtIndex:[(RXMovieProxy*)movie ID]] objectForKey:@"Name"];
     assert(movie_name);
     
-    BOOL endgame_movie;
-    NSRange r = [movie_name rangeOfString:@"ogr_b.mov" options:NSCaseInsensitiveSearch range:NSMakeRange(0, [movie_name length])];
-    if (r.location != NSNotFound)
-        endgame_movie = YES;
+    BOOL endgame_movie = [movie_name hasSuffix:@"ogr_b.mov"];
+    
+    // for the movies where we give the trap book to Gehn, we need to schedule setting atrapbook to 0
+    int64_t remove_trap_book_time;
+    if ([movie_name hasSuffix:@"ogc_b.mov"])
+        remove_trap_book_time = 7200LL;
+    else if ([movie_name hasSuffix:@"ogf_b.mov"])
+        remove_trap_book_time = 13200LL;
     else
-        endgame_movie = NO;
+        remove_trap_book_time = 0;
     
     // we'll need to handle the mouse cursor ourselves since hotspot handling
     // is disabled during script execution
@@ -5156,6 +5162,12 @@ DEFINE_COMMAND(xbookclick) {
     while (1) {
         // get the current movie time
         QTTime movie_time = [movie _noLockCurrentTime];
+        
+        // if we have reached the point where Gehn takes the trap book, set atrapbook to 0
+        if (remove_trap_book_time && movie_time.timeValue > remove_trap_book_time) {
+            [gs setUnsigned32:0 forKey:@"atrapbook"];
+            remove_trap_book_time = 0;
+        }
         
         // if we have gone beyond the link window, exit the mouse tracking loop
         if (movie_time.timeValue > start_timeval)
@@ -5259,13 +5271,13 @@ DEFINE_COMMAND(xbookclick) {
         usleep(12 * 1E6);
         
         // set ocage to 1
-        [[g_world gameState] setUnsigned32:1 forKey:@"ocage"];
+        [gs setUnsigned32:1 forKey:@"ocage"];
         
         // set agehn to 4 (which indicates that Gehn is trapped)
-        [[g_world gameState] setUnsigned32:4 forKey:@"agehn"];
+        [gs setUnsigned32:4 forKey:@"agehn"];
         
         // set atrapbook to 1 (giving the player the trap book)
-        [[g_world gameState] setUnsigned32:1 forKey:@"atrapbook"];
+        [gs setUnsigned32:1 forKey:@"atrapbook"];
         
         // play movie with MLST 7 (code 1) and wait until end
         DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, 7);
