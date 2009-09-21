@@ -32,6 +32,7 @@
 
 
 static NSTimeInterval const kRunloopPeriod = 0.001;
+static useconds_t const kRunloopPeriodMicroseconds = 1000;
 
 static uint32_t const k_trap_book_card_rmap = 7940;
 
@@ -1711,7 +1712,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         if (!_blocking_movie)
             break;
         
-        usleep(kRunloopPeriod * 1E6);
+        usleep(kRunloopPeriodMicroseconds);
     }
     
     // check for the scheduled movie command one more time
@@ -2636,10 +2637,7 @@ DEFINE_COMMAND(xhandlecontrolup) {
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
     // track the mouse until the mouse button is released
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
-           isfinite(mouse_vector.size.width))
-    {
+    while (isfinite(mouse_vector.size.width)) {
         if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
             // play the switch down movie
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
@@ -2665,6 +2663,8 @@ DEFINE_COMMAND(xhandlecontrolup) {
         
         [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
         mouse_vector = [controller mouseVector];
+        
+        usleep(kRunloopPeriodMicroseconds);
     }
 }
 
@@ -2673,10 +2673,7 @@ DEFINE_COMMAND(xhandlecontrolmid) {
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
     // track the mouse until the mouse button is released
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
-           isfinite(mouse_vector.size.width))
-    {
+    while (isfinite(mouse_vector.size.width)) {
         if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
             // play the switch up movie
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 7);
@@ -2718,6 +2715,8 @@ DEFINE_COMMAND(xhandlecontrolmid) {
         
         [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
         mouse_vector = [controller mouseVector];
+        
+        usleep(kRunloopPeriodMicroseconds);
     }
 }
 
@@ -2726,10 +2725,7 @@ DEFINE_COMMAND(xhandlecontroldown) {
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
     // track the mouse until the mouse button is released
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
-           isfinite(mouse_vector.size.width))
-    {
+    while (isfinite(mouse_vector.size.width)) {
         if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
             // play the switch up movie
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
@@ -2746,6 +2742,8 @@ DEFINE_COMMAND(xhandlecontroldown) {
         
         [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
         mouse_vector = [controller mouseVector];
+        
+        usleep(kRunloopPeriodMicroseconds);
     }
 }
 
@@ -2759,10 +2757,7 @@ DEFINE_COMMAND(xvalvecontrol) {
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
     // track the mouse until the mouse button is released
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
-           isfinite(mouse_vector.size.width))
-    {
+    while (isfinite(mouse_vector.size.width)) {
         float theta = 180.0f * atan2f(mouse_vector.size.height, mouse_vector.size.width) * M_1_PI;
         float r = sqrtf((mouse_vector.size.height * mouse_vector.size.height) + (mouse_vector.size.width * mouse_vector.size.width));
         
@@ -2805,6 +2800,8 @@ DEFINE_COMMAND(xvalvecontrol) {
         
         [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
         mouse_vector = [controller mouseVector];
+        
+        usleep(kRunloopPeriodMicroseconds);
     }
     
     // if we set the valve to position 1 (power to the boiler), we need to update the boiler state
@@ -3309,10 +3306,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     tic_sound->pan = 0.5f;
     
     // track the mouse, updating the position of the slider as appropriate
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
-           isfinite(mouse_vector.size.width))
-    {
+    while (isfinite(mouse_vector.size.width)) {
         // where are we now?
         RXHotspot* hotspot = [self domeSliderHotspotForDome:dome
                                               mousePosition:NSOffsetRect(mouse_vector, mouse_vector.size.width,
@@ -3335,6 +3329,8 @@ DEFINE_COMMAND(xschool280_playwhark) {
         // update the mouse cursor and vector
         [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
         mouse_vector = [controller mouseVector];
+        
+        usleep(kRunloopPeriodMicroseconds);
     }
     
     // check if the sliders match the dome configuration
@@ -3773,11 +3769,9 @@ DEFINE_COMMAND(xtakeit) {
     
     // track the mouse until the mouse button is released
     NSRect mouse_vector = [controller mouseVector];
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
-           isfinite(mouse_vector.size.width))
-    {
+    while (isfinite(mouse_vector.size.width)) {
         mouse_vector = [controller mouseVector];
+        usleep(kRunloopPeriodMicroseconds);
     }
     
     // update the marble's position
@@ -4398,9 +4392,7 @@ DEFINE_COMMAND(xvga1300_carriage) {
     CFAbsoluteTime trapeze_window_end = CFAbsoluteTimeGetCurrent() + 5.0;
     rx_event_t mouse_down_event = [controller lastMouseDownEvent];
     BOOL mouse_was_pressed = NO;
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]])
-    {
+    while (1) {
         // have we passed the trapeze window?
         if (trapeze_window_end < CFAbsoluteTimeGetCurrent())
             break;
@@ -4417,6 +4409,8 @@ DEFINE_COMMAND(xvga1300_carriage) {
                 break;
             }
         }
+        
+        usleep(kRunloopPeriodMicroseconds);
     }
     
     // if the player did not click on the trapeze within the alloted time, have
@@ -4683,12 +4677,11 @@ DEFINE_COMMAND(xbait) {
     
     // track the mouse until the mouse button is released
     NSRect mouse_vector = [controller mouseVector];
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
-           isfinite(mouse_vector.size.width))
-    {
+    while (isfinite(mouse_vector.size.width)) {
         [controller setMouseCursor:RX_CURSOR_BAIT];
         mouse_vector = [controller mouseVector];
+        
+        usleep(kRunloopPeriodMicroseconds);
     }
     
     // did we drop the bait over the bait plate?
@@ -4717,12 +4710,11 @@ DEFINE_COMMAND(xbaitplate) {
     
     // track the mouse until the mouse button is released
     NSRect mouse_vector = [controller mouseVector];
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]] &&
-           isfinite(mouse_vector.size.width))
-    {
+    while (isfinite(mouse_vector.size.width)) {
         [controller setMouseCursor:RX_CURSOR_BAIT];
         mouse_vector = [controller mouseVector];
+        
+        usleep(kRunloopPeriodMicroseconds);
     }
     
     // did we drop the bait over the bait plate?
@@ -5161,15 +5153,15 @@ DEFINE_COMMAND(xbookclick) {
     // is disabled during script execution
     
     // busy-wait until we reach the start timestamp
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]])
-    {
+    while (1) {
         // get the current movie time
         QTTime movie_time = [movie _noLockCurrentTime];
         
         // if we have gone beyond the link window, exit the mouse tracking loop
         if (movie_time.timeValue > start_timeval)
             break;
+        
+        usleep(kRunloopPeriodMicroseconds);
     }
     
     // get the current mouse vector
@@ -5189,9 +5181,7 @@ DEFINE_COMMAND(xbookclick) {
     // exits the link region
     rx_event_t mouse_down_event = [controller lastMouseDownEvent];
     BOOL mouse_was_pressed = NO;
-    while ([[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
-                                    beforeDate:[NSDate dateWithTimeIntervalSinceNow:kRunloopPeriod]])
-    {
+    while (1) {
         // get the current movie time
         QTTime movie_time = [movie _noLockCurrentTime];
         
@@ -5223,6 +5213,8 @@ DEFINE_COMMAND(xbookclick) {
         
         // update the mouse vector
         mouse_vector = [controller mouseVector];
+        
+        usleep(kRunloopPeriodMicroseconds);
     }
     
     // hide the mouse cursor again and reset it to the forward cursor
@@ -5526,7 +5518,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
             }
         }
         
-        usleep(kRunloopPeriod * 1E6);
+        usleep(kRunloopPeriodMicroseconds);
     }
     
     // if the mouse was pressed, stop the movie and update jsunners if requested
