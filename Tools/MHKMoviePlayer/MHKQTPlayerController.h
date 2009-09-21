@@ -23,5 +23,6 @@
 }
 
 - (IBAction)setCurrentTime:(id)sender;
+- (IBAction)getCurrentTime:(id)sender;
 
 @end

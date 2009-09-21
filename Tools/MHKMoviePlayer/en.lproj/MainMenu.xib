@@ -2,10 +2,10 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.10">
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
-		<string key="IBDocument.SystemVersion">10A398</string>
+		<string key="IBDocument.SystemVersion">10B504</string>
 		<string key="IBDocument.InterfaceBuilderVersion">732</string>
-		<string key="IBDocument.AppKitVersion">1029</string>
-		<string key="IBDocument.HIToolboxVersion">431.00</string>
+		<string key="IBDocument.AppKitVersion">1038.2</string>
+		<string key="IBDocument.HIToolboxVersion">437.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<bool key="EncodedWithXMLCoder">YES</bool>
 			<object class="NSArray" key="dict.sortedKeys">
@@ -16,13 +16,13 @@
 			<object class="NSMutableArray" key="dict.values">
 				<bool key="EncodedWithXMLCoder">YES</bool>
 				<string>732</string>
-				<string>1572</string>
+				<string>1584</string>
 			</object>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="260"/>
 			<integer value="2"/>
+			<integer value="260"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -161,6 +161,26 @@ dWR0YQAAAAA</bytes>
 								<string key="NSContents">Go</string>
 								<reference key="NSSupport" ref="22"/>
 								<reference key="NSControlView" ref="205662330"/>
+								<int key="NSButtonFlags">-2038284033</int>
+								<int key="NSButtonFlags2">129</int>
+								<string key="NSAlternateContents"/>
+								<string key="NSKeyEquivalent"/>
+								<int key="NSPeriodicDelay">200</int>
+								<int key="NSPeriodicInterval">25</int>
+							</object>
+						</object>
+						<object class="NSButton" id="297684387">
+							<reference key="NSNextResponder" ref="61159843"/>
+							<int key="NSvFlags">268</int>
+							<string key="NSFrame">{{433, 8}, {96, 16}}</string>
+							<reference key="NSSuperview" ref="61159843"/>
+							<bool key="NSEnabled">YES</bool>
+							<object class="NSButtonCell" key="NSCell" id="979051350">
+								<int key="NSCellFlags">67239424</int>
+								<int key="NSCellFlags2">134479872</int>
+								<string key="NSContents">Get Time</string>
+								<reference key="NSSupport" ref="22"/>
+								<reference key="NSControlView" ref="297684387"/>
 								<int key="NSButtonFlags">-2038284033</int>
 								<int key="NSButtonFlags2">129</int>
 								<string key="NSAlternateContents"/>
@@ -1572,6 +1592,14 @@ dWR0YQAAAAA</bytes>
 					</object>
 					<int key="connectionID">300358</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">getCurrentTime:</string>
+						<reference key="source" ref="744886762"/>
+						<reference key="destination" ref="297684387"/>
+					</object>
+					<int key="connectionID">300361</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -1613,6 +1641,7 @@ dWR0YQAAAAA</bytes>
 							<reference ref="251018502"/>
 							<reference ref="322785254"/>
 							<reference ref="205662330"/>
+							<reference ref="297684387"/>
 						</object>
 						<reference key="parent" ref="917914968"/>
 					</object>
@@ -2284,6 +2313,20 @@ dWR0YQAAAAA</bytes>
 						<reference key="object" ref="1005903089"/>
 						<reference key="parent" ref="465118344"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">300359</int>
+						<reference key="object" ref="297684387"/>
+						<object class="NSMutableArray" key="children">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<reference ref="979051350"/>
+						</object>
+						<reference key="parent" ref="61159843"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">300360</int>
+						<reference key="object" ref="979051350"/>
+						<reference key="parent" ref="297684387"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -2424,6 +2467,8 @@ dWR0YQAAAAA</bytes>
 					<string>300326.IBPluginDependency</string>
 					<string>300327.IBPluginDependency</string>
 					<string>300328.IBPluginDependency</string>
+					<string>300359.IBPluginDependency</string>
+					<string>300360.IBPluginDependency</string>
 					<string>301.IBPluginDependency</string>
 					<string>301.ImportedFromIB2</string>
 					<string>305.IBPluginDependency</string>
@@ -2587,6 +2632,8 @@ dWR0YQAAAAA</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.QTKitIBPlugin</string>
 					<integer value="1"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -2631,7 +2678,7 @@ dWR0YQAAAAA</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">300358</int>
+			<int key="maxID">300361</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -2648,8 +2695,17 @@ dWR0YQAAAAA</bytes>
 					<string key="className">MHKQTPlayerController</string>
 					<string key="superclassName">NSObject</string>
 					<object class="NSMutableDictionary" key="actions">
-						<string key="NS.key.0">setCurrentTime:</string>
-						<string key="NS.object.0">id</string>
+						<bool key="EncodedWithXMLCoder">YES</bool>
+						<object class="NSArray" key="dict.sortedKeys">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>getCurrentTime:</string>
+							<string>setCurrentTime:</string>
+						</object>
+						<object class="NSMutableArray" key="dict.values">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
+							<string>id</string>
+						</object>
 					</object>
 					<object class="NSMutableDictionary" key="outlets">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -3060,7 +3116,7 @@ dWR0YQAAAAA</bytes>
 			<integer value="3100" key="NS.object.0"/>
 		</object>
 		<bool key="IBDocument.PluginDeclaredDependenciesTrackSystemTargetVersion">YES</bool>
-		<string key="IBDocument.LastKnownRelativeProjectPath">../../rivenx.xcodeproj</string>
+		<string key="IBDocument.LastKnownRelativeProjectPath">../../../rivenx.xcodeproj</string>
 		<int key="IBDocument.defaultPropertyAccessControl">3</int>
 	</data>
 </archive>

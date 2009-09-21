@@ -119,4 +119,10 @@
     [[qtView movie] setCurrentTime:time];
 }
 
+- (IBAction)getCurrentTime:(id)sender {
+    QTTime time = [[qtView movie] currentTime];
+    [timeValueField setStringValue:[NSString stringWithFormat:@"%lld", time.timeValue]];
+    [timeBaseField setStringValue:[NSString stringWithFormat:@"%ld", time.timeScale]];
+}
+
 @end
