@@ -114,6 +114,7 @@
         }
         
         _substream = [[RXScriptOpcodeStream alloc] initWithScriptBuffer:(_case_pbuf + 2) opcodeCount:*(_case_pbuf + 1)];
+        [_substream setDelegate:_delegate];
         
         if ([_delegate respondsToSelector:@selector(opcodeStream:willEnterBranchCaseForValue:)])
             [_delegate opcodeStream:self willEnterBranchCaseForValue:*_case_pbuf];
