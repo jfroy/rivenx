@@ -20,12 +20,27 @@
 }
 
 - (id)initWithScript:(NSDictionary*)program {
+    [program retain];
+    
+    self = [self initWithScriptBuffer:[[program objectForKey:RXScriptProgramKey] bytes]
+                          opcodeCount:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
+    if (!self) {
+        [program release];
+        return nil;
+    }
+    
+    _program_dict = program;
+    
+    return self;
+}
+
+- (id)initWithScriptBuffer:(uint16_t const*)pbuf opcodeCount:(uint16_t)op_count {
     self = [super init];
     if (!self)
         return nil;
     
-    _program = [program retain];
-    _opcode_count = [[_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
+    _program = pbuf;
+    _opcode_count = op_count;
     
     [self reset];
     
@@ -33,9 +48,17 @@
 }
 
 - (void)dealloc {
-    [_program release];
+    [_program_dict release];
     [_substream release];
     [super dealloc];
+}
+
+- (id)delegate {
+    return _delegate;
+}
+
+- (void)setDelegate:(id)delegate {
+    _delegate = delegate;
 }
 
 - (void)reset {
@@ -43,7 +66,7 @@
     _substream = nil;
     case_index = 0;
     
-    _pbuf = [[_program objectForKey:RXScriptProgramKey] bytes];
+    _pbuf = _program;
     pc = 0;
 }
 
@@ -52,6 +75,11 @@
         rx_opcode_t* opcode = [_substream nextOpcode];
         if (opcode)
             return opcode;
+        
+        // end of a branch case block
+        
+        _case_pbuf = _substream->_pbuf;
+        case_index++;
         
         [_substream release];
         _substream = nil;
@@ -65,25 +93,30 @@
     if (*_pbuf == RX_COMMAND_BRANCH) {
         uint16_t case_count = *(_pbuf + 3);
         
+        // entering a branch block
+        if (case_index == 0) {
+            _case_pbuf = BUFFER_OFFSET(_pbuf, 8); // argc, variable ID, case count
+            if ([_delegate respondsToSelector:@selector(opcodeStream:willEnterBranchForVariable:)])
+                [_delegate opcodeStream:self willEnterBranchForVariable:*BUFFER_OFFSET(_pbuf, 2)];
+        }
+        
+        // exiting a branch block
         if (case_index == case_count) {
             case_index = 0;
             
             _pbuf = _case_pbuf;
             pc++;
             
+            if ([_delegate respondsToSelector:@selector(opcodeStreamWillExitBranch:)])
+                [_delegate opcodeStreamWillExitBranch:self];
+            
             return [self nextOpcode];
-        } else if (case_index == 0)
-            _case_pbuf = BUFFER_OFFSET(_pbuf, 8); // argc, variable ID, case count
+        }
         
-        size_t subprogram_size = rx_compute_riven_script_length((_case_pbuf + 2), *(_case_pbuf + 1), false) + 4;
-        NSDictionary* subprogram = [NSDictionary dictionaryWithObjectsAndKeys:
-            [NSData dataWithBytesNoCopy:(void*)(_case_pbuf + 2) length:subprogram_size freeWhenDone:NO], RXScriptProgramKey,
-            [NSNumber numberWithUnsignedShort:*(_case_pbuf + 1)], RXScriptOpcodeCountKey,
-            nil];
-        _substream = [[RXScriptOpcodeStream alloc] initWithScript:subprogram];
+        _substream = [[RXScriptOpcodeStream alloc] initWithScriptBuffer:(_case_pbuf + 2) opcodeCount:*(_case_pbuf + 1)];
         
-        _case_pbuf = BUFFER_OFFSET(_case_pbuf, subprogram_size);
-        case_index++;
+        if ([_delegate respondsToSelector:@selector(opcodeStream:willEnterBranchCaseForValue:)])
+            [_delegate opcodeStream:self willEnterBranchCaseForValue:*_case_pbuf];
         
         return [self nextOpcode];
     } else {

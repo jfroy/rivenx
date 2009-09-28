@@ -16,7 +16,9 @@ typedef struct {
 } rx_opcode_t;
 
 @interface RXScriptOpcodeStream : NSObject {
-    NSDictionary* _program;
+    NSDictionary* _program_dict;
+    
+    uint16_t const* _program;
     uint16_t _opcode_count;
     RXScriptOpcodeStream* _substream;
     
@@ -27,11 +29,25 @@ typedef struct {
     
     uint16_t const* _case_pbuf;
     uint16_t case_index;
+    
+    id _delegate;
 }
 
 - (id)initWithScript:(NSDictionary*)program;
+- (id)initWithScriptBuffer:(uint16_t const*)pbuf opcodeCount:(uint16_t)op_count;
+
+- (id)delegate;
+- (void)setDelegate:(id)delegate;
 
 - (void)reset;
 - (rx_opcode_t*)nextOpcode;
+
+@end
+
+@interface NSObject(RXScriptOpcodeStreamDelegate)
+
+- (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchForVariable:(uint16_t)var;
+- (void)opcodeStreamWillExitBranch:(RXScriptOpcodeStream*)stream;
+- (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchCaseForValue:(uint16_t)value;
 
 @end
