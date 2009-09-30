@@ -97,7 +97,7 @@
         if (case_index == 0) {
             _case_pbuf = BUFFER_OFFSET(_pbuf, 8); // argc, variable ID, case count
             if ([_delegate respondsToSelector:@selector(opcodeStream:willEnterBranchForVariable:)])
-                [_delegate opcodeStream:self willEnterBranchForVariable:*BUFFER_OFFSET(_pbuf, 2)];
+                [_delegate opcodeStream:self willEnterBranchForVariable:*BUFFER_OFFSET(_pbuf, 4)];
         }
         
         // exiting a branch block
