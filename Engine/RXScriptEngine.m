@@ -280,7 +280,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     [_active_hotspots release];
     
     [_synthesizedSoundGroup release];
-    [card release];
+    [_card release];
     
     [logPrefix release];
     
@@ -311,12 +311,16 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #pragma mark -
 #pragma mark active card
 
+- (RXCard*)card {
+    return _card;
+}
+
 - (void)setCard:(RXCard*)c {
-    if (c == card)
+    if (c == _card)
         return;
     
-    id old = card;
-    card = [c retain];
+    id old = _card;
+    _card = [c retain];
     [old release];
     
     [self _emptyPictureCaches];
@@ -330,7 +334,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     if (!controller)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"NO RIVEN SCRIPT HANDLER" userInfo:nil];
     
-    RXStack* parent = [[card descriptor] parent];
+    RXStack* parent = [[_card descriptor] parent];
     
     // bump the execution depth
     _programExecutionDepth++;
@@ -459,7 +463,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     // disable screen updates while running screen update programs
     _screen_update_disable_counter++;
     
-    NSArray* programs = [[card scripts] objectForKey:RXScreenUpdateScriptKey];
+    NSArray* programs = [[_card scripts] objectForKey:RXScreenUpdateScriptKey];
     uint32_t programCount = [programs count];
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
@@ -533,16 +537,16 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 
 - (void)openCard {
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@opening card %@ {", logPrefix, card);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@opening card %@ {", logPrefix, _card);
     [logPrefix appendString:@"    "];
 #endif
 
     // retain the card while it executes programs
-    RXCard* executing_card = card;
+    RXCard* executing_card = _card;
     [executing_card retain];
     
     // load the card
-    [card load];
+    [_card load];
     
     // disable screen updates
     DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
@@ -550,7 +554,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     // clear all active hotspots and replace them with the new card's hotspots
     OSSpinLockLock(&_active_hotspots_lock);
     [_active_hotspots removeAllObjects];
-    [_active_hotspots addObjectsFromArray:[card hotspots]];
+    [_active_hotspots addObjectsFromArray:[_card hotspots]];
     [_active_hotspots makeObjectsPerformSelector:@selector(enable)];
     [_active_hotspots sortUsingSelector:@selector(compareByIndex:)];
     OSSpinLockUnlock(&_active_hotspots_lock);
@@ -560,7 +564,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     _did_activate_slst = NO;
     
     // reset water animation
-    [controller queueSpecialEffect:NULL owner:card];
+    [controller queueSpecialEffect:NULL owner:_card];
     
     // disable all movies on the next screen refresh (bad drawing glitches occur if this is not done, see bspit 163)
     [controller disableAllMoviesOnNextScreenUpdate];
@@ -570,7 +574,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     }
     
     // execute card open programs
-    NSArray* programs = [[card scripts] objectForKey:RXCardOpenScriptKey];
+    NSArray* programs = [[_card scripts] objectForKey:RXCardOpenScriptKey];
     assert(programs);
     
     uint32_t programCount = [programs count];
@@ -582,7 +586,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     }
     
     // activate the first picture if none has been enabled already
-    if ([card pictureCount] > 0 && !_did_activate_plst) {
+    if ([_card pictureCount] > 0 && !_did_activate_plst) {
 #if defined(DEBUG)
         RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first plst record", logPrefix);
 #endif
@@ -590,15 +594,15 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     }
     
     // workarounds that should execute after the open card scripts
-    RXSimpleCardDescriptor* ecsd = [[card descriptor] simpleDescriptor];
+    RXSimpleCardDescriptor* ecsd = [[_card descriptor] simpleDescriptor];
     
     // dome combination card - if the dome combination is 1-2-3-4-5, the opendome hotspot won't get enabled, so do it here
-    if ([[card descriptor] isCardWithRMAP:85570 stackName:@"jspit"]) {
+    if ([[_card descriptor] isCardWithRMAP:85570 stackName:@"jspit"]) {
         // check if the sliders match the dome configuration
         uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
         if (sliders_state == domecombo) {
-            DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
-            DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+            DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"resetsliders") ID]);
+            DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"opendome") ID]);
         }
     } else if ([ecsd->stackKey isEqualToString:@"aspit"] && ecsd->cardID == 2) {
         // black card before introduction sequence - force hide the cursor to
@@ -629,16 +633,16 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 
 - (void)startRendering {
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting rendering for card %@ {", logPrefix, card);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@starting rendering for card %@ {", logPrefix, _card);
     [logPrefix appendString:@"    "];
 #endif
 
     // retain the card while it executes programs
-    RXCard* executing_card = card;
+    RXCard* executing_card = _card;
     [executing_card retain];
     
     // execute rendering programs (index 9)
-    NSArray* programs = [[card scripts] objectForKey:RXStartRenderingScriptKey];
+    NSArray* programs = [[_card scripts] objectForKey:RXStartRenderingScriptKey];
     assert(programs);
     
     uint32_t programCount = [programs count];
@@ -650,16 +654,16 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     }
     
     // activate the first sound group if none has been enabled already
-    if ([[card soundGroups] count] > 0 && !_did_activate_slst) {
+    if ([[_card soundGroups] count] > 0 && !_did_activate_slst) {
 #if defined(DEBUG)
         RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@automatically activating first slst record", logPrefix);
 #endif
-        [controller activateSoundGroup:[[card soundGroups] objectAtIndex:0]];
+        [controller activateSoundGroup:[[_card soundGroups] objectAtIndex:0]];
         _did_activate_slst = YES;
     }
     
     // workarounds that should execute after the start rendering programs
-    RXCardDescriptor* cdesc = [card descriptor];
+    RXCardDescriptor* cdesc = [_card descriptor];
     
     // Catherine prison card - need to schedule periodic movie events
     if ([cdesc isCardWithRMAP:14981 stackName:@"pspit"]) {
@@ -706,20 +710,20 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 
 - (void)closeCard {
     // we may be switching from the NULL card, so check for that and return immediately if that's the case
-    if (!card)
+    if (!_card)
         return;
 
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing card %@ {", logPrefix, card);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@closing card %@ {", logPrefix, _card);
     [logPrefix appendString:@"    "];
 #endif
     
     // retain the card while it executes programs
-    RXCard* executing_card = card;
+    RXCard* executing_card = _card;
     [executing_card retain];
     
     // execute leaving programs (index 7)
-    NSArray* programs = [[card scripts] objectForKey:RXCardCloseScriptKey];
+    NSArray* programs = [[_card scripts] objectForKey:RXCardCloseScriptKey];
     assert(programs);
     
     uint32_t programCount = [programs count];
@@ -769,7 +773,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #endif
     
     // retain the card while it executes programs
-    RXCard* executing_card = card;
+    RXCard* executing_card = _card;
     [executing_card retain];
     
     // keep a weak reference to the hotspot while executing within the context of this hotspot handler
@@ -816,7 +820,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #endif
     
     // retain the card while it executes programs
-    RXCard* executing_card = card;
+    RXCard* executing_card = _card;
     [executing_card retain];
     
     // keep a weak reference to the hotspot while executing within the context of this hotspot handler
@@ -860,7 +864,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #endif
     
     // retain the card while it executes programs
-    RXCard* executing_card = card;
+    RXCard* executing_card = _card;
     [executing_card retain];
     
     // keep a weak reference to the hotspot while executing within the context of this hotspot handler
@@ -907,7 +911,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #endif
 
     // retain the card while it executes programs
-    RXCard* executing_card = card;
+    RXCard* executing_card = _card;
     [executing_card retain];
     
     // keep a weak reference to the hotspot while executing within the context of this hotspot handler
@@ -1120,7 +1124,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 
 - (void)_playDataSoundWithID:(uint16_t)twav_id gain:(float)gain duration:(double*)duration_ptr {
     RXDataSound* sound = [RXDataSound new];
-    sound->parent = [[card descriptor] parent];
+    sound->parent = [[_card descriptor] parent];
     sound->twav_id = twav_id;
     sound->gain = gain;
     sound->pan = 0.5f;
@@ -1133,11 +1137,11 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 }
 
 - (uint16_t)dataSoundIDWithCardID:(uint16_t)card_id name:(NSString*)name {
-    return [[card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_%@_1", card_id, name]];
+    return [[_card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_%@_1", card_id, name]];
 }
 
 - (uint16_t)dataSoundIDForCurrentCardWithName:(NSString*)name {
-    return [self dataSoundIDWithCardID:[[card descriptor] ID] name:name];
+    return [self dataSoundIDWithCardID:[[_card descriptor] ID] name:name];
 }
 
 #pragma mark -
@@ -1177,7 +1181,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 }
 
 - (void)_endgameWithMLST:(uint16_t)movie_mlst delay:(double)delay {
-    uint16_t movie_code = [card movieCodes][movie_mlst - 1];
+    uint16_t movie_code = [_card movieCodes][movie_mlst - 1];
     DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, movie_mlst);
     [self _endgameWithCode:movie_code delay:delay];
 }
@@ -1224,7 +1228,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
             logPrefix, argv[0], display_rect.origin.x, display_rect.origin.y, display_rect.size.width, display_rect.size.height);
 #endif
     
-    [self _drawPictureWithID:argv[0] stack:[card parent] displayRect:display_rect samplingRect:sampling_rect];
+    [self _drawPictureWithID:argv[0] stack:[_card parent] displayRect:display_rect samplingRect:sampling_rect];
 }
 
 // 2
@@ -1234,7 +1238,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@going to card ID %hu", logPrefix, argv[0]);
 #endif
 
-    RXStack* parent = [[card descriptor] parent];
+    RXStack* parent = [[_card descriptor] parent];
     [controller setActiveCardWithStack:[parent key] ID:argv[0] waitUntilDone:YES];
 }
 
@@ -1249,7 +1253,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 
     // argv + 1 is suitable for _createSoundGroupWithSLSTRecord
     uint16_t soundCount = argv[0];
-    _synthesizedSoundGroup = [card newSoundGroupWithSLSTRecord:(argv + 1) soundCount:soundCount swapBytes:NO];
+    _synthesizedSoundGroup = [_card newSoundGroupWithSLSTRecord:(argv + 1) soundCount:soundCount swapBytes:NO];
     
     [controller activateSoundGroup:_synthesizedSoundGroup];
     _did_activate_slst = YES;
@@ -1296,7 +1300,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #endif
     
     // have the card load the movie
-    RXMovie* movie = [card loadMovieWithMLSTRecord:mlst_r];
+    RXMovie* movie = [_card loadMovieWithMLSTRecord:mlst_r];
     
     // update the code to movie map
     uintptr_t k = mlst_r->code;
@@ -1314,7 +1318,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     if (argc < 2)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
     
-    RXStack* parent = [[card descriptor] parent];
+    RXStack* parent = [[_card descriptor] parent];
     NSString* name = [parent varNameAtIndex:argv[0]];
     if (!name)
         name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
@@ -1336,7 +1340,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #endif
     
     uintptr_t k = argv[0];
-    RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
+    RXHotspot* hotspot = (RXHotspot*)NSMapGet([_card hotspotsIDMap], (void*)k);
     assert(hotspot);
     
     if (!hotspot->enabled) {
@@ -1362,7 +1366,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #endif
     
     uintptr_t k = argv[0];
-    RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
+    RXHotspot* hotspot = (RXHotspot*)NSMapGet([_card hotspotsIDMap], (void*)k);
     assert(hotspot);
     
     if (hotspot->enabled) {
@@ -1444,7 +1448,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     uint16_t external_id = argv[0];
     uint16_t external_argc = argv[1];
     
-    NSString* external_name = [[[[card descriptor] parent] externalNameAtIndex:external_id] lowercaseString];
+    NSString* external_name = [[[[_card descriptor] parent] externalNameAtIndex:external_id] lowercaseString];
     if (!external_name)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID EXTERNAL COMMAND ID" userInfo:nil];
     
@@ -1555,7 +1559,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     if (argc < 2)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
     
-    RXStack* parent = [[card descriptor] parent];
+    RXStack* parent = [[_card descriptor] parent];
     NSString* name = [parent varNameAtIndex:argv[0]];
     if (!name)
         name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
@@ -1573,7 +1577,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     if (argc < 2)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
     
-    RXStack* parent = [[card descriptor] parent];
+    RXStack* parent = [[_card descriptor] parent];
     NSString* name = [parent varNameAtIndex:argv[0]];
     if (!name)
         name = [NSString stringWithFormat:@"%@%hu", [parent key], argv[0]];
@@ -1600,7 +1604,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
     
     // get the stack for the given stack key
-    NSString* k = [[[card descriptor] parent] stackNameAtIndex:argv[0]];
+    NSString* k = [[[_card descriptor] parent] stackNameAtIndex:argv[0]];
     RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:k];
     assert(stack);
     
@@ -1821,7 +1825,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // get the picture record from the card
     unsigned int index = argv[0] - 1;
-    struct rx_plst_record* picture_record = [card pictureRecords] + index;
+    struct rx_plst_record* picture_record = [_card pictureRecords] + index;
     
 #if defined(DEBUG)
     if (!_disableScriptLogging)
@@ -1837,7 +1841,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
             [self _emptyPictureCaches];
         
         // get a texture from the texture broker
-        MHKArchive* archive = [[[card parent] fileWithResourceType:@"tBMP" ID:picture_record->bitmap_id] archive];
+        MHKArchive* archive = [[[_card parent] fileWithResourceType:@"tBMP" ID:picture_record->bitmap_id] archive];
         assert(archive);
         
         NSError* error;
@@ -1886,7 +1890,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #endif
     
     // the script handler is responsible for this
-    [controller activateSoundGroup:[[card soundGroups] objectAtIndex:argv[0] - 1]];
+    [controller activateSoundGroup:[[_card soundGroups] objectAtIndex:argv[0] - 1]];
     _did_activate_slst = YES;
 }
 
@@ -1895,7 +1899,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     if (argc < 1)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
     
-    uint16_t code = [card movieCodes][argv[0] - 1];
+    uint16_t code = [_card movieCodes][argv[0] - 1];
     
 #if defined(DEBUG)
     if (!_disableScriptLogging) {
@@ -1924,9 +1928,9 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating blst record at index %hu", logPrefix, argv[0]);
 #endif
     
-    struct rx_blst_record* record = [card hotspotControlRecords] + (argv[0] - 1);
+    struct rx_blst_record* record = [_card hotspotControlRecords] + (argv[0] - 1);
     uintptr_t k =  record->hotspot_id;
-    RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsIDMap], (void*)k);
+    RXHotspot* hotspot = (RXHotspot*)NSMapGet([_card hotspotsIDMap], (void*)k);
     assert(hotspot);
     
     OSSpinLockLock(&_active_hotspots_lock);
@@ -1955,14 +1959,14 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating flst record at index %hu", logPrefix, argv[0]);
 #endif
 
-    [controller queueSpecialEffect:[card sfxes] + (argv[0] - 1) owner:card];
+    [controller queueSpecialEffect:[_card sfxes] + (argv[0] - 1) owner:_card];
 }
 
 // 46
 - (void)_opcode_activateMLST:(const uint16_t)argc arguments:(const uint16_t*)argv {
     if (argc < 1)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
-    uintptr_t k = [card movieCodes][argv[0] - 1];
+    uintptr_t k = [_card movieCodes][argv[0] - 1];
 
 #if defined(DEBUG)
     if (!_disableScriptLogging)
@@ -1970,7 +1974,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #endif
     
     // update the code to movie map
-    RXMovie* movie = [[card movies] objectAtIndex:argv[0] - 1];
+    RXMovie* movie = [[_card movies] objectAtIndex:argv[0] - 1];
     NSMapInsert(code_movie_map, (const void*)k, movie);
     
     // schedule the movie for reset
@@ -1991,7 +1995,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #endif
     
     // get the sound group
-    RXSoundGroup* sg = [[card soundGroups] objectAtIndex:argv[0] - 1];
+    RXSoundGroup* sg = [[_card soundGroups] objectAtIndex:argv[0] - 1];
     
     // temporarily change its gain
     uint16_t integer_gain = argv[1];
@@ -2170,7 +2174,7 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
         combination_sampling_origin.x = 32.0f * ((telescope_combo & 0x7) - 1);
         
         [self _drawPictureWithID:13 + i
-                           stack:[card parent]
+                           stack:[_card parent]
                      displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
                     samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
         
@@ -2322,7 +2326,7 @@ DEFINE_COMMAND(xtchotakesbook) {
             combo_bit--;
         combination_sampling_origin.x = 32.0f * (24 - combo_bit);
         [self _drawPictureWithID:364
-                           stack:[card parent]
+                           stack:[_card parent]
                      displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
                     samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
         combination_display_origin.x += combination_base_rect.size.width;
@@ -2332,7 +2336,7 @@ DEFINE_COMMAND(xtchotakesbook) {
             combo_bit--;
         combination_sampling_origin.x = 32.0f * (24 - combo_bit);       
         [self _drawPictureWithID:365
-                           stack:[card parent]
+                           stack:[_card parent]
                      displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
                     samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
         combination_display_origin.x += combination_base_rect.size.width;
@@ -2342,7 +2346,7 @@ DEFINE_COMMAND(xtchotakesbook) {
             combo_bit--;
         combination_sampling_origin.x = 32.0f * (24 - combo_bit);
         [self _drawPictureWithID:366
-                           stack:[card parent]
+                           stack:[_card parent]
                      displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
                     samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
         combination_display_origin.x += combination_base_rect.size.width;
@@ -2352,7 +2356,7 @@ DEFINE_COMMAND(xtchotakesbook) {
             combo_bit--;
         combination_sampling_origin.x = 32.0f * (24 - combo_bit);
         [self _drawPictureWithID:367
-                           stack:[card parent]
+                           stack:[_card parent]
                      displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
                     samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
         combination_display_origin.x += combination_base_rect.size.width;
@@ -2362,7 +2366,7 @@ DEFINE_COMMAND(xtchotakesbook) {
             combo_bit--;
         combination_sampling_origin.x = 32.0f * (24 - combo_bit);
         [self _drawPictureWithID:368
-                           stack:[card parent]
+                           stack:[_card parent]
                      displayRect:NSOffsetRect(combination_base_rect, combination_display_origin.x, combination_display_origin.y)
                     samplingRect:NSOffsetRect(combination_base_rect, combination_sampling_origin.x, combination_sampling_origin.y)];
     }
@@ -2655,7 +2659,7 @@ DEFINE_COMMAND(xhandlecontrolup) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
             
             // go to the middle jungle elevator card
-            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:k_jungle_elevator_mid_rmap]);
+            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[_card parent] cardIDFromRMAPCode:k_jungle_elevator_mid_rmap]);
             
             // we're all done
             break;
@@ -2693,7 +2697,7 @@ DEFINE_COMMAND(xhandlecontrolmid) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 5);
             
             // go to the top jungle elevator card
-            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:k_jungle_elevator_top_rmap]);
+            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[_card parent] cardIDFromRMAPCode:k_jungle_elevator_top_rmap]);
             
             // we're all done
             break;
@@ -2707,7 +2711,7 @@ DEFINE_COMMAND(xhandlecontrolmid) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 4);
             
             // go to the bottom jungle elevator card
-            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:k_jungle_elevator_bottom_rmap]);
+            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[_card parent] cardIDFromRMAPCode:k_jungle_elevator_bottom_rmap]);
             
             // we're all done
             break;
@@ -2734,7 +2738,7 @@ DEFINE_COMMAND(xhandlecontroldown) {
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
             
             // go to the middle jungle elevator card
-            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:k_jungle_elevator_mid_rmap]);
+            DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[_card parent] cardIDFromRMAPCode:k_jungle_elevator_mid_rmap]);
             
             // we're all done
             break;
@@ -3114,7 +3118,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 
 - (void)drawSlidersForDome:(NSString*)dome minHotspotID:(uintptr_t)min_id {
     // cache the hotspots ID map
-    NSMapTable* hotspots_map = [card hotspotsIDMap];
+    NSMapTable* hotspots_map = [_card hotspotsIDMap];
     uint16_t background = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:[dome stringByAppendingString:@" sliders background"]];
     uint16_t sliders = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:[dome stringByAppendingString:@" sliders"]];
         
@@ -3124,7 +3128,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     // draw the background; 220 x 69 is the slider background dimension
     NSRect display_rect = RXMakeCompositeDisplayRect(dome_slider_background_position.x, dome_slider_background_position.y,
                                                      dome_slider_background_position.x + 220, dome_slider_background_position.y + 69);
-    [self _drawPictureWithID:background stack:[card parent] displayRect:display_rect samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
+    [self _drawPictureWithID:background stack:[_card parent] displayRect:display_rect samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
     
     // draw the sliders
     uintptr_t k = 0;
@@ -3141,7 +3145,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
                                           hotspot_rect.top - dome_slider_background_position.y,
                                           display_rect.size.width,
                                           display_rect.size.height);
-        [self _drawPictureWithID:sliders stack:[card parent] displayRect:display_rect samplingRect:sampling_rect];
+        [self _drawPictureWithID:sliders stack:[_card parent] displayRect:display_rect samplingRect:sampling_rect];
     }
     
     // end the screen update transaction
@@ -3151,13 +3155,13 @@ DEFINE_COMMAND(xschool280_playwhark) {
 - (void)resetSlidersForDome:(NSString*)dome {
     // cache the tic sound
     RXDataSound* tic_sound = [RXDataSound new];
-    tic_sound->parent = [[card descriptor] parent];
+    tic_sound->parent = [[_card descriptor] parent];
     tic_sound->twav_id = [self dataSoundIDForCurrentCardWithName:@"aBigTic"];
     tic_sound->gain = 1.0f;
     tic_sound->pan = 0.5f;
     
     // cache the minimum slider hotspot ID
-    RXHotspot* min_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], @"s1");
+    RXHotspot* min_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], @"s1");
     assert(min_hotspot);
     uintptr_t min_hotspot_id = [min_hotspot ID];
     
@@ -3202,11 +3206,11 @@ DEFINE_COMMAND(xschool280_playwhark) {
     // check if the sliders match the dome configuration
     uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
     if (sliders_state == domecombo) {
-        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
-        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"resetsliders") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"opendome") ID]);
     } else {
-        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
-        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"resetsliders") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"opendome") ID]);
     }
     
     [tic_sound release];
@@ -3214,7 +3218,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 
 - (RXHotspot*)domeSliderHotspotForDome:(NSString*)dome mousePosition:(NSPoint)mouse_position activeHotspot:(RXHotspot*)active_hotspot minHotspotID:(uintptr_t)min_id {
     // cache the hotspots ID map
-    NSMapTable* hotspots_map = [card hotspotsIDMap];
+    NSMapTable* hotspots_map = [_card hotspotsIDMap];
     
     uintptr_t boundary_hotspot_id = 0;
     for (uintptr_t k = 0; k < 25; k++) {
@@ -3282,7 +3286,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 
 - (void)handleSliderDragForDome:(NSString*)dome {    
     // cache the minimum slider hotspot ID
-    RXHotspot* min_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], @"s1");
+    RXHotspot* min_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], @"s1");
     assert(min_hotspot);
     uintptr_t min_hotspot_id = [min_hotspot ID];
     
@@ -3300,7 +3304,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     // cache the tic sound
     RXDataSound* tic_sound = [RXDataSound new];
-    tic_sound->parent = [[card descriptor] parent];
+    tic_sound->parent = [[_card descriptor] parent];
     tic_sound->twav_id = [self dataSoundIDForCurrentCardWithName:@"aBigTic"];
     tic_sound->gain = 1.0f;
     tic_sound->pan = 0.5f;
@@ -3336,18 +3340,18 @@ DEFINE_COMMAND(xschool280_playwhark) {
     // check if the sliders match the dome configuration
     uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
     if (sliders_state == domecombo) {
-        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
-        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"resetsliders") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"opendome") ID]);
     } else {
-        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
-        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"resetsliders") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"opendome") ID]);
     }
     
     [tic_sound release];
 }
 
 - (void)handleMouseOverSliderForDome:(NSString*)dome {
-    RXHotspot* min_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], @"s1");
+    RXHotspot* min_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], @"s1");
     assert(min_hotspot);
     uintptr_t min_hotspot_id = [min_hotspot ID];
     
@@ -3376,8 +3380,8 @@ DEFINE_COMMAND(xbisland190_opencard) {
     // check if the sliders match the dome configuration
     uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
     if (sliders_state == domecombo) {
-        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
-        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"resetsliders") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"opendome") ID]);
     }
 }
 
@@ -3410,8 +3414,8 @@ DEFINE_COMMAND(xgisland25_opencard) {
     // check if the sliders match the dome configuration
     uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
     if (sliders_state == domecombo) {
-        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
-        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"resetsliders") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"opendome") ID]);
     }
 }
 
@@ -3470,8 +3474,8 @@ DEFINE_COMMAND(xpisland25_opencard) {
     // check if the sliders match the dome configuration
     uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
     if (sliders_state == domecombo) {
-        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
-        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"resetsliders") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"opendome") ID]);
     }
 }
 
@@ -3504,8 +3508,8 @@ DEFINE_COMMAND(xtisland5056_opencard) {
     // check if the sliders match the dome configuration
     uint32_t domecombo = [[g_world gameState] unsigned32ForKey:@"aDomeCombo"];
     if (sliders_state == domecombo) {
-        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"resetsliders") ID]);
-        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendome") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"resetsliders") ID]);
+        DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"opendome") ID]);
     }
 }
 
@@ -3662,7 +3666,7 @@ DEFINE_COMMAND(xt7600_setupmarbles) {
 
 - (void)_initializeMarbleHotspotWithVariable:(NSString*)marble_var initialRectPointer:(rx_core_rect_t*)initial_rect_ptr {
     RXGameState* gs = [g_world gameState];
-    NSMapTable* hotspots_map = [card hotspotsNameMap];
+    NSMapTable* hotspots_map = [_card hotspotsNameMap];
     
     RXHotspot* hotspot = (RXHotspot*)NSMapGet(hotspots_map, marble_var);
     *initial_rect_ptr = [hotspot coreFrame];
@@ -3703,7 +3707,7 @@ DEFINE_COMMAND(xt7800_setup) {
     if (active_marble == marble)
         return;
     
-    RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], marble_var);
+    RXHotspot* hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], marble_var);
     rx_core_rect_t hotspot_rect = [hotspot coreFrame];
     hotspot_rect.left += 3;
     hotspot_rect.top += 3;
@@ -3856,7 +3860,7 @@ DEFINE_COMMAND(xtakeit) {
     }
     
     // update the marble's position by moving its hotspot
-    RXHotspot* hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], marble_var);
+    RXHotspot* hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], marble_var);
     if (new_marble_pos == UINT32_MAX) {
         // the marble was dropped somewhere outside the grid;
         // set the marble variable to 0 to indicate the marble is in its receptacle
@@ -4229,7 +4233,7 @@ DEFINE_COMMAND(xgrviewer) {
 DEFINE_COMMAND(xgwharksnd) {
     // cache the solo card ID (to be able to get a reference to the solo
     // sounds)
-    whark_solo_card = [[card descriptor] ID];
+    whark_solo_card = [[_card descriptor] ID];
     
     // play a solo within the next 5 seconds if we've never played one before
     // otherwise within the next 5 minutes but no sooner than in 2 minutes;
@@ -4438,7 +4442,7 @@ DEFINE_COMMAND(xvga1300_carriage) {
     [transition release];
     
     // go to card RMAP 101709
-    uint16_t card_id = [[[card descriptor] parent] cardIDFromRMAPCode:101709];
+    uint16_t card_id = [[[_card descriptor] parent] cardIDFromRMAPCode:101709];
     DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, card_id);
     
     // schedule a transition with code 12 (from left, push new and old)
@@ -4447,7 +4451,7 @@ DEFINE_COMMAND(xvga1300_carriage) {
     [transition release];
     
     // go to card RMAP 101045
-    card_id = [[[card descriptor] parent] cardIDFromRMAPCode:101045];
+    card_id = [[[_card descriptor] parent] cardIDFromRMAPCode:101045];
     DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, card_id);
     
     // play movie with code 1 (going up movie)
@@ -4463,7 +4467,7 @@ DEFINE_COMMAND(xvga1300_carriage) {
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
     
     // go to card RMAP 94567
-    card_id = [[[card descriptor] parent] cardIDFromRMAPCode:94567];
+    card_id = [[[_card descriptor] parent] cardIDFromRMAPCode:94567];
     DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, card_id);
 }
 
@@ -4685,7 +4689,7 @@ DEFINE_COMMAND(xbait) {
     }
     
     // did we drop the bait over the bait plate?
-    RXHotspot* plate_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], @"baitplate");
+    RXHotspot* plate_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], @"baitplate");
     assert(plate_hotspot);
     if (!NSMouseInRect(mouse_vector.origin, [plate_hotspot worldFrame], NO))
         return;
@@ -4718,7 +4722,7 @@ DEFINE_COMMAND(xbaitplate) {
     }
     
     // did we drop the bait over the bait plate?
-    RXHotspot* plate_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], @"baitplate");
+    RXHotspot* plate_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], @"baitplate");
     assert(plate_hotspot);
     if (NSMouseInRect(mouse_vector.origin, [plate_hotspot worldFrame], NO)) {
         // set bbait to 1
@@ -4745,7 +4749,7 @@ DEFINE_COMMAND(xbaitplate) {
     event_timer = nil;
     
     // if we're no longer in the frog trap card, bail out
-    if ([[card descriptor] ID] != frog_trap_card)
+    if ([[_card descriptor] ID] != frog_trap_card)
         return;
     
     // dispatch xbcheckcatch with 1 (e.g. play the trap sound)
@@ -4757,7 +4761,7 @@ DEFINE_COMMAND(xbsettrap) {
     NSTimeInterval catch_delay = 10 + ((random() % 3001) / 60.0);
     
     // remember the frog trap card ID, because we need to abort the catch frog event if we've switched to a different card
-    frog_trap_card = [[card descriptor] ID];
+    frog_trap_card = [[_card descriptor] ID];
     
     // schedule the event timer
     [event_timer invalidate];
@@ -5014,7 +5018,7 @@ DEFINE_COMMAND(xtisland390_covercombo) {
     [gs setUnsigned32:combo forKey:@"tcovercombo"];
     
     // if the current combination matches the correct order, enable the opencover hotspot, otherwise disable it
-    RXHotspot* cover_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], @"opencover");
+    RXHotspot* cover_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], @"opencover");
     if (combo == [gs unsigned32ForKey:@"tcorrectorder"])
         DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [cover_hotspot ID]);
     else {
@@ -5035,7 +5039,7 @@ DEFINE_COMMAND(xtisland390_covercombo) {
     event_timer = nil;
     
     // if we're no longer in the rebel prison card, bail out
-    if ([[card descriptor] ID] != rebel_prison_window_card)
+    if ([[_card descriptor] ID] != rebel_prison_window_card)
         return;
     
     // generate a random MLST index between 2 and 13 and activate it
@@ -5065,7 +5069,7 @@ DEFINE_COMMAND(xrwindowsetup) {
     RXGameState* gs = [g_world gameState];
     
     // remember the card ID, because we need to abort the periodic event if we've switched to a different card
-    rebel_prison_window_card = [[card descriptor] ID];
+    rebel_prison_window_card = [[_card descriptor] ID];
     
     // activate SLST 1 now as a work-around for the late activation by the script
     DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 1);
@@ -5135,7 +5139,7 @@ DEFINE_COMMAND(xbookclick) {
     
     // get the specified touchbook hotspot
     NSString* touchbook_hotspot_name = [NSString stringWithFormat:@"touchbook%hu", touchbook_index];
-    RXHotspot* touchbook_hotspot = (RXHotspot*)NSMapGet([card hotspotsNameMap], touchbook_hotspot_name);
+    RXHotspot* touchbook_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], touchbook_hotspot_name);
     assert(touchbook_hotspot);
     
     // ogr_b.mov is different from the other trap book movies because it leads
@@ -5295,7 +5299,7 @@ DEFINE_COMMAND(xbookclick) {
         DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 0, (uint16_t)kRXSoundGainDivisor, 0);
         
         // go to card RMAP 10373
-        DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[card parent] cardIDFromRMAPCode:10373]);
+        DISPATCH_COMMAND1(RX_COMMAND_GOTO_CARD, [[_card parent] cardIDFromRMAPCode:10373]);
         
         // abort the current line of script execution at this point (brings us back to a depth of 0)
         _abortProgramExecution = YES;
@@ -5341,9 +5345,9 @@ DEFINE_COMMAND(xooffice30_closebook) {
     
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
     
-    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"closebook") ID]);
-    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"null") ID]);
-    DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"openbook") ID]);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"closebook") ID]);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"null") ID]);
+    DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"openbook") ID]);
     
     DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, 1);
     DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 1);
@@ -5357,8 +5361,8 @@ DEFINE_COMMAND(xobedroom5_closedrawer) {
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
     DISPATCH_COMMAND1(RX_COMMAND_DISABLE_MOVIE, 2);
     
-    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"closedrawer") ID]);
-    DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([card hotspotsNameMap], @"opendrawer") ID]);
+    DISPATCH_COMMAND1(RX_COMMAND_DISABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"closedrawer") ID]);
+    DISPATCH_COMMAND1(RX_COMMAND_ENABLE_HOTSPOT, [(RXHotspot*)NSMapGet([_card hotspotsNameMap], @"opendrawer") ID]);
     
     [[g_world gameState] setUnsigned32:0 forKey:@"ostanddrawer"];
 }
@@ -5417,7 +5421,7 @@ static const uint16_t cath_prison_movie_mlsts2[] = {9, 10, 12, 13};
     event_timer = nil;
     
     // if we're no longer in the catherine prison card, bail out
-    if (![[[card descriptor] simpleDescriptor] isEqual:cath_prison_card])
+    if (![[[_card descriptor] simpleDescriptor] isEqual:cath_prison_card])
         return;
     
     RXGameState* gs = [g_world gameState];
@@ -5445,7 +5449,7 @@ static const uint16_t cath_prison_movie_mlsts2[] = {9, 10, 12, 13};
     
     // get the movie's duration and compute the next movie's delay
     NSTimeInterval delay = 0.0;
-    uintptr_t movie_code = [card movieCodes][movie_mlst - 1];
+    uintptr_t movie_code = [_card movieCodes][movie_mlst - 1];
     RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)movie_code);
     if (movie)
         QTGetTimeInterval([movie duration], &delay);
@@ -5575,7 +5579,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
         return;
     
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing upper stairs sunners movie {", logPrefix, card);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing upper stairs sunners movie {", logPrefix, _card);
     [logPrefix appendString:@"    "];
 #endif
     
@@ -5618,7 +5622,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
         return;
     
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing mid stairs sunners movie {", logPrefix, card);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing mid stairs sunners movie {", logPrefix, _card);
     [logPrefix appendString:@"    "];
 #endif
     
@@ -5668,7 +5672,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
         return;
     
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing lower stairs sunners movie {", logPrefix, card);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing lower stairs sunners movie {", logPrefix, _card);
     [logPrefix appendString:@"    "];
 #endif
     
@@ -5711,7 +5715,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
         return;
     
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing beach sunners movie {", logPrefix, card);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing beach sunners movie {", logPrefix, _card);
     [logPrefix appendString:@"    "];
 #endif
     
@@ -5741,7 +5745,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
         return;
     }
     
-    RXCardDescriptor* cdesc = [card descriptor];
+    RXCardDescriptor* cdesc = [_card descriptor];
     if ([cdesc isCardWithRMAP:sunners_upper_stairs_rmap stackName:@"jspit"])
         [self _handleSunnersUpperStairsEvent];
     else if ([cdesc isCardWithRMAP:sunners_mid_stairs_rmap stackName:@"jspit"])

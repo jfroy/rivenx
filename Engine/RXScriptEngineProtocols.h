@@ -12,6 +12,7 @@
 #import "Engine/RXCardProtocols.h"
 
 @protocol RXScriptEngineProtocol <NSObject>
+- (RXCard*)card;
 - (void)setCard:(RXCard*)c;
 
 - (void)openCard;
