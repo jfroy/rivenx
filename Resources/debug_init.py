@@ -8,6 +8,7 @@ import rivenx
 
 import debug_notification
 
+
 # ignore all warnings
 warnings.simplefilter("ignore")
 
@@ -120,11 +121,6 @@ def cmd_missing_externals(*args):
     edition = edition_manager.currentEdition()
     stacks = edition.valueForKey_("stackDescriptors").allKeys()
 
-#    stack = edition_manager.loadStackWithKey_('jspit')
-#    desc = RXCardDescriptor.alloc().initWithStack_ID_(stack, 628)
-#    card = RXCard.alloc().initWithCardDescriptor_(desc)
-#    _find_missing_externals(card)
-
     for stack_key in sorted(stacks):
         stack = edition_manager.loadStackWithKey_(stack_key)
         if not stack:
@@ -168,3 +164,54 @@ def cmd_dcombo(*args):
             if (dcombo & (1 << (24 - i))):
                 yield i + 1
     print "dome combination: %d %d %d %d %d" % tuple(gen_dome_digit())
+
+OPCODES = {
+    0: "invalid",
+    1: "draw dynamic picture",
+    2: "goto card",
+    3: "activate synthesized SLST",
+    4: "play sfx",
+    5: "activate synthesized MLST",
+    6: "unimplemented",
+    7: "set variable",
+    8: "branch",
+    9: "enable hotspot",
+    10: "disable hotspot",
+    11: "invalid",
+    12: "clear ambient sounds",
+    13: "set cursor",
+    14: "pause",
+    15: "invalid",
+    16: "invalid",
+    17: "call external",
+    18: "schedule transition",
+    19: "reload",
+    20: "disable screen updates",
+    21: "enable screen updates",
+    22: "invalid",
+    23: "invalid",
+    24: "increment var",
+    25: "decrement var",
+    26: "close all movies",
+    27: "goto stack",
+    28: "disable movie",
+    29: "disable all movies",
+    30: "set movie rate",
+    31: "enable movie",
+    32: "play movie and block",
+    33: "play movie",
+    34: "stop movie",
+    35: "activate SFXE",
+    36: "noop",
+    37: "fade ambient sounds",
+    38: "schedule movie command",
+    39: "activate PLST",
+    40: "activate SLST",
+    41: "activate MLST and play movie",
+    42: "noop",
+    43: "activate BLST",
+    44: "activate FLST",
+    45: "do zip",
+    46: "activate MLST",
+    47: "activate SLST with volume",
+}
