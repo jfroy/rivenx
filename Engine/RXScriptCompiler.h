@@ -13,7 +13,11 @@
 
 @interface RXScriptCompiler : NSObject {
     RXScriptOpcodeStream* _ops;
-    NSArray* _decompiled_script;
+    NSMutableArray* _decompiled_script;
+    
+    NSMutableArray* _current_block;
+    NSMutableArray* _block_stack;
+    NSMutableArray* _cases_stack;
 }
 
 - (id)initWithCompiledScript:(NSDictionary*)script;

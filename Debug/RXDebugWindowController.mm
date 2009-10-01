@@ -12,7 +12,7 @@
 
 #import "Engine/RXWorldProtocol.h"
 #import "Engine/RXEditionManager.h"
-#import "Engine/RXScriptOpcodeStream.h"
+#import "Engine/RXScriptCompiler.h"
 #import "Engine/RXScriptCommandAliases.h"
 
 #import "States/RXCardState.h"
@@ -307,28 +307,11 @@ static PyMethodDef rivenx_methods[] = {
             continue;
         
         [self print:[NSString stringWithFormat:@"decompiling %@", k]];
-        RXScriptOpcodeStream* ops = [[RXScriptOpcodeStream alloc] initWithScript:[[scripts objectForKey:k] objectAtIndex:0]];
-        [ops setDelegate:self];
-        
-        rx_opcode_t* op = NULL;
-        while ((op = [ops nextOpcode])) {
-            [self print:[NSString stringWithFormat:@"%hu", op->command]];
-        }
-        
-        [ops release];
+        RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:[[scripts objectForKey:k] objectAtIndex:0]];
+        NSMutableArray* decompiled_script = [comp decompiledScript];
+        [self print:[decompiled_script description]];
+        [comp release];
     }
-}
-
-- (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchForVariable:(uint16_t)var {
-    [self print:[NSString stringWithFormat:@"entering branch for var %hu", var]];
-}
-
-- (void)opcodeStreamWillExitBranch:(RXScriptOpcodeStream*)stream {
-    [self print:@"exiting branch"];
-}
-
-- (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchCaseForValue:(uint16_t)value {
-    [self print:[NSString stringWithFormat:@"entering case for value %hu", value]];
 }
 
 @end
