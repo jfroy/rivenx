@@ -296,4 +296,39 @@ static PyMethodDef rivenx_methods[] = {
     [renderingState setActiveCardWithStack:@"jspit" ID:_trip waitUntilDone:NO];
 }
 
+- (void)cmd_decompile:(NSArray*)args {
+    RXCard* card = [[(RXCardState*)[g_world cardRenderState] scriptEngine] card];
+    NSDictionary* scripts = [card scripts];
+    
+    NSEnumerator* iter_k = [scripts keyEnumerator];
+    NSString* k;
+    while ((k = [iter_k nextObject])) {
+        if ([[scripts objectForKey:k] count] == 0)
+            continue;
+        
+        [self print:[NSString stringWithFormat:@"decompiling %@", k]];
+        RXScriptOpcodeStream* ops = [[RXScriptOpcodeStream alloc] initWithScript:[[scripts objectForKey:k] objectAtIndex:0]];
+        [ops setDelegate:self];
+        
+        rx_opcode_t* op = NULL;
+        while ((op = [ops nextOpcode])) {
+            [self print:[NSString stringWithFormat:@"%hu", op->command]];
+        }
+        
+        [ops release];
+    }
+}
+
+- (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchForVariable:(uint16_t)var {
+    [self print:[NSString stringWithFormat:@"entering branch for var %hu", var]];
+}
+
+- (void)opcodeStreamWillExitBranch:(RXScriptOpcodeStream*)stream {
+    [self print:@"exiting branch"];
+}
+
+- (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchCaseForValue:(uint16_t)value {
+    [self print:[NSString stringWithFormat:@"entering case for value %hu", value]];
+}
+
 @end

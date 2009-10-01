@@ -26,7 +26,7 @@ typedef struct {
 
 @interface RXScriptEngine : NSObject <RXScriptEngineProtocol> {
     __weak id<RXScriptEngineControllerProtocol> controller;
-    RXCard* card;
+    RXCard* _card;
     
     // program execution
     uint32_t _programExecutionDepth;
