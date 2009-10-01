@@ -70,7 +70,8 @@ size_t rx_compute_riven_script_length(const void* script, uint16_t command_count
                     caseCommandCount = CFSwapInt16BigToHost(caseCommandCount);
                 scriptOffset += 2;
                 
-                size_t caseCommandListLength = rx_compute_riven_script_length(BUFFER_OFFSET(script, scriptOffset), caseCommandCount, byte_swap);
+                size_t caseCommandListLength = rx_compute_riven_script_length(BUFFER_OFFSET(script, scriptOffset),
+                                                                              caseCommandCount, byte_swap);
                 scriptOffset += caseCommandListLength;
             }
         }
@@ -131,7 +132,8 @@ NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length
     }
     
     // each event key holds an array of programs
-    NSDictionary* scriptDictionary = [[NSDictionary alloc] initWithObjects:eventProgramsPerType forKeys:script_keys_array count:eventTypeCount];
+    NSDictionary* scriptDictionary = [[NSDictionary alloc] initWithObjects:eventProgramsPerType
+                                                                   forKeys:script_keys_array count:eventTypeCount];
     
     // release the program arrays now that they're in the dictionary
     for (currentEventIndex = 0; currentEventIndex < eventTypeCount; currentEventIndex++)
