@@ -215,6 +215,7 @@
 		31DCF73608CB855C00E351D9 /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31DCF73208CB855C00E351D9 /* QuickTime.framework */; };
 		31E0122E0C90F016000A271E /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3158857A0C8729D800204DDD /* MHKKit.framework */; };
 		31EAC32B08FF38940018D8DA /* rivenx.icns in Resources */ = {isa = PBXBuildFile; fileRef = 31EAC32A08FF38940018D8DA /* rivenx.icns */; };
+		31EE15E010745FA3006E196D /* RXScriptCompiler.m in Sources */ = {isa = PBXBuildFile; fileRef = 31EE15DF10745FA3006E196D /* RXScriptCompiler.m */; };
 		31F0DD4B0D3A7682000FBB5F /* EngineVariables.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31F0DD4A0D3A7682000FBB5F /* EngineVariables.plist */; };
 		31F1BEA60D3B03D000CFE301 /* about.png in Resources */ = {isa = PBXBuildFile; fileRef = 31F1BEA50D3B03D000CFE301 /* about.png */; };
 		31F1BED60D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 31F1BED50D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf */; };
@@ -559,6 +560,8 @@
 		31DCF73108CB855C00E351D9 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = /System/Library/Frameworks/QuartzCore.framework; sourceTree = "<absolute>"; };
 		31DCF73208CB855C00E351D9 /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = /System/Library/Frameworks/QuickTime.framework; sourceTree = "<absolute>"; };
 		31EAC32A08FF38940018D8DA /* rivenx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = rivenx.icns; sourceTree = "<group>"; };
+		31EE15DE10745FA3006E196D /* RXScriptCompiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptCompiler.h; sourceTree = "<group>"; };
+		31EE15DF10745FA3006E196D /* RXScriptCompiler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptCompiler.m; sourceTree = "<group>"; };
 		31F0DD4A0D3A7682000FBB5F /* EngineVariables.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = EngineVariables.plist; sourceTree = "<group>"; };
 		31F1BEA50D3B03D000CFE301 /* about.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = about.png; sourceTree = "<group>"; };
 		31F1BED50D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Riven X Acknowledgments.pdf"; sourceTree = "<group>"; };
@@ -1135,6 +1138,8 @@
 				312EDC700A2E3B80005D26AF /* RXHotspot.h */,
 				312EDC710A2E3B80005D26AF /* RXHotspot.m */,
 				3195A6330EEC57860000CFB6 /* RXScriptCommandAliases.h */,
+				31EE15DE10745FA3006E196D /* RXScriptCompiler.h */,
+				31EE15DF10745FA3006E196D /* RXScriptCompiler.m */,
 				31F4F0000F3533EF00A68652 /* RXScriptDecoding.h */,
 				31F4F0010F3533EF00A68652 /* RXScriptDecoding.m */,
 				31F4EFE80F35312700A68652 /* RXScriptEngine.h */,
@@ -1700,6 +1705,7 @@
 				3186C9E5102E47F4004E81D2 /* RXTexture.m in Sources */,
 				31766E62102FAC02001762A9 /* RXDynamicBitfield.m in Sources */,
 				31CE92961033D576008B7717 /* RXInterpolator.m in Sources */,
+				31EE15E010745FA3006E196D /* RXScriptCompiler.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
