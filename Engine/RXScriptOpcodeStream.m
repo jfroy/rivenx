@@ -19,17 +19,17 @@
     return nil;
 }
 
-- (id)initWithScript:(NSDictionary*)program {
-    [program retain];
+- (id)initWithScript:(NSDictionary*)script {
+    [script retain];
     
-    self = [self initWithScriptBuffer:[[program objectForKey:RXScriptProgramKey] bytes]
-                          opcodeCount:[[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
+    self = [self initWithScriptBuffer:[[script objectForKey:RXScriptProgramKey] bytes]
+                          opcodeCount:[[script objectForKey:RXScriptOpcodeCountKey] unsignedShortValue]];
     if (!self) {
-        [program release];
+        [script release];
         return nil;
     }
     
-    _program_dict = program;
+    _script = script;
     
     return self;
 }
@@ -48,7 +48,7 @@
 }
 
 - (void)dealloc {
-    [_program_dict release];
+    [_script release];
     [_substream release];
     [super dealloc];
 }
@@ -59,6 +59,19 @@
 
 - (void)setDelegate:(id)delegate {
     _delegate = delegate;
+}
+
+- (NSDictionary*)script {
+    if (_script)
+        return [[_script retain] autorelease];
+    
+    size_t s = rx_compute_riven_script_length(_program, _opcode_count, false);
+    _script = [[NSDictionary alloc] initWithObjectsAndKeys:
+        [NSData dataWithBytes:_program length:s], RXScriptProgramKey,
+        [NSNumber numberWithUnsignedShort:_opcode_count], RXScriptOpcodeCountKey,
+        nil];
+    
+    return [[_script retain] autorelease];
 }
 
 - (void)reset {

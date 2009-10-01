@@ -16,7 +16,7 @@ typedef struct {
 } rx_opcode_t;
 
 @interface RXScriptOpcodeStream : NSObject {
-    NSDictionary* _program_dict;
+    NSDictionary* _script;
     
     uint16_t const* _program;
     uint16_t _opcode_count;
@@ -33,11 +33,13 @@ typedef struct {
     id _delegate;
 }
 
-- (id)initWithScript:(NSDictionary*)program;
+- (id)initWithScript:(NSDictionary*)script;
 - (id)initWithScriptBuffer:(uint16_t const*)pbuf opcodeCount:(uint16_t)op_count;
 
 - (id)delegate;
 - (void)setDelegate:(id)delegate;
+
+- (NSDictionary*)script;
 
 - (void)reset;
 - (rx_opcode_t*)nextOpcode;
