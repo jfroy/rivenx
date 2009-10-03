@@ -8,6 +8,7 @@
 
 #import "Engine/RXScriptCompiler.h"
 #import "Engine/RXScriptCommandAliases.h"
+#import "Engine/RXScriptDecoding.h"
 
 
 @implementation RXScriptCompiler
@@ -52,19 +53,81 @@
     [super dealloc];
 }
 
+- (void)_compileBlock:(NSArray*)block inBuffer:(NSMutableData*)pbuf {
+    NSEnumerator* iter_opcode = [block objectEnumerator];
+    NSDictionary* opcode = nil;
+    while ((opcode = [iter_opcode nextObject])) {
+        uint16_t temp = [[opcode objectForKey:@"command"] unsignedShortValue];
+        
+        if (temp == RX_COMMAND_BRANCH) {
+            [pbuf appendBytes:&temp length:sizeof(uint16_t)];
+            
+            temp = 2;
+            [pbuf appendBytes:&temp length:sizeof(uint16_t)];
+            
+            temp = [[opcode objectForKey:@"variable"] unsignedShortValue];
+            [pbuf appendBytes:&temp length:sizeof(uint16_t)];
+            
+            NSArray* cases = [opcode objectForKey:@"cases"];
+            
+            temp = [cases count];
+            [pbuf appendBytes:&temp length:sizeof(uint16_t)];
+            
+            NSEnumerator* iter_cases = [cases objectEnumerator];
+            NSDictionary* c = nil;
+            while ((c = [iter_cases nextObject])) {
+                temp = [[c objectForKey:@"value"] unsignedShortValue];
+                [pbuf appendBytes:&temp length:sizeof(uint16_t)];
+                
+                NSArray* block = [c objectForKey:@"block"];
+                
+                temp = [block count];
+                [pbuf appendBytes:&temp length:sizeof(uint16_t)];
+                
+                [self _compileBlock:block inBuffer:pbuf];
+            }
+        } else {
+            NSArray* args = [opcode objectForKey:@"args"];
+            
+            [pbuf appendBytes:&temp length:sizeof(uint16_t)];
+            
+            uint16_t argc = [args count];
+            [pbuf appendBytes:&argc length:sizeof(uint16_t)];
+            
+            for (uint16_t argi = 0; argi < argc; argi++) {
+                temp = [[args objectAtIndex:argi] unsignedShortValue];
+                [pbuf appendBytes:&temp length:sizeof(uint16_t)];
+            }
+        }
+    }
+}
+
 - (NSDictionary*)compiledScript {
     if (_ops)
         return [_ops script];
     
     // compile
+    NSMutableData* pbuf = [[NSMutableData alloc] init];
+    [self _compileBlock:_decompiled_script inBuffer:pbuf];
     
+    NSDictionary* script = [NSDictionary dictionaryWithObjectsAndKeys:
+        pbuf, RXScriptProgramKey,
+        [NSNumber numberWithUnsignedShort:[_decompiled_script count]], RXScriptOpcodeCountKey,
+        nil];
+    [pbuf release];
+    
+    _ops = [[RXScriptOpcodeStream alloc] initWithScript:script];
     return [_ops script];
 }
 
 - (void)setCompiledScript:(NSDictionary*)script {
+    [script retain];
+    
     [_ops release];
     _ops = [[RXScriptOpcodeStream alloc] initWithScript:script];
     [_ops setDelegate:self];
+    
+    [script release];
     
     [_decompiled_script release];
     _decompiled_script = nil;
@@ -118,10 +181,11 @@
 }
 
 - (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchForVariable:(uint16_t)var {
-    NSMutableDictionary* cases = [NSMutableDictionary dictionary];
+    NSMutableArray* cases = [NSMutableArray array];
     
     [_current_block addObject:[NSDictionary dictionaryWithObjectsAndKeys:
                                [NSNumber numberWithUnsignedShort:RX_COMMAND_BRANCH], @"command",
+                               [NSNumber numberWithUnsignedShort:var], @"variable",
                                cases, @"cases",
                                nil]];
     
@@ -146,8 +210,12 @@
 - (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchCaseForValue:(uint16_t)value {
     // create a new block array for the branch case
     _current_block = [NSMutableArray array];
-    [(NSMutableDictionary*)[_cases_stack lastObject]
-        setObject:_current_block forKey:[NSNumber numberWithUnsignedShort:value]];
+    
+    NSMutableArray* cases = [_cases_stack lastObject];
+    [cases addObject:[NSDictionary dictionaryWithObjectsAndKeys:
+        _current_block, @"block",
+        [NSNumber numberWithUnsignedShort:value], @"value",
+        nil]];
 }
 
 @end
