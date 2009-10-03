@@ -14,6 +14,7 @@
 #import "Engine/RXEditionManager.h"
 #import "Engine/RXScriptCompiler.h"
 #import "Engine/RXScriptCommandAliases.h"
+#import "Engine/RXScriptDecoding.h"
 
 #import "States/RXCardState.h"
 
@@ -296,7 +297,7 @@ static PyMethodDef rivenx_methods[] = {
     [renderingState setActiveCardWithStack:@"jspit" ID:_trip waitUntilDone:NO];
 }
 
-- (void)cmd_decompile:(NSArray*)args {
+- (void)cmd_recompile:(NSArray*)args {
     RXCard* card = [[(RXCardState*)[g_world cardRenderState] scriptEngine] card];
     NSDictionary* scripts = [card scripts];
     
@@ -306,11 +307,22 @@ static PyMethodDef rivenx_methods[] = {
         if ([[scripts objectForKey:k] count] == 0)
             continue;
         
-        [self print:[NSString stringWithFormat:@"decompiling %@", k]];
+        [self print:[NSString stringWithFormat:@"recompiling %@", k]];
+                
         RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:[[scripts objectForKey:k] objectAtIndex:0]];
         NSMutableArray* decompiled_script = [comp decompiledScript];
-        [self print:[decompiled_script description]];
+        
+        [comp setDecompiledScript:decompiled_script];
+        NSDictionary* compiled_script = [comp compiledScript];
+        
         [comp release];
+        
+        if (![compiled_script isEqual:[[scripts objectForKey:k] objectAtIndex:0]]) {
+            [self print:@"re-compiled script not equal to origial script!"];
+            [[[[scripts objectForKey:k] objectAtIndex:0] objectForKey:RXScriptProgramKey] writeToFile:@"original.rxscript" options:0 error:NULL];
+            [[compiled_script objectForKey:RXScriptProgramKey] writeToFile:@"recompiled.rxscript" options:0 error:NULL];
+            break;
+        }
     }
 }
 
