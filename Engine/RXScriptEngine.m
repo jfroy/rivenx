@@ -347,11 +347,11 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         if (_abortProgramExecution)
             break;
         
-        if (*program == 8) {
+        if (*program == RX_COMMAND_BRANCH) {
             // parameters for the conditional branch opcode
             uint16_t argc = *(program + 1);
-            uint16_t varID = *(program + 2);
-            uint16_t caseCount = *(program + 3);
+            uint16_t variable_id = *(program + 2);
+            uint16_t casec = *(program + 3);
             
             // adjust the shorted program
             program_off += 8;
@@ -362,28 +362,28 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
                 @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
             
             // get the variable from the game state
-            NSString* name = [parent varNameAtIndex:varID];
+            NSString* name = [parent varNameAtIndex:variable_id];
             if (!name)
-                name = [NSString stringWithFormat:@"%@%hu", [parent key], varID];
-            uint16_t varValue = [[g_world gameState] unsignedShortForKey:name];
+                name = [NSString stringWithFormat:@"%@%hu", [parent key], variable_id];
+            uint16_t var_val = [[g_world gameState] unsignedShortForKey:name];
             
 #if defined(DEBUG)
-            RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@switch statement on variable %@=%hu", logPrefix, name, varValue);
+            RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@switch statement on variable %@=%hu", logPrefix, name, var_val);
 #endif
             
             // evaluate each branch
-            uint16_t caseIndex = 0;
-            uint16_t caseValue;
-            size_t defaultCaseOffset = 0;
-            for (; caseIndex < caseCount; caseIndex++) {
-                caseValue = *program;
+            uint16_t casei = 0;
+            uint16_t case_val;
+            size_t default_case_off = 0;
+            for (; casei < casec; casei++) {
+                case_val = *program;
                 
                 // record the address of the default case in case we need to execute it if we don't find a matching case
-                if (caseValue == 0xffff)
-                    defaultCaseOffset = program_off;
+                if (case_val == 0xffff)
+                    default_case_off = program_off;
                 
                 // matching case
-                if (caseValue == varValue) {
+                if (case_val == var_val) {
 #if defined(DEBUG)
                     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@executing matching case {", logPrefix);
                     [logPrefix appendString:@"    "];
@@ -404,20 +404,20 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
                 program = (uint16_t*)BUFFER_OFFSET(program_buffer, program_off);
                 
                 // bail out if we executed a matching case
-                if (caseValue == varValue)
+                if (case_val == var_val)
                     break;
             }
             
             // if we didn't match any case, execute the default case
-            if (caseIndex == caseCount && defaultCaseOffset != 0) {
+            if (casei == casec && default_case_off != 0) {
 #if defined(DEBUG)
                 RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@no case matched variable value, executing default case {", logPrefix);
                 [logPrefix appendString:@"    "];
 #endif
                 
                 // execute the switch statement program
-                [self _executeRivenProgram:((uint16_t*)BUFFER_OFFSET(program_buffer, defaultCaseOffset)) + 2
-                                     count:*(((uint16_t*)BUFFER_OFFSET(program_buffer, defaultCaseOffset)) + 1)];
+                [self _executeRivenProgram:((uint16_t*)BUFFER_OFFSET(program_buffer, default_case_off)) + 2
+                                     count:*(((uint16_t*)BUFFER_OFFSET(program_buffer, default_case_off)) + 1)];
                 
 #if defined(DEBUG)
                 [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
@@ -425,8 +425,8 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #endif
             } else {
                 // skip over the instructions of the remaining cases
-                caseIndex++;
-                for (; caseIndex < caseCount; caseIndex++) {
+                casei++;
+                for (; casei < casec; casei++) {
                     program_off += rx_compute_riven_script_length((program + 2), *(program + 1), false) + 4;
                     program = (uint16_t*)BUFFER_OFFSET(program_buffer, program_off);
                 }
