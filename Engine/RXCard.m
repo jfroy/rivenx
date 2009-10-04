@@ -14,6 +14,7 @@
 #import "Engine/RXScriptDecoding.h"
 #import "Engine/RXScriptCommandAliases.h"
 #import "Engine/RXEditionManager.h"
+#import "Engine/RXScriptCompiler.h"
 
 #import "Rendering/Graphics/RXMovieProxy.h"
 
@@ -128,41 +129,33 @@
     
     // WORKAROUND: there is a legitimate bug in the CD edition's tspit 155 open card program;
     // it executes activate SLST record 2 command after the introduction sequence, which is the mute SLST; patch it up to activate SLST 1
-    if ([_descriptor ID] == 155 && [[[_descriptor parent] key] isEqualToString:@"tspit"] && [[ce valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
+    if ([_descriptor isCardWithRMAP:28314 stackName:@"tspit"] && [[ce valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
         NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndex:0];
+        RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:start_rendering_program];
+        NSMutableArray* dp = [comp decompiledScript];
         
-        const uint16_t* base_program = (const uint16_t*)[[start_rendering_program objectForKey:RXScriptProgramKey] bytes];
-        uint16_t opcode_count = [[start_rendering_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
-        uint32_t switch_opcode_offset;
-        if (opcode_count > 0 && rx_get_riven_script_opcode(base_program, opcode_count, 0, &switch_opcode_offset) == 8) {
-            uint32_t case_program_offset = 0;
-            uint16_t case_opcode_count = rx_get_riven_script_case_opcode_count(BUFFER_OFFSET(base_program, switch_opcode_offset), 0, &case_program_offset);
-            
-            uint32_t slst_opcode_offset;
-            if (case_program_offset > 0 && rx_get_riven_script_opcode(BUFFER_OFFSET(base_program, switch_opcode_offset + case_program_offset),
-                                                                      case_opcode_count,
-                                                                      case_opcode_count - 3,
-                                                                      &slst_opcode_offset) == RX_COMMAND_ACTIVATE_SLST) {
-                NSMutableData* program = [[start_rendering_program objectForKey:RXScriptProgramKey] mutableCopy];
-                uint16_t* slst_index = BUFFER_OFFSET((uint16_t*)[program mutableBytes], switch_opcode_offset + case_program_offset + slst_opcode_offset + 4);
-                if (*slst_index == 2) {
-                    *slst_index = 1;
-                    start_rendering_program = [[NSDictionary alloc] initWithObjectsAndKeys:
-                        program, RXScriptProgramKey,
-                        [start_rendering_program objectForKey:RXScriptOpcodeCountKey], RXScriptOpcodeCountKey,
-                        nil];
-                    
-                    NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
-                    [mutable_script setObject:[NSArray arrayWithObject:start_rendering_program] forKey:RXStartRenderingScriptKey];
-                    [start_rendering_program release];
-                    
-                    [_card_scripts release];
-                    _card_scripts = mutable_script;
+        NSDictionary* opcode = [dp objectAtIndex:0];
+        if ([[opcode objectForKey:@"command"] unsignedShortValue] == RX_COMMAND_BRANCH) {
+            NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndex:0];
+            if ([[case0 objectForKey:@"value"] unsignedShortValue] == 0) {
+                opcode = [[case0 objectForKey:@"block"] objectAtIndex:26];
+                if ([[opcode objectForKey:@"command"] unsignedShortValue] == RX_COMMAND_ACTIVATE_SLST &&
+                    [[[opcode objectForKey:@"args"] objectAtIndex:0] unsignedShortValue] == 2)
+                {
+                    [[opcode objectForKey:@"args"] replaceObjectAtIndex:0 withObject:[NSNumber numberWithUnsignedShort:1]];
                 }
-                
-                [program release];
             }
         }
+        
+        [comp setDecompiledScript:dp];
+        
+        NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
+        [mutable_script setObject:[NSArray arrayWithObject:[comp compiledScript]] forKey:RXStartRenderingScriptKey];
+        
+        [_card_scripts release];
+        _card_scripts = mutable_script;
+        
+        [comp release];
     }
 }
 
