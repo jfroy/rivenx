@@ -155,7 +155,7 @@
             [args addObject:[NSNumber numberWithUnsignedShort:op->arguments[i]]];
         
         assert(_current_block);
-        [_current_block addObject:[NSDictionary dictionaryWithObjectsAndKeys:
+        [_current_block addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:
                                    [NSNumber numberWithUnsignedShort:op->command], @"command",
                                    args, @"args",
                                    nil]];
@@ -183,7 +183,7 @@
 - (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchForVariable:(uint16_t)var {
     NSMutableArray* cases = [NSMutableArray array];
     
-    [_current_block addObject:[NSDictionary dictionaryWithObjectsAndKeys:
+    [_current_block addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:
                                [NSNumber numberWithUnsignedShort:RX_COMMAND_BRANCH], @"command",
                                [NSNumber numberWithUnsignedShort:var], @"variable",
                                cases, @"cases",
@@ -212,7 +212,7 @@
     _current_block = [NSMutableArray array];
     
     NSMutableArray* cases = [_cases_stack lastObject];
-    [cases addObject:[NSDictionary dictionaryWithObjectsAndKeys:
+    [cases addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:
         _current_block, @"block",
         [NSNumber numberWithUnsignedShort:value], @"value",
         nil]];
