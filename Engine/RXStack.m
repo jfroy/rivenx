@@ -254,6 +254,14 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return (_varNames) ? [_varNames objectAtIndex:index] : nil;
 }
 
+- (uint32_t)varIndexForName:(NSString*)name {
+    uint32_t n = [_varNames count];
+    for (uint32_t i = 0; i < n; i++)
+        if ([name isEqualToString:[_varNames objectAtIndex:i]])
+            return i;
+    return UINT32_MAX;
+}
+
 - (NSString*)stackNameAtIndex:(uint32_t)index {
     return (_stackNames) ? [_stackNames objectAtIndex:index] : nil;
 }

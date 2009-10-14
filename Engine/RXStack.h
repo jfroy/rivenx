@@ -40,6 +40,7 @@
 - (NSString*)hotspotNameAtIndex:(uint32_t)index;
 - (NSString*)externalNameAtIndex:(uint32_t)index;
 - (NSString*)varNameAtIndex:(uint32_t)index;
+- (uint32_t)varIndexForName:(NSString*)name;
 - (NSString*)stackNameAtIndex:(uint32_t)index;
 
 - (uint16_t)cardIDFromRMAPCode:(uint32_t)code;
