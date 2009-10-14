@@ -179,8 +179,25 @@
                     opcode = [block objectAtIndex:i];
                     if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_SET_VARIABLE) && RX_VAR_NAME_EQ(RX_OPCODE_ARG(opcode, 0), @"atrapbook")) {
                         [block removeObjectAtIndex:i];
-                        break;
-                    }   
+                        n--;
+                        i--;
+                    } else if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_START_MOVIE_BLOCKING) && RX_OPCODE_ARG(opcode, 0) == 3) {
+                        uint32_t movie_time = 41000; // ms
+                        opcode = [NSDictionary dictionaryWithObjectsAndKeys:
+                            [NSNumber numberWithUnsignedShort:RX_COMMAND_SCHEDULE_MOVIE_COMMAND], @"command",
+                            [NSArray arrayWithObjects:
+                                [NSNumber numberWithUnsignedShort:3], // movie code
+                                [NSNumber numberWithUnsignedShort:movie_time >> 16], // movie time
+                                [NSNumber numberWithUnsignedShort:movie_time & 0xFFFF],
+                                [NSNumber numberWithUnsignedShort:RX_COMMAND_SET_VARIABLE], // scheduled command
+                                [NSNumber numberWithUnsignedShort:[_parent varIndexForName:@"atrapbook"]], // scheduled command args
+                                [NSNumber numberWithUnsignedShort:0],
+                                nil], @"args",
+                            nil];
+                        [block insertObject:opcode atIndex:i];
+                        i++;
+                        n++;
+                    }
                 }
             }
         }
