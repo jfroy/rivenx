@@ -57,6 +57,7 @@
     NSEnumerator* iter_opcode = [block objectEnumerator];
     NSDictionary* opcode = nil;
     while ((opcode = [iter_opcode nextObject])) {
+        assert([opcode objectForKey:@"command"]);
         uint16_t temp = [[opcode objectForKey:@"command"] unsignedShortValue];
         
         if (temp == RX_COMMAND_BRANCH) {
@@ -65,10 +66,12 @@
             temp = 2;
             [pbuf appendBytes:&temp length:sizeof(uint16_t)];
             
+            assert([opcode objectForKey:@"variable"]);
             temp = [[opcode objectForKey:@"variable"] unsignedShortValue];
             [pbuf appendBytes:&temp length:sizeof(uint16_t)];
             
             NSArray* cases = [opcode objectForKey:@"cases"];
+            assert(cases);
             
             temp = [cases count];
             [pbuf appendBytes:&temp length:sizeof(uint16_t)];
@@ -76,10 +79,12 @@
             NSEnumerator* iter_cases = [cases objectEnumerator];
             NSDictionary* c = nil;
             while ((c = [iter_cases nextObject])) {
+                assert([c objectForKey:@"value"]);
                 temp = [[c objectForKey:@"value"] unsignedShortValue];
                 [pbuf appendBytes:&temp length:sizeof(uint16_t)];
                 
                 NSArray* block = [c objectForKey:@"block"];
+                assert(block);
                 
                 temp = [block count];
                 [pbuf appendBytes:&temp length:sizeof(uint16_t)];
@@ -88,6 +93,7 @@
             }
         } else {
             NSArray* args = [opcode objectForKey:@"args"];
+            assert(args);
             
             [pbuf appendBytes:&temp length:sizeof(uint16_t)];
             
