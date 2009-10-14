@@ -641,6 +641,12 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     RXCard* executing_card = _card;
     [executing_card retain];
     
+    // cache the card descriptor and game state for the workarounds
+    RXCardDescriptor* cdesc = [_card descriptor];
+    RXGameState* gs = [g_world gameState];
+    
+    // workarounds that should execute before the start rendering programs
+    
     // execute rendering programs (index 9)
     NSArray* programs = [[_card scripts] objectForKey:RXStartRenderingScriptKey];
     assert(programs);
@@ -663,7 +669,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     }
     
     // workarounds that should execute after the start rendering programs
-    RXCardDescriptor* cdesc = [_card descriptor];
     
     // Catherine prison card - need to schedule periodic movie events
     if ([cdesc isCardWithRMAP:14981 stackName:@"pspit"]) {
@@ -676,18 +681,18 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
                                                      userInfo:nil
                                                       repeats:NO];
     }
-    // schedule a deferred execution of _handleTrapBookLink on ourselves; also hard-hide the mouse cursor for this sequence
+    // inside trap book card - schedule a deferred execution of _handleTrapBookLink on ourselves; also explicitly hide the mouse cursor for the sequence
     else if ([cdesc isCardWithRMAP:k_trap_book_card_rmap stackName:@"aspit"]) {
         [self performSelector:@selector(_handleTrapBookLink) withObject:nil afterDelay:5.0];
         [controller hideMouseCursor];
     }
-    // schedule sunners events if we're on one of the sunners cards
+    // sunners cards - schedule sunners movies / events
     else if ([cdesc isCardWithRMAP:sunners_upper_stairs_rmap stackName:@"jspit"] ||
              [cdesc isCardWithRMAP:sunners_mid_stairs_rmap stackName:@"jspit"] ||
              [cdesc isCardWithRMAP:sunners_lower_stairs_rmap stackName:@"jspit"] ||
              [cdesc isCardWithRMAP:sunners_beach_rmap stackName:@"jspit"])
     {
-        if (![[g_world gameState] unsigned64ForKey:@"jsunners"] && !event_timer)
+        if (![gs unsigned64ForKey:@"jsunners"] && !event_timer)
             event_timer = [NSTimer scheduledTimerWithTimeInterval:0.5
                                                            target:self
                                                          selector:@selector(_handleSunnersIdleEvent:)
