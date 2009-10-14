@@ -1035,7 +1035,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
             [logPrefix appendString:@"    "];
         }
 #endif
-        DISPATCH_COMMAND1(_scheduled_movie_command.command[0], _scheduled_movie_command.command[1]);
+        DISPATCH_COMMAND2(_scheduled_movie_command.command[0], _scheduled_movie_command.command[1], _scheduled_movie_command.command[2]);
 #if defined(DEBUG)
         if (!_disableScriptLogging) {
             [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
@@ -1812,6 +1812,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         _scheduled_movie_command.time = command_time / 1000.0;
         _scheduled_movie_command.command[0] = command;
         _scheduled_movie_command.command[1] = command_arg;
+        _scheduled_movie_command.command[2] = (argc > 5) ? argv[5] : 0;
     } else {
         memset(&_scheduled_movie_command, 0, sizeof(rx_scheduled_movie_command_t));
         DISPATCH_COMMAND1(command, command_arg);

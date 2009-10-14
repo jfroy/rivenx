@@ -20,7 +20,7 @@
 
 typedef struct {
     NSTimeInterval time;
-    uint16_t command[2];
+    uint16_t command[3];
     uint16_t code;
 } rx_scheduled_movie_command_t;
 
