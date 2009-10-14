@@ -118,6 +118,15 @@
 #pragma mark -
 #pragma mark loading
 
+#define RX_VAR_NAME_EQ(var, name) [[_parent varNameAtIndex:(var)] isEqualToString:(name)]
+
+#define RX_OPCODE_COMMAND_EQ(opcode, command) [[(opcode) objectForKey:@"command"] unsignedShortValue] == (command)
+#define RX_OPCODE_ARG(opcode, i) [[[(opcode) objectForKey:@"args"] objectAtIndex:(i)] unsignedShortValue]
+#define RX_OPCODE_SET_ARG(opcode, i, value) [[(opcode) objectForKey:@"args"] replaceObjectAtIndex:(i) withObject:[NSNumber numberWithUnsignedShort:(value)]]
+
+#define RX_BRANCH_VAR_NAME_EQ(branch, name) [[_parent varNameAtIndex:[[(branch) objectForKey:@"variable"] unsignedShortValue]] isEqualToString:(name)]
+#define RX_CASE_VAL_EQ(case, value) [[(case) objectForKey:@"value"] unsignedShortValue] == (value)
+
 - (void)_loadScripts {
     NSData* card_data = [_descriptor data];
     
@@ -135,14 +144,43 @@
         NSMutableArray* dp = [comp decompiledScript];
         
         NSDictionary* opcode = [dp objectAtIndex:0];
-        if ([[opcode objectForKey:@"command"] unsignedShortValue] == RX_COMMAND_BRANCH) {
+        if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_BRANCH)) {
             NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndex:0];
-            if ([[case0 objectForKey:@"value"] unsignedShortValue] == 0) {
+            if (RX_CASE_VAL_EQ(case0, 0)) {
                 opcode = [[case0 objectForKey:@"block"] objectAtIndex:26];
-                if ([[opcode objectForKey:@"command"] unsignedShortValue] == RX_COMMAND_ACTIVATE_SLST &&
-                    [[[opcode objectForKey:@"args"] objectAtIndex:0] unsignedShortValue] == 2)
-                {
-                    [[opcode objectForKey:@"args"] replaceObjectAtIndex:0 withObject:[NSNumber numberWithUnsignedShort:1]];
+                if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_ACTIVATE_SLST) && RX_OPCODE_ARG(opcode, 0) == 2)
+                    RX_OPCODE_SET_ARG(opcode, 0, 1);
+            }
+        }
+        
+        [comp setDecompiledScript:dp];
+        
+        NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
+        [mutable_script setObject:[NSArray arrayWithObject:[comp compiledScript]] forKey:RXStartRenderingScriptKey];
+        
+        [_card_scripts release];
+        _card_scripts = mutable_script;
+        
+        [comp release];
+    }
+    // WORKAROUND: patch pspit 29's start rendering script to remove the instruction that sets atrapbook to 0
+    else if ([_descriptor isCardWithRMAP:2526 stackName:@"pspit"]) {
+        NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndex:0];
+        RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:start_rendering_program];
+        NSMutableArray* dp = [comp decompiledScript];
+        
+        NSDictionary* opcode = [dp lastObject];
+        if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_BRANCH)) {
+            NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndex:0];
+            if (RX_BRANCH_VAR_NAME_EQ(opcode, @"pcage") && RX_CASE_VAL_EQ(case0, 1)) {
+                NSMutableArray* block = [case0 objectForKey:@"block"];
+                uint32_t n = [block count];
+                for (uint32_t i = 0; i < n; i++) {
+                    opcode = [block objectAtIndex:i];
+                    if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_SET_VARIABLE) && RX_VAR_NAME_EQ(RX_OPCODE_ARG(opcode, 0), @"atrapbook")) {
+                        [block removeObjectAtIndex:i];
+                        break;
+                    }   
                 }
             }
         }
