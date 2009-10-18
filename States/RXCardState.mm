@@ -2287,7 +2287,8 @@ exit_render:
             _hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
             _hotspotDebugRenderElementCountArray[primitive_index] = 4;
             
-            NSRect frame = [hotspot worldFrame];
+            // get the hotspot's world frame and inset by 0.5 to draw at the pixel center
+            NSRect frame = NSInsetRect([hotspot worldFrame], 0.5, 0.5);
             
             attribs[0] = frame.origin.x;
             attribs[1] = frame.origin.y;
@@ -2334,7 +2335,7 @@ exit_render:
                 _hotspotDebugRenderElementCountArray[primitive_index] = 4;
                 
                 inv_count++;
-                NSRect frame = _inventory_hotspot_frames[inventory_i];
+                NSRect frame = NSInsetRect(_inventory_hotspot_frames[inventory_i], 0.5, 0.5);
                 
                 attribs[0] = frame.origin.x;
                 attribs[1] = frame.origin.y;
