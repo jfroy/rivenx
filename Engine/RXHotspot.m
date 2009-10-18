@@ -64,8 +64,6 @@
     _cursor_id = cursorID;
     _script = [script retain];
     
-    _description = [[NSString alloc] initWithFormat: @"{ID=%hu, rect=<%hu, %hu, %hu, %hu>}", _ID, _rect.left, _rect.top, _rect.right, _rect.bottom];
-    
     // register for reshape notifications so we can update our world frame and do an update immediately to initialize the world frame
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_updateWorldFrame:) name:@"RXOpenGLDidReshapeNotification" object:nil];
     [self _updateWorldFrame:nil];
@@ -111,7 +109,24 @@
         return NSOrderedDescending;
 }
 
+- (void)_updateDescription {
+    [_description release];
+    
+    if (_name)
+        _description = [[NSString alloc] initWithFormat: @"%@ {ID=%hu, core=<%hu, %hu, %hu, %hu>, world=<%d, %d, %d, %d>}",
+            _name, _ID,
+            _rect.left, _rect.top, _rect.right, _rect.bottom,
+            (int)_world_frame.origin.x, (int)_world_frame.origin.y, (int)_world_frame.size.width, (int)_world_frame.size.height];
+    else
+        _description = [[NSString alloc] initWithFormat: @"{ID=%hu, core=<%hu, %hu, %hu, %hu>, world=<%d, %d, %d, %d>}",
+            _ID,
+            _rect.left, _rect.top, _rect.right, _rect.bottom,
+            (int)_world_frame.origin.x, (int)_world_frame.origin.y, (int)_world_frame.size.width, (int)_world_frame.size.height];
+}
+
 - (NSString*)description {
+    if (!_description)
+        [self _updateDescription];
     return [[_description retain] autorelease];
 }
 
@@ -123,11 +138,10 @@
     if (_name == name)
         return;
     
-    [_description release];
-    _description = [[NSString alloc] initWithFormat: @"%@ {ID=%hu, rect=<%hu, %hu, %hu, %hu>}", name, _ID, _rect.left, _rect.top, _rect.right, _rect.bottom];
-    
     [_name release];
-    _name = [name retain];
+    _name = [name copy];
+    
+    [self _updateDescription];
 }
 
 - (uint16_t)ID {
@@ -141,6 +155,7 @@
 - (void)setCoreFrame:(rx_core_rect_t)frame {
     _rect = frame;
     [self _updateWorldFrame:nil];
+    [self _updateDescription];
 }
 
 - (uint16_t)cursorID {
