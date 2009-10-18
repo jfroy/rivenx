@@ -420,9 +420,9 @@
     // let each render state do "global" rendering, e.g. rendering inside the window server framebuffer
     stateEnum = [renderStates objectEnumerator];
     while ((descriptor = [stateEnum nextObject])) {
-        typedef void (*render_global_t)(id, SEL, CGLContextObj);
-        render_global_t imp = (render_global_t)[descriptor->state methodForSelector:@selector(_renderInGlobalContext:)];
-        imp(descriptor->state, @selector(_renderInGlobalContext:), cgl_ctx);
+        typedef void (*render_fcrt_t)(id, SEL, CGLContextObj);
+        render_fcrt_t imp = (render_fcrt_t)[descriptor->state methodForSelector:@selector(_renderInFinalCompositeRT:)];
+        imp(descriptor->state, @selector(_renderInFinalCompositeRT:), cgl_ctx);
     }
     
     [fade_callback release];

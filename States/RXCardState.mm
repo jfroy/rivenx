@@ -2246,7 +2246,7 @@ exit_render:
     OSSpinLockUnlock(&_render_lock);
 }
 
-- (void)_renderInGlobalContext:(CGLContextObj)cgl_ctx {
+- (void)_renderInFinalCompositeRT:(CGLContextObj)cgl_ctx {
 #if defined(DEBUG)
     // alias the render context state object pointer
     NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
