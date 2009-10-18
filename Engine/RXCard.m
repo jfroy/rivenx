@@ -464,6 +464,43 @@
                 hotspot_scripts = mutable_script;
             }
         }
+        // WORKAROUND: patch hotspot 16 on pspit 31 to reset pelevcombo to 0 when the combination is wrong
+        else if ([_descriptor isCardWithRMAP:15632 stackName:@"pspit"] && hspt_record->blst_id == 16) {
+            NSDictionary* program = [[hotspot_scripts objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
+            RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:program];
+            NSMutableArray* dp = [comp decompiledScript];
+            
+            NSDictionary* opcode = [dp lastObject];
+            if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_BRANCH)) {
+                NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndex:0];
+                if (RX_BRANCH_VAR_NAME_EQ(opcode, @"pelevcombo") && RX_CASE_VAL_EQ(case0, 5)) {
+                    // insert a default case to the branch that will set pelevcombo to 0
+                    NSArray* block = [NSArray arrayWithObject:[NSDictionary dictionaryWithObjectsAndKeys:
+                            [NSNumber numberWithUnsignedShort:RX_COMMAND_SET_VARIABLE], @"command",
+                            [NSArray arrayWithObjects:
+                                [NSNumber numberWithUnsignedShort:[_parent varIndexForName:@"pelevcombo"]],
+                                [NSNumber numberWithUnsignedShort:0],
+                                nil], @"args",
+                            nil]];
+                    
+                    case0 = [NSDictionary dictionaryWithObjectsAndKeys:
+                        [NSNumber numberWithUnsignedShort:0xffff], @"value",
+                        block, @"block",
+                        nil];
+                    [[opcode objectForKey:@"cases"] addObject:case0];
+                }
+            }
+            
+            [comp setDecompiledScript:dp];
+            
+            NSMutableDictionary* mutable_script = [hotspot_scripts mutableCopy];
+            [mutable_script setObject:[NSArray arrayWithObject:[comp compiledScript]] forKey:RXMouseDownScriptKey];
+            
+            [hotspot_scripts release];
+            hotspot_scripts = mutable_script;
+            
+            [comp release];
+        }
         
         // allocate the hotspot object
         RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index
