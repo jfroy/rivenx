@@ -5403,7 +5403,6 @@ DEFINE_COMMAND(xpisland990_elevcombo) {
     // play the specified combination sound
     uint16_t combo_sound = [self dataSoundIDForCurrentCardWithName:[NSString stringWithFormat:@"aelev%d", argv[0]]];
     DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, combo_sound, (uint16_t)kRXSoundGainDivisor, 0);
-    usleep(500 * 1E3);
     
     // if Gehn is not trapped, basically pretend nothing happened
     if ([gs unsigned32ForKey:@"agehn"] != 4)
