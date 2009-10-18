@@ -444,21 +444,21 @@
         // WORKAROUND: there is a legitimate bug in aspit's "start new game" hotspot; it executes a command 12 at the very end,
         // which kills ambient sound after the introduction sequence; we remove that command here
         if ([_descriptor ID] == 1 && [[[_descriptor parent] key] isEqualToString:@"aspit"] && hspt_record->blst_id == 16) {
-            NSDictionary* mouse_down_program = [[hotspot_scripts objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
+            NSDictionary* program = [[hotspot_scripts objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
             
-            uint16_t opcode_count = [[mouse_down_program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
-            if (opcode_count > 0 && rx_get_riven_script_opcode([[mouse_down_program objectForKey:RXScriptProgramKey] bytes],
+            uint16_t opcode_count = [[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
+            if (opcode_count > 0 && rx_get_riven_script_opcode([[program objectForKey:RXScriptProgramKey] bytes],
                                                                opcode_count,
                                                                opcode_count - 1,
                                                                NULL) == RX_COMMAND_CLEAR_SLST) {
-                mouse_down_program = [[NSDictionary alloc] initWithObjectsAndKeys:
-                    [mouse_down_program objectForKey:RXScriptProgramKey], RXScriptProgramKey,
+                program = [[NSDictionary alloc] initWithObjectsAndKeys:
+                    [program objectForKey:RXScriptProgramKey], RXScriptProgramKey,
                     [NSNumber numberWithUnsignedShort:opcode_count - 1], RXScriptOpcodeCountKey,
                     nil];
                 
                 NSMutableDictionary* mutable_script = [hotspot_scripts mutableCopy];
-                [mutable_script setObject:[NSArray arrayWithObject:mouse_down_program] forKey:RXMouseDownScriptKey];
-                [mouse_down_program release];
+                [mutable_script setObject:[NSArray arrayWithObject:program] forKey:RXMouseDownScriptKey];
+                [program release];
                 
                 [hotspot_scripts release];
                 hotspot_scripts = mutable_script;
