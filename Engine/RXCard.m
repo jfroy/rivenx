@@ -11,6 +11,8 @@
 #import <mach/thread_policy.h>
 
 #import "Engine/RXCard.h"
+
+#import "Engine/RXCursors.h"
 #import "Engine/RXScriptDecoding.h"
 #import "Engine/RXScriptCommandAliases.h"
 #import "Engine/RXEditionManager.h"
@@ -441,6 +443,11 @@
         if (hspt_record->zip == 1)
             continue;
         
+        // get the hotspot's name (if it has one)
+        NSString* hotspotName = nil;
+        if (hspt_record->name_rec >= 0)
+            hotspotName = [[[_descriptor parent] hotspotNameAtIndex:hspt_record->name_rec] lowercaseString];
+        
         // WORKAROUND: there is a legitimate bug in aspit's "start new game" hotspot; it executes a command 12 at the very end,
         // which kills ambient sound after the introduction sequence; we remove that command here
         if ([_descriptor ID] == 1 && [[[_descriptor parent] key] isEqualToString:@"aspit"] && hspt_record->blst_id == 16) {
@@ -501,6 +508,10 @@
             
             [comp release];
         }
+        // WORKAROUND: tweak hotspot "raisehandle" on tspit 138 (29539) to have the open-hand cursor
+        else if ([_descriptor isCardWithRMAP:29539 stackName:@"tspit"] && hotspotName && [hotspotName isEqualToString:@"raisehandle"]) {
+            hspt_record->mouse_cursor = RX_CURSOR_OPEN_HAND;
+        }
         
         // allocate the hotspot object
         RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index
@@ -508,8 +519,8 @@
                                                     rect:hspt_record->rect
                                                 cursorID:hspt_record->mouse_cursor
                                                   script:hotspot_scripts];
-        if (hspt_record->name_rec >= 0) {
-            [hs setName:[[[_descriptor parent] hotspotNameAtIndex:hspt_record->name_rec] lowercaseString]];
+        if (hotspotName) {
+            [hs setName:hotspotName];
             NSMapInsert(_hotspots_name_map, [hs name], hs);
         }
         
