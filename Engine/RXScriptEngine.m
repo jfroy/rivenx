@@ -4276,7 +4276,6 @@ DEFINE_COMMAND(xgplaywhark) {
     // don't trigger a Whark event unless the red light has been toggled off and back on by setting gWharkTime back to 0
     [gs setUnsigned32:0 forKey:@"gWharkTime"];
     
-    
     // count the number of times the red light has been light / the whark has come
     whark_visits++;
     if (whark_visits > 5)
