@@ -516,6 +516,10 @@
         else if ([_descriptor isCardWithRMAP:167117 stackName:@"jspit"] && hotspotName && [hotspotName isEqualToString:@"forward"]) {
             hspt_record->mouse_cursor = RX_CURSOR_OPEN_HAND;
         }
+        // WORKAROUND: tweak hotspot "open" on bspit 163 (85071) to have the open-hand cursor
+        else if ([_descriptor isCardWithRMAP:85071 stackName:@"bspit"] && hotspotName && [hotspotName isEqualToString:@"open"]) {
+            hspt_record->mouse_cursor = RX_CURSOR_OPEN_HAND;
+        }
         
         // allocate the hotspot object
         RXHotspot* hs = [[RXHotspot alloc] initWithIndex:hspt_record->index
