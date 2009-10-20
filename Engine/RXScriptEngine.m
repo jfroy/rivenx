@@ -34,8 +34,6 @@
 static NSTimeInterval const kRunloopPeriod = 0.001;
 static useconds_t const kRunloopPeriodMicroseconds = 1000;
 
-static uint32_t const k_trap_book_card_rmap = 7940;
-
 static uint32_t const sunners_upper_stairs_rmap = 30678;
 static uint32_t const sunners_mid_stairs_rmap = 31165;
 static uint32_t const sunners_lower_stairs_rmap = 31723;
@@ -682,7 +680,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
                                                       repeats:NO];
     }
     // inside trap book card - schedule a deferred execution of _handleTrapBookLink on ourselves; also explicitly hide the mouse cursor for the sequence
-    else if ([cdesc isCardWithRMAP:k_trap_book_card_rmap stackName:@"aspit"]) {
+    else if ([cdesc isCardWithRMAP:7940 stackName:@"aspit"]) {
         [self performSelector:@selector(_handleTrapBookLink) withObject:nil afterDelay:5.0];
         [controller hideMouseCursor];
     }
