@@ -1411,14 +1411,14 @@ init_failure:
     [self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:scd inThread:[g_world scriptThread] waitUntilDone:wait];
     
     // if we have a card redirect entry, queue the final destination card switch
-    RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:scd];
-    if (switchTableDestination) {       
-        RXTransition* transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0.f, 0.f, kRXCardViewportSize.width, kRXCardViewportSize.height)];
-        [self performSelector:@selector(queueTransition:) withObject:transition inThread:[g_world scriptThread] waitUntilDone:wait];
-        [transition release];
-        
-        [self setActiveCardWithStack:switchTableDestination->stackKey ID:switchTableDestination->cardID waitUntilDone:wait];
-    }
+//    RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:scd];
+//    if (switchTableDestination) {       
+//        RXTransition* transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0.f, 0.f, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+//        [self performSelector:@selector(queueTransition:) withObject:transition inThread:[g_world scriptThread] waitUntilDone:wait];
+//        [transition release];
+//        
+//        [self setActiveCardWithStack:switchTableDestination->stackKey ID:switchTableDestination->cardID waitUntilDone:wait];
+//    }
 }
 
 - (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {

@@ -34,6 +34,8 @@
 static NSTimeInterval const kRunloopPeriod = 0.001;
 static useconds_t const kRunloopPeriodMicroseconds = 1000;
 
+static double const kRXLinkingBookDelay = 1.4;
+
 static uint32_t const sunners_upper_stairs_rmap = 30678;
 static uint32_t const sunners_mid_stairs_rmap = 31165;
 static uint32_t const sunners_lower_stairs_rmap = 31723;
@@ -696,6 +698,67 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
                                                          selector:@selector(_handleSunnersIdleEvent:)
                                                          userInfo:nil
                                                           repeats:YES];
+    }
+    // office linking books - linking books change card to a dummy card, which then must change card to the destination
+    else if ([cdesc isCardWithRMAP:114919 stackName:@"bspit"] ||
+             [cdesc isCardWithRMAP:70065 stackName:@"gspit"]  ||
+             [cdesc isCardWithRMAP:156200 stackName:@"jspit"] ||
+             [cdesc isCardWithRMAP:16648 stackName:@"pspit"]  ||
+             [cdesc isCardWithRMAP:138089 stackName:@"tspit"])
+    {
+        [self performSelector:@selector(_linkToCard:)
+                   withObject:[RXSimpleCardDescriptor descriptorWithStackName:@"ospit" rmap:11894]
+                   afterDelay:kRXLinkingBookDelay];
+        [controller hideMouseCursor];
+    }
+    // rebel age linking book
+    else if ([cdesc isCardWithRMAP:166424 stackName:@"jspit"]) {
+        [self performSelector:@selector(_linkToCard:)
+                   withObject:[RXSimpleCardDescriptor descriptorWithStackName:@"rspit" rmap:3988]
+                   afterDelay:kRXLinkingBookDelay];
+        [controller hideMouseCursor];
+    }
+    // rebel age riven linking book
+    else if ([cdesc isCardWithRMAP:13016 stackName:@"rspit"]) {
+        [self performSelector:@selector(_linkToCard:)
+                   withObject:[RXSimpleCardDescriptor descriptorWithStackName:@"jspit" rmap:115828]
+                   afterDelay:kRXLinkingBookDelay];
+        [controller hideMouseCursor];
+    }
+    // prison island linking book
+    else if ([cdesc isCardWithRMAP:24333 stackName:@"ospit"]) {
+        [self performSelector:@selector(_linkToCard:)
+                   withObject:[RXSimpleCardDescriptor descriptorWithStackName:@"pspit" rmap:15456]
+                   afterDelay:kRXLinkingBookDelay];
+        [controller hideMouseCursor];
+    }
+    // jungle island linking book
+    else if ([cdesc isCardWithRMAP:18186 stackName:@"ospit"]) {
+        [self performSelector:@selector(_linkToCard:)
+                   withObject:[RXSimpleCardDescriptor descriptorWithStackName:@"jspit" rmap:86413]
+                   afterDelay:kRXLinkingBookDelay];
+        [controller hideMouseCursor];
+    }
+    // garden island linking book
+    else if ([cdesc isCardWithRMAP:23634 stackName:@"ospit"]) {
+        [self performSelector:@selector(_linkToCard:)
+                   withObject:[RXSimpleCardDescriptor descriptorWithStackName:@"gspit" rmap:69098]
+                   afterDelay:kRXLinkingBookDelay];
+        [controller hideMouseCursor];
+    }
+    // book island linking book
+    else if ([cdesc isCardWithRMAP:23912 stackName:@"ospit"]) {
+        [self performSelector:@selector(_linkToCard:)
+                   withObject:[RXSimpleCardDescriptor descriptorWithStackName:@"bspit" rmap:10439]
+                   afterDelay:kRXLinkingBookDelay];
+        [controller hideMouseCursor];
+    }
+    // temple island linking book
+    else if ([cdesc isCardWithRMAP:24137 stackName:@"ospit"]) {
+        [self performSelector:@selector(_linkToCard:)
+                   withObject:[RXSimpleCardDescriptor descriptorWithStackName:@"tspit" rmap:18867]
+                   afterDelay:kRXLinkingBookDelay];
+        [controller hideMouseCursor];
     }
     
 #if defined(DEBUG)
@@ -2297,6 +2360,23 @@ DEFINE_COMMAND(xtchotakesbook) {
     
     // sneakily remove the trap book when Cho takes it
     [self performSelectorOnMainThread:@selector(_scheduleChoTrapBookDisableMessage) withObject:nil waitUntilDone:NO];
+}
+
+#pragma mark -
+#pragma mark linking books
+
+- (void)_linkToCard:(RXSimpleCardDescriptor*)scd {
+    // the original engine played 2 linking sound, but I don't like that, so only one!
+//    DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, 0, (uint16_t)kRXSoundGainDivisor, 0);
+    
+    RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionDissolve
+                                                        direction:0
+                                                           region:NSMakeRect(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height)];
+    [controller queueTransition:transition];
+    [transition release];
+    
+    [controller setActiveCardWithSimpleDescriptor:scd waitUntilDone:YES];
+    [controller showMouseCursor];
 }
 
 #pragma mark -
