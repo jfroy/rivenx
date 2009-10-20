@@ -6,10 +6,13 @@
 //  Copyright 2006 MacStorm. All rights reserved.
 //
 
-#import "RXCardDescriptor.h"
-#import "RXStack.h"
+#import "Engine/RXCardDescriptor.h"
+
+#import "Engine/RXEditionManager.h"
+#import "Engine/RXStack.h"
 
 #import "Utilities/integer_pair_hash.h"
+
 
 struct _RXCardDescriptorPrimer {
     MHKArchive* archive;
@@ -18,6 +21,13 @@ struct _RXCardDescriptorPrimer {
 
 
 @implementation RXSimpleCardDescriptor
+
++ (RXSimpleCardDescriptor*)descriptorWithStackName:(NSString*)name rmap:(uint32_t)rmap {
+    RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:name];
+    if (!stack)
+        return nil;
+    return [[[[self class] alloc] initWithStackKey:[stack key] ID:[stack cardIDFromRMAPCode:rmap]] autorelease];
+}
 
 - (id)initWithStackKey:(NSString*)name ID:(uint16_t)ID {
     self = [super init];
@@ -120,6 +130,7 @@ struct _RXCardDescriptorPrimer {
     // NOTE: weak reference to the stack
     _parent = stack;
     _ID = cardID;
+    _rmap = UINT32_MAX;
     
     _data = [[_parent dataWithResourceType:@"CARD" ID:_ID] retain];
     if (!_data) {
@@ -162,7 +173,9 @@ struct _RXCardDescriptorPrimer {
 }
 
 - (uint32_t)rmap {
-    return [_parent cardRMAPCodeFromID:_ID];
+    if (_rmap == UINT32_MAX)
+        _rmap = [_parent cardRMAPCodeFromID:_ID];
+    return _rmap;
 }
 
 - (NSData*)data {

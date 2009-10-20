@@ -18,6 +18,8 @@
     uint16_t cardID;
 }
 
++ (RXSimpleCardDescriptor*)descriptorWithStackName:(NSString*)name rmap:(uint32_t)rmap;
+
 - (id)initWithStackKey:(NSString*)name ID:(uint16_t)ID;
 - (id)initWithString:(NSString*)stringRepresentation;
 
@@ -29,6 +31,7 @@
 @interface RXCardDescriptor : NSObject {
     __weak RXStack* _parent;
     uint16_t _ID;
+    uint32_t _rmap;
     
     NSData* _data;
     NSString* _name;
