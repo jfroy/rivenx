@@ -5330,18 +5330,23 @@ DEFINE_COMMAND(xorollcredittime) {
     // figure out the proper code based on agehn
     uint32_t gehn_state = [[g_world gameState] unsigned32ForKey:@"agehn"];
     uintptr_t movie_code;
-    if (gehn_state == 0)
+    double delay;
+    if (gehn_state == 0) {
         // never spoke to Gehn
         movie_code = 1;
-    else if (gehn_state == 4)
+        delay = 9.5;
+    } else if (gehn_state == 4) {
         // Gehn was trapped
         movie_code = 2;
-    else
+        delay = 12.0;
+    } else {
         // Spoke with Gehn at least once
         movie_code = 3;
+        delay = 8.0;
+    }
     
     // start the endgame credits; the MLST has already been activated
-    [self _endgameWithCode:movie_code delay:1.5];
+    [self _endgameWithCode:movie_code delay:delay];
     
     // re-enable the mouse cursor directly, since it was hidden by the trap book handler
     [controller showMouseCursor];
