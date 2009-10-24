@@ -1980,14 +1980,14 @@ init_failure:
                                 error:NULL];
             
             glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                         0,
-                         0,
-                         0,
-                         360,
-                         784,
-                         GL_BGRA,
-                         GL_UNSIGNED_INT_8_8_8_8_REV,
-                         _credits_texture_buffer); glReportError();
+                            0,
+                            0,
+                            0,
+                            360,
+                            784,
+                            GL_BGRA,
+                            GL_UNSIGNED_INT_8_8_8_8_REV,
+                            _credits_texture_buffer); glReportError();
             
             // reset the modulate color on the card program to white
             glUniform4f(_module_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
@@ -2012,14 +2012,14 @@ init_failure:
 
             
             glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                         0,
-                         0,
-                         0,
-                         360,
-                         784,
-                         GL_BGRA,
-                         GL_UNSIGNED_INT_8_8_8_8_REV,
-                         _credits_texture_buffer); glReportError();
+                            0,
+                            0,
+                            0,
+                            360,
+                            784,
+                            GL_BGRA,
+                            GL_UNSIGNED_INT_8_8_8_8_REV,
+                            _credits_texture_buffer); glReportError();
         } else
             abort();
         
