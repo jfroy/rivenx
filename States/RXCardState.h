@@ -109,7 +109,7 @@ struct rx_transition_program {
     BOOL _water_sfx_disabled;
     
     GLuint _card_program;
-    GLint _module_color_uniform;
+    GLint _modulate_color_uniform;
     
     GLuint _debugRenderVAO;
     

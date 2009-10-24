@@ -525,8 +525,8 @@ init_failure:
     GLint uniform_loc = glGetUniformLocation(_card_program, "destination_card"); glReportError();
     glUniform1i(uniform_loc, 0); glReportError();
     
-    _module_color_uniform = glGetUniformLocation(_card_program, "modulate_color"); glReportError();
-    glUniform4f(_module_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
+    _modulate_color_uniform = glGetUniformLocation(_card_program, "modulate_color"); glReportError();
+    glUniform4f(_modulate_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
     
     // transition shaders
     _dissolve = [self _loadTransitionShaderWithName:@"transition_crossfade" direction:0 context:cgl_ctx];
@@ -1936,7 +1936,7 @@ init_failure:
             // next: display 302
             
             // reset the modulate color on the card program to white
-            glUniform4f(_module_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
+            glUniform4f(_modulate_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
         } else if (_credits_state == 2) {
             // next: fade-out 302
         } else if (_credits_state == 3) {
@@ -1962,7 +1962,7 @@ init_failure:
             // next: display 303
             
             // reset the modulate color on the card program to white
-            glUniform4f(_module_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
+            glUniform4f(_modulate_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
         } else if (_credits_state == 5) {
             // next: fade-out 303
         } else if (_credits_state == 6) {
@@ -1990,7 +1990,7 @@ init_failure:
                             _credits_texture_buffer); glReportError();
             
             // reset the modulate color on the card program to white
-            glUniform4f(_module_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
+            glUniform4f(_modulate_color_uniform, 1.f, 1.f, 1.f, 1.f); glReportError();
         } else if (_credits_state >= 7) {
             // next: load next scrolling credits page
             
@@ -2076,10 +2076,10 @@ init_failure:
     // color to t; conversly, if we're in one of the fade-out states, we need
     // to set the modulate color to 1 - t
     if (_credits_state == 1 || _credits_state == 4) {
-        glUniform4f(_module_color_uniform, t, t, t, 1.f); glReportError();
+        glUniform4f(_modulate_color_uniform, t, t, t, 1.f); glReportError();
     } else if (_credits_state == 3 || _credits_state == 6) {
         float one_minus_t = 1.f - t;
-        glUniform4f(_module_color_uniform, one_minus_t, one_minus_t, one_minus_t, 1.f); glReportError();
+        glUniform4f(_modulate_color_uniform, one_minus_t, one_minus_t, one_minus_t, 1.f); glReportError();
     }
     
     // bind VAO 0
