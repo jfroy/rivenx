@@ -736,16 +736,18 @@
     free(list_data);
     
     // WORKAROUND: bspit 445 (dome linking book card) has no SLST record, which means when you link back to it from the
-    // office age, the dome ambience won't kick in; so we synthesize a suitable SLST record
+    // office age, the dome ambience won't kick in; so we copy the sound grounds from that stack's dome card
     if ([_descriptor isCardWithRMAP:10439 stackName:@"bspit"] && soundGroupCount == 0) {
-        // create a sound group for the record
-        RXSoundGroup* sgroup = [RXSoundGroup new];
-        sgroup->gain = 1.0f;
-        sgroup->loop = YES;
-        sgroup->fadeOutRemovedSounds = NO;
-        sgroup->fadeInNewSounds = YES;
+        // 110077 is the bspit dome card (which has the ambience sound)
+        RXCardDescriptor* domeCardDesc = [[RXCardDescriptor alloc] initWithStack:_parent ID:[_parent cardIDFromRMAPCode:110077]];
+        RXCard* domeCard = [[RXCard alloc] initWithCardDescriptor:domeCardDesc];
+        [domeCard _loadSounds];
         
-        [sgroup addSoundWithStack:_parent ID:[self dataSoundIDWithName:@"aindome"] gain:1.0f pan:0.5f];
+        [_soundGroups release];
+        _soundGroups = [[domeCard soundGroups] copy];
+        
+        [domeCard release];
+        [domeCardDesc release];
     }
     
 }
