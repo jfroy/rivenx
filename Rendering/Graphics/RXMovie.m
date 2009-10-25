@@ -15,6 +15,13 @@
 
 NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotification";
 
+enum {
+    kRXMovieGotoEndStateInitial = 0,
+    kRXMovieGotoEndStateWaitForRateChange,
+    kRXMovieGotoEndStateWaitForRender,
+    kRXMovieGotoEndStateSendNotification,
+};
+
 
 @interface RXMovieReaper : NSObject {
 @public
@@ -549,6 +556,8 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 }
 
 - (void)gotoEnd {
+    if (_goto_end_notification_state == kRXMovieGotoEndStateInitial)
+        _goto_end_notification_state = kRXMovieGotoEndStateWaitForRateChange;
     [_movie gotoEnd];
 }
 
@@ -558,8 +567,14 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
 #if defined(DEBUG)
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"rate has changed to %f", rate);
 #endif
-    if (fabsf(rate) < 0.001f)
-        [[NSNotificationCenter defaultCenter] postNotificationName:RXMoviePlaybackDidEndNotification object:self];
+    
+    if (fabsf(rate) < 0.001f) {
+        int32_t gens = _goto_end_notification_state;
+        if (gens == kRXMovieGotoEndStateInitial || gens == kRXMovieGotoEndStateSendNotification)
+            [[NSNotificationCenter defaultCenter] postNotificationName:RXMoviePlaybackDidEndNotification object:self];
+        else
+            _goto_end_notification_state = kRXMovieGotoEndStateWaitForRender;
+    }
 }
 
 - (void)reset {
@@ -575,6 +590,9 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
     
     // reset the movie to the beginning
     [_movie gotoBeginning];
+    
+    _goto_end_notification_state = kRXMovieGotoEndStateInitial;
+    OSMemoryBarrier();
     
     // update the current time
     OSSpinLockLock(&_current_time_lock);
@@ -673,6 +691,18 @@ NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotif
                                 GL_UNSIGNED_INT_8_8_8_8_REV,
 #endif
                                 _texture_storage); glReportError();
+            }
+            
+            // if the gotoEnd notification state is kRXMovieGotoEndStateWaitForRender, fake a rate change notification on the main thread
+            if (_goto_end_notification_state == kRXMovieGotoEndStateWaitForRender) {
+                _goto_end_notification_state = kRXMovieGotoEndStateSendNotification;
+                OSMemoryBarrier();
+                
+                NSNotification* notification = [NSNotification notificationWithName:QTMovieRateDidChangeNotification
+                                                                             object:_movie
+                                                                           userInfo:[NSDictionary dictionaryWithObject:[NSNumber numberWithFloat:[_movie rate]]
+                                                                                                                forKey:QTMovieRateDidChangeNotificationParameter]];
+                [self performSelectorOnMainThread:@selector(_handleRateChange:) withObject:notification waitUntilDone:NO];
             }
         }
     } else if (_image_buffer) {

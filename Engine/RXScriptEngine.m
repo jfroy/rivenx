@@ -1019,13 +1019,8 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 
 - (void)skipBlockingMovie {
     // WARNING: WILL RUN ON MAIN THREAD
-    if (_blocking_movie) {
+    if (_blocking_movie)
         [(RXMovie*)_blocking_movie gotoEnd];
-        
-        [_blocking_movie release];
-        _blocking_movie = nil;
-        OSMemoryBarrier();
-    }
 }
 
 - (void)_handleBlockingMovieFinishedPlaying:(NSNotification*)notification {
