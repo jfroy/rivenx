@@ -270,6 +270,8 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
+    [whark_solo_card release];
+    
     [_movies_to_reset release];
     if (code_movie_map)
         NSFreeMapTable(code_movie_map);
@@ -1197,14 +1199,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     [sound release];
 }
 
-- (uint16_t)dataSoundIDWithCardID:(uint16_t)card_id name:(NSString*)name {
-    return [[_card parent] dataSoundIDForName:[NSString stringWithFormat:@"%hu_%@_1", card_id, name]];
-}
-
-- (uint16_t)dataSoundIDForCurrentCardWithName:(NSString*)name {
-    return [self dataSoundIDWithCardID:[[_card descriptor] ID] name:name];
-}
-
 #pragma mark -
 #pragma mark endgame
 
@@ -2125,7 +2119,7 @@ DEFINE_COMMAND(xthideinventory) {
 }
 
 - (void)_flipPageWithTransitionDirection:(RXTransitionDirection)direction {
-    uint16_t page_sound = [self dataSoundIDForCurrentCardWithName:(random() % 2) ? @"aPage1" : @"aPage2"];
+    uint16_t page_sound = [_card dataSoundIDWithName:(random() % 2) ? @"aPage1" : @"aPage2"];
     [self _playDataSoundWithID:page_sound gain:0.2f duration:NULL];
     
     RXTransition* transition = [[RXTransition alloc] initWithType:RXTransitionSlide
@@ -2559,7 +2553,7 @@ DEFINE_COMMAND(xcheckicons) {
         [[g_world gameState] setUnsigned32:0 forKey:@"jicons"];
         [[g_world gameState] setUnsigned32:0 forKey:@"jiconorder"];
         
-        uint16_t sfx = [self dataSoundIDForCurrentCardWithName:@"jfiveicdn"];
+        uint16_t sfx = [_card dataSoundIDWithName:@"jfiveicdn"];
         DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, sfx, (uint16_t)kRXSoundGainDivisor, 1);
     }
 }
@@ -3235,7 +3229,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     // cache the tic sound
     RXDataSound* tic_sound = [RXDataSound new];
     tic_sound->parent = [[_card descriptor] parent];
-    tic_sound->twav_id = [self dataSoundIDForCurrentCardWithName:@"aBigTic"];
+    tic_sound->twav_id = [_card dataSoundIDWithName:@"aBigTic"];
     tic_sound->gain = 1.0f;
     tic_sound->pan = 0.5f;
     
@@ -3384,7 +3378,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     // cache the tic sound
     RXDataSound* tic_sound = [RXDataSound new];
     tic_sound->parent = [[_card descriptor] parent];
-    tic_sound->twav_id = [self dataSoundIDForCurrentCardWithName:@"aBigTic"];
+    tic_sound->twav_id = [_card dataSoundIDWithName:@"aBigTic"];
     tic_sound->gain = 1.0f;
     tic_sound->pan = 0.5f;
     
@@ -4251,7 +4245,7 @@ DEFINE_COMMAND(xgrviewer) {
     if (viewer_light == 1) {
         [gs setUnsigned32:0 forKey:@"gRView"];
         
-        uint16_t button_up_sound = [self dataSoundIDForCurrentCardWithName:@"gScpBtnUp"];
+        uint16_t button_up_sound = [_card dataSoundIDWithName:@"gScpBtnUp"];
         [self _playDataSoundWithID:button_up_sound gain:1.0f duration:NULL];
     
         DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
@@ -4286,7 +4280,7 @@ DEFINE_COMMAND(xgrviewer) {
     uint32_t whark_solo = (random() % 9) + 1;
     
     // play the solo
-    uint16_t solo_sound = [self dataSoundIDWithCardID:whark_solo_card name:[NSString stringWithFormat:@"gWharkSolo%d", whark_solo]];
+    uint16_t solo_sound = [whark_solo_card dataSoundIDWithName:[NSString stringWithFormat:@"gWharkSolo%d", whark_solo]];
     [self _playDataSoundWithID:solo_sound gain:1.0f duration:NULL];
     
     if (play_solo)
@@ -4310,9 +4304,10 @@ DEFINE_COMMAND(xgrviewer) {
 }
 
 DEFINE_COMMAND(xgwharksnd) {
-    // cache the solo card ID (to be able to get a reference to the solo
-    // sounds)
-    whark_solo_card = [[_card descriptor] ID];
+    // cache an un-loaded copy of the whark solo card so we can load the solos later on other cards
+    whark_solo_card = [[RXCard alloc] initWithCardDescriptor:[_card descriptor]];
+    
+    // cache the wh
     
     // play a solo within the next 5 seconds if we've never played one before
     // otherwise within the next 5 minutes but no sooner than in 2 minutes;
@@ -4637,7 +4632,7 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     [self performSelectorOnMainThread:@selector(_configurePinMovieForRaise) withObject:nil waitUntilDone:YES];
     
     // get the pin raise sound
-    uint16_t pin_raise_sound = [self dataSoundIDForCurrentCardWithName:@"gPinsUp"];
+    uint16_t pin_raise_sound = [_card dataSoundIDWithName:@"gPinsUp"];
     
     // play the pin raise sound and movie
     [self _playDataSoundWithID:pin_raise_sound gain:1.0f duration:NULL];
@@ -4660,7 +4655,7 @@ static int16_t const pin_movie_codes[] = {1, 2, 1, 2, 1, 3, 4, 3, 4, 5, 1, 1, 2,
     [self performSelectorOnMainThread:@selector(_configurePinMovieForLower) withObject:nil waitUntilDone:YES];
     
     // get the pin lower sound
-    uint16_t pin_lower_sound = [self dataSoundIDForCurrentCardWithName:@"gPinsDn"];
+    uint16_t pin_lower_sound = [_card dataSoundIDWithName:@"gPinsDn"];
     
     // play the pin lower sound and movie
     [self _playDataSoundWithID:pin_lower_sound gain:1.0f duration:NULL];
@@ -4684,7 +4679,7 @@ DEFINE_COMMAND(xgrotatepins) {
     uintptr_t pin_movie_code = [gs unsigned32ForKey:@"gUpMoov"];
     
     // get the pin rotation sound
-    uint16_t pin_rotation_sound = [self dataSoundIDForCurrentCardWithName:@"gPinsRot"];
+    uint16_t pin_rotation_sound = [_card dataSoundIDWithName:@"gPinsRot"];
     
     // play the pin rotate sound and movie
     [self _playDataSoundWithID:pin_rotation_sound gain:1.0f duration:NULL];
@@ -4888,7 +4883,7 @@ DEFINE_COMMAND(xbcheckcatch) {
     
     // play the catch sound effect if argv[0] is 1
     if (argv[0]) {
-        uint16_t trap_sound = [self dataSoundIDForCurrentCardWithName:@"bYTCaught"];
+        uint16_t trap_sound = [_card dataSoundIDWithName:@"bYTCaught"];
         [self _playDataSoundWithID:trap_sound gain:1.0f duration:NULL];
     }
 }
@@ -5016,7 +5011,7 @@ DEFINE_COMMAND(xtexterior300_telescopeup) {
     
     // if the telescope is fully raised, play the "can't move" sound effect
     if ([gs unsignedShortForKey:@"ttelescope"] == 5) {
-        uint16_t blocked_sound = [self dataSoundIDForCurrentCardWithName:@"tTelDnMore"];
+        uint16_t blocked_sound = [_card dataSoundIDWithName:@"tTelDnMore"];
         DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, blocked_sound, (uint16_t)kRXSoundGainDivisor, 1);
         return;
     }
@@ -5029,7 +5024,7 @@ DEFINE_COMMAND(xtexterior300_telescopeup) {
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, movie_code);
     
     // play the telescope move sound effect and block on it (it's longer than the movie)
-    uint16_t move_sound = [self dataSoundIDForCurrentCardWithName:@"tTeleMove"];
+    uint16_t move_sound = [_card dataSoundIDWithName:@"tTeleMove"];
     DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, move_sound, (uint16_t)kRXSoundGainDivisor, 1);
     
     // refresh the card (which is going to disable the telescope raise movie)
@@ -5052,7 +5047,7 @@ DEFINE_COMMAND(xtexterior300_telescopedown) {
     
     // if the telescope is fully lowered, play the "can't move" sound effect and possibly trigger an ending
     if ([gs unsignedShortForKey:@"ttelescope"] == 1) {
-        uint16_t blocked_sound = [self dataSoundIDForCurrentCardWithName:@"tTelDnMore"];
+        uint16_t blocked_sound = [_card dataSoundIDWithName:@"tTelDnMore"];
         
         // if the fissure hatch is open and the telescope pin is disengaged, play the sound effect in the
         // background and trigger the appropriate ending; otherwise, play the sound effect and block on it
@@ -5075,7 +5070,7 @@ DEFINE_COMMAND(xtexterior300_telescopedown) {
     DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, movie_code);
     
     // play the telescope move sound effect and block on it (it's longer than the movie)
-    uint16_t move_sound = [self dataSoundIDForCurrentCardWithName:@"tTeleMove"];
+    uint16_t move_sound = [_card dataSoundIDWithName:@"tTeleMove"];
     DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, move_sound, (uint16_t)kRXSoundGainDivisor, 1);
     
     // refresh the card (which is going to disable the telescope lower movie)
@@ -5458,9 +5453,9 @@ DEFINE_COMMAND(xgwatch) {
     uint32_t prison_combo = [[g_world gameState] unsigned32ForKey:@"pcorrectorder"];
     
     uint16_t combo_sounds[3];
-    combo_sounds[0] = [self dataSoundIDForCurrentCardWithName:@"aelev1"];
-    combo_sounds[1] = [self dataSoundIDForCurrentCardWithName:@"aelev2"];
-    combo_sounds[2] = [self dataSoundIDForCurrentCardWithName:@"aelev3"];
+    combo_sounds[0] = [_card dataSoundIDWithName:@"aelev1"];
+    combo_sounds[1] = [_card dataSoundIDWithName:@"aelev2"];
+    combo_sounds[2] = [_card dataSoundIDWithName:@"aelev3"];
     
     [self _hideMouseCursor];
     
@@ -5482,7 +5477,7 @@ DEFINE_COMMAND(xpisland990_elevcombo) {
     uint16_t button = argv[0];
     
     // play the specified combination sound
-    uint16_t combo_sound = [self dataSoundIDForCurrentCardWithName:[NSString stringWithFormat:@"aelev%d", argv[0]]];
+    uint16_t combo_sound = [_card dataSoundIDWithName:[NSString stringWithFormat:@"aelev%d", argv[0]]];
     DISPATCH_COMMAND3(RX_COMMAND_PLAY_DATA_SOUND, combo_sound, (uint16_t)kRXSoundGainDivisor, 0);
     
     // if Gehn is not trapped, basically pretend nothing happened

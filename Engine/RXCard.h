@@ -72,5 +72,7 @@
 
 - (RXSoundGroup*)newSoundGroupWithSLSTRecord:(const uint16_t*)slstRecord soundCount:(uint16_t)soundCount swapBytes:(BOOL)swapBytes;
 - (RXMovie*)loadMovieWithMLSTRecord:(struct rx_mlst_record*)mlst;
+- (uint16_t)soundIDWithName:(NSString*)name;
+- (uint16_t)dataSoundIDWithName:(NSString*)name;
 
 @end

@@ -723,10 +723,10 @@
         slstRecordPointer++;
         
         // create a sound group for the record
-        RXSoundGroup* group = [self newSoundGroupWithSLSTRecord:slstRecordPointer soundCount:soundCount swapBytes:YES];
-        if (group)
-            [_soundGroups addObject:group];
-        [group release];
+        RXSoundGroup* sgroup = [self newSoundGroupWithSLSTRecord:slstRecordPointer soundCount:soundCount swapBytes:YES];
+        if (sgroup)
+            [_soundGroups addObject:sgroup];
+        [sgroup release];
         
         // move on to the next record's sound_count field
         slstRecordPointer = slstRecordPointer + (4 * soundCount) + 6;
@@ -829,6 +829,14 @@
     [movie_proxy release];
     
     return (RXMovie*)movie_proxy;
+}
+
+- (uint16_t)soundIDWithName:(NSString*)name {
+    return [_parent soundIDForName:[NSString stringWithFormat:@"%hu_%@_1", [_descriptor ID], name]];
+}
+
+- (uint16_t)dataSoundIDWithName:(NSString*)name {
+    return [_parent dataSoundIDForName:[NSString stringWithFormat:@"%hu_%@_1", [_descriptor ID], name]];
 }
 
 #pragma mark -
