@@ -842,7 +842,7 @@
     [_movies addObject:movie_proxy];
     [movie_proxy release];
     
-    return (RXMovie*)movie_proxy;
+    return [[(RXMovie*)movie_proxy retain] autorelease];
 }
 
 - (uint16_t)soundIDWithName:(NSString*)name {
@@ -857,11 +857,11 @@
 #pragma mark accessors
 
 - (RXCardDescriptor*)descriptor {
-    return _descriptor;
+    return [[_descriptor retain] autorelease];
 }
 
 - (RXStack*)parent {
-    return [_descriptor parent];
+    return [[[_descriptor parent] retain] autorelease];
 }
 
 - (GLuint)pictureCount {
@@ -873,11 +873,11 @@
 }
 
 - (NSDictionary*)scripts {
-    return _card_scripts;
+    return [[_card_scripts retain] autorelease];
 }
 
 - (NSArray*)hotspots {
-    return _hotspots;
+    return [[_hotspots retain] autorelease];
 }
 
 - (NSMapTable*)hotspotsIDMap {
@@ -893,7 +893,7 @@
 }
 
 - (NSArray*)movies {
-    return _movies;
+    return [[_movies retain] autorelease];
 }
 
 - (uint16_t*)movieCodes {
@@ -901,7 +901,7 @@
 }
 
 - (NSArray*)soundGroups {
-    return _soundGroups;
+    return [[_soundGroups retain] autorelease];
 }
 
 - (rx_card_sfxe*)sfxes {
