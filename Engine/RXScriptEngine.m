@@ -270,6 +270,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
+    [cath_prison_scdesc release];
     [whark_solo_card release];
     
     [_movies_to_reset release];
@@ -674,8 +675,9 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // Catherine prison card - need to schedule periodic movie events
     if ([cdesc isCardWithRMAP:14981 stackName:@"pspit"]) {
-        if (!cath_prison_card)
-            cath_prison_card = [[cdesc simpleDescriptor] retain];
+        if (!cath_prison_scdesc)
+            cath_prison_scdesc = [[cdesc simpleDescriptor] retain];
+        
         [event_timer invalidate];
         event_timer = [NSTimer scheduledTimerWithTimeInterval:(random() % 33) + 1
                                                        target:self
@@ -5502,7 +5504,7 @@ static const uint16_t cath_prison_movie_mlsts2[] = {9, 10, 12, 13};
     event_timer = nil;
     
     // if we're no longer in the catherine prison card, bail out
-    if (![[[_card descriptor] simpleDescriptor] isEqual:cath_prison_card])
+    if (![[[_card descriptor] simpleDescriptor] isEqual:cath_prison_scdesc])
         return;
     
     RXGameState* gs = [g_world gameState];
