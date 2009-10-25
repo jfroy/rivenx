@@ -734,6 +734,20 @@
     
     // don't need the SLST data anymore
     free(list_data);
+    
+    // WORKAROUND: bspit 445 (dome linking book card) has no SLST record, which means when you link back to it from the
+    // office age, the dome ambience won't kick in; so we synthesize a suitable SLST record
+    if ([_descriptor isCardWithRMAP:10439 stackName:@"bspit"] && soundGroupCount == 0) {
+        // create a sound group for the record
+        RXSoundGroup* sgroup = [RXSoundGroup new];
+        sgroup->gain = 1.0f;
+        sgroup->loop = YES;
+        sgroup->fadeOutRemovedSounds = NO;
+        sgroup->fadeInNewSounds = YES;
+        
+        [sgroup addSoundWithStack:_parent ID:[self dataSoundIDWithName:@"aindome"] gain:1.0f pan:0.5f];
+    }
+    
 }
 
 - (void)load {
