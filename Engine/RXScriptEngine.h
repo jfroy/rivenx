@@ -25,7 +25,7 @@ typedef struct {
 } rx_scheduled_movie_command_t;
 
 @interface RXScriptEngine : NSObject <RXScriptEngineProtocol> {
-    __weak id<RXScriptEngineControllerProtocol> controller;
+    id<RXScriptEngineControllerProtocol> controller;
     RXCard* _card;
     
     // program execution

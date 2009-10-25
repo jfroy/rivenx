@@ -17,7 +17,7 @@
 extern NSString* const RXMoviePlaybackDidEndNotification;
 
 @interface RXMovie : NSObject <RXRenderingProtocol> {
-    __weak id _owner;
+    id _owner;
     
     QTMovie* _movie;
     QTVisualContextRef _vc;

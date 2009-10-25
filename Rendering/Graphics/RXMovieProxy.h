@@ -13,7 +13,7 @@
 
 
 @interface RXMovieProxy : NSObject {
-    __weak id _owner;
+    id _owner;
     
     MHKArchive* _archive;
     uint16_t _ID;

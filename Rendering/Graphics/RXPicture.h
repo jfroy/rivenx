@@ -13,7 +13,7 @@
 
 
 @interface RXPicture : NSObject <RXRenderingProtocol> {
-    __weak id _owner;
+    id _owner;
     
     RXTexture* _texture;
     GLuint _vao;

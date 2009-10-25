@@ -29,7 +29,7 @@
 @end
 
 @interface RXCardDescriptor : NSObject {
-    __weak RXStack* _parent;
+    RXStack* _parent;
     uint16_t _ID;
     uint32_t _rmap;
     
