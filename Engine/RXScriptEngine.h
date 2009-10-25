@@ -79,10 +79,10 @@ typedef struct {
     uint16_t yellow_marble_tBMP;
     rx_core_rect_t yellow_marble_initial_rect;
     
-    uint16_t frog_trap_card;
-    uint16_t rebel_prison_window_card;
-    RXCard* whark_solo_card;
+    RXSimpleCardDescriptor* frog_trap_scdesc;
+    RXSimpleCardDescriptor* rebel_prison_window_scdesc;
     RXSimpleCardDescriptor* cath_prison_scdesc;
+    RXCard* whark_solo_card;
     
     BOOL played_one_whark_solo;
     NSRect trapeze_rect;

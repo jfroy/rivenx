@@ -271,6 +271,8 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
     [cath_prison_scdesc release];
+    [rebel_prison_window_scdesc release];
+    [frog_trap_scdesc release];
     [whark_solo_card release];
     
     [_movies_to_reset release];
@@ -4828,7 +4830,7 @@ DEFINE_COMMAND(xbaitplate) {
     event_timer = nil;
     
     // if we're no longer in the frog trap card, bail out
-    if ([[_card descriptor] ID] != frog_trap_card)
+    if (![[[_card descriptor] simpleDescriptor] isEqual:frog_trap_scdesc])
         return;
     
     // dispatch xbcheckcatch with 1 (e.g. play the trap sound)
@@ -4839,8 +4841,8 @@ DEFINE_COMMAND(xbsettrap) {
     // compute a random catch delay - up to 1 minute, and no sooner than within 10 seconds
     NSTimeInterval catch_delay = 10 + ((random() % 3001) / 60.0);
     
-    // remember the frog trap card ID, because we need to abort the catch frog event if we've switched to a different card
-    frog_trap_card = [[_card descriptor] ID];
+    // remember the frog trap card, because we need to abort the catch frog event if we've switched to a different card
+    frog_trap_scdesc = [[[_card descriptor] simpleDescriptor] retain];
     
     // schedule the event timer
     [event_timer invalidate];
@@ -5118,7 +5120,7 @@ DEFINE_COMMAND(xtisland390_covercombo) {
     event_timer = nil;
     
     // if we're no longer in the rebel prison card, bail out
-    if ([[_card descriptor] ID] != rebel_prison_window_card)
+    if (![[[_card descriptor] simpleDescriptor] isEqual:rebel_prison_window_scdesc])
         return;
     
     // generate a random MLST index between 2 and 13 and activate it
@@ -5148,7 +5150,7 @@ DEFINE_COMMAND(xrwindowsetup) {
     RXGameState* gs = [g_world gameState];
     
     // remember the card ID, because we need to abort the periodic event if we've switched to a different card
-    rebel_prison_window_card = [[_card descriptor] ID];
+    rebel_prison_window_scdesc = [[[_card descriptor] simpleDescriptor] retain];
     
     // activate SLST 1 now as a work-around for the late activation by the script
     DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 1);
