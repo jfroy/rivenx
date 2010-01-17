@@ -107,9 +107,9 @@
     if (![[RXEditionManager sharedEditionManager] makeEditionCurrent:_pickedEdition rememberChoice:remember error:&error]) {
         if ([error code] == kRXErrEditionCantBecomeCurrent && [error domain] == RXErrorDomain) {
             error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-                [NSString stringWithFormat:@"Riven X cannot make \"%@\" the current edition because it is not installed.", [_pickedEdition valueForKey:@"name"]], NSLocalizedDescriptionKey,
-                @"You need to install this edition by using the Edition Manager.", NSLocalizedRecoverySuggestionErrorKey,
-                [NSArray arrayWithObjects:@"Install", @"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
+                [NSString stringWithFormat:NSLocalizedStringFromTable(@"CANNOT_MAKE_EDITION_CURRENT", @"Editions", @"can't make edition current"), [_pickedEdition valueForKey:@"name"]], NSLocalizedDescriptionKey,
+                NSLocalizedStringFromTable(@"USE_EDITION_MANAGER_TO_INSTALL", @"Editions", @"use edition manager"), NSLocalizedRecoverySuggestionErrorKey,
+                [NSArray arrayWithObjects:NSLocalizedString(@"INSTALL", @"install"), NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
                 [NSApp delegate], NSRecoveryAttempterErrorKey,
                 error, NSUnderlyingErrorKey,
             nil]];

@@ -234,9 +234,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
         if (error) {
             *error = [NSError errorWithDomain:RXErrorDomain code:kRXErrEditionCantBecomeCurrent userInfo:
                       [NSDictionary dictionaryWithObjectsAndKeys:
-                       [NSString stringWithFormat:@"Riven X cannot make \"%@\" the current edition because it is not installed.", [edition valueForKey:@"name"]], NSLocalizedDescriptionKey,
-                       @"You need to install this edition by using the Edition Manager.", NSLocalizedRecoverySuggestionErrorKey,
-                       [NSArray arrayWithObjects:@"Install", @"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
+                       [NSString stringWithFormat:NSLocalizedStringFromTable(@"CANNOT_MAKE_EDITION_CURRENT", @"Editions", @"can't make edition current"), [edition valueForKey:@"name"]], NSLocalizedDescriptionKey,
+                       NSLocalizedStringFromTable(@"USE_EDITION_MANAGER_TO_INSTALL", @"Editions", @"use edition manager"), NSLocalizedRecoverySuggestionErrorKey,
+                       [NSArray arrayWithObjects:NSLocalizedString(@"INSTALL", @"install"), NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
                        [NSApp delegate], NSRecoveryAttempterErrorKey,
                        nil]];
         }
@@ -268,8 +268,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
         if (error) {
             *error = [NSError errorWithDomain:RXErrorDomain code:kRXErrUnableToLoadExtrasArchive userInfo:
                       [NSDictionary dictionaryWithObjectsAndKeys:
-                       [NSString stringWithFormat:@"Riven X failed to load the Extras archive for the \"%@\" edition.", [edition valueForKey:@"name"]], NSLocalizedDescriptionKey,
-                       [NSArray arrayWithObjects:@"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
+                       [NSString stringWithFormat:NSLocalizedStringFromTable(@"FAILED_LOAD_EXTRAS", @"Editions", "failed to load Extras"), [edition valueForKey:@"name"]], NSLocalizedDescriptionKey,
+                       [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
                        [NSApp delegate], NSRecoveryAttempterErrorKey,
                        nil]];
         }
@@ -474,7 +474,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     if (!mount_path) {
         ReturnValueWithError(nil, 
             RXErrorDomain, kRXErrArchiveUnavailable,
-            ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data archive \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
+            ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:NSLocalizedStringFromTable(@"DATA_FILE_NOT_FOUND", @"Editions", "data file not found"), filename] forKey:NSLocalizedDescriptionKey]),
             error);
     }
     
@@ -483,7 +483,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     if (!directory)
         ReturnValueWithError(nil,
             RXErrorDomain, kRXErrArchiveUnavailable,
-            ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data file \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
+            ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:NSLocalizedStringFromTable(@"DATA_FILE_NOT_FOUND", @"Editions", "data file not found"), filename] forKey:NSLocalizedDescriptionKey]),
             error);
     
     // compute the final on-disc archive path
@@ -498,7 +498,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     
     ReturnValueWithError(nil, 
         RXErrorDomain, kRXErrArchiveUnavailable,
-        ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:@"The Riven data file \"%@\" is unavailable.", filename] forKey:NSLocalizedDescriptionKey]),
+        ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:NSLocalizedStringFromTable(@"DATA_FILE_NOT_FOUND", @"Editions", "data file not found"), filename] forKey:NSLocalizedDescriptionKey]),
         error);
 }
 
@@ -606,8 +606,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     if (!stack) {
         error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
             [error localizedDescription], NSLocalizedDescriptionKey,
-            @"To re-install your Riven edition, relaunch Riven X while holding down the Option key. If you have a Riven DVD edition, you may instead insert your disc and relaunch Riven X.", NSLocalizedRecoverySuggestionErrorKey,
-            [NSArray arrayWithObjects:@"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
+            NSLocalizedStringFromTable(@"REINSTALL_EDITION", @"Editions", "reinstall edition"), NSLocalizedRecoverySuggestionErrorKey,
+            [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
             [NSApp delegate], NSRecoveryAttempterErrorKey,
             error, NSUnderlyingErrorKey,
             nil]];

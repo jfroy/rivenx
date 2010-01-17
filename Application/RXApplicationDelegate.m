@@ -96,10 +96,12 @@
                 else
                     [NSApp terminate:self];
                 break;
+            
             case kRXErrSavedGameCantBeLoaded:
                 if (recoveryOptionIndex == 0)
                     [[RXEditionManager sharedEditionManager] showEditionManagerWindow];
                 break;
+            
             case kRXErrQuickTimeTooOld:
                 if (recoveryOptionIndex == 0) {
                     // once to launch SU, and another time to make sure it becomes the active application
@@ -189,9 +191,9 @@
     // if QuickTime is too old, tell the user about the Cinepak problem and offer them to launch SU
     NSError* error = [NSError errorWithDomain:RXErrorDomain code:kRXErrQuickTimeTooOld userInfo:
                       [NSDictionary dictionaryWithObjectsAndKeys:
-                       [NSString stringWithFormat:@"Riven X requires QuickTime 7.6.2 or later."], NSLocalizedDescriptionKey,
-                       @"Prior versions of QuickTime have compatibility problems with Riven X. You can use Software Update to update QuickTime.", NSLocalizedRecoverySuggestionErrorKey,
-                       [NSArray arrayWithObjects:@"Update QuickTime", @"Quit", nil], NSLocalizedRecoveryOptionsErrorKey,
+                       [NSString stringWithFormat:NSLocalizedString(@"QUICKTIME_REQUIRE_762", "require QuickTime 7.6.2")], NSLocalizedDescriptionKey,
+                       NSLocalizedString(@"QUICKTIME_SHOULD_UPGRADE", "should upgrade QuickTime"), NSLocalizedRecoverySuggestionErrorKey,
+                       [NSArray arrayWithObjects:NSLocalizedString(@"UPDATE_QUICKTIME", "update QuickTime"), NSLocalizedString(@"QUIT", "quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
                        self, NSRecoveryAttempterErrorKey,
                        nil]];
     [NSApp presentError:error];
@@ -324,9 +326,9 @@
         // check if the game's edition can be made current; if not, present an error to the user
         if (![[gameState edition] canBecomeCurrent]) {
             error = [NSError errorWithDomain:RXErrorDomain code:kRXErrSavedGameCantBeLoaded userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-                [NSString stringWithFormat:@"Riven X cannot load the saved game because \"%@\" is not installed.", [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
-                @"You may install this edition by using the Edition Manager, or cancel and resume your current game.", NSLocalizedRecoverySuggestionErrorKey,
-                [NSArray arrayWithObjects:@"Install", @"Cancel", nil], NSLocalizedRecoveryOptionsErrorKey,
+                [NSString stringWithFormat:NSLocalizedStringFromTable(@"CANNOT_LOAD_SAVE_EDITION_NOT_INSTALLED", @"Editions", "cannot load save edition not installed"), [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
+                NSLocalizedStringFromTable(@"INSTALL_EDITION_OR_RESUME", @"Editions", "install or resume"), NSLocalizedRecoverySuggestionErrorKey,
+                [NSArray arrayWithObjects:NSLocalizedString(@"INSTALL", "install"), NSLocalizedString(@"CANCEL", "cancel"), nil], NSLocalizedRecoveryOptionsErrorKey,
                 self, NSRecoveryAttempterErrorKey,
                 nil]];
             [NSApp presentError:error];

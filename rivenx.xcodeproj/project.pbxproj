@@ -186,6 +186,8 @@
 		31B644EA10033B52008AD8E0 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		31B644ED10033B57008AD8E0 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		31B644F210033B7E008AD8E0 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384B08C6A73E004B7FD0 /* CoreServices.framework */; };
+		31B654A21102B9EF004818AC /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31B6549E1102B9EF004818AC /* Localizable.strings */; };
+		31B654A31102B9EF004818AC /* Rendering.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31B654A01102B9EF004818AC /* Rendering.strings */; };
 		31B741C10B8414EA00D1A247 /* Cyan Worlds.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 31B741C00B8414EA00D1A247 /* Cyan Worlds.mp4 */; };
 		31BC739F09A57D4E001EC1E0 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
 		31C3572A0D92A72400EDEF81 /* RXSound_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31C357290D92A72400EDEF81 /* RXSound_test.mm */; };
@@ -410,12 +412,12 @@
 		313C7DE508CCFA4600950A70 /* NSFontAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSFontAdditions.m; sourceTree = "<group>"; };
 		313C7E9F08CCFB4D00950A70 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = /System/Library/Frameworks/ApplicationServices.framework; sourceTree = "<absolute>"; };
 		313C7EFB08CD057500950A70 /* Riven301.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Riven301.ttf; sourceTree = "<group>"; };
-		313E999D0E074DE1007C18E4 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/About.strings; sourceTree = "<group>"; };
-		313E999E0E074DE1007C18E4 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Editions.strings; sourceTree = "<group>"; };
-		313E999F0E074DE1007C18E4 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		313E99D50E074DF4007C18E4 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		313E99D60E074DF4007C18E4 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Editions.strings; sourceTree = "<group>"; };
-		313E99D70E074DF4007C18E4 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/About.strings; sourceTree = "<group>"; };
+		313E999D0E074DE1007C18E4 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/About.strings; sourceTree = "<group>"; };
+		313E999E0E074DE1007C18E4 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Editions.strings; sourceTree = "<group>"; };
+		313E999F0E074DE1007C18E4 /* de */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		313E99D50E074DF4007C18E4 /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		313E99D60E074DF4007C18E4 /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Editions.strings; sourceTree = "<group>"; };
+		313E99D70E074DF4007C18E4 /* fr */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/About.strings; sourceTree = "<group>"; };
 		3145383F08C6A5F4004B7FD0 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
 		3145384A08C6A73E004B7FD0 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		3145384B08C6A73E004B7FD0 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
@@ -525,6 +527,8 @@
 		31A9F03A094D2E2600C6A0AB /* RXRenderState.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = RXRenderState.h; path = States/RXRenderState.h; sourceTree = "<group>"; };
 		31AA79800F75AACC006F06AC /* RXCursors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCursors.h; sourceTree = "<group>"; };
 		31AE54560DE0ADD6000E71CF /* ExceptionHandling.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExceptionHandling.framework; path = /System/Library/Frameworks/ExceptionHandling.framework; sourceTree = "<absolute>"; };
+		31B6549F1102B9EF004818AC /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		31B654A11102B9EF004818AC /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Rendering.strings; sourceTree = "<group>"; };
 		31B741C00B8414EA00D1A247 /* Cyan Worlds.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Cyan Worlds.mp4"; sourceTree = "<group>"; };
 		31B78EC50C88F25F00227E0F /* Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 		31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = DebugRelease.xcconfig; sourceTree = "<group>"; };
@@ -1078,7 +1082,6 @@
 		31F3093C08BE43D500417394 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				31FE33AB101BBC4100C30CD1 /* debug_notification.py */,
 				31DAAF0C0DDE21EF00D06D0C /* cursors */,
 				31DAAF210DDE21EF00D06D0C /* sounds */,
 				312D9EC90D4D81A3006E384C /* Extras.MHK */,
@@ -1094,9 +1097,12 @@
 				31F1BEA50D3B03D000CFE301 /* about.png */,
 				3160E1810FD3075300F18E86 /* tiny_marbles.png */,
 				312EBAC70FD202ED00D65E22 /* debug_init.py */,
+				31FE33AB101BBC4100C30CD1 /* debug_notification.py */,
 				312D9ECB0D4D81A3006E384C /* About.strings */,
 				3114FE960D58C8AE0099AF69 /* Editions.strings */,
 				312D9EC70D4D81A3006E384C /* InfoPlist.strings */,
+				31B6549E1102B9EF004818AC /* Localizable.strings */,
+				31B654A01102B9EF004818AC /* Rendering.strings */,
 				313C7EFB08CD057500950A70 /* Riven301.ttf */,
 				312876F80F2972E900A114FF /* CardInspector.xib */,
 				31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */,
@@ -1453,6 +1459,8 @@
 				312EBAC80FD202ED00D65E22 /* debug_init.py in Resources */,
 				3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */,
 				31FE33AC101BBC4100C30CD1 /* debug_notification.py in Resources */,
+				31B654A21102B9EF004818AC /* Localizable.strings in Resources */,
+				31B654A31102B9EF004818AC /* Rendering.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1790,6 +1798,22 @@
 				316D273D10004B23003579F9 /* MainMenu.xib */,
 			);
 			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+		31B6549E1102B9EF004818AC /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				31B6549F1102B9EF004818AC /* en */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		31B654A01102B9EF004818AC /* Rendering.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				31B654A11102B9EF004818AC /* en */,
+			);
+			name = Rendering.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
