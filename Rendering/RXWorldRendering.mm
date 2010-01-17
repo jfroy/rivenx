@@ -62,16 +62,15 @@
 //            [renderWindow setCollectionBehavior:NSWindowCollectionBehaviorDefault];
 //    } else {
         // regular window
-        renderWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0.0f, 0.0f, kRXRendererViewportSize.width, kRXRendererViewportSize.height)
-                                                   styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask
-                                                     backing:NSBackingStoreBuffered
-                                                       defer:YES
-                                                      screen:mainScreen];
-        
-        [renderWindow setLevel:NSNormalWindowLevel];
-        [renderWindow setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - (kRXRendererViewportSize.width / 2),
-                                                 (screenRect.size.height / 2) - (kRXRendererViewportSize.height / 2))];
-//    }
+    renderWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0.0f, 0.0f, kRXRendererViewportSize.width, kRXRendererViewportSize.height)
+                                               styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask
+                                                 backing:NSBackingStoreBuffered
+                                                   defer:YES
+                                                  screen:mainScreen];
+    
+    [renderWindow setLevel:NSNormalWindowLevel];
+    [renderWindow setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - (kRXRendererViewportSize.width / 2),
+                                             (screenRect.size.height / 2) - (kRXRendererViewportSize.height / 2))];
     
     [renderWindow setAcceptsMouseMovedEvents:YES];
     [renderWindow setCanHide:YES];
