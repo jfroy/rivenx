@@ -52,12 +52,11 @@ static CVReturn rx_render_output_callback(CVDisplayLinkRef displayLink,
     return kCVReturnSuccess;
 }
 
-static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
+static NSOpenGLPixelFormatAttribute base_window_attribs[] = {
     NSOpenGLPFAWindow,
     NSOpenGLPFADoubleBuffer,
     NSOpenGLPFAColorSize, 24,
     NSOpenGLPFAAlphaSize, 8,
-    0
 };
 
 + (BOOL)accessInstanceVariablesDirectly {
@@ -134,25 +133,74 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
         return nil;
     
     // initialize the global world view reference
+    assert(g_worldView == nil);
     g_worldView = self;
     
+    // process the basic pixel format attributes to a final list of attributes
+    NSOpenGLPixelFormatAttribute final_attribs[32] = {0};
+    uint32_t pfa_index = sizeof(base_window_attribs) / sizeof(NSOpenGLPixelFormatAttribute) - 1;
+    
+    // copy the basic attributes
+    memcpy(final_attribs, base_window_attribs, sizeof(base_window_attribs));
+    
     // if we're on Leopard and later, allow offline renderers
-    if ([GTMSystemVersion isLeopardOrGreater]) {
-        windowed_attribs[4] = NSOpenGLPFAAllowOfflineRenderers;
-        windowed_attribs[5] = 0;
-    }
+    if ([GTMSystemVersion isLeopardOrGreater])
+        final_attribs[++pfa_index] = NSOpenGLPFAAllowOfflineRenderers;
+    
+    // request a 4x MSAA multisampling buffer by default (if context creation fails, we'll remove those)
+    final_attribs[++pfa_index] = NSOpenGLPFASampleBuffers;
+    final_attribs[++pfa_index] = 1;
+    final_attribs[++pfa_index] = NSOpenGLPFASamples;
+    final_attribs[++pfa_index] = 4;
+    final_attribs[++pfa_index] = NSOpenGLPFAMultisample;
+    final_attribs[++pfa_index] = NSOpenGLPFASampleAlpha;
+    
+#define SIMULATE_NO_PF 1
+#if SIMULATE_NO_PF
+    final_attribs[++pfa_index] = NSOpenGLPFARendererID;
+    final_attribs[++pfa_index] = 0xcafebabe;
+#endif
+    
+    // terminate the list of attributes
+    final_attribs[++pfa_index] = 0;
     
     // create an NSGL pixel format
-    NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:windowed_attribs];
-#if defined(DEBUG)
+    NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:final_attribs];
+    if (!format) {
+        // remove the multisampling buffer attributes
+        pfa_index = sizeof(base_window_attribs) / sizeof(NSOpenGLPixelFormatAttribute);
+        
+#if SIMULATE_NO_PF
+        final_attribs[++pfa_index] = NSOpenGLPFARendererID;
+        final_attribs[++pfa_index] = 0xcafebabe;
+#endif
+        
+        final_attribs[++pfa_index] = 0;
+        
+        format = [[NSOpenGLPixelFormat alloc] initWithAttributes:final_attribs];
+        if (!format) {
+            NSDictionary* error_info = [NSDictionary dictionaryWithObjectsAndKeys:
+                NSLocalizedStringFromTable(@"NO_SUPPORTED_GPU", @"Rendering", @"no supported gpu"), NSLocalizedDescriptionKey,
+                NSLocalizedStringFromTable(@"UPGRADE_OS_OR_HARDWARE", @"Rendering", @"upgrade Mac OS X or computer or gpu"), NSLocalizedRecoverySuggestionErrorKey,
+                [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
+                [NSApp delegate], NSRecoveryAttempterErrorKey,
+                nil];
+            [NSApp presentError:[NSError errorWithDomain:RXErrorDomain code:kRXErrFailedToCreatePixelFormat userInfo:error_info]];
+            
+            [self release];
+            return nil;
+        }
+    }
+    
     GLint npix = [format numberOfVirtualScreens];
     for (GLint ipix = 0; ipix < npix; ipix++) {
         GLint renderer;
         [format getValues:&renderer forAttribute:NSOpenGLPFARendererID forVirtualScreen:ipix];
+#if DEBUG
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"virtual screen %d is driven by the \"%@\" renderer",
             ipix, [RXWorldView rendererNameForID:renderer]);
-    }
 #endif
+    }
     
     // set the pixel format on the view
     [self setPixelFormat:format];
@@ -161,6 +209,8 @@ static NSOpenGLPixelFormatAttribute windowed_attribs[8] = {
     // create the render context
     _render_context = [[NSOpenGLContext alloc] initWithFormat:format shareContext:nil];
     if (!_render_context) {
+        // NSOpenGLPFARendererID, kCGLRendererGenericFloatID,
+        
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"could not create the render OpenGL context");
         [self release];
         return nil;

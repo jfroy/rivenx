@@ -114,6 +114,11 @@
                 // this is fatal right now
                 [NSApp terminate:self];
                 break;
+            
+            // fatal errors
+            case kRXErrFailedToCreatePixelFormat:
+                [NSApp terminate:self];
+                break;
         }
         return YES;
     }
