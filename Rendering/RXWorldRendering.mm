@@ -80,7 +80,7 @@
     [renderWindow setReleasedWhenClosed:YES];
     [renderWindow setTitle:@"Riven X"];
     
-    // allocate the world view (which will create the GL contexes)
+    // allocate the world view (which will create the GL contexts)
     NSRect contentViewRect = [renderWindow contentRectForFrameRect:[renderWindow frame]];
     contentViewRect.origin.x = 0;
     contentViewRect.origin.y = 0;
