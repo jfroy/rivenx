@@ -398,8 +398,6 @@
 		312F4DAB0DC263F400B3AF0D /* RXTextureBroker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXTextureBroker.m; sourceTree = "<group>"; };
 		312F4DAC0DC263F400B3AF0D /* RXTransition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXTransition.h; sourceTree = "<group>"; };
 		312F4DAD0DC263F400B3AF0D /* RXTransition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXTransition.m; sourceTree = "<group>"; };
-		312F4DAE0DC263F400B3AF0D /* RXVBOBroker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVBOBroker.h; sourceTree = "<group>"; };
-		312F4DAF0DC263F400B3AF0D /* RXVBOBroker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVBOBroker.m; sourceTree = "<group>"; };
 		312F4DB20DC263F400B3AF0D /* RXWorldView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWorldView.h; sourceTree = "<group>"; };
 		312F4DB30DC263F400B3AF0D /* RXWorldView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXWorldView.m; sourceTree = "<group>"; };
 		31327B640DCF509E00280D8F /* RXScriptEngineProtocols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptEngineProtocols.h; sourceTree = "<group>"; };
@@ -843,8 +841,6 @@
 				312F4DAB0DC263F400B3AF0D /* RXTextureBroker.m */,
 				312F4DAC0DC263F400B3AF0D /* RXTransition.h */,
 				312F4DAD0DC263F400B3AF0D /* RXTransition.m */,
-				312F4DAE0DC263F400B3AF0D /* RXVBOBroker.h */,
-				312F4DAF0DC263F400B3AF0D /* RXVBOBroker.m */,
 				312F4DB20DC263F400B3AF0D /* RXWorldView.h */,
 				312F4DB30DC263F400B3AF0D /* RXWorldView.m */,
 			);
