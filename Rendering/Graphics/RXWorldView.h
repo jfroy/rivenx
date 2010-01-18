@@ -27,6 +27,7 @@
     GLuint _glMinorVersion;
     GLuint _glslMajorVersion;
     GLuint _glslMinorVersion;
+    NSSet* _gl_extensions;
     
     ssize_t _total_vram;
     

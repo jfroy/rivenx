@@ -59,6 +59,13 @@ static NSOpenGLPixelFormatAttribute base_window_attribs[] = {
     NSOpenGLPFAAlphaSize, 8,
 };
 
+static NSString* required_extensions[] = {
+    @"GL_APPLE_vertex_array_object",
+    @"GL_ARB_texture_rectangle",
+    @"GL_ARB_pixel_buffer_object",
+    @"GL_EXT_framebuffer_object",
+};
+
 + (BOOL)accessInstanceVariablesDirectly {
     return NO;
 }
@@ -136,6 +143,15 @@ static NSOpenGLPixelFormatAttribute base_window_attribs[] = {
     assert(g_worldView == nil);
     g_worldView = self;
     
+    // prepare the generic "no supported GPU" error
+    NSDictionary* error_info = [NSDictionary dictionaryWithObjectsAndKeys:
+        NSLocalizedStringFromTable(@"NO_SUPPORTED_GPU", @"Rendering", @"no supported gpu"), NSLocalizedDescriptionKey,
+        NSLocalizedStringFromTable(@"UPGRADE_OS_OR_HARDWARE", @"Rendering", @"upgrade Mac OS X or computer or gpu"), NSLocalizedRecoverySuggestionErrorKey,
+        [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
+        [NSApp delegate], NSRecoveryAttempterErrorKey,
+        nil];
+    NSError* no_supported_gpu_error = [NSError errorWithDomain:RXErrorDomain code:kRXErrFailedToCreatePixelFormat userInfo:error_info];
+    
     // process the basic pixel format attributes to a final list of attributes
     NSOpenGLPixelFormatAttribute final_attribs[32] = {0};
     uint32_t pfa_index = sizeof(base_window_attribs) / sizeof(NSOpenGLPixelFormatAttribute) - 1;
@@ -155,7 +171,7 @@ static NSOpenGLPixelFormatAttribute base_window_attribs[] = {
     final_attribs[++pfa_index] = NSOpenGLPFAMultisample;
     final_attribs[++pfa_index] = NSOpenGLPFASampleAlpha;
     
-#define SIMULATE_NO_PF 1
+//#define SIMULATE_NO_PF 1
 #if SIMULATE_NO_PF
     final_attribs[++pfa_index] = NSOpenGLPFARendererID;
     final_attribs[++pfa_index] = 0xcafebabe;
@@ -179,28 +195,76 @@ static NSOpenGLPixelFormatAttribute base_window_attribs[] = {
         
         format = [[NSOpenGLPixelFormat alloc] initWithAttributes:final_attribs];
         if (!format) {
-            NSDictionary* error_info = [NSDictionary dictionaryWithObjectsAndKeys:
-                NSLocalizedStringFromTable(@"NO_SUPPORTED_GPU", @"Rendering", @"no supported gpu"), NSLocalizedDescriptionKey,
-                NSLocalizedStringFromTable(@"UPGRADE_OS_OR_HARDWARE", @"Rendering", @"upgrade Mac OS X or computer or gpu"), NSLocalizedRecoverySuggestionErrorKey,
-                [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
-                [NSApp delegate], NSRecoveryAttempterErrorKey,
-                nil];
-            [NSApp presentError:[NSError errorWithDomain:RXErrorDomain code:kRXErrFailedToCreatePixelFormat userInfo:error_info]];
-            
+            [NSApp presentError:no_supported_gpu_error];
             [self release];
             return nil;
         }
     }
     
+    // iterate over the virtual screens to determine the set of virtual screens / renderers we can actually use
+    NSMutableSet* viable_renderers = [NSMutableSet set];
+    
+    NSSet* required_extensions_set = [NSSet setWithObjects:required_extensions count:sizeof(required_extensions) / sizeof(NSString*)];
+    NSOpenGLContext* probing_context = [[NSOpenGLContext alloc] initWithFormat:format shareContext:nil];
     GLint npix = [format numberOfVirtualScreens];
     for (GLint ipix = 0; ipix < npix; ipix++) {
         GLint renderer;
         [format getValues:&renderer forAttribute:NSOpenGLPFARendererID forVirtualScreen:ipix];
+        
+        [probing_context makeCurrentContext];
+        [probing_context setCurrentVirtualScreen:ipix];
+        
 #if DEBUG
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"virtual screen %d is driven by the \"%@\" renderer",
             ipix, [RXWorldView rendererNameForID:renderer]);
 #endif
+        
+        [self _determineGLVersion:[probing_context CGLContextObj]];
+        [self _determineGLFeatures:[probing_context CGLContextObj]];
+        
+        NSMutableSet* missing_extensions = [[required_extensions_set mutableCopy] autorelease];
+        [missing_extensions minusSet:_gl_extensions];
+        if ([missing_extensions count] == 0) {
+//#define FORCE_GENERIC_FLOAT_RENDERER 1
+#if FORCE_GENERIC_FLOAT_RENDERER
+            if ((renderer & kCGLRendererIDMatchingMask) == kCGLRendererGenericFloatID)
+#endif
+                [viable_renderers addObject:[NSNumber numberWithInt:renderer]];
+        }
     }
+    [NSOpenGLContext clearCurrentContext];
+    [probing_context release];
+    
+//#define SIMULATE_NO_VIABLE_RENDERER 1
+#if SIMULATE_NO_VIABLE_RENDERER
+    [viable_renderers removeAllObjects];
+#endif
+    
+    // if there are no viable renderers, bail out
+    if ([viable_renderers count] == 0) {
+        [format release];
+        
+        [NSApp presentError:no_supported_gpu_error];
+        [self release];
+        return nil;
+    }
+    
+    // if there is only one viable renderer, we'll force it in the final pixel format
+    else if ([viable_renderers count] == 1) {
+        final_attribs[pfa_index] = NSOpenGLPFARendererID;
+        final_attribs[++pfa_index] = [[viable_renderers anyObject] intValue];
+        
+        final_attribs[++pfa_index] = 0;
+        
+        [format release];
+        format = [[NSOpenGLPixelFormat alloc] initWithAttributes:final_attribs];
+        if (!format) {
+            [NSApp presentError:no_supported_gpu_error];
+            [self release];
+            return nil;
+        }
+    }
+    // NOTE: ignoring the case where [viable_renderers count] != [format numberOfVirtualScreens], for now
     
     // set the pixel format on the view
     [self setPixelFormat:format];
@@ -219,7 +283,7 @@ static NSOpenGLPixelFormatAttribute base_window_attribs[] = {
     // cache the underlying CGL pixel format
     _cglPixelFormat = [format CGLPixelFormatObj];
     
-    // set the render context on the view
+    // set the render context on the view and release it (e.g. transfer ownership to the view)
     [self setOpenGLContext:_render_context];
     [_render_context release];
     
@@ -345,6 +409,7 @@ static NSOpenGLPixelFormatAttribute base_window_attribs[] = {
     CGColorSpaceRelease(_displayColorSpace);
     
     [_cursor release];
+    [_gl_extensions release];
     
     [super dealloc];
 }
@@ -712,14 +777,14 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     if (_glMajorVersion == 1) {
         const GLubyte* extensions = glGetString(GL_EXTENSIONS); glReportError();
         
-        if (gluCheckExtension((const GLubyte *) "GL_ARB_shader_objects", extensions) &&
-            gluCheckExtension((const GLubyte *) "GL_ARB_vertex_shader", extensions) &&
-            gluCheckExtension((const GLubyte *) "GL_ARB_fragment_shader", extensions))
+        if (gluCheckExtension((const GLubyte*) "GL_ARB_shader_objects", extensions) &&
+            gluCheckExtension((const GLubyte*) "GL_ARB_vertex_shader", extensions) &&
+            gluCheckExtension((const GLubyte*) "GL_ARB_fragment_shader", extensions))
         {
-            if (gluCheckExtension((const GLubyte *) "GL_ARB_shading_language_110", extensions)) {
+            if (gluCheckExtension((const GLubyte*) "GL_ARB_shading_language_110", extensions)) {
                 _glslMajorVersion = 1;
                 _glslMinorVersion = 1;
-            } else if (gluCheckExtension((const GLubyte *) "GL_ARB_shading_language_100", extensions)) {
+            } else if (gluCheckExtension((const GLubyte*) "GL_ARB_shading_language_100", extensions)) {
                 _glslMajorVersion = 1;
                 _glslMinorVersion = 0;
             }
@@ -745,25 +810,23 @@ major_number.minor_number major_number.minor_number.release_number
 }
 
 - (void)_determineGLFeatures:(CGLContextObj)cgl_ctx {
+    [_gl_extensions release];
+    _gl_extensions = [[NSSet alloc] initWithArray:
+                      [[NSString stringWithCString:(const char*)glGetString(GL_EXTENSIONS)
+                                          encoding:NSASCIIStringEncoding] componentsSeparatedByString:@" "]];
+    
     NSMutableString* features_message = [[NSMutableString alloc] initWithString:@"supported OpenGL features:\n"];
-    NSSet* extensions = [[NSSet alloc] initWithArray:
-                         [[NSString stringWithCString:(const char*)glGetString(GL_EXTENSIONS)
-                                             encoding:NSASCIIStringEncoding] componentsSeparatedByString:@" "]];
-    
-    if ([extensions containsObject:@"GL_ARB_texture_rectangle"])
+    if ([_gl_extensions containsObject:@"GL_ARB_texture_rectangle"])
         [features_message appendString:@"    texture rectangle (ARB)\n"];
-    if ([extensions containsObject:@"GL_EXT_framebuffer_object"])
+    if ([_gl_extensions containsObject:@"GL_EXT_framebuffer_object"])
         [features_message appendString:@"    framebuffer objects (EXT)\n"];
-    if ([extensions containsObject:@"GL_ARB_pixel_buffer_object"])
+    if ([_gl_extensions containsObject:@"GL_ARB_pixel_buffer_object"])
         [features_message appendString:@"    pixel buffer objects (ARB)\n"];
-    if ([extensions containsObject:@"GL_APPLE_vertex_array_object"])
+    if ([_gl_extensions containsObject:@"GL_APPLE_vertex_array_object"])
         [features_message appendString:@"    vertex array objects (APPLE)\n"];
-    if ([extensions containsObject:@"GL_APPLE_flush_buffer_range"])
+    if ([_gl_extensions containsObject:@"GL_APPLE_flush_buffer_range"])
         [features_message appendString:@"    flush buffer range (APPLE)\n"];
-    
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"%@", features_message);
-    
-    [extensions release];
     [features_message release];
 }
 
