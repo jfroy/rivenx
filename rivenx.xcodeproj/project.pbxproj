@@ -48,7 +48,6 @@
 		312F4D8F0DC2639C00B3AF0D /* RXRendering.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D8C0DC2639C00B3AF0D /* RXRendering.m */; };
 		312F4D900DC2639C00B3AF0D /* RXWorldRendering.mm in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D8D0DC2639C00B3AF0D /* RXWorldRendering.mm */; };
 		312F4DB40DC263F600B3AF0D /* GL_debug.c in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D960DC263F400B3AF0D /* GL_debug.c */; };
-		312F4DB50DC263F600B3AF0D /* GLee.c in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D980DC263F400B3AF0D /* GLee.c */; };
 		312F4DB60DC263F600B3AF0D /* RXMovie.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D9B0DC263F400B3AF0D /* RXMovie.m */; };
 		312F4DBD0DC263F600B3AF0D /* RXStateCompositor.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DA90DC263F400B3AF0D /* RXStateCompositor.m */; };
 		312F4DBF0DC263F600B3AF0D /* RXTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DAD0DC263F400B3AF0D /* RXTransition.m */; };
@@ -121,6 +120,7 @@
 		315D43B50E328591003F7EDD /* Sparkle.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 315D438B0E328582003F7EDD /* Sparkle.framework */; };
 		316038FA100EE54600052849 /* RXScriptOpcodeStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 316038F9100EE54600052849 /* RXScriptOpcodeStream.m */; };
 		3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */ = {isa = PBXBuildFile; fileRef = 3160E1810FD3075300F18E86 /* tiny_marbles.png */; };
+		3165A576110BB13B004E71F1 /* glew.c in Sources */ = {isa = PBXBuildFile; fileRef = 3165A574110BB13B004E71F1 /* glew.c */; };
 		316721AB0D27F5F700FB2C0E /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
 		316721AD0D27F60A00FB2C0E /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		316721AF0D27F63000FB2C0E /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
@@ -467,6 +467,8 @@
 		316038F8100EE54600052849 /* RXScriptOpcodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptOpcodeStream.h; sourceTree = "<group>"; };
 		316038F9100EE54600052849 /* RXScriptOpcodeStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptOpcodeStream.m; sourceTree = "<group>"; };
 		3160E1810FD3075300F18E86 /* tiny_marbles.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = tiny_marbles.png; sourceTree = "<group>"; };
+		3165A574110BB13B004E71F1 /* glew.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = glew.c; sourceTree = "<group>"; };
+		3165A575110BB13B004E71F1 /* glew.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glew.h; sourceTree = "<group>"; };
 		316721D80D27FB3200FB2C0E /* integer_pair_hash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = integer_pair_hash.h; sourceTree = "<group>"; };
 		316721D90D27FB3200FB2C0E /* integer_pair_hash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = integer_pair_hash.c; sourceTree = "<group>"; };
 		316C37B10987227800AC2C8E /* RXCardState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXCardState.h; path = States/RXCardState.h; sourceTree = "<group>"; };
@@ -854,6 +856,8 @@
 		312F4D940DC263F400B3AF0D /* GL */ = {
 			isa = PBXGroup;
 			children = (
+				3165A574110BB13B004E71F1 /* glew.c */,
+				3165A575110BB13B004E71F1 /* glew.h */,
 				312F4D950DC263F400B3AF0D /* GL.h */,
 				312F4D960DC263F400B3AF0D /* GL_debug.c */,
 				312F4D970DC263F400B3AF0D /* GL_debug.h */,
@@ -1679,7 +1683,6 @@
 				312F4D8F0DC2639C00B3AF0D /* RXRendering.m in Sources */,
 				312F4D900DC2639C00B3AF0D /* RXWorldRendering.mm in Sources */,
 				312F4DB40DC263F600B3AF0D /* GL_debug.c in Sources */,
-				312F4DB50DC263F600B3AF0D /* GLee.c in Sources */,
 				312F4DB60DC263F600B3AF0D /* RXMovie.m in Sources */,
 				312F4DBD0DC263F600B3AF0D /* RXStateCompositor.m in Sources */,
 				312F4DBF0DC263F600B3AF0D /* RXTransition.m in Sources */,
@@ -1710,6 +1713,7 @@
 				31766E62102FAC02001762A9 /* RXDynamicBitfield.m in Sources */,
 				31CE92961033D576008B7717 /* RXInterpolator.m in Sources */,
 				31EE15E010745FA3006E196D /* RXScriptCompiler.m in Sources */,
+				3165A576110BB13B004E71F1 /* glew.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

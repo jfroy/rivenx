@@ -133,7 +133,7 @@
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     
     // unmap the unpack buffer
-    if (GLEE_APPLE_flush_buffer_range)
+    if (GLEW_APPLE_flush_buffer_range)
         glFlushMappedBufferRangeAPPLE(GL_PIXEL_UNPACK_BUFFER, 0, picture_size);
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER); glReportError();
     

@@ -1,14 +1,14 @@
 /*
  *  GL.h
- *  cidnectrl
+ *  rivenx
  *
- *  Created by Jean-Francois Roy on 30/09/2007.
- *  Copyright 2007 Design III Equipe 1. All rights reserved.
+ *  Created by Jean-Francois Roy on 23/01/2010.
+ *  Copyright 2007-2010 MacStorm. All rights reserved.
  *
  */
 
-#if !defined(GL_H_INCLUDED)
-#define GL_H_INCLUDED
+#if !defined(RX_GL_H)
+#define RX_GL_H
 
 #import <sys/cdefs.h>
 
@@ -21,7 +21,7 @@ __BEGIN_DECLS
 #include <windows.h>
 #endif
 
-#include "GLee.h"
+#include "glew.h"
 
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>
@@ -33,4 +33,4 @@ __BEGIN_DECLS
 
 __END_DECLS
 
-#endif // GL_H_INCLUDED
+#endif // RX_GL_H

@@ -292,6 +292,12 @@ static NSString* required_extensions[] = {
     assert(_render_context_cgl);
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"render context: %p", _render_context_cgl);
     
+    // make the rendering context current
+    [_render_context makeCurrentContext];
+    
+    // initialize GLEW
+    glewInit();
+    
     // create the state object for the rendering context and store it in the context's client context slot
     NSObject<RXOpenGLStateProtocol>* state = [[RXOpenGLState alloc] initWithContext:_render_context_cgl];
     cgl_err = CGLSetParameter(_render_context_cgl, kCGLCPClientStorage, (const GLint*)&state);
@@ -732,7 +738,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_SCISSOR_TEST);
-    if (GLEE_ARB_multisample)
+    if (GLEW_APPLE_flush_buffer_range)
         glDisable(GL_MULTISAMPLE_ARB);
     
     // pixel store state
@@ -749,7 +755,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     glHint(GL_FOG_HINT, GL_NICEST);
-    if (GLEE_APPLE_transform_hint)
+    if (GLEW_APPLE_flush_buffer_range)
         glHint(GL_TRANSFORM_HINT_APPLE, GL_NICEST);
     
     glReportError();
