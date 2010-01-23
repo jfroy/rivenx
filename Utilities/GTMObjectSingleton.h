@@ -17,6 +17,8 @@
 //  the License.
 //
 
+#import "GTMDefines.h"
+
 /// This macro implements the various methods needed to make a safe singleton.
 //
 /// This Singleton pattern was taken from:
@@ -24,18 +26,18 @@
 ///
 /// Sample usage:
 ///
-/// SINGLETON_BOILERPLATE(GMSomeUsefulManager, sharedSomeUsefulManager)
+/// GTMOBJECT_SINGLETON_BOILERPLATE(SomeUsefulManager, sharedSomeUsefulManager)
 /// (with no trailing semicolon)
 ///
 #define GTMOBJECT_SINGLETON_BOILERPLATE(_object_name_, _shared_obj_name_) \
-static _object_name_* z##_shared_obj_name_ = nil;  \
+static _object_name_ *z##_shared_obj_name_ = nil;  \
 + (_object_name_ *)_shared_obj_name_ {             \
   @synchronized(self) {                            \
     if (z##_shared_obj_name_ == nil) {             \
       /* Note that 'self' may not be the same as _object_name_ */                               \
       /* first assignment done in allocWithZone but we must reassign in case init fails */      \
       z##_shared_obj_name_ = [[self alloc] init];                                               \
-      NSAssert((z##_shared_obj_name_ != nil), @"didn't catch singleton allocation");       \
+      _GTMDevAssert((z##_shared_obj_name_ != nil), @"didn't catch singleton allocation");       \
     }                                              \
   }                                                \
   return z##_shared_obj_name_;                     \
@@ -49,14 +51,14 @@ static _object_name_* z##_shared_obj_name_ = nil;  \
   }                                                \
                                                    \
   /* We can't return the shared instance, because it's been init'd */ \
-  NSAssert(NO, @"use the singleton API, not alloc+init");        \
+  _GTMDevAssert(NO, @"use the singleton API, not alloc+init");        \
   return nil;                                      \
 }                                                  \
 - (id)retain {                                     \
   return self;                                     \
 }                                                  \
-- (unsigned int)retainCount {                      \
-  return UINT_MAX;                                 \
+- (NSUInteger)retainCount {                        \
+  return NSUIntegerMax;                            \
 }                                                  \
 - (void)release {                                  \
 }                                                  \
