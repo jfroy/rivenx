@@ -117,7 +117,7 @@ CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 
 CF_INLINE double rx_rnd_range(double lower, double upper) {
     long r = random();
-    return ((double)r / INT32_MAX) * (upper - lower) + lower;
+    return ((double)r / RAND_MAX) * (upper - lower) + lower;
 }
 
 
