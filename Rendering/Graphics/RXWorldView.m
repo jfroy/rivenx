@@ -337,8 +337,7 @@ static NSString* required_extensions[] = {
         return nil;
     }
     
-    // disable the MT engine as it is a significant performance hit for Riven X; note that we ignore kCGLBadEnumeration
-    // as those will be returned on Tiger
+    // disable the MT engine as it is a significant performance hit for Riven X; note that we ignore kCGLBadEnumeration errors because of Tiger
     cgl_err = CGLDisable(_render_context_cgl, kCGLCEMPEngine);
     if (cgl_err != kCGLNoError && cgl_err != kCGLBadEnumeration) {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLEnable for kCGLCEMPEngine failed with error %d: %s",
@@ -367,7 +366,10 @@ static NSString* required_extensions[] = {
     CVDisplayLinkSetOutputCallback(_displayLink, &rx_render_output_callback, self);
     
     // working color space
-    _workingColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
+    if ([GTMSystemVersion isLeopardOrGreater])
+        _workingColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGBLinear);
+    else
+        _workingColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
     
     // get the default cursor from the world
     _cursor = [[g_world defaultCursor] retain];
