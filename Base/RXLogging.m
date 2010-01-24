@@ -30,14 +30,28 @@ const int kRXLoggingLevelMessage = ASL_LEVEL_NOTICE;
 const int kRXLoggingLevelError = ASL_LEVEL_ERR;
 const int kRXLoggingLevelCritical = ASL_LEVEL_CRIT;
 
-static NSString* RX_log_format = @"%@ [%@] [%@] %@\n";
+static NSString* RX_log_format = @"%@ [%s] [%@] %@\n";
 
 void RXCFLog(const char* facility, int level, CFStringRef format, ...) {
     va_list args;
     va_start(args, format);
-    NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
-    RXLogv(facility, level, (NSString*)format, args);
-    [p release];
+    
+    CFStringRef userString = CFStringCreateWithFormatAndArguments(kCFAllocatorDefault, NULL, format, args);
+    CFStringRef facilityString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, facility, NSASCIIStringEncoding, kCFAllocatorNull);
+    CFDateRef now = CFDateCreate(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent());
+    
+    char const* threadName = RXGetThreadName();
+    if (!threadName)
+        threadName = "unknown";
+    
+    CFStringRef logString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, (CFStringRef)RX_log_format, now, threadName, facilityString, userString);
+    [[RXLogCenter sharedLogCenter] log:(NSString*)logString facility:(NSString*)facilityString level:level];
+    
+    CFRelease(logString);
+    CFRelease(now);
+    CFRelease(facilityString);
+    CFRelease(userString);
+    
     va_end(args);
 }
 
@@ -53,11 +67,11 @@ void RXLogv(const char* facility, int level, NSString* format, va_list args) {
     NSString* facilityString = [[NSString alloc] initWithCString:facility encoding:NSASCIIStringEncoding];
     NSDate* now = [NSDate new];
     
-    NSString* threadName = RXGetThreadName();
+    char const* threadName = RXGetThreadName();
     if (!threadName)
-        threadName = @"unknown thread";
+        threadName = "unknown";
     
-    NSString* logString = [[NSString alloc] initWithFormat:RX_log_format, [NSDate date], threadName, facilityString, userString];
+    NSString* logString = [[NSString alloc] initWithFormat:RX_log_format, now, threadName, facilityString, userString];
     [[RXLogCenter sharedLogCenter] log:logString facility:facilityString level:level];
     
     [logString release];

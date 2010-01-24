@@ -104,7 +104,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         
         // initialize threading
         RXInitThreading();
-        RXSetThreadName(@"Main");
+        RXSetThreadName("main");
         
         // initialize timing
         RXTimingUpdateTimebase();
@@ -336,7 +336,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     CGLSetCurrentContext([_worldView loadContext]);
     
     // run the thread
-    RXThreadRunLoopRun(_threadInitSemaphore, @"Script");
+    RXThreadRunLoopRun(_threadInitSemaphore, "script");
 }
 
 - (void)_stopThreadRunloop {

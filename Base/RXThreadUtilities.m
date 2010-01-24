@@ -9,17 +9,18 @@
 #import <Cocoa/Cocoa.h>
 #import <QuickTime/QuickTime.h>
 
-#import "RXDebug.h"
-#import "RXThreadUtilities.h"
-#import "RXLogging.h"
-#import "InterThreadMessaging.h"
+#import "Debug/RXDebug.h"
+#import "Base/RXThreadUtilities.h"
+#import "Base/RXLogging.h"
+#import "Utilities/InterThreadMessaging.h"
+#import "Utilities/GTMSystemVersion.h"
 
 static pthread_key_t rx_thread_storage_key = 0;
 
 static void _RXReleaseThreadStorage(void* p) {
     struct rx_thread_storage* storage = (struct rx_thread_storage*)p;
     if (storage->name)
-        [storage->name release];
+        free(storage->name);
     free(storage);
 }
 
@@ -50,28 +51,30 @@ void RXInitThreading() {
     pthread_key_create(&rx_thread_storage_key, _RXReleaseThreadStorage);
 }
 
-NSString* RXGetThreadName(void) {
+char const*  RXGetThreadName(void) {
     return RXGetThreadStorage()->name;
 }
 
-void RXSetThreadName(NSString* name) {
-    RXGetThreadStorage()->name = [name copy];
+void RXSetThreadName(char const* name) {
+    struct rx_thread_storage* ts = RXGetThreadStorage();
+    
+    size_t size = strlen(name) + 1;
+    if (ts->name)
+        free(ts->name);
+    ts->name = malloc(size);
+    strlcpy(ts->name, name, size);
+    
+    if ([GTMSystemVersion isLeopardOrGreater]) {
+        NSString* nsName = [[NSString alloc] initWithCStringNoCopy:ts->name length:size-1 freeWhenDone:NO];
+        [[NSThread currentThread] setName:nsName];
+        [nsName release];
+    }
+    
+    if ([GTMSystemVersion isSnowLeopardOrGreater])
+        pthread_setname_np(ts->name);
 }
 
-const char* RXGetThreadNameC(void) {
-    NSString* name = RXGetThreadName();
-    if (name)
-        return [name UTF8String];
-    return NULL;
-}
-
-void RXSetThreadNameC(const char* name) {
-    NSString* obj_name = [[NSString alloc] initWithUTF8String:name];
-    RXSetThreadName(obj_name);
-    [obj_name release];
-}
-
-void RXThreadRunLoopRun(semaphore_t ready_semaphore, NSString* name) {
+void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name) {
     NSAutoreleasePool* p = [NSAutoreleasePool new];
     
     // inter-thread messaging
