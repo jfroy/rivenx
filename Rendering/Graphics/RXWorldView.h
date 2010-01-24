@@ -6,22 +6,23 @@
 //  Copyright 2005 MacStorm. All rights reserved.
 //
 
-#import "RXRendering.h"
+#import "Rendering/RXRendering.h"
 #import "Rendering/Graphics/RXOpenGLState.h"
 
 
 @interface RXWorldView : NSOpenGLView <RXWorldViewProtocol> {
-    BOOL _tornDown;
-    
-    NSOpenGLContext* _render_context;
-    NSOpenGLContext* _load_context;
-    
     CGLPixelFormatObj _cglPixelFormat;
     
-    CGLContextObj _render_context_cgl;
-    CGLContextObj _load_context_cgl;
+    NSOpenGLContext* _renderContext;
+    CGLContextObj _renderContextCGL;
     
-    io_service_t _accelerator_service;
+    NSOpenGLContext* _loadContext;
+    CGLContextObj _loadContextCGL;
+    
+    CIContext* _ciContext;
+    CIFilter* _scaleFilter;
+    
+    io_service_t _acceleratorService;
     
     GLuint _glMajorVersion;
     GLuint _glMinorVersion;
@@ -29,7 +30,7 @@
     GLuint _glslMinorVersion;
     NSSet* _gl_extensions;
     
-    ssize_t _total_vram;
+    ssize_t _totalVRAM;
     
     GLsizei _glWidth;
     GLsizei _glHeight;
@@ -41,13 +42,17 @@
     
     float _menuBarHeight;
     
-    id _renderTarget;
-    rx_render_dispatch_t _renderDispatch;
-    rx_post_flush_tasks_dispatch_t _postFlushTasksDispatch;
-    
-    BOOL _glInitialized;
+    rx_renderer_t _cardRenderer;
+    GLuint _cardFBO;
+    GLuint _cardTexture;
+    GLuint _cardVAO;
+    GLuint _cardVBO;
+    GLuint _cardProgram;
     
     NSCursor* _cursor;
+    
+    BOOL _glInitialized;
+    BOOL _tornDown;
 }
 
 @end

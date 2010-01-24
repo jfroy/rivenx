@@ -37,10 +37,7 @@
     BOOL _rendering_initialized;
     NSView <RXWorldViewProtocol>* _worldView;
     void* _audioRenderer;
-    RXStateCompositor* _stateCompositor;
-    
-    // rendering states
-    RXRenderState* _cardState;
+    RXRenderState* _cardRenderer;
     
     // game state
     RXGameState* _gameState;

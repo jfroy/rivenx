@@ -17,8 +17,8 @@
 #import <OpenGL/CGLMacro.h>
 #import "Graphics/GL/GL_debug.h"
 
-#import <Cocoa/Cocoa.h>
 #import <QuartzCore/CoreVideo.h>
+#import <QuartzCore/CoreImage.h>
 
 #import "Engine/RXCoreStructures.h"
 
@@ -103,6 +103,8 @@ __END_DECLS
 - (CGColorSpaceRef)displayColorSpace;
 
 - (rx_size_t)viewportSize;
+
+- (void)setCardRenderer:(id)renderer;
 
 - (NSCursor*)cursor;
 - (void)setCursor:(NSCursor*)cursor;

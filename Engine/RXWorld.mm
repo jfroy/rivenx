@@ -38,7 +38,6 @@ NSObject* g_world = nil;
 
 @interface RXWorld (RXWorldRendering)
 - (void)_initializeRendering;
-- (void)_initializeRenderStates;
 @end
 
 @implementation RXWorld
@@ -222,13 +221,20 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         // wait for each thread to be running (this needs to be called the same number of times as the number of threads)
         semaphore_wait(_threadInitSemaphore);
         
-        // initialize the render states
-        [self _initializeRenderStates];
-        
         _rendering_initialized = YES;
     } @catch (NSException* e) {
         [[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
     }
+}
+
+- (void)_setInitialCard:(NSNotification*)notification {
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXStackDidLoadNotification" object:nil];
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
+#endif
+    [(RXCardState*)_cardRenderer setActiveCardWithStack:@"aspit"
+                                                     ID:[[[RXEditionManager sharedEditionManager] activeStackWithKey:@"aspit"] entryCardID]
+                                          waitUntilDone:NO];
 }
 
 - (void)_currentEditionChanged:(NSNotification*)notification {
@@ -243,6 +249,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     
     // initialize rendering
     [self initializeRendering];
+    
+    // subscribe to RXStackDidLoadNotification notifications so we know when the asplit stack finishes loading
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_setInitialCard:) name:@"RXStackDidLoadNotification" object:nil];
     
     // load the aspit stack on the script thread asynchronously
     [[RXEditionManager sharedEditionManager] performSelector:@selector(loadStackWithKey:) withObject:@"aspit" inThread:_scriptThread waitUntilDone:NO];
@@ -271,13 +280,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     if (g_worldView)
         [[g_worldView window] setDelegate:nil];
     
-    // rendering states
-    [_cardState release];
-    _cardState = nil;    
-    
-    // state compositor
-    [_stateCompositor release];
-    _stateCompositor = nil;
+    // card renderer
+    [_cardRenderer release];
+    _cardRenderer = nil;    
     
     // tear the world view down
     [g_worldView tearDown];
@@ -389,14 +394,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     return _audioRenderer;
 }
 
-- (RXStateCompositor*)stateCompositor {
-    return _stateCompositor;
-}
-
-#pragma mark -
-
-- (RXRenderState*)cardRenderState {
-    return _cardState;
+- (RXRenderState*)cardRenderer {
+    return _cardRenderer;
 }
 
 #pragma mark -
@@ -424,10 +423,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         
         // set the active card to that of the new game state
         RXSimpleCardDescriptor* scd = [_gameState currentCard];
-        [(RXCardState*)_cardState setActiveCardWithStack:scd->stackKey ID:scd->cardID waitUntilDone:NO];
+        [(RXCardState*)_cardRenderer setActiveCardWithStack:scd->stackKey ID:scd->cardID waitUntilDone:NO];
         
         // fade the card state back in
-        [_stateCompositor fadeInState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedIn:)];
+//        [_stateCompositor fadeInState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedIn:)];
     }
 }
 
@@ -436,12 +435,12 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)_cardStateWasFadedOut:(RXRenderState*)state {
-    [(RXCardState*)_cardState clearActiveCardWaitingUntilDone:NO];
+    [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
 }
 
 - (BOOL)loadGameState:(RXGameState*)gameState error:(NSError**)error {
     _gameStateToLoad = [gameState retain];
-    [_stateCompositor fadeOutState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedOut:)];
+//    [_stateCompositor fadeOutState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedOut:)];
     return YES;
 }
 

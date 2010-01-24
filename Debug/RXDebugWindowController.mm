@@ -171,7 +171,7 @@ static PyMethodDef rivenx_methods[] = {
     if ([arguments count] < 2)
         @throw [NSException exceptionWithName:@"RXCommandArgumentsException" reason:@"card [stack] [ID]" userInfo:nil];
 
-    RXCardState* renderingState = (RXCardState*)[g_world cardRenderState];
+    RXCardState* renderingState = (RXCardState*)[g_world cardRenderer];
 
     NSString* stackKey = [arguments objectAtIndex:0];
     NSString* cardStringID = [arguments objectAtIndex:1];
@@ -187,12 +187,12 @@ static PyMethodDef rivenx_methods[] = {
 
 - (void)cmd_refresh:(NSArray*)arguments {
     RXSimpleCardDescriptor* current_card = [[g_world gameState] currentCard];
-    RXCardState* renderingState = (RXCardState*)[g_world cardRenderState];
+    RXCardState* renderingState = (RXCardState*)[g_world cardRenderer];
     [renderingState setActiveCardWithStack:current_card->stackKey ID:current_card->cardID waitUntilDone:NO];
 }
 
 - (void)_activateSLST:(NSNumber*)index {
-    RXCardState* renderingState = (RXCardState*)[g_world cardRenderState];
+    RXCardState* renderingState = (RXCardState*)[g_world cardRenderer];
     uint16_t args = (uint16_t)[index intValue];
     [[renderingState valueForKey:@"sengine"] performSelector:@selector(_opcode_activateSLST:arguments:) withObject:(id)1 withObject:(id)&args];
 }
@@ -269,7 +269,7 @@ static PyMethodDef rivenx_methods[] = {
 }
 
 - (void)cmd_dump:(NSArray*)arguments {
-    [[g_world cardRenderState] performSelector:@selector(exportCompositeFramebuffer)];
+    [[g_world cardRenderer] performSelector:@selector(exportCompositeFramebuffer)];
 }
 
 - (void)_nextJspitCard:(NSNotification*)notification {
@@ -286,19 +286,19 @@ static PyMethodDef rivenx_methods[] = {
         d = [RXCardDescriptor descriptorWithStack:jspit ID:_trip];
     }
     
-    RXCardState* renderingState = (RXCardState *)[g_world cardRenderState];
+    RXCardState* renderingState = (RXCardState *)[g_world cardRenderer];
     [renderingState setActiveCardWithStack:@"jspit" ID:_trip waitUntilDone:NO];
 }
 
 - (void)cmd_jtrip:(NSArray*)arguments {
-    RXCardState* renderingState = (RXCardState*)[g_world cardRenderState];
+    RXCardState* renderingState = (RXCardState*)[g_world cardRenderer];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_nextJspitCard:) name:@"RXActiveCardDidChange" object:nil];
     _trip = 1;
     [renderingState setActiveCardWithStack:@"jspit" ID:_trip waitUntilDone:NO];
 }
 
 - (void)cmd_recompile:(NSArray*)args {
-    RXCard* card = [[(RXCardState*)[g_world cardRenderState] scriptEngine] card];
+    RXCard* card = [[(RXCardState*)[g_world cardRenderer] scriptEngine] card];
     NSDictionary* scripts = [card scripts];
     
     NSEnumerator* iter_k = [scripts keyEnumerator];

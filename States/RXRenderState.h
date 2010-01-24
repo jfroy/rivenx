@@ -9,17 +9,8 @@
 #import "Rendering/RXRendering.h"
 
 
-typedef struct __RXStateDelegateFlags {
-
-} _RXStateDelegateFlags;
-
-
 @interface RXRenderState : NSResponder <RXRenderingProtocol> {
-    id _delegate;
-    _RXStateDelegateFlags _delegateFlags;
-}
 
-- (id)delegate;
-- (void)setDelegate:(id)delegate;
+}
 
 @end

@@ -49,7 +49,6 @@
 		312F4D900DC2639C00B3AF0D /* RXWorldRendering.mm in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D8D0DC2639C00B3AF0D /* RXWorldRendering.mm */; };
 		312F4DB40DC263F600B3AF0D /* GL_debug.c in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D960DC263F400B3AF0D /* GL_debug.c */; };
 		312F4DB60DC263F600B3AF0D /* RXMovie.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D9B0DC263F400B3AF0D /* RXMovie.m */; };
-		312F4DBD0DC263F600B3AF0D /* RXStateCompositor.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DA90DC263F400B3AF0D /* RXStateCompositor.m */; };
 		312F4DBF0DC263F600B3AF0D /* RXTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DAD0DC263F400B3AF0D /* RXTransition.m */; };
 		312F4DC20DC263F600B3AF0D /* RXWorldView.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DB30DC263F400B3AF0D /* RXWorldView.m */; };
 		31333F5A09B01A3700DB6FC7 /* rxaudio_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */; };
@@ -392,8 +391,6 @@
 		312F4D9B0DC263F400B3AF0D /* RXMovie.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXMovie.m; sourceTree = "<group>"; };
 		312F4DA20DC263F400B3AF0D /* GLShaderProgramManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLShaderProgramManager.h; sourceTree = "<group>"; };
 		312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GLShaderProgramManager.m; sourceTree = "<group>"; };
-		312F4DA80DC263F400B3AF0D /* RXStateCompositor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXStateCompositor.h; sourceTree = "<group>"; };
-		312F4DA90DC263F400B3AF0D /* RXStateCompositor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXStateCompositor.m; sourceTree = "<group>"; };
 		312F4DAA0DC263F400B3AF0D /* RXTextureBroker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXTextureBroker.h; sourceTree = "<group>"; };
 		312F4DAB0DC263F400B3AF0D /* RXTextureBroker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXTextureBroker.m; sourceTree = "<group>"; };
 		312F4DAC0DC263F400B3AF0D /* RXTransition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXTransition.h; sourceTree = "<group>"; };
@@ -837,8 +834,6 @@
 				31D3D85F0EEE36FD00F2D1C4 /* RXOpenGLState.m */,
 				3103D4D90EF0D3D40025170A /* RXPicture.h */,
 				3103D4DA0EF0D3D40025170A /* RXPicture.m */,
-				312F4DA80DC263F400B3AF0D /* RXStateCompositor.h */,
-				312F4DA90DC263F400B3AF0D /* RXStateCompositor.m */,
 				3186C9E3102E47F4004E81D2 /* RXTexture.h */,
 				3186C9E4102E47F4004E81D2 /* RXTexture.m */,
 				312F4DAA0DC263F400B3AF0D /* RXTextureBroker.h */,
@@ -1680,7 +1675,6 @@
 				312F4D900DC2639C00B3AF0D /* RXWorldRendering.mm in Sources */,
 				312F4DB40DC263F600B3AF0D /* GL_debug.c in Sources */,
 				312F4DB60DC263F600B3AF0D /* RXMovie.m in Sources */,
-				312F4DBD0DC263F600B3AF0D /* RXStateCompositor.m in Sources */,
 				312F4DBF0DC263F600B3AF0D /* RXTransition.m in Sources */,
 				312F4DC20DC263F600B3AF0D /* RXWorldView.m in Sources */,
 				31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */,

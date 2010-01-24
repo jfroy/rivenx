@@ -10,12 +10,14 @@
 #import <OpenGL/CGLMacro.h>
 #import <OpenGL/CGLRenderers.h>
 
+#import "Rendering/Graphics/RXWorldView.h"
+
 #import "Application/RXApplicationDelegate.h"
 #import "Base/RXThreadUtilities.h"
 #import "Engine/RXWorldProtocol.h"
 #import "Utilities/GTMSystemVersion.h"
 
-#import "Rendering/Graphics/RXWorldView.h"
+#import "Rendering/Graphics/GL/GLShaderProgramManager.h"
 
 #ifndef kCGLRendererIDMatchingMask
 #define kCGLRendererIDMatchingMask   0x00FE7F00
@@ -27,6 +29,9 @@
 
 - (void)_createWorkingColorSpace;
 - (void)_handleColorProfileChange:(NSNotification*)notification;
+
+- (void)_initializeCardRendering;
+- (void)_updateCardCoordinates;
 
 - (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx;
 - (void)_determineGLVersion:(CGLContextObj)cgl_ctx;
@@ -271,8 +276,8 @@ static NSString* required_extensions[] = {
     [format release];
     
     // create the render context
-    _render_context = [[NSOpenGLContext alloc] initWithFormat:format shareContext:nil];
-    if (!_render_context) {
+    _renderContext = [[NSOpenGLContext alloc] initWithFormat:format shareContext:nil];
+    if (!_renderContext) {
         // NSOpenGLPFARendererID, kCGLRendererGenericFloatID,
         
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"could not create the render OpenGL context");
@@ -284,23 +289,23 @@ static NSString* required_extensions[] = {
     _cglPixelFormat = [format CGLPixelFormatObj];
     
     // set the render context on the view and release it (e.g. transfer ownership to the view)
-    [self setOpenGLContext:_render_context];
-    [_render_context release];
+    [self setOpenGLContext:_renderContext];
+    [_renderContext release];
     
     // cache the underlying CGL context
-    _render_context_cgl = [_render_context CGLContextObj];
-    assert(_render_context_cgl);
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"render context: %p", _render_context_cgl);
+    _renderContextCGL = [_renderContext CGLContextObj];
+    assert(_renderContextCGL);
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"render context: %p", _renderContextCGL);
     
     // make the rendering context current
-    [_render_context makeCurrentContext];
+    [_renderContext makeCurrentContext];
     
     // initialize GLEW
     glewInit();
     
     // create the state object for the rendering context and store it in the context's client context slot
-    NSObject<RXOpenGLStateProtocol>* state = [[RXOpenGLState alloc] initWithContext:_render_context_cgl];
-    cgl_err = CGLSetParameter(_render_context_cgl, kCGLCPClientStorage, (const GLint*)&state);
+    NSObject<RXOpenGLStateProtocol>* state = [[RXOpenGLState alloc] initWithContext:_renderContextCGL];
+    cgl_err = CGLSetParameter(_renderContextCGL, kCGLCPClientStorage, (const GLint*)&state);
     if (cgl_err != kCGLNoError) {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
@@ -309,20 +314,20 @@ static NSString* required_extensions[] = {
     }
     
     // create a load context and pair it with the render context
-    _load_context = [[NSOpenGLContext alloc] initWithFormat:format shareContext:_render_context];
-    if (!_load_context) {
+    _loadContext = [[NSOpenGLContext alloc] initWithFormat:format shareContext:_renderContext];
+    if (!_loadContext) {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"could not create the resource load OpenGL context");
         [self release];
         return nil;
     }
     
     // cache the underlying CGL context
-    _load_context_cgl = [_load_context CGLContextObj];
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"load context: %p", _load_context_cgl);
+    _loadContextCGL = [_loadContext CGLContextObj];
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"load context: %p", _loadContextCGL);
     
     // create the state object for the loading context and store it in the context's client context slot
-    state = [[RXOpenGLState alloc] initWithContext:_load_context_cgl];
-    cgl_err = CGLSetParameter(_load_context_cgl, kCGLCPClientStorage, (const GLint*)&state);
+    state = [[RXOpenGLState alloc] initWithContext:_loadContextCGL];
+    cgl_err = CGLSetParameter(_loadContextCGL, kCGLCPClientStorage, (const GLint*)&state);
     if (cgl_err != kCGLNoError) {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
@@ -335,7 +340,7 @@ static NSString* required_extensions[] = {
     
     // enable vsync on the render context
     param = 1;
-    cgl_err = CGLSetParameter(_render_context_cgl, kCGLCPSwapInterval, &param);
+    cgl_err = CGLSetParameter(_renderContextCGL, kCGLCPSwapInterval, &param);
     if (cgl_err != kCGLNoError) {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPSwapInterval failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
@@ -344,7 +349,7 @@ static NSString* required_extensions[] = {
     }
     
     // disable the MT engine as it is a significant performance hit for Riven X; note that we ignore kCGLBadEnumeration errors because of Tiger
-    cgl_err = CGLDisable(_render_context_cgl, kCGLCEMPEngine);
+    cgl_err = CGLDisable(_renderContextCGL, kCGLCEMPEngine);
     if (cgl_err != kCGLNoError && cgl_err != kCGLBadEnumeration) {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLEnable for kCGLCEMPEngine failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
@@ -352,20 +357,20 @@ static NSString* required_extensions[] = {
         return nil;
     }
     
-    cgl_err = CGLDisable(_load_context_cgl, kCGLCEMPEngine);
+    cgl_err = CGLDisable(_loadContextCGL, kCGLCEMPEngine);
     if (cgl_err != kCGLNoError && cgl_err != kCGLBadEnumeration) {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLEnable for kCGLCEMPEngine failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
         [self release];
         return nil;
     }
-    
-    // configure the view's autoresizing behavior to resize itself to match its container
-    [self setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     
     // do base state setup
-    [self _baseOpenGLStateSetup:_load_context_cgl];
-    [self _baseOpenGLStateSetup:_render_context_cgl];
+    [self _baseOpenGLStateSetup:_loadContextCGL];
+    [self _baseOpenGLStateSetup:_renderContextCGL];
+    
+    // initialize card rendering
+    [self _initializeCardRendering];
     
     // create the CV display link
     CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
@@ -382,6 +387,9 @@ static NSString* required_extensions[] = {
     
     // cache the height of the menu bar, since it will change if / when the menu bar is hidden
     _menuBarHeight = [[NSApp mainMenu] menuBarHeight];
+    
+    // configure the view's autoresizing behavior to resize itself to match its container
+    [self setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     
     return self;
 }
@@ -408,16 +416,19 @@ static NSString* required_extensions[] = {
     if (_displayLink)
         CVDisplayLinkRelease(_displayLink);
     
-    if (_accelerator_service)
-        IOObjectRelease(_accelerator_service);
+    if (_acceleratorService)
+        IOObjectRelease(_acceleratorService);
     
-    [_load_context release];
+    [_loadContext release];
     
     CGColorSpaceRelease(_workingColorSpace);
     CGColorSpaceRelease(_displayColorSpace);
     
     [_cursor release];
     [_gl_extensions release];
+    
+    [_scaleFilter release];
+    [_ciContext release];
     
     [super dealloc];
 }
@@ -426,11 +437,11 @@ static NSString* required_extensions[] = {
 #pragma mark world view protocol
 
 - (CGLContextObj)renderContext {
-    return _render_context_cgl;
+    return _renderContextCGL;
 }
 
 - (CGLContextObj)loadContext {
-    return _load_context_cgl;
+    return _loadContextCGL;
 }
 
 - (CGLPixelFormatObj)cglPixelFormat {
@@ -451,6 +462,10 @@ static NSString* required_extensions[] = {
 
 - (rx_size_t)viewportSize {
     return RXSizeMake(_glWidth, _glHeight);
+}
+
+- (void)setCardRenderer:(id)renderer {
+    _cardRenderer = RXGetRenderer(renderer);
 }
 
 - (NSCursor*)cursor {
@@ -498,11 +513,11 @@ static NSString* required_extensions[] = {
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {
-    [[g_world stateCompositor] mouseDown:theEvent];
+    [[g_world cardRenderer] mouseDown:theEvent];
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
-    [[g_world stateCompositor] mouseUp:theEvent];
+    [[g_world cardRenderer] mouseUp:theEvent];
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent {
@@ -530,15 +545,15 @@ static NSString* required_extensions[] = {
     }
     
     // forward the even to the state compositor
-    [[g_world stateCompositor] mouseMoved:theEvent];
+    [[g_world cardRenderer] mouseMoved:theEvent];
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent {
-    [[g_world stateCompositor] mouseDragged:theEvent];
+    [[g_world cardRenderer] mouseDragged:theEvent];
 }
 
 - (void)keyDown:(NSEvent *)theEvent {
-    [[g_world stateCompositor] keyDown:theEvent];
+    [[g_world cardRenderer] keyDown:theEvent];
 }
 
 - (void)resetCursorRects {
@@ -568,6 +583,19 @@ static NSString* required_extensions[] = {
     
     _displayColorSpace = CGColorSpaceCreateWithPlatformColorSpace(displayProfile);
     CMCloseProfile(displayProfile);
+    
+    CGLLockContext(_renderContextCGL);
+    
+    // re-create the CoreImage context with the new output color space
+    NSDictionary* options = [NSDictionary dictionaryWithObjectsAndKeys:
+        (id)_workingColorSpace, kCIContextWorkingColorSpace,
+        (id)_displayColorSpace, kCIContextOutputColorSpace,
+        nil];
+    [_ciContext release];
+    _ciContext = [[CIContext contextWithCGLContext:_renderContextCGL pixelFormat:_cglPixelFormat options:options] retain];
+    assert(_ciContext);
+    
+    CGLUnlockContext(_renderContextCGL);
 }
 
 - (void)viewDidMoveToWindow {
@@ -604,11 +632,6 @@ static NSString* required_extensions[] = {
     if ([GTMSystemVersion isTiger])
         [self reshape];
     
-    // cache the imp for world render methods
-    _renderTarget = [g_world stateCompositor];
-    _renderDispatch = RXGetRenderImplementation([_renderTarget class], RXRenderingRenderSelector);
-    _postFlushTasksDispatch = RXGetPostFlushTasksImplementation([_renderTarget class], RXRenderingPostFlushTasksSelector);
-    
     // start the CV display link
     CVDisplayLinkStart(_displayLink);
 }
@@ -619,14 +642,14 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     CGLError cglerr;
     CGError cgerr;
     
-    if (_accelerator_service) {
-        IOObjectRelease(_accelerator_service);
-        _accelerator_service = 0;
+    if (_acceleratorService) {
+        IOObjectRelease(_acceleratorService);
+        _acceleratorService = 0;
     }
     
     // get the display mask for the current virtual screen
     CGOpenGLDisplayMask display_mask;
-    cglerr = CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFADisplayMask, (GLint*)&display_mask);
+    cglerr = CGLDescribePixelFormat(_cglPixelFormat, [_renderContext currentVirtualScreen], kCGLPFADisplayMask, (GLint*)&display_mask);
     if (cglerr != kCGLNoError)
         return;
     
@@ -637,7 +660,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     
     // use a private CG function to get the accelerator for that display ID
     uint32_t accelerator_index;
-    cgerr = CGSAcceleratorForDisplayNumber(display_id, &_accelerator_service, &accelerator_index);
+    cgerr = CGSAcceleratorForDisplayNumber(display_id, &_acceleratorService, &accelerator_index);
     if (cgerr != kCGErrorSuccess)
         return;
 }
@@ -647,30 +670,30 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     
     // the virtual screen has changed, reconfigure the contexes and the display link
     
-    CGLLockContext(_render_context_cgl);
-    CGLLockContext(_load_context_cgl);
+    CGLLockContext(_renderContextCGL);
+    CGLLockContext(_loadContextCGL);
     
     if (_displayLink)
-        CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(_displayLink, _render_context_cgl, _cglPixelFormat);
-    CGLSetVirtualScreen(_load_context_cgl, [_render_context currentVirtualScreen]);
+        CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(_displayLink, _renderContextCGL, _cglPixelFormat);
+    CGLSetVirtualScreen(_loadContextCGL, [_renderContext currentVirtualScreen]);
     
     GLint renderer;
-    CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFARendererID, &renderer);
+    CGLDescribePixelFormat(_cglPixelFormat, [_renderContext currentVirtualScreen], kCGLPFARendererID, &renderer);
     
     [self _updateAcceleratorService];
     [self _updateTotalVRAM];
     
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"now using virtual screen %d driven by the \"%@\" renderer; VRAM: %ld MB total, %.2f MB free",
-        [_render_context currentVirtualScreen], [RXWorldView rendererNameForID:renderer], _total_vram / 1024 / 1024, [self currentFreeVRAM:NULL] / 1024.0 / 1024.0);
+        [_renderContext currentVirtualScreen], [RXWorldView rendererNameForID:renderer], _totalVRAM / 1024 / 1024, [self currentFreeVRAM:NULL] / 1024.0 / 1024.0);
     
     // determine OpenGL version and features
-    [self _determineGLVersion:_render_context_cgl];
-    [self _determineGLFeatures:_render_context_cgl];
+    [self _determineGLVersion:_renderContextCGL];
+    [self _determineGLFeatures:_renderContextCGL];
     
     // FIXME: determine if we need to fallback to software and do so here; this may not be required since we allow fallback in the pixel format
     
-    CGLUnlockContext(_load_context_cgl);
-    CGLUnlockContext(_render_context_cgl);
+    CGLUnlockContext(_loadContextCGL);
+    CGLUnlockContext(_renderContextCGL);
 }
 
 - (void)reshape {
@@ -694,7 +717,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     _glHeight = glRect.size.height;
     
     // use the render context because it's the one that matters for screen output
-    CGLContextObj cgl_ctx = _render_context_cgl;
+    CGLContextObj cgl_ctx = _renderContextCGL;
     CGLLockContext(cgl_ctx);
     
     // set the OpenGL viewport
@@ -707,10 +730,23 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    
     glReportError();
     
-    // let others re-configure OpenGL to their needs
+    // update the card coordinates
+    [self _updateCardCoordinates];
+    
+    // update the scale filter
+    if (!_scaleFilter) {
+        _scaleFilter = [[CIFilter filterWithName:@"CILanczosScaleTransform"] retain];
+        assert(_scaleFilter);
+        [_scaleFilter setDefaults];
+    }
+    
+    NSRect scale_rect = RXRenderScaleRect();
+    [_scaleFilter setValue:[NSNumber numberWithFloat:scale_rect.size.width] forKey:kCIInputScaleKey];
+    [_scaleFilter setValue:[NSNumber numberWithFloat:scale_rect.size.width / scale_rect.size.height] forKey:kCIInputAspectRatioKey];
+    
+    // let others know that the surface has changed size
 #if defined(DEBUG)
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"sending RXOpenGLDidReshapeNotification notification");
 #endif
@@ -721,6 +757,119 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
 
 #pragma mark -
 #pragma mark OpenGL initialization
+
+- (void)_initializeCardRendering {
+    CGLContextObj cgl_ctx = _renderContextCGL;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
+    
+    glGenFramebuffersEXT(1, &_cardFBO);
+    glGenTextures(1, &_cardTexture);
+    
+    // bind the texture
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _cardTexture); glReportError();
+    
+    // texture parameters
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glReportError();
+    
+    // disable client storage because it's incompatible with allocating texture space with NULL (which is what we want to do for FBO color attachement textures)
+    GLenum client_storage = [gl_state setUnpackClientStorage:GL_FALSE];
+    
+    // allocate memory for the texture
+    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXRendererViewportSize.width, kRXRendererViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
+    
+    // color0 texture attach
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _cardFBO); glReportError();
+    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_RECTANGLE_ARB, _cardTexture, 0); glReportError();
+        
+    // completeness check
+    GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+    if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"card FBO not complete, status 0x%04x\n", (unsigned int)status);
+    }
+    
+    // create the card VBO and VAO
+    glGenVertexArraysAPPLE(1, &_cardVAO); glReportError();
+    [gl_state bindVertexArrayObject:_cardVAO];
+    
+    glGenBuffers(1, &_cardVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, _cardVBO); glReportError();
+    
+    if (GLEW_APPLE_flush_buffer_range)
+        glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+    glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
+    
+    // configure the VAs
+    glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), NULL); glReportError();
+    
+    glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
+    
+    _cardProgram = [[GLShaderProgramManager sharedManager]
+                    standardProgramWithFragmentShaderName:@"card"
+                    extraSources:nil
+                    epilogueIndex:0
+                    context:cgl_ctx
+                    error:NULL];
+    assert(_cardProgram);
+    
+    glUseProgram(_cardProgram); glReportError();
+    
+    GLint uniform_loc = glGetUniformLocation(_cardProgram, "destination_card"); glReportError();
+    assert(uniform_loc != -1);
+    glUniform1i(uniform_loc, 0); glReportError();
+    
+    uniform_loc = glGetUniformLocation(_cardProgram, "modulate_color"); glReportError();
+    assert(uniform_loc != -1);
+    glUniform4f(uniform_loc, 1.f, 1.f, 1.f, 1.f); glReportError();
+    
+    // restore state
+    glUseProgram(0);
+    [gl_state bindVertexArrayObject:0];
+    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+    [gl_state setUnpackClientStorage:client_storage];
+    glReportError();
+}
+
+- (void)_updateCardCoordinates {
+    CGLContextObj cgl_ctx = _renderContextCGL;
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
+    
+    [gl_state bindVertexArrayObject:_cardVAO];
+    
+    struct _attribs {
+        GLfloat pos[2];
+        GLfloat tex[2];
+    };
+    assert(sizeof(struct _attribs) == 4 * sizeof(GLfloat));
+    struct _attribs* attribs = (struct _attribs*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY); glReportError();
+    assert(attribs);
+    
+    rx_rect_t contentRect = RXEffectiveRendererFrame();
+    
+    attribs[0].pos[0] = contentRect.origin.x;                               attribs[0].pos[1] = contentRect.origin.y;
+    attribs[0].tex[0] = 0.0f;                                               attribs[0].tex[1] = 0.0f;
+    
+    attribs[1].pos[0] = contentRect.origin.x + contentRect.size.width;      attribs[1].pos[1] = contentRect.origin.y;
+    attribs[1].tex[0] = (GLfloat)kRXRendererViewportSize.width;             attribs[1].tex[1] = 0.0f;
+    
+    attribs[2].pos[0] = contentRect.origin.x;                               attribs[2].pos[1] = contentRect.origin.y + contentRect.size.height;
+    attribs[2].tex[0] = 0.0f;                                               attribs[2].tex[1] = (GLfloat)kRXRendererViewportSize.height;
+    
+    attribs[3].pos[0] = contentRect.origin.x + contentRect.size.width;      attribs[3].pos[1] = contentRect.origin.y + contentRect.size.height;
+    attribs[3].tex[0] = (GLfloat)kRXRendererViewportSize.width;             attribs[3].tex[1] = (GLfloat)kRXRendererViewportSize.height;
+    
+    if (GLEW_APPLE_flush_buffer_range)
+        glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 16 * sizeof(GLfloat));
+    glUnmapBuffer(GL_ARRAY_BUFFER);
+    glReportError();
+    
+    [gl_state bindVertexArrayObject:0];
+}
 
 - (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx {
     // set background color to black
@@ -843,17 +992,17 @@ major_number.minor_number major_number.minor_number.release_number
     
     // get the display mask for the current virtual screen
     CGOpenGLDisplayMask display_mask;
-    cglerr = CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFADisplayMask, (GLint*)&display_mask);
+    cglerr = CGLDescribePixelFormat(_cglPixelFormat, [_renderContext currentVirtualScreen], kCGLPFADisplayMask, (GLint*)&display_mask);
     if (cglerr != kCGLNoError) {
-        _total_vram = -1;
+        _totalVRAM = -1;
         return;
     }
     
     // get the renderer ID for the current virtual screen
     GLint renderer;
-    cglerr = CGLDescribePixelFormat(_cglPixelFormat, [_render_context currentVirtualScreen], kCGLPFARendererID, &renderer);
+    cglerr = CGLDescribePixelFormat(_cglPixelFormat, [_renderContext currentVirtualScreen], kCGLPFARendererID, &renderer);
     if (cglerr != kCGLNoError) {
-        _total_vram = -1;
+        _totalVRAM = -1;
         return;
     }
     
@@ -862,7 +1011,7 @@ major_number.minor_number major_number.minor_number.release_number
     GLint renderer_count;
     cglerr = CGLQueryRendererInfo(display_mask, &renderer_info, &renderer_count);
     if (cglerr != kCGLNoError) {
-        _total_vram = -1;
+        _totalVRAM = -1;
         return;
     }
     
@@ -874,7 +1023,7 @@ major_number.minor_number major_number.minor_number.release_number
             cglerr = CGLDescribeRenderer(renderer_info, 0, kCGLRPRendererID, &renderer_id);
             if (cglerr != kCGLNoError) {
                 CGLDestroyRendererInfo(renderer_info);
-                _total_vram = -1;
+                _totalVRAM = -1;
                 return;
             }
             
@@ -885,27 +1034,27 @@ major_number.minor_number major_number.minor_number.release_number
     
     if (renderer_index == renderer_count) {
         CGLDestroyRendererInfo(renderer_info);
-        _total_vram = -1;
+        _totalVRAM = -1;
         return;
     }
     
     GLint total_vram = -1;
     cglerr = CGLDescribeRenderer(renderer_info, renderer_index, kCGLRPVideoMemory, &total_vram);
     if (cglerr != kCGLNoError) {
-        _total_vram = -1;
+        _totalVRAM = -1;
         return;
     }
     CGLDestroyRendererInfo(renderer_info);
     
-    _total_vram = total_vram;
+    _totalVRAM = total_vram;
 }
 
 - (ssize_t)currentFreeVRAM:(NSError**)error {        
-    if (!_accelerator_service)
+    if (!_acceleratorService)
         ReturnValueWithError(-1, RXErrorDomain, kRXErrNoAcceleratorService, nil, error);
     
     // get the performance statistics ditionary out of the accelerator service
-    CFDictionaryRef perf_stats = IORegistryEntryCreateCFProperty(_accelerator_service, CFSTR("PerformanceStatistics"), kCFAllocatorDefault, 0);
+    CFDictionaryRef perf_stats = IORegistryEntryCreateCFProperty(_acceleratorService, CFSTR("PerformanceStatistics"), kCFAllocatorDefault, 0);
     if (!perf_stats)
         ReturnValueWithError(-1, RXErrorDomain, kRXErrFailedToGetAcceleratorPerfStats, nil, error);
     
@@ -923,8 +1072,8 @@ major_number.minor_number major_number.minor_number.release_number
                 CFNumberGetValue(free_vram_number, kCFNumberLongType, &free_vram);
                 free_vram_number = NULL;
                 
-                if (_total_vram != -1) {
-                    free_vram = _total_vram - free_vram;
+                if (_totalVRAM != -1) {
+                    free_vram = _totalVRAM - free_vram;
                     free_vram_number = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &free_vram);
                     free_number = YES;
                 }
@@ -956,21 +1105,125 @@ major_number.minor_number major_number.minor_number.release_number
     if (_tornDown)
         return;
     
-    CGLContextObj cgl_ctx = _render_context_cgl;
+    CGLContextObj cgl_ctx = _renderContextCGL;
     CGLSetCurrentContext(cgl_ctx);
     CGLLockContext(cgl_ctx);
+    
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     // clear to black
     glClear(GL_COLOR_BUFFER_BIT);
     
-    // render the world
-    _renderDispatch.imp(_renderTarget, _renderDispatch.sel, outputTime, cgl_ctx, 0);
+//    OSSpinLockLock(&_render_lock);
+//    NSArray* renderStates = [_renderStates retain];
+//    id<RXInterpolator> fade_interpolator = [_fade_interpolator retain];
+//    NSInvocation* fade_callback = [_fade_animation_callback retain];
+//    OSSpinLockUnlock(&_render_lock);
+    
+    if (_cardRenderer.target) {
+        // bind the card FBO, clear the color buffer and call down to the card renderer
+        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _cardFBO); glReportError();
+//        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); glReportError();
+        glClear(GL_COLOR_BUFFER_BIT);
+        _cardRenderer.render.imp(_cardRenderer.target, _cardRenderer.render.sel, outputTime, cgl_ctx, _cardFBO);
+        
+        // bind the window server FBO
+        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); glReportError();
+        
+#define USE_COREIMAGE 1
+#if defined(USE_COREIMAGE)
+        glUseProgram(0); glReportError();
+        [gl_state bindVertexArrayObject:0];
+        
+        // scale the card texture
+        // HACK: until the pipeline uses linear color space, we'll use the display color space for card texture
+        CIImage* cardImage = [CIImage imageWithTexture:_cardTexture size:CGSizeMake(kRXRendererViewportSize.width, kRXRendererViewportSize.height) flipped:0 colorSpace:_displayColorSpace];
+        [_scaleFilter setValue:cardImage forKey:kCIInputImageKey];
+        CIImage* scaledCardImage = [_scaleFilter valueForKey:kCIOutputImageKey];
+        
+        // render the scaled card texture
+        [_ciContext drawImage:scaledCardImage atPoint:CGPointZero fromRect:[scaledCardImage extent]];
+#else
+        glUseProgram(_cardProgram); glReportError();
+        [gl_state bindVertexArrayObject:_cardVAO];
+        
+        glActiveTexture(GL_TEXTURE0); glReportError();
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _cardTexture); glReportError();
+        
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
+        
+        glUseProgram(0); glReportError();
+        [gl_state bindVertexArrayObject:0];
+#endif
+    
+//#if defined(DEBUG_GL)
+//    glValidateProgram(_compositing_program); glReportError();
+//    GLint valid;
+//    glGetProgramiv(_compositing_program, GL_VALIDATE_STATUS, &valid);
+//    if (valid != GL_TRUE)
+//        RXOLog(@"program not valid: %u", _compositing_program);
+//#endif
+//    
+//    // if we have a fade animation, apply it's value to the blend weight 0 and call its completion callback if it's reached its end
+//    if (fade_interpolator) {
+//        _texture_blend_weights[0] = [fade_interpolator value];
+//        if ([fade_interpolator isDone]) {
+//            [fade_callback performSelectorOnMainThread:@selector(invoke) withObject:nil waitUntilDone:NO];
+//            
+//            OSSpinLockLock(&_render_lock);
+//            if (fade_interpolator == _fade_interpolator) {
+//                [_fade_interpolator release];
+//                _fade_interpolator = nil;
+//            }
+//            if (fade_callback == _fade_animation_callback) {
+//                [_fade_animation_callback release];
+//                _fade_animation_callback = nil;
+//            }
+//            OSSpinLockUnlock(&_render_lock);
+//        }
+//    }
+//    
+//    // bind the compositor program and update the render state blend uniform
+//    glUseProgram(_compositing_program); glReportError();
+//    glUniform4fv(_texture_blend_weights_uniform, 1, _texture_blend_weights); glReportError();
+//    
+//    // bind the compositing vao
+//    [gl_state bindVertexArrayObject:_compositing_vao];
+//    
+//    // bind render state textures
+//    uint32_t state_count = [_states count];
+//    for (uint32_t state_i = 0; state_i < state_count; state_i++) {
+//        glActiveTexture(GL_TEXTURE0 + state_i); glReportError();
+//        GLuint texture = ((RXRenderStateCompositionDescriptor*)[_states objectAtIndex:state_i])->texture;
+//        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture); glReportError();
+//    }
+//    
+//    // render all states at once!
+//    glDrawArrays(GL_QUADS, 0, 4); glReportError();
+//    
+//    // set the active texture unit to TEXTURE0 (Riven X assumption)
+//    glActiveTexture(GL_TEXTURE0); glReportError();
+//    
+//    // bind program 0 (FF processing)
+//    glUseProgram(0); glReportError();
+    
+        // call down to the card renderer again, this time to perform rendering into the system framebuffer
+        // FIXME: cache the selector and IMP lookup
+        typedef void (*render_fcrt_t)(id, SEL, CGLContextObj);
+        render_fcrt_t imp = (render_fcrt_t)[_cardRenderer.target methodForSelector:@selector(_renderInFinalCompositeRT:)];
+        imp(_cardRenderer.target, @selector(_renderInFinalCompositeRT:), cgl_ctx);
+    }
+    
+//    [fade_callback release];
+//    [fade_interpolator release];
+//    [renderStates release];
     
     // glFlush and swap the front and back buffers
     CGLFlushDrawable(cgl_ctx);
     
-    // let the world perform post-flush processing
-    _postFlushTasksDispatch.imp(_renderTarget, _postFlushTasksDispatch.sel, outputTime);
+    // finally call down to the card renderer one last time to let it take post-flush actions
+    if (_cardRenderer.target)
+        _cardRenderer.flush.imp(_cardRenderer.target, _cardRenderer.flush.sel, outputTime);
     
     CGLUnlockContext(cgl_ctx);
 }

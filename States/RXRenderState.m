@@ -11,14 +11,6 @@
 
 @implementation RXRenderState
 
-- (id)delegate {
-    return _delegate;
-}
-
-- (void)setDelegate:(id)delegate {
-    _delegate = delegate;
-}
-
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
 }

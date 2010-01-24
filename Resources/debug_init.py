@@ -45,7 +45,7 @@ def _load_globals():
     global world, renderer, engine, edition_manager, load_notification_handler
     world = objc.lookUpClass('RXWorld').sharedWorld()
     if world:
-        renderer = world.cardRenderState()
+        renderer = world.cardRenderer()
     if renderer:
         engine = renderer.scriptEngine()
     edition_manager = objc.lookUpClass('RXEditionManager').sharedEditionManager()

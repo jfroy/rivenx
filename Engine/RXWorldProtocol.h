@@ -16,10 +16,11 @@
 #import <Cocoa/Cocoa.h>
 #import <MHKKit/MHKKit.h>
 
-#import "Engine/RXStack.h"
-#import "Rendering/RXRendering.h"
-#import "Rendering/Graphics/RXStateCompositor.h"
 #import "Engine/RXGameState.h"
+#import "Engine/RXStack.h"
+
+#import "Rendering/RXRendering.h"
+#import "States/RXRenderState.h"
 
 
 @protocol RXWorldProtocol <NSObject>
@@ -27,9 +28,8 @@
 
 - (NSDictionary*)extraBitmapsDescriptor;
 
-- (RXStateCompositor*)stateCompositor;
 - (void*)audioRenderer;
-- (RXRenderState*)cardRenderState;
+- (RXRenderState*)cardRenderer;
 
 - (RXGameState*)gameState;
 

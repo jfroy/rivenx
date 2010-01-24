@@ -19,16 +19,6 @@
 
 @implementation RXWorld (RXWorldRendering)
 
-- (void)setInitialCard_:(NSNotification*)notification {
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXStackDidLoadNotification" object:nil];
-#if defined(DEBUG)
-    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
-#endif
-    [(RXCardState*)_cardState setActiveCardWithStack:@"aspit"
-                                                  ID:[[[RXEditionManager sharedEditionManager] activeStackWithKey:@"aspit"] entryCardID]
-                                       waitUntilDone:NO];
-}
-
 - (void)_initializeRendering {
     // WARNING: the world has to run on the main thread
     if (!pthread_main_np())
@@ -88,11 +78,12 @@
     // initialize the shader manager
     [GLShaderProgramManager sharedManager];
     
-    // initialize the state compositor
-    _stateCompositor = [[RXStateCompositor alloc] init];
-    
     // initialize the dynamic picture unpack buffer
     [RXDynamicPicture sharedDynamicPictureUnpackBuffer];
+    
+    // initialize the card renderer
+    _cardRenderer = [[RXCardState alloc] init];
+    [_worldView setCardRenderer:_cardRenderer];
     
     // set the world view as the content view
     [renderWindow setContentView:_worldView];
@@ -110,18 +101,6 @@
     
     // initialize QuickTime
     EnterMovies();
-}
-
-- (void)_initializeRenderStates {    
-    // prep the card state
-    _cardState = [[RXCardState alloc] init];
-    [_cardState setDelegate:_stateCompositor];
-    
-    // add states to the state compositor
-    [_stateCompositor addState:_cardState opacity:1.0f];
-    
-    // when the aspit stack finishes loading, we'll be notified
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(setInitialCard_:) name:@"RXStackDidLoadNotification" object:nil];
 }
 
 @end
