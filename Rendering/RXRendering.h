@@ -252,6 +252,21 @@ CF_INLINE rx_post_flush_tasks_dispatch_t RXGetPostFlushTasksImplementation(Class
     return d;
 }
 
+struct _rx_renderer {
+    id target;
+    rx_render_dispatch_t render;
+    rx_post_flush_tasks_dispatch_t flush;
+};
+typedef struct _rx_renderer rx_renderer_t;
+
+CF_INLINE rx_renderer_t RXGetRenderer(id target) {
+    rx_renderer_t renderer;
+    renderer.target = target;
+    renderer.render = RXGetRenderImplementation([target class], RXRenderingRenderSelector);
+    renderer.flush = RXGetPostFlushTasksImplementation([target class], RXRenderingPostFlushTasksSelector);
+    return renderer;
+}
+
 __END_DECLS
 
 #endif // __OBJC__
