@@ -388,8 +388,6 @@
 		312F4D950DC263F400B3AF0D /* GL.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GL.h; sourceTree = "<group>"; };
 		312F4D960DC263F400B3AF0D /* GL_debug.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = GL_debug.c; sourceTree = "<group>"; };
 		312F4D970DC263F400B3AF0D /* GL_debug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GL_debug.h; sourceTree = "<group>"; };
-		312F4D980DC263F400B3AF0D /* GLee.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = GLee.c; sourceTree = "<group>"; };
-		312F4D990DC263F400B3AF0D /* GLee.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLee.h; sourceTree = "<group>"; };
 		312F4D9A0DC263F400B3AF0D /* RXMovie.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXMovie.h; sourceTree = "<group>"; };
 		312F4D9B0DC263F400B3AF0D /* RXMovie.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXMovie.m; sourceTree = "<group>"; };
 		312F4DA20DC263F400B3AF0D /* GLShaderProgramManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLShaderProgramManager.h; sourceTree = "<group>"; };
@@ -861,8 +859,6 @@
 				312F4D950DC263F400B3AF0D /* GL.h */,
 				312F4D960DC263F400B3AF0D /* GL_debug.c */,
 				312F4D970DC263F400B3AF0D /* GL_debug.h */,
-				312F4D980DC263F400B3AF0D /* GLee.c */,
-				312F4D990DC263F400B3AF0D /* GLee.h */,
 				312F4DA20DC263F400B3AF0D /* GLShaderProgramManager.h */,
 				312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */,
 			);
