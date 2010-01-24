@@ -13,6 +13,7 @@
 #import "RXLogCenter.h"
 #import "RXThreadUtilities.h"
 
+
 /* facilities */
 const char* kRXLoggingBase = "BASE";
 const char* kRXLoggingEngine = "ENGINE";
@@ -30,6 +31,15 @@ const int kRXLoggingLevelError = ASL_LEVEL_ERR;
 const int kRXLoggingLevelCritical = ASL_LEVEL_CRIT;
 
 static NSString* RX_log_format = @"%@ [%@] [%@] %@\n";
+
+void RXCFLog(const char* facility, int level, CFStringRef format, ...) {
+    va_list args;
+    va_start(args, format);
+    NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
+    RXLogv(facility, level, (NSString*)format, args);
+    [p release];
+    va_end(args);
+}
 
 void RXLog(const char* facility, int level, NSString* format, ...) {
     va_list args;
@@ -65,13 +75,4 @@ void _RXOLog(id object, const char* facility, int level, NSString* format, ...) 
     
     va_end(args);
     [finalFormat release];
-}
-
-void RXCFLog(const char* facility, int level, CFStringRef format, ...) {
-    va_list args;
-    va_start(args, format);
-    NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
-    RXLogv(facility, level, (NSString*)format, args);
-    [p release];
-    va_end(args);
 }
