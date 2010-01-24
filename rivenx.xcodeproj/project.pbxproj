@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 45;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -1363,7 +1363,7 @@
 				ORGANIZATIONNAME = MacStorm;
 			};
 			buildConfigurationList = 31CB99BA08B29A4100609EB5 /* Build configuration list for PBXProject "rivenx" */;
-			compatibilityVersion = "Xcode 3.1";
+			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 1;
 			knownRegions = (
