@@ -46,7 +46,7 @@ static void createMessagePortForThread(NSThread* thread, NSRunLoop* runLoop) {
     NSPort* port = NSMapGet(pThreadMessagePorts, thread);
     if (!port) {
         port = [NSPort new];
-        [port setDelegate:[InterThreadManager class]];
+        [port setDelegate:(id <NSPortDelegate>)[InterThreadManager class]];
         [port scheduleInRunLoop:runLoop forMode:NSDefaultRunLoopMode];
 
         NSMapInsertKnownAbsent(pThreadMessagePorts, thread, port);
