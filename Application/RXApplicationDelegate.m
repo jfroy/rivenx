@@ -196,7 +196,7 @@
     // if QuickTime is too old, tell the user about the Cinepak problem and offer them to launch SU
     NSError* error = [NSError errorWithDomain:RXErrorDomain code:kRXErrQuickTimeTooOld userInfo:
                       [NSDictionary dictionaryWithObjectsAndKeys:
-                       [NSString stringWithFormat:NSLocalizedString(@"QUICKTIME_REQUIRE_762", "require QuickTime 7.6.2")], NSLocalizedDescriptionKey,
+                       NSLocalizedString(@"QUICKTIME_REQUIRE_762", "require QuickTime 7.6.2"), NSLocalizedDescriptionKey,
                        NSLocalizedString(@"QUICKTIME_SHOULD_UPGRADE", "should upgrade QuickTime"), NSLocalizedRecoverySuggestionErrorKey,
                        [NSArray arrayWithObjects:NSLocalizedString(@"UPDATE_QUICKTIME", "update QuickTime"), NSLocalizedString(@"QUIT", "quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
                        self, NSRecoveryAttempterErrorKey,
