@@ -59,8 +59,8 @@
                                                   screen:mainScreen];
     
     [renderWindow setLevel:NSNormalWindowLevel];
-    [renderWindow setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - (kRXRendererViewportSize.width / 2),
-                                             (screenRect.size.height / 2) - (kRXRendererViewportSize.height / 2))];
+    [renderWindow setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - ([renderWindow frame].size.width / 2),
+                                             (screenRect.size.height / 2) - ([renderWindow frame].size.height / 2))];
     
     [renderWindow setAcceptsMouseMovedEvents:YES];
     [renderWindow setCanHide:YES];
