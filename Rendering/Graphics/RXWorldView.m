@@ -675,7 +675,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     
     if (_displayLink)
         CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(_displayLink, _renderContextCGL, _cglPixelFormat);
-    CGLSetVirtualScreen(_loadContextCGL, [_renderContext currentVirtualScreen]);
+    [_loadContext setCurrentVirtualScreen:[_renderContext currentVirtualScreen]];
     
     GLint renderer;
     CGLDescribePixelFormat(_cglPixelFormat, [_renderContext currentVirtualScreen], kCGLPFARendererID, &renderer);
