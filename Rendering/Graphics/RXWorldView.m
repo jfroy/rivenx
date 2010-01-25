@@ -1142,7 +1142,8 @@ major_number.minor_number major_number.minor_number.release_number
         CIImage* scaledCardImage = [_scaleFilter valueForKey:kCIOutputImageKey];
         
         // render the scaled card texture
-        [_ciContext drawImage:scaledCardImage atPoint:CGPointZero fromRect:[scaledCardImage extent]];
+        rx_rect_t contentRect = RXEffectiveRendererFrame();
+        [_ciContext drawImage:scaledCardImage atPoint:CGPointMake(contentRect.origin.x, contentRect.origin.y) fromRect:[scaledCardImage extent]];
 #else
         glUseProgram(_cardProgram); glReportError();
         [gl_state bindVertexArrayObject:_cardVAO];
