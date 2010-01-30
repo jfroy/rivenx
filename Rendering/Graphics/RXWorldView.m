@@ -1101,6 +1101,14 @@ major_number.minor_number major_number.minor_number.release_number
 #pragma mark -
 #pragma mark rendering
 
+- (BOOL)isUsingCoreImage {
+    return _useCoreImage;
+}
+
+- (void)setUseCoreImage:(BOOL)flag {
+    _useCoreImage = flag;
+}
+
 - (void)_render:(const CVTimeStamp*)outputTime {
     if (_tornDown)
         return;
@@ -1130,32 +1138,32 @@ major_number.minor_number major_number.minor_number.release_number
         // bind the window server FBO
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); glReportError();
         
-#define USE_COREIMAGE 1
-#if defined(USE_COREIMAGE)
-        glUseProgram(0); glReportError();
-        [gl_state bindVertexArrayObject:0];
-        
-        // scale the card texture
-        // HACK: until the pipeline uses linear color space, we'll use the display color space for card texture
-        CIImage* cardImage = [CIImage imageWithTexture:_cardTexture size:CGSizeMake(kRXRendererViewportSize.width, kRXRendererViewportSize.height) flipped:0 colorSpace:_displayColorSpace];
-        [_scaleFilter setValue:cardImage forKey:kCIInputImageKey];
-        CIImage* scaledCardImage = [_scaleFilter valueForKey:kCIOutputImageKey];
-        
-        // render the scaled card texture
-        rx_rect_t contentRect = RXEffectiveRendererFrame();
-        [_ciContext drawImage:scaledCardImage atPoint:CGPointMake(contentRect.origin.x, contentRect.origin.y) fromRect:[scaledCardImage extent]];
-#else
-        glUseProgram(_cardProgram); glReportError();
-        [gl_state bindVertexArrayObject:_cardVAO];
-        
-        glActiveTexture(GL_TEXTURE0); glReportError();
-        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _cardTexture); glReportError();
-        
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
-        
-        glUseProgram(0); glReportError();
-        [gl_state bindVertexArrayObject:0];
-#endif
+        if (_useCoreImage) {
+            glUseProgram(0); glReportError();
+            [gl_state bindVertexArrayObject:0];
+            
+            // scale the card texture
+            // HACK: until the pipeline uses linear color space, we'll use the display color space for card texture
+            CIImage* cardImage = [CIImage imageWithTexture:_cardTexture size:CGSizeMake(kRXRendererViewportSize.width, kRXRendererViewportSize.height) flipped:0 colorSpace:_displayColorSpace];
+            [_scaleFilter setValue:cardImage forKey:kCIInputImageKey];
+            CIImage* scaledCardImage = [_scaleFilter valueForKey:kCIOutputImageKey];
+            
+            // render the scaled card texture; note that we need to inset the image by one pixel to avoid garbage pixels output by the lanczos filter
+            rx_rect_t contentRect = RXEffectiveRendererFrame();
+            CGRect contentCGRect = CGRectMake(contentRect.origin.x, contentRect.origin.y, contentRect.size.width, contentRect.size.height);
+            [_ciContext drawImage:scaledCardImage inRect:contentCGRect fromRect:CGRectInset([scaledCardImage extent], 1, 1)];
+        } else {
+            glUseProgram(_cardProgram); glReportError();
+            [gl_state bindVertexArrayObject:_cardVAO];
+            
+            glActiveTexture(GL_TEXTURE0); glReportError();
+            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _cardTexture); glReportError();
+            
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
+            
+            glUseProgram(0); glReportError();
+            [gl_state bindVertexArrayObject:0];
+        }
     
 //#if defined(DEBUG_GL)
 //    glValidateProgram(_compositing_program); glReportError();

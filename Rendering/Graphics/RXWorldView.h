@@ -52,7 +52,11 @@
     NSCursor* _cursor;
     
     BOOL _glInitialized;
+    BOOL _useCoreImage;
     BOOL _tornDown;
 }
+
+- (BOOL)isUsingCoreImage;
+- (void)setUseCoreImage:(BOOL)flag;
 
 @end
