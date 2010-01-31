@@ -124,6 +124,7 @@
 		316721AD0D27F60A00FB2C0E /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		316721AF0D27F63000FB2C0E /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 316721D90D27FB3200FB2C0E /* integer_pair_hash.c */; };
+		3167EF021115057C002DDE6D /* RXWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 3167EF011115057C002DDE6D /* RXWindow.m */; };
 		316C37B40987227800AC2C8E /* RXCardState.mm in Sources */ = {isa = PBXBuildFile; fileRef = 316C37B20987227800AC2C8E /* RXCardState.mm */; };
 		316C389E0F469F7200EFB7FB /* CAAudioUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14BD60F03F568006EFF93 /* CAAudioUnit.cpp */; };
 		316C38A00F469F8000EFB7FB /* CAGuard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B960F03F527006EFF93 /* CAGuard.cpp */; };
@@ -466,6 +467,8 @@
 		3165A575110BB13B004E71F1 /* glew.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glew.h; sourceTree = "<group>"; };
 		316721D80D27FB3200FB2C0E /* integer_pair_hash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = integer_pair_hash.h; sourceTree = "<group>"; };
 		316721D90D27FB3200FB2C0E /* integer_pair_hash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = integer_pair_hash.c; sourceTree = "<group>"; };
+		3167EF001115057C002DDE6D /* RXWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWindow.h; sourceTree = "<group>"; };
+		3167EF011115057C002DDE6D /* RXWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXWindow.m; sourceTree = "<group>"; };
 		316C37B10987227800AC2C8E /* RXCardState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXCardState.h; path = States/RXCardState.h; sourceTree = "<group>"; };
 		316C37B20987227800AC2C8E /* RXCardState.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RXCardState.mm; path = States/RXCardState.mm; sourceTree = "<group>"; };
 		316C38A60F469FA800EFB7FB /* CAMutex.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAMutex.cpp; sourceTree = "<group>"; };
@@ -840,6 +843,8 @@
 				312F4DAB0DC263F400B3AF0D /* RXTextureBroker.m */,
 				312F4DAC0DC263F400B3AF0D /* RXTransition.h */,
 				312F4DAD0DC263F400B3AF0D /* RXTransition.m */,
+				3167EF001115057C002DDE6D /* RXWindow.h */,
+				3167EF011115057C002DDE6D /* RXWindow.m */,
 				312F4DB20DC263F400B3AF0D /* RXWorldView.h */,
 				312F4DB30DC263F400B3AF0D /* RXWorldView.m */,
 			);
@@ -1704,6 +1709,7 @@
 				31CE92961033D576008B7717 /* RXInterpolator.m in Sources */,
 				31EE15E010745FA3006E196D /* RXScriptCompiler.m in Sources */,
 				3165A576110BB13B004E71F1 /* glew.c in Sources */,
+				3167EF021115057C002DDE6D /* RXWindow.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
