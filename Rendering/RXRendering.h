@@ -70,9 +70,8 @@ typedef struct rx_card_sfxe rx_card_sfxe;
 #pragma mark rendering constants
 
 extern const rx_size_t kRXRendererViewportSize;
-
 extern const rx_size_t kRXCardViewportSize;
-extern const rx_point_t kRXCardViewportOriginOffset;
+extern const rx_size_t kRXInventorySize;
 
 extern const double kRXTransitionDuration;
 
@@ -109,6 +108,9 @@ __END_DECLS
 - (NSCursor*)cursor;
 - (void)setCursor:(NSCursor*)cursor;
 
+- (BOOL)isUsingCoreImage;
+- (void)setUseCoreImage:(BOOL)flag;
+
 - (ssize_t)currentFreeVRAM:(NSError**)error;
 @end
 
@@ -135,26 +137,36 @@ CF_INLINE rx_size_t RXGetGLViewportSize() {
 CF_INLINE rx_rect_t RXEffectiveRendererFrame() {
     // FIXME: need to cache the result of this function, since it should not change too often
     rx_size_t viewportSize = RXGetGLViewportSize();
-    rx_size_t contentSize = kRXRendererViewportSize;
+    rx_size_t contentSize = kRXCardViewportSize;
     
     float viewportAR = (float)viewportSize.width / (float)viewportSize.height;
     float contentAR = (float)contentSize.width / (float)contentSize.height;
     
-    if (viewportAR > 0) {
-        contentSize.height = viewportSize.height;
-        contentSize.width = contentSize.height * contentAR;
-    } else {
+    if (viewportAR > 1.0f) {
         contentSize.width = viewportSize.width;
         contentSize.height = viewportSize.width / contentAR;
+        
+        if (contentSize.height > viewportSize.height - kRXInventorySize.height) {
+            contentSize.height = viewportSize.height - kRXInventorySize.height;
+            contentSize.width = contentSize.height * contentAR;
+        }
+    } else {
+        contentSize.height = viewportSize.height - kRXInventorySize.height;
+        contentSize.width = contentSize.height * contentAR;
+        
+        if (contentSize.width > viewportSize.width) {
+            contentSize.width = viewportSize.width;
+            contentSize.height = viewportSize.width / contentAR;
+        }
     }
     
-    return RXRectMake((viewportSize.width / 2) - (contentSize.width / 2), (viewportSize.height / 2) - (contentSize.height / 2), contentSize.width, contentSize.height);
+    return RXRectMake((viewportSize.width / 2) - (contentSize.width / 2), viewportSize.height - contentSize.height, contentSize.width, contentSize.height);
 }
 
 CF_INLINE NSRect RXRenderScaleRect() {
     rx_rect_t render_frame = RXEffectiveRendererFrame();
-    float scale_x = (float)render_frame.size.width / (float)kRXRendererViewportSize.width;
-    float scale_y = (float)render_frame.size.height / (float)kRXRendererViewportSize.height;
+    float scale_x = (float)render_frame.size.width / (float)kRXCardViewportSize.width;
+    float scale_y = (float)render_frame.size.height / (float)kRXCardViewportSize.height;
     return NSMakeRect(render_frame.origin.x, render_frame.origin.y, scale_x, scale_y);
 }
 
@@ -186,8 +198,8 @@ CF_INLINE NSRect RXTransformRectCoreToWorld(rx_core_rect_t rect) {
     NSRect composite_rect = RXMakeCompositeDisplayRectFromCoreRect(rect);
         
     NSRect world_rect;
-    world_rect.origin.x = scale_rect.origin.x + (composite_rect.origin.x + kRXCardViewportOriginOffset.x) * scale_rect.size.width;
-    world_rect.origin.y = scale_rect.origin.y + (composite_rect.origin.y + kRXCardViewportOriginOffset.y) * scale_rect.size.height;
+    world_rect.origin.x = scale_rect.origin.x + composite_rect.origin.x * scale_rect.size.width;
+    world_rect.origin.y = scale_rect.origin.y + composite_rect.origin.y * scale_rect.size.height;
     world_rect.size.width = composite_rect.size.width * scale_rect.size.width;
     world_rect.size.height = composite_rect.size.height * scale_rect.size.height;
     return world_rect;
@@ -203,8 +215,8 @@ CF_INLINE rx_core_rect_t RXTransformRectWorldToCore(NSRect rect) {
     }
     
     NSRect composite_rect;
-    composite_rect.origin.x = ((rect.origin.x - scale_rect.origin.x) / scale_rect.size.width) - kRXCardViewportOriginOffset.x;
-    composite_rect.origin.y = ((rect.origin.y - scale_rect.origin.y) / scale_rect.size.height) - kRXCardViewportOriginOffset.y;
+    composite_rect.origin.x = (rect.origin.x - scale_rect.origin.x) / scale_rect.size.width;
+    composite_rect.origin.y = (rect.origin.y - scale_rect.origin.y) / scale_rect.size.height;
     composite_rect.size.width = rect.size.width / scale_rect.size.width;
     composite_rect.size.height = rect.size.height / scale_rect.size.height;
     return RXMakeCoreRectFromCompositeDisplayRect(composite_rect);
@@ -222,50 +234,69 @@ __END_DECLS
 
 __BEGIN_DECLS
 
-typedef void (*RXRendering_RenderIMP)(id, SEL, const CVTimeStamp*, CGLContextObj, GLuint);
-typedef void (*RXRendering_PerformPostFlushTasksIMP)(id, SEL, const CVTimeStamp*);
-
+// render:inContext:framebuffer:
+#define RXRenderingRenderSelector @selector(render:inContext:framebuffer:)
+typedef void (*RXRendering_Render_IMP)(id, SEL, const CVTimeStamp*, CGLContextObj, GLuint);
 struct _rx_render_dispatch {
-    RXRendering_RenderIMP imp;
+    RXRendering_Render_IMP imp;
     SEL sel;
 };
 typedef struct _rx_render_dispatch rx_render_dispatch_t;
-
-struct _rx_post_flush_tasks_dispatch {
-    RXRendering_PerformPostFlushTasksIMP imp;
-    SEL sel;
-};
-typedef struct _rx_post_flush_tasks_dispatch rx_post_flush_tasks_dispatch_t;
-
-#define RXRenderingRenderSelector @selector(render:inContext:framebuffer:)
-#define RXRenderingPostFlushTasksSelector @selector(performPostFlushTasks:)
-
 CF_INLINE rx_render_dispatch_t RXGetRenderImplementation(Class impClass, SEL sel) {
     rx_render_dispatch_t d;
     d.sel = sel;
-    d.imp = (RXRendering_RenderIMP)[impClass instanceMethodForSelector:sel];
+    d.imp = (RXRendering_Render_IMP)[impClass instanceMethodForSelector:sel];
     return d;
 }
 
+// renderInMainRT:
+#define RXRenderingRenderInMainRTSelector @selector(renderInMainRT:)
+typedef void (*RXRendering_RenderInMainRT_IMP)(id, SEL, CGLContextObj);
+struct _rx_renderinmainrt_dispatch {
+    RXRendering_RenderInMainRT_IMP imp;
+    SEL sel;
+};
+typedef struct _rx_renderinmainrt_dispatch rx_renderinmainrt_dispatch_t;
+CF_INLINE rx_renderinmainrt_dispatch_t RXGetRenderInMainRTImplementation(Class impClass, SEL sel) {
+    rx_renderinmainrt_dispatch_t d;
+    d.sel = sel;
+    d.imp = (RXRendering_RenderInMainRT_IMP)[impClass instanceMethodForSelector:sel];
+    return d;
+}
+
+// performPostFlushTasks:
+#define RXRenderingPostFlushTasksSelector @selector(performPostFlushTasks:)
+typedef void (*RXRendering_PerformPostFlushTasks_IMP)(id, SEL, const CVTimeStamp*);
+struct _rx_post_flush_tasks_dispatch {
+    RXRendering_PerformPostFlushTasks_IMP imp;
+    SEL sel;
+};
+typedef struct _rx_post_flush_tasks_dispatch rx_post_flush_tasks_dispatch_t;
 CF_INLINE rx_post_flush_tasks_dispatch_t RXGetPostFlushTasksImplementation(Class impClass, SEL sel) {
     rx_post_flush_tasks_dispatch_t d;
     d.sel = sel;
-    d.imp = (RXRendering_PerformPostFlushTasksIMP)[impClass instanceMethodForSelector:sel];
+    d.imp = (RXRendering_PerformPostFlushTasks_IMP)[impClass instanceMethodForSelector:sel];
     return d;
 }
 
+// renderer structure
 struct _rx_renderer {
     id target;
     rx_render_dispatch_t render;
+    rx_renderinmainrt_dispatch_t renderInMainRT;
     rx_post_flush_tasks_dispatch_t flush;
 };
 typedef struct _rx_renderer rx_renderer_t;
 
 CF_INLINE rx_renderer_t RXGetRenderer(id target) {
     rx_renderer_t renderer;
+    Class cls = [target class];
+    
     renderer.target = target;
-    renderer.render = RXGetRenderImplementation([target class], RXRenderingRenderSelector);
-    renderer.flush = RXGetPostFlushTasksImplementation([target class], RXRenderingPostFlushTasksSelector);
+    renderer.render = RXGetRenderImplementation(cls, RXRenderingRenderSelector);
+    renderer.renderInMainRT = RXGetRenderInMainRTImplementation(cls, RXRenderingRenderInMainRTSelector);
+    renderer.flush = RXGetPostFlushTasksImplementation(cls, RXRenderingPostFlushTasksSelector);
+    
     return renderer;
 }
 

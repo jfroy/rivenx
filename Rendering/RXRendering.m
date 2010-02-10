@@ -10,9 +10,8 @@
 
 
 const rx_size_t kRXRendererViewportSize = {608, 458};
-
 const rx_size_t kRXCardViewportSize = {608, 392};
-const rx_point_t kRXCardViewportOriginOffset = {0, 66};
+const rx_size_t kRXInventorySize = {0, 66};
 
 const double kRXTransitionDuration = 0.4;
 

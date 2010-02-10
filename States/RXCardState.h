@@ -118,23 +118,25 @@ struct rx_transition_program {
     GLint* _hotspotDebugRenderElementCountArray;
     
     // inventory
-    GLuint _inventory_textures[3];
-    CGRect _inventory_frames[3];
     id<RXInterpolator> _inventory_position_interpolators[3];
-    float _inventory_alpha[3];
     id<RXInterpolator> _inventory_alpha_interpolators[3];
-    uint32_t _inventory_alpha_interpolator_uninterruptible_flags;
+    CGRect _inventory_frames[3];
     NSRect _inventory_hotspot_frames[3];
-    BOOL _inventory_has_focus;
+    GLuint _inventory_textures[3];
+    float _inventory_alpha[3];
+    float _inventory_base_x_offset;
+    uint32_t _inventory_alpha_interpolator_uninterruptible_flags;
     uint32_t _inventory_flags;
+    uint32_t _inventory_max_width;
     OSSpinLock _inventory_update_lock;
+    BOOL _inventory_has_focus;
     
     // credits
-    BOOL _render_credits;
-    int _credits_state;
     uint64_t _credits_start_time;
     void* _credits_texture_buffer;
+    int _credits_state;
     GLuint _credits_texture;
+    BOOL _render_credits;
 }
 
 - (RXScriptEngine*)scriptEngine;

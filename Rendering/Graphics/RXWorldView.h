@@ -37,10 +37,9 @@
     
     CGColorSpaceRef _workingColorSpace;
     CGColorSpaceRef _displayColorSpace;
+    CGColorSpaceRef _sRGBColorSpace;
     
     CVDisplayLinkRef _displayLink;
-    
-    float _menuBarHeight;
     
     rx_renderer_t _cardRenderer;
     GLuint _cardFBO;
@@ -55,8 +54,5 @@
     BOOL _useCoreImage;
     BOOL _tornDown;
 }
-
-- (BOOL)isUsingCoreImage;
-- (void)setUseCoreImage:(BOOL)flag;
 
 @end

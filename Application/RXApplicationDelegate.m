@@ -31,16 +31,15 @@
 
 + (void)initialize {
     [super initialize];
+    
     [[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:
-        [NSNumber numberWithBool:NO], @"FullScreenMode",
-        [NSNumber numberWithBool:NO], @"StretchToFit",
+        [NSNumber numberWithBool:NO], @"Fullscreen",
         nil
     ]];
 }
 
 - (void)awakeFromNib {
     [_aboutBox center];
-    [_preferences center];
     
     NSBundle* bundle = [NSBundle mainBundle];
     
@@ -49,8 +48,6 @@
     
     [_versionField setStringValue:[NSString stringWithFormat:version_format, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], version]];
     [_copyrightField setStringValue:NSLocalizedStringFromTable(@"LONG_COPYRIGHT", @"About", nil)];
-    
-//    _fullscreen = [[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"];
 }
 
 - (void)dealloc {
@@ -63,10 +60,6 @@
 #if defined(DEBUG)
 - (void)_showDebugConsole:(id)sender {
     [_debugConsoleWC showWindow:sender];
-}
-
-- (void)_showCardInspector:(id)sender {
-
 }
 
 - (void)_initDebugUI {
@@ -221,18 +214,29 @@
     [RXWorld sharedWorld];
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification *)notification {
+- (void)applicationDidFinishLaunching:(NSNotification*)notification {
 #if defined(DEBUG)
     [self _initDebugUI];
     [self _showDebugConsole:self];
 #endif
 }
 
-- (BOOL)application:(NSApplication*)theApplication openFile:(NSString*)filename {
+- (void)applicationWillResignActive:(NSNotification*)notification {
+    wasFullscreen = [g_world fullscreen];
+    if (wasFullscreen)
+        [g_world toggleFullscreen];
+}
+
+- (void)applicationWillBecomeActive:(NSNotification*)notification {
+    if (wasFullscreen)
+        [g_world toggleFullscreen];
+}
+
+- (BOOL)application:(NSApplication*)application openFile:(NSString*)filename {
     return [self _openGameWithURL:[NSURL fileURLWithPath:filename]];
 }
 
-- (void)windowWillClose:(NSNotification *)aNotification {
+- (void)windowWillClose:(NSNotification*)notification {
     [NSApp terminate:self];
 }
 
@@ -249,21 +253,8 @@
     [[NSWorkspace sharedWorkspace] openFile:ackPath];
 }
 
-- (IBAction)showPreferences:(id)sender {
-    [_preferences makeKeyAndOrderFront:sender];
-    if (_fullscreen)
-        [_preferences setLevel:NSTornOffMenuWindowLevel];
-}
-
 - (IBAction)toggleFullscreen:(id)sender {
-    // FIXME: implement method in RXRendering or RXWorld (in RXWorldRendering.mm) to do this
-}
-
-- (IBAction)toggleStretchToFit:(id)sender {
-//    BOOL stretchToFit = [[NSUserDefaults standardUserDefaults] boolForKey:@"StretchToFit"];
-//    [[NSUserDefaults standardUserDefaults] setBool:!stretchToFit forKey:@"StretchToFit"];
-//    
-//    [[NSNotificationCenter defaultCenter] postNotificationName:@"RXOpenGLDidReshapeNotification" object:self];
+    [g_world toggleFullscreen];
 }
 
 - (IBAction)openDocument:(id)sender {
@@ -366,10 +357,6 @@
 - (void)setSavingEnabled:(BOOL)flag {
     _saveFlag = flag;
     [self _updateCanSave];
-}
-
-- (BOOL)isFullscreen {
-    return _fullscreen;
 }
 
 - (void)_saveAsPanelDidEnd:(NSSavePanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {

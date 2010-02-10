@@ -27,7 +27,6 @@
 @interface RXWorldView (RXWorldView_Private)
 + (NSString*)rendererNameForID:(GLint)renderer;
 
-- (void)_createWorkingColorSpace;
 - (void)_handleColorProfileChange:(NSNotification*)notification;
 
 - (void)_initializeCardRendering;
@@ -382,11 +381,11 @@ static NSString* required_extensions[] = {
     else
         _workingColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
     
+    // sRGB color space
+    _sRGBColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    
     // get the default cursor from the world
     _cursor = [[g_world defaultCursor] retain];
-    
-    // cache the height of the menu bar, since it will change if / when the menu bar is hidden
-    _menuBarHeight = [[NSApp mainMenu] menuBarHeight];
     
     // configure the view's autoresizing behavior to resize itself to match its container
     [self setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
@@ -423,6 +422,7 @@ static NSString* required_extensions[] = {
     
     CGColorSpaceRelease(_workingColorSpace);
     CGColorSpaceRelease(_displayColorSpace);
+    CGColorSpaceRelease(_sRGBColorSpace);
     
     [_cursor release];
     [_gl_extensions release];
@@ -512,47 +512,23 @@ static NSString* required_extensions[] = {
     return YES;
 }
 
-- (void)mouseDown:(NSEvent *)theEvent {
+- (void)mouseDown:(NSEvent*)theEvent {
     [[g_world cardRenderer] mouseDown:theEvent];
 }
 
-- (void)mouseUp:(NSEvent *)theEvent {
+- (void)mouseUp:(NSEvent*)theEvent {
     [[g_world cardRenderer] mouseUp:theEvent];
 }
 
-- (void)mouseMoved:(NSEvent *)theEvent {
-    NSPoint screenLoc = [self convertPoint:[theEvent locationInWindow] toView:nil];
-    
-    // if we're in fullscreen mode and on the main display, we have to check if we're over the menu bar
-    if ([[NSApp delegate] isFullscreen]) {
-        CGDirectDisplayID ddid = CVDisplayLinkGetCurrentCGDisplay(_displayLink);
-        CGDirectDisplayID mainDisplay = CGMainDisplayID();
-        if (ddid == mainDisplay) {
-            CGRect displayBounds = CGDisplayBounds(ddid);
-            if (screenLoc.y < displayBounds.size.height - _menuBarHeight) {
-                if ([NSMenu menuBarVisible]) {
-                    [NSMenu setMenuBarVisible:NO];
-                }
-            } else {
-                if (![NSMenu menuBarVisible]) {
-                    [NSMenu setMenuBarVisible:YES];
-                    
-                    // while over the menu bar, use the system's arrow cursor
-                    [[NSCursor arrowCursor] set];
-                }
-            }
-        }
-    }
-    
-    // forward the even to the state compositor
+- (void)mouseMoved:(NSEvent*)theEvent {
     [[g_world cardRenderer] mouseMoved:theEvent];
 }
 
-- (void)mouseDragged:(NSEvent *)theEvent {
+- (void)mouseDragged:(NSEvent*)theEvent {
     [[g_world cardRenderer] mouseDragged:theEvent];
 }
 
-- (void)keyDown:(NSEvent *)theEvent {
+- (void)keyDown:(NSEvent*)theEvent {
     [[g_world cardRenderer] keyDown:theEvent];
 }
 
@@ -779,7 +755,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     GLenum client_storage = [gl_state setUnpackClientStorage:GL_FALSE];
     
     // allocate memory for the texture
-    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXRendererViewportSize.width, kRXRendererViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
+    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
     
     // color0 texture attach
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _cardFBO); glReportError();
@@ -855,13 +831,13 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     attribs[0].tex[0] = 0.0f;                                               attribs[0].tex[1] = 0.0f;
     
     attribs[1].pos[0] = contentRect.origin.x + contentRect.size.width;      attribs[1].pos[1] = contentRect.origin.y;
-    attribs[1].tex[0] = (GLfloat)kRXRendererViewportSize.width;             attribs[1].tex[1] = 0.0f;
+    attribs[1].tex[0] = (GLfloat)kRXCardViewportSize.width;                 attribs[1].tex[1] = 0.0f;
     
     attribs[2].pos[0] = contentRect.origin.x;                               attribs[2].pos[1] = contentRect.origin.y + contentRect.size.height;
-    attribs[2].tex[0] = 0.0f;                                               attribs[2].tex[1] = (GLfloat)kRXRendererViewportSize.height;
+    attribs[2].tex[0] = 0.0f;                                               attribs[2].tex[1] = (GLfloat)kRXCardViewportSize.height;
     
     attribs[3].pos[0] = contentRect.origin.x + contentRect.size.width;      attribs[3].pos[1] = contentRect.origin.y + contentRect.size.height;
-    attribs[3].tex[0] = (GLfloat)kRXRendererViewportSize.width;             attribs[3].tex[1] = (GLfloat)kRXRendererViewportSize.height;
+    attribs[3].tex[0] = (GLfloat)kRXCardViewportSize.width;                 attribs[3].tex[1] = (GLfloat)kRXCardViewportSize.height;
     
     if (GLEW_APPLE_flush_buffer_range)
         glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 16 * sizeof(GLfloat));
@@ -1131,7 +1107,6 @@ major_number.minor_number major_number.minor_number.release_number
     if (_cardRenderer.target) {
         // bind the card FBO, clear the color buffer and call down to the card renderer
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _cardFBO); glReportError();
-//        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); glReportError();
         glClear(GL_COLOR_BUFFER_BIT);
         _cardRenderer.render.imp(_cardRenderer.target, _cardRenderer.render.sel, outputTime, cgl_ctx, _cardFBO);
         
@@ -1143,8 +1118,7 @@ major_number.minor_number major_number.minor_number.release_number
             [gl_state bindVertexArrayObject:0];
             
             // scale the card texture
-            // HACK: until the pipeline uses linear color space, we'll use the display color space for card texture
-            CIImage* cardImage = [CIImage imageWithTexture:_cardTexture size:CGSizeMake(kRXRendererViewportSize.width, kRXRendererViewportSize.height) flipped:0 colorSpace:_displayColorSpace];
+            CIImage* cardImage = [CIImage imageWithTexture:_cardTexture size:CGSizeMake(kRXCardViewportSize.width, kRXCardViewportSize.height) flipped:0 colorSpace:_sRGBColorSpace];
             [_scaleFilter setValue:cardImage forKey:kCIInputImageKey];
             CIImage* scaledCardImage = [_scaleFilter valueForKey:kCIOutputImageKey];
             
@@ -1217,10 +1191,7 @@ major_number.minor_number major_number.minor_number.release_number
 //    glUseProgram(0); glReportError();
     
         // call down to the card renderer again, this time to perform rendering into the system framebuffer
-        // FIXME: cache the selector and IMP lookup
-        typedef void (*render_fcrt_t)(id, SEL, CGLContextObj);
-        render_fcrt_t imp = (render_fcrt_t)[_cardRenderer.target methodForSelector:@selector(_renderInFinalCompositeRT:)];
-        imp(_cardRenderer.target, @selector(_renderInFinalCompositeRT:), cgl_ctx);
+        _cardRenderer.renderInMainRT.imp(_cardRenderer.target, _cardRenderer.render.sel, cgl_ctx);
     }
     
 //    [fade_callback release];

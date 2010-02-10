@@ -12,12 +12,108 @@
 #import "Rendering/Audio/RXAudioRenderer.h"
 #import "Rendering/Graphics/RXDynamicPicture.h"
 #import "Rendering/Graphics/RXWorldView.h"
+#import "Rendering/Graphics/RXWindow.h"
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
 
 #import "States/RXCardState.h"
 
+#import "Utilities/GTMSystemVersion.h"
+
 
 @implementation RXWorld (RXWorldRendering)
+
+- (void)_initializeRenderingWindow:(NSWindow*)window {
+    [window setTitle:@"Riven X"];
+    [window setAcceptsMouseMovedEvents:YES];
+    [window setDelegate:[NSApp delegate]];
+    [window setDisplaysWhenScreenProfileChanges:YES];
+    [window setReleasedWhenClosed:YES];
+    
+    [window orderOut:self];
+}
+
+- (void)_initializeFullscreenWindow:(NSScreen*)screen {
+    // create a fullscreen, borderless window
+    _fullscreenWindow = [[RXWindow alloc] initWithContentRect:[screen frame]
+                                                    styleMask:NSBorderlessWindowMask
+                                                      backing:NSBackingStoreBuffered
+                                                        defer:NO
+                                                       screen:screen];
+    
+    [_fullscreenWindow setLevel:NSStatusWindowLevel + 1];
+    [_fullscreenWindow setFrameOrigin:NSZeroPoint];
+    [_fullscreenWindow setCanHide:NO];
+    [self _initializeRenderingWindow:_fullscreenWindow];
+    
+    // we need to manually enable cursor rects and set the collection behavior back to managed because the window is borderless
+    [_fullscreenWindow enableCursorRects];
+    if ([_fullscreenWindow respondsToSelector:@selector(setCollectionBehavior:)])
+        [_fullscreenWindow setCollectionBehavior:NSWindowCollectionBehaviorManaged];
+}
+
+- (void)_initializeWindow:(NSScreen*)screen {
+    // create a regular window
+    _window = [[RXWindow alloc] initWithContentRect:NSMakeRect(0.0f, 0.0f, kRXRendererViewportSize.width, kRXRendererViewportSize.height)
+                                          styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask
+                                            backing:NSBackingStoreBuffered
+                                              defer:YES
+                                             screen:screen];
+    
+    [_window setLevel:NSNormalWindowLevel];
+    NSRect screenRect = [screen frame];
+    [_window setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - ([_window frame].size.width / 2),
+                                        (screenRect.size.height / 2) - ([_window frame].size.height / 2))];
+    [_window setCanHide:YES];
+    [self _initializeRenderingWindow:_window];
+}
+
+- (NSWindow*)_renderingWindow {
+    return (_fullscreen) ? _fullscreenWindow : _window;
+}
+
+- (void)_toggleFullscreenSnow {
+    if (_fullscreen) {
+        _defaultPresentationOptions = [NSApp presentationOptions];
+        [NSApp setPresentationOptions:(NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar)];
+        
+        [_window setLevel:NSStatusWindowLevel + 1];
+        [_window setStyleMask:NSBorderlessWindowMask];
+        [_window setFrame:[[_window screen] frame] display:YES animate:YES];
+        [_window setCanHide:NO];
+        [_window enableCursorRects];
+        [_window setCollectionBehavior:NSWindowCollectionBehaviorManaged];
+    } else {
+        [NSApp setPresentationOptions:_defaultPresentationOptions];
+        
+        [_window setLevel:NSNormalWindowLevel];
+        [_window setStyleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask];
+        
+        NSRect screenRect = [[_window screen] frame];
+        NSRect contentViewRect = NSMakeRect(0, 0, kRXRendererViewportSize.width, kRXRendererViewportSize.height);
+        NSRect windowRect = [_window frameRectForContentRect:contentViewRect];
+        windowRect.origin = NSMakePoint((screenRect.size.width / 2) - (windowRect.size.width / 2),
+                                        (screenRect.size.height / 2) - (windowRect.size.height / 2));
+        [_window setFrame:windowRect display:YES animate:YES];
+        
+        [_window setCanHide:YES];
+        [_window enableCursorRects];
+        [_window setCollectionBehavior:NSWindowCollectionBehaviorManaged];
+    }
+}
+
+- (void)_toggleFullscreen {
+    // the _fullscreen attribute has been updated when this is called
+    NSWindow* window = [self _renderingWindow];
+    NSWindow* oldWindow = [_worldView window];
+    
+    [oldWindow orderOut:self];
+    [_worldView removeFromSuperviewWithoutNeedingDisplay];
+    
+    [window setContentView:_worldView];
+    [window makeKeyAndOrderFront:self];
+    
+    [_worldView setUseCoreImage:_fullscreen];
+}
 
 - (void)_initializeRendering {
     // WARNING: the world has to run on the main thread
@@ -35,46 +131,20 @@
                                                       options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionInitial
                                                       context:[_engineVariables objectForKey:@"rendering"]];
     
-    // FIXME: we should store the last screen ID (index? some other?) used and keep using that
-    // create our window on the main screen
+    // create our windows on the main screen; on Snow Leopard and later, we only need one window
     NSScreen* mainScreen = [NSScreen mainScreen];
-    NSRect screenRect = [mainScreen frame];
-    NSWindow* renderWindow;
-//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"]) {
-//        // create fullscreen, borderless window
-//        renderWindow = [[NSWindow alloc] initWithContentRect:screenRect
-//                                                   styleMask:NSBorderlessWindowMask
-//                                                     backing:NSBackingStoreBuffered
-//                                                       defer:NO
-//                                                      screen:mainScreen];
-//        [renderWindow setLevel:NSTornOffMenuWindowLevel];
-//        if ([renderWindow respondsToSelector:@selector(setCollectionBehavior:)])
-//            [renderWindow setCollectionBehavior:NSWindowCollectionBehaviorDefault];
-//    } else {
-        // regular window
-    renderWindow = [[NSWindow alloc] initWithContentRect:NSMakeRect(0.0f, 0.0f, kRXRendererViewportSize.width, kRXRendererViewportSize.height)
-                                               styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask
-                                                 backing:NSBackingStoreBuffered
-                                                   defer:YES
-                                                  screen:mainScreen];
+    [self _initializeWindow:mainScreen];
+    [self _initializeFullscreenWindow:mainScreen];
     
-    [renderWindow setLevel:NSNormalWindowLevel];
-    [renderWindow setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - ([renderWindow frame].size.width / 2),
-                                             (screenRect.size.height / 2) - ([renderWindow frame].size.height / 2))];
+    // set the initial fullscreen state
+    _fullscreen = [[NSUserDefaults standardUserDefaults] boolForKey:@"Fullscreen"];
     
-    [renderWindow setAcceptsMouseMovedEvents:YES];
-    [renderWindow setCanHide:YES];
-    [renderWindow setDelegate:[NSApp delegate]];
-    [renderWindow setDisplaysWhenScreenProfileChanges:YES];
-    [renderWindow setReleasedWhenClosed:YES];
-    [renderWindow setTitle:@"Riven X"];
+    NSWindow* window = [self _renderingWindow];
     
     // allocate the world view (which will create the GL contexts)
-    NSRect contentViewRect = [renderWindow contentRectForFrameRect:[renderWindow frame]];
-    contentViewRect.origin.x = 0;
-    contentViewRect.origin.y = 0;
+    NSRect contentViewRect = [window contentRectForFrameRect:[window frame]];
     _worldView = [[RXWorldView alloc] initWithFrame:contentViewRect];
-        
+    
     // initialize the shader manager
     [GLShaderProgramManager sharedManager];
     
@@ -86,15 +156,10 @@
     [_worldView setCardRenderer:_cardRenderer];
     
     // set the world view as the content view
-    [renderWindow setContentView:_worldView];
-    [_worldView release];
-    
-    // if we're in fullscreen mode, hide the menu bar now
-//    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenMode"])
-//        [NSMenu setMenuBarVisible:NO];
+    [window setContentView:_worldView];
     
     // show the window
-    [renderWindow makeKeyAndOrderFront:self];
+    [window makeKeyAndOrderFront:self];
     
     // start the audio renderer
     audioRenderer->Start();

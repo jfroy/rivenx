@@ -17,7 +17,6 @@
 #endif
     
     IBOutlet NSWindow* _aboutBox;
-    IBOutlet NSWindow* _preferences;
     IBOutlet NSTextField* _versionField;
     IBOutlet NSTextField* _copyrightField;
     
@@ -25,13 +24,11 @@
     
     BOOL _saveFlag;
     BOOL _canSave;
-    BOOL _fullscreen;
+    BOOL wasFullscreen;
 }
 
 - (IBAction)orderFrontAboutWindow:(id)sender;
 - (IBAction)showAcknowledgments:(id)sender;
-
-- (IBAction)showPreferences:(id)sender;
 
 - (IBAction)openDocument:(id)sender;
 - (IBAction)saveGame:(id)sender;
@@ -41,7 +38,5 @@
 - (void)setSavingEnabled:(BOOL)flag;
 
 - (IBAction)toggleFullscreen:(id)sender;
-- (IBAction)toggleStretchToFit:(id)sender;
-- (BOOL)isFullscreen;
 
 @end

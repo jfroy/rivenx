@@ -337,7 +337,7 @@ init_failure:
         glUniform2f(program.card_size_uniform, kRXCardViewportSize.width, kRXCardViewportSize.height);
     
     if (program.margin_uniform != -1)
-        glUniform2f(program.margin_uniform, kRXCardViewportOriginOffset.x, kRXCardViewportOriginOffset.y);
+        glUniform2f(program.margin_uniform, 0.0f, 0.0f);
     
     glReportError();
     return program;
@@ -362,8 +362,8 @@ init_failure:
 // water sfxe
     
     // create the water draw and readback buffers
-    _water_draw_buffer = malloc((kRXRendererViewportSize.width * kRXRendererViewportSize.height) << 3);
-    _water_readback_buffer = BUFFER_OFFSET(_water_draw_buffer, (kRXRendererViewportSize.width * kRXRendererViewportSize.height) << 2);
+    _water_draw_buffer = malloc((kRXCardViewportSize.width * kRXCardViewportSize.height) << 3);
+    _water_readback_buffer = BUFFER_OFFSET(_water_draw_buffer, (kRXCardViewportSize.width * kRXCardViewportSize.height) << 2);
     
 // inventory textures and interpolators
     
@@ -372,9 +372,11 @@ init_failure:
     NSDictionary* journal_descriptors = [[g_world extraBitmapsDescriptor] objectForKey:@"Journals"];
     
     // get the texture descriptors for the inventory textures and compute the total byte size of those textures (packed BGRA format)
+    // also compute the maximum inventory width
     // FIXME: we need actual error handling beyond just logging...
     NSDictionary* inventoryTextureDescriptors[3];
     uint32_t inventoryTotalTextureSize = 0;
+    _inventory_max_width = 0.0f;
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
         inventoryTextureDescriptors[inventory_i] = [extras_archive
                                                     bitmapDescriptorWithID:[[journal_descriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue]
@@ -384,11 +386,15 @@ init_failure:
             continue;
         }
         
-        // cache the dimensions of the inventory item textures in the inventory regions
-        _inventory_frames[inventory_i].size.width = [[inventoryTextureDescriptors[inventory_i] objectForKey:@"Width"] floatValue];
-        _inventory_frames[inventory_i].size.height = [[inventoryTextureDescriptors[inventory_i] objectForKey:@"Height"] floatValue];
+        rx_size_t item_size = RXSizeMake([[inventoryTextureDescriptors[inventory_i] objectForKey:@"Width"] unsignedIntValue],
+                                         [[inventoryTextureDescriptors[inventory_i] objectForKey:@"Height"] unsignedIntValue]);
         
-        inventoryTotalTextureSize += (uint32_t)(_inventory_frames[inventory_i].size.width * _inventory_frames[inventory_i].size.height) << 2;
+        // cache the dimensions of the inventory item textures in the inventory regions
+        _inventory_frames[inventory_i].size.width = (float)item_size.width;
+        _inventory_frames[inventory_i].size.height = (float)item_size.height;
+        
+        _inventory_max_width += item_size.width;
+        inventoryTotalTextureSize += (item_size.width * item_size.height) << 2;
     }
     
     // load the journal inventory textures in an unpack buffer object
@@ -448,8 +454,8 @@ init_failure:
         glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
                      0,
                      GL_RGBA8,
-                     kRXRendererViewportSize.width,
-                     kRXRendererViewportSize.height,
+                     kRXCardViewportSize.width,
+                     kRXCardViewportSize.height,
                      0,
                      GL_BGRA,
                      GL_UNSIGNED_INT_8_8_8_8_REV,
@@ -477,19 +483,19 @@ init_failure:
     
     // main card composite
     {
-        positions[0] = kRXCardViewportOriginOffset.x; positions[1] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
+        positions[0] = 0.0f; positions[1] = kRXCardViewportSize.height;
         tex_coords0[0] = 0.0f; tex_coords0[1] = 0.0f;
         positions += 4; tex_coords0 += 4;
         
-        positions[0] = kRXCardViewportOriginOffset.x + kRXCardViewportSize.width; positions[1] = kRXCardViewportOriginOffset.y + kRXCardViewportSize.height;
+        positions[0] = kRXCardViewportSize.width; positions[1] = kRXCardViewportSize.height;
         tex_coords0[0] = kRXCardViewportSize.width; tex_coords0[1] = 0.0f;
         positions += 4; tex_coords0 += 4;
         
-        positions[0] = kRXCardViewportOriginOffset.x; positions[1] = kRXCardViewportOriginOffset.y;
+        positions[0] = 0.0f; positions[1] = 0.0f;
         tex_coords0[0] = 0.0f; tex_coords0[1] = kRXCardViewportSize.height;
         positions += 4; tex_coords0 += 4;
         
-        positions[0] = kRXCardViewportOriginOffset.x + kRXCardViewportSize.width; positions[1] = kRXCardViewportOriginOffset.y;
+        positions[0] = kRXCardViewportSize.width; positions[1] = 0.0f;
         tex_coords0[0] = kRXCardViewportSize.width; tex_coords0[1] = kRXCardViewportSize.height;
         positions += 4; tex_coords0 += 4;
     }
@@ -634,6 +640,9 @@ init_failure:
     
     // done with OpenGL
     CGLUnlockContext(cgl_ctx);
+    
+    // register for reshape notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_reshape:) name:@"RXOpenGLDidReshapeNotification" object:nil];
 }
 
 #pragma mark -
@@ -1438,6 +1447,12 @@ init_failure:
 #pragma mark -
 #pragma mark graphics rendering
 
+- (void)_reshape:(NSNotification*)notification {
+#if defined(DEBUG) && DEBUG > 1
+    RXOLog2(kRXLoggingRendering, kRXLoggingLevelDebug, @"reshaping");
+#endif
+}
+
 - (void)_renderCardWithTimestamp:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx {
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
     
@@ -1533,8 +1548,9 @@ init_failure:
         _movieFlushTasksDispatch.imp(movie, _movieFlushTasksDispatch.sel, outputTime);
 }
 
-- (void)_renderInventoryWithTimestamp:(const CVTimeStamp*)output_time context:(CGLContextObj)cgl_ctx {
+- (void)_renderInventory:(CGLContextObj)cgl_ctx {
     RXGameState* gs = [g_world gameState];
+    NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     // build a new set of inventory item flags; note that for the trap book,
     // the variable has to be exactly set to 1; in particular, atrapbook can be
@@ -1560,8 +1576,10 @@ init_failure:
             total_inventory_width += _inventory_frames[inventory_i].size.width + RX_INVENTORY_MARGIN;
     }
     
-    // compute the x position of the items
-    float x_offset = kRXCardViewportOriginOffset.x + (kRXCardViewportSize.width / 2.0f) - (total_inventory_width / 2.0f);
+    // compute the initial inventory x offset
+    float x_offset = (_inventory_max_width / 2.0f) - (total_inventory_width / 2.0f);
+    
+    // compute the x position of every active inventory item
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
         if (!(new_flags & (1 << inventory_i)))
             continue;
@@ -1570,24 +1588,23 @@ init_failure:
         x_offset = _inventory_frames[inventory_i].origin.x + _inventory_frames[inventory_i].size.width + RX_INVENTORY_MARGIN;
     }
     
-    // we'll compute the hotspot frames by scaling the rendering frames
-    rx_rect_t content_frame = RXEffectiveRendererFrame();
-    float scale_x = (float)content_frame.size.width / (float)kRXRendererViewportSize.width;
-    float scale_y = (float)content_frame.size.height / (float)kRXRendererViewportSize.height;
+    // compute the new inventory base x offset now, since we need it to compute the hotspot frames
+    rx_size_t viewport = RXGetGLViewportSize();
+    float new_inventory_base_x_offset = (viewport.width / 2.0f) - (_inventory_max_width / 2.0f);
     
-    // process the active items
+    // compute the y position and hotspot frame of every active inventory item
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
         if (!(new_flags & (1 << inventory_i)))
             continue;
     
         // compute the y position of the items
-        _inventory_frames[inventory_i].origin.y = (kRXCardViewportOriginOffset.y / 2.0f) - (_inventory_frames[inventory_i].size.height / 2.0f);
+        _inventory_frames[inventory_i].origin.y = (kRXInventorySize.height / 2.0f) - (_inventory_frames[inventory_i].size.height / 2.0f);
     
         // compute the hotspot frame
-        _inventory_hotspot_frames[inventory_i].origin.x = content_frame.origin.x + _inventory_frames[inventory_i].origin.x * scale_x;
-        _inventory_hotspot_frames[inventory_i].origin.y = content_frame.origin.y + _inventory_frames[inventory_i].origin.y * scale_y;
-        _inventory_hotspot_frames[inventory_i].size.width = _inventory_frames[inventory_i].size.width * scale_x;
-        _inventory_hotspot_frames[inventory_i].size.height = _inventory_frames[inventory_i].size.height * scale_y;
+        _inventory_hotspot_frames[inventory_i].origin.x = _inventory_frames[inventory_i].origin.x + new_inventory_base_x_offset;
+        _inventory_hotspot_frames[inventory_i].origin.y = _inventory_frames[inventory_i].origin.y;
+        _inventory_hotspot_frames[inventory_i].size.width = _inventory_frames[inventory_i].size.width;
+        _inventory_hotspot_frames[inventory_i].size.height = _inventory_frames[inventory_i].size.height;
     }
     
     // we can unlock the inventory update lock now since the rest of the work only affects the rendering thread
@@ -1611,8 +1628,11 @@ init_failure:
         glEnable(GL_BLEND);
         glReportError();
     
-        // make sure we're using the standard card program
+        // use the standard card program
         glUseProgram(_card_program); glReportError();
+        
+        // bind the card composite VAO
+        [gl_state bindVertexArrayObject:_card_composite_vao];
     }
     
     // get pointers into the card composite array
@@ -1632,12 +1652,13 @@ init_failure:
         RXLinearInterpolator* pos_interpolator = (RXLinearInterpolator*)_inventory_position_interpolators[inv_i];
         RXLinearInterpolator* alpha_interpolator = (RXLinearInterpolator*)_inventory_alpha_interpolators[inv_i];
         
-        float pos_x = positions[inv_i * 16];
+        // get the current x position of the item and subtract from it the base inventory x offset
+        float pos_x = positions[inv_i * 16] - _inventory_base_x_offset;
         
         // if the position has changed, setup a position interpolator
         float final_position = _inventory_frames[inv_i].origin.x;
         if ((pos_interpolator && pos_interpolator->end != final_position) ||
-            (!pos_interpolator && pos_x != final_position && pos_x >= kRXCardViewportOriginOffset.x))
+            (!pos_interpolator && pos_x != final_position && pos_x >= 0.0f))
         {
             duration = (pos_interpolator) ? [[pos_interpolator animation] progress] : 1.0;
             [pos_interpolator release];
@@ -1768,6 +1789,9 @@ init_failure:
     // the true start time for new animations is now
     uint64_t anim_start_time = RXTimingNow();
     
+    // update the inventory base x offset with the new offset
+    _inventory_base_x_offset = new_inventory_base_x_offset;
+    
     // render the items
     for (uint32_t inv_i = 0; inv_i < RX_MAX_INVENTORY_ITEMS; inv_i++) {
         // inventory bit
@@ -1784,7 +1808,7 @@ init_failure:
             [[alpha_interpolator animation] startAt:anim_start_time];
         
         // get the base X position of the item
-        float base_x = (pos_interpolator) ? [pos_interpolator value] : _inventory_frames[inv_i].origin.x;
+        float base_x = _inventory_base_x_offset + ((pos_interpolator) ? [pos_interpolator value] : _inventory_frames[inv_i].origin.x);
         
         // update the current position of the item based on the base X position
         positions[0] = base_x;
@@ -1844,13 +1868,15 @@ init_failure:
         }
     }
         
-    // disable blending
+    // restore graphics state
     if (render_inv) {
         glDisable(GL_BLEND); glReportError();
+        glUseProgram(0); glReportError();
+        [gl_state bindVertexArrayObject:0];
     }
 }
 
-- (void)_renderCredits:(const CVTimeStamp*)output_time inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo {
+- (void)_renderCredits:(CGLContextObj)cgl_ctx {
     NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     uint64_t now = RXTimingNow();
     
@@ -2051,11 +2077,11 @@ init_failure:
     float bottom, top, height;
     if (_credits_state >= 7) {
         height = 784.f;
-        top = kRXCardViewportOriginOffset.y + t * 784.f;
+        top = t * 784.f;
         bottom = top - 784.f;
     } else {
         height = 392.f;
-        bottom = kRXCardViewportOriginOffset.y;
+        bottom = 0.0f;
         top = bottom + height;
     }
     
@@ -2096,7 +2122,7 @@ init_failure:
     
     // enable and configure the scissor test (to clip rendering to the card viewport)
     glEnable(GL_SCISSOR_TEST);
-    glScissor(kRXCardViewportOriginOffset.x, kRXCardViewportOriginOffset.y, kRXCardViewportSize.width, kRXCardViewportSize.height);
+    glScissor(0, 0, kRXCardViewportSize.width, kRXCardViewportSize.height);
     
     // draw the credits quad
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
@@ -2119,7 +2145,7 @@ init_failure:
     
     // end credits mode
     if (_render_credits) {
-        [self _renderCredits:output_time inContext:cgl_ctx framebuffer:fbo];
+        [self _renderCredits:cgl_ctx];
         goto exit_render;
     }
     
@@ -2212,9 +2238,6 @@ init_failure:
     // draw the card composite
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
     
-    // draw the inventory
-    [self _renderInventoryWithTimestamp:output_time context:cgl_ctx];
-    
 #if defined(DEBUG)
     if (RXEngineGetBool(@"rendering.marble_lines")) {
         GLfloat attribs[] = {
@@ -2246,7 +2269,10 @@ exit_render:
     OSSpinLockUnlock(&_render_lock);
 }
 
-- (void)_renderInFinalCompositeRT:(CGLContextObj)cgl_ctx {
+- (void)renderInMainRT:(CGLContextObj)cgl_ctx {
+    // draw the inventory
+    [self _renderInventory:cgl_ctx];
+    
 #if defined(DEBUG)
     // alias the render context state object pointer
     NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
@@ -2256,9 +2282,10 @@ exit_render:
     BOOL render_cardinfo = RXEngineGetBool(@"rendering.card_info");
     BOOL render_mouseinfo = RXEngineGetBool(@"rendering.mouse_info");
     BOOL render_movieinfo = RXEngineGetBool(@"rendering.movie_info");
+    BOOL renderCoreImageMode = RXEngineGetBool(@"rendering.cimode");
     
     // early bail out if there's nothing to be done
-    if (!render_hotspots && !render_cardinfo && !render_mouseinfo && !render_movieinfo)
+    if (!render_hotspots && !render_cardinfo && !render_mouseinfo && !render_movieinfo && !renderCoreImageMode)
         return;
     
     // bind the debug rendering VAO
@@ -2548,6 +2575,33 @@ exit_render:
         background_strip[10] = background_strip[7];
     }
     
+    // CI mode info
+    if (renderCoreImageMode) {
+        if ([g_worldView isUsingCoreImage])
+            snprintf(debug_buffer, 100, "using Core Image");
+        else
+            snprintf(debug_buffer, 100, "using OpenGL");
+        
+        background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
+        background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
+        
+        glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        glRasterPos3d(10.5f, background_origin.y + 1.0, 0.0f);
+        size_t l = strlen(debug_buffer);
+        for (size_t i = 0; i < l; i++)
+            glutBitmapCharacter(GLUT_BITMAP_8_BY_13, debug_buffer[i]);
+        
+        // go up to the next debug line
+        background_origin.y += 13.0;
+        background_strip[1] = background_strip[7];
+        background_strip[4] = background_strip[7];
+        background_strip[7] = background_strip[7] + 13.0f;
+        background_strip[10] = background_strip[7];
+    }
+    
     // reset the VAO binding to 0 (Riven X assumption)
     [gl_state bindVertexArrayObject:0];
     
@@ -2589,7 +2643,7 @@ exit_flush_tasks:
                                                                             isPlanar:NO
                                                                       colorSpaceName:NSDeviceRGBColorSpace
                                                                         bitmapFormat:NSAlphaNonpremultipliedBitmapFormat
-                                                                         bytesPerRow:kRXRendererViewportSize.width * 4
+                                                                         bytesPerRow:kRXCardViewportSize.width * 4
                                                                         bitsPerPixel:32];
     
     glActiveTexture(GL_TEXTURE0); glReportError();
@@ -2733,7 +2787,7 @@ exit_flush_tasks:
     NSArray* active_hotspots = [sengine activeHotspots];
 
     // update the active status of the inventory based on the position of the mouse
-    if (NSMouseInRect(mouse_vector.origin, [(NSView*)g_worldView bounds], NO) && mouse_vector.origin.y < kRXCardViewportOriginOffset.y)
+    if (NSMouseInRect(mouse_vector.origin, [(NSView*)g_worldView bounds], NO) && mouse_vector.origin.y < kRXInventorySize.height)
         _inventory_has_focus = YES;
     else
         _inventory_has_focus = NO;

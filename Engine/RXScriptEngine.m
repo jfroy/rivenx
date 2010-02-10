@@ -1227,7 +1227,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     NSTimeInterval video_duration;
     QTGetTimeInterval([movie videoDuration], &video_duration);
     
-    // sleep for the duration of the video track (the ending movies also include the credit music)
+    // sleep for the duration of the video track (the ending movies also include the credit music) plus the specified delay
     usleep((video_duration - (CFAbsoluteTimeGetCurrent() - movie_start_ts) + delay) * 1E6);
     
     // start the credits
@@ -2717,9 +2717,12 @@ DEFINE_COMMAND(xhandlecontrolup) {
     NSRect mouse_vector = [controller mouseVector];
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
+    NSRect scale_rect = RXRenderScaleRect();
+    float trigger_mag = k_jungle_elevator_trigger_magnitude * scale_rect.size.height;
+    
     // track the mouse until the mouse button is released
     while (isfinite(mouse_vector.size.width)) {
-        if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= k_jungle_elevator_trigger_magnitude) {
+        if (mouse_vector.size.height < 0.0f && fabsf(mouse_vector.size.height) >= trigger_mag) {
             // play the switch down movie
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
             
@@ -2753,9 +2756,12 @@ DEFINE_COMMAND(xhandlecontrolmid) {
     NSRect mouse_vector = [controller mouseVector];
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
+    NSRect scale_rect = RXRenderScaleRect();
+    float trigger_mag = k_jungle_elevator_trigger_magnitude * scale_rect.size.height;
+    
     // track the mouse until the mouse button is released
     while (isfinite(mouse_vector.size.width)) {
-        if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
+        if (mouse_vector.size.height >= trigger_mag) {
             // play the switch up movie
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 7);
             
@@ -2805,9 +2811,12 @@ DEFINE_COMMAND(xhandlecontroldown) {
     NSRect mouse_vector = [controller mouseVector];
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
     
+    NSRect scale_rect = RXRenderScaleRect();
+    float trigger_mag = k_jungle_elevator_trigger_magnitude * scale_rect.size.height;
+    
     // track the mouse until the mouse button is released
     while (isfinite(mouse_vector.size.width)) {
-        if (mouse_vector.size.height >= k_jungle_elevator_trigger_magnitude) {
+        if (mouse_vector.size.height >= trigger_mag) {
             // play the switch up movie
             DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 1);
             
@@ -2834,8 +2843,12 @@ DEFINE_COMMAND(xhandlecontroldown) {
 DEFINE_COMMAND(xvalvecontrol) {
     uint16_t valve_state = [[g_world gameState] unsignedShortForKey:@"bvalve"];
     
-    NSRect mouse_vector = [controller mouseVector];
     [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
+    
+    NSRect scale_rect = RXRenderScaleRect();
+    NSRect mouse_vector = [controller mouseVector];
+    mouse_vector.size.width /= scale_rect.size.width;
+    mouse_vector.size.height /= scale_rect.size.height;
     
     // track the mouse until the mouse button is released
     while (isfinite(mouse_vector.size.width)) {
@@ -2880,7 +2893,10 @@ DEFINE_COMMAND(xvalvecontrol) {
         }       
         
         [controller setMouseCursor:RX_CURSOR_CLOSED_HAND];
+        
         mouse_vector = [controller mouseVector];
+        mouse_vector.size.width /= scale_rect.size.width;
+        mouse_vector.size.height /= scale_rect.size.height;
         
         usleep(kRunloopPeriodMicroseconds);
     }
@@ -5319,7 +5335,7 @@ DEFINE_COMMAND(xbookclick) {
     [controller setMouseCursor:RX_CURSOR_FORWARD];
     
     // if the mouse was not pressed and this is an endgame movie, start the
-    // endgame credits; note tha the mouse cursor will be show again
+    // endgame credits; note that the mouse cursor will be show again
     // automatically when the program execution depth reaches 0
     if (!mouse_was_pressed && endgame_movie) {
         [self _endgameWithCode:movie_code delay:5.0];

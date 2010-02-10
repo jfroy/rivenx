@@ -31,6 +31,9 @@
 - (void*)audioRenderer;
 - (RXRenderState*)cardRenderer;
 
+- (BOOL)fullscreen;
+- (void)toggleFullscreen;
+
 - (RXGameState*)gameState;
 
 - (id)valueForEngineVariable:(NSString*)path;

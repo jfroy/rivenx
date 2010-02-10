@@ -38,6 +38,7 @@ NSObject* g_world = nil;
 
 @interface RXWorld (RXWorldRendering)
 - (void)_initializeRendering;
+- (void)_toggleFullscreen;
 @end
 
 @implementation RXWorld
@@ -208,7 +209,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)initializeRendering {
-    if (_rendering_initialized)
+    if (_renderingInitialized)
         return;
     
     @try {
@@ -221,7 +222,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         // wait for each thread to be running (this needs to be called the same number of times as the number of threads)
         semaphore_wait(_threadInitSemaphore);
         
-        _rendering_initialized = YES;
+        _renderingInitialized = YES;
     } @catch (NSException* e) {
         [[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
     }
@@ -398,6 +399,18 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     return _cardRenderer;
 }
 
+- (BOOL)fullscreen {
+    return _fullscreen;
+}
+
+- (void)toggleFullscreen {
+    _fullscreen = !_fullscreen;
+    [[NSUserDefaults standardUserDefaults] setBool:_fullscreen forKey:@"Fullscreen"];
+    
+    [self _toggleFullscreen];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"RXFullscreenModeChangeNotification" object:nil userInfo:nil];
+}
+
 #pragma mark -
 
 - (RXGameState*)gameState {
@@ -440,6 +453,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (BOOL)loadGameState:(RXGameState*)gameState error:(NSError**)error {
     _gameStateToLoad = [gameState retain];
+    [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
 //    [_stateCompositor fadeOutState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedOut:)];
     return YES;
 }

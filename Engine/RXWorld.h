@@ -17,35 +17,34 @@
 
 
 @interface RXWorld : NSObject <RXWorldProtocol> {
-    BOOL _tornDown;
-    
-    // world location
     NSURL* _worldBase;
     NSURL* _worldUserBase;
     
-    // extras data store
     NSDictionary* _extrasDescriptor;
     
-    // cursors
     NSMapTable* _cursors;
     
-    // threading
     semaphore_t _threadInitSemaphore;
     NSThread* _scriptThread;
     
-    // rendering
-    BOOL _rendering_initialized;
+    
     NSView <RXWorldViewProtocol>* _worldView;
+    NSWindow* _fullscreenWindow;
+    NSWindow* _window;
     void* _audioRenderer;
     RXRenderState* _cardRenderer;
     
-    // game state
     RXGameState* _gameState;
     RXGameState* _gameStateToLoad;
     
-    // engine variables
     pthread_mutex_t _engineVariablesMutex;
     NSMutableDictionary* _engineVariables;
+    
+    NSApplicationPresentationOptions _defaultPresentationOptions;
+    
+    BOOL _tornDown;
+    BOOL _renderingInitialized;
+    BOOL _fullscreen;
 }
 
 + (RXWorld*)sharedWorld;

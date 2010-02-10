@@ -193,7 +193,6 @@
 		31C3572A0D92A72400EDEF81 /* RXSound_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31C357290D92A72400EDEF81 /* RXSound_test.mm */; };
 		31C545530D5D50620024B486 /* RXEditionInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 31C545520D5D50620024B486 /* RXEditionInstaller.m */; };
 		31CE92961033D576008B7717 /* RXInterpolator.m in Sources */ = {isa = PBXBuildFile; fileRef = 31CE92951033D576008B7717 /* RXInterpolator.m */; };
-		31D21B990DBC078E00E970E1 /* VariableEditor.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B980DBC078E00E970E1 /* VariableEditor.xib */; };
 		31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9A0DBC07A700E970E1 /* MainMenu.xib */; };
 		31D21B9D0DBC07B500E970E1 /* EditionManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9C0DBC07B500E970E1 /* EditionManager.xib */; };
 		31D21B9F0DBC07C300E970E1 /* DebugConsole.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */; };
@@ -1448,7 +1447,6 @@
 				312D9ECF0D4D81A3006E384C /* About.strings in Resources */,
 				312A896D0D57B33700FCDF91 /* Editions in Resources */,
 				3114FE980D58C8AE0099AF69 /* Editions.strings in Resources */,
-				31D21B990DBC078E00E970E1 /* VariableEditor.xib in Resources */,
 				31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */,
 				31D21B9D0DBC07B500E970E1 /* EditionManager.xib in Resources */,
 				31D21B9F0DBC07C300E970E1 /* DebugConsole.xib in Resources */,
