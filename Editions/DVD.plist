@@ -2,60 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>tWAV LUT</key>
-	<dict/>
-	<key>tBMP LUT</key>
-	<dict>
-		<key>gdome sliders</key>
-		<integer>161</integer>
-		<key>gdome sliders background</key>
-		<integer>162</integer>
-		<key>bdome sliders</key>
-		<integer>701</integer>
-		<key>bdome sliders background</key>
-		<integer>702</integer>
-		<key>pdome sliders</key>
-		<integer>58</integer>
-		<key>pdome sliders background</key>
-		<integer>59</integer>
-		<key>tdome sliders</key>
-		<integer>813</integer>
-		<key>tdome sliders background</key>
-		<integer>814</integer>
-		<key>jdome sliders</key>
-		<integer>547</integer>
-		<key>jdome sliders background</key>
-		<integer>548</integer>
-	</dict>
-	<key>Card LUT</key>
-	<dict/>
-	<key>Stack switch table</key>
-	<dict>
-		<key>bspit 447</key>
-		<string>ospit 1</string>
-		<key>gspit 178</key>
-		<string>ospit 1</string>
-		<key>jspit 228</key>
-		<string>rspit 3</string>
-		<key>jspit 343</key>
-		<string>ospit 1</string>
-		<key>ospit 58</key>
-		<string>pspit 43</string>
-		<key>ospit 62</key>
-		<string>jspit 340</string>
-		<key>ospit 67</key>
-		<string>gspit 175</string>
-		<key>ospit 72</key>
-		<string>bspit 444</string>
-		<key>ospit 76</key>
-		<string>tspit 393</string>
-		<key>pspit 46</key>
-		<string>ospit 1</string>
-		<key>rspit 13</key>
-		<string>jspit 215</string>
-		<key>tspit 398</key>
-		<string>ospit 1</string>
-	</dict>
 	<key>Edition</key>
 	<dict>
 		<key>Directories</key>
@@ -87,97 +33,59 @@
 	<dict>
 		<key>aspit</key>
 		<dict>
-			<key>Data Archives</key>
-			<string>a_Data.MHK</string>
 			<key>Entry</key>
 			<integer>1</integer>
 			<key>ID</key>
 			<integer>8</integer>
-			<key>Sound Archives</key>
-			<string>a_Sounds.MHK</string>
 		</dict>
 		<key>bspit</key>
 		<dict>
-			<key>Data Archives</key>
-			<string>b_Data.MHK</string>
 			<key>Entry</key>
 			<integer>1</integer>
 			<key>ID</key>
 			<integer>5</integer>
-			<key>Sound Archives</key>
-			<string>b_Sounds.MHK</string>
 		</dict>
 		<key>gspit</key>
 		<dict>
-			<key>Data Archives</key>
-			<string>g_Data.MHK</string>
 			<key>Entry</key>
 			<integer>1</integer>
 			<key>ID</key>
 			<integer>6</integer>
-			<key>Sound Archives</key>
-			<string>g_Sounds.MHK</string>
 		</dict>
 		<key>jspit</key>
 		<dict>
-			<key>Data Archives</key>
-			<array>
-				<string>j_Data1.MHK</string>
-				<string>j_Data2.MHK</string>
-			</array>
 			<key>Entry</key>
 			<integer>1</integer>
 			<key>ID</key>
 			<integer>7</integer>
-			<key>Sound Archives</key>
-			<string>j_Sounds.MHK</string>
 		</dict>
 		<key>ospit</key>
 		<dict>
-			<key>Data Archives</key>
-			<string>o_Data.MHK</string>
 			<key>Entry</key>
 			<integer>1</integer>
 			<key>ID</key>
 			<integer>1</integer>
-			<key>Sound Archives</key>
-			<string>o_Sounds.MHK</string>
 		</dict>
 		<key>pspit</key>
 		<dict>
-			<key>Data Archives</key>
-			<string>p_Data.MHK</string>
 			<key>Entry</key>
 			<integer>12</integer>
 			<key>ID</key>
 			<integer>2</integer>
-			<key>Sound Archives</key>
-			<string>p_Sounds.MHK</string>
 		</dict>
 		<key>rspit</key>
 		<dict>
-			<key>Data Archives</key>
-			<string>r_Data.MHK</string>
 			<key>Entry</key>
 			<integer>3</integer>
 			<key>ID</key>
 			<integer>3</integer>
-			<key>Sound Archives</key>
-			<string>r_Sounds.MHK</string>
 		</dict>
 		<key>tspit</key>
 		<dict>
-			<key>Data Archives</key>
-			<array>
-				<string>t_Data1.MHK</string>
-				<string>t_Data2.MHK</string>
-			</array>
 			<key>Entry</key>
 			<integer>1</integer>
 			<key>ID</key>
 			<integer>4</integer>
-			<key>Sound Archives</key>
-			<string>t_Sounds.MHK</string>
 		</dict>
 	</dict>
 	<key>Journals</key>

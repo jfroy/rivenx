@@ -264,13 +264,14 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     OSSpinLockUnlock(&_valid_mount_paths_lock);
     
     // try to load the extras archive for the edition
-    if (![self extrasArchive]) {
+    if (![self extrasArchive:error]) {
         if (error) {
             *error = [NSError errorWithDomain:RXErrorDomain code:kRXErrUnableToLoadExtrasArchive userInfo:
                       [NSDictionary dictionaryWithObjectsAndKeys:
                        [NSString stringWithFormat:NSLocalizedStringFromTable(@"FAILED_LOAD_EXTRAS", @"Editions", "failed to load Extras"), [edition valueForKey:@"name"]], NSLocalizedDescriptionKey,
                        [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
                        [NSApp delegate], NSRecoveryAttempterErrorKey,
+                       *error, NSUnderlyingErrorKey,
                        nil]];
         }
         return NO;
@@ -414,99 +415,93 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     return nil;
 }
 
-- (MHKArchive*)_archiveWithFilename:(NSString*)filename directoryKey:(NSString*)dir_key stackKey:(NSString*)stack_key error:(NSError**)error {
-    NSString* archive_path;
-    MHKArchive* archive = nil;
-        
+static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) {
+    return [(NSString*)lhs compare:rhs options:NSCaseInsensitiveSearch | NSNumericSearch];
+}
+
+- (NSArray*)_archivesForExpression:(NSString*)regex error:(NSError**)error {
     // if there is no current edition, throw a tantrum
     if (!current_edition)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException
-                                       reason:@"Riven X tried to load an archive without having made an edition current first."
+                                       reason:@"Riven X tried to get archives for a stack without having a current edition."
                                      userInfo:nil];
+    
+    // create a predicate to match filenames against the provided regular expression, case insensitive
+    NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", regex];
+    
+    NSMutableArray* matching_paths = [NSMutableArray array];
+    NSString* directory;
+    NSArray* content;
     
     // first look in the local data store
     if (_local_data_store) {
-        archive_path = BZFSSearchDirectoryForItem(_local_data_store, filename, YES, error);
-        if (BZFSFileExists(archive_path)) {
-            archive = [[[MHKArchive alloc] initWithPath:archive_path error:error] autorelease];
-            if (archive)
-                return archive;
+        directory = _local_data_store;
+        content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
+        if (content) {
+            NSEnumerator* enumerator = [content objectEnumerator];
+            NSString* filename;
+            while ((filename = [enumerator nextObject]))
+                [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
         }
     }
     
     // then look in the edition user data base
-    archive_path = BZFSSearchDirectoryForItem([current_edition valueForKey:@"userDataBase"], filename, YES, error);
-    if (BZFSFileExists(archive_path)) {
-        archive = [[[MHKArchive alloc] initWithPath:archive_path error:error] autorelease];
-        if (archive)
-            return archive;
-    }
-    
-    // if the stack key is the special value "EXTRAS", check if the edition know where to look on the optical media for the Extras archive
-    if ([stack_key isEqualToString:@"EXTRAS"]) {
-        NSString* disc = [[current_edition valueForKey:@"discs"] objectAtIndex:0];
-        NSString* mount_path = [self _validMountPathForDisc:disc];
-        archive_path = [current_edition searchForExtrasArchiveInMountPath:mount_path];
-        if (archive_path) {
-            archive = [[[MHKArchive alloc] initWithPath:archive_path error:error] autorelease];
-            if (archive)
-                return archive;
-        }
+    directory = [current_edition valueForKey:@"userDataBase"];
+    content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
+    if (content) {
+        NSEnumerator* enumerator = [content objectEnumerator];
+        NSString* filename;
+        while ((filename = [enumerator nextObject]))
+            [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
     }
     
     // then look inside Riven X
-    archive_path = [[NSBundle mainBundle] pathForResource:[filename stringByDeletingPathExtension] ofType:[filename pathExtension]];
-    if (BZFSFileExists(archive_path)) {
-        archive = [[[MHKArchive alloc] initWithPath:archive_path error:error] autorelease];
+    directory = [[NSBundle mainBundle] resourcePath];
+    content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
+    if (content) {
+        NSEnumerator* enumerator = [content objectEnumerator];
+        NSString* filename;
+        while ((filename = [enumerator nextObject]))
+            [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
+    }
+    
+    // load every archive found
+    NSMutableArray* archives = [NSMutableArray array];
+    NSEnumerator* enumerator = [matching_paths objectEnumerator];
+    NSString* archive_path;
+    while ((archive_path = [enumerator nextObject])) {
+        MHKArchive* archive = [[MHKArchive alloc] initWithPath:archive_path error:error];
         if (archive)
-            return archive;
+            [archives addObject:archive];
+        [archive release];
     }
     
-    // if we have no stack key or no directory key, we can't go any further
-    if (!stack_key || !dir_key)
-        return nil;
-    
-    // then look on optical media
-    NSNumber* disc_index = [current_edition valueForKeyPath:[NSString stringWithFormat:@"stackDescriptors.%@.Disc", stack_key]];
-    NSString* disc = [[current_edition valueForKey:@"discs"] objectAtIndex:(disc_index) ? [disc_index unsignedIntValue] : 0];
-    NSString* mount_path = [self _validMountPathForDisc:disc];
-    
-    if (!mount_path) {
-        ReturnValueWithError(nil, 
-            RXErrorDomain, kRXErrArchiveUnavailable,
-            ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:NSLocalizedStringFromTable(@"DATA_FILE_NOT_FOUND", @"Editions", "data file not found"), filename] forKey:NSLocalizedDescriptionKey]),
-            error);
+    return archives;
+}
+
+- (NSArray*)dataArchivesForStackKey:(NSString*)stack_key error:(NSError**)error {
+    return [self _archivesForExpression:[NSString stringWithFormat:@"%C_Data[0-9]?\\.MHK", [stack_key characterAtIndex:0]] error:error];
+}
+
+- (NSArray*)soundArchivesForStackKey:(NSString*)stack_key error:(NSError**)error {
+    return [self _archivesForExpression:[NSString stringWithFormat:@"%C_Sounds[0-9]?\\.MHK", [stack_key characterAtIndex:0]] error:error];
+}
+
+- (MHKArchive*)extrasArchive:(NSError**)error {
+    if (!_extras_archive) {
+        _extras_archive = [[[self _archivesForExpression:@"Extras\\.MHK" error:error] objectAtIndex:0] retain];
+#if defined(DEBUG)
+        RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"loaded Extras archive from %@", [[_extras_archive url] path]);
+#endif
     }
-    
-    // get the directory for the requested type of archive
-    NSString* directory = [[current_edition valueForKey:@"directories"] objectForKey:dir_key];
-    if (!directory)
-        ReturnValueWithError(nil,
-            RXErrorDomain, kRXErrArchiveUnavailable,
-            ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:NSLocalizedStringFromTable(@"DATA_FILE_NOT_FOUND", @"Editions", "data file not found"), filename] forKey:NSLocalizedDescriptionKey]),
-            error);
-    
-    // compute the final on-disc archive path
-    archive_path = BZFSSearchDirectoryForItem([mount_path stringByAppendingPathComponent:directory], filename, YES, error);
-    if (BZFSFileExists(archive_path)) {
-        archive = [[[MHKArchive alloc] initWithPath:archive_path error:error] autorelease];
-        if (!archive)
-            return nil;
-        else
-            return archive;
-    }
-    
-    ReturnValueWithError(nil, 
-        RXErrorDomain, kRXErrArchiveUnavailable,
-        ([NSDictionary dictionaryWithObject:[NSString stringWithFormat:NSLocalizedStringFromTable(@"DATA_FILE_NOT_FOUND", @"Editions", "data file not found"), filename] forKey:NSLocalizedDescriptionKey]),
-        error);
+    return [[_extras_archive retain] autorelease];
 }
 
 - (NSArray*)dataPatchArchivesForStackKey:(NSString*)stack_key error:(NSError**)error {
     // if there is no current edition, throw a tantrum
     if (!current_edition)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException
-                                       reason:@"Riven X tried to load a patch archive without having made an edition current first."
+                                       reason:@"Riven X tried to load a patch archive without having a current edition."
                                      userInfo:nil];
     
     NSString* edition_patches_directory = [_patches_directory stringByAppendingPathComponent:[current_edition valueForKey:@"key"]];
@@ -545,29 +540,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     }
     
     return data_archives;
-}
-
-- (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stack_key error:(NSError**)error {
-    MHKArchive* archive = nil;
-    if ([stack_key isEqualToString:@"aspit"])
-        archive = [self _archiveWithFilename:filename directoryKey:@"All" stackKey:stack_key error:error];
-    if (!archive)
-        archive = [self _archiveWithFilename:filename directoryKey:@"Data" stackKey:stack_key error:error];
-    return archive;
-}
-
-- (MHKArchive*)soundArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stack_key error:(NSError**)error {
-    return [self _archiveWithFilename:filename directoryKey:@"Sound" stackKey:stack_key error:error];
-}
-
-- (MHKArchive*)extrasArchive {
-    if (!_extras_archive) {
-        _extras_archive = [[self _archiveWithFilename:@"Extras.MHK" directoryKey:nil stackKey:@"EXTRAS" error:NULL] retain];
-#if defined(DEBUG)
-        RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"loaded Extras archive from %@", [[_extras_archive url] path]);
-#endif
-    }
-    return [[_extras_archive retain] autorelease];
 }
 
 #pragma mark -
@@ -626,21 +598,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     
     // return the stack
     return stack;
-}
-
-#pragma mark -
-#pragma mark resource lookup
-
-- (RXSimpleCardDescriptor*)lookupCardWithKey:(NSString*)lookup_key {
-    return [[current_edition valueForKey:@"cardLUT"] objectForKey:lookup_key];
-}
-
-- (uint16_t)lookupBitmapWithKey:(NSString*)lookup_key {
-    return [[[current_edition valueForKey:@"bitmapLUT"] objectForKey:lookup_key] unsignedShortValue];
-}
-
-- (uint16_t)lookupSoundWithKey:(NSString*)lookup_key {
-    return [[[current_edition valueForKey:@"soundLUT"] objectForKey:lookup_key] unsignedShortValue];
 }
 
 @end

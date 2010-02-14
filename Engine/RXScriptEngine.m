@@ -3212,9 +3212,17 @@ DEFINE_COMMAND(xschool280_playwhark) {
 - (void)drawSlidersForDome:(NSString*)dome minHotspotID:(uintptr_t)min_id {
     // cache the hotspots ID map
     NSMapTable* hotspots_map = [_card hotspotsIDMap];
-    uint16_t background = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:[dome stringByAppendingString:@" sliders background"]];
-    uint16_t sliders = [[RXEditionManager sharedEditionManager] lookupBitmapWithKey:[dome stringByAppendingString:@" sliders"]];
-        
+    
+    // get the dome slider and slider background pictures
+    uint16_t slider_suffix = 190;
+    if ([dome isEqualToString:@"pdome"])
+        slider_suffix = 25;
+    NSString* slider_bmp_name = [NSString stringWithFormat:@"%hu_%Csliders.%hu", [[_card descriptor] ID], [dome characterAtIndex:0], slider_suffix];
+    NSString* sliderbg_bmp_name = [NSString stringWithFormat:@"%hu_%Csliderbg.%hu", [[_card descriptor] ID], [dome characterAtIndex:0], slider_suffix];
+    
+    uint16_t sliders = [[_card parent] bitmapIDForName:slider_bmp_name];
+    uint16_t background = [[_card parent] bitmapIDForName:sliderbg_bmp_name];
+    
     // begin a screen update transaction
     DISPATCH_COMMAND0(RX_COMMAND_DISABLE_SCREEN_UPDATES);
     
@@ -3809,7 +3817,7 @@ DEFINE_COMMAND(xt7800_setup) {
     
     NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
     [self _drawPictureWithID:bitmap_id
-                     archive:[[RXEditionManager sharedEditionManager] extrasArchive]
+                     archive:[[RXEditionManager sharedEditionManager] extrasArchive:NULL]
                  displayRect:display_rect
                 samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 }

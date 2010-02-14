@@ -21,15 +21,7 @@
         return NO;
     if (![descriptor objectForKey:@"Stacks"])
         return NO;
-    if (![descriptor objectForKey:@"Stack switch table"])
-        return NO;
     if (![descriptor objectForKey:@"Journals"])
-        return NO;
-    if (![descriptor objectForKey:@"Card LUT"])
-        return NO;
-    if (![descriptor objectForKey:@"tBMP LUT"])
-        return NO;
-    if (![descriptor objectForKey:@"tWAV LUT"])
         return NO;
     
     // check that the Edition dictionary has all the required keys
@@ -68,16 +60,6 @@
     if (![journals isKindOfClass:[NSDictionary class]])
         return NO;
     if (![journals objectForKey:@"Card ID Map"])
-        return NO;
-    
-    // "Stack switch table", "Card LUT", "tBMP LUT" and "tWAV LUT" must be dictionaries
-    if (![[descriptor objectForKey:@"Stack switch table"] isKindOfClass:[NSDictionary class]])
-        return NO;
-    if (![[descriptor objectForKey:@"Card LUT"] isKindOfClass:[NSDictionary class]])
-        return NO;
-    if (![[descriptor objectForKey:@"tBMP LUT"] isKindOfClass:[NSDictionary class]])
-        return NO;
-    if (![[descriptor objectForKey:@"tWAV LUT"] isKindOfClass:[NSDictionary class]])
         return NO;
     
     // good enough
@@ -150,41 +132,8 @@
     directories = [edition objectForKey:@"Directories"];
     installDirectives = [edition objectForKey:@"Install Directives"];
     
-    NSEnumerator* enumerator;
-    
-    // process the stack switch table to store simple card descriptors instead of strings as the keys and values
-    NSDictionary* textSwitchTable = [_descriptor objectForKey:@"Stack switch table"];
-    stackSwitchTables = [NSMutableDictionary new];
-    
-    enumerator = [textSwitchTable keyEnumerator];
-    NSString* k;
-    while ((k = [enumerator nextObject])) {
-        RXSimpleCardDescriptor* from = [[RXSimpleCardDescriptor alloc] initWithString:k];
-        RXSimpleCardDescriptor* to = [[RXSimpleCardDescriptor alloc] initWithString:[textSwitchTable objectForKey:k]];
-        [(NSMutableDictionary*)stackSwitchTables setObject:to forKey:from];
-        [to release];
-        [from release];
-    }
-    
     // the journal card ID map
     journalCardIDMap = [[_descriptor objectForKey:@"Journals"] objectForKey:@"Card ID Map"];
-    
-    // process the card LUT to store simple card descriptors instead of strings as the values
-    NSDictionary* text_lut = [_descriptor objectForKey:@"Card LUT"];
-    cardLUT = [NSMutableDictionary new];
-    
-    enumerator = [text_lut keyEnumerator];
-    while ((k = [enumerator nextObject])) {
-        RXSimpleCardDescriptor* to = [[RXSimpleCardDescriptor alloc] initWithString:[text_lut objectForKey:k]];
-        [(NSMutableDictionary*)cardLUT setObject:to forKey:k];
-        [to release];
-    }
-    
-    // bitmap LUT
-    bitmapLUT = [_descriptor objectForKey:@"tBMP LUT"];
-    
-    // sound LUT
-    soundLUT = [_descriptor objectForKey:@"tWAV LUT"];
     
     // patch archives directory
     patchArchives = [_descriptor objectForKey:@"Patch Archives"];
@@ -244,9 +193,6 @@
     [userDataBase release];
     
     [openArchives release];
-    
-    [stackSwitchTables release];
-    [cardLUT release];
     
     [super dealloc];
 }

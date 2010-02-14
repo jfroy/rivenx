@@ -368,7 +368,11 @@ init_failure:
 // inventory textures and interpolators
     
     // get a reference to the extra bitmaps archive, and get the inventory texture descriptors
-    MHKArchive* extras_archive = [[RXEditionManager sharedEditionManager] extrasArchive];
+    MHKArchive* extras_archive = [[RXEditionManager sharedEditionManager] extrasArchive:&error];
+    if (!extras_archive) {
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get the Extras archive: %@", [error localizedDescription]);
+        return;
+    }
     NSDictionary* journal_descriptors = [[g_world extraBitmapsDescriptor] objectForKey:@"Journals"];
     
     // get the texture descriptors for the inventory textures and compute the total byte size of those textures (packed BGRA format)
@@ -1418,16 +1422,6 @@ init_failure:
     // hide the mouse cursor and switch card on the script thread
     [self hideMouseCursor];
     [self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:scd inThread:[g_world scriptThread] waitUntilDone:wait];
-    
-    // if we have a card redirect entry, queue the final destination card switch
-//    RXSimpleCardDescriptor* switchTableDestination = [[[[RXEditionManager sharedEditionManager] currentEdition] valueForKey:@"stackSwitchTables"] objectForKey:scd];
-//    if (switchTableDestination) {       
-//        RXTransition* transition = [[RXTransition alloc] initWithCode:16 region:NSMakeRect(0.f, 0.f, kRXCardViewportSize.width, kRXCardViewportSize.height)];
-//        [self performSelector:@selector(queueTransition:) withObject:transition inThread:[g_world scriptThread] waitUntilDone:wait];
-//        [transition release];
-//        
-//        [self setActiveCardWithStack:switchTableDestination->stackKey ID:switchTableDestination->cardID waitUntilDone:wait];
-//    }
 }
 
 - (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait {
@@ -1890,7 +1884,7 @@ init_failure:
         _credits_texture_buffer = malloc(360 * 784 * 4);
         
         // create the credits texture and load the first credits picture in it
-        MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive];
+        MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive:NULL];
         [archive loadBitmapWithID:302
                            buffer:_credits_texture_buffer
                            format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
@@ -1969,7 +1963,7 @@ init_failure:
             // next: load 303 and fade-in
             
             // load 303
-            MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive];
+            MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive:NULL];
             [archive loadBitmapWithID:303
                                buffer:_credits_texture_buffer
                                format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
@@ -1995,7 +1989,7 @@ init_failure:
             // next: load 304 and 305 and beging scrolling credits
             
             // load 304 and 305
-            MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive];
+            MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive:NULL];
             [archive loadBitmapWithID:304
                                buffer:_credits_texture_buffer
                                format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
@@ -2028,7 +2022,7 @@ init_failure:
             
             // load the new bottom page
             if (_credits_state < 22) {
-                MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive];
+                MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive:NULL];
                 [archive loadBitmapWithID:299 + _credits_state
                                    buffer:BUFFER_OFFSET(_credits_texture_buffer, 360 * 392 * 4)
                                    format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED

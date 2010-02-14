@@ -51,6 +51,7 @@
 
 - (uint16_t)soundIDForName:(NSString*)sound_name;
 - (uint16_t)dataSoundIDForName:(NSString*)sound_name;
+- (uint16_t)bitmapIDForName:(NSString*)bitmap_name;
 
 - (MHKFileHandle*)fileWithResourceType:(NSString*)type ID:(uint16_t)ID;
 - (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)ID;

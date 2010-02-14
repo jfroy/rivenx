@@ -86,72 +86,38 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     _dataArchives = [[NSMutableArray alloc] initWithCapacity:3];
     _soundArchives = [[NSMutableArray alloc] initWithCapacity:1];
     
-    // get the data archives list
-    id dataArchives = [descriptor objectForKey:@"Data Archives"];
-    if (!dataArchives)
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Descriptor dictionary does not contain data archives information." userInfo:nil];
-    
-    // get the sound archives list
-    id soundArchives = [descriptor objectForKey:@"Sound Archives"];
-    if (!soundArchives)
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Descriptor dictionary does not contain sound archives information." userInfo:nil];
-    
     // get the edition manager
     RXEditionManager* sem = [RXEditionManager sharedEditionManager];
     
     // load up any patch archives first
-    NSArray* patch_archives = [sem dataPatchArchivesForStackKey:_key error:error];
-    if (!patch_archives) {
+    NSArray* archives = [sem dataPatchArchivesForStackKey:_key error:error];
+    if (!archives) {
         [self release];
         return nil;
     }
-    [_dataArchives addObjectsFromArray:patch_archives];
+    [_dataArchives addObjectsFromArray:archives];
     
     // load the data archives
-    if ([dataArchives isKindOfClass:[NSString class]]) {
-        // only one archive
-        MHKArchive* anArchive = [sem dataArchiveWithFilename:dataArchives stackKey:_key error:error];
-        if (!anArchive) {
-            [self release];
-            return nil;
-        }
-        [_dataArchives addObject:anArchive];
-    } else if ([dataArchives isKindOfClass:[NSArray class]]) {
-        // enumerate the archives
-        NSEnumerator* archivesEnum = [dataArchives objectEnumerator];
-        NSString* anArchiveName = nil;
-        while ((anArchiveName = [archivesEnum nextObject])) {
-            MHKArchive* anArchive = [sem dataArchiveWithFilename:anArchiveName stackKey:_key error:error];
-            if (!anArchive) {
-                [self release];
-                return nil;
-            }
-            [_dataArchives addObject:anArchive];
-        }
-    } else
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Data Archives object has an invalid type." userInfo:nil];
+    archives = [sem dataArchivesForStackKey:_key error:error];
+    if (!archives || [archives count] == 0) {
+        [self release];
+        return nil;
+    }
+    [_dataArchives addObjectsFromArray:archives];
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"data archives: %@", _dataArchives);
+#endif
     
     // load the sound archives
-    if ([soundArchives isKindOfClass:[NSString class]]) {
-        MHKArchive* anArchive = [sem soundArchiveWithFilename:soundArchives stackKey:_key error:error];
-        if (!anArchive) {
-            [self release];
-            return nil;
-        }
-        [_soundArchives addObject:anArchive];
-    } else if ([soundArchives isKindOfClass:[NSArray class]]) {
-        NSEnumerator* archivesEnum = [soundArchives objectEnumerator];
-        NSString* anArchiveName = nil;
-        while ((anArchiveName = [archivesEnum nextObject])) {
-            MHKArchive* anArchive = [sem soundArchiveWithFilename:anArchiveName stackKey:_key error:error];
-            if (!anArchive) {
-                [self release];
-                return nil;
-            }
-            [_soundArchives addObject:anArchive];
-        }
-    } else
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"Sound Archives object has an invalid type." userInfo:nil];
+    archives = [sem soundArchivesForStackKey:_key error:error];
+    if (!archives || [archives count] == 0) {
+        [self release];
+        return nil;
+    }
+    [_soundArchives addObjectsFromArray:archives];
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"sound archives: %@", _soundArchives);
+#endif
     
     // load me up, baby
     [self _load];
@@ -327,6 +293,17 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     MHKArchive* archive;
     while ((archive = [enumerator nextObject])) {
         NSDictionary* desc = [archive resourceDescriptorWithResourceType:@"tWAV" name:sound_name];
+        if (desc)
+            return [[desc objectForKey:@"ID"] unsignedShortValue];
+    }
+    return 0;
+}
+
+- (uint16_t)bitmapIDForName:(NSString*)bitmap_name {
+    NSEnumerator* enumerator = [_dataArchives objectEnumerator];
+    MHKArchive* archive;
+    while ((archive = [enumerator nextObject])) {
+        NSDictionary* desc = [archive resourceDescriptorWithResourceType:@"tBMP" name:bitmap_name];
         if (desc)
             return [[desc objectForKey:@"ID"] unsignedShortValue];
     }

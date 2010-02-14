@@ -58,15 +58,11 @@
 
 - (void)ejectMountPath:(NSString*)mountPath;
 
-- (RXSimpleCardDescriptor*)lookupCardWithKey:(NSString*)lookup_key;
-- (uint16_t)lookupBitmapWithKey:(NSString*)lookup_key;
-- (uint16_t)lookupSoundWithKey:(NSString*)lookup_key;
+- (NSArray*)dataArchivesForStackKey:(NSString*)stack_key error:(NSError**)error;
+- (NSArray*)soundArchivesForStackKey:(NSString*)stack_key error:(NSError**)error;
+- (MHKArchive*)extrasArchive:(NSError**)error;
 
 - (NSArray*)dataPatchArchivesForStackKey:(NSString*)stackKey error:(NSError**)error;
-
-- (MHKArchive*)dataArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error;
-- (MHKArchive*)soundArchiveWithFilename:(NSString*)filename stackKey:(NSString*)stackKey error:(NSError**)error;
-- (MHKArchive*)extrasArchive;
 
 - (RXStack*)activeStackWithKey:(NSString*)stackKey;
 - (RXStack*)loadStackWithKey:(NSString*)stackKey;
