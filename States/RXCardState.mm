@@ -43,19 +43,25 @@ static rx_post_flush_tasks_dispatch_t _movieFlushTasksDispatch;
 static const double RX_AUDIO_GAIN_RAMP_DURATION = 2.0;
 static const double RX_AUDIO_PAN_RAMP_DURATION = 0.5;
 
-static const GLuint RX_CARD_DYNAMIC_RENDER_INDEX = 0;
+static const unsigned int RX_CARD_DYNAMIC_RENDER_INDEX = 0;
 
-static const GLuint RX_MAX_RENDER_HOTSPOT = 30;
+static const unsigned int RX_MAX_RENDER_HOTSPOT = 30;
 
-static const GLuint RX_MAX_INVENTORY_ITEMS = 3;
+static const unsigned int RX_MAX_INVENTORY_ITEMS = 3;
+static const unsigned int RX_INVENTORY_RMAPS[3] = {
+    5708,
+    7544,
+    7880
+};
 static const NSString* RX_INVENTORY_KEYS[3] = {
     @"Atrus",
     @"Catherine",
     @"Prison"
 };
-static const int RX_INVENTORY_ATRUS = 0;
-static const int RX_INVENTORY_CATHERINE = 1;
-static const int RX_INVENTORY_TRAP = 2;
+static const unsigned int RX_INVENTORY_ATRUS = 0;
+static const unsigned int RX_INVENTORY_CATHERINE = 1;
+static const unsigned int RX_INVENTORY_TRAP = 2;
+
 static const float RX_INVENTORY_MARGIN = 20.f;
 static const float RX_INVENTORY_UNFOCUSED_ALPHA = 0.75f;
 
@@ -2877,13 +2883,21 @@ exit_flush_tasks:
                                        reason:@"OUT OF BOUNDS INVENTORY INDEX"
                                      userInfo:nil];
     
-    RXEdition* edition = [[RXEditionManager sharedEditionManager] currentEdition];
+    RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:@"aspit"];
+    if (!stack) {
+#if defined(DEBUG)
+        RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"aborting _handleInventoryMouseDown because stack aspit could not be loaded");
+#endif
+        return;
+    }
     
-    NSNumber* journalCardIDNumber = [[edition valueForKey:@"journalCardIDMap"] objectForKey:RX_INVENTORY_KEYS[index]];
-    if (!journalCardIDNumber)
-        @throw [NSException exceptionWithName:NSInternalInconsistencyException
-                                       reason:@"NO CARD ID FOR GIVEN INVENTORY KEY IN JOURNAL CARD ID MAP"
-                                     userInfo:nil];
+    uint16_t journal_card_id = [stack cardIDFromRMAPCode:RX_INVENTORY_RMAPS[index]];
+    if (journal_card_id) {
+#if defined(DEBUG)
+        RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"aborting _handleInventoryMouseDown because card rmap %u could not be resolved", RX_INVENTORY_RMAPS[index]);
+#endif
+        return;
+    }
     
     // disable the inventory
     [[g_world gameState] setUnsigned32:0 forKey:@"ainventory"];
@@ -2912,7 +2926,7 @@ exit_flush_tasks:
     _forceFadeInOnNextSoundGroup = YES;
     
     // change the active card to the journal card
-    [self setActiveCardWithStack:@"aspit" ID:[journalCardIDNumber unsignedShortValue] waitUntilDone:NO];
+    [self setActiveCardWithStack:@"aspit" ID:journal_card_id waitUntilDone:NO];
 }
 
 - (void)mouseMoved:(NSEvent*)event {

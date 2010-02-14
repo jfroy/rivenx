@@ -21,8 +21,6 @@
         return NO;
     if (![descriptor objectForKey:@"Stacks"])
         return NO;
-    if (![descriptor objectForKey:@"Journals"])
-        return NO;
     
     // check that the Edition dictionary has all the required keys
     id edition = [descriptor objectForKey:@"Edition"];
@@ -53,13 +51,6 @@
     if (![directories objectForKey:@"Sound"])
         return NO;
     if (![directories objectForKey:@"All"])
-        return NO;
-    
-    // Journals must be a dictionary and contain at least a "Card ID Map" key
-    id journals = [descriptor objectForKey:@"Journals"];
-    if (![journals isKindOfClass:[NSDictionary class]])
-        return NO;
-    if (![journals objectForKey:@"Card ID Map"])
         return NO;
     
     // good enough
@@ -131,9 +122,6 @@
     name = [NSLocalizedStringFromTable(key, @"Editions", nil) retain];
     directories = [edition objectForKey:@"Directories"];
     installDirectives = [edition objectForKey:@"Install Directives"];
-    
-    // the journal card ID map
-    journalCardIDMap = [[_descriptor objectForKey:@"Journals"] objectForKey:@"Card ID Map"];
     
     // patch archives directory
     patchArchives = [_descriptor objectForKey:@"Patch Archives"];

@@ -21,8 +21,6 @@
     NSArray* installDirectives;
     NSDictionary* directories;
     
-    NSDictionary* journalCardIDMap;
-    
     NSDictionary* patchArchives;
     
     NSString* userBase;
