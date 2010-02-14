@@ -615,6 +615,10 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     [super dealloc];
 }
 
+- (NSString*)description {
+    return [NSString stringWithFormat:@"%@ %@", [super description], [mhk_url path]];
+}
+
 #pragma mark -
 
 - (NSDictionary*)resourceDescriptorWithResourceType:(NSString*)type ID:(uint16_t)resourceID {
