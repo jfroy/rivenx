@@ -196,7 +196,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
             NSCursor* cursor = [[NSCursor alloc] initWithImage:cursorImage hotSpot:cursorHotspot];
             uintptr_t key = [cursorKey intValue];
             NSMapInsert(_cursors, (const void*)key, (const void*)cursor);
+            
             [cursor release];
+            [cursorImage release];
         }
                 
         // the semaphore will be signaled when a thread has setup inter-thread messaging
