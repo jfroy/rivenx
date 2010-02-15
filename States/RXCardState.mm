@@ -2892,7 +2892,7 @@ exit_flush_tasks:
     }
     
     uint16_t journal_card_id = [stack cardIDFromRMAPCode:RX_INVENTORY_RMAPS[index]];
-    if (journal_card_id) {
+    if (!journal_card_id) {
 #if defined(DEBUG)
         RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"aborting _handleInventoryMouseDown because card rmap %u could not be resolved", RX_INVENTORY_RMAPS[index]);
 #endif
