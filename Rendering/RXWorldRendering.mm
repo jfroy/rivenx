@@ -25,7 +25,7 @@
 - (void)_initializeRenderingWindow:(NSWindow*)window {
     [window setTitle:@"Riven X"];
     [window setAcceptsMouseMovedEvents:YES];
-    [window setDelegate:[NSApp delegate]];
+    [window setDelegate:(id <NSWindowDelegate>)self];
     [window setDisplaysWhenScreenProfileChanges:YES];
     [window setReleasedWhenClosed:YES];
     
@@ -113,6 +113,11 @@
     [window makeKeyAndOrderFront:self];
     
     [_worldView setUseCoreImage:_fullscreen];
+}
+
+- (void)windowWillClose:(NSNotification*)notification {
+    // FIXME: check if we need to save (or do so automatically)
+    [NSApp terminate:nil];
 }
 
 - (void)_initializeRendering {
