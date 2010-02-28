@@ -32,17 +32,28 @@ BOOL BZFSDirectoryExists(NSString* path) {
     return YES;
 }
 
-BOOL BZFSCreateDirectory(NSString* path, NSError** error) {
+BOOL BZFSCreateDirectoryExtended(NSString* path, NSString* group, uint32_t permissions, NSError** error) {
     BOOL success;
     NSFileManager* fm = [NSFileManager defaultManager];
+    
+    NSMutableDictionary* attributes = [NSMutableDictionary dictionary];
+    if (permissions)
+        [attributes setObject:[NSNumber numberWithUnsignedInt:permissions] forKey:NSFilePosixPermissions];
+    if (group)
+        [attributes setObject:group forKey:NSFileGroupOwnerAccountName];
+    
     if ([fm respondsToSelector:@selector(createDirectoryAtPath:withIntermediateDirectories:attributes:error:)])
-        success = [fm createDirectoryAtPath:path withIntermediateDirectories:NO attributes:nil error:error];
+        success = [fm createDirectoryAtPath:path withIntermediateDirectories:NO attributes:attributes error:error];
     else {
-        success = [fm createDirectoryAtPath:path attributes:nil];
+        success = [fm createDirectoryAtPath:path attributes:attributes];
         if (!success && error)
             *error = [NSError errorWithDomain:@"BZFSErrorDomain" code:0 userInfo:nil];
     }
     return success;
+}
+
+BOOL BZFSCreateDirectory(NSString* path, NSError** error) {
+    return BZFSCreateDirectoryExtended(path, nil, 0, error);
 }
 
 BOOL BZFSDirectoryURLExists(NSURL* url) {

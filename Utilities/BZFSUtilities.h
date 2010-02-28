@@ -16,6 +16,7 @@ extern BOOL BZFSFileURLExists(NSURL* url);
 
 extern BOOL BZFSDirectoryExists(NSString* path);
 extern BOOL BZFSCreateDirectory(NSString* path, NSError** error);
+BOOL BZFSCreateDirectoryExtended(NSString* path, NSString* group, uint32_t permissions, NSError** error);
 
 extern BOOL BZFSDirectoryURLExists(NSURL* url);
 extern BOOL BZFSCreateDirectoryURL(NSURL* url, NSError** error);
