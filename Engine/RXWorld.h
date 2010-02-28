@@ -19,6 +19,7 @@
 @interface RXWorld : NSObject <RXWorldProtocol> {
     NSURL* _worldBase;
     NSURL* _worldUserBase;
+    NSURL* _worldSharedBase;
     
     NSDictionary* _extrasDescriptor;
     
@@ -26,7 +27,6 @@
     
     semaphore_t _threadInitSemaphore;
     NSThread* _scriptThread;
-    
     
     NSView <RXWorldViewProtocol>* _worldView;
     NSWindow* _fullscreenWindow;
@@ -53,6 +53,7 @@
 
 - (NSURL*)worldBase;
 - (NSURL*)worldUserBase;
+- (NSURL*)worldSharedBase;
 
 - (RXGameState*)gameState;
 - (BOOL)loadGameState:(RXGameState*)gameState error:(NSError**)error;

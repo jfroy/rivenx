@@ -146,16 +146,37 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         // world base is the parent directory of the application bundle
         _worldBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent], kCFURLPOSIXPathStyle, true);
         
-        // the world user base is a "Riven X" folder inside the user's Application Support folder
-        NSString* userBase = [[NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
+        // the world user base is a "Riven X" folder inside the user's Documents folder
+        NSString* userBase = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
         if (!BZFSDirectoryExists(userBase)) {
             BOOL success = BZFSCreateDirectory(userBase, &error);
             if (!success)
                 @throw [NSException exceptionWithName:@"RXFilesystemException"
-                                               reason:@"Riven X was unable to create its support folder in your Application Support folder."
+                                               reason:@"Riven X was unable to create its saved games folder in your Documents folder."
                                              userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
         }
         _worldUserBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)userBase, kCFURLPOSIXPathStyle, true);
+        
+        FSRef sharedFolderRef;
+        if (FSFindFolder(kLocalDomain, kSharedUserDataFolderType, kDontCreateFolder, &sharedFolderRef) != noErr) {
+            @throw [NSException exceptionWithName:@"RXFilesystemException"
+                                           reason:@"Riven X was unable to locate your Mac's Shared folder."
+                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        }
+        
+        NSURL* sharedFolderURL = [(NSURL*)CFURLCreateFromFSRef(kCFAllocatorDefault, &sharedFolderRef) autorelease];
+        assert(sharedFolderURL);
+        
+        // the world shared base is a "Riven X" folder inside the /Users/Shared directory
+        NSString* sharedBase = [[sharedFolderURL path] stringByAppendingPathComponent:@"Riven X"];
+        if (!BZFSDirectoryExists(sharedBase)) {
+            BOOL success = BZFSCreateDirectoryExtended(sharedBase, @"admin", 0775, &error);
+            if (!success)
+                @throw [NSException exceptionWithName:@"RXFilesystemException"
+                                               reason:@"Riven X was unable to create its shared support folder in your Mac's Shared folder."
+                                             userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        }
+        _worldSharedBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)sharedBase, kCFURLPOSIXPathStyle, true);
         
         // register for current edition change notifications
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_currentEditionChanged:) name:@"RXCurrentEditionChangedNotification" object:nil];
@@ -327,6 +348,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     [_worldUserBase release];
     _worldUserBase = nil;
     
+    [_worldSharedBase release];
+    _worldSharedBase = nil;
+    
     // engine variables
     [_engineVariables release];
     _engineVariables = nil;
@@ -358,12 +382,15 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 #pragma mark -
 
 - (NSURL*)worldBase {
-    // this method can run on any thread
     return _worldBase;
 }
 
 - (NSURL*)worldUserBase {
     return _worldUserBase;
+}
+
+- (NSURL*)worldSharedBase {
+    return _worldSharedBase;
 }
 
 - (NSDictionary*)extraBitmapsDescriptor {
