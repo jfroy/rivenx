@@ -109,11 +109,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 #endif
     }
     
-    // register for removable media notifications
-    NSNotificationCenter* ws_notification_center = [[NSWorkspace sharedWorkspace] notificationCenter];
-    [ws_notification_center addObserver:self selector:@selector(_removableMediaMounted:) name:NSWorkspaceDidMountNotification object:nil];
-    [ws_notification_center addObserver:self selector:@selector(_removableMediaUnmounted:) name:NSWorkspaceDidUnmountNotification object:nil];
-    
     // load edition manager settings
     NSString* settings_path = [[[[RXWorld sharedWorld] worldUserBase] path] stringByAppendingPathComponent:@"Edtion Manager.plist"];
     if (BZFSFileExists(settings_path)) {
@@ -145,7 +140,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
         [self performSelectorOnMainThread:@selector(_makeEditionChoiceMemoryCurrent) withObject:nil waitUntilDone:NO];
     else {
         // show the edition manager
-        [self showEditionManagerWindow];
+//        [self showEditionManagerWindow];
     }
     
     return self;
@@ -157,9 +152,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
     _torn_down = YES;
     
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
-    
-    [_window_controller close];
-    [_window_controller release];
 }
 
 - (void)dealloc {
@@ -195,14 +187,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
 - (RXEdition*)currentEdition {
     return [[current_edition retain] autorelease];
-}
-
-- (void)showEditionManagerWindow {
-    if (!_window_controller)
-        _window_controller = [[RXEditionManagerWindowController alloc] initWithWindowNibName:@"EditionManager"];
-
-    [[_window_controller window] center];
-    [_window_controller showWindow:self];
 }
 
 - (RXEdition*)defaultEdition {
@@ -296,124 +280,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 }
 
 #pragma mark -
-#pragma mark mount paths
-
-- (void)_clearMountPath:(NSString*)mount_path {
-    OSSpinLockLock(&_valid_mount_paths_lock);
-    [_validated_mount_paths removeObject:mount_path];
-    [_valid_mount_paths removeObject:mount_path];
-    OSSpinLockUnlock(&_valid_mount_paths_lock);
-}
-
-- (BOOL)_validateMountPath:(NSString*)mount_path {
-    BOOL valid = NO;
-    
-    NSAutoreleasePool* p = [NSAutoreleasePool new];
-    OSSpinLockLock(&_valid_mount_paths_lock);
-    
-    if (![_validated_mount_paths containsObject:mount_path]) {
-        [_validated_mount_paths addObject:mount_path];
-        
-        if ([current_edition isValidMountPath:mount_path]) {
-            [_valid_mount_paths addObject:mount_path];
-            valid = YES;
-        }
-    } else
-        valid = [_valid_mount_paths containsObject:mount_path];
-    
-    OSSpinLockUnlock(&_valid_mount_paths_lock);
-    [p release];
-    
-    return valid;
-}
-
-- (void)_checkIfWaitedForDisc:(NSString*)mount_path {
-    if ([[mount_path lastPathComponent] caseInsensitiveCompare:_waiting_disc_name] == NSOrderedSame) {
-        [_waiting_disc_name release];
-        _waiting_disc_name = nil;
-    } else
-        [NSThread detachNewThreadSelector:@selector(ejectMountPath:) toTarget:self withObject:mount_path];
-}
-
-- (void)_removableMediaMounted:(NSNotification*)notification {
-    NSString* path = [[notification userInfo] objectForKey:@"NSDevicePath"];
-    
-    // scan the new mount path in a thread since RXEdition -isValidMountPath can take a long time
-    if (current_edition)
-        [NSThread detachNewThreadSelector:@selector(_validateMountPath:) toTarget:self withObject:path];
-    
-    // check if we are waiting for that disc
-    if (_waiting_disc_name)
-        [self _checkIfWaitedForDisc:path];
-}
-
-- (void)_removableMediaUnmounted:(NSNotification*)notification {
-    NSString* path = [[notification userInfo] objectForKey:@"NSDevicePath"];
-#if defined(DEBUG)
-    RXOLog(@"removable media mounted at %@ is gone", path);
-#endif
-    
-    [self _clearMountPath:path];
-}
-
-- (void)_actuallyWaitForDisc:(NSString*)disc inModalSession:(NSModalSession)session {
-#if defined(DEBUG)
-    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"waiting for disc %@", disc);
-#endif
-    
-    _waiting_disc_name = [disc retain];
-    while (_waiting_disc_name) {
-        if (session) {
-            if ([NSApp runModalSession:session] != NSRunContinuesResponse) {
-                [_waiting_disc_name release];
-                _waiting_disc_name = nil;
-            }
-        }
-        [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
-    }
-}
-
-- (NSString*)mountPathForDisc:(NSString*)disc waitingInModalSession:(NSModalSession)session {
-    NSEnumerator* mount_path_enum = [[[NSWorkspace sharedWorkspace] mountedRemovableMedia] objectEnumerator];
-    NSString* mount_path;
-    while ((mount_path = [mount_path_enum nextObject])) {
-        if ([[mount_path lastPathComponent] caseInsensitiveCompare:disc] == NSOrderedSame)
-            return mount_path;
-    }
-    
-    // if there's a modal session, wait for the disc while driving the session
-    if (session) {
-        [self _actuallyWaitForDisc:disc inModalSession:session];
-        mount_path = [self mountPathForDisc:disc waitingInModalSession:NULL];
-    }
-    
-    return mount_path;
-}
-
-- (void)ejectMountPath:(NSString*)mount_path {
-    NSAutoreleasePool* p = [NSAutoreleasePool new];
-    
-    // don't wait for the unmount to occur to remove the disc from the lists of mount paths
-    [self _clearMountPath:mount_path];
-    
-    // don't ask questions, someone doesn't like it
-    [[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:mount_path];
-    
-    [p release];
-}
-
-#pragma mark -
 #pragma mark archive lookup
-
-- (NSString*)_validMountPathForDisc:(NSString*)disc {
-    NSString* mount_path = [self mountPathForDisc:disc waitingInModalSession:nil];
-    if (!mount_path)
-        return nil;
-    
-    if ([self _validateMountPath:mount_path])
-        return mount_path;
-    return nil;
-}
 
 static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) {
     return [(NSString*)lhs compare:rhs options:NSCaseInsensitiveSearch | NSNumericSearch];

@@ -11,7 +11,6 @@
 #import <libkern/OSAtomic.h>
 
 #import "Engine/RXEdition.h"
-#import "Engine/RXEditionManagerWindowController.h"
 #import "Engine/RXCardDescriptor.h"
 #import "Engine/RXStack.h"
 
@@ -24,9 +23,6 @@
     RXEdition* current_edition;
     NSMutableDictionary* active_stacks;
     MHKArchive* _extras_archive;
-    
-    RXEditionManagerWindowController* _window_controller;
-    BOOL _torn_down;
     
     OSSpinLock _valid_mount_paths_lock;
     NSMutableArray* _valid_mount_paths;
@@ -53,10 +49,6 @@
 - (RXEdition*)defaultEdition;
 - (void)setDefaultEdition:(RXEdition*)edition;
 - (void)resetDefaultEdition;
-
-- (NSString*)mountPathForDisc:(NSString*)disc waitingInModalSession:(NSModalSession)session;
-
-- (void)ejectMountPath:(NSString*)mountPath;
 
 - (NSArray*)dataArchivesForStackKey:(NSString*)stack_key error:(NSError**)error;
 - (NSArray*)soundArchivesForStackKey:(NSString*)stack_key error:(NSError**)error;
