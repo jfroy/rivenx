@@ -30,6 +30,10 @@ enum {
     kRXErrFailedToGetAcceleratorPerfStats,
     kRXErrFailedToFindFreeVRAMInformation,
     kRXErrFailedToCreatePixelFormat,
+    
+    kRXErrInstallerAlreadyRan,
+    kRXErrInstallerMissingArchives,
+    kRXErrInstallerCancelled,
 };
 
 extern NSString* const RXErrorDomain;
