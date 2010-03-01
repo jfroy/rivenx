@@ -38,7 +38,8 @@ static void _BZFSOperationStatusCallback(FSFileOperationRef fileOp, const char* 
 
 - (id)initCopyOperationWithSource:(NSString*)source destination:(NSString*)destination {
     self = [super init];
-    if (!self) return nil;
+    if (!self)
+        return nil;
     
     _type = BZFSOperationCopyOperation;
     
