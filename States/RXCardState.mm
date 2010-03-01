@@ -10,7 +10,7 @@
 
 #import "States/RXCardState.h"
 
-#import "Application/RXApplicationDelegate.h"
+#import "Base/RXThreadUtilities.h"
 
 #import "Engine/RXWorldProtocol.h"
 #import "Engine/RXHardwareProfiler.h"
@@ -1028,7 +1028,8 @@ init_failure:
 - (void)_audioTaskThread:(id)object {
     // WARNING: WILL BE RUNNING ON A DEDICATED THREAD
     NSAutoreleasePool* p = [NSAutoreleasePool new];
-    uint32_t cycles = 0;
+    
+    RXSetThreadName("audio task");
     
     CFRange everything = CFRangeMake(0, 0);
     void* renderer = [g_world audioRenderer];
@@ -1048,6 +1049,7 @@ init_failure:
                            (thread_policy_t)&precedencePolicy,
                            THREAD_PRECEDENCE_POLICY_COUNT);
     
+    uint32_t cycles = 0;
     while (1) {
         OSSpinLockLock(&_audioTaskThreadStatusLock);
         
