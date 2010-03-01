@@ -10,6 +10,8 @@
 #import "BZFSUtilities.h"
 
 
+NSString* const BZFSErrorDomain = @"BZFSErrorDomain";
+
 BOOL BZFSFileExists(NSString* path) {
     BOOL isDirectory;
     if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory] == NO)
@@ -47,7 +49,7 @@ BOOL BZFSCreateDirectoryExtended(NSString* path, NSString* group, uint32_t permi
     else {
         success = [fm createDirectoryAtPath:path attributes:attributes];
         if (!success && error)
-            *error = [NSError errorWithDomain:@"BZFSErrorDomain" code:0 userInfo:nil];
+            *error = [NSError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
     }
     return success;
 }
@@ -72,7 +74,7 @@ NSArray* BZFSContentsOfDirectory(NSString* path, NSError** error) {
     else {
         contents = [fm directoryContentsAtPath:path];
         if (!contents && error)
-            *error = [NSError errorWithDomain:@"BZFSErrorDomain" code:0 userInfo:nil];
+            *error = [NSError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
     }
     return contents;
 }
@@ -109,13 +111,26 @@ NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error) {
     else {
         attributes = [fm fileAttributesAtPath:path traverseLink:NO];
         if (!attributes && error)
-            *error = [NSError errorWithDomain:@"BZFSErrorDomain" code:0 userInfo:nil];
+            *error = [NSError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
     }
     return attributes;
 }
 
 NSDictionary* BZFSAttributesOfItemAtURL(NSURL* url, NSError** error) {
     return BZFSAttributesOfItemAtPath([url path], error);
+}
+
+BOOL BZFSSetAttributesOfItemAtPath(NSString* path, NSDictionary* attributes, NSError** error) {
+    BOOL success;
+    NSFileManager* fm = [NSFileManager defaultManager];
+    if ([fm respondsToSelector:@selector(setAttributes:ofItemAtPath:error:)])
+        success = [fm setAttributes:attributes ofItemAtPath:path error:error];
+    else {
+        success = [fm changeFileAttributes:attributes atPath:path];
+        if (!success && error)
+            *error = [NSError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
+    }
+    return success;
 }
 
 BOOL BZFSRemoveItemAtURL(NSURL* url, NSError** error) {
@@ -126,7 +141,7 @@ BOOL BZFSRemoveItemAtURL(NSURL* url, NSError** error) {
     else {
         success = [fm removeFileAtPath:[url path] handler:nil];
         if (!success && error)
-            *error = [NSError errorWithDomain:@"BZFSErrorDomain" code:0 userInfo:nil];
+            *error = [NSError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
     }
     return success;
 }

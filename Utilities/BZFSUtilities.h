@@ -11,6 +11,12 @@
 
 __BEGIN_DECLS
 
+enum {
+    kBZFSErrUnknownError = 1,
+};
+
+extern NSString* const BZFSErrorDomain;
+
 extern BOOL BZFSFileExists(NSString* path);
 extern BOOL BZFSFileURLExists(NSURL* url);
 
@@ -28,6 +34,7 @@ extern NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL
 
 extern NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error);
 extern NSDictionary* BZFSAttributesOfItemAtURL(NSURL* url, NSError** error);
+extern BOOL BZFSSetAttributesOfItemAtPath(NSString* path, NSDictionary* attributes, NSError** error);
 
 extern BOOL BZFSRemoveItemAtURL(NSURL* url, NSError** error);
 
