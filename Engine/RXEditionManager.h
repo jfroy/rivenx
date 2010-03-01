@@ -32,13 +32,17 @@
     NSString* _local_data_store;
     
     NSMutableDictionary* _settings;
+    
+    BOOL _torn_down;
 }
 
 + (RXEditionManager*)sharedEditionManager;
 
-- (void)tearDown;
++ (NSPredicate*)dataArchiveFilenamePredicate;
++ (NSPredicate*)soundsArchiveFilenamePredicate;
++ (NSPredicate*)extrasArchiveFilenamePredicate;
 
-- (void)showEditionManagerWindow;
+- (void)tearDown;
 
 - (NSArray*)editionProxies;
 - (RXEdition*)editionForKey:(NSString*)editionKey;

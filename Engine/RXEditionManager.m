@@ -19,6 +19,27 @@
 
 GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
 
++ (NSPredicate*)dataArchiveFilenamePredicate {
+    static NSPredicate* predicate = nil;
+    if (!predicate)
+        predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^[abgjoprt]_Data[0-9]?\\.MHK$"] retain];
+    return predicate;
+}
+
++ (NSPredicate*)soundsArchiveFilenamePredicate {
+    static NSPredicate* predicate = nil;
+    if (!predicate)
+        predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^[abgjoprt]_Sounds[0-9]?\\.MHK$"] retain];
+    return predicate;
+}
+
++ (NSPredicate*)extrasArchiveFilenamePredicate {
+    static NSPredicate* predicate = nil;
+    if (!predicate)
+        predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^Extras\\.MHK$"] retain];
+    return predicate;
+}
+
 - (BOOL)_writeSettings {
     NSData* settings_data = [NSPropertyListSerialization dataFromPropertyList:_settings
                                                                        format:NSPropertyListBinaryFormat_v1_0
@@ -347,19 +368,22 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 }
 
 - (NSArray*)dataArchivesForStackKey:(NSString*)stack_key error:(NSError**)error {
-    return [self _archivesForExpression:[NSString stringWithFormat:@"%C_Data[0-9]?\\.MHK", [stack_key characterAtIndex:0]] error:error];
+    return [self _archivesForExpression:[NSString stringWithFormat:@"^%C_Data[0-9]?\\.MHK$", [stack_key characterAtIndex:0]] error:error];
 }
 
 - (NSArray*)soundArchivesForStackKey:(NSString*)stack_key error:(NSError**)error {
-    return [self _archivesForExpression:[NSString stringWithFormat:@"%C_Sounds[0-9]?\\.MHK", [stack_key characterAtIndex:0]] error:error];
+    return [self _archivesForExpression:[NSString stringWithFormat:@"^%C_Sounds[0-9]?\\.MHK$", [stack_key characterAtIndex:0]] error:error];
 }
 
 - (MHKArchive*)extrasArchive:(NSError**)error {
     if (!_extras_archive) {
-        _extras_archive = [[[self _archivesForExpression:@"Extras\\.MHK" error:error] objectAtIndex:0] retain];
+        NSArray* archives = [self _archivesForExpression:@"^Extras\\.MHK$" error:error];
+        if ([archives count]) {
+            _extras_archive = [[archives objectAtIndex:0] retain];
 #if defined(DEBUG)
-        RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"loaded Extras archive from %@", [[_extras_archive url] path]);
+            RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"loaded Extras archive from %@", [[_extras_archive url] path]);
 #endif
+        }
     }
     return [[_extras_archive retain] autorelease];
 }
