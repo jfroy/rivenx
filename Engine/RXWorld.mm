@@ -182,7 +182,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_currentEditionChanged:) name:@"RXCurrentEditionChangedNotification" object:nil];
         
         // bootstrap the edition manager
-        [RXEditionManager sharedEditionManager];
+//        [RXEditionManager sharedEditionManager];
         
         // load Extras.plist
         _extrasDescriptor = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"plist"]];
