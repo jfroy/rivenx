@@ -2763,10 +2763,11 @@ exit_flush_tasks:
     }
     
     // when we're on edge values of the hotspot handling disable counter, we need to update the load / save UI
-    if (_hotspot_handling_disable_counter == 0)
-        [(RXApplicationDelegate*)[NSApp delegate] setSavingEnabled:YES];
-    else if (_hotspot_handling_disable_counter == 1)
-        [(RXApplicationDelegate*)[NSApp delegate] setSavingEnabled:NO];
+    // (because it basically means we're starting to execute some script as a response of user action)
+//    if (_hotspot_handling_disable_counter == 0)
+//        [(RXApplicationDelegate*)[NSApp delegate] setSavingEnabled:YES];
+//    else if (_hotspot_handling_disable_counter == 1)
+//        [(RXApplicationDelegate*)[NSApp delegate] setSavingEnabled:NO];
     
     // if hotspot handling is disabled, simply return
     if (_hotspot_handling_disable_counter > 0)
