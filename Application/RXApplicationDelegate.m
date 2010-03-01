@@ -13,7 +13,6 @@
 
 #import "Engine/RXWorld.h"
 #import "Engine/RXEditionManager.h"
-#import "Engine/RXEditionManagerWindowController.h"
 
 #import "Rendering/Graphics/RXWorldView.h"
 
@@ -39,15 +38,14 @@
 }
 
 - (void)awakeFromNib {
-    [_aboutBox center];
-    
+    // setup the about box
     NSBundle* bundle = [NSBundle mainBundle];
-    
     NSString* version_format = NSLocalizedStringFromTable(@"VERSION_FORMAT", @"About", nil);
     NSString* version = [NSString stringWithFormat:@"branch '%@' r%@", NSLocalizedStringFromTable(@"BUILD_BRANCH", @"build", nil), NSLocalizedStringFromTable(@"BUILD_VERSION", @"build", nil)];
     
-    [_versionField setStringValue:[NSString stringWithFormat:version_format, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], version]];
-    [_copyrightField setStringValue:NSLocalizedStringFromTable(@"LONG_COPYRIGHT", @"About", nil)];
+    [aboutBox center];
+    [versionField setStringValue:[NSString stringWithFormat:version_format, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], version]];
+    [copyrightField setStringValue:NSLocalizedStringFromTable(@"LONG_COPYRIGHT", @"About", nil)];
 }
 
 - (void)dealloc {
@@ -59,11 +57,11 @@
 
 #if defined(DEBUG)
 - (void)_showDebugConsole:(id)sender {
-    [_debugConsoleWC showWindow:sender];
+    [debugConsoleWC showWindow:sender];
 }
 
 - (void)_initDebugUI {
-    _debugConsoleWC = [[RXDebugWindowController alloc] initWithWindowNibName:@"DebugConsole"];
+    debugConsoleWC = [[RXDebugWindowController alloc] initWithWindowNibName:@"DebugConsole"];
     
     NSMenu* debugMenu = [[NSMenu alloc] initWithTitle:@"Debug"];
     [debugMenu addItemWithTitle:@"Console" action:@selector(_showDebugConsole:) keyEquivalent:@""];
@@ -85,14 +83,15 @@
         switch ([error code]) {
             case kRXErrEditionCantBecomeCurrent:
                 if (recoveryOptionIndex == 0)
-                    [[RXEditionManager sharedEditionManager] showEditionManagerWindow];
+//                    [[RXEditionManager sharedEditionManager] showEditionManagerWindow];
+                    NSBeep();
                 else
                     [NSApp terminate:self];
                 break;
             
             case kRXErrSavedGameCantBeLoaded:
                 if (recoveryOptionIndex == 0)
-                    [[RXEditionManager sharedEditionManager] showEditionManagerWindow];
+//                    [[RXEditionManager sharedEditionManager] showEditionManagerWindow];
                 break;
             
             case kRXErrQuickTimeTooOld:
@@ -103,8 +102,10 @@
                 }
                 [NSApp terminate:self];
                 break;
+            
             case kRXErrArchiveUnavailable:
-                // this is fatal right now
+            case kRXErrUnableToLoadExtrasArchive:
+                // these are fatal right now
                 [NSApp terminate:self];
                 break;
             
@@ -164,7 +165,9 @@
     if (!qtkit_vers || [qtkit_vers count] == 0)
         qtkit_vers = [NSArray arrayWithObjects:@"0", nil];
     
-//    qtkit_vers = [NSArray arrayWithObjects:@"7", @"6", @"1", nil];
+#if defined(TEST_QUICKTIME_CHECK)
+    qtkit_vers = [NSArray arrayWithObjects:@"7", @"6", @"1", nil];
+#endif
     
     BOOL quicktime_too_old = NO;
     if ([qtkit_vers count] > 0)
@@ -206,15 +209,21 @@
     [[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:
         NSLogUncaughtExceptionMask | NSHandleUncaughtExceptionMask |
         NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
-    
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification*)notification {    
+    // check if the system's QuickTime version is compatible and return if it is not
     if (![self _checkQuickTime])
         return;
     
-    // and a flower shall blossom
+    // initialize the world
     [RXWorld sharedWorld];
-}
-
-- (void)applicationDidFinishLaunching:(NSNotification*)notification {
+    
+    // if we're not installed, start the welcome controller, otherwise start the world
+    // FIXME: implement the above logic
+    welcomeController = [[RXWelcomeWindowController alloc] initWithWindowNibName:@"Welcome"];
+    [welcomeController showWindow:nil];
+    
 #if defined(DEBUG)
     [self _initDebugUI];
     [self _showDebugConsole:self];
@@ -222,12 +231,18 @@
 }
 
 - (void)applicationWillResignActive:(NSNotification*)notification {
+    if (!g_world)
+        return;
+    
     wasFullscreen = [g_world fullscreen];
     if (wasFullscreen)
         [g_world toggleFullscreen];
 }
 
 - (void)applicationWillBecomeActive:(NSNotification*)notification {
+    if (!g_world)
+        return;
+    
     if (wasFullscreen)
         [g_world toggleFullscreen];
 }
@@ -236,16 +251,8 @@
     return [self _openGameWithURL:[NSURL fileURLWithPath:filename]];
 }
 
-- (void)windowWillClose:(NSNotification*)notification {
-    [NSApp terminate:self];
-}
-
-- (id <SUVersionComparison>)versionComparatorForUpdater:(SUUpdater*)updater {
-    return versionComparator;
-}
-
 - (IBAction)orderFrontAboutWindow:(id)sender {
-    [_aboutBox makeKeyAndOrderFront:sender];
+    [aboutBox makeKeyAndOrderFront:sender];
 }
 
 - (IBAction)showAcknowledgments:(id)sender {
@@ -254,10 +261,21 @@
 }
 
 - (IBAction)toggleFullscreen:(id)sender {
-    [g_world toggleFullscreen];
+    if (g_world)
+        [g_world toggleFullscreen];
 }
 
+- (id <SUVersionComparison>)versionComparatorForUpdater:(SUUpdater*)updater {
+    return versionComparator;
+}
+
+#pragma mark -
+#pragma mark game opening and saving
+
 - (IBAction)openDocument:(id)sender {
+    if (!g_world)
+        return;
+    
     NSOpenPanel* panel = [NSOpenPanel openPanel];
     [panel setCanChooseFiles:YES];
     [panel setCanChooseDirectories:NO];
@@ -280,14 +298,50 @@
     [self _openGameWithURL:[panel URL]];
 }
 
+- (void)_updateCanSave {
+    [self willChangeValueForKey:@"canSave"];
+    if (g_world)
+        canSave = (([[g_world gameState] URL])) ? YES : NO;
+    else
+        canSave = NO;
+    [self didChangeValueForKey:@"canSave"];
+}
+
 - (IBAction)saveGame:(id)sender {
+    if (!g_world)
+        return;
+    
     NSError* error;
     RXGameState* gameState = [g_world gameState];
     if (![gameState writeToURL:[gameState URL] error:&error])
         [NSApp presentError:error];
 }
 
+- (void)_saveAsPanelDidEnd:(NSSavePanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
+    if (returnCode == NSCancelButton)
+        return;
+    
+    // dismiss the panel now
+    [panel orderOut:self];
+    
+    NSError* error = nil;
+    RXGameState* gameState = [g_world gameState];
+    if (![gameState writeToURL:[panel URL] error:&error]) {
+        [NSApp presentError:error];
+        return;
+    }
+    
+    // we need to update the can-save state now, since we may not have had a save file before we saved as
+    [self _updateCanSave];
+    
+    // add the new save file to the recents
+    [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]]; 
+}
+
 - (IBAction)saveGameAs:(id)sender {
+    if (!g_world)
+        return;
+    
     NSSavePanel* panel = [NSSavePanel savePanel];
     [panel setCanCreateDirectories:YES];
     [panel setAllowsOtherFileTypes:NO];
@@ -304,11 +358,12 @@
     [panel beginSheetForDirectory:nil file:@"untitled" modalForWindow:[g_worldView window] modalDelegate:self didEndSelector:@selector(_saveAsPanelDidEnd:returnCode:contextInfo:) contextInfo:nil];
 }
 
-#pragma mark -
-#pragma mark game opening and saving
-
 - (BOOL)_openGameWithURL:(NSURL*)url {
     NSError* error;
+    
+    // if the game is not running, we can't load anything
+    if (!g_world)
+        return NO;
     
     // load the save file, and present any error to the user if one occurs
     RXGameState* gameState = [RXGameState gameStateWithURL:url error:&error];
@@ -344,40 +399,8 @@
     return YES;
 }
 
-- (void)_updateCanSave {
-    [self willChangeValueForKey:@"canSave"];
-    _canSave = (([[g_world gameState] URL])) ? YES : NO;
-    [self didChangeValueForKey:@"canSave"];
-}
-
-- (BOOL)isSavingEnabled {
-    return _saveFlag;
-}
-
-- (void)setSavingEnabled:(BOOL)flag {
-    _saveFlag = flag;
-    [self _updateCanSave];
-}
-
-- (void)_saveAsPanelDidEnd:(NSSavePanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
-    if (returnCode == NSCancelButton)
-        return;
-    
-    // dismiss the panel now
-    [panel orderOut:self];
-    
-    NSError* error = nil;
-    RXGameState* gameState = [g_world gameState];
-    if (![gameState writeToURL:[panel URL] error:&error]) {
-        [NSApp presentError:error];
-        return;
-    }
-    
-    // we need to update the can-save state now, since we may not have had a save file before we saved as
-    [self _updateCanSave];
-    
-    // add the new save file to the recents
-    [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]]; 
+- (BOOL)isGameLoaded {
+    return (g_world) ? YES : NO;
 }
 
 @end

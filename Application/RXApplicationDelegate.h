@@ -8,22 +8,24 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "RXVersionComparator.h"
+#import "Application/RXVersionComparator.h"
+#import "Application/RXWelcomeWindowController.h"
 
 
 @interface RXApplicationDelegate : NSObject {
 #if defined(DEBUG)
-    NSWindowController* _debugConsoleWC;
+    NSWindowController* debugConsoleWC;
 #endif
     
-    IBOutlet NSWindow* _aboutBox;
-    IBOutlet NSTextField* _versionField;
-    IBOutlet NSTextField* _copyrightField;
+    IBOutlet NSWindow* aboutBox;
+    IBOutlet NSTextField* versionField;
+    IBOutlet NSTextField* copyrightField;
     
     IBOutlet RXVersionComparator* versionComparator;
     
-    BOOL _saveFlag;
-    BOOL _canSave;
+    RXWelcomeWindowController* welcomeController;
+    
+    BOOL canSave;
     BOOL wasFullscreen;
 }
 
@@ -34,9 +36,8 @@
 - (IBAction)saveGame:(id)sender;
 - (IBAction)saveGameAs:(id)sender;
 
-- (BOOL)isSavingEnabled;
-- (void)setSavingEnabled:(BOOL)flag;
-
 - (IBAction)toggleFullscreen:(id)sender;
+
+- (BOOL)isGameLoaded;
 
 @end
