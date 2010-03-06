@@ -15,6 +15,7 @@
 #import "Engine/RXCursors.h"
 #import "Engine/RXScriptDecoding.h"
 #import "Engine/RXScriptCommandAliases.h"
+#import "Engine/RXEdition.h"
 #import "Engine/RXEditionManager.h"
 #import "Engine/RXScriptCompiler.h"
 
@@ -136,7 +137,8 @@
     _card_scripts = rx_decode_riven_script(BUFFER_OFFSET([card_data bytes], 4), NULL);
     
     // get the current edition
-    RXEdition* ce = [[RXEditionManager sharedEditionManager] currentEdition];
+//    RXEdition* ce = [[RXEditionManager sharedEditionManager] currentEdition];
+    RXEdition* ce = nil;
     
     // WORKAROUND: there is a legitimate bug in the CD edition's tspit 155 open card program;
     // it executes activate SLST record 2 command after the introduction sequence, which is the mute SLST; patch it up to activate SLST 1

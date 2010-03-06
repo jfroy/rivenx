@@ -262,23 +262,23 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)_currentEditionChanged:(NSNotification*)notification {
-    // create a new game state for the new current edition (if there isn't one yet); if there is, it is assumed to be for the new current edition
-    if (!_gameState) {
-        _gameState = [[RXGameState alloc] initWithEdition:[[RXEditionManager sharedEditionManager] currentEdition]];
-        
-        // register for card changed notifications
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
-    } else
-        assert([[_gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]);
-    
-    // initialize rendering
-    [self initializeRendering];
-    
-    // subscribe to RXStackDidLoadNotification notifications so we know when the asplit stack finishes loading
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_setInitialCard:) name:@"RXStackDidLoadNotification" object:nil];
-    
-    // load the aspit stack on the script thread asynchronously
-    [[RXEditionManager sharedEditionManager] performSelector:@selector(loadStackWithKey:) withObject:@"aspit" inThread:_scriptThread waitUntilDone:NO];
+//    // create a new game state for the new current edition (if there isn't one yet); if there is, it is assumed to be for the new current edition
+//    if (!_gameState) {
+//        _gameState = [[RXGameState alloc] initWithEdition:[[RXEditionManager sharedEditionManager] currentEdition]];
+//        
+//        // register for card changed notifications
+//        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
+//    } else
+//        assert([[_gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]);
+//    
+//    // initialize rendering
+//    [self initializeRendering];
+//    
+//    // subscribe to RXStackDidLoadNotification notifications so we know when the asplit stack finishes loading
+//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_setInitialCard:) name:@"RXStackDidLoadNotification" object:nil];
+//    
+//    // load the aspit stack on the script thread asynchronously
+//    [[RXEditionManager sharedEditionManager] performSelector:@selector(loadStackWithKey:) withObject:@"aspit" inThread:_scriptThread waitUntilDone:NO];
 }
 
 - (void)dealloc {
@@ -337,9 +337,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     // game state
     [_gameState release];
     _gameState = nil;
-    
-    // edition manager
-    [[RXEditionManager sharedEditionManager] tearDown];
     
     // world locations
     [_worldBase release];
@@ -448,7 +445,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (void)_activeCardDidChange:(NSNotification*)notification {
     // NOTE: WILL RUN ON THE MAIN THREAD
-    NSError* error;
+//    NSError* error;
     
     // if we have a new game state to load and we just cleared the active card, do the swap
     if (![notification object] && _gameStateToLoad) {   
@@ -458,10 +455,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         _gameStateToLoad = nil;
         
         // make the new game's edition current
-        if (![[RXEditionManager sharedEditionManager] makeEditionCurrent:[_gameState edition] rememberChoice:NO error:&error]) {
-            [NSApp presentError:error];
-            return;
-        }
+//        if (![[RXEditionManager sharedEditionManager] makeEditionCurrent:[_gameState edition] rememberChoice:NO error:&error]) {
+//            [NSApp presentError:error];
+//            return;
+//        }
         
         // set the active card to that of the new game state
         RXSimpleCardDescriptor* scd = [_gameState currentCard];

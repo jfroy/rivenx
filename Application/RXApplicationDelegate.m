@@ -373,19 +373,19 @@
     }
     
     // the save game may be using a different edition than the active edition
-    if (![[gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]) {
-        // check if the game's edition can be made current; if not, present an error to the user
-        if (![[gameState edition] canBecomeCurrent]) {
-            error = [NSError errorWithDomain:RXErrorDomain code:kRXErrSavedGameCantBeLoaded userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-                [NSString stringWithFormat:NSLocalizedStringFromTable(@"CANNOT_LOAD_SAVE_EDITION_NOT_INSTALLED", @"Editions", "cannot load save edition not installed"), [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
-                NSLocalizedStringFromTable(@"INSTALL_EDITION_OR_RESUME", @"Editions", "install or resume"), NSLocalizedRecoverySuggestionErrorKey,
-                [NSArray arrayWithObjects:NSLocalizedString(@"INSTALL", "install"), NSLocalizedString(@"CANCEL", "cancel"), nil], NSLocalizedRecoveryOptionsErrorKey,
-                self, NSRecoveryAttempterErrorKey,
-                nil]];
-            [NSApp presentError:error];
-            return NO;
-        }
-    }
+//    if (![[gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]) {
+//        // check if the game's edition can be made current; if not, present an error to the user
+//        if (![[gameState edition] canBecomeCurrent]) {
+//            error = [NSError errorWithDomain:RXErrorDomain code:kRXErrSavedGameCantBeLoaded userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+//                [NSString stringWithFormat:NSLocalizedStringFromTable(@"CANNOT_LOAD_SAVE_EDITION_NOT_INSTALLED", @"Editions", "cannot load save edition not installed"), [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
+//                NSLocalizedStringFromTable(@"INSTALL_EDITION_OR_RESUME", @"Editions", "install or resume"), NSLocalizedRecoverySuggestionErrorKey,
+//                [NSArray arrayWithObjects:NSLocalizedString(@"INSTALL", "install"), NSLocalizedString(@"CANCEL", "cancel"), nil], NSLocalizedRecoveryOptionsErrorKey,
+//                self, NSRecoveryAttempterErrorKey,
+//                nil]];
+//            [NSApp presentError:error];
+//            return NO;
+//        }
+//    }
     
     // try to load the game, and present any error to the user if one occurs
     if (![[RXWorld sharedWorld] loadGameState:gameState error:&error]) {

@@ -222,14 +222,14 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
                                                reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
                                              userInfo:nil];
             }
-            NSString* edition_key = [decoder decodeObjectForKey:@"editionKey"];
-            _edition = [[[RXEditionManager sharedEditionManager] editionForKey:edition_key] retain];
-            if (!_edition) {
-                [self release];
-                @throw [NSException exceptionWithName:@"RXUnknownEditionKeyException"
-                                               reason:@"Riven X was unable to find the edition for the save file. It may have been created with a more recent version of Riven X than you are using."
-                                             userInfo:nil];
-            }
+//            NSString* edition_key = [decoder decodeObjectForKey:@"editionKey"];
+//            _edition = [[[RXEditionManager sharedEditionManager] editionForKey:edition_key] retain];
+//            if (!_edition) {
+//                [self release];
+//                @throw [NSException exceptionWithName:@"RXUnknownEditionKeyException"
+//                                               reason:@"Riven X was unable to find the edition for the save file. It may have been created with a more recent version of Riven X than you are using."
+//                                             userInfo:nil];
+//            }
             
             if (![decoder containsValueForKey:@"currentCard"]) {
                 [self release];
