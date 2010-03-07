@@ -117,7 +117,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // that we are installed and kick up the game; otherwise, let the application
     // handle the error
     if (did_install) {
-        
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"RXInstalled"];
     } else {
         if ([[error domain] isEqualToString:RXErrorDomain] && [error code] == kRXErrInstallerCancelled) {
             // delete the shared base directory's content
