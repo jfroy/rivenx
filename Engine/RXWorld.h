@@ -7,7 +7,7 @@
 //
 
 #import <mach/semaphore.h>
-#import <pthread.h>
+#import <libkern/OSAtomic.h>
 #import <Cocoa/Cocoa.h>
 
 #import "Engine/RXWorldProtocol.h"
@@ -37,8 +37,8 @@
     RXGameState* _gameState;
     RXGameState* _gameStateToLoad;
     
-    pthread_mutex_t _engineVariablesMutex;
     NSMutableDictionary* _engineVariables;
+    OSSpinLock _engineVariablesLock;
     
     NSApplicationPresentationOptions _defaultPresentationOptions;
     

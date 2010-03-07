@@ -139,7 +139,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         srandom(time(NULL));
     
         // initialize the engine variables
-        pthread_mutex_init(&_engineVariablesMutex, NULL);
+        _engineVariablesLock = OS_SPINLOCK_INIT;
         [self _initEngineVariables];
         
         // world base is the parent directory of the application bundle
@@ -350,8 +350,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     // engine variables
     [_engineVariables release];
     _engineVariables = nil;
-    
-    pthread_mutex_destroy(&_engineVariablesMutex);
 }
 
 #pragma mark -
@@ -486,23 +484,23 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 #pragma mark -
 
 - (void)_dumpEngineVariables {
-    pthread_mutex_lock(&_engineVariablesMutex);
+    OSSpinLockLock(&_engineVariablesLock);
     RXOLog(@"dumping engine variables\n%@", _engineVariables);
-    pthread_mutex_unlock(&_engineVariablesMutex);
+    OSSpinLockUnlock(&_engineVariablesLock);
 }
 
 - (id)valueForEngineVariable:(NSString*)path {
-    pthread_mutex_lock(&_engineVariablesMutex);
+    OSSpinLockLock(&_engineVariablesLock);
     id value = [_engineVariables valueForKeyPath:path];
-    pthread_mutex_unlock(&_engineVariablesMutex);
+    OSSpinLockUnlock(&_engineVariablesLock);
     return value;
 }
 
 - (void)setValue:(id)value forEngineVariable:(NSString*)path {
-    pthread_mutex_lock(&_engineVariablesMutex);
+    OSSpinLockLock(&_engineVariablesLock)l
     [_engineVariables setValue:value forKeyPath:path];
     [[NSUserDefaults standardUserDefaults] setObject:_engineVariables forKey:@"EngineVariables"];
-    pthread_mutex_unlock(&_engineVariablesMutex);
+    OSSpinLockUnlock(&_engineVariablesLock);
 }
 
 @end
