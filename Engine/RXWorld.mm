@@ -497,7 +497,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)setValue:(id)value forEngineVariable:(NSString*)path {
-    OSSpinLockLock(&_engineVariablesLock)l
+    OSSpinLockLock(&_engineVariablesLock);
     [_engineVariables setValue:value forKeyPath:path];
     [[NSUserDefaults standardUserDefaults] setObject:_engineVariables forKey:@"EngineVariables"];
     OSSpinLockUnlock(&_engineVariablesLock);
