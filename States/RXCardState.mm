@@ -1349,7 +1349,7 @@ init_failure:
     // if we're switching to a different card, create it
     if (new_card == nil) {
         // if we don't have the stack, bail
-        RXStack* stack = [[RXArchiveManager sharedArchiveManager] loadStackWithKey:scd->stackKey];
+        RXStack* stack = [g_world loadStackWithKey:scd->stackKey];
         if (!stack) {
 #if defined(DEBUG)
             RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug,
@@ -2058,9 +2058,7 @@ init_failure:
         // resources and go back to aspit 1 in a new game
         if (_credits_state == 24) {
             // FIXME: hook up the new document action and use that instead
-            [self setActiveCardWithStack:@"aspit"
-                                      ID:[[[RXArchiveManager sharedArchiveManager] activeStackWithKey:@"aspit"] entryCardID]
-                           waitUntilDone:NO];
+            [self setActiveCardWithStack:@"aspit" ID:[[g_world activeStackWithKey:@"aspit"] entryCardID] waitUntilDone:NO];
             
             // show the mouse cursor again
             [self performSelectorOnMainThread:@selector(showMouseCursor) withObject:nil waitUntilDone:NO];
@@ -2886,7 +2884,7 @@ exit_flush_tasks:
                                        reason:@"OUT OF BOUNDS INVENTORY INDEX"
                                      userInfo:nil];
     
-    RXStack* stack = [[RXArchiveManager sharedArchiveManager] loadStackWithKey:@"aspit"];
+    RXStack* stack = [g_world loadStackWithKey:@"aspit"];
     if (!stack) {
 #if defined(DEBUG)
         RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"aborting _handleInventoryMouseDown because stack aspit could not be loaded");

@@ -9,13 +9,10 @@
 #import <Cocoa/Cocoa.h>
 #import <MHKKit/MHKKit.h>
 
-#import "Engine/RXStack.h"
-
 
 @interface RXArchiveManager : NSObject {
     NSString* patches_directory;
     
-    NSMutableDictionary* active_stacks;
     MHKArchive* extras_archive;
     
     NSString* local_data_store;
@@ -32,8 +29,5 @@
 - (MHKArchive*)extrasArchive:(NSError**)error;
 
 - (NSArray*)dataPatchArchivesForStackKey:(NSString*)stackKey error:(NSError**)error;
-
-- (RXStack*)activeStackWithKey:(NSString*)stackKey;
-- (RXStack*)loadStackWithKey:(NSString*)stackKey;
 
 @end

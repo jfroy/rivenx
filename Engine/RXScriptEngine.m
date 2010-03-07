@@ -1664,7 +1664,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // get the stack for the given stack key
     NSString* k = [[[_card descriptor] parent] stackNameAtIndex:argv[0]];
-    RXStack* stack = [[RXArchiveManager sharedArchiveManager] loadStackWithKey:k];
+    RXStack* stack = [g_world loadStackWithKey:k];
     assert(stack);
     
     uint32_t card_rmap = (argv[1] << 16) | argv[2];
@@ -2302,10 +2302,10 @@ DEFINE_COMMAND(xatrapbookclose) {
     uint32_t card_rmap;
     if ([return_card->stackKey isEqualToString:@"rspit"]) {
         card_rmap = 13112;
-        stack = [[RXArchiveManager sharedArchiveManager] loadStackWithKey:@"rspit"];
+        stack = [g_world loadStackWithKey:@"rspit"];
     } else {
         card_rmap = 17581;
-        stack = [[RXArchiveManager sharedArchiveManager] loadStackWithKey:@"ospit"];
+        stack = [g_world loadStackWithKey:@"ospit"];
     }
     
     [return_card release];

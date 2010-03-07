@@ -34,6 +34,8 @@
     void* _audioRenderer;
     RXRenderState* _cardRenderer;
     
+    NSMutableDictionary* _activeStacks;
+    
     RXGameState* _gameState;
     RXGameState* _gameStateToLoad;
     

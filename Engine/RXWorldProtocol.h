@@ -36,6 +36,9 @@
 
 - (RXGameState*)gameState;
 
+- (RXStack*)activeStackWithKey:(NSString*)stackKey;
+- (RXStack*)loadStackWithKey:(NSString*)stackKey;
+
 - (id)valueForEngineVariable:(NSString*)path;
 - (void)setValue:(id)value forEngineVariable:(NSString*)path;
 

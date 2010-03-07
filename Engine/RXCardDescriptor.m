@@ -8,7 +8,7 @@
 
 #import "Engine/RXCardDescriptor.h"
 
-#import "Engine/RXArchiveManager.h"
+#import "Engine/RXWorldProtocol.h"
 #import "Engine/RXStack.h"
 
 #import "Utilities/integer_pair_hash.h"
@@ -23,7 +23,7 @@ struct _RXCardDescriptorPrimer {
 @implementation RXSimpleCardDescriptor
 
 + (RXSimpleCardDescriptor*)descriptorWithStackName:(NSString*)name rmap:(uint32_t)rmap {
-    RXStack* stack = [[RXArchiveManager sharedArchiveManager] loadStackWithKey:name];
+    RXStack* stack = [g_world loadStackWithKey:name];
     if (!stack)
         return nil;
     return [[[[self class] alloc] initWithStackKey:[stack key] ID:[stack cardIDFromRMAPCode:rmap]] autorelease];

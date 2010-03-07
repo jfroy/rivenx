@@ -76,6 +76,45 @@ NSObject* g_world = nil;
         [[NSUserDefaults standardUserDefaults] setValue:[NSMutableDictionary dictionary] forKey:@"EngineVariables"];
 }
 
+- (void)_initEngineLocations {
+    NSError* error;
+    
+    // world base is the parent directory of the application bundle
+    _worldBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent], kCFURLPOSIXPathStyle, true);
+    
+    // the world user base is a "Riven X" folder inside the user's Documents folder
+    NSString* userBase = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
+    if (!BZFSDirectoryExists(userBase)) {
+        BOOL success = BZFSCreateDirectory(userBase, &error);
+        if (!success)
+            @throw [NSException exceptionWithName:@"RXFilesystemException"
+                                           reason:@"Riven X was unable to create its saved games folder in your Documents folder."
+                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+    }
+    _worldUserBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)userBase, kCFURLPOSIXPathStyle, true);
+    
+    FSRef sharedFolderRef;
+    if (FSFindFolder(kLocalDomain, kSharedUserDataFolderType, kDontCreateFolder, &sharedFolderRef) != noErr) {
+        @throw [NSException exceptionWithName:@"RXFilesystemException"
+                                       reason:@"Riven X was unable to locate your Mac's Shared folder."
+                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+    }
+    
+    NSURL* sharedFolderURL = [(NSURL*)CFURLCreateFromFSRef(kCFAllocatorDefault, &sharedFolderRef) autorelease];
+    assert(sharedFolderURL);
+    
+    // the world shared base is a "Riven X" folder inside the /Users/Shared directory
+    NSString* sharedBase = [[sharedFolderURL path] stringByAppendingPathComponent:@"Riven X"];
+    if (!BZFSDirectoryExists(sharedBase)) {
+        BOOL success = BZFSCreateDirectoryExtended(sharedBase, @"admin", 0775, &error);
+        if (!success)
+            @throw [NSException exceptionWithName:@"RXFilesystemException"
+                                           reason:@"Riven X was unable to create its shared support folder in your Mac's Shared folder."
+                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+    }
+    _worldSharedBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)sharedBase, kCFURLPOSIXPathStyle, true);
+}
+
 - (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context {
     if (context == [_engineVariables objectForKey:@"rendering"]) {
         if ([keyPath isEqualToString:@"volume"])
@@ -131,9 +170,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)_secondStageInit {
-    NSError* error;
-    kern_return_t kerr;
-    
     @try {
         // seed random
         srandom(time(NULL));
@@ -142,43 +178,14 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         _engineVariablesLock = OS_SPINLOCK_INIT;
         [self _initEngineVariables];
         
-        // world base is the parent directory of the application bundle
-        _worldBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent], kCFURLPOSIXPathStyle, true);
+        // initialize engine location URLs (the bases)
+        [self _initEngineLocations];
         
-        // the world user base is a "Riven X" folder inside the user's Documents folder
-        NSString* userBase = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
-        if (!BZFSDirectoryExists(userBase)) {
-            BOOL success = BZFSCreateDirectory(userBase, &error);
-            if (!success)
-                @throw [NSException exceptionWithName:@"RXFilesystemException"
-                                               reason:@"Riven X was unable to create its saved games folder in your Documents folder."
-                                             userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-        }
-        _worldUserBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)userBase, kCFURLPOSIXPathStyle, true);
-        
-        FSRef sharedFolderRef;
-        if (FSFindFolder(kLocalDomain, kSharedUserDataFolderType, kDontCreateFolder, &sharedFolderRef) != noErr) {
-            @throw [NSException exceptionWithName:@"RXFilesystemException"
-                                           reason:@"Riven X was unable to locate your Mac's Shared folder."
-                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-        }
-        
-        NSURL* sharedFolderURL = [(NSURL*)CFURLCreateFromFSRef(kCFAllocatorDefault, &sharedFolderRef) autorelease];
-        assert(sharedFolderURL);
-        
-        // the world shared base is a "Riven X" folder inside the /Users/Shared directory
-        NSString* sharedBase = [[sharedFolderURL path] stringByAppendingPathComponent:@"Riven X"];
-        if (!BZFSDirectoryExists(sharedBase)) {
-            BOOL success = BZFSCreateDirectoryExtended(sharedBase, @"admin", 0775, &error);
-            if (!success)
-                @throw [NSException exceptionWithName:@"RXFilesystemException"
-                                               reason:@"Riven X was unable to create its shared support folder in your Mac's Shared folder."
-                                             userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-        }
-        _worldSharedBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)sharedBase, kCFURLPOSIXPathStyle, true);
+        // the active stacks dictionary maps stack keys (e.g. aspit, etc.) to RXStack objects
+        _activeStacks = [NSMutableDictionary new];
         
         // register for current edition change notifications
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_currentEditionChanged:) name:@"RXCurrentEditionChangedNotification" object:nil];
+//        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_currentEditionChanged:) name:@"RXCurrentEditionChangedNotification" object:nil];
         
         // bootstrap the edition manager
 //        [RXEditionManager sharedEditionManager];
@@ -222,7 +229,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         }
                 
         // the semaphore will be signaled when a thread has setup inter-thread messaging
-        kerr = semaphore_create(mach_task_self(), &_threadInitSemaphore, SYNC_POLICY_FIFO, 0);
+        kern_return_t kerr = semaphore_create(mach_task_self(), &_threadInitSemaphore, SYNC_POLICY_FIFO, 0);
         if (kerr != 0)
             @throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack thread init semaphore." userInfo:nil];
     } @catch (NSException* e) {
@@ -350,6 +357,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     // engine variables
     [_engineVariables release];
     _engineVariables = nil;
+    
+    [_activeStacks release];
+    _activeStacks = nil;
 }
 
 #pragma mark -
@@ -479,6 +489,65 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
 //    [_stateCompositor fadeOutState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedOut:)];
     return YES;
+}
+
+#pragma mark -
+#pragma mark stack management
+
+- (RXStack*)activeStackWithKey:(NSString*)stackKey {
+    return [_activeStacks objectForKey:stackKey];
+}
+
+- (void)_postStackLoadedNotification:(NSString*)stackKey {
+    // WARNING: MUST RUN ON THE MAIN THREAD
+    if (!pthread_main_np()) {
+        [self performSelectorOnMainThread:@selector(_postStackLoadedNotification:) withObject:stackKey waitUntilDone:NO];
+        return;
+    }
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"RXStackDidLoadNotification" object:stackKey userInfo:nil];
+}
+
+- (RXStack*)loadStackWithKey:(NSString*)stackKey {
+    RXStack* stack = [self activeStackWithKey:stackKey];
+    if (stack)
+        return stack;
+    
+    NSError* error;
+        
+    // get the stack descriptor from the current edition
+//    NSDictionary* stack_descriptor = [[g_world stackDescriptors] objectForkKey:stack_key];
+    NSDictionary* stack_descriptor = nil;
+    if (!stack_descriptor || ![stack_descriptor isKindOfClass:[NSDictionary class]])
+        @throw [NSException exceptionWithName:NSInvalidArgumentException
+                                       reason:@"Stack descriptor object is nil or of the wrong type."
+                                     userInfo:stack_descriptor];
+    
+    // initialize the stack
+    stack = [[RXStack alloc] initWithStackDescriptor:stack_descriptor key:stackKey error:&error];
+    if (!stack) {
+        error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+            [error localizedDescription], NSLocalizedDescriptionKey,
+            NSLocalizedStringFromTable(@"REINSTALL_EDITION", @"Editions", "reinstall edition"), NSLocalizedRecoverySuggestionErrorKey,
+            [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
+            [NSApp delegate], NSRecoveryAttempterErrorKey,
+            error, NSUnderlyingErrorKey,
+            nil]];
+        [NSApp performSelectorOnMainThread:@selector(presentError:) withObject:error waitUntilDone:NO];
+        return nil;
+    }
+        
+    // store the new stack in the active stacks dictionary
+    [_activeStacks setObject:stack forKey:stackKey];
+    
+    // give up ownership of the new stack
+    [stack release];
+    
+    // post the stack loaded notification on the main thread
+    [self _postStackLoadedNotification:stackKey];
+    
+    // return the stack
+    return stack;
 }
 
 #pragma mark -

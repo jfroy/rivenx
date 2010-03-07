@@ -45,8 +45,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXArchiveManager, sharedArchiveManager)
     if (!self)
         return nil;
     
-    active_stacks = [NSMutableDictionary new];
-    
     // find the Editions directory
     NSString* editions_directory = [[NSBundle mainBundle] pathForResource:@"Editions" ofType:nil];
     if (!editions_directory)
@@ -90,7 +88,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXArchiveManager, sharedArchiveManager)
 - (void)dealloc {    
     [local_data_store release];
     [patches_directory release];
-    [active_stacks release];
     [extras_archive release];
     
     [super dealloc];
@@ -214,65 +211,6 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 //    return data_archives;
     // FIXME: need to re-implement this w/o editions
     return [NSArray array];
-}
-
-#pragma mark -
-#pragma mark stack management
-
-- (RXStack*)activeStackWithKey:(NSString*)stack_key {
-    return [active_stacks objectForKey:stack_key];
-}
-
-- (void)_postStackLoadedNotification:(NSString*)stack_key {
-    // WARNING: MUST RUN ON THE MAIN THREAD
-    if (!pthread_main_np()) {
-        [self performSelectorOnMainThread:@selector(_postStackLoadedNotification:) withObject:stack_key waitUntilDone:NO];
-        return;
-    }
-    
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"RXStackDidLoadNotification" object:stack_key userInfo:nil];
-}
-
-- (RXStack*)loadStackWithKey:(NSString*)stack_key {
-    RXStack* stack = [self activeStackWithKey:stack_key];
-    if (stack)
-        return stack;
-    
-    NSError* error;
-        
-    // get the stack descriptor from the current edition
-//    NSDictionary* stack_descriptor = [[g_world stackDescriptors] objectForkKey:stack_key];
-    NSDictionary* stack_descriptor = nil;
-    if (!stack_descriptor || ![stack_descriptor isKindOfClass:[NSDictionary class]])
-        @throw [NSException exceptionWithName:NSInvalidArgumentException
-                                       reason:@"Stack descriptor object is nil or of the wrong type."
-                                     userInfo:stack_descriptor];
-    
-    // initialize the stack
-    stack = [[RXStack alloc] initWithStackDescriptor:stack_descriptor key:stack_key error:&error];
-    if (!stack) {
-        error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
-            [error localizedDescription], NSLocalizedDescriptionKey,
-            NSLocalizedStringFromTable(@"REINSTALL_EDITION", @"Editions", "reinstall edition"), NSLocalizedRecoverySuggestionErrorKey,
-            [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
-            [NSApp delegate], NSRecoveryAttempterErrorKey,
-            error, NSUnderlyingErrorKey,
-            nil]];
-        [NSApp performSelectorOnMainThread:@selector(presentError:) withObject:error waitUntilDone:NO];
-        return nil;
-    }
-        
-    // store the new stack in the active stacks dictionary
-    [active_stacks setObject:stack forKey:stack_key];
-    
-    // give up ownership of the new stack
-    [stack release];
-    
-    // post the stack loaded notification on the main thread
-    [self _postStackLoadedNotification:stack_key];
-    
-    // return the stack
-    return stack;
 }
 
 @end

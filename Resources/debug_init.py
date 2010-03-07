@@ -121,7 +121,7 @@ def cmd_missing_externals(*args):
     stacks = None # FIXME: get from world
 
     for stack_key in sorted(stacks):
-        stack = archive_manager.loadStackWithKey_(stack_key)
+        stack = world.loadStackWithKey_(stack_key)
         if not stack:
             continue
         print "missing externals for %s" % stack_key
