@@ -9,6 +9,8 @@
 #import "Application/RXWelcomeWindowController.h"
 
 #import "Engine/RXArchiveManager.h"
+#import "Engine/RXWorld.h"
+
 #import "Utilities/BZFSUtilities.h"
 
 
@@ -111,11 +113,23 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [installer removeObserver:self forKeyPath:@"progress"];
     [installer release];
     
-    // if the edition was installed, make it current
-//    if (didInstall)
-//        [self _makeEditionCurrent:ed];
-    if (!did_install)
-        NSBeep();
+    // if the installation was successful, set a flag in our defaults informing us
+    // that we are installed and kick up the game; otherwise, let the application
+    // handle the error
+    if (did_install) {
+        
+    } else {
+        if ([[error domain] isEqualToString:RXErrorDomain] && [error code] == kRXErrInstallerCancelled) {
+            // delete the shared base directory's content
+            NSString* shared_base = [[(RXWorld*)g_world worldSharedBase] path];
+            NSArray* content = BZFSContentsOfDirectory(shared_base, NULL);
+            NSEnumerator* content_e = [content objectEnumerator];
+            NSString* dir;
+            while ((dir = [content_e nextObject]))
+                BZFSRemoveItemAtURL([NSURL fileURLWithPath:[shared_base stringByAppendingPathComponent:dir]], NULL);
+        } else
+            [NSApp presentError:error];
+    }
 }
 
 - (BOOL)waitForDisc:(NSString*)disc_name ejectingDisc:(NSString*)path error:(NSError**)error {
