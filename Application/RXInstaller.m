@@ -222,9 +222,18 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     }
     
     // finally, check that we have a data and sound archive for every stack
+    RXArchiveManager* am = [RXArchiveManager sharedArchiveManager];
+    size_t n_stacks = sizeof(gStacks) / sizeof(NSString*);
+    for (size_t i = 0; i < n_stacks; ++i) {
+        NSArray* archives = [am dataArchivesForStackKey:gStacks[i] error:error];
+        if ([archives count] == 0)
+            ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesAfterInstall, nil, error);
+        archives = [am soundArchivesForStackKey:gStacks[i] error:error];
+        if ([archives count] == 0)
+            ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesAfterInstall, nil, error);
+    }
     
-    
-    return NO;
+    return YES;
 }
 
 - (BOOL)runWithModalSession:(NSModalSession)session error:(NSError**)error {
