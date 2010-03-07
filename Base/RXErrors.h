@@ -32,8 +32,9 @@ enum {
     kRXErrFailedToCreatePixelFormat,
     
     kRXErrInstallerAlreadyRan,
-    kRXErrInstallerMissingArchives,
+    kRXErrInstallerMissingArchivesOnMedia,
     kRXErrInstallerCancelled,
+    kRXErrInstallerMissingArchivesAfterInstall,
 };
 
 extern NSString* const RXErrorDomain;

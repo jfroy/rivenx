@@ -68,7 +68,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [super dealloc];
 }
 
-- (BOOL)_hasDataArchiveForStackKey:(NSString*)stack_key {
+- (BOOL)_mediaHasDataArchiveForStackKey:(NSString*)stack_key {
     NSString* regex = [NSString stringWithFormat:@"^%C_Data[0-9]?\\.MHK$", [stack_key characterAtIndex:0]];
     NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", regex];
     
@@ -78,7 +78,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return NO;
 }
 
-- (BOOL)_hasSoundArchiveForStackKey:(NSString*)stack_key {
+- (BOOL)_mediaHasSoundArchiveForStackKey:(NSString*)stack_key {
     NSString* regex = [NSString stringWithFormat:@"^%C_Sounds[0-9]?\\.MHK$", [stack_key characterAtIndex:0]];
     NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", regex];
     
@@ -161,6 +161,9 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     if (extrasPath)
         [archive_paths addObject:extrasPath];
+    
+    if ([archive_paths count] == 0)
+        ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesOnMedia, nil, error);
     
     [archive_paths sortUsingFunction:string_numeric_insensitive_sort context:NULL];
     
@@ -245,7 +248,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     BOOL cd_install = NO;
     size_t n_stacks = sizeof(gStacks) / sizeof(NSString*);
     for (size_t i = 0; i < n_stacks; ++i) {
-        if (![self _hasDataArchiveForStackKey:gStacks[i]]) {
+        if (![self _mediaHasDataArchiveForStackKey:gStacks[i]]) {
             cd_install = YES;
             break;
         }
@@ -266,8 +269,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         // we need to have a sound archive for every stack
         // NOTE: it is implied if we are here that we have a data archive for every stack
         for (size_t i = 0; i < n_stacks; ++i) {
-            if (![self _hasSoundArchiveForStackKey:gStacks[i]])
-                ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchives, nil, error);
+            if (![self _mediaHasSoundArchiveForStackKey:gStacks[i]])
+                ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesOnMedia, nil, error);
         }
     }
     
