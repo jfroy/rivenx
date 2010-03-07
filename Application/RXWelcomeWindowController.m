@@ -68,7 +68,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     }
 }
 
-- (void)_initializeInstallationUI:(RXEditionInstaller*)installer {
+- (void)_initializeInstallationUI:(RXInstaller*)installer {
     [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Editions", NULL)];
     [_installingStatusField setStringValue:@""];
     [_installingProgress setMinValue:0.0];
@@ -81,7 +81,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 
 - (void)_runInstallerWithMountPaths:(NSDictionary*)mount_paths {
     // create an installer
-    installer = [[RXEditionInstaller alloc] initWithMountPaths:mount_paths mediaProvider:self];
+    installer = [[RXInstaller alloc] initWithMountPaths:mount_paths mediaProvider:self];
     
     // setup the basic installation UI
     [self _initializeInstallationUI:installer];

@@ -6,7 +6,7 @@
 //  Copyright 2008 MacStorm. All rights reserved.
 //
 
-#import "Application/RXEditionInstaller.h"
+#import "Application/RXInstaller.h"
 
 #import "Engine/RXWorld.h"
 #import "Engine/RXArchiveManager.h"
@@ -30,7 +30,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return [(NSString*)lhs compare:rhs options:NSCaseInsensitiveSearch | NSNumericSearch];
 }
 
-@implementation RXEditionInstaller
+@implementation RXInstaller
 
 - (id)initWithMountPaths:(NSDictionary*)mount_paths mediaProvider:(id <RXInstallerMediaProviderProtocol>)mp {
     self = [super init];

@@ -13,7 +13,7 @@
 - (BOOL)waitForDisc:(NSString*)disc_name ejectingDisc:(NSString*)path error:(NSError**)error;
 @end
 
-@interface RXEditionInstaller : NSObject {
+@interface RXInstaller : NSObject {
     double progress;
     CFTimeInterval remainingTime;
     NSString* item;

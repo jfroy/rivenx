@@ -189,7 +189,7 @@
 		31B741C10B8414EA00D1A247 /* Cyan Worlds.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 31B741C00B8414EA00D1A247 /* Cyan Worlds.mp4 */; };
 		31BC739F09A57D4E001EC1E0 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
 		31C3572A0D92A72400EDEF81 /* RXSound_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31C357290D92A72400EDEF81 /* RXSound_test.mm */; };
-		31C545530D5D50620024B486 /* RXEditionInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 31C545520D5D50620024B486 /* RXEditionInstaller.m */; };
+		31C545530D5D50620024B486 /* RXInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 31C545520D5D50620024B486 /* RXInstaller.m */; };
 		31CE92961033D576008B7717 /* RXInterpolator.m in Sources */ = {isa = PBXBuildFile; fileRef = 31CE92951033D576008B7717 /* RXInterpolator.m */; };
 		31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9A0DBC07A700E970E1 /* MainMenu.xib */; };
 		31D21B9F0DBC07C300E970E1 /* DebugConsole.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */; };
@@ -533,8 +533,8 @@
 		31C3571C0D92A6A700EDEF81 /* UnitTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnitTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
 		31C357280D92A72400EDEF81 /* RXSound_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXSound_test.h; sourceTree = "<group>"; };
 		31C357290D92A72400EDEF81 /* RXSound_test.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXSound_test.mm; sourceTree = "<group>"; };
-		31C545510D5D50620024B486 /* RXEditionInstaller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXEditionInstaller.h; sourceTree = "<group>"; };
-		31C545520D5D50620024B486 /* RXEditionInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXEditionInstaller.m; sourceTree = "<group>"; };
+		31C545510D5D50620024B486 /* RXInstaller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXInstaller.h; sourceTree = "<group>"; };
+		31C545520D5D50620024B486 /* RXInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXInstaller.m; sourceTree = "<group>"; };
 		31CE92941033D576008B7717 /* RXInterpolator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXInterpolator.h; sourceTree = "<group>"; };
 		31CE92951033D576008B7717 /* RXInterpolator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXInterpolator.m; sourceTree = "<group>"; };
 		31D21B980DBC078E00E970E1 /* VariableEditor.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = VariableEditor.xib; sourceTree = "<group>"; };
@@ -940,8 +940,8 @@
 			children = (
 				315547E008C4C44F00A2AA7A /* RXApplicationDelegate.h */,
 				315547E108C4C44F00A2AA7A /* RXApplicationDelegate.m */,
-				31C545510D5D50620024B486 /* RXEditionInstaller.h */,
-				31C545520D5D50620024B486 /* RXEditionInstaller.m */,
+				31C545510D5D50620024B486 /* RXInstaller.h */,
+				31C545520D5D50620024B486 /* RXInstaller.m */,
 				3185C4710E06046D00528220 /* RXVersionComparator.h */,
 				3185C4720E06046D00528220 /* RXVersionComparator.m */,
 				31E933481127B0CE00188488 /* RXWelcomeWindowController.h */,
@@ -1662,7 +1662,7 @@
 				311400080D58F0230099AF69 /* GTMSystemVersion.m in Sources */,
 				311400640D58F5CA0099AF69 /* RXEditionProxy.m in Sources */,
 				3133D9AF0D5CDDC1004DAD5E /* BZFSOperation.m in Sources */,
-				31C545530D5D50620024B486 /* RXEditionInstaller.m in Sources */,
+				31C545530D5D50620024B486 /* RXInstaller.m in Sources */,
 				3105EC330D74844900609273 /* RXLogCenter.m in Sources */,
 				3105EC610D74922500609273 /* RXLogging.m in Sources */,
 				3196B9360D945CC100BC818E /* RXTiming.c in Sources */,

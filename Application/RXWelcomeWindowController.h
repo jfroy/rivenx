@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "Application/RXEditionInstaller.h"
+#import "Application/RXInstaller.h"
 
 
 @interface RXWelcomeWindowController : NSWindowController <RXInstallerMediaProviderProtocol> {
@@ -19,7 +19,7 @@
     
     NSThread* scanningThread;
     
-    RXEditionInstaller* installer;
+    RXInstaller* installer;
     NSModalSession installerSession;
     NSString* waitedOnDisc;
 }
