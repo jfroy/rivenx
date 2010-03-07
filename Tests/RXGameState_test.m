@@ -10,7 +10,7 @@
 
 #import "BZFSUtilities.h"
 
-#import "RXEditionManager.h"
+#import "RXArchiveManager.h"
 
 
 @implementation RXGameState_test
@@ -20,7 +20,7 @@
     [NSClassFromString(@"RXWorld") performSelector:@selector(sharedWorld)];
     
     // hopefully we have at least one edition object...
-    RXEdition* someEdition = [[[[RXEditionManager sharedEditionManager] valueForKey:@"editions"] allValues] objectAtIndex:0];
+    RXEdition* someEdition = [[[[RXArchiveManager sharedArchiveManager] valueForKey:@"editions"] allValues] objectAtIndex:0];
     gameState = [[RXGameState alloc] initWithEdition:someEdition];
 }
 

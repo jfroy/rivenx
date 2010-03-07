@@ -19,7 +19,6 @@
 
 #import "Engine/RXWorld.h"
 #import "Engine/RXCursors.h"
-#import "Engine/RXEditionManager.h"
 
 #import "Utilities/GTMObjectSingleton.h"
 #import "Utilities/BZFSUtilities.h"
@@ -252,13 +251,13 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)_setInitialCard:(NSNotification*)notification {
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXStackDidLoadNotification" object:nil];
-#if defined(DEBUG)
-    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
-#endif
-    [(RXCardState*)_cardRenderer setActiveCardWithStack:@"aspit"
-                                                     ID:[[[RXEditionManager sharedEditionManager] activeStackWithKey:@"aspit"] entryCardID]
-                                          waitUntilDone:NO];
+//    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXStackDidLoadNotification" object:nil];
+//#if defined(DEBUG)
+//    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
+//#endif
+//    [(RXCardState*)_cardRenderer setActiveCardWithStack:@"aspit"
+//                                                     ID:[[[RXEditionManager sharedEditionManager] activeStackWithKey:@"aspit"] entryCardID]
+//                                          waitUntilDone:NO];
 }
 
 - (void)_currentEditionChanged:(NSNotification*)notification {

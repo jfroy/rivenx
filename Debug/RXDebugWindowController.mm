@@ -11,7 +11,6 @@
 #import "Debug/RXDebugWindowController.h"
 
 #import "Engine/RXWorldProtocol.h"
-#import "Engine/RXEditionManager.h"
 #import "Engine/RXScriptCompiler.h"
 #import "Engine/RXScriptCommandAliases.h"
 #import "Engine/RXScriptDecoding.h"
@@ -279,7 +278,8 @@ static PyMethodDef rivenx_methods[] = {
         return;
     }
     
-    RXStack* jspit = [[RXEditionManager sharedEditionManager] activeStackWithKey:@"jspit"];
+//    RXStack* jspit = [[RXEditionManager sharedEditionManager] activeStackWithKey:@"jspit"];
+    RXStack* jspit = nil; // FIXME: get from RXWorld
     RXCardDescriptor* d = [RXCardDescriptor descriptorWithStack:jspit ID:_trip];
     while (!d) {
         _trip++;

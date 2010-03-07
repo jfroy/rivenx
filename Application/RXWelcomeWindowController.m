@@ -8,7 +8,7 @@
 
 #import "Application/RXWelcomeWindowController.h"
 
-#import "Engine/RXEditionManager.h"
+#import "Engine/RXArchiveManager.h"
 #import "Utilities/BZFSUtilities.h"
 
 
@@ -209,7 +209,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         return NO;
     
     // check for the usual suspects
-    NSArray* data_archives = [[BZFSContentsOfDirectory(data_path, &error) filteredArrayUsingPredicate:[RXEditionManager dataArchiveFilenamePredicate]]
+    NSArray* data_archives = [[BZFSContentsOfDirectory(data_path, &error) filteredArrayUsingPredicate:[RXArchiveManager dataArchiveFilenamePredicate]]
                               sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
     if ([data_archives count] == 0)
         return NO;
@@ -217,7 +217,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // if there is an Assets1 directory, it must contain sound archives
     NSArray* assets_archives = nil;
     if (assets_path) {
-        assets_archives = [[BZFSContentsOfDirectory(assets_path, &error) filteredArrayUsingPredicate:[RXEditionManager soundsArchiveFilenamePredicate]]
+        assets_archives = [[BZFSContentsOfDirectory(assets_path, &error) filteredArrayUsingPredicate:[RXArchiveManager soundsArchiveFilenamePredicate]]
                            sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
         if ([assets_archives count] == 0)
             return NO;
@@ -226,7 +226,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // if there is an All directory, it will contain data archives
     NSArray* all_archives = nil;
     if (all_path) {
-        all_archives = [[BZFSContentsOfDirectory(all_path, &error) filteredArrayUsingPredicate:[RXEditionManager dataArchiveFilenamePredicate]]
+        all_archives = [[BZFSContentsOfDirectory(all_path, &error) filteredArrayUsingPredicate:[RXArchiveManager dataArchiveFilenamePredicate]]
                         sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
         if ([all_archives count] == 0)
             return NO;

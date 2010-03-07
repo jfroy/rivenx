@@ -15,7 +15,7 @@
 #import "Engine/RXWorldProtocol.h"
 #import "Engine/RXHardwareProfiler.h"
 #import "Engine/RXHotspot.h"
-#import "Engine/RXEditionManager.h"
+#import "Engine/RXArchiveManager.h"
 
 #import "Rendering/Audio/RXCardAudioSource.h"
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
@@ -374,7 +374,7 @@ init_failure:
 // inventory textures and interpolators
     
     // get a reference to the extra bitmaps archive, and get the inventory texture descriptors
-    MHKArchive* extras_archive = [[RXEditionManager sharedEditionManager] extrasArchive:&error];
+    MHKArchive* extras_archive = [[RXArchiveManager sharedArchiveManager] extrasArchive:&error];
     if (!extras_archive) {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to get the Extras archive: %@", [error localizedDescription]);
         return;
@@ -1349,7 +1349,7 @@ init_failure:
     // if we're switching to a different card, create it
     if (new_card == nil) {
         // if we don't have the stack, bail
-        RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:scd->stackKey];
+        RXStack* stack = [[RXArchiveManager sharedArchiveManager] loadStackWithKey:scd->stackKey];
         if (!stack) {
 #if defined(DEBUG)
             RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug,
@@ -1892,7 +1892,7 @@ init_failure:
         _credits_texture_buffer = malloc(360 * 784 * 4);
         
         // create the credits texture and load the first credits picture in it
-        MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive:NULL];
+        MHKArchive* archive = [[RXArchiveManager sharedArchiveManager] extrasArchive:NULL];
         [archive loadBitmapWithID:302
                            buffer:_credits_texture_buffer
                            format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
@@ -1971,7 +1971,7 @@ init_failure:
             // next: load 303 and fade-in
             
             // load 303
-            MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive:NULL];
+            MHKArchive* archive = [[RXArchiveManager sharedArchiveManager] extrasArchive:NULL];
             [archive loadBitmapWithID:303
                                buffer:_credits_texture_buffer
                                format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
@@ -1997,7 +1997,7 @@ init_failure:
             // next: load 304 and 305 and beging scrolling credits
             
             // load 304 and 305
-            MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive:NULL];
+            MHKArchive* archive = [[RXArchiveManager sharedArchiveManager] extrasArchive:NULL];
             [archive loadBitmapWithID:304
                                buffer:_credits_texture_buffer
                                format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
@@ -2030,7 +2030,7 @@ init_failure:
             
             // load the new bottom page
             if (_credits_state < 22) {
-                MHKArchive* archive = [[RXEditionManager sharedEditionManager] extrasArchive:NULL];
+                MHKArchive* archive = [[RXArchiveManager sharedArchiveManager] extrasArchive:NULL];
                 [archive loadBitmapWithID:299 + _credits_state
                                    buffer:BUFFER_OFFSET(_credits_texture_buffer, 360 * 392 * 4)
                                    format:MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
@@ -2059,7 +2059,7 @@ init_failure:
         if (_credits_state == 24) {
             // FIXME: hook up the new document action and use that instead
             [self setActiveCardWithStack:@"aspit"
-                                      ID:[[[RXEditionManager sharedEditionManager] activeStackWithKey:@"aspit"] entryCardID]
+                                      ID:[[[RXArchiveManager sharedArchiveManager] activeStackWithKey:@"aspit"] entryCardID]
                            waitUntilDone:NO];
             
             // show the mouse cursor again
@@ -2886,7 +2886,7 @@ exit_flush_tasks:
                                        reason:@"OUT OF BOUNDS INVENTORY INDEX"
                                      userInfo:nil];
     
-    RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:@"aspit"];
+    RXStack* stack = [[RXArchiveManager sharedArchiveManager] loadStackWithKey:@"aspit"];
     if (!stack) {
 #if defined(DEBUG)
         RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"aborting _handleInventoryMouseDown because stack aspit could not be loaded");

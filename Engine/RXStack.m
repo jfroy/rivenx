@@ -12,7 +12,7 @@
 #import "RXCardDescriptor.h"
 
 #import "RXWorldProtocol.h"
-#import "RXEditionManager.h"
+#import "RXArchiveManager.h"
 
 static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID) {
     NSData* nameData = [archive dataWithResourceType:@"NAME" ID:resourceID];
@@ -86,11 +86,11 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     _dataArchives = [[NSMutableArray alloc] initWithCapacity:3];
     _soundArchives = [[NSMutableArray alloc] initWithCapacity:1];
     
-    // get the edition manager
-    RXEditionManager* sem = [RXEditionManager sharedEditionManager];
+    // get the archive manager
+    RXArchiveManager* sam = [RXArchiveManager sharedArchiveManager];
     
     // load up any patch archives first
-    NSArray* archives = [sem dataPatchArchivesForStackKey:_key error:error];
+    NSArray* archives = [sam dataPatchArchivesForStackKey:_key error:error];
     if (!archives) {
         [self release];
         return nil;
@@ -98,7 +98,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     [_dataArchives addObjectsFromArray:archives];
     
     // load the data archives
-    archives = [sem dataArchivesForStackKey:_key error:error];
+    archives = [sam dataArchivesForStackKey:_key error:error];
     if (!archives || [archives count] == 0) {
         [self release];
         return nil;
@@ -109,7 +109,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 #endif
     
     // load the sound archives
-    archives = [sem soundArchivesForStackKey:_key error:error];
+    archives = [sam soundArchivesForStackKey:_key error:error];
     if (!archives || [archives count] == 0) {
         [self release];
         return nil;

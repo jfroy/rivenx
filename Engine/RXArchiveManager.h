@@ -1,5 +1,5 @@
 //
-//  RXEditionManager.h
+//  RXArchiveManager.h
 //  rivenx
 //
 //  Created by Jean-Francois Roy on 02/02/2008.
@@ -12,7 +12,7 @@
 #import "Engine/RXStack.h"
 
 
-@interface RXEditionManager : NSObject {
+@interface RXArchiveManager : NSObject {
     NSString* patches_directory;
     
     NSMutableDictionary* active_stacks;
@@ -21,7 +21,7 @@
     NSString* local_data_store;
 }
 
-+ (RXEditionManager*)sharedEditionManager;
++ (RXArchiveManager*)sharedArchiveManager;
 
 + (NSPredicate*)dataArchiveFilenamePredicate;
 + (NSPredicate*)soundsArchiveFilenamePredicate;

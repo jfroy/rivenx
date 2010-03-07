@@ -37,18 +37,18 @@ debug = objc.lookUpClass('RXDebugWindowController').globalDebugWindowController(
 world = None
 renderer = None
 engine = None
-edition_manager = None
+archive_manager = None
 
 load_notification_handler = None
 
 def _load_globals():
-    global world, renderer, engine, edition_manager, load_notification_handler
+    global world, renderer, engine, archive_manager, load_notification_handler
     world = objc.lookUpClass('RXWorld').sharedWorld()
     if world:
         renderer = world.cardRenderer()
     if renderer:
         engine = renderer.scriptEngine()
-    edition_manager = objc.lookUpClass('RXEditionManager').sharedEditionManager()
+    archive_manager = objc.lookUpClass('RXArchiveManager').sharedArchiveManager()
 
     if load_notification_handler:
         del load_notification_handler
@@ -118,11 +118,10 @@ def _find_missing_externals(card):
     return frozenset(a for a in externals if not hasattr(engine, '_external_' + a + '_arguments_'))
 
 def cmd_missing_externals(*args):
-    edition = edition_manager.currentEdition()
-    stacks = edition.valueForKey_("stackDescriptors").allKeys()
+    stacks = None # FIXME: get from world
 
     for stack_key in sorted(stacks):
-        stack = edition_manager.loadStackWithKey_(stack_key)
+        stack = archive_manager.loadStackWithKey_(stack_key)
         if not stack:
             continue
         print "missing externals for %s" % stack_key

@@ -1,5 +1,5 @@
 //
-//  RXEditionManager.m
+//  RXArchiveManager.m
 //  rivenx
 //
 //  Created by Jean-Francois Roy on 02/02/2008.
@@ -8,16 +8,16 @@
 
 #import <Carbon/Carbon.h>
 
-#import "Engine/RXEditionManager.h"
+#import "Engine/RXArchiveManager.h"
 #import "Engine/RXWorld.h"
 
 #import "Utilities/BZFSUtilities.h"
 #import "Utilities/GTMObjectSingleton.h"
 
 
-@implementation RXEditionManager
+@implementation RXArchiveManager
 
-GTMOBJECT_SINGLETON_BOILERPLATE(RXEditionManager, sharedEditionManager)
+GTMOBJECT_SINGLETON_BOILERPLATE(RXArchiveManager, sharedArchiveManager)
 
 + (NSPredicate*)dataArchiveFilenamePredicate {
     static NSPredicate* predicate = nil;

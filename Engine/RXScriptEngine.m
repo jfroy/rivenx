@@ -23,7 +23,7 @@
 #import "Engine/RXScriptEngine.h"
 #import "Engine/RXScriptCommandAliases.h"
 #import "Engine/RXWorldProtocol.h"
-#import "Engine/RXEditionManager.h"
+#import "Engine/RXArchiveManager.h"
 #import "Engine/RXCursors.h"
 
 #import "Rendering/Graphics/RXTextureBroker.h"
@@ -1664,7 +1664,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // get the stack for the given stack key
     NSString* k = [[[_card descriptor] parent] stackNameAtIndex:argv[0]];
-    RXStack* stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:k];
+    RXStack* stack = [[RXArchiveManager sharedArchiveManager] loadStackWithKey:k];
     assert(stack);
     
     uint32_t card_rmap = (argv[1] << 16) | argv[2];
@@ -2302,10 +2302,10 @@ DEFINE_COMMAND(xatrapbookclose) {
     uint32_t card_rmap;
     if ([return_card->stackKey isEqualToString:@"rspit"]) {
         card_rmap = 13112;
-        stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:@"rspit"];
+        stack = [[RXArchiveManager sharedArchiveManager] loadStackWithKey:@"rspit"];
     } else {
         card_rmap = 17581;
-        stack = [[RXEditionManager sharedEditionManager] loadStackWithKey:@"ospit"];
+        stack = [[RXArchiveManager sharedArchiveManager] loadStackWithKey:@"ospit"];
     }
     
     [return_card release];
@@ -3817,7 +3817,7 @@ DEFINE_COMMAND(xt7800_setup) {
     
     NSRect display_rect = RXMakeCompositeDisplayRectFromCoreRect(hotspot_rect);
     [self _drawPictureWithID:bitmap_id
-                     archive:[[RXEditionManager sharedEditionManager] extrasArchive:NULL]
+                     archive:[[RXArchiveManager sharedArchiveManager] extrasArchive:NULL]
                  displayRect:display_rect
                 samplingRect:NSMakeRect(0.0f, 0.0f, 0.0f, 0.0f)];
 }

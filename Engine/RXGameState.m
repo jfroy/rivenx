@@ -7,7 +7,6 @@
 //
 
 #import "Engine/RXGameState.h"
-#import "Engine/RXEditionManager.h"
 
 
 static const int RX_GAME_STATE_CURRENT_VERSION = 3;

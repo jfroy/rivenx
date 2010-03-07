@@ -15,8 +15,6 @@
 #import "Engine/RXCursors.h"
 #import "Engine/RXScriptDecoding.h"
 #import "Engine/RXScriptCommandAliases.h"
-#import "Engine/RXEdition.h"
-#import "Engine/RXEditionManager.h"
 #import "Engine/RXScriptCompiler.h"
 
 #import "Rendering/Graphics/RXMovieProxy.h"
@@ -138,11 +136,12 @@
     
     // get the current edition
 //    RXEdition* ce = [[RXEditionManager sharedEditionManager] currentEdition];
-    RXEdition* ce = nil;
     
     // WORKAROUND: there is a legitimate bug in the CD edition's tspit 155 open card program;
+    // FIXME: need a new "is CD edition" check
     // it executes activate SLST record 2 command after the introduction sequence, which is the mute SLST; patch it up to activate SLST 1
-    if ([_descriptor isCardWithRMAP:28314 stackName:@"tspit"] && [[ce valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
+//    if ([_descriptor isCardWithRMAP:28314 stackName:@"tspit"] && [[ce valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
+    if ([_descriptor isCardWithRMAP:28314 stackName:@"tspit"]) {
         NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndex:0];
         RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:start_rendering_program];
         NSMutableArray* dp = [comp decompiledScript];
