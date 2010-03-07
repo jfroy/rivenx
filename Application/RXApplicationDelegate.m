@@ -108,6 +108,11 @@
                 [NSApp terminate:self];
                 break;
             
+            // installer errors are not fatal, we just want to display them
+            case kRXErrInstallerMissingArchivesAfterInstall:
+            case kRXErrInstallerMissingArchivesOnMedia:
+                break;
+            
             // fatal errors
             case kRXErrFailedToCreatePixelFormat:
                 [NSApp terminate:self];
