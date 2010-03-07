@@ -19,6 +19,19 @@
 
 GTMOBJECT_SINGLETON_BOILERPLATE(RXArchiveManager, sharedArchiveManager)
 
++ (NSPredicate*)anyArchiveFilenamePredicate {
+    static NSPredicate* predicate = nil;
+    if (!predicate)
+        predicate = [[NSCompoundPredicate orPredicateWithSubpredicates:
+                      [NSArray arrayWithObjects:
+                       [self dataArchiveFilenamePredicate],
+                       [self soundsArchiveFilenamePredicate],
+                       [self extrasArchiveFilenamePredicate],
+                       nil]]
+                     retain];
+    return predicate;
+}
+
 + (NSPredicate*)dataArchiveFilenamePredicate {
     static NSPredicate* predicate = nil;
     if (!predicate)

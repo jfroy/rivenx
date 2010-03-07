@@ -20,6 +20,7 @@
 
 + (RXArchiveManager*)sharedArchiveManager;
 
++ (NSPredicate*)anyArchiveFilenamePredicate;
 + (NSPredicate*)dataArchiveFilenamePredicate;
 + (NSPredicate*)soundsArchiveFilenamePredicate;
 + (NSPredicate*)extrasArchiveFilenamePredicate;
