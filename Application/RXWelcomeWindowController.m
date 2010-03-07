@@ -223,7 +223,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         return NO;
     
     // check for the usual suspects
-    NSArray* data_archives = [[BZFSContentsOfDirectory(data_path, &error) filteredArrayUsingPredicate:[RXArchiveManager dataArchiveFilenamePredicate]]
+    NSArray* data_archives = [[BZFSContentsOfDirectory(data_path, &error) filteredArrayUsingPredicate:[RXArchiveManager anyArchiveFilenamePredicate]]
                               sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
     if ([data_archives count] == 0)
         return NO;
@@ -237,10 +237,10 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
             return NO;
     }
     
-    // if there is an All directory, it will contain data archives
+    // if there is an All directory, it will contain archives for aspit
     NSArray* all_archives = nil;
     if (all_path) {
-        all_archives = [[BZFSContentsOfDirectory(all_path, &error) filteredArrayUsingPredicate:[RXArchiveManager dataArchiveFilenamePredicate]]
+        all_archives = [[BZFSContentsOfDirectory(all_path, &error) filteredArrayUsingPredicate:[RXArchiveManager anyArchiveFilenamePredicate]]
                         sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
         if ([all_archives count] == 0)
             return NO;
