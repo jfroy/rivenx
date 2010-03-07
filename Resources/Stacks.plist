@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>tspit</key>
+	<dict>
+		<key>Entry</key>
+		<integer>1</integer>
+		<key>ID</key>
+		<integer>4</integer>
+	</dict>
+	<key>rspit</key>
+	<dict>
+		<key>Entry</key>
+		<integer>3</integer>
+		<key>ID</key>
+		<integer>3</integer>
+	</dict>
+	<key>pspit</key>
+	<dict>
+		<key>Entry</key>
+		<integer>12</integer>
+		<key>ID</key>
+		<integer>2</integer>
+	</dict>
+	<key>ospit</key>
+	<dict>
+		<key>Entry</key>
+		<integer>1</integer>
+		<key>ID</key>
+		<integer>1</integer>
+	</dict>
+	<key>jspit</key>
+	<dict>
+		<key>Entry</key>
+		<integer>1</integer>
+		<key>ID</key>
+		<integer>7</integer>
+	</dict>
+	<key>gspit</key>
+	<dict>
+		<key>Entry</key>
+		<integer>1</integer>
+		<key>ID</key>
+		<integer>6</integer>
+	</dict>
+	<key>bspit</key>
+	<dict>
+		<key>Entry</key>
+		<integer>1</integer>
+		<key>ID</key>
+		<integer>5</integer>
+	</dict>
+	<key>aspit</key>
+	<dict>
+		<key>Entry</key>
+		<integer>1</integer>
+		<key>ID</key>
+		<integer>8</integer>
+	</dict>
+</dict>
+</plist>
