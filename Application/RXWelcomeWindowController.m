@@ -77,7 +77,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [_installingProgress setMaxValue:1.0];
     [_installingProgress setDoubleValue:0.0];
     [_installingProgress setIndeterminate:YES];
-//    [_installingProgress setUsesThreadedAnimation:YES];
+    [_installingProgress setUsesThreadedAnimation:YES];
     [_installingProgress startAnimation:self];
 }
 
