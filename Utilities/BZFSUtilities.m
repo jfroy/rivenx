@@ -136,7 +136,9 @@ BOOL BZFSSetAttributesOfItemAtPath(NSString* path, NSDictionary* attributes, NSE
 BOOL BZFSRemoveItemAtURL(NSURL* url, NSError** error) {
     BOOL success;
     NSFileManager* fm = [NSFileManager defaultManager];
-    if ([fm respondsToSelector:@selector(removeItemAtPath:error:)])
+    if ([fm respondsToSelector:@selector(removeItemAtURL:error:)])
+        success = [fm removeItemAtURL:url error:error];
+    else if ([fm respondsToSelector:@selector(removeItemAtPath:error:)])
         success = [fm removeItemAtPath:[url path] error:error];
     else {
         success = [fm removeFileAtPath:[url path] handler:nil];
