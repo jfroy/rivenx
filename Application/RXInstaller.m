@@ -149,18 +149,31 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 - (BOOL)_runSingleDiscInstall:(NSError**)error {    
     // build a mega-array of all the archives we need to copy
     NSMutableArray* archive_paths = [NSMutableArray array];
+    NSMutableSet* archive_names = [NSMutableSet set];
     
     NSEnumerator* e = [dataArchives objectEnumerator];
     NSString* archive;
-    while ((archive = [e nextObject]))
-        [archive_paths addObject:[dataPath stringByAppendingPathComponent:archive]];
+    while ((archive = [e nextObject])) {
+        if (![archive_names containsObject:archive]) {
+            [archive_paths addObject:[dataPath stringByAppendingPathComponent:archive]];
+            [archive_names addObject:archive];
+        }
+    }
     
     e = [assetsArchives objectEnumerator];
-    while ((archive = [e nextObject]))
-        [archive_paths addObject:[assetsPath stringByAppendingPathComponent:archive]];
+    while ((archive = [e nextObject])) {
+        if (![archive_names containsObject:archive]) {
+            [archive_paths addObject:[assetsPath stringByAppendingPathComponent:archive]];
+            [archive_names addObject:archive];
+        }
+    }
     
-    if (extrasPath)
-        [archive_paths addObject:extrasPath];
+    if (extrasPath) {
+        if (![archive_names containsObject:[extrasPath lastPathComponent]]) {
+            [archive_paths addObject:extrasPath];
+            [archive_names addObject:[extrasPath lastPathComponent]];
+        }
+    }
     
     if ([archive_paths count] == 0)
         ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesOnMedia, nil, error);
