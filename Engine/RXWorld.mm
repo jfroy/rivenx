@@ -193,7 +193,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         // load Extras.plist
         _extrasDescriptor = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"plist"]];
         if (!_extrasDescriptor)
-            @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Extras.plist." userInfo:nil];
+            @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Failed to load Extras.plist." userInfo:nil];
         
         /*  Notes on Extras.MHK
             *
@@ -202,10 +202,15 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
             *  The credits are 302 and 303 for the standalones, then 304 to 320 for the scrolling composite
         */
         
+        // load Stacks.plist
+        _stackDescriptors = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Stacks" ofType:@"plist"]];
+        if (!_stackDescriptors)
+            @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Failed to load Stacks.plist." userInfo:nil];
+        
         // load cursors metadata
         NSDictionary* cursorMetadata = [NSDictionary dictionaryWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Cursors" ofType:@"plist"]];
         if (!cursorMetadata)
-            @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Unable to find Cursors.plist." userInfo:nil];
+            @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Failed to load Cursors.plist." userInfo:nil];
         
         // load cursors
         _cursors = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 20);
@@ -258,13 +263,13 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)_setInitialCard:(NSNotification*)notification {
-//    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXStackDidLoadNotification" object:nil];
-//#if defined(DEBUG)
-//    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
-//#endif
-//    [(RXCardState*)_cardRenderer setActiveCardWithStack:@"aspit"
-//                                                     ID:[[[RXEditionManager sharedEditionManager] activeStackWithKey:@"aspit"] entryCardID]
-//                                          waitUntilDone:NO];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXStackDidLoadNotification" object:nil];
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
+#endif
+    [(RXCardState*)_cardRenderer setActiveCardWithStack:@"aspit"
+                                                     ID:[[self activeStackWithKey:@"aspit"] entryCardID]
+                                          waitUntilDone:NO];
 }
 
 - (void)_currentEditionChanged:(NSNotification*)notification {
@@ -494,6 +499,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 #pragma mark -
 #pragma mark stack management
 
+- (NSDictionary*)stackDescriptorForKey:(NSString*)stackKey {
+    return [_stackDescriptors objectForKey:stackKey];
+}
+
 - (RXStack*)activeStackWithKey:(NSString*)stackKey {
     return [_activeStacks objectForKey:stackKey];
 }
@@ -513,18 +522,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     if (stack)
         return stack;
     
-    NSError* error;
-        
-    // get the stack descriptor from the current edition
-//    NSDictionary* stack_descriptor = [[g_world stackDescriptors] objectForkKey:stack_key];
-    NSDictionary* stack_descriptor = nil;
-    if (!stack_descriptor || ![stack_descriptor isKindOfClass:[NSDictionary class]])
-        @throw [NSException exceptionWithName:NSInvalidArgumentException
-                                       reason:@"Stack descriptor object is nil or of the wrong type."
-                                     userInfo:stack_descriptor];
-    
     // initialize the stack
-    stack = [[RXStack alloc] initWithStackDescriptor:stack_descriptor key:stackKey error:&error];
+    NSError* error;
+    stack = [[RXStack alloc] initWithKey:stackKey error:&error];
     if (!stack) {
         error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
             [error localizedDescription], NSLocalizedDescriptionKey,
@@ -536,7 +536,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         [NSApp performSelectorOnMainThread:@selector(presentError:) withObject:error waitUntilDone:NO];
         return nil;
     }
-        
+    
     // store the new stack in the active stacks dictionary
     [_activeStacks setObject:stack forKey:stackKey];
     

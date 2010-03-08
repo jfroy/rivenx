@@ -66,27 +66,24 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return nil;
 }
 
-- (id)initWithStackDescriptor:(NSDictionary*)descriptor key:(NSString*)key error:(NSError**)error {
+- (id)initWithKey:(NSString*)key error:(NSError**)error {
+    if (!key)
+        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Key string cannot be nil." userInfo:nil];
+    
     self = [super init];
     if (!self)
         return nil;
     
-    // check that we have a descriptor object
+    NSDictionary* descriptor = [g_world stackDescriptorForKey:key];
     if (!descriptor)
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Descriptor dictionary cannot be nil." userInfo:nil];
+        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:[NSString stringWithFormat:@"No stack descriptor for stack key %@.", key] userInfo:nil];
     
     _entryCardID = [[descriptor objectForKey:@"Entry"] unsignedShortValue];
-    
-    // check that we have a key object
-    if (!key)
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Key string cannot be nil." userInfo:nil];
     _key = [key copy];
     
-    // allocate the archives arrays
     _dataArchives = [[NSMutableArray alloc] initWithCapacity:3];
     _soundArchives = [[NSMutableArray alloc] initWithCapacity:1];
     
-    // get the archive manager
     RXArchiveManager* sam = [RXArchiveManager sharedArchiveManager];
     
     // load up any patch archives first

@@ -36,6 +36,7 @@
 
 - (RXGameState*)gameState;
 
+- (NSDictionary*)stackDescriptorForKey:(NSString*)stackKey;
 - (RXStack*)activeStackWithKey:(NSString*)stackKey;
 - (RXStack*)loadStackWithKey:(NSString*)stackKey;
 

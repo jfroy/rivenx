@@ -35,6 +35,7 @@
     RXRenderState* _cardRenderer;
     
     NSMutableDictionary* _activeStacks;
+    NSDictionary* _stackDescriptors;
     
     RXGameState* _gameState;
     RXGameState* _gameStateToLoad;

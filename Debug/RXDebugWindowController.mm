@@ -278,8 +278,7 @@ static PyMethodDef rivenx_methods[] = {
         return;
     }
     
-//    RXStack* jspit = [[RXEditionManager sharedEditionManager] activeStackWithKey:@"jspit"];
-    RXStack* jspit = nil; // FIXME: get from RXWorld
+    RXStack* jspit = [g_world activeStackWithKey:@"jspit"];
     RXCardDescriptor* d = [RXCardDescriptor descriptorWithStack:jspit ID:_trip];
     while (!d) {
         _trip++;
