@@ -231,6 +231,12 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         if (kerr != 0)
             @throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack thread init semaphore." userInfo:nil];
         
+        // start threads
+        [NSThread detachNewThreadSelector:@selector(_RXScriptThreadEntry:) toTarget:self withObject:nil];
+        
+        // wait for each thread to be running (this needs to be called the same number of times as the number of threads)
+        semaphore_wait(_threadInitSemaphore);
+        
         // register for card changed notifications
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
     } @catch (NSException* e) {
@@ -245,12 +251,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     @try {
         // initialize rendering
         [self _initializeRendering];
-        
-        // start threads
-        [NSThread detachNewThreadSelector:@selector(_RXScriptThreadEntry:) toTarget:self withObject:nil];
-        
-        // wait for each thread to be running (this needs to be called the same number of times as the number of threads)
-        semaphore_wait(_threadInitSemaphore);
         
         _renderingInitialized = YES;
     } @catch (NSException* e) {
