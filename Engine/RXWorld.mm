@@ -32,7 +32,6 @@ NSObject* g_world = nil;
 
 @interface RXWorld (RXWorldPrivate)
 - (void)_secondStageInit;
-- (void)_removableMediaAvailabilityHasChanged:(NSNotification *)mediaNotidication;
 @end
 
 @interface RXWorld (RXWorldRendering)
@@ -231,6 +230,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         kern_return_t kerr = semaphore_create(mach_task_self(), &_threadInitSemaphore, SYNC_POLICY_FIFO, 0);
         if (kerr != 0)
             @throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack thread init semaphore." userInfo:nil];
+        
+        // register for card changed notifications
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
     } @catch (NSException* e) {
         [[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
     }
@@ -254,36 +256,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     } @catch (NSException* e) {
         [[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
     }
-}
-
-- (void)_setInitialCard:(NSNotification*)notification {
-    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"RXStackDidLoadNotification" object:nil];
-#if defined(DEBUG)
-    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"responding to a RXStackDidLoadNotification notification by loading the entry card of stack aspit");
-#endif
-    [(RXCardState*)_cardRenderer setActiveCardWithStack:@"aspit"
-                                                     ID:[[self activeStackWithKey:@"aspit"] entryCardID]
-                                          waitUntilDone:NO];
-}
-
-- (void)_currentEditionChanged:(NSNotification*)notification {
-//    // create a new game state for the new current edition (if there isn't one yet); if there is, it is assumed to be for the new current edition
-//    if (!_gameState) {
-//        _gameState = [[RXGameState alloc] initWithEdition:[[RXEditionManager sharedEditionManager] currentEdition]];
-//        
-//        // register for card changed notifications
-//        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
-//    } else
-//        assert([[_gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]);
-//    
-//    // initialize rendering
-//    [self initializeRendering];
-//    
-//    // subscribe to RXStackDidLoadNotification notifications so we know when the asplit stack finishes loading
-//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_setInitialCard:) name:@"RXStackDidLoadNotification" object:nil];
-//    
-//    // load the aspit stack on the script thread asynchronously
-//    [[RXEditionManager sharedEditionManager] performSelector:@selector(loadStackWithKey:) withObject:@"aspit" inThread:_scriptThread waitUntilDone:NO];
 }
 
 - (void)dealloc {
@@ -451,7 +423,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (void)_activeCardDidChange:(NSNotification*)notification {
     // NOTE: WILL RUN ON THE MAIN THREAD
-//    NSError* error;
     
     // if we have a new game state to load and we just cleared the active card, do the swap
     if (![notification object] && _gameStateToLoad) {   
@@ -460,11 +431,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         _gameState = _gameStateToLoad;
         _gameStateToLoad = nil;
         
-        // make the new game's edition current
-//        if (![[RXEditionManager sharedEditionManager] makeEditionCurrent:[_gameState edition] rememberChoice:NO error:&error]) {
-//            [NSApp presentError:error];
-//            return;
-//        }
+        // ensure the rendering and script engine are running
+        [self initializeRendering];
         
         // set the active card to that of the new game state
         RXSimpleCardDescriptor* scd = [_gameState currentCard];

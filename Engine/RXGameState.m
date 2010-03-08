@@ -168,6 +168,11 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     // generate random combinations for the game
     [self _generateCombinations];
     
+    // set the inital card to the entry card of aspit
+    RXSimpleCardDescriptor* scd = [[RXSimpleCardDescriptor alloc] initWithStackKey:@"aspit" ID:[[[g_world stackDescriptorForKey:@"aspit"] objectForKey:@"Entry"] unsignedShortValue]];
+    [self setCurrentCard:scd];
+    [scd release];
+    
     // no URL for new game states
     _URL = nil;
     

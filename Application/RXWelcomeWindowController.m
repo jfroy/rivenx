@@ -43,11 +43,21 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 }
 
 - (void)windowWillClose:(NSNotification*)notification {
-    [NSApp terminate:nil];
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"IsInstalled"])
+        [NSApp terminate:nil];
 }
 
 - (IBAction)buyRiven:(id)sender {
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.google.com/products/catalog?hl=en&cid=11798540492054256128&sa=title"]];
+}
+
+#pragma mark installation
+
+- (void)_beginNewGame {
+    NSError* error;
+    RXGameState* gs = [[RXGameState alloc] init];
+    if (![[RXWorld sharedWorld] loadGameState:gs error:&error])
+        [NSApp presentError:error];
 }
 
 - (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context {
@@ -117,7 +127,9 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // that we are installed and kick up the game; otherwise, let the application
     // handle the error
     if (did_install) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"RXInstalled"];
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"IsInstalled"];
+        [self close];
+        [self performSelector:@selector(_beginNewGame) withObject:nil afterDelay:0.0];
     } else {
         if ([[error domain] isEqualToString:RXErrorDomain] && [error code] == kRXErrInstallerCancelled) {
             // delete the shared base directory's content

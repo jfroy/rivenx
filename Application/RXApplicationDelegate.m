@@ -32,6 +32,8 @@
     
     [[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:
         [NSNumber numberWithBool:NO], @"Fullscreen",
+        [NSNumber numberWithBool:NO], @"IsInstalled",
+        [NSDictionary dictionary], @"EngineVariables",
         nil
     ]];
 }
@@ -223,10 +225,11 @@
     // initialize the world
     [RXWorld sharedWorld];
     
-    // if we're not installed, start the welcome controller, otherwise start the world
-    // FIXME: implement the above logic
-    welcomeController = [[RXWelcomeWindowController alloc] initWithWindowNibName:@"Welcome"];
-    [welcomeController showWindow:nil];
+    // if we're not installed, start the welcome controller; otherwise, load the last save game, or a new game if no such save can be found
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"IsInstalled"]) {
+        welcomeController = [[RXWelcomeWindowController alloc] initWithWindowNibName:@"Welcome"];
+        [welcomeController showWindow:nil];
+    }
     
 #if defined(DEBUG)
     [self _initDebugUI];
