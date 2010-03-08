@@ -180,7 +180,11 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 #if defined(DEBUG)
             RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"loaded Extras archive from %@", [[extras_archive url] path]);
 #endif
+        } else {
+            if (error)
+                *error = [NSError errorWithDomain:RXErrorDomain code:kRXErrUnableToLoadExtrasArchive userInfo:nil];
         }
+            
     }
     return [[extras_archive retain] autorelease];
 }
