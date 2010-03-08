@@ -451,11 +451,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
 }
 
-- (BOOL)loadGameState:(RXGameState*)gameState error:(NSError**)error {
+- (void)loadGameState:(RXGameState*)gameState {
     _gameStateToLoad = [gameState retain];
     [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
 //    [_stateCompositor fadeOutState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedOut:)];
-    return YES;
 }
 
 #pragma mark -

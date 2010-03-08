@@ -59,6 +59,6 @@
 - (NSURL*)worldSharedBase;
 
 - (RXGameState*)gameState;
-- (BOOL)loadGameState:(RXGameState*)gameState error:(NSError**)error;
+- (void)loadGameState:(RXGameState*)gameState;
 
 @end

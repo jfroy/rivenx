@@ -53,13 +53,6 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 
 #pragma mark installation
 
-- (void)_beginNewGame {
-    NSError* error;
-    RXGameState* gs = [[RXGameState alloc] init];
-    if (![[RXWorld sharedWorld] loadGameState:gs error:&error])
-        [NSApp presentError:error];
-}
-
 - (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context {
     if ([keyPath isEqualToString:@"progress"]) {
         double oldp = [[change objectForKey:NSKeyValueChangeOldKey] doubleValue];
@@ -89,6 +82,12 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [_installingProgress setIndeterminate:YES];
     [_installingProgress setUsesThreadedAnimation:YES];
     [_installingProgress startAnimation:self];
+}
+
+- (void)_beginNewGame {
+    RXGameState* gs = [[RXGameState alloc] init];
+    [[RXWorld sharedWorld] loadGameState:gs];
+    [gs release];
 }
 
 - (void)_runInstallerWithMountPaths:(NSDictionary*)mount_paths {

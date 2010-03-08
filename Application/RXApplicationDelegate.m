@@ -394,11 +394,8 @@
 //        }
 //    }
     
-    // try to load the game, and present any error to the user if one occurs
-    if (![[RXWorld sharedWorld] loadGameState:gameState error:&error]) {
-        [NSApp presentError:error];
-        return NO;
-    }
+    // load the game
+    [[RXWorld sharedWorld] loadGameState:gameState];
     
     // add the save file to the recents
     [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]];
