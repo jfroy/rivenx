@@ -184,12 +184,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         // the active stacks dictionary maps stack keys (e.g. aspit, etc.) to RXStack objects
         _activeStacks = [NSMutableDictionary new];
         
-        // register for current edition change notifications
-//        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_currentEditionChanged:) name:@"RXCurrentEditionChangedNotification" object:nil];
-        
-        // bootstrap the edition manager
-//        [RXEditionManager sharedEditionManager];
-        
         // load Extras.plist
         _extrasDescriptor = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"plist"]];
         if (!_extrasDescriptor)

@@ -7,9 +7,10 @@
 //
 
 #import "Engine/RXGameState.h"
+#import "Engine/RXWorldProtocol.h"
 
 
-static const int RX_GAME_STATE_CURRENT_VERSION = 3;
+static const int RX_GAME_STATE_CURRENT_VERSION = 4;
 
 // 1-2-3-4-5
 static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 << 21) | (1 << 20);
@@ -136,24 +137,11 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
 }
 
 - (id)init {
-    [self doesNotRecognizeSelector:_cmd];
-    [self release];
-    return nil;
-}
-
-- (id)initWithEdition:(RXEdition*)edition {
     self = [super init];
     if (!self)
         return nil;
     
     _accessLock = [NSRecursiveLock new];
-    
-    if (edition == nil) {
-        [self release];
-        @throw [NSException exceptionWithName:NSInvalidArgumentException
-                                       reason:@"edition must not be nil"
-                                     userInfo:nil];
-    }
     
     NSError* error = nil;
     NSData* defaultVarData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"GameVariables" ofType:@"plist"] options:0 error:&error];
@@ -176,9 +164,6 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
                                      userInfo:[NSDictionary dictionaryWithObject:error_str forKey:@"RXErrorString"]];
     }
     [error_str release];
-    
-    // retain our parent edition
-    _edition = [edition retain];
     
     // generate random combinations for the game
     [self _generateCombinations];
@@ -203,6 +188,7 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     int32_t version = [decoder decodeInt32ForKey:@"VERSION"];
     
     switch (version) {
+        case 4:
         case 3:
         case 2:
         case 1:
@@ -221,14 +207,6 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
                                                reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
                                              userInfo:nil];
             }
-//            NSString* edition_key = [decoder decodeObjectForKey:@"editionKey"];
-//            _edition = [[[RXEditionManager sharedEditionManager] editionForKey:edition_key] retain];
-//            if (!_edition) {
-//                [self release];
-//                @throw [NSException exceptionWithName:@"RXUnknownEditionKeyException"
-//                                               reason:@"Riven X was unable to find the edition for the save file. It may have been created with a more recent version of Riven X than you are using."
-//                                             userInfo:nil];
-//            }
             
             if (![decoder containsValueForKey:@"currentCard"]) {
                 [self release];
@@ -272,7 +250,6 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     
     [encoder encodeInt32:RX_GAME_STATE_CURRENT_VERSION forKey:@"VERSION"];
     
-    [encoder encodeObject:[_edition valueForKey:@"key"] forKey:@"editionKey"];
     [encoder encodeObject:_currentCard forKey:@"currentCard"];
     [encoder encodeObject:_returnCard forKey:@"returnCard"];
     [encoder encodeObject:_variables forKey:@"variables"];
@@ -283,7 +260,6 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
 - (void)dealloc {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
-    [_edition release];
     [_variables release];
     [_currentCard release];
     [_returnCard release];
@@ -321,10 +297,6 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     }
     
     return success;
-}
-
-- (RXEdition*)edition {
-    return _edition;
 }
 
 - (uint16_t)unsignedShortForKey:(NSString*)key {
@@ -513,8 +485,7 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     [old release];
     
     [self setUnsignedShort:descriptor->cardID forKey:@"currentcardid"];
-    [self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->stackKey] objectForKey:@"ID"] unsignedShortValue]
-                    forKey:@"currentstackid"];
+    [self setUnsignedShort:[[[g_world stackDescriptorForKey:descriptor->stackKey] objectForKey:@"ID"] unsignedShortValue] forKey:@"currentstackid"];
     
     [_accessLock unlock];
 }
@@ -536,8 +507,7 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     
     if (descriptor) {
         [self setUnsignedShort:descriptor->cardID forKey:@"returncardid"];
-        [self setUnsignedShort:[[[[_edition valueForKeyPath:@"stackDescriptors"] objectForKey:descriptor->stackKey] objectForKey:@"ID"] unsignedShortValue]
-                        forKey:@"returnstackid"];
+        [self setUnsignedShort:[[[g_world stackDescriptorForKey:descriptor->stackKey] objectForKey:@"ID"] unsignedShortValue] forKey:@"returnstackid"];
     } else {
         [self setUnsignedShort:0 forKey:@"returncardid"];
         [self setUnsignedShort:0 forKey:@"returnstackid"];

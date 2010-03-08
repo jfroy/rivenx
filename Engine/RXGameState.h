@@ -6,14 +6,12 @@
 //  Copyright 2007 MacStorm. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
-#import "Engine/RXEdition.h"
 #import "Engine/RXCardDescriptor.h"
 
 
 @interface RXGameState : NSObject <NSCoding> {
-    RXEdition* _edition;
     NSMutableDictionary* _variables;
     RXSimpleCardDescriptor* _currentCard;
     RXSimpleCardDescriptor* _returnCard;
@@ -23,14 +21,12 @@
 
 + (RXGameState*)gameStateWithURL:(NSURL*)url error:(NSError**)error;
 
-- (id)initWithEdition:(RXEdition*)edition;
+- (id)init;
 
 - (void)dump;
 
 - (NSURL*)URL;
 - (BOOL)writeToURL:(NSURL*)url error:(NSError**)error;
-
-- (RXEdition*)edition;
 
 - (uint16_t)unsignedShortForKey:(NSString*)key;
 - (void)setUnsignedShort:(uint16_t)value forKey:(NSString*)key;
