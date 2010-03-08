@@ -431,9 +431,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         _gameState = _gameStateToLoad;
         _gameStateToLoad = nil;
         
-        // ensure the rendering and script engine are running
-        [self initializeRendering];
-        
         // set the active card to that of the new game state
         RXSimpleCardDescriptor* scd = [_gameState currentCard];
         [(RXCardState*)_cardRenderer setActiveCardWithStack:scd->stackKey ID:scd->cardID waitUntilDone:NO];
@@ -453,6 +450,13 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (void)loadGameState:(RXGameState*)gameState {
     _gameStateToLoad = [gameState retain];
+    
+    // load the stack of the game state's current card to make sure we can actually run and load that save
+    [self loadStackWithKey:[[_gameStateToLoad currentCard] stackKey]];
+    
+    // ensure that rendering has been initialized, since we require the card renderer to load a game state
+    [self initializeRendering];
+    
     [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
 //    [_stateCompositor fadeOutState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedOut:)];
 }

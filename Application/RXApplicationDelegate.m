@@ -82,14 +82,6 @@
 - (BOOL)attemptRecoveryFromError:(NSError*)error optionIndex:(NSUInteger)recoveryOptionIndex {
     if ([error domain] == RXErrorDomain) {
         switch ([error code]) {
-            case kRXErrEditionCantBecomeCurrent:
-                if (recoveryOptionIndex == 0)
-//                    [[RXEditionManager sharedEditionManager] showEditionManagerWindow];
-                    NSBeep();
-                else
-                    [NSApp terminate:self];
-                break;
-            
             case kRXErrSavedGameCantBeLoaded:
                 if (recoveryOptionIndex == 0)
 //                    [[RXEditionManager sharedEditionManager] showEditionManagerWindow];
@@ -104,7 +96,7 @@
                 [NSApp terminate:self];
                 break;
             
-            case kRXErrArchiveUnavailable:
+            case kRXErrArchivesNotFound:
             case kRXErrUnableToLoadExtrasArchive:
                 // these are fatal right now
                 [NSApp terminate:self];

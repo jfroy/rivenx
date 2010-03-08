@@ -137,6 +137,8 @@ struct rx_transition_program {
     int _credits_state;
     GLuint _credits_texture;
     BOOL _render_credits;
+    
+    BOOL _initialized;
 }
 
 - (RXScriptEngine*)scriptEngine;

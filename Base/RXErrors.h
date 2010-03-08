@@ -18,11 +18,10 @@ __BEGIN_DECLS
 
 
 enum {
-    kRXErrEditionCantBecomeCurrent = 1,
     kRXErrSavedGameCantBeLoaded,
-    kRXErrArchiveUnavailable,
-    kRXErrNoCurrentEdition,
     kRXErrQuickTimeTooOld,
+    
+    kRXErrArchivesNotFound,
     kRXErrUnableToLoadExtrasArchive,
     
     kRXErrFailedToGetDisplayID,

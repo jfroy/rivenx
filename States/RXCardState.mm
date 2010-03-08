@@ -226,6 +226,10 @@ static void rx_release_owner_applier(const void* value, void* context) {
     
     // initialize all the rendering stuff (shaders, textures, buffers, VAOs)
     [self _initializeRendering];
+    if (!_initialized) {
+        [self release];
+        return nil;
+    }
     
     // initialize the mouse state
     _mouse_vector.origin = [(NSView*)g_worldView convertPoint:[[(NSView*)g_worldView window] mouseLocationOutsideOfEventStream] fromView:nil];
@@ -653,6 +657,8 @@ init_failure:
     
     // register for reshape notifications
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_reshape:) name:@"RXOpenGLDidReshapeNotification" object:nil];
+    
+    _initialized = YES;
 }
 
 #pragma mark -

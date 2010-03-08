@@ -156,9 +156,18 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     NSString* archive_path;
     while ((archive_path = [enumerator nextObject])) {
         MHKArchive* archive = [[MHKArchive alloc] initWithPath:archive_path error:error];
-        if (archive)
-            [archives addObject:archive];
+        if (!archive)
+            return nil;
+        
+        [archives addObject:archive];
         [archive release];
+    }
+    
+    // emit an error and return nil if no archives was found or loaded
+    if ([archives count] == 0) {
+        archives = nil;
+        if (error)
+            *error = [NSError errorWithDomain:RXErrorDomain code:kRXErrArchivesNotFound userInfo:nil];
     }
     
     return archives;
