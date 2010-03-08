@@ -229,12 +229,17 @@
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"IsInstalled"]) {
         welcomeController = [[RXWelcomeWindowController alloc] initWithWindowNibName:@"Welcome"];
         [welcomeController showWindow:nil];
-    }
-    
+    } else {
+        // FIXME: look up the last loaded game and load that instead of creating a new game
+        RXGameState* gs = [[RXGameState alloc] init];
+        [[RXWorld sharedWorld] loadGameState:gs];
+        [gs release];
+        
 #if defined(DEBUG)
-    [self _initDebugUI];
-    [self _showDebugConsole:self];
+        [self _initDebugUI];
+        [self _showDebugConsole:self];
 #endif
+    }
 }
 
 - (void)applicationWillResignActive:(NSNotification*)notification {
