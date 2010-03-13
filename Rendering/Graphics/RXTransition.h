@@ -3,7 +3,7 @@
 //  rivenx
 //
 //  Created by Jean-Francois Roy on 03/11/2007.
-//  Copyright 2007 MacStorm. All rights reserved.
+//  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>

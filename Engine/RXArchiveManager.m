@@ -3,7 +3,7 @@
 //  rivenx
 //
 //  Created by Jean-Francois Roy on 02/02/2008.
-//  Copyright 2008 MacStorm. All rights reserved.
+//  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
 #import <Carbon/Carbon.h>

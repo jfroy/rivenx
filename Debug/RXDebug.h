@@ -3,7 +3,7 @@
  *  rivenx
  *
  *  Created by Jean-François Roy on 10/04/2007.
- *  Copyright 2007 MacStorm. All rights reserved.
+ *  Copyright 2005-2010 MacStorm. All rights reserved.
  *
  */
 

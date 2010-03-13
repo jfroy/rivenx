@@ -3,7 +3,7 @@
 //  phascolarctidae
 //
 //  Created by Jean-Francois Roy on 5/21/2005.
-//  Copyright 2005 MacStorm. All rights reserved.
+//  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
 #if defined(__OBJC__)

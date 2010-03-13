@@ -3,7 +3,7 @@
 //  rivenx
 //
 //  Created by Jean-François Roy on 31/12/2006.
-//  Copyright 2006 MacStorm. All rights reserved.
+//  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
 #import <OpenGL/CGLMacro.h>

@@ -1,18 +1,15 @@
 //
-//  RXExceptions.m
+//  RXErrors.m
 //  rivenx
 //
-//  Created by Jean-Francois RoyJean-Francois Roy on 7/27/07.
-//  Copyright 2007 Apple, Inc. All rights reserved.
+//  Created by Jean-Francois Roy on 7/27/07.
+//  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import "RXErrors.h"
+#import "Base/RXErrors.h"
+
 
 NSString* const RXErrorDomain = @"RXErrorDomain";
 NSString* const RXIOKitErrorDomain = @"RXIOKitErrorDomain";
 NSString* const RXCGLErrorDomain = @"RXCGLErrorDomain";
 NSString* const RXCGErrorDomain = @"RXCGErrorDomain";
-
-NSException* RXArchiveManagerArchiveNotFoundExceptionWithArchiveName(NSString* name) {
-    return [NSException exceptionWithName:@"RXArchiveManagerArchiveNotFoundException" reason:[NSString stringWithFormat:@"RXArchiveManager could not find \"%@\".", name] userInfo:nil];
-}

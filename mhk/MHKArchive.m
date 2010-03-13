@@ -3,7 +3,7 @@
 //  MHKKit
 //
 //  Created by Jean-Francois Roy on 15/04/2005.
-//  Copyright 2005 MacStorm. All rights reserved.
+//  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
 #import <CoreServices/CoreServices.h>

@@ -3,7 +3,7 @@
  *  MHKKit
  *
  *  Created by Jean-Francois Roy on 05/04/2006.
- *  Copyright 2006 MacStorm. All rights reserved.
+ *  Copyright 2005-2010 MacStorm. All rights reserved.
  *
  */
 
