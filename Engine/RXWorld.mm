@@ -452,7 +452,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     _gameStateToLoad = [gameState retain];
     
     // load the stack of the game state's current card to make sure we can actually run and load that save
-    [self loadStackWithKey:[[_gameStateToLoad currentCard] stackKey]];
+    if (![self loadStackWithKey:[[_gameStateToLoad currentCard] stackKey]])
+        return;
     
     // ensure that rendering has been initialized, since we require the card renderer to load a game state
     [self initializeRendering];
