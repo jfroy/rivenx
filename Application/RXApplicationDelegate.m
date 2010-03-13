@@ -97,7 +97,6 @@
                 break;
             
             case kRXErrArchivesNotFound:
-            case kRXErrUnableToLoadExtrasArchive:
                 // these are fatal right now
                 [NSApp terminate:self];
                 break;
