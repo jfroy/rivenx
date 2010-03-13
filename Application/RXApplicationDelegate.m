@@ -18,6 +18,7 @@
 #import "Debug/RXDebug.h"
 #import "Debug/RXDebugWindowController.h"
 
+#import "Utilities/BZFSUtilities.h"
 #import "Utilities/GTMSystemVersion.h"
 
 
@@ -82,11 +83,6 @@
 - (BOOL)attemptRecoveryFromError:(NSError*)error optionIndex:(NSUInteger)recoveryOptionIndex {
     if ([error domain] == RXErrorDomain) {
         switch ([error code]) {
-            case kRXErrSavedGameCantBeLoaded:
-                if (recoveryOptionIndex == 0)
-//                    [[RXEditionManager sharedEditionManager] showEditionManagerWindow];
-                break;
-            
             case kRXErrQuickTimeTooOld:
                 if (recoveryOptionIndex == 0) {
                     // once to launch SU, and another time to make sure it becomes the active application
@@ -96,8 +92,18 @@
                 [NSApp terminate:self];
                 break;
             
-            case kRXErrArchivesNotFound:
-                // these are fatal right now
+            case kRXErrFailedToInitializeStack:
+                if (recoveryOptionIndex == 1) {
+                    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"IsInstalled"];
+                    
+                    // delete the shared base directory's content
+                    NSString* shared_base = [[(RXWorld*)g_world worldSharedBase] path];
+                    NSArray* content = BZFSContentsOfDirectory(shared_base, NULL);
+                    NSEnumerator* content_e = [content objectEnumerator];
+                    NSString* dir;
+                    while ((dir = [content_e nextObject]))
+                        BZFSRemoveItemAtURL([NSURL fileURLWithPath:[shared_base stringByAppendingPathComponent:dir]], NULL);
+                }
                 [NSApp terminate:self];
                 break;
             
@@ -107,6 +113,7 @@
                 break;
             
             // fatal errors
+            case kRXErrArchivesNotFound:
             case kRXErrFailedToCreatePixelFormat:
                 [NSApp terminate:self];
                 break;
