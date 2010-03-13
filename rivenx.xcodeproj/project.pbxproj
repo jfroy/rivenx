@@ -14,8 +14,6 @@
 		31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */; };
 		311138A70F23FB000009C6C1 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311138A60F23FB000009C6C1 /* GLUT.framework */; };
 		311400080D58F0230099AF69 /* GTMSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 311400070D58F0230099AF69 /* GTMSystemVersion.m */; };
-		311400640D58F5CA0099AF69 /* RXEditionProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 311400630D58F5CA0099AF69 /* RXEditionProxy.m */; };
-		3114FE980D58C8AE0099AF69 /* Editions.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3114FE960D58C8AE0099AF69 /* Editions.strings */; };
 		3114FF3C0D58DF0A0099AF69 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		311B7C840BCC4D0500653D2D /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
 		311EDC9A0EF59CCD002CAB47 /* RXDynamicPicture.m in Sources */ = {isa = PBXBuildFile; fileRef = 311EDC990EF59CCD002CAB47 /* RXDynamicPicture.m */; };
@@ -34,7 +32,6 @@
 		31225ABE08C4216D0055628F /* RXStack.m in Sources */ = {isa = PBXBuildFile; fileRef = 31225ABD08C4216D0055628F /* RXStack.m */; };
 		31225AC408C421790055628F /* RXCard.m in Sources */ = {isa = PBXBuildFile; fileRef = 31225AC308C421790055628F /* RXCard.m */; };
 		3124F2A909C36792009BA3CF /* RXSoundGroup.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3124F2A609C36782009BA3CF /* RXSoundGroup.mm */; };
-		312A89650D57B25600FCDF91 /* RXEdition.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A895F0D57B25600FCDF91 /* RXEdition.m */; };
 		312A89660D57B25600FCDF91 /* RXArchiveManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89610D57B25600FCDF91 /* RXArchiveManager.m */; };
 		312A896D0D57B33700FCDF91 /* Editions in Resources */ = {isa = PBXBuildFile; fileRef = 312A89690D57B33700FCDF91 /* Editions */; };
 		312D9ECD0D4D81A3006E384C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9EC70D4D81A3006E384C /* InfoPlist.strings */; };
@@ -344,9 +341,6 @@
 		311400060D58F0230099AF69 /* GTMSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMSystemVersion.h; sourceTree = "<group>"; };
 		311400070D58F0230099AF69 /* GTMSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GTMSystemVersion.m; sourceTree = "<group>"; };
 		3114000B0D58F07F0099AF69 /* GTMObjectSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMObjectSingleton.h; sourceTree = "<group>"; };
-		311400620D58F5CA0099AF69 /* RXEditionProxy.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXEditionProxy.h; sourceTree = "<group>"; };
-		311400630D58F5CA0099AF69 /* RXEditionProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXEditionProxy.m; sourceTree = "<group>"; };
-		3114FE970D58C8AE0099AF69 /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Editions.strings; sourceTree = "<group>"; };
 		3114FF3A0D58DF0A0099AF69 /* BZFSUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BZFSUtilities.h; sourceTree = "<group>"; };
 		3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BZFSUtilities.m; sourceTree = "<group>"; };
 		31154B4D0B4990E9002FCEDD /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Shaders; sourceTree = "<group>"; };
@@ -364,8 +358,6 @@
 		3124F2A509C36782009BA3CF /* RXSoundGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXSoundGroup.h; sourceTree = "<group>"; };
 		3124F2A609C36782009BA3CF /* RXSoundGroup.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXSoundGroup.mm; sourceTree = "<group>"; };
 		312876F80F2972E900A114FF /* CardInspector.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CardInspector.xib; sourceTree = "<group>"; };
-		312A895E0D57B25600FCDF91 /* RXEdition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXEdition.h; sourceTree = "<group>"; };
-		312A895F0D57B25600FCDF91 /* RXEdition.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXEdition.m; sourceTree = "<group>"; };
 		312A89600D57B25600FCDF91 /* RXArchiveManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXArchiveManager.h; sourceTree = "<group>"; };
 		312A89610D57B25600FCDF91 /* RXArchiveManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXArchiveManager.m; sourceTree = "<group>"; };
 		312A89690D57B33700FCDF91 /* Editions */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Editions; sourceTree = "<group>"; };
@@ -1085,7 +1077,6 @@
 				312EBAC70FD202ED00D65E22 /* debug_init.py */,
 				31FE33AB101BBC4100C30CD1 /* debug_notification.py */,
 				31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */,
-				3114FE960D58C8AE0099AF69 /* Editions.strings */,
 				31F0DD4A0D3A7682000FBB5F /* EngineVariables.plist */,
 				31472CED114C2F66008B6CF7 /* Extras.MHK */,
 				3155480F08C52A1400A2AA7A /* Extras.plist */,
@@ -1121,10 +1112,6 @@
 				31863C0509919F87001A4A42 /* RXCardProtocols.h */,
 				319288DB0EF43C630043B15A /* RXCoreStructures.h */,
 				31AA79800F75AACC006F06AC /* RXCursors.h */,
-				312A895E0D57B25600FCDF91 /* RXEdition.h */,
-				312A895F0D57B25600FCDF91 /* RXEdition.m */,
-				311400620D58F5CA0099AF69 /* RXEditionProxy.h */,
-				311400630D58F5CA0099AF69 /* RXEditionProxy.m */,
 				317403920CDC1A67006F3523 /* RXGameState.h */,
 				317403930CDC1A67006F3523 /* RXGameState.m */,
 				3103D4F20EF0DAF30025170A /* RXHardwareProfiler.h */,
@@ -1438,7 +1425,6 @@
 				312D9ECD0D4D81A3006E384C /* InfoPlist.strings in Resources */,
 				312D9ECF0D4D81A3006E384C /* About.strings in Resources */,
 				312A896D0D57B33700FCDF91 /* Editions in Resources */,
-				3114FE980D58C8AE0099AF69 /* Editions.strings in Resources */,
 				31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */,
 				31D21B9F0DBC07C300E970E1 /* DebugConsole.xib in Resources */,
 				31DAAF0B0DDE21BB00D06D0C /* Cursors.plist in Resources */,
@@ -1656,11 +1642,9 @@
 				315017FA0CC06872001BA929 /* RXThreadUtilities.m in Sources */,
 				317403940CDC1A67006F3523 /* RXGameState.m in Sources */,
 				316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */,
-				312A89650D57B25600FCDF91 /* RXEdition.m in Sources */,
 				312A89660D57B25600FCDF91 /* RXArchiveManager.m in Sources */,
 				3114FF3C0D58DF0A0099AF69 /* BZFSUtilities.m in Sources */,
 				311400080D58F0230099AF69 /* GTMSystemVersion.m in Sources */,
-				311400640D58F5CA0099AF69 /* RXEditionProxy.m in Sources */,
 				3133D9AF0D5CDDC1004DAD5E /* BZFSOperation.m in Sources */,
 				31C545530D5D50620024B486 /* RXInstaller.m in Sources */,
 				3105EC330D74844900609273 /* RXLogCenter.m in Sources */,
@@ -1744,14 +1728,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
-		3114FE960D58C8AE0099AF69 /* Editions.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				3114FE970D58C8AE0099AF69 /* en */,
-			);
-			name = Editions.strings;
-			sourceTree = "<group>";
-		};
 		312D9EC70D4D81A3006E384C /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

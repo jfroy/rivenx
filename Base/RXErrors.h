@@ -18,6 +18,7 @@ enum {
     kRXErrQuickTimeTooOld,
     
     kRXErrArchivesNotFound,
+    kRXErrFailedToInitializeStack,
     
     kRXErrFailedToGetDisplayID,
     kRXErrNoAcceleratorService,

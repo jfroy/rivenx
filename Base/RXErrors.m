@@ -25,6 +25,7 @@ NSString* const RXErrorDomain = @"RXErrorDomain";
             case kRXErrQuickTimeTooOld: return @"QuickTime is too old.";
             
             case kRXErrArchivesNotFound: return @"Failed to find required Riven data files.";
+            case kRXErrFailedToInitializeStack: return @"Riven X was unable to load a segment of Riven.";
             
             case kRXErrFailedToGetDisplayID: return @"Failed to get display ID.";
             case kRXErrNoAcceleratorService: return @"No graphics accelerator service.";
