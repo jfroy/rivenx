@@ -74,7 +74,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 }
 
 - (void)_initializeInstallationUI:(RXInstaller*)installer {
-    [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Editions", NULL)];
+    [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Installer", NULL)];
     [_installingStatusField setStringValue:@""];
     [_installingProgress setMinValue:0.0];
     [_installingProgress setMaxValue:1.0];

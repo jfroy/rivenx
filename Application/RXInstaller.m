@@ -45,7 +45,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     progress = -1.0;
     item = nil;
-    stage = [NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Editions", NULL) retain];
+    stage = [NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Installer", NULL) retain];
     remainingTime = -1.0;
     
     return self;
@@ -109,7 +109,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 }
 
 - (BOOL)_copyFileAtPath:(NSString*)path error:(NSError**)error {
-    [self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_FILE_COPY", @"Editions", NULL), [path lastPathComponent]] forKey:@"stage"];
+    [self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_FILE_COPY", @"Installer", NULL), [path lastPathComponent]] forKey:@"stage"];
     
     BZFSOperation* copy_op = [[BZFSOperation alloc] initCopyOperationWithSource:path destination:destination];
     [copy_op setAllowOverwriting:YES];
@@ -220,7 +220,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         [self willChangeValueForKey:@"progress"];
         progress = -1.0;
         [self didChangeValueForKey:@"progress"];
-        [self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_INSERT_DISC", @"Editions", NULL), disc_name] forKey:@"stage"];
+        [self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_INSERT_DISC", @"Installer", NULL), disc_name] forKey:@"stage"];
         
         // wait for the disc
         if (![mediaProvider waitForDisc:disc_name ejectingDisc:currentDisc error:error])
