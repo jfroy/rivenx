@@ -154,7 +154,7 @@ static NSString* required_extensions[] = {
         [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
         [NSApp delegate], NSRecoveryAttempterErrorKey,
         nil];
-    NSError* no_supported_gpu_error = [NSError errorWithDomain:RXErrorDomain code:kRXErrFailedToCreatePixelFormat userInfo:error_info];
+    NSError* no_supported_gpu_error = [RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToCreatePixelFormat userInfo:error_info];
     
     // process the basic pixel format attributes to a final list of attributes
     NSOpenGLPixelFormatAttribute final_attribs[32] = {0};

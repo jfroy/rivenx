@@ -32,7 +32,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
     FSRef logsFolder;
     OSErr oerr = FSFindFolder(kUserDomain, kLogsFolderType, true, &logsFolder);
     if (oerr != noErr) {
-        error = [NSError errorWithDomain:NSOSStatusErrorDomain code:oerr userInfo:nil];
+        error = [RXError errorWithDomain:NSOSStatusErrorDomain code:oerr userInfo:nil];
         @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to find your logs folder." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     
@@ -54,7 +54,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
     
     fd = open([[_logsBase stringByAppendingPathComponent:@"Rendering.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
     if (fd == -1) {
-        error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
+        error = [RXError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
         @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
@@ -64,7 +64,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
     
     fd = open([[_logsBase stringByAppendingPathComponent:@"Script.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
     if (fd == -1) {
-        error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
+        error = [RXError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
         @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
@@ -72,7 +72,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
     
     fd = open([[_logsBase stringByAppendingPathComponent:@"Base.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
     if (fd == -1) {
-        error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
+        error = [RXError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
         @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
@@ -80,7 +80,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
     
     fd = open([[_logsBase stringByAppendingPathComponent:@"Audio.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
     if (fd == -1) {
-        error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
+        error = [RXError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
         @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];

@@ -187,7 +187,7 @@
         return YES;
     
     // if QuickTime is too old, tell the user about the Cinepak problem and offer them to launch SU
-    NSError* error = [NSError errorWithDomain:RXErrorDomain code:kRXErrQuickTimeTooOld userInfo:
+    NSError* error = [RXError errorWithDomain:RXErrorDomain code:kRXErrQuickTimeTooOld userInfo:
                       [NSDictionary dictionaryWithObjectsAndKeys:
                        NSLocalizedString(@"QUICKTIME_REQUIRE_762", "require QuickTime 7.6.2"), NSLocalizedDescriptionKey,
                        NSLocalizedString(@"QUICKTIME_SHOULD_UPGRADE", "should upgrade QuickTime"), NSLocalizedRecoverySuggestionErrorKey,
@@ -379,7 +379,7 @@
 //    if (![[gameState edition] isEqual:[[RXEditionManager sharedEditionManager] currentEdition]]) {
 //        // check if the game's edition can be made current; if not, present an error to the user
 //        if (![[gameState edition] canBecomeCurrent]) {
-//            error = [NSError errorWithDomain:RXErrorDomain code:kRXErrSavedGameCantBeLoaded userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+//            error = [RXError errorWithDomain:RXErrorDomain code:kRXErrSavedGameCantBeLoaded userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
 //                [NSString stringWithFormat:NSLocalizedStringFromTable(@"CANNOT_LOAD_SAVE_EDITION_NOT_INSTALLED", @"Editions", "cannot load save edition not installed"), [[gameState edition] valueForKey:@"name"]], NSLocalizedDescriptionKey,
 //                NSLocalizedStringFromTable(@"INSTALL_EDITION_OR_RESUME", @"Editions", "install or resume"), NSLocalizedRecoverySuggestionErrorKey,
 //                [NSArray arrayWithObjects:NSLocalizedString(@"INSTALL", "install"), NSLocalizedString(@"CANCEL", "cancel"), nil], NSLocalizedRecoveryOptionsErrorKey,

@@ -15,7 +15,6 @@
 
 #import "MHKErrors.h"
 #import "MHKFileHandle.h"
-#import "PHSErrorMacros.h"
 
 
 struct descriptor_binary_tree {

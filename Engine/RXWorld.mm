@@ -492,7 +492,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     NSError* error;
     stack = [[RXStack alloc] initWithKey:stackKey error:&error];
     if (!stack) {
-        error = [NSError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+        error = [RXError errorWithDomain:[error domain] code:[error code] userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
             [error localizedDescription], NSLocalizedDescriptionKey,
             NSLocalizedStringFromTable(@"REINSTALL_EDITION", @"Editions", "reinstall edition"), NSLocalizedRecoverySuggestionErrorKey,
             [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,

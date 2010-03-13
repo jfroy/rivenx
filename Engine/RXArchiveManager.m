@@ -167,7 +167,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     if ([archives count] == 0) {
         archives = nil;
         if (error)
-            *error = [NSError errorWithDomain:RXErrorDomain code:kRXErrArchivesNotFound userInfo:nil];
+            *error = [RXError errorWithDomain:RXErrorDomain code:kRXErrArchivesNotFound userInfo:nil];
     }
     
     return archives;

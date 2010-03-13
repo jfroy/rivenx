@@ -8,7 +8,8 @@
 
 #import "MHKFileHandle.h"
 #import "MHKArchive.h"
-#import "PHSErrorMacros.h"
+#import "MHKErrors.h"
+
 
 @implementation MHKFileHandle
 

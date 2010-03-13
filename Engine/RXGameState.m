@@ -49,11 +49,11 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
             if ([[e userInfo] objectForKey:NSUnderlyingErrorKey])
                 *error = [[[[e userInfo] objectForKey:NSUnderlyingErrorKey] retain] autorelease];
             else if ([[e userInfo] objectForKey:@"RXErrorString"])
-                *error = [NSError errorWithDomain:RXErrorDomain
+                *error = [RXError errorWithDomain:RXErrorDomain
                                              code:0
                                          userInfo:[NSDictionary dictionaryWithObject:[[e userInfo] objectForKey:@"RXErrorString"] forKey:NSLocalizedDescriptionKey]];
             else
-                *error = [NSError errorWithDomain:RXErrorDomain
+                *error = [RXError errorWithDomain:RXErrorDomain
                                              code:0
                                          userInfo:[NSDictionary dictionaryWithObject:[e reason] forKey:NSLocalizedDescriptionKey]];
         }

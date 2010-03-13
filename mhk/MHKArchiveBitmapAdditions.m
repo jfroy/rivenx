@@ -12,7 +12,6 @@
 
 #import "MHKArchive.h"
 #import "MHKErrors.h"
-#import "PHSErrorMacros.h"
 
 
 @implementation MHKArchive (MHKArchiveBitmapAdditions)

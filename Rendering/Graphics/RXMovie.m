@@ -151,7 +151,7 @@ enum {
             [self release];
             @throw [NSException exceptionWithName:@"RXMovieException"
                                            reason:@"QTPixelBufferContextCreate failed."
-                                         userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain
+                                         userInfo:[NSDictionary dictionaryWithObject:[RXError errorWithDomain:NSOSStatusErrorDomain
                                                                                                          code:err
                                                                                                      userInfo:nil]
                                                                               forKey:NSUnderlyingErrorKey]];
@@ -191,7 +191,7 @@ enum {
             [self release];
             @throw [NSException exceptionWithName:@"RXMovieException"
                                            reason:@"QTOpenGLTextureContextCreate failed."
-                                         userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain
+                                         userInfo:[NSDictionary dictionaryWithObject:[RXError errorWithDomain:NSOSStatusErrorDomain
                                                                                                          code:err
                                                                                                      userInfo:nil]
                                                                               forKey:NSUnderlyingErrorKey]];
@@ -226,7 +226,7 @@ enum {
         [self release];
         @throw [NSException exceptionWithName:@"RXMovieException"
                                        reason:@"SetMovieVisualContext failed."
-                                     userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain
+                                     userInfo:[NSDictionary dictionaryWithObject:[RXError errorWithDomain:NSOSStatusErrorDomain
                                                                                                      code:err
                                                                                                  userInfo:nil]
                                                                           forKey:NSUnderlyingErrorKey]];
@@ -275,7 +275,7 @@ enum {
         [self release];
         @throw [NSException exceptionWithName:@"RXMovieException"
                                        reason:@"NewMovieFromProperties failed."
-                                     userInfo:[NSDictionary dictionaryWithObject:[NSError errorWithDomain:NSOSStatusErrorDomain
+                                     userInfo:[NSDictionary dictionaryWithObject:[RXError errorWithDomain:NSOSStatusErrorDomain
                                                                                                      code:err
                                                                                                  userInfo:nil]
                                                                           forKey:NSUnderlyingErrorKey]];

@@ -1829,6 +1829,10 @@
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_PREFIX_HEADER = RXBase.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"ERROR_CLASS=MHKError",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/ffmpeg/$(CURRENT_ARCH)\"",
@@ -1852,6 +1856,10 @@
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_PREFIX_HEADER = RXBase.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"ERROR_CLASS=MHKError",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/ffmpeg/$(CURRENT_ARCH)\"",
@@ -1875,6 +1883,10 @@
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_PREFIX_HEADER = RXBase.pch;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"ERROR_CLASS=MHKError",
+				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SRCROOT)/ffmpeg/$(CURRENT_ARCH)\"",

@@ -89,7 +89,7 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
             [NSString stringWithCString:source_cstr encoding:NSASCIIStringEncoding], @"GLShaderSource",
             @"vertex", @"GLShaderType",
             nil];
-        error = [NSError errorWithDomain:GLShaderCompileErrorDomain code:status userInfo:userInfo];
+        error = [RXError errorWithDomain:GLShaderCompileErrorDomain code:status userInfo:userInfo];
         
         free(source_cstr);
         free(log);
@@ -201,7 +201,7 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
                 [NSString stringWithCString:source encoding:NSASCIIStringEncoding], @"GLShaderSource",
                 @"fragment", @"GLShaderType",
                 nil];
-            *error = [NSError errorWithDomain:GLShaderCompileErrorDomain code:status userInfo:userInfo];
+            *error = [RXError errorWithDomain:GLShaderCompileErrorDomain code:status userInfo:userInfo];
             
             free(source);
             free(log);
@@ -235,7 +235,7 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
             NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
                 [NSString stringWithCString:log encoding:NSASCIIStringEncoding], @"GLLinkLog",
                 nil];
-            *error = [NSError errorWithDomain:GLShaderLinkErrorDomain code:status userInfo:userInfo];
+            *error = [RXError errorWithDomain:GLShaderLinkErrorDomain code:status userInfo:userInfo];
             
             free(log);
         }

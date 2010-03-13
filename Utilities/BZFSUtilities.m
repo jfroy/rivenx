@@ -6,7 +6,6 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import "Base/PHSErrorMacros.h"
 #import "BZFSUtilities.h"
 
 
@@ -49,7 +48,7 @@ BOOL BZFSCreateDirectoryExtended(NSString* path, NSString* group, uint32_t permi
     else {
         success = [fm createDirectoryAtPath:path attributes:attributes];
         if (!success && error)
-            *error = [NSError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
+            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
     }
     return success;
 }
@@ -74,7 +73,7 @@ NSArray* BZFSContentsOfDirectory(NSString* path, NSError** error) {
     else {
         contents = [fm directoryContentsAtPath:path];
         if (!contents && error)
-            *error = [NSError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
+            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
     }
     return contents;
 }
@@ -111,7 +110,7 @@ NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error) {
     else {
         attributes = [fm fileAttributesAtPath:path traverseLink:NO];
         if (!attributes && error)
-            *error = [NSError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
+            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
     }
     return attributes;
 }
@@ -128,7 +127,7 @@ BOOL BZFSSetAttributesOfItemAtPath(NSString* path, NSDictionary* attributes, NSE
     else {
         success = [fm changeFileAttributes:attributes atPath:path];
         if (!success && error)
-            *error = [NSError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
+            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
     }
     return success;
 }
@@ -143,7 +142,7 @@ BOOL BZFSRemoveItemAtURL(NSURL* url, NSError** error) {
     else {
         success = [fm removeFileAtPath:[url path] handler:nil];
         if (!success && error)
-            *error = [NSError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
+            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
     }
     return success;
 }

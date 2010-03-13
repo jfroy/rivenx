@@ -8,8 +8,6 @@
 
 #import "mohawk_wave.h"
 
-#import "Base/PHSErrorMacros.h"
-
 #import "MHKArchive.h"
 #import "MHKADPCMDecompressor.h"
 #import "MHKMP2Decompressor.h"

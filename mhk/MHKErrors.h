@@ -7,15 +7,16 @@
  *
  */
 
-#import <Foundation/NSString.h>
+#import <Foundation/Foundation.h>
+
+#import "Base/PHSErrorMacros.h"
 
 
 // error domains
 extern NSString *const MHKErrorDomain;
-extern NSString *const MHKffmpegErrorDomain;
 
 // MHK errors
-typedef enum {
+enum {
     errFileTooLarge = 1, 
     errBadArchive, 
     errResourceNotFound,
@@ -26,4 +27,7 @@ typedef enum {
     errInvalidSoundDescriptor, 
     errInvalidBitmapCompression, 
     errInvalidBitmapCompressorInstruction
-} MHKError;
+};
+
+@interface MHKError : NSError
+@end

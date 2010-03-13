@@ -36,9 +36,9 @@ enum {
 #import "Base/PHSErrorMacros.h"
 
 extern NSString* const RXErrorDomain;
-extern NSString* const RXIOKitErrorDomain;
-extern NSString* const RXCGLErrorDomain;
-extern NSString* const RXCGErrorDomain;
+
+@interface RXError : NSError
+@end
 
 #endif
 

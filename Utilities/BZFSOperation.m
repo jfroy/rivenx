@@ -6,8 +6,7 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import "Base/PHSErrorMacros.h"
-#import "BZFSOperation.h"
+#import "Utilities/BZFSOperation.h"
 
 
 @interface BZFSOperation(BZFSOperationPrivate)
@@ -27,7 +26,7 @@ static CFStringRef _BZFSOperationDescribeObjCObject(const void* info) {
 }
 
 static void _BZFSOperationStatusCallback(FSFileOperationRef fileOp, const char* currentItem, FSFileOperationStage stage, OSStatus error, CFDictionaryRef statusDictionary, void* info) {
-    [(BZFSOperation*)info _updateStatus:[NSString stringWithUTF8String:currentItem] stage:stage error:[NSError errorWithDomain:NSOSStatusErrorDomain code:error userInfo:nil] status:(NSDictionary*)statusDictionary];
+    [(BZFSOperation*)info _updateStatus:[NSString stringWithUTF8String:currentItem] stage:stage error:[RXError errorWithDomain:NSOSStatusErrorDomain code:error userInfo:nil] status:(NSDictionary*)statusDictionary];
 }
 
 @implementation BZFSOperation
