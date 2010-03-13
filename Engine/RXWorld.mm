@@ -78,6 +78,10 @@ NSObject* g_world = nil;
 - (void)_initEngineLocations {
     NSError* error;
     
+    [_worldBase release];
+    [_worldUserBase release];
+    [_worldSharedBase release];
+    
     // world base is the parent directory of the application bundle
     _worldBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent], kCFURLPOSIXPathStyle, true);
     
@@ -172,13 +176,29 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     @try {
         // seed random
         srandom(time(NULL));
-    
+        
         // initialize the engine variables
         _engineVariablesLock = OS_SPINLOCK_INIT;
         [self _initEngineVariables];
         
         // initialize engine location URLs (the bases)
         [self _initEngineLocations];
+        
+        // load the shared preferences
+        [_sharedPreferences writeToFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"] atomically:NO];
+        _sharedPreferences = [NSMutableDictionary dictionaryWithContentsOfFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"]];
+        if (!_sharedPreferences)
+            _sharedPreferences = [NSMutableDictionary new];
+        
+        // apply the WorldBase override preference
+        if ([_sharedPreferences objectForKey:@"WorldBase"]) {
+            if (BZFSDirectoryExists([_sharedPreferences objectForKey:@"WorldBase"])) {
+                [_worldBase release];
+                _worldBase = [[NSURL fileURLWithPath:[_sharedPreferences objectForKey:@"WorldBase"]] retain];
+            } else {
+                [self setWorldBaseOverride:nil];
+            }
+        }
         
         // the active stacks dictionary maps stack keys (e.g. aspit, etc.) to RXStack objects
         _activeStacks = [NSMutableDictionary new];
@@ -270,52 +290,40 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 #if defined(DEBUG)
     RXOLog(@"tearing down");
 #endif
-    // boolean guard for several methods
     _tornDown = YES;
     
-    // terminate notifications
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     
-    // cut window delegate messages
     if (g_worldView)
         [[g_worldView window] setDelegate:nil];
     
-    // card renderer
     [_cardRenderer release];
     _cardRenderer = nil;    
     
-    // tear the world view down
     [g_worldView tearDown];
     
-    // tear the audoo renderer down
     if (_audioRenderer) {
         reinterpret_cast<RX::AudioRenderer*>(_audioRenderer)->Stop();
         delete reinterpret_cast<RX::AudioRenderer*>(_audioRenderer);
         _audioRenderer = 0;
     }
     
-    // terminate threads
     if (_scriptThread)
         [self performSelector:@selector(_stopThreadRunloop) inThread:_scriptThread];
     
-    // stack thread creation cond / mutex
     semaphore_destroy(mach_task_self(), _threadInitSemaphore);
     
-    // extras archive
     [_extrasDescriptor release];
     _extrasDescriptor = nil;
     
-    // cursors
     if (_cursors)
         NSFreeMapTable(_cursors);
     _cursors = nil;
     
-    // game state
     [_gameState release];
     _gameState = nil;
     
-    // world locations
     [_worldBase release];
     _worldBase = nil;
     
@@ -325,12 +333,14 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     [_worldSharedBase release];
     _worldSharedBase = nil;
     
-    // engine variables
     [_engineVariables release];
     _engineVariables = nil;
     
     [_activeStacks release];
     _activeStacks = nil;
+    
+    [_sharedPreferences release];
+    _sharedPreferences = nil;
 }
 
 #pragma mark -
@@ -368,12 +378,33 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     return _worldSharedBase;
 }
 
-- (NSDictionary*)extraBitmapsDescriptor {
-    return _extrasDescriptor;
+- (BOOL)isInstalled {
+    return [[_sharedPreferences objectForKey:@"IsInstalled"] boolValue];
 }
 
-- (NSView <RXWorldViewProtocol> *)worldView {
-    return _worldView;
+- (void)setIsInstalled:(BOOL)flag {
+    [_sharedPreferences setObject:[NSNumber numberWithBool:flag] forKey:@"IsInstalled"];
+    [_sharedPreferences writeToFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"] atomically:NO];
+}
+
+- (void)setWorldBaseOverride:(NSString*)path {
+    if (path) {
+        [_worldBase release];
+        _worldBase = [[NSURL fileURLWithPath:path] retain];
+        
+        [_sharedPreferences setObject:path forKey:@"WorldBase"];
+    } else {
+        [self _initEngineLocations];
+        [_sharedPreferences removeObjectForKey:@"WorldBase"];
+    }
+    
+    [_sharedPreferences writeToFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"] atomically:NO];
+}
+
+#pragma mark -
+
+- (NSDictionary*)extraBitmapsDescriptor {
+    return _extrasDescriptor;
 }
 
 - (NSCursor*)defaultCursor {
@@ -394,6 +425,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 #pragma mark -
+
+- (NSView <RXWorldViewProtocol> *)worldView {
+    return _worldView;
+}
 
 - (void*)audioRenderer {
     return _audioRenderer;

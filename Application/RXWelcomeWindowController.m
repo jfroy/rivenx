@@ -43,7 +43,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 }
 
 - (void)windowWillClose:(NSNotification*)notification {
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"IsInstalled"])
+    if (![[RXWorld sharedWorld] isInstalled])
         [NSApp terminate:nil];
 }
 
@@ -126,7 +126,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // that we are installed and kick up the game; otherwise, let the application
     // handle the error
     if (did_install) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"IsInstalled"];
+        [[RXWorld sharedWorld] setIsInstalled:YES];
         [self close];
         [self performSelector:@selector(_beginNewGame) withObject:nil afterDelay:0.0];
     } else {

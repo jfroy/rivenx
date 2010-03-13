@@ -12,10 +12,7 @@
 
 @interface RXArchiveManager : NSObject {
     NSString* patches_directory;
-    
     MHKArchive* extras_archive;
-    
-    NSString* local_data_store;
 }
 
 + (RXArchiveManager*)sharedArchiveManager;

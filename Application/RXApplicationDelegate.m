@@ -33,7 +33,6 @@
     
     [[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:
         [NSNumber numberWithBool:NO], @"Fullscreen",
-        [NSNumber numberWithBool:NO], @"IsInstalled",
         [NSDictionary dictionary], @"EngineVariables",
         nil
     ]];
@@ -94,7 +93,7 @@
             
             case kRXErrFailedToInitializeStack:
                 if (recoveryOptionIndex == 1) {
-                    [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"IsInstalled"];
+                    [[RXWorld sharedWorld] setIsInstalled:NO];
                     
                     // delete the shared base directory's content
                     NSString* shared_base = [[(RXWorld*)g_world worldSharedBase] path];
@@ -224,7 +223,7 @@
     [RXWorld sharedWorld];
     
     // if we're not installed, start the welcome controller; otherwise, load the last save game, or a new game if no such save can be found
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"IsInstalled"]) {
+    if (![[RXWorld sharedWorld] isInstalled]) {
         welcomeController = [[RXWelcomeWindowController alloc] initWithWindowNibName:@"Welcome"];
         [welcomeController showWindow:nil];
     } else {

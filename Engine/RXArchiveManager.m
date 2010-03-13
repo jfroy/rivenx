@@ -68,38 +68,10 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXArchiveManager, sharedArchiveManager)
     // cache the path to the Patches directory
     patches_directory = [[editions_directory stringByAppendingPathComponent:@"Patches"] retain];
     
-    // get the location of the local data store
-    local_data_store = [[[[[RXWorld sharedWorld] worldBase] path] stringByAppendingPathComponent:@"Data"] retain];
-    
-#if defined(DEBUG)
-    if (!BZFSDirectoryExists(local_data_store)) {
-        [local_data_store release];
-        local_data_store = [[[[NSFileManager defaultManager] currentDirectoryPath] stringByAppendingPathComponent:@"Data"] retain];
-    }
-#endif
-    
-    // check if the local data store exists (it is not required)
-    if (!BZFSDirectoryExists(local_data_store)) {
-        [local_data_store release];
-        local_data_store = nil;
-#if defined(DEBUG)
-        RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"no local data store could be found");
-#endif
-    }
-    
-//    BOOL option_pressed = ((GetCurrentKeyModifiers() & (optionKey | rightOptionKey)) != 0) ? YES : NO;
-//    if (default_edition && !option_pressed)
-//        [self performSelectorOnMainThread:@selector(_makeEditionChoiceMemoryCurrent) withObject:nil waitUntilDone:NO];
-//    else {
-//        // show the edition manager
-////        [self showEditionManagerWindow];
-//    }
-    
     return self;
 }
 
-- (void)dealloc {    
-    [local_data_store release];
+- (void)dealloc {
     [patches_directory release];
     [extras_archive release];
     
@@ -118,16 +90,25 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     NSString* directory;
     NSArray* content;
     
-    // first look in the local data store
-    if (local_data_store) {
-        directory = local_data_store;
-        content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-        if (content) {
-            NSEnumerator* enumerator = [content objectEnumerator];
-            NSString* filename;
-            while ((filename = [enumerator nextObject]))
-                [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
-        }
+    
+    // first look in the world base
+    directory = [[[RXWorld sharedWorld] worldBase] path];
+    content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
+    if (content) {
+        NSEnumerator* enumerator = [content objectEnumerator];
+        NSString* filename;
+        while ((filename = [enumerator nextObject]))
+            [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
+    }
+    
+    // then look in a Data subdirectory of the world base
+    directory = [[[[RXWorld sharedWorld] worldBase] path] stringByAppendingPathComponent:@"Data"];
+    content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
+    if (content) {
+        NSEnumerator* enumerator = [content objectEnumerator];
+        NSString* filename;
+        while ((filename = [enumerator nextObject]))
+            [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
     }
     
     // then look in the world shared base (e.g. /Users/Shared/Riven X, where the installer will put the archives)

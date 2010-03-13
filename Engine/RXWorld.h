@@ -45,6 +45,8 @@
     
     NSApplicationPresentationOptions _defaultPresentationOptions;
     
+    NSMutableDictionary* _sharedPreferences;
+    
     BOOL _tornDown;
     BOOL _renderingInitialized;
     BOOL _fullscreen;
@@ -57,6 +59,11 @@
 - (NSURL*)worldBase;
 - (NSURL*)worldUserBase;
 - (NSURL*)worldSharedBase;
+
+- (BOOL)isInstalled;
+- (void)setIsInstalled:(BOOL)flag;
+
+- (void)setWorldBaseOverride:(NSString*)path;
 
 - (RXGameState*)gameState;
 - (void)loadGameState:(RXGameState*)gameState;
