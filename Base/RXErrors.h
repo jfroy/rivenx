@@ -22,7 +22,6 @@ enum {
     kRXErrQuickTimeTooOld,
     
     kRXErrArchivesNotFound,
-    kRXErrUnableToLoadExtrasArchive,
     
     kRXErrFailedToGetDisplayID,
     kRXErrNoAcceleratorService,
