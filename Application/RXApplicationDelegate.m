@@ -204,6 +204,21 @@
     return NO;
 }
 
+- (void)_deleteOldDataStore:(id)context {
+    NSAutoreleasePool* pool = [NSAutoreleasePool new];
+    
+    NSArray* dirs = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+    if (![dirs count]) {
+        [pool drain];
+        return;
+    }
+    
+    NSString* path = [[dirs objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
+    BZFSRemoveItemAtURL([NSURL fileURLWithPath:path], NULL);
+    
+    [pool drain];
+}
+
 #pragma mark -
 #pragma mark delegation and UI
 
@@ -218,6 +233,9 @@
     // check if the system's QuickTime version is compatible and return if it is not
     if (![self _checkQuickTime])
         return;
+    
+    // delete old world data
+    [NSThread detachNewThreadSelector:@selector(_deleteOldDataStore:) toTarget:self withObject:nil];
     
     // initialize the world
     [RXWorld sharedWorld];
