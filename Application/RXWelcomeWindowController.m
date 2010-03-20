@@ -51,6 +51,70 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.google.com/products/catalog?hl=en&cid=11798540492054256128&sa=title"]];
 }
 
+- (void)_installFromFolderPanelDidEnd:(NSOpenPanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
+    if (returnCode == NSCancelButton)
+        return;
+    
+    NSString* path = [[panel URL] path];
+    
+    BOOL removable, writable, unmountable;
+    NSString* description, *fsType;
+    if (![[NSWorkspace sharedWorkspace] getFileSystemInfoForPath:path isRemovable:&removable isWritable:&writable isUnmountable:&unmountable description:&description type:&fsType]) {
+        [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
+        return;
+    }
+    
+    if (removable) {
+        NSError* error;
+        NSDictionary* attributes = BZFSAttributesOfItemAtPath(path, &error);
+        if (!attributes) {
+            [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
+            return;
+        }
+        NSUInteger fs_init = [attributes fileSystemNumber];
+        
+        while (![path isEqualToString:@"/"]) {
+            NSString* parent = [path stringByDeletingLastPathComponent];
+            attributes = BZFSAttributesOfItemAtPath(parent, &error);
+            if (!attributes) {
+                [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
+                return;
+            }
+            
+            NSUInteger fs = [attributes fileSystemNumber];
+            if (fs != fs_init)
+                break;
+            
+            path = parent;
+        }
+        
+        [self performSelector:@selector(_performMountScanWithFeedback:) withObject:path inThread:scanningThread];
+    } else
+        [self performSelector:@selector(_performFolderScanWithFeedback:) withObject:path inThread:scanningThread];
+}
+
+- (IBAction)installFromFolder:(id)sender {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+    
+    [panel setCanCreateDirectories:NO];
+    [panel setAllowsOtherFileTypes:NO];
+    [panel setCanSelectHiddenExtension:NO];
+    [panel setTreatsFilePackagesAsDirectories:NO];
+    
+    [panel setMessage:NSLocalizedStringFromTable(@"FOLDER_INSTALL_PANEL_MESSAGE", @"Welcome", NULL)];
+    [panel setPrompt:NSLocalizedString(@"CHOOSE", NULL)];
+    [panel setTitle:NSLocalizedString(@"CHOOSE", NULL)];
+    
+    [panel beginSheetForDirectory:@"/Volumes" file:nil types:nil modalForWindow:[self window] modalDelegate:self didEndSelector:@selector(_installFromFolderPanelDidEnd:returnCode:contextInfo:) contextInfo:nil];
+}
+
+- (IBAction)cancelInstallation:(id)sender {
+    [NSApp abortModal];
+}
+
 #pragma mark installation
 
 - (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context {
@@ -162,7 +226,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     waitedOnDisc = nil;
 }
 
-- (void)_didEndOfferToInstallAlert:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context {
+- (void)_offerToInstallFromDiscAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context {
     NSDictionary* mount_paths = [(NSDictionary*)context autorelease];
     
     // if the user did not choose to install, we're done
@@ -176,7 +240,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [self _runInstallerWithMountPaths:mount_paths];
 }
 
-- (void)_offerToInstallFromMount:(NSDictionary*)mount_paths {
+- (void)_offerToInstallFromDisc:(NSDictionary*)mount_paths {
     // do nothing if there is already an active installer
     if (installer)
         return;
@@ -188,22 +252,62 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         localized_mount_name = [path lastPathComponent];
     
     NSAlert* alert = [[[NSAlert alloc] init] autorelease];
-    [alert setMessageText:[NSString stringWithFormat:@"Do you wish to install Riven from the disc \"%@\"?", localized_mount_name]];
-    [alert setInformativeText:@"Riven needs to be installed on your computer before you can play. You will not need to insert your disc after this."];
+    [alert setMessageText:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALL_FROM_DISC_MESSAGE", @"Welcome", NULL), localized_mount_name]];
+    [alert setInformativeText:NSLocalizedStringFromTable(@"INSTALL_FROM_DISC_INFO", @"Welcome", NULL)];
     
-    [alert addButtonWithTitle:@"Install"];
-    [alert addButtonWithTitle:@"Cancel"];
+    [alert addButtonWithTitle:NSLocalizedString(@"INSTALL", NULL)];
+    [alert addButtonWithTitle:NSLocalizedString(@"CANCEL", NULL)];
     
-    [alert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:@selector(_didEndOfferToInstallAlert:returnCode:contextInfo:) contextInfo:[mount_paths retain]];
+    [alert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:@selector(_offerToInstallFromDiscAlertDidEnd:returnCode:contextInfo:) contextInfo:[mount_paths retain]];
 }
 
-- (IBAction)cancelInstallation:(id)sender {
-    [NSApp abortModal];
+- (void)_offerToInstallFromFolderAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context {
+    NSDictionary* mount_paths = [(NSDictionary*)context autorelease];
+    
+    // if the user did not choose one of the install actions, we're done
+    if (return_code == NSAlertThirdButtonReturn)
+        return;
+    
+    // dismiss the alert's sheet window
+    [[alert window] orderOut:nil];
+    
+    // if the user chose to to a direct install, set the world user base override and go
+    if (return_code == NSAlertFirstButtonReturn) {
+        [[RXWorld sharedWorld] setIsInstalled:YES];
+        [[RXWorld sharedWorld] setWorldBaseOverride:[mount_paths objectForKey:@"path"]];
+        [self close];
+        [self performSelector:@selector(_beginNewGame) withObject:nil afterDelay:0.0];
+    } else {
+        // otherwise, the user chose to to a copy install,and so run an installer
+        [self _runInstallerWithMountPaths:mount_paths];
+    }
+}
+
+- (void)_offerToInstallFromFolder:(NSDictionary*)mount_paths {
+    // do nothing if there is already an active installer
+    if (installer)
+        return;
+    
+    NSString* path = [mount_paths objectForKey:@"path"];
+    
+    NSString* localized_mount_name = [[NSFileManager defaultManager] displayNameAtPath:path];
+    if (!localized_mount_name)
+        localized_mount_name = [path lastPathComponent];
+    
+    NSAlert* alert = [[[NSAlert alloc] init] autorelease];
+    [alert setMessageText:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALL_FROM_FOLDER_MESSAGE", @"Welcome", NULL), localized_mount_name]];
+    [alert setInformativeText:NSLocalizedStringFromTable(@"INSTALL_FROM_FOLDER_INFO", @"Welcome", NULL)];
+    
+    [alert addButtonWithTitle:NSLocalizedStringFromTable(@"DIRECT_INSTALL", @"Welcome", NULL)];
+    [alert addButtonWithTitle:NSLocalizedStringFromTable(@"COPY_INSTALL", @"Welcome", NULL)];
+    [alert addButtonWithTitle:NSLocalizedString(@"CANCEL", NULL)];
+    
+    [alert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:@selector(_offerToInstallFromFolderAlertDidEnd:returnCode:contextInfo:) contextInfo:[mount_paths retain]];
 }
 
 #pragma mark removable media
 
-- (BOOL)_checkMediaContent:(NSString*)path {    
+- (BOOL)_checkPathContent:(NSString*)path removable:(BOOL)removable {    
     // basically look for a Data directory with a bunch of .MHK files, possibly an Assets1 directory and an Extras.MHK file
     NSError* error;
     NSArray* content = BZFSContentsOfDirectory(path, &error);
@@ -286,18 +390,41 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     // everything checks out; if we're not installing, propose to install from this mount, otherwise inform
     // the installer about the new mount paths
+    SEL action;
     if (installer)
-        [self performSelectorOnMainThread:@selector(_stopWaitingForDisc:) withObject:mount_paths waitUntilDone:NO];
-    else
-        [self performSelectorOnMainThread:@selector(_offerToInstallFromMount:) withObject:mount_paths waitUntilDone:NO];
+        action = @selector(_stopWaitingForDisc:);
+    else {
+        if (removable)
+            action = @selector(_offerToInstallFromDisc:);
+        else
+            action = @selector(_offerToInstallFromFolder:);
+    }
+    
+    [self performSelectorOnMainThread:action withObject:mount_paths waitUntilDone:NO];
     
     return YES;
 }
 
 - (void)_performMountScan:(NSString*)path {
-    BOOL usable_mount = [self _checkMediaContent:path];
+    BOOL usable_mount = [self _checkPathContent:path removable:YES];
     if (!usable_mount && installer)
         [[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:path];
+}
+
+- (void)_presentErrorSheet:(NSError*)error {
+    [NSApp presentError:error modalForWindow:[self window] delegate:nil didPresentSelector:nil contextInfo:nil];
+}
+
+- (void)_performMountScanWithFeedback:(NSString*)path {
+    BOOL usable_mount = [self _checkPathContent:path removable:YES];
+    if (!usable_mount)
+        [self performSelectorOnMainThread:@selector(_presentErrorSheet:) withObject:[RXError errorWithDomain:RXErrorDomain code:kRXErrUnusableInstallMedia userInfo:nil] waitUntilDone:NO];
+}
+
+- (void)_performFolderScanWithFeedback:(NSString*)path {
+    BOOL usable_mount = [self _checkPathContent:path removable:NO];
+    if (!usable_mount)
+        [self performSelectorOnMainThread:@selector(_presentErrorSheet:) withObject:[RXError errorWithDomain:RXErrorDomain code:kRXErrUnusableInstallFolder userInfo:nil] waitUntilDone:NO];
 }
 
 - (void)_scanningThread:(id)context {

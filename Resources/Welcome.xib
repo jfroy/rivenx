@@ -2,7 +2,7 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="8.00">
 	<data>
 		<int key="IBDocument.SystemTarget">1040</int>
-		<string key="IBDocument.SystemVersion">10D559</string>
+		<string key="IBDocument.SystemVersion">10D572</string>
 		<string key="IBDocument.InterfaceBuilderVersion">740</string>
 		<string key="IBDocument.AppKitVersion">1038.29</string>
 		<string key="IBDocument.HIToolboxVersion">460.00</string>
@@ -11,7 +11,7 @@
 			<string key="NS.object.0">740</string>
 		</object>
 		<array class="NSMutableArray" key="IBDocument.EditedObjectIDs">
-			<integer value="19"/>
+			<integer value="4"/>
 		</array>
 		<array key="IBDocument.PluginDependencies">
 			<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -38,7 +38,7 @@
 				<string key="NSWindowContentMaxSize">{580, 320}</string>
 				<string key="NSWindowContentMinSize">{580, 320}</string>
 				<object class="NSView" key="NSWindowView" id="197112473">
-					<nil key="NSNextResponder"/>
+					<reference key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<array class="NSMutableArray" key="NSSubviews">
 						<object class="NSImageView" id="1055168623">
@@ -198,6 +198,7 @@ IGRpc2MgYWdhaW4uA</string>
 						</object>
 					</array>
 					<string key="NSFrameSize">{580, 320}</string>
+					<reference key="NSSuperview"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {2560, 1578}}</string>
 				<string key="NSMinSize">{580, 342}</string>
@@ -222,6 +223,7 @@ IGRpc2MgYWdhaW4uA</string>
 							<object class="NSPSMatrix" key="NSDrawMatrix"/>
 							<string key="NSFrame">{{18, 52}, {392, 20}}</string>
 							<reference key="NSSuperview" ref="809652026"/>
+							<reference key="NSWindow"/>
 							<int key="NSpiFlags">16394</int>
 							<double key="NSMinValue">20</double>
 							<double key="NSMaxValue">100</double>
@@ -231,6 +233,7 @@ IGRpc2MgYWdhaW4uA</string>
 							<int key="NSvFlags">268</int>
 							<string key="NSFrame">{{17, 84}, {486, 17}}</string>
 							<reference key="NSSuperview" ref="809652026"/>
+							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSTextFieldCell" key="NSCell" id="889002832">
 								<int key="NSCellFlags">67239488</int>
@@ -264,6 +267,7 @@ IGRpc2MgYWdhaW4uA</string>
 							<int key="NSvFlags">268</int>
 							<string key="NSFrame">{{17, 20}, {486, 28}}</string>
 							<reference key="NSSuperview" ref="809652026"/>
+							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSTextFieldCell" key="NSCell" id="975822758">
 								<int key="NSCellFlags">67239424</int>
@@ -280,6 +284,7 @@ IGRpc2MgYWdhaW4uA</string>
 							<int key="NSvFlags">268</int>
 							<string key="NSFrame">{{410, 46}, {96, 32}}</string>
 							<reference key="NSSuperview" ref="809652026"/>
+							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="40734527">
 								<int key="NSCellFlags">67239424</int>
@@ -302,6 +307,7 @@ IGRpc2MgYWdhaW4uA</string>
 					</array>
 					<string key="NSFrameSize">{520, 121}</string>
 					<reference key="NSSuperview"/>
+					<reference key="NSWindow"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {2560, 1578}}</string>
 				<string key="NSMaxSize">{1.79769e+308, 1.79769e+308}</string>
@@ -433,6 +439,14 @@ IGRpc2MgYWdhaW4uA</string>
 						<reference key="destination" ref="672792521"/>
 					</object>
 					<int key="connectionID">64</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">installFromFolder:</string>
+						<reference key="source" ref="1001"/>
+						<reference key="destination" ref="752777718"/>
+					</object>
+					<int key="connectionID">68</int>
 				</object>
 			</array>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -653,9 +667,9 @@ IGRpc2MgYWdhaW4uA</string>
 				<string key="24.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="25.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="26.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
-				<string key="3.IBEditorWindowLastContentRect">{{971, 922}, {580, 320}}</string>
+				<string key="3.IBEditorWindowLastContentRect">{{1115, 690}, {580, 320}}</string>
 				<string key="3.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
-				<string key="3.IBWindowTemplateEditedContentRect">{{971, 922}, {580, 320}}</string>
+				<string key="3.IBWindowTemplateEditedContentRect">{{1115, 690}, {580, 320}}</string>
 				<integer value="0" key="3.NSWindowTemplate.visibleAtLaunch"/>
 				<string key="3.editorWindowContentRectSynchronizationRect">{{859, 754}, {580, 320}}</string>
 				<boolean value="YES" key="3.windowTemplate.hasMaxSize"/>
@@ -684,7 +698,7 @@ IGRpc2MgYWdhaW4uA</string>
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">64</int>
+			<int key="maxID">68</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -708,6 +722,7 @@ IGRpc2MgYWdhaW4uA</string>
 					<dictionary class="NSMutableDictionary" key="actions">
 						<string key="buyRiven:">id</string>
 						<string key="cancelInstallation:">id</string>
+						<string key="installFromFolder:">id</string>
 					</dictionary>
 					<dictionary class="NSMutableDictionary" key="outlets">
 						<string key="_installingProgress">NSProgressIndicator</string>

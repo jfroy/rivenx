@@ -25,6 +25,8 @@
 }
 
 - (IBAction)buyRiven:(id)sender;
+- (IBAction)installFromFolder:(id)sender;
+
 - (IBAction)cancelInstallation:(id)sender;
 
 @end

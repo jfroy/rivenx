@@ -1,0 +1,17 @@
+/* 
+   Welcome.strings
+   rivenx
+
+   Created by Jean-Francois Roy on 20/03/2010.
+   Copyright 2010 MacStorm. All rights reserved.
+ */
+
+"FOLDER_INSTALL_PANEL_MESSAGE" = "Choose a folder or disc to install Riven from.";
+
+"INSTALL_FROM_DISC_MESSAGE" = "Do you wish to install Riven from the disc \"%@\"?";
+"INSTALL_FROM_DISC_INFO" = "Riven needs to be installed on your computer before you can play. You will not need to insert your disc afterwards.";
+
+"INSTALL_FROM_FOLDER_MESSAGE" = "Do you wish to install Riven from the folder \"%@\"?";
+"INSTALL_FROM_FOLDER_INFO" = "You can optionally copy the Riven data files in a folder managed by Riven X on this Mac. This is the recommended choice if the folder you selected is on a network share.";
+"COPY_INSTALL" = "Copy and Install";
+"DIRECT_INSTALL" = "Install";

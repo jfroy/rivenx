@@ -164,6 +164,7 @@
 		3199276D0D96AFCE00ED1B47 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		319927730D96B07200ED1B47 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		319C458109C138380031F95F /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
+		319C8C691155793D00DF3E7D /* Welcome.strings in Resources */ = {isa = PBXBuildFile; fileRef = 319C8C681155793D00DF3E7D /* Welcome.strings */; };
 		31A14B860F03F495006EFF93 /* AUOutputBL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B810F03F495006EFF93 /* AUOutputBL.cpp */; };
 		31A14B870F03F495006EFF93 /* CAAudioChannelLayout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B830F03F495006EFF93 /* CAAudioChannelLayout.cpp */; };
 		31A14B880F03F495006EFF93 /* CAAudioChannelLayoutObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B840F03F495006EFF93 /* CAAudioChannelLayoutObject.cpp */; };
@@ -184,7 +185,6 @@
 		31B644F210033B7E008AD8E0 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384B08C6A73E004B7FD0 /* CoreServices.framework */; };
 		31B654A21102B9EF004818AC /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31B6549E1102B9EF004818AC /* Localizable.strings */; };
 		31B654A31102B9EF004818AC /* Rendering.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31B654A01102B9EF004818AC /* Rendering.strings */; };
-		31B741C10B8414EA00D1A247 /* Cyan Worlds.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 31B741C00B8414EA00D1A247 /* Cyan Worlds.mp4 */; };
 		31BC739F09A57D4E001EC1E0 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
 		31C3572A0D92A72400EDEF81 /* RXSound_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31C357290D92A72400EDEF81 /* RXSound_test.mm */; };
 		31C545530D5D50620024B486 /* RXInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 31C545520D5D50620024B486 /* RXInstaller.m */; };
@@ -490,6 +490,7 @@
 		319926E10D96A81000ED1B47 /* RXSystemProfiler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXSystemProfiler.m; sourceTree = "<group>"; };
 		319C457F09C1382F0031F95F /* VirtualRingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = VirtualRingBuffer.h; sourceTree = "<group>"; };
 		319C458009C1382F0031F95F /* VirtualRingBuffer.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = VirtualRingBuffer.m; sourceTree = "<group>"; };
+		319C8C591155787C00DF3E7D /* en */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Welcome.strings; sourceTree = "<group>"; };
 		31A14B810F03F495006EFF93 /* AUOutputBL.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AUOutputBL.cpp; sourceTree = "<group>"; };
 		31A14B830F03F495006EFF93 /* CAAudioChannelLayout.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAAudioChannelLayout.cpp; sourceTree = "<group>"; };
 		31A14B840F03F495006EFF93 /* CAAudioChannelLayoutObject.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAAudioChannelLayoutObject.cpp; sourceTree = "<group>"; };
@@ -510,7 +511,6 @@
 		31AE54560DE0ADD6000E71CF /* ExceptionHandling.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExceptionHandling.framework; path = /System/Library/Frameworks/ExceptionHandling.framework; sourceTree = "<absolute>"; };
 		31B6549F1102B9EF004818AC /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		31B654A11102B9EF004818AC /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Rendering.strings; sourceTree = "<group>"; };
-		31B741C00B8414EA00D1A247 /* Cyan Worlds.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Cyan Worlds.mp4"; sourceTree = "<group>"; };
 		31B78EC50C88F25F00227E0F /* Base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 		31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = DebugRelease.xcconfig; sourceTree = "<group>"; };
 		31B78EC70C88F25F00227E0F /* RivenX.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = RivenX.xcconfig; sourceTree = "<group>"; };
@@ -1073,7 +1073,6 @@
 				312876F80F2972E900A114FF /* CardInspector.xib */,
 				31DAAF0C0DDE21EF00D06D0C /* cursors */,
 				31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */,
-				31B741C00B8414EA00D1A247 /* Cyan Worlds.mp4 */,
 				312EBAC70FD202ED00D65E22 /* debug_init.py */,
 				31FE33AB101BBC4100C30CD1 /* debug_notification.py */,
 				31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */,
@@ -1095,6 +1094,7 @@
 				31D4E8CD1144635D00D70E28 /* Stacks.plist */,
 				3160E1810FD3075300F18E86 /* tiny_marbles.png */,
 				31D21B980DBC078E00E970E1 /* VariableEditor.xib */,
+				319C8C681155793D00DF3E7D /* Welcome.strings */,
 				31E933431127B02000188488 /* Welcome.xib */,
 			);
 			path = Resources;
@@ -1417,7 +1417,6 @@
 				3155481008C52A1400A2AA7A /* Extras.plist in Resources */,
 				313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */,
 				31EAC32B08FF38940018D8DA /* rivenx.icns in Resources */,
-				31B741C10B8414EA00D1A247 /* Cyan Worlds.mp4 in Resources */,
 				31F0DD4B0D3A7682000FBB5F /* EngineVariables.plist in Resources */,
 				31F1BEA60D3B03D000CFE301 /* about.png in Resources */,
 				31F1BED60D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf in Resources */,
@@ -1440,6 +1439,7 @@
 				31D4E8CE1144635D00D70E28 /* Stacks.plist in Resources */,
 				31472D03114C2FC7008B6CF7 /* Installer.strings in Resources */,
 				31472CEE114C2F66008B6CF7 /* Extras.MHK in Resources */,
+				319C8C691155793D00DF3E7D /* Welcome.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1758,6 +1758,14 @@
 				316D273D10004B23003579F9 /* MainMenu.xib */,
 			);
 			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
+		319C8C681155793D00DF3E7D /* Welcome.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				319C8C591155787C00DF3E7D /* en */,
+			);
+			name = Welcome.strings;
 			sourceTree = "<group>";
 		};
 		31B6549E1102B9EF004818AC /* Localizable.strings */ = {

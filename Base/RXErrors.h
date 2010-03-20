@@ -30,6 +30,9 @@ enum {
     kRXErrInstallerMissingArchivesOnMedia,
     kRXErrInstallerCancelled,
     kRXErrInstallerMissingArchivesAfterInstall,
+    kRXErrFailedToGetFilesystemInformation,
+    kRXErrUnusableInstallMedia,
+    kRXErrUnusableInstallFolder,
 };
 
 #if defined(__OBJC__)
