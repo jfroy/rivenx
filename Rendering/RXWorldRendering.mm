@@ -27,6 +27,7 @@
     [window setDelegate:(id <NSWindowDelegate>)self];
     [window setDisplaysWhenScreenProfileChanges:YES];
     [window setReleasedWhenClosed:YES];
+    [window setShowsResizeIndicator:NO];
     
     [window orderOut:self];
 }
