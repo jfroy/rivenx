@@ -33,7 +33,6 @@
 		31225AC408C421790055628F /* RXCard.m in Sources */ = {isa = PBXBuildFile; fileRef = 31225AC308C421790055628F /* RXCard.m */; };
 		3124F2A909C36792009BA3CF /* RXSoundGroup.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3124F2A609C36782009BA3CF /* RXSoundGroup.mm */; };
 		312A89660D57B25600FCDF91 /* RXArchiveManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89610D57B25600FCDF91 /* RXArchiveManager.m */; };
-		312A896D0D57B33700FCDF91 /* Editions in Resources */ = {isa = PBXBuildFile; fileRef = 312A89690D57B33700FCDF91 /* Editions */; };
 		312D9ECD0D4D81A3006E384C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9EC70D4D81A3006E384C /* InfoPlist.strings */; };
 		312D9ECF0D4D81A3006E384C /* About.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9ECB0D4D81A3006E384C /* About.strings */; };
 		312EBAA40FD1FB2800D65E22 /* Python.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 312EBAA30FD1FB2800D65E22 /* Python.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
@@ -360,7 +359,6 @@
 		312876F80F2972E900A114FF /* CardInspector.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CardInspector.xib; sourceTree = "<group>"; };
 		312A89600D57B25600FCDF91 /* RXArchiveManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXArchiveManager.h; sourceTree = "<group>"; };
 		312A89610D57B25600FCDF91 /* RXArchiveManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXArchiveManager.m; sourceTree = "<group>"; };
-		312A89690D57B33700FCDF91 /* Editions */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Editions; sourceTree = "<group>"; };
 		312D9EC80D4D81A3006E384C /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		312D9ECC0D4D81A3006E384C /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/About.strings; sourceTree = "<group>"; };
 		312EBAA30FD1FB2800D65E22 /* Python.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Python.framework; path = /System/Library/Frameworks/Python.framework; sourceTree = "<absolute>"; };
@@ -712,7 +710,6 @@
 				31F3094108BE440E00417394 /* Engine */,
 				31DCF68F08CB6CFE00E351D9 /* Rendering */,
 				31A9EC1D094D23F200C6A0AB /* States */,
-				312A89690D57B33700FCDF91 /* Editions */,
 				31154B4D0B4990E9002FCEDD /* Shaders */,
 				31F3093C08BE43D500417394 /* Resources */,
 				311FD3DA08C0426C0045BE11 /* cocoa_main.m */,
@@ -1423,7 +1420,6 @@
 				31FF29D50D425BFE00E3B5FF /* GameVariables.plist in Resources */,
 				312D9ECD0D4D81A3006E384C /* InfoPlist.strings in Resources */,
 				312D9ECF0D4D81A3006E384C /* About.strings in Resources */,
-				312A896D0D57B33700FCDF91 /* Editions in Resources */,
 				31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */,
 				31D21B9F0DBC07C300E970E1 /* DebugConsole.xib in Resources */,
 				31DAAF0B0DDE21BB00D06D0C /* Cursors.plist in Resources */,
