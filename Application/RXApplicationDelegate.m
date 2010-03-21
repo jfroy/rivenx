@@ -409,7 +409,7 @@
 }
 
 - (BOOL)isGameLoaded {
-    return (g_world) ? YES : NO;
+    return [[RXWorld sharedWorld] isInstalled];
 }
 
 @end
