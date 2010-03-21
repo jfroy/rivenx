@@ -58,15 +58,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXArchiveManager, sharedArchiveManager)
     if (!self)
         return nil;
     
-    // find the Editions directory
-    NSString* editions_directory = [[NSBundle mainBundle] pathForResource:@"Editions" ofType:nil];
-    if (!editions_directory)
-        @throw [NSException exceptionWithName:@"RXMissingResourceException"
-                                       reason:@"Riven X could not find the Editions bundle resource directory."
-                                     userInfo:nil];
-    
     // cache the path to the Patches directory
-    patches_directory = [[editions_directory stringByAppendingPathComponent:@"Patches"] retain];
+    patches_directory = nil;
     
     return self;
 }
