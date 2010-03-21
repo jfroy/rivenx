@@ -27,12 +27,8 @@
 
 #import "States/RXCardState.h"
 
+
 NSObject* g_world = nil;
-
-
-@interface RXWorld (RXWorldPrivate)
-- (void)_secondStageInit;
-@end
 
 @interface RXWorld (RXWorldRendering)
 - (void)_initializeRendering;
@@ -158,22 +154,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
             [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
             [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
         
-        // set the global to ourselves
-        g_world = self;
-        
-        // second stage initialization
-        [self _secondStageInit];
-    } @catch (NSException* e) {
-        [[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
-        [self release];
-        self = nil;
-    }
-    
-    return self;
-}
-
-- (void)_secondStageInit {
-    @try {
         // seed random
         srandom(time(NULL));
         
@@ -185,8 +165,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         [self _initEngineLocations];
         
         // load the shared preferences
-        [_sharedPreferences writeToFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"] atomically:NO];
-        _sharedPreferences = [NSMutableDictionary dictionaryWithContentsOfFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"]];
+        _sharedPreferences = [[NSMutableDictionary alloc] initWithContentsOfFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"]];
         if (!_sharedPreferences)
             _sharedPreferences = [NSMutableDictionary new];
         
@@ -261,7 +240,14 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
     } @catch (NSException* e) {
         [[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
+        [self release];
+        self = nil;
     }
+    
+    // set the global to ourselves
+    g_world = self;
+    
+    return self;
 }
 
 - (void)initializeRendering {
@@ -348,9 +334,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 - (void)_RXScriptThreadEntry:(id)object {
     // reference to the thread
     _scriptThread = [NSThread currentThread];
-    
-    // make the load CGL context default for the script thread
-    CGLSetCurrentContext([_worldView loadContext]);
     
     // run the thread
     RXThreadRunLoopRun(_threadInitSemaphore, "script");

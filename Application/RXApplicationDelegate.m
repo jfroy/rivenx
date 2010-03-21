@@ -227,6 +227,9 @@
     [[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:
         NSLogUncaughtExceptionMask | NSHandleUncaughtExceptionMask |
         NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
+    
+    // initialize the world
+    [RXWorld sharedWorld];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {    
@@ -236,9 +239,6 @@
     
     // delete old world data
     [NSThread detachNewThreadSelector:@selector(_deleteOldDataStore:) toTarget:self withObject:nil];
-    
-    // initialize the world
-    [RXWorld sharedWorld];
     
     // if we're not installed, start the welcome controller; otherwise, load the last save game, or a new game if no such save can be found
     if (![[RXWorld sharedWorld] isInstalled]) {
@@ -409,7 +409,7 @@
 }
 
 - (BOOL)isGameLoaded {
-    return [[RXWorld sharedWorld] isInstalled];
+    return (g_world) ? [[RXWorld sharedWorld] isInstalled] : NO;
 }
 
 @end
