@@ -1878,9 +1878,10 @@ init_failure:
         
     // restore graphics state
     if (render_inv) {
-        glDisable(GL_BLEND); glReportError();
-        glUseProgram(0); glReportError();
+        glDisable(GL_BLEND);
+        glUseProgram(0);
         [gl_state bindVertexArrayObject:0];
+        glReportError();
     }
 }
 

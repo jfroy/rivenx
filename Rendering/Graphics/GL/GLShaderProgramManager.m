@@ -48,7 +48,7 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     _shaders_root = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[NSBundle mainBundle] pathForResource:@"Shaders" ofType:nil], kCFURLPOSIXPathStyle, true);
     
     // get the source of the standard one texture coordinates vertex shader
-    NSURL* source_url = [NSURL URLWithString:[@"1texcoord" stringByAppendingPathExtension:@"vs"] relativeToURL:_shaders_root];
+    NSURL* source_url = [NSURL URLWithString:[@"1texcoord" stringByAppendingPathExtension:@"vsh"] relativeToURL:_shaders_root];
     NSString* source = [NSString stringWithContentsOfURL:source_url encoding:NSASCIIStringEncoding error:NULL];
     if (!source)
         @throw [NSException exceptionWithName:@"RXShaderException" reason:@"Riven X was unable to load the standard texturing vertex shader's source." userInfo:nil];
@@ -143,7 +143,7 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     epilogueIndex++;
     
     // shader source URLs
-    NSURL* fs_url = [NSURL URLWithString:[name stringByAppendingPathExtension:@"fs"] relativeToURL:_shaders_root];
+    NSURL* fs_url = [NSURL URLWithString:[name stringByAppendingPathExtension:@"fsh"] relativeToURL:_shaders_root];
     
     // read the shader sources
     NSString* fshader_source = [NSString stringWithContentsOfURL:fs_url encoding:NSASCIIStringEncoding error:error];
@@ -174,7 +174,7 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     // fragment shader source
     fs = glCreateShader(GL_FRAGMENT_SHADER); glReportError();
     if (fs == 0)
-        goto failure_delete_fs;
+        goto failure_delete_shader_sources;
     
     shader_sources[epilogueIndex - 1] = (GLchar*)[fshader_source cStringUsingEncoding:NSASCIIStringEncoding];
     if (!shader_sources[epilogueIndex - 1])
@@ -258,6 +258,162 @@ failure_delete_fs:
 failure_delete_shader_sources:
     free(shader_sources);
     
+    return 0;
+}
+
+- (GLuint)programWithName:(NSString*)name
+        attributeBindings:(NSDictionary*)bindings
+                  context:(CGLContextObj)cgl_ctx
+                    error:(NSError**)error
+{
+    // WARNING: ASSUMES THE CALLER HAS LOCKED THE CONTEXT
+    
+    // argument validation
+    if (name == nil || cgl_ctx == NULL)
+        return 0;
+    
+    GLuint vs, fs, program;
+    GLint status;
+    const char* shader_src;
+    
+    // shader source URLs
+    NSURL* vs_url = [NSURL URLWithString:[name stringByAppendingPathExtension:@"vsh"] relativeToURL:_shaders_root];
+    NSURL* fs_url = [NSURL URLWithString:[name stringByAppendingPathExtension:@"fsh"] relativeToURL:_shaders_root];
+    
+    // read the shader sources
+    NSString* vshader_source = [NSString stringWithContentsOfURL:vs_url encoding:NSASCIIStringEncoding error:error];
+    if (!vshader_source)
+        return 0;
+    NSString* fshader_source = [NSString stringWithContentsOfURL:fs_url encoding:NSASCIIStringEncoding error:error];
+    if (!fshader_source)
+        return 0;
+    
+    // vertex shader source
+    vs = glCreateShader(GL_VERTEX_SHADER); glReportError();
+    if (vs == 0)
+        goto failure;
+    shader_src = [vshader_source cStringUsingEncoding:NSASCIIStringEncoding];
+    glShaderSource(vs, 1, (const GLchar**)&shader_src, NULL); glReportError();
+    
+    // compile the vertex shader
+    glCompileShader(vs); glReportError();
+    glGetShaderiv(vs, GL_COMPILE_STATUS, &status);
+    if (status != GL_TRUE) {
+        if (error) {
+            GLint length;
+            
+            glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &length);
+            GLchar* log = malloc(length);
+            glGetShaderInfoLog(vs, length, NULL, log);
+            
+            glGetShaderiv(vs, GL_SHADER_SOURCE_LENGTH, &length);
+            GLchar* source = malloc(length);
+            glGetShaderSource(vs, length, NULL, source);
+            
+            NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
+                [NSString stringWithCString:log encoding:NSASCIIStringEncoding], @"GLCompileLog",
+                [NSString stringWithCString:source encoding:NSASCIIStringEncoding], @"GLShaderSource",
+                @"vertex", @"GLShaderType",
+                nil];
+            *error = [RXError errorWithDomain:GLShaderCompileErrorDomain code:status userInfo:userInfo];
+            
+            free(source);
+            free(log);
+        }
+        
+        goto failure_delete_vs;
+    }
+    
+    // fragment shader source
+    fs = glCreateShader(GL_FRAGMENT_SHADER); glReportError();
+    if (fs == 0)
+        goto failure_delete_vs;
+    shader_src = [fshader_source cStringUsingEncoding:NSASCIIStringEncoding];
+    glShaderSource(fs, 1, (const GLchar**)&shader_src, NULL); glReportError();
+    
+    // compile the fragment shader
+    glCompileShader(fs); glReportError();
+    glGetShaderiv(fs, GL_COMPILE_STATUS, &status);
+    if (status != GL_TRUE) {
+        if (error) {
+            GLint length;
+            
+            glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &length);
+            GLchar* log = malloc(length);
+            glGetShaderInfoLog(fs, length, NULL, log);
+            
+            glGetShaderiv(fs, GL_SHADER_SOURCE_LENGTH, &length);
+            GLchar* source = malloc(length);
+            glGetShaderSource(fs, length, NULL, source);
+            
+            NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
+                [NSString stringWithCString:log encoding:NSASCIIStringEncoding], @"GLCompileLog",
+                [NSString stringWithCString:source encoding:NSASCIIStringEncoding], @"GLShaderSource",
+                @"fragment", @"GLShaderType",
+                nil];
+            *error = [RXError errorWithDomain:GLShaderCompileErrorDomain code:status userInfo:userInfo];
+            
+            free(source);
+            free(log);
+        }
+        
+        goto failure_delete_fs;
+    }
+    
+    // create the program
+    program = glCreateProgram(); glReportError();
+    
+    // attach the vertex and fragment shaders
+    glAttachShader(program, vs); glReportError();
+    glAttachShader(program, fs); glReportError();
+    
+    // bind the attribute positions
+    NSEnumerator* keyEnum = [bindings keyEnumerator];
+    NSString* key;
+    while ((key = [keyEnum nextObject])) {
+        const char* attrib = [key cStringUsingEncoding:NSASCIIStringEncoding];
+        GLint position = [[bindings objectForKey:key] intValue];
+        glBindAttribLocation(program, position, attrib); glReportError();
+    }
+    
+    // link
+    glLinkProgram(program); glReportError();
+    glGetProgramiv(program, GL_LINK_STATUS, &status);
+    if (status != GL_TRUE) {
+        if (error) {
+            GLint length;
+            
+            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+            GLchar* log = malloc(length);
+            glGetProgramInfoLog(program, length, NULL, log);
+            
+            NSDictionary* userInfo = [NSDictionary dictionaryWithObjectsAndKeys:
+                [NSString stringWithCString:log encoding:NSASCIIStringEncoding], @"GLLinkLog",
+                nil];
+            *error = [RXError errorWithDomain:GLShaderLinkErrorDomain code:status userInfo:userInfo];
+            
+            free(log);
+        }
+        
+        goto failure_delete_program;
+    }
+    
+    // we don't need the shader objects anymore
+    glDeleteShader(vs); glReportError();
+    glDeleteShader(fs); glReportError();
+    
+    return program;
+
+failure_delete_program:
+    glDeleteProgram(program); glReportError();
+
+failure_delete_fs:
+    glDeleteShader(fs); glReportError();
+
+failure_delete_vs:
+    glDeleteShader(vs); glReportError();
+
+failure:
     return 0;
 }
 

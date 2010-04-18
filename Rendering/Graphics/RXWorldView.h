@@ -8,6 +8,7 @@
 
 #import "Rendering/RXRendering.h"
 #import "Rendering/Graphics/RXOpenGLState.h"
+#import "Rendering/Animation/RXInterpolator.h"
 
 
 @interface RXWorldView : NSOpenGLView <RXWorldViewProtocol> {
@@ -21,6 +22,9 @@
     
     CIContext* _ciContext;
     CIFilter* _scaleFilter;
+    CIFilter* _fadeColorFilter;
+    CIFilter* _multiplyBlendFilter;
+    CIFilter* _cropFilter;
     
     io_service_t _acceleratorService;
     
@@ -41,14 +45,22 @@
     
     CVDisplayLinkRef _displayLink;
     
+    GLuint _attribsVBO;
     rx_renderer_t _cardRenderer;
     GLuint _cardFBO;
     GLuint _cardTexture;
     GLuint _cardVAO;
-    GLuint _cardVBO;
     GLuint _cardProgram;
     
+    GLuint _fadeLayerVAO;
+    GLuint _solidColorProgram;
+    GLint _solidColorLocation;
+    
     NSCursor* _cursor;
+    
+    id _fadeCompletionDelegate;
+    SEL _fadeCompletionSel;
+    RXLinearInterpolator* _fadeInterpolator;
     
     BOOL _glInitialized;
     BOOL _useCoreImage;

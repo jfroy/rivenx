@@ -94,10 +94,8 @@ __END_DECLS
 
 - (CGLContextObj)renderContext;
 - (CGLContextObj)loadContext;
-
 - (CGLPixelFormatObj)cglPixelFormat;
 - (CVDisplayLinkRef)displayLink;
-
 - (CGColorSpaceRef)workingColorSpace;
 - (CGColorSpaceRef)displayColorSpace;
 
@@ -111,7 +109,10 @@ __END_DECLS
 - (BOOL)isUsingCoreImage;
 - (void)setUseCoreImage:(BOOL)flag;
 
-- (ssize_t)currentFreeVRAM:(NSError**)error;
+- (void)fadeOutWithDuration:(NSTimeInterval)duration completionDelegate:(id)completionDelegate selector:(SEL)completionSel;
+- (void)fadeInWithDuration:(NSTimeInterval)duration completionDelegate:(id)completionDelegate selector:(SEL)completionSel;
+
+- (ssize_t)currentFreeVRAM;
 @end
 
 __BEGIN_DECLS

@@ -452,17 +452,11 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         // set the active card to that of the new game state
         RXSimpleCardDescriptor* scd = [_gameState currentCard];
         [(RXCardState*)_cardRenderer setActiveCardWithStack:scd->stackKey ID:scd->cardID waitUntilDone:NO];
-        
-        // fade the card state back in
-//        [_stateCompositor fadeInState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedIn:)];
     }
 }
 
-- (void)_cardStateWasFadedIn:(RXRenderState*)state {
-
-}
-
-- (void)_cardStateWasFadedOut:(RXRenderState*)state {
+- (void)_fadeOutFinished {
+    [g_worldView fadeInWithDuration:1.0 completionDelegate:nil selector:nil];
     [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
 }
 
@@ -476,8 +470,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     // ensure that rendering has been initialized, since we require the card renderer to load a game state
     [self initializeRendering];
     
-    [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
-//    [_stateCompositor fadeOutState:_cardState over:1.0 completionDelegate:self completionSelector:@selector(_cardStateWasFadedOut:)];
+//    [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
+    [g_worldView fadeOutWithDuration:1.0 completionDelegate:self selector:@selector(_fadeOutFinished)];
 }
 
 #pragma mark -

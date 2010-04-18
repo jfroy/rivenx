@@ -27,4 +27,9 @@ extern NSString* const GLShaderLinkErrorDomain;
                                         context:(CGLContextObj)cgl_ctx
                                           error:(NSError**)error;
 
+- (GLuint)programWithName:(NSString*)name
+        attributeBindings:(NSDictionary*)bindings
+                  context:(CGLContextObj)cgl_ctx
+                    error:(NSError**)error;
+
 @end

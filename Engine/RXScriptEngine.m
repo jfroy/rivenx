@@ -1897,7 +1897,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     RXPicture* picture = [_picture_cache objectForKey:picture_key];
     if (!picture) {
         // if VRAM gets below 32 MiB, empty the picture cache
-        if ([g_worldView currentFreeVRAM:NULL] < 32 * 1024 * 1024)
+        if ([g_worldView currentFreeVRAM] < 32 * 1024 * 1024)
             [self _emptyPictureCaches];
         
         // get a texture from the texture broker

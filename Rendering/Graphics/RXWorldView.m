@@ -430,6 +430,8 @@ static NSString* required_extensions[] = {
     [_scaleFilter release];
     [_ciContext release];
     
+    [_fadeInterpolator release];
+    
     [super dealloc];
 }
 
@@ -660,7 +662,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     [self _updateTotalVRAM];
     
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"now using virtual screen %d driven by the \"%@\" renderer; VRAM: %ld MB total, %.2f MB free",
-        [_renderContext currentVirtualScreen], [RXWorldView rendererNameForID:renderer], _totalVRAM / 1024 / 1024, [self currentFreeVRAM:NULL] / 1024.0 / 1024.0);
+        [_renderContext currentVirtualScreen], [RXWorldView rendererNameForID:renderer], _totalVRAM / 1024 / 1024, [self currentFreeVRAM] / 1024.0 / 1024.0);
     
     // determine OpenGL version and features
     [self _determineGLVersion:_renderContextCGL];
@@ -716,6 +718,18 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
         _scaleFilter = [[CIFilter filterWithName:@"CILanczosScaleTransform"] retain];
         assert(_scaleFilter);
         [_scaleFilter setDefaults];
+        
+//        _fadeColorFilter = [[CIFilter filterWithName:@"CIConstantColorGenerator"] retain];
+//        assert(_fadeColorFilter);
+//        [_fadeColorFilter setDefaults];
+//        
+//        _multiplyBlendFilter = [[CIFilter filterWithName:@"CIMultiplyBlendMode"] retain];
+//        assert(_multiplyBlendFilter);
+//        [_multiplyBlendFilter setDefaults];
+//        
+//        _cropFilter = [[CIFilter filterWithName:@"CICrop"] retain];
+//        assert(_cropFilter);
+//        [_cropFilter setDefaults];
     }
     
     NSRect scale_rect = RXRenderScaleRect();
@@ -767,16 +781,17 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"card FBO not complete, status 0x%04x\n", (unsigned int)status);
     }
     
-    // create the card VBO and VAO
-    glGenVertexArraysAPPLE(1, &_cardVAO); glReportError();
-    [gl_state bindVertexArrayObject:_cardVAO];
-    
-    glGenBuffers(1, &_cardVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, _cardVBO); glReportError();
-    
+    // one VBO for all our vertex attribs
+    glGenBuffers(1, &_attribsVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, _attribsVBO); glReportError();
     if (GLEW_APPLE_flush_buffer_range)
         glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
-    glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
+    glBufferData(GL_ARRAY_BUFFER, 32 * sizeof(GLfloat), NULL, GL_STATIC_DRAW); glReportError();
+    
+    // create the card VAO
+    glGenVertexArraysAPPLE(1, &_cardVAO); glReportError();
+    [gl_state bindVertexArrayObject:_cardVAO];
+    glBindBuffer(GL_ARRAY_BUFFER, _attribsVBO); glReportError();
     
     // configure the VAs
     glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
@@ -785,6 +800,16 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     glEnableVertexAttribArray(RX_ATTRIB_TEXCOORD0); glReportError();
     glVertexAttribPointer(RX_ATTRIB_TEXCOORD0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 2 * sizeof(GLfloat))); glReportError();
     
+    // create the fade VAO
+    glGenVertexArraysAPPLE(1, &_fadeLayerVAO); glReportError();
+    [gl_state bindVertexArrayObject:_fadeLayerVAO];
+    glBindBuffer(GL_ARRAY_BUFFER, _attribsVBO); glReportError();
+    
+    // configure the VAs
+    glEnableVertexAttribArray(RX_ATTRIB_POSITION); glReportError();
+    glVertexAttribPointer(RX_ATTRIB_POSITION, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), BUFFER_OFFSET(NULL, 16 * sizeof(GLfloat))); glReportError();
+    
+    // get a standard card program
     _cardProgram = [[GLShaderProgramManager sharedManager]
                     standardProgramWithFragmentShaderName:@"card"
                     extraSources:nil
@@ -803,6 +828,18 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     assert(uniform_loc != -1);
     glUniform4f(uniform_loc, 1.f, 1.f, 1.f, 1.f); glReportError();
     
+    // get the solid color program
+    NSDictionary* bindings = [NSDictionary dictionaryWithObjectsAndKeys:
+        [NSNumber numberWithInt:RX_ATTRIB_POSITION], @"position",
+        nil];
+    _solidColorProgram = [[GLShaderProgramManager sharedManager] programWithName:@"solidcolor" attributeBindings:bindings context:cgl_ctx error:NULL];
+    assert(_solidColorProgram);
+    
+    glUseProgram(_solidColorProgram); glReportError();
+    
+    _solidColorLocation = glGetUniformLocation(_solidColorProgram, "color"); glReportError();
+    assert(_solidColorLocation != -1);
+    
     // restore state
     glUseProgram(0);
     [gl_state bindVertexArrayObject:0];
@@ -816,6 +853,8 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     [gl_state bindVertexArrayObject:_cardVAO];
+    glBindBuffer(GL_ARRAY_BUFFER, _attribsVBO);
+    glReportError();
     
     struct _attribs {
         GLfloat pos[2];
@@ -825,6 +864,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     struct _attribs* attribs = (struct _attribs*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY); glReportError();
     assert(attribs);
     
+    // card
     rx_rect_t contentRect = RXEffectiveRendererFrame();
     
     attribs[0].pos[0] = contentRect.origin.x;                               attribs[0].pos[1] = contentRect.origin.y;
@@ -839,11 +879,25 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     attribs[3].pos[0] = contentRect.origin.x + contentRect.size.width;      attribs[3].pos[1] = contentRect.origin.y + contentRect.size.height;
     attribs[3].tex[0] = (GLfloat)kRXCardViewportSize.width;                 attribs[3].tex[1] = (GLfloat)kRXCardViewportSize.height;
     
+    // whole screen
+    attribs[4].pos[0] = 0.0f;                                               attribs[4].pos[1] = 0.0f;
+    attribs[4].tex[0] = 0.0f;                                               attribs[4].tex[1] = 0.0f;
+    
+    attribs[5].pos[0] = _glWidth;                                           attribs[5].pos[1] = 0.0f;
+    attribs[5].tex[0] = _glWidth;                                           attribs[5].tex[1] = 0.0f;
+    
+    attribs[6].pos[0] = 0.0f;                                               attribs[6].pos[1] = _glHeight;
+    attribs[6].tex[0] = 0.0f;                                               attribs[6].tex[1] = _glHeight;
+    
+    attribs[7].pos[0] = _glWidth;                                           attribs[7].pos[1] = _glHeight;
+    attribs[7].tex[0] = _glWidth;                                           attribs[7].tex[1] = _glHeight;
+    
     if (GLEW_APPLE_flush_buffer_range)
-        glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 16 * sizeof(GLfloat));
+        glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 32 * sizeof(GLfloat));
     glUnmapBuffer(GL_ARRAY_BUFFER);
     glReportError();
     
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     [gl_state bindVertexArrayObject:0];
 }
 
@@ -1025,14 +1079,14 @@ major_number.minor_number major_number.minor_number.release_number
     _totalVRAM = total_vram;
 }
 
-- (ssize_t)currentFreeVRAM:(NSError**)error {        
+- (ssize_t)currentFreeVRAM {        
     if (!_acceleratorService)
-        ReturnValueWithError(-1, RXErrorDomain, kRXErrNoAcceleratorService, nil, error);
+        return -1;
     
     // get the performance statistics ditionary out of the accelerator service
     CFDictionaryRef perf_stats = IORegistryEntryCreateCFProperty(_acceleratorService, CFSTR("PerformanceStatistics"), kCFAllocatorDefault, 0);
     if (!perf_stats)
-        ReturnValueWithError(-1, RXErrorDomain, kRXErrFailedToGetAcceleratorPerfStats, nil, error);
+        return -1;
     
     // look for a number of keys (this is mostly reverse engineering and best-guess effort)
     CFNumberRef free_vram_number = NULL;
@@ -1060,7 +1114,7 @@ major_number.minor_number major_number.minor_number.release_number
     // if we did not find or compute a free VRAM number, return an error
     if (!free_vram_number) {
         CFRelease(perf_stats);
-        ReturnValueWithError(-1, RXErrorDomain, kRXErrFailedToFindFreeVRAMInformation, nil, error);
+        return -1;
     }
     
     // get its value out
@@ -1085,6 +1139,52 @@ major_number.minor_number major_number.minor_number.release_number
     _useCoreImage = flag;
 }
 
+- (void)fadeOutWithDuration:(NSTimeInterval)duration completionDelegate:(id)completionDelegate selector:(SEL)completionSel {
+    float start = (_fadeInterpolator) ? [_fadeInterpolator value] : 0.0f;
+    RXAnimation* animation = [[RXCannedAnimation alloc] initWithDuration:duration];
+    
+    [_fadeInterpolator release];
+    _fadeInterpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:start end:1.0f];
+    [animation release];
+    
+    if (_fadeCompletionDelegate)
+        [_fadeCompletionDelegate performSelector:_fadeCompletionSel];
+    
+    _fadeCompletionDelegate = completionDelegate;
+    _fadeCompletionSel = completionSel;
+    
+    [animation startNow];
+}
+
+- (void)fadeInWithDuration:(NSTimeInterval)duration completionDelegate:(id)completionDelegate selector:(SEL)completionSel {
+    float start = (_fadeInterpolator) ? [_fadeInterpolator value] : 1.0f;
+    RXAnimation* animation = [[RXCannedAnimation alloc] initWithDuration:duration];
+    
+    [_fadeInterpolator release];
+    _fadeInterpolator = [[RXLinearInterpolator alloc] initWithAnimation:animation start:start end:0.0f];
+    [animation release];
+    
+    if (_fadeCompletionDelegate)
+        [_fadeCompletionDelegate performSelector:_fadeCompletionSel];
+    
+    _fadeCompletionDelegate = completionDelegate;
+    _fadeCompletionSel = completionSel;
+    
+    [animation startNow];
+}
+
+- (void)_handleFadeCompletion:(id<RXInterpolator>)interpolator {
+    id completionDelegate = _fadeCompletionDelegate;
+    SEL completionSel = _fadeCompletionSel;
+    
+    _fadeCompletionDelegate = nil;
+    _fadeCompletionSel = nil;
+    [interpolator release];
+    
+    if (completionDelegate)
+        [completionDelegate performSelector:completionSel];
+}
+
 - (void)_render:(const CVTimeStamp*)outputTime {
     if (_tornDown)
         return;
@@ -1098,29 +1198,40 @@ major_number.minor_number major_number.minor_number.release_number
     // clear to black
     glClear(GL_COLOR_BUFFER_BIT);
     
-//    OSSpinLockLock(&_render_lock);
-//    NSArray* renderStates = [_renderStates retain];
-//    id<RXInterpolator> fade_interpolator = [_fade_interpolator retain];
-//    NSInvocation* fade_callback = [_fade_animation_callback retain];
-//    OSSpinLockUnlock(&_render_lock);
-    
     if (_cardRenderer.target) {
         // bind the card FBO, clear the color buffer and call down to the card renderer
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _cardFBO); glReportError();
         glClear(GL_COLOR_BUFFER_BIT);
         _cardRenderer.render.imp(_cardRenderer.target, _cardRenderer.render.sel, outputTime, cgl_ctx, _cardFBO);
         
-        // bind the window server FBO
+        // bind the window surface FBO
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); glReportError();
         
         if (_useCoreImage) {
             glUseProgram(0); glReportError();
             [gl_state bindVertexArrayObject:0];
             
-            // scale the card texture
             CIImage* cardImage = [CIImage imageWithTexture:_cardTexture size:CGSizeMake(kRXCardViewportSize.width, kRXCardViewportSize.height) flipped:0 colorSpace:_sRGBColorSpace];
+//            CGRect cardImageExtent = [cardImage extent];
+            CIImage* scaledCardImage;
+            
+//            if (fadeInterpolator) {
+//                float fadeValue = [fadeInterpolator value];
+//                CIColor* fadeColor = [CIColor colorWithRed:fadeValue green:fadeValue blue:fadeValue alpha:1.0f];
+//                [_fadeColorFilter setValue:fadeColor forKey:kCIInputColorKey];
+//                
+//                CIVector* cropVector = [CIVector vectorWithX:cardImageExtent.origin.x Y:cardImageExtent.origin.y Z:cardImageExtent.size.width W:cardImageExtent.size.height];
+//                [_cropFilter setValue:[_fadeColorFilter valueForKey:kCIOutputImageKey] forKey:kCIInputImageKey];
+//                [_cropFilter setValue:cropVector forKey:@"inputRectangle"];
+//                
+//                [_multiplyBlendFilter setValue:cardImage forKey:kCIInputImageKey];
+//                [_multiplyBlendFilter setValue:[_cropFilter valueForKey:kCIOutputImageKey] forKey:@"inputBackgroundImage"];
+//                
+//                cardImage = [_multiplyBlendFilter valueForKey:kCIOutputImageKey];
+//            }
+            
             [_scaleFilter setValue:cardImage forKey:kCIInputImageKey];
-            CIImage* scaledCardImage = [_scaleFilter valueForKey:kCIOutputImageKey];
+            scaledCardImage = [_scaleFilter valueForKey:kCIOutputImageKey];
             
             // render the scaled card texture; note that we need to inset the image by one pixel to avoid garbage pixels output by the lanczos filter
             rx_rect_t contentRect = RXEffectiveRendererFrame();
@@ -1133,70 +1244,49 @@ major_number.minor_number major_number.minor_number.release_number
             glActiveTexture(GL_TEXTURE0); glReportError();
             glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _cardTexture); glReportError();
             
+//            if (fadeInterpolator) {
+//                float fadeValue = [fadeInterpolator value];
+//                glUniform4f(_modulateColorLocation, fadeValue, fadeValue, fadeValue, 1.f); glReportError();
+//            } else {
+//                glUniform4f(_modulateColorLocation, 1.f, 1.f, 1.f, 1.f); glReportError();
+//            }
+            
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
             
             glUseProgram(0); glReportError();
             [gl_state bindVertexArrayObject:0];
         }
-    
-//#if defined(DEBUG_GL)
-//    glValidateProgram(_compositing_program); glReportError();
-//    GLint valid;
-//    glGetProgramiv(_compositing_program, GL_VALIDATE_STATUS, &valid);
-//    if (valid != GL_TRUE)
-//        RXOLog(@"program not valid: %u", _compositing_program);
-//#endif
-//    
-//    // if we have a fade animation, apply it's value to the blend weight 0 and call its completion callback if it's reached its end
-//    if (fade_interpolator) {
-//        _texture_blend_weights[0] = [fade_interpolator value];
-//        if ([fade_interpolator isDone]) {
-//            [fade_callback performSelectorOnMainThread:@selector(invoke) withObject:nil waitUntilDone:NO];
-//            
-//            OSSpinLockLock(&_render_lock);
-//            if (fade_interpolator == _fade_interpolator) {
-//                [_fade_interpolator release];
-//                _fade_interpolator = nil;
-//            }
-//            if (fade_callback == _fade_animation_callback) {
-//                [_fade_animation_callback release];
-//                _fade_animation_callback = nil;
-//            }
-//            OSSpinLockUnlock(&_render_lock);
-//        }
-//    }
-//    
-//    // bind the compositor program and update the render state blend uniform
-//    glUseProgram(_compositing_program); glReportError();
-//    glUniform4fv(_texture_blend_weights_uniform, 1, _texture_blend_weights); glReportError();
-//    
-//    // bind the compositing vao
-//    [gl_state bindVertexArrayObject:_compositing_vao];
-//    
-//    // bind render state textures
-//    uint32_t state_count = [_states count];
-//    for (uint32_t state_i = 0; state_i < state_count; state_i++) {
-//        glActiveTexture(GL_TEXTURE0 + state_i); glReportError();
-//        GLuint texture = ((RXRenderStateCompositionDescriptor*)[_states objectAtIndex:state_i])->texture;
-//        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, texture); glReportError();
-//    }
-//    
-//    // render all states at once!
-//    glDrawArrays(GL_QUADS, 0, 4); glReportError();
-//    
-//    // set the active texture unit to TEXTURE0 (Riven X assumption)
-//    glActiveTexture(GL_TEXTURE0); glReportError();
-//    
-//    // bind program 0 (FF processing)
-//    glUseProgram(0); glReportError();
-    
+        
         // call down to the card renderer again, this time to perform rendering into the system framebuffer
         _cardRenderer.renderInMainRT.imp(_cardRenderer.target, _cardRenderer.render.sel, cgl_ctx);
+        
+        // if we're running a fade animation, draw a suitably opaque black quad on top of everything
+        if (_fadeInterpolator) {
+            glUseProgram(_solidColorProgram);
+            float fadeValue = [_fadeInterpolator value];
+            glUniform4f(_solidColorLocation, 0.0f, 0.0f, 0.0f, fadeValue);
+            glReportError();
+            
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+            glEnable(GL_BLEND);
+            glReportError();
+            
+            [gl_state bindVertexArrayObject:_fadeLayerVAO];
+            
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
+            
+            glDisable(GL_BLEND);
+            glUseProgram(0); glReportError();
+            [gl_state bindVertexArrayObject:0];
+            
+            if ([_fadeInterpolator isDone]) {
+                id<RXInterpolator> interpolator = _fadeInterpolator;
+                _fadeInterpolator = nil;
+                [self performSelectorOnMainThread:@selector(_handleFadeCompletion:) withObject:interpolator waitUntilDone:NO];
+            }
+        }
     }
-    
-//    [fade_callback release];
-//    [fade_interpolator release];
-//    [renderStates release];
     
     // glFlush and swap the front and back buffers
     CGLFlushDrawable(cgl_ctx);
