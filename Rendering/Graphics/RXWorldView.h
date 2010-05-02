@@ -61,6 +61,7 @@
     id _fadeCompletionDelegate;
     SEL _fadeCompletionSel;
     RXLinearInterpolator* _fadeInterpolator;
+    float _fadeValue;
     
     BOOL _glInitialized;
     BOOL _useCoreImage;

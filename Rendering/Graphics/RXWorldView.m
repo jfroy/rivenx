@@ -390,6 +390,9 @@ static NSString* required_extensions[] = {
     // configure the view's autoresizing behavior to resize itself to match its container
     [self setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     
+    // initial fade value is 1.0f
+    _fadeValue = 1.0f;
+    
     return self;
 }
 
@@ -1261,10 +1264,11 @@ major_number.minor_number major_number.minor_number.release_number
         _cardRenderer.renderInMainRT.imp(_cardRenderer.target, _cardRenderer.render.sel, cgl_ctx);
         
         // if we're running a fade animation, draw a suitably opaque black quad on top of everything
-        if (_fadeInterpolator) {
+        if (_fadeInterpolator || _fadeValue < 1.0f) {
+            _fadeValue = [_fadeInterpolator value];
+            
             glUseProgram(_solidColorProgram);
-            float fadeValue = [_fadeInterpolator value];
-            glUniform4f(_solidColorLocation, 0.0f, 0.0f, 0.0f, fadeValue);
+            glUniform4f(_solidColorLocation, 0.0f, 0.0f, 0.0f, _fadeValue);
             glReportError();
             
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
