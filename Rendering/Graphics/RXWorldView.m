@@ -1265,7 +1265,8 @@ major_number.minor_number major_number.minor_number.release_number
         
         // if we're running a fade animation, draw a suitably opaque black quad on top of everything
         if (_fadeInterpolator || _fadeValue < 1.0f) {
-            _fadeValue = [_fadeInterpolator value];
+            if (_fadeInterpolator)
+                _fadeValue = [_fadeInterpolator value];
             
             glUseProgram(_solidColorProgram);
             glUniform4f(_solidColorLocation, 0.0f, 0.0f, 0.0f, _fadeValue);
