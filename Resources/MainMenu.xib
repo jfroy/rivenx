@@ -809,76 +809,6 @@
 				<object class="IBConnectionRecord">
 					<object class="IBBindingConnection" key="connection">
 						<string key="label">enabled: gameLoaded</string>
-						<reference key="source" ref="864081769"/>
-						<reference key="destination" ref="155193720"/>
-						<object class="NSNibBindingConnector" key="connector">
-							<reference key="NSSource" ref="864081769"/>
-							<reference key="NSDestination" ref="155193720"/>
-							<string key="NSLabel">enabled: gameLoaded</string>
-							<string key="NSBinding">enabled</string>
-							<string key="NSKeyPath">gameLoaded</string>
-							<dictionary key="NSOptions">
-								<integer value="0" key="NSMultipleValuesPlaceholder"/>
-								<integer value="0" key="NSNoSelectionPlaceholder"/>
-								<integer value="0" key="NSNotApplicablePlaceholder"/>
-								<integer value="0" key="NSNullPlaceholder"/>
-							</dictionary>
-							<int key="NSNibBindingConnectorVersion">2</int>
-						</object>
-					</object>
-					<int key="connectionID">481</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBBindingConnection" key="connection">
-						<string key="label">enabled: gameLoaded</string>
-						<reference key="source" ref="357921168"/>
-						<reference key="destination" ref="155193720"/>
-						<object class="NSNibBindingConnector" key="connector">
-							<reference key="NSSource" ref="357921168"/>
-							<reference key="NSDestination" ref="155193720"/>
-							<string key="NSLabel">enabled: gameLoaded</string>
-							<string key="NSBinding">enabled</string>
-							<string key="NSKeyPath">gameLoaded</string>
-							<int key="NSNibBindingConnectorVersion">2</int>
-						</object>
-					</object>
-					<int key="connectionID">508</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBBindingConnection" key="connection">
-						<string key="label">enabled: gameLoaded</string>
-						<reference key="source" ref="35521764"/>
-						<reference key="destination" ref="155193720"/>
-						<object class="NSNibBindingConnector" key="connector">
-							<reference key="NSSource" ref="35521764"/>
-							<reference key="NSDestination" ref="155193720"/>
-							<string key="NSLabel">enabled: gameLoaded</string>
-							<string key="NSBinding">enabled</string>
-							<string key="NSKeyPath">gameLoaded</string>
-							<int key="NSNibBindingConnectorVersion">2</int>
-						</object>
-					</object>
-					<int key="connectionID">514</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBBindingConnection" key="connection">
-						<string key="label">enabled: gameLoaded</string>
-						<reference key="source" ref="102109569"/>
-						<reference key="destination" ref="155193720"/>
-						<object class="NSNibBindingConnector" key="connector">
-							<reference key="NSSource" ref="102109569"/>
-							<reference key="NSDestination" ref="155193720"/>
-							<string key="NSLabel">enabled: gameLoaded</string>
-							<string key="NSBinding">enabled</string>
-							<string key="NSKeyPath">gameLoaded</string>
-							<int key="NSNibBindingConnectorVersion">2</int>
-						</object>
-					</object>
-					<int key="connectionID">515</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBBindingConnection" key="connection">
-						<string key="label">enabled: gameLoaded</string>
 						<reference key="source" ref="123728716"/>
 						<reference key="destination" ref="155193720"/>
 						<object class="NSNibBindingConnector" key="connector">
@@ -891,6 +821,86 @@
 						</object>
 					</object>
 					<int key="connectionID">516</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBBindingConnection" key="connection">
+						<string key="label">enabled: gameLoadingAndSavingDisabled</string>
+						<reference key="source" ref="35521764"/>
+						<reference key="destination" ref="155193720"/>
+						<object class="NSNibBindingConnector" key="connector">
+							<reference key="NSSource" ref="35521764"/>
+							<reference key="NSDestination" ref="155193720"/>
+							<string key="NSLabel">enabled: gameLoadingAndSavingDisabled</string>
+							<string key="NSBinding">enabled</string>
+							<string key="NSKeyPath">gameLoadingAndSavingDisabled</string>
+							<object class="NSDictionary" key="NSOptions">
+								<string key="NS.key.0">NSValueTransformerName</string>
+								<string key="NS.object.0">NSNegateBoolean</string>
+							</object>
+							<int key="NSNibBindingConnectorVersion">2</int>
+						</object>
+					</object>
+					<int key="connectionID">521</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBBindingConnection" key="connection">
+						<string key="label">enabled: gameLoadingAndSavingDisabled</string>
+						<reference key="source" ref="357921168"/>
+						<reference key="destination" ref="155193720"/>
+						<object class="NSNibBindingConnector" key="connector">
+							<reference key="NSSource" ref="357921168"/>
+							<reference key="NSDestination" ref="155193720"/>
+							<string key="NSLabel">enabled: gameLoadingAndSavingDisabled</string>
+							<string key="NSBinding">enabled</string>
+							<string key="NSKeyPath">gameLoadingAndSavingDisabled</string>
+							<object class="NSDictionary" key="NSOptions">
+								<string key="NS.key.0">NSValueTransformerName</string>
+								<string key="NS.object.0">NSNegateBoolean</string>
+							</object>
+							<int key="NSNibBindingConnectorVersion">2</int>
+						</object>
+					</object>
+					<int key="connectionID">522</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBBindingConnection" key="connection">
+						<string key="label">enabled: gameLoadingAndSavingDisabled</string>
+						<reference key="source" ref="102109569"/>
+						<reference key="destination" ref="155193720"/>
+						<object class="NSNibBindingConnector" key="connector">
+							<reference key="NSSource" ref="102109569"/>
+							<reference key="NSDestination" ref="155193720"/>
+							<string key="NSLabel">enabled: gameLoadingAndSavingDisabled</string>
+							<string key="NSBinding">enabled</string>
+							<string key="NSKeyPath">gameLoadingAndSavingDisabled</string>
+							<object class="NSDictionary" key="NSOptions">
+								<string key="NS.key.0">NSValueTransformerName</string>
+								<string key="NS.object.0">NSNegateBoolean</string>
+							</object>
+							<int key="NSNibBindingConnectorVersion">2</int>
+						</object>
+					</object>
+					<int key="connectionID">524</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBBindingConnection" key="connection">
+						<string key="label">enabled: gameLoadingAndSavingDisabled</string>
+						<reference key="source" ref="864081769"/>
+						<reference key="destination" ref="155193720"/>
+						<object class="NSNibBindingConnector" key="connector">
+							<reference key="NSSource" ref="864081769"/>
+							<reference key="NSDestination" ref="155193720"/>
+							<string key="NSLabel">enabled: gameLoadingAndSavingDisabled</string>
+							<string key="NSBinding">enabled</string>
+							<string key="NSKeyPath">gameLoadingAndSavingDisabled</string>
+							<object class="NSDictionary" key="NSOptions">
+								<string key="NS.key.0">NSValueTransformerName</string>
+								<string key="NS.object.0">NSNegateBoolean</string>
+							</object>
+							<int key="NSNibBindingConnectorVersion">2</int>
+						</object>
+					</object>
+					<int key="connectionID">528</int>
 				</object>
 			</array>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -1409,7 +1419,7 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">516</int>
+			<int key="maxID">528</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">

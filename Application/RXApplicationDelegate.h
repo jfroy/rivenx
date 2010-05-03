@@ -27,6 +27,7 @@
     
     NSString* savedGamesDirectory;
     
+    BOOL disableGameSavingAndLoading;
     BOOL wasFullscreen;
 }
 
@@ -40,5 +41,8 @@
 - (IBAction)toggleFullscreen:(id)sender;
 
 - (BOOL)isGameLoaded;
+
+- (BOOL)isGameLoadingAndSavingDisabled;
+- (void)setDisableGameLoadingAndSaving:(BOOL)disable;
 
 @end

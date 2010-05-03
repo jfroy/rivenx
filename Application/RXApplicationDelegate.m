@@ -312,7 +312,7 @@
 #pragma mark game opening and saving
 
 - (IBAction)newDocument:(id)sender {
-    if (![self isGameLoaded])
+    if ([self isGameLoadingAndSavingDisabled])
         return;
     
     RXGameState* gs = [[RXGameState alloc] init];
@@ -321,7 +321,7 @@
 }
 
 - (IBAction)openDocument:(id)sender {
-    if (![self isGameLoaded])
+    if ([self isGameLoadingAndSavingDisabled])
         return;
     
     NSOpenPanel* panel = [NSOpenPanel openPanel];
@@ -354,7 +354,7 @@
 }
 
 - (IBAction)saveGame:(id)sender {
-    if (![self isGameLoaded])
+    if ([self isGameLoadingAndSavingDisabled])
         return;
     
     RXGameState* gameState = [g_world gameState];
@@ -373,7 +373,7 @@
 }
 
 - (void)_saveAsPanelDidEnd:(NSSavePanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
-    if (returnCode == NSCancelButton)
+    if (returnCode == NSCancelButton || [self isGameLoadingAndSavingDisabled])
         return;
     
     // dismiss the panel now
@@ -391,7 +391,7 @@
 }
 
 - (IBAction)saveGameAs:(id)sender {
-    if (![self isGameLoaded])
+    if ([self isGameLoadingAndSavingDisabled])
         return;
     
     NSSavePanel* panel = [NSSavePanel savePanel];
@@ -418,9 +418,9 @@
 - (BOOL)_openGameWithURL:(NSURL*)url {
     NSError* error;
     
-    // if the game is not running, we can't load anything
-    if (![self isGameLoaded])
-        return NO;
+    // lie if loading and saving is disabled by returning YES to avoid the error dialog
+    if ([self isGameLoadingAndSavingDisabled])
+        return YES;
     
     // load the save file, and present any error to the user if one occurs
     RXGameState* gameState = [RXGameState gameStateWithURL:url error:&error];
@@ -440,6 +440,14 @@
 
 - (BOOL)isGameLoaded {
     return (g_world) ? [[RXWorld sharedWorld] isInstalled] : NO;
+}
+
+- (BOOL)isGameLoadingAndSavingDisabled {
+    return disableGameSavingAndLoading || ![self isGameLoaded];
+}
+
+- (void)setDisableGameLoadingAndSaving:(BOOL)disable {
+    disableGameSavingAndLoading = disable;
 }
 
 @end
