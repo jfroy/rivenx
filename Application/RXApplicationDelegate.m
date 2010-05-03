@@ -251,10 +251,16 @@
         welcomeController = [[RXWelcomeWindowController alloc] initWithWindowNibName:@"Welcome"];
         [welcomeController showWindow:nil];
     } else if ([[RXWorld sharedWorld] gameState] == nil) {
-        // FIXME: look up the last loaded game and load that instead of creating a new game
-        RXGameState* gs = [[RXGameState alloc] init];
-        [[RXWorld sharedWorld] loadGameState:gs];
-        [gs release];
+        NSArray* recentGames = [[NSDocumentController sharedDocumentController] recentDocumentURLs];
+        BOOL didLoadRecent = NO;
+        if ([recentGames count] > 0)
+            didLoadRecent = [self _openGameWithURL:[recentGames objectAtIndex:0]];
+        
+        if (!didLoadRecent) {
+            RXGameState* gs = [[RXGameState alloc] init];
+            [[RXWorld sharedWorld] loadGameState:gs];
+            [gs release];
+        }
         
 #if defined(DEBUG)
         [self _initDebugUI];
