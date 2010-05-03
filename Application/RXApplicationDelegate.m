@@ -305,6 +305,15 @@
 #pragma mark -
 #pragma mark game opening and saving
 
+- (IBAction)newDocument:(id)sender {
+    if (![self isGameLoaded])
+        return;
+    
+    RXGameState* gs = [[RXGameState alloc] init];
+    [[RXWorld sharedWorld] loadGameState:gs];
+    [gs release];
+}
+
 - (IBAction)openDocument:(id)sender {
     if (![self isGameLoaded])
         return;
