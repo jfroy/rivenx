@@ -361,6 +361,8 @@
         NSError* error;
         if (![gameState writeToURL:[gameState URL] error:&error])
             [NSApp presentError:error];
+        else
+            [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]];
     }
 }
 
