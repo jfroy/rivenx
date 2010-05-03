@@ -18,7 +18,6 @@
 
 @interface RXWorld : NSObject <RXWorldProtocol> {
     NSURL* _worldBase;
-    NSURL* _worldUserBase;
     NSURL* _worldSharedBase;
     
     NSDictionary* _extrasDescriptor;
@@ -57,7 +56,6 @@
 - (void)tearDown;
 
 - (NSURL*)worldBase;
-- (NSURL*)worldUserBase;
 - (NSURL*)worldSharedBase;
 
 - (BOOL)isInstalled;

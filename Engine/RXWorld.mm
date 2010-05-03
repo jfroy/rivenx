@@ -75,22 +75,10 @@ NSObject* g_world = nil;
     NSError* error;
     
     [_worldBase release];
-    [_worldUserBase release];
     [_worldSharedBase release];
     
     // world base is the parent directory of the application bundle
     _worldBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent], kCFURLPOSIXPathStyle, true);
-    
-    // the world user base is a "Riven X" folder inside the user's Documents folder
-    NSString* userBase = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
-    if (!BZFSDirectoryExists(userBase)) {
-        BOOL success = BZFSCreateDirectory(userBase, &error);
-        if (!success)
-            @throw [NSException exceptionWithName:@"RXFilesystemException"
-                                           reason:@"Riven X was unable to create its saved games folder in your Documents folder."
-                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
-    }
-    _worldUserBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)userBase, kCFURLPOSIXPathStyle, true);
     
     FSRef sharedFolderRef;
     if (FSFindFolder(kLocalDomain, kSharedUserDataFolderType, kDontCreateFolder, &sharedFolderRef) != noErr) {
@@ -283,10 +271,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     
     if (g_worldView)
         [[g_worldView window] setDelegate:nil];
-    
-    [_cardRenderer release];
-    _cardRenderer = nil;    
-    
+    [_cardRenderer release], _cardRenderer = nil;
     [g_worldView tearDown];
     
     if (_audioRenderer) {
@@ -300,33 +285,17 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     
     semaphore_destroy(mach_task_self(), _threadInitSemaphore);
     
-    [_extrasDescriptor release];
-    _extrasDescriptor = nil;
-    
     if (_cursors)
         NSFreeMapTable(_cursors);
     _cursors = nil;
     
-    [_gameState release];
-    _gameState = nil;
-    
-    [_worldBase release];
-    _worldBase = nil;
-    
-    [_worldUserBase release];
-    _worldUserBase = nil;
-    
-    [_worldSharedBase release];
-    _worldSharedBase = nil;
-    
-    [_engineVariables release];
-    _engineVariables = nil;
-    
-    [_activeStacks release];
-    _activeStacks = nil;
-    
-    [_sharedPreferences release];
-    _sharedPreferences = nil;
+    [_extrasDescriptor release], _extrasDescriptor = nil;
+    [_gameState release], _gameState = nil;
+    [_worldBase release], _worldBase = nil;
+    [_worldSharedBase release], _worldSharedBase = nil;
+    [_engineVariables release], _engineVariables = nil;
+    [_activeStacks release], _activeStacks = nil;
+    [_sharedPreferences release], _sharedPreferences = nil;
 }
 
 #pragma mark -
@@ -351,10 +320,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (NSURL*)worldBase {
     return _worldBase;
-}
-
-- (NSURL*)worldUserBase {
-    return _worldUserBase;
 }
 
 - (NSURL*)worldSharedBase {
