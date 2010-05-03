@@ -278,8 +278,15 @@
 }
 
 - (void)applicationWillTerminate:(NSNotification*)notification {
-    // autosave before quitting
-    [self _autosave:nil];
+    // autosave and save (if the game has been saved once) before quitting
+    RXGameState* gameState = [g_world gameState];
+    if (gameState) {
+        [self _autosave:nil];
+        
+        if ([gameState URL])
+            [self saveGame:nil];
+    }
+    
 }
 
 - (void)applicationWillResignActive:(NSNotification*)notification {
