@@ -1418,6 +1418,15 @@ init_failure:
     // wipe out the transition queue
     [_transitionQueue removeAllObjects];
     
+    // synthesize and activate an empty sound group
+    RXSoundGroup* sgroup = [RXSoundGroup new];
+    sgroup->gain = 1.0f;
+    sgroup->loop = NO;
+    sgroup->fadeOutRemovedSounds = YES;
+    sgroup->fadeInNewSounds = NO;
+    [self activateSoundGroup:sgroup];
+    [sgroup release];
+    
     // hide the mouse cursor
     [self hideMouseCursor];
     
