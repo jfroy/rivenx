@@ -206,13 +206,6 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
             _returnCard = [[decoder decodeObjectForKey:@"returnCard"] retain];
         
         case 0:
-            if (![decoder containsValueForKey:@"editionKey"]) {
-                [self release];
-                @throw [NSException exceptionWithName:@"RXInvalidGameStateArchive"
-                                               reason:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
-                                             userInfo:nil];
-            }
-            
             if (![decoder containsValueForKey:@"currentCard"]) {
                 [self release];
                 @throw [NSException exceptionWithName:@"RXInvalidGameStateArchive"
