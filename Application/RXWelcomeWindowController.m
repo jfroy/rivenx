@@ -149,9 +149,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 }
 
 - (void)_beginNewGame {
-    RXGameState* gs = [[RXGameState alloc] init];
-    [[RXWorld sharedWorld] loadGameState:gs];
-    [gs release];
+    [[NSApp delegate] newDocument:nil];
 }
 
 - (void)_runInstallerWithMountPaths:(NSDictionary*)mount_paths {

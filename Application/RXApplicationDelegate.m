@@ -24,6 +24,7 @@
 
 @interface RXApplicationDelegate (RXApplicationDelegate_Private)
 - (BOOL)_openGameWithURL:(NSURL*)url;
+- (void)_autosave:(NSTimer*)timer;
 @end
 
 @implementation RXApplicationDelegate
@@ -244,6 +245,10 @@
         savedGamesDirectory = [[@"~/Documents/Riven X Games" stringByExpandingTildeInPath] retain];
     BZFSCreateDirectoryExtended(savedGamesDirectory, nil, 0700, NULL);
     
+    // derive the autosave URL from the saved games directory
+    NSString* extension = [(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease];
+    autosaveURL = [[NSURL fileURLWithPath:[[savedGamesDirectory stringByAppendingPathComponent:@"Autosave"] stringByAppendingPathExtension:extension]] retain];
+    
     // if we're not installed, start the welcome controller; otherwise, if not
     // game has been loaded, load the last save game, or a new game if no such
     // save can be found
@@ -267,6 +272,14 @@
         [self _showDebugConsole:self];
 #endif
     }
+    
+    // start the autosave timer
+    [NSTimer scheduledTimerWithTimeInterval:30.0 target:self selector:@selector(_autosave:) userInfo:nil repeats:YES];
+}
+
+- (void)applicationWillTerminate:(NSNotification*)notification {
+    // autosave before quitting
+    [self _autosave:nil];
 }
 
 - (void)applicationWillResignActive:(NSNotification*)notification {
@@ -438,6 +451,21 @@
     return YES;
 }
 
+- (void)_autosave:(NSTimer*)timer {
+    if ([self isGameLoadingAndSavingDisabled]) {
+        missedAutosave = YES;
+        return;
+    }
+    missedAutosave = NO;
+    
+    RXGameState* gameState = [g_world gameState];
+    if (!gameState)
+        return;
+    
+    if ([gameState writeToURL:autosaveURL updateURL:NO error:NULL])
+        [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:autosaveURL];
+}
+
 - (BOOL)isGameLoaded {
     return (g_world) ? [[RXWorld sharedWorld] isInstalled] : NO;
 }
@@ -448,6 +476,8 @@
 
 - (void)setDisableGameLoadingAndSaving:(BOOL)disable {
     disableGameSavingAndLoading = disable;
+    if (missedAutosave)
+        [self _autosave:nil];
 }
 
 @end

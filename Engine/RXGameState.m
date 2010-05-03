@@ -276,6 +276,10 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
 }
 
 - (BOOL)writeToURL:(NSURL*)url error:(NSError**)error {
+    return [self writeToURL:url updateURL:YES error:error];
+}
+
+- (BOOL)writeToURL:(NSURL*)url updateURL:(BOOL)update error:(NSError**)error {
     // serialize ourselves as data
     NSData* gameStateData = [NSKeyedArchiver archivedDataWithRootObject:self];
     if (!gameStateData)
@@ -288,8 +292,8 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     // write the data
     BOOL success = [gameStateData writeToURL:url options:NSAtomicWrite error:error];
     
-    // if we were successful, update our internal URL
-    if (success && url != _URL) {
+    // if we were successful, update our internal URL (if update is YES)
+    if (success && update && url != _URL) {
         [_URL release];
         _URL = [url retain];
     }

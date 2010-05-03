@@ -27,6 +27,7 @@
 
 - (NSURL*)URL;
 - (BOOL)writeToURL:(NSURL*)url error:(NSError**)error;
+- (BOOL)writeToURL:(NSURL*)url updateURL:(BOOL)update error:(NSError**)error;
 
 - (uint16_t)unsignedShortForKey:(NSString*)key;
 - (void)setUnsignedShort:(uint16_t)value forKey:(NSString*)key;

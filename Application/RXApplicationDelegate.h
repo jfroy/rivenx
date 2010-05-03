@@ -26,8 +26,10 @@
     RXWelcomeWindowController* welcomeController;
     
     NSString* savedGamesDirectory;
+    NSURL* autosaveURL;
     
     BOOL disableGameSavingAndLoading;
+    BOOL missedAutosave;
     BOOL wasFullscreen;
 }
 
