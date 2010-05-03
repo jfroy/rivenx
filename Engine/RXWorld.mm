@@ -421,7 +421,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 }
 
 - (void)_fadeOutFinished {
-    [g_worldView fadeInWithDuration:1.0 completionDelegate:nil selector:nil];
+    [g_worldView fadeInWithDuration:0.5 completionDelegate:nil selector:nil];
     [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
 }
 
@@ -435,8 +435,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     // ensure that rendering has been initialized, since we require the card renderer to load a game state
     [self initializeRendering];
     
-//    [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
-    [g_worldView fadeOutWithDuration:1.0 completionDelegate:self selector:@selector(_fadeOutFinished)];
+    // fade out over 0.5 seconds and load the new game when the fade completes
+    [g_worldView fadeOutWithDuration:0.5 completionDelegate:self selector:@selector(_fadeOutFinished)];
 }
 
 #pragma mark -
