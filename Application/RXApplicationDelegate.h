@@ -25,7 +25,8 @@
     
     RXWelcomeWindowController* welcomeController;
     
-    BOOL canSave;
+    NSString* savedGamesDirectory;
+    
     BOOL wasFullscreen;
 }
 

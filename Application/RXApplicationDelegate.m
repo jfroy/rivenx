@@ -49,10 +49,6 @@
     [copyrightField setStringValue:NSLocalizedStringFromTable(@"LONG_COPYRIGHT", @"About", nil)];
 }
 
-- (void)dealloc {
-    [super dealloc];
-}
-
 #pragma mark -
 #pragma mark debug UI
 
@@ -228,23 +224,33 @@
         NSLogUncaughtExceptionMask | NSHandleUncaughtExceptionMask |
         NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
     
-    // initialize the world
-    [RXWorld sharedWorld];
-}
-
-- (void)applicationDidFinishLaunching:(NSNotification*)notification {    
     // check if the system's QuickTime version is compatible and return if it is not
     if (![self _checkQuickTime])
         return;
     
+    // initialize the world
+    [RXWorld sharedWorld];
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification*)notification {
     // delete old world data
     [NSThread detachNewThreadSelector:@selector(_deleteOldDataStore:) toTarget:self withObject:nil];
     
-    // if we're not installed, start the welcome controller; otherwise, load the last save game, or a new game if no such save can be found
+    // get the path to the saved games directory and create it if it doesn't exists
+    NSArray* docsDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    if ([docsDir count] > 0)
+        savedGamesDirectory = [[[docsDir objectAtIndex:0] stringByAppendingPathComponent:@"Riven X Games"] retain];
+    else
+        savedGamesDirectory = [[@"~/Documents/Riven X Games" stringByExpandingTildeInPath] retain];
+    BZFSCreateDirectoryExtended(savedGamesDirectory, nil, 0700, NULL);
+    
+    // if we're not installed, start the welcome controller; otherwise, if not
+    // game has been loaded, load the last save game, or a new game if no such
+    // save can be found
     if (![[RXWorld sharedWorld] isInstalled]) {
         welcomeController = [[RXWelcomeWindowController alloc] initWithWindowNibName:@"Welcome"];
         [welcomeController showWindow:nil];
-    } else {
+    } else if ([[RXWorld sharedWorld] gameState] == nil) {
         // FIXME: look up the last loaded game and load that instead of creating a new game
         RXGameState* gs = [[RXGameState alloc] init];
         [[RXWorld sharedWorld] loadGameState:gs];
@@ -300,7 +306,7 @@
 #pragma mark game opening and saving
 
 - (IBAction)openDocument:(id)sender {
-    if (!g_world)
+    if (![self isGameLoaded])
         return;
     
     NSOpenPanel* panel = [NSOpenPanel openPanel];
@@ -318,30 +324,35 @@
         types = [NSArray arrayWithObject:@"org.macstorm.rivenx.game"];
     else
         types = [NSArray arrayWithObject:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
-    NSInteger result = [panel runModalForDirectory:nil file:nil types:types];
-    if (result == NSCancelButton)
-        return;
     
-    [self _openGameWithURL:[panel URL]];
-}
-
-- (void)_updateCanSave {
-    [self willChangeValueForKey:@"canSave"];
-    if (g_world)
-        canSave = (([[g_world gameState] URL])) ? YES : NO;
-    else
-        canSave = NO;
-    [self didChangeValueForKey:@"canSave"];
+    wasFullscreen = [g_world fullscreen];
+    if (wasFullscreen)
+        [g_world toggleFullscreen];
+    
+    NSInteger result = [panel runModalForDirectory:savedGamesDirectory file:nil types:types];
+    
+    if (wasFullscreen)
+        [g_world toggleFullscreen];
+    
+    if (result == NSOKButton)
+        [self _openGameWithURL:[panel URL]];
 }
 
 - (IBAction)saveGame:(id)sender {
-    if (!g_world)
+    if (![self isGameLoaded])
         return;
     
-    NSError* error;
     RXGameState* gameState = [g_world gameState];
-    if (![gameState writeToURL:[gameState URL] error:&error])
-        [NSApp presentError:error];
+    if (!gameState)
+        return;
+    
+    if (![gameState URL])
+        [self saveGameAs:sender];
+    else {
+        NSError* error;
+        if (![gameState writeToURL:[gameState URL] error:&error])
+            [NSApp presentError:error];
+    }
 }
 
 - (void)_saveAsPanelDidEnd:(NSSavePanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
@@ -358,15 +369,12 @@
         return;
     }
     
-    // we need to update the can-save state now, since we may not have had a save file before we saved as
-    [self _updateCanSave];
-    
     // add the new save file to the recents
     [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]]; 
 }
 
 - (IBAction)saveGameAs:(id)sender {
-    if (!g_world)
+    if (![self isGameLoaded])
         return;
     
     NSSavePanel* panel = [NSSavePanel savePanel];
@@ -382,14 +390,19 @@
         types = [NSArray arrayWithObject:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
     [panel setAllowedFileTypes:types];
     
-    [panel beginSheetForDirectory:nil file:@"untitled" modalForWindow:[g_worldView window] modalDelegate:self didEndSelector:@selector(_saveAsPanelDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    [panel beginSheetForDirectory:savedGamesDirectory
+                             file:@"untitled"
+                   modalForWindow:[g_worldView window]
+                    modalDelegate:self
+                   didEndSelector:@selector(_saveAsPanelDidEnd:returnCode:contextInfo:)
+                      contextInfo:nil];
 }
 
 - (BOOL)_openGameWithURL:(NSURL*)url {
     NSError* error;
     
     // if the game is not running, we can't load anything
-    if (!g_world)
+    if (![self isGameLoaded])
         return NO;
     
     // load the save file, and present any error to the user if one occurs
