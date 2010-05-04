@@ -87,7 +87,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     RXArchiveManager* sam = [RXArchiveManager sharedArchiveManager];
     
     // load the data archives
-    archives = [sam dataArchivesForStackKey:_key error:error];
+    NSArray* archives = [sam dataArchivesForStackKey:_key error:error];
     if (!archives || [archives count] == 0) {
         [self release];
         return nil;
