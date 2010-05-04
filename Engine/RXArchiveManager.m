@@ -168,45 +168,4 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return [[extras_archive retain] autorelease];
 }
 
-- (NSArray*)dataPatchArchivesForStackKey:(NSString*)stack_key error:(NSError**)error {
-//    NSString* edition_patches_directory = [_patches_directory stringByAppendingPathComponent:[current_edition valueForKey:@"key"]];
-//    NSDictionary* patch_archives = [current_edition valueForKey:@"patchArchives"];
-//    
-//    // if the edition has no patch archives, return an empty array
-//    if (!patch_archives)
-//        return [NSArray array];
-//    
-//    // get the patch archives for the requested stack; if there are none, return an empty array
-//    NSDictionary* stack_patch_archives = [patch_archives objectForKey:stack_key];
-//    if (!stack_patch_archives)
-//        return [NSArray array];
-//    
-//    // get the data patch archives; if there are none, return an empty array
-//    NSArray* data_patch_archives = [stack_patch_archives objectForKey:@"Data Archives"];
-//    if (!data_patch_archives)
-//        return [NSArray array];
-//    
-//    // load the data archives
-//    NSMutableArray* data_archives = [NSMutableArray array];
-//    
-//    NSEnumerator* archive_enumerator = [data_patch_archives objectEnumerator];
-//    NSString* archive_name;
-//    while ((archive_name = [archive_enumerator nextObject])) {
-//        NSString* archive_path = BZFSSearchDirectoryForItem(edition_patches_directory, archive_name, YES, error);
-//        if (!BZFSFileExists(archive_path))
-//            continue;
-//        
-//        MHKArchive* archive = [[MHKArchive alloc] initWithPath:archive_path error:error];
-//        if (!archive)
-//            return nil;
-//        
-//        [data_archives addObject:archive];
-//        [archive release];
-//    }
-//    
-//    return data_archives;
-    // FIXME: need to re-implement this w/o editions
-    return [NSArray array];
-}
-
 @end
