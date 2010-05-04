@@ -331,9 +331,9 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
             extras_path = item_path;
     }
     
-    // if there's no Data directory, we're not interested
+    // if the Data directory is missing, try the path itself as a workaround for allowing to install from a folder containing all the archives
     if (!data_path)
-        return NO;
+        data_path = path;
     
     // check for the usual suspects
     NSArray* data_archives = [[BZFSContentsOfDirectory(data_path, &error) filteredArrayUsingPredicate:[RXArchiveManager anyArchiveFilenamePredicate]]

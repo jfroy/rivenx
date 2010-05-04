@@ -10,6 +10,11 @@
 
 #import "Engine/RXWorld.h"
 #import "Engine/RXArchiveManager.h"
+#import "Engine/RXCard.h"
+
+#import "Engine/RXScriptCommandAliases.h"
+#import "Engine/RXScriptCompiler.h"
+#import "Engine/RXScriptDecoding.h"
 
 #import "Utilities/BZFSOperation.h"
 #import "Utilities/BZFSUtilities.h"
@@ -104,7 +109,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     uint64_t bytes_copied = [[[(BZFSOperation*)object status] objectForKey:(NSString*)kFSOperationBytesCompleteKey] unsignedLongLongValue];
     
     [self willChangeValueForKey:@"progress"];
-    progress = (double)(totalBytesCopied + bytes_copied) / totalBytesToCopy;
+    progress = MIN(1.0, (double)(totalBytesCopied + bytes_copied) / totalBytesToCopy);
     [self didChangeValueForKey:@"progress"];
 }
 
@@ -234,7 +239,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
             return NO;
     }
     
-    // finally, check that we have a data and sound archive for every stack
+    // check that we have a data and sound archive for every stack
     RXArchiveManager* am = [RXArchiveManager sharedArchiveManager];
     size_t n_stacks = sizeof(gStacks) / sizeof(NSString*);
     for (size_t i = 0; i < n_stacks; ++i) {
@@ -244,6 +249,56 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         archives = [am soundArchivesForStackKey:gStacks[i] error:error];
         if ([archives count] == 0)
             ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesAfterInstall, nil, error);
+    }
+    
+    return YES;
+}
+
+- (BOOL)_conditionallyInstallPatchArchives:(NSError**)error {
+    RXStack* bspit = [[RXStack alloc] initWithKey:@"bspit" error:error];
+    if (!bspit)
+        return NO;
+    
+    RXCardDescriptor* cdesc = [RXCardDescriptor descriptorWithStack:bspit ID:284];
+    if (!cdesc)
+        return YES;
+    
+    RXCard* bspit_284 = [[RXCard alloc] initWithCardDescriptor:cdesc];
+    if (!bspit_284)
+        return YES;
+    [bspit_284 load];
+    
+    uintptr_t hotspot_id = 9;
+    RXHotspot* hotspot = (RXHotspot*)NSMapGet([bspit_284 hotspotsIDMap], (void*)hotspot_id);
+    if (!hotspot) {
+        [bspit_284 release];
+        return YES;
+    }
+    
+    NSArray* md_programs = [[hotspot scripts] objectForKey:RXMouseDownScriptKey];
+    if (!md_programs || [md_programs count] == 0) {
+        [bspit_284 release];
+        return YES;
+    }
+    
+    RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:[md_programs objectAtIndex:0]];
+    [bspit_284 release];
+    [bspit release];
+    
+    NSMutableArray* dp = [comp decompiledScript];
+    if (!comp || !dp)
+        return YES;
+    
+    NSDictionary* opcode = [dp objectAtIndex:4];
+    BOOL need_patch = RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_ACTIVATE_SLST) && RX_OPCODE_ARG(opcode, 0) == 3;
+    [comp release];
+    
+    if (need_patch) {
+        NSBundle* bundle = [NSBundle mainBundle];
+        if (![self _copyFileAtPath:[bundle pathForResource:@"b_Data1" ofType:@"MHK" inDirectory:@"patches"] error:error])
+            return NO;
+        if (![self _copyFileAtPath:[bundle pathForResource:@"j_Data3" ofType:@"MHK" inDirectory:@"patches"] error:error])
+            return NO;
     }
     
     return YES;
@@ -296,10 +351,17 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         }
     }
     
+    // run a single disc or multi-disk install, as appropriate
+    BOOL success;
     if (cd_install)
-        return [self _runMultiDiscInstall:error];
+        success = [self _runMultiDiscInstall:error];
     else
-        return [self _runSingleDiscInstall:error];
+        success = [self _runSingleDiscInstall:error];
+    if (!success)
+        return NO;
+    
+    // check if we have an edition that requires the 1.02 patch archives
+    return [self _conditionallyInstallPatchArchives:error];
 }
 
 - (void)updatePathsWithMountPaths:(NSDictionary*)mount_paths {
