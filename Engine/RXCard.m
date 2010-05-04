@@ -119,15 +119,6 @@
 #pragma mark -
 #pragma mark loading
 
-#define RX_VAR_NAME_EQ(var, name) [[_parent varNameAtIndex:(var)] isEqualToString:(name)]
-
-#define RX_OPCODE_COMMAND_EQ(opcode, command) [[(opcode) objectForKey:@"command"] unsignedShortValue] == (command)
-#define RX_OPCODE_ARG(opcode, i) [[[(opcode) objectForKey:@"args"] objectAtIndex:(i)] unsignedShortValue]
-#define RX_OPCODE_SET_ARG(opcode, i, value) [[(opcode) objectForKey:@"args"] replaceObjectAtIndex:(i) withObject:[NSNumber numberWithUnsignedShort:(value)]]
-
-#define RX_BRANCH_VAR_NAME_EQ(branch, name) [[_parent varNameAtIndex:[[(branch) objectForKey:@"variable"] unsignedShortValue]] isEqualToString:(name)]
-#define RX_CASE_VAL_EQ(case, value) [[(case) objectForKey:@"value"] unsignedShortValue] == (value)
-
 - (void)_loadScripts {
     NSData* card_data = [_descriptor data];
     
@@ -737,7 +728,7 @@
     free(list_data);
     
     // WORKAROUND: bspit 445 (dome linking book card) has no SLST record, which means when you link back to it from the
-    // office age, the dome ambience won't kick in; so we copy the sound grounds from that stack's dome card
+    // office age, the dome ambience won't kick in; we copy the sound group from that stack's dome card to fix the problem
     if ([_descriptor isCardWithRMAP:10439 stackName:@"bspit"] && soundGroupCount == 0) {
         // 110077 is the bspit dome card (which has the ambience sound)
         RXCardDescriptor* domeCardDesc = [[RXCardDescriptor alloc] initWithStack:_parent ID:[_parent cardIDFromRMAPCode:110077]];
