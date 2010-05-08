@@ -15,3 +15,5 @@
 "INSTALL_FROM_FOLDER_INFO" = "You can optionally copy the Riven data files in a folder managed by Riven X on this Mac. This is the recommended choice if the folder you selected is on a network share.";
 "COPY_INSTALL" = "Copy and Install";
 "DIRECT_INSTALL" = "Install";
+
+"SCANNING_MEDIA" = "Scanning installation media...";

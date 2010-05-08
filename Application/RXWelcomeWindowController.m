@@ -18,6 +18,12 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return [(NSString*)lhs compare:rhs options:NSCaseInsensitiveSearch | NSNumericSearch];
 }
 
+@interface RXWelcomeWindowController (RXWelcomeWindowControllerPrivate)
+- (void)_initializeInstallationUI;
+- (void)_showInstallationUI;
+- (void)_dismissInstallationUI;
+@end
+
 @implementation RXWelcomeWindowController
 
 - (void)dealloc {
@@ -52,6 +58,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 }
 
 - (void)_installFromFolderPanelDidEnd:(NSOpenPanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
+    alertOrPanelCurrentlyActive = NO;
+    
     if (returnCode == NSCancelButton)
         return;
     
@@ -88,9 +96,24 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
             path = parent;
         }
         
+        [self _initializeInstallationUI];
+        [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"SCANNING_MEDIA", @"Welcome", NULL)];
+        [_cancelInstallButton setHidden:YES];
+        
+        [panel orderOut:self];
+        [self _showInstallationUI];
+        
         [self performSelector:@selector(_performMountScanWithFeedback:) withObject:path inThread:scanningThread];
-    } else
+    } else {
+        [self _initializeInstallationUI];
+        [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"SCANNING_MEDIA", @"Welcome", NULL)];
+        [_cancelInstallButton setHidden:YES];
+        
+        [panel orderOut:self];
+        [self _showInstallationUI];
+        
         [self performSelector:@selector(_performFolderScanWithFeedback:) withObject:path inThread:scanningThread];
+    }
 }
 
 - (IBAction)installFromFolder:(id)sender {
@@ -109,6 +132,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [panel setTitle:NSLocalizedString(@"CHOOSE", NULL)];
     
     [panel beginSheetForDirectory:@"/Volumes" file:nil types:nil modalForWindow:[self window] modalDelegate:self didEndSelector:@selector(_installFromFolderPanelDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    alertOrPanelCurrentlyActive = YES;
 }
 
 - (IBAction)cancelInstallation:(id)sender {
@@ -137,7 +161,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     }
 }
 
-- (void)_initializeInstallationUI:(RXInstaller*)installer {
+- (void)_initializeInstallationUI {
     [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Installer", NULL)];
     [_installingStatusField setStringValue:@""];
     [_installingProgress setMinValue:0.0];
@@ -145,7 +169,28 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [_installingProgress setDoubleValue:0.0];
     [_installingProgress setIndeterminate:YES];
     [_installingProgress setUsesThreadedAnimation:YES];
+    [_cancelInstallButton setHidden:NO];
+}
+
+- (void)_showInstallationUI {
     [_installingProgress startAnimation:self];
+    
+    // show the installation panel
+    [NSApp beginSheet:_installingSheet modalForWindow:[self window] modalDelegate:nil didEndSelector:NULL contextInfo:installer];
+    installerSession = [NSApp beginModalSessionForWindow:_installingSheet];
+}
+
+- (void)_dismissInstallationUI {
+    if (!installerSession)
+        return;
+    
+    // dismiss the sheet
+    [NSApp endModalSession:installerSession];
+    installerSession = NULL;
+    
+    [NSApp endSheet:_installingSheet returnCode:0];
+    [_installingSheet orderOut:self];
+    [_installingProgress stopAnimation:self];
 }
 
 - (void)_beginNewGame {
@@ -157,11 +202,10 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     installer = [[RXInstaller alloc] initWithMountPaths:mount_paths mediaProvider:self];
     
     // setup the basic installation UI
-    [self _initializeInstallationUI:installer];
+    [self _initializeInstallationUI];
     
     // show the installation panel
-    [NSApp beginSheet:_installingSheet modalForWindow:[self window] modalDelegate:nil didEndSelector:NULL contextInfo:installer];
-    installerSession = [NSApp beginModalSessionForWindow:_installingSheet];
+    [self _showInstallationUI];
     
     // observe the installer
     [installer addObserver:self forKeyPath:@"progress" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:NULL];
@@ -171,13 +215,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     NSError* error;
     BOOL did_install = [installer runWithModalSession:installerSession error:&error];
     
-    // dismiss the sheet
-    [NSApp endModalSession:installerSession];
-    installerSession = NULL;
-    
-    [NSApp endSheet:_installingSheet returnCode:0];
-    [_installingSheet orderOut:self];
-    [_installingProgress stopAnimation:self];
+    // dismiss the installation panel
+    [self _dismissInstallationUI];
     
     // we're done with the installer
     [_installingTitleField unbind:@"value"];
@@ -220,11 +259,15 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 }
 
 - (void)_stopWaitingForDisc:(NSDictionary*)mount_paths {
+    if (!waitedOnDisc)
+        return
+    
     [installer updatePathsWithMountPaths:mount_paths];
     waitedOnDisc = nil;
 }
 
 - (void)_offerToInstallFromDiscAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context {
+    alertOrPanelCurrentlyActive = NO;
     NSDictionary* mount_paths = [(NSDictionary*)context autorelease];
     
     // if the user did not choose to install, we're done
@@ -239,9 +282,13 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 }
 
 - (void)_offerToInstallFromDisc:(NSDictionary*)mount_paths {
-    // do nothing if there is already an active installer
-    if (installer)
+    // do nothing if there is already an active installer or we're already installed (e.g. an installer finsihed)
+    // or there is some panel or alert already being displayed
+    if (installer || [[RXWorld sharedWorld] isInstalled] || alertOrPanelCurrentlyActive)
         return;
+    
+    // dismiss the installation UI to close the "scanning media" panel
+    [self _dismissInstallationUI];
     
     NSString* path = [mount_paths objectForKey:@"path"];
     
@@ -257,9 +304,11 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [alert addButtonWithTitle:NSLocalizedString(@"CANCEL", NULL)];
     
     [alert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:@selector(_offerToInstallFromDiscAlertDidEnd:returnCode:contextInfo:) contextInfo:[mount_paths retain]];
+    alertOrPanelCurrentlyActive = YES;
 }
 
 - (void)_offerToInstallFromFolderAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context {
+    alertOrPanelCurrentlyActive = NO;
     NSDictionary* mount_paths = [(NSDictionary*)context autorelease];
     
     // if the user did not choose one of the install actions, we're done
@@ -282,9 +331,13 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 }
 
 - (void)_offerToInstallFromFolder:(NSDictionary*)mount_paths {
-    // do nothing if there is already an active installer
-    if (installer)
+    // do nothing if there is already an active installer or we're already installed (e.g. an installer finsihed)
+    // or there is some panel or alert already being displayed
+    if (installer || [[RXWorld sharedWorld] isInstalled] || alertOrPanelCurrentlyActive)
         return;
+    
+    // dismiss the installation UI to close the "scanning media" panel
+    [self _dismissInstallationUI];
     
     NSString* path = [mount_paths objectForKey:@"path"];
     
@@ -301,6 +354,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [alert addButtonWithTitle:NSLocalizedString(@"CANCEL", NULL)];
     
     [alert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:@selector(_offerToInstallFromFolderAlertDidEnd:returnCode:contextInfo:) contextInfo:[mount_paths retain]];
+    alertOrPanelCurrentlyActive = YES;
 }
 
 #pragma mark removable media
@@ -389,7 +443,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // everything checks out; if we're not installing, propose to install from this mount, otherwise inform
     // the installer about the new mount paths
     SEL action;
-    if (installer)
+    if (installer && waitedOnDisc)
         action = @selector(_stopWaitingForDisc:);
     else {
         if (removable)
@@ -410,6 +464,9 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 }
 
 - (void)_presentErrorSheet:(NSError*)error {
+    // dismiss the installation UI to close the "scanning media" panel
+    [self _dismissInstallationUI];
+    
     [NSApp presentError:error modalForWindow:[self window] delegate:nil didPresentSelector:nil contextInfo:nil];
 }
 

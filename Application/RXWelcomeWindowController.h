@@ -16,12 +16,16 @@
     IBOutlet NSTextField* _installingTitleField;
     IBOutlet NSTextField* _installingStatusField;
     IBOutlet NSProgressIndicator* _installingProgress;
+    IBOutlet NSButton* _cancelInstallButton;
     
     NSThread* scanningThread;
     
     RXInstaller* installer;
     NSModalSession installerSession;
     NSString* waitedOnDisc;
+    
+    NSAlert* checkingMediaAlert;
+    BOOL alertOrPanelCurrentlyActive;
 }
 
 - (IBAction)buyRiven:(id)sender;
