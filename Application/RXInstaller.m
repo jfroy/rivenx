@@ -275,7 +275,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         return YES;
     }
     
-    NSArray* md_programs = [[hotspot scripts] objectForKey:RXMouseDownScriptKey];
+    NSArray* md_programs = [[[[hotspot scripts] objectForKey:RXMouseDownScriptKey] retain] autorelease];
     if (!md_programs || [md_programs count] == 0) {
         [bspit_284 release];
         return YES;
