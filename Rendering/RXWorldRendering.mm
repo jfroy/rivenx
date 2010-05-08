@@ -116,7 +116,6 @@
 }
 
 - (void)windowWillClose:(NSNotification*)notification {
-    // FIXME: check if we need to save (or do so automatically)
     [NSApp terminate:nil];
 }
 

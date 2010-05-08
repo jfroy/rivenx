@@ -86,16 +86,8 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     
     RXArchiveManager* sam = [RXArchiveManager sharedArchiveManager];
     
-    // load up any patch archives first
-    NSArray* archives = [sam dataPatchArchivesForStackKey:_key error:error];
-    if (!archives) {
-        [self release];
-        return nil;
-    }
-    [_dataArchives addObjectsFromArray:archives];
-    
     // load the data archives
-    archives = [sam dataArchivesForStackKey:_key error:error];
+    NSArray* archives = [sam dataArchivesForStackKey:_key error:error];
     if (!archives || [archives count] == 0) {
         [self release];
         return nil;
@@ -123,7 +115,17 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 }
 
 - (void)_load {
-    MHKArchive* masterDataArchive = [_dataArchives lastObject];
+    // the master archive is the one that contains the RMAP and NAME data
+    NSDictionary* rmapDescriptor = nil;
+    NSUInteger masterArchiveIndex = [_dataArchives count];
+    MHKArchive* masterDataArchive;
+    while (rmapDescriptor == nil && masterArchiveIndex > 0) {
+        masterArchiveIndex--;
+        masterDataArchive = [_dataArchives objectAtIndex:masterArchiveIndex];
+        rmapDescriptor = [[masterDataArchive valueForKey:@"RMAP"] objectAtIndex:0];
+    }
+    if (!rmapDescriptor)
+        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:[NSString stringWithFormat:@"No RMAP data for stack %@.", _key] userInfo:nil];
     
     // global stack data
     _cardNames = _loadNAMEResourceWithID(masterDataArchive, 1);
@@ -133,7 +135,6 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     _stackNames = _loadNAMEResourceWithID(masterDataArchive, 5);
     
     // rmap data
-    NSDictionary* rmapDescriptor = [[masterDataArchive valueForKey:@"RMAP"] objectAtIndex:0];
     uint16_t remapID = [[rmapDescriptor objectForKey:@"ID"] unsignedShortValue];
     _rmapData = [[masterDataArchive dataWithResourceType:@"RMAP" ID:remapID] retain];
     

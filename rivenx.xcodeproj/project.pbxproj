@@ -112,6 +112,7 @@
 		315BD41C0D85B64D007A3BFA /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		315D438C0E328582003F7EDD /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 315D438B0E328582003F7EDD /* Sparkle.framework */; };
 		315D43B50E328591003F7EDD /* Sparkle.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 315D438B0E328582003F7EDD /* Sparkle.framework */; };
+		315DA3CF118FED0F003E21BC /* patches in Resources */ = {isa = PBXBuildFile; fileRef = 315DA3CB118FED0F003E21BC /* patches */; };
 		316038FA100EE54600052849 /* RXScriptOpcodeStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 316038F9100EE54600052849 /* RXScriptOpcodeStream.m */; };
 		3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */ = {isa = PBXBuildFile; fileRef = 3160E1810FD3075300F18E86 /* tiny_marbles.png */; };
 		3165A576110BB13B004E71F1 /* glew.c in Sources */ = {isa = PBXBuildFile; fileRef = 3165A574110BB13B004E71F1 /* glew.c */; };
@@ -439,6 +440,7 @@
 		31588872098D7A120090A6B6 /* RXCardDescriptor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardDescriptor.m; sourceTree = "<group>"; };
 		315A129708F1C3E500566B20 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = /System/Library/Frameworks/Accelerate.framework; sourceTree = "<absolute>"; };
 		315D438B0E328582003F7EDD /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Sparkle.framework; sourceTree = "<group>"; };
+		315DA3CB118FED0F003E21BC /* patches */ = {isa = PBXFileReference; lastKnownFileType = folder; path = patches; sourceTree = "<group>"; };
 		316038F8100EE54600052849 /* RXScriptOpcodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptOpcodeStream.h; sourceTree = "<group>"; };
 		316038F9100EE54600052849 /* RXScriptOpcodeStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptOpcodeStream.m; sourceTree = "<group>"; };
 		3160E1810FD3075300F18E86 /* tiny_marbles.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = tiny_marbles.png; sourceTree = "<group>"; };
@@ -1081,6 +1083,7 @@
 				31472D02114C2FC7008B6CF7 /* Installer.strings */,
 				31B6549E1102B9EF004818AC /* Localizable.strings */,
 				31D21B9A0DBC07A700E970E1 /* MainMenu.xib */,
+				315DA3CB118FED0F003E21BC /* patches */,
 				31B654A01102B9EF004818AC /* Rendering.strings */,
 				31F1BED50D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf */,
 				31F3093508BE43C100417394 /* Riven X-Info.plist */,
@@ -1436,6 +1439,7 @@
 				31472D03114C2FC7008B6CF7 /* Installer.strings in Resources */,
 				31472CEE114C2F66008B6CF7 /* Extras.MHK in Resources */,
 				319C8C691155793D00DF3E7D /* Welcome.strings in Resources */,
+				315DA3CF118FED0F003E21BC /* patches in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

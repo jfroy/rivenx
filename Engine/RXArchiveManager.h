@@ -26,6 +26,4 @@
 - (NSArray*)soundArchivesForStackKey:(NSString*)stack_key error:(NSError**)error;
 - (MHKArchive*)extrasArchive:(NSError**)error;
 
-- (NSArray*)dataPatchArchivesForStackKey:(NSString*)stackKey error:(NSError**)error;
-
 @end

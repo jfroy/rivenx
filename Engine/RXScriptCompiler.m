@@ -168,12 +168,8 @@
     }
     
     _current_block = nil;
-    
-    [_block_stack release];
-    _block_stack = nil;
-    
-    [_cases_stack release];
-    _cases_stack = nil;
+    [_block_stack release], _block_stack = nil;
+    [_cases_stack release], _cases_stack = nil;
     
     return [[_decompiled_script mutableCopy] autorelease];
 }
