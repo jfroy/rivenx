@@ -12,7 +12,6 @@
 		3105EC330D74844900609273 /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
 		3105EC610D74922500609273 /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
 		31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */; };
-		311138A70F23FB000009C6C1 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311138A60F23FB000009C6C1 /* GLUT.framework */; };
 		311400080D58F0230099AF69 /* GTMSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 311400070D58F0230099AF69 /* GTMSystemVersion.m */; };
 		3114FF3C0D58DF0A0099AF69 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		311B7C840BCC4D0500653D2D /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
@@ -104,7 +103,6 @@
 		315547E208C4C44F00A2AA7A /* RXApplicationDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 315547E108C4C44F00A2AA7A /* RXApplicationDelegate.m */; };
 		3155481008C52A1400A2AA7A /* Extras.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3155480F08C52A1400A2AA7A /* Extras.plist */; };
 		31588874098D7A120090A6B6 /* RXCardDescriptor.m in Sources */ = {isa = PBXBuildFile; fileRef = 31588872098D7A120090A6B6 /* RXCardDescriptor.m */; };
-		315A129808F1C3E500566B20 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 315A129708F1C3E500566B20 /* Accelerate.framework */; };
 		315BD3CE0D85AF94007A3BFA /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
 		315BD3CF0D85AF95007A3BFA /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
 		315BD3D00D85AF97007A3BFA /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
@@ -664,7 +662,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				315A129808F1C3E500566B20 /* Accelerate.framework in Frameworks */,
 				313C7EA008CCFB4D00950A70 /* ApplicationServices.framework in Frameworks */,
 				3153ED8609A3ED3E002E1149 /* AudioToolbox.framework in Frameworks */,
 				3153ED8709A3ED3E002E1149 /* AudioUnit.framework in Frameworks */,
@@ -682,7 +679,6 @@
 				31AE54570DE0ADD6000E71CF /* ExceptionHandling.framework in Frameworks */,
 				3153E7F40DE5ABC900DF63B8 /* Carbon.framework in Frameworks */,
 				315D438C0E328582003F7EDD /* Sparkle.framework in Frameworks */,
-				311138A70F23FB000009C6C1 /* GLUT.framework in Frameworks */,
 				312EBAA40FD1FB2800D65E22 /* Python.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1823,11 +1819,6 @@
 				);
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
-				OTHER_LDFLAGS = (
-					"-lz",
-					"-lbz2",
-					"-lcrypto",
-				);
 				PRODUCT_NAME = MHKKit;
 			};
 			name = Debug;
@@ -1850,11 +1841,6 @@
 				);
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
-				OTHER_LDFLAGS = (
-					"-lz",
-					"-lbz2",
-					"-lcrypto",
-				);
 				PRODUCT_NAME = MHKKit;
 			};
 			name = "Beta Release";
@@ -1877,11 +1863,6 @@
 				);
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
-				OTHER_LDFLAGS = (
-					"-lz",
-					"-lbz2",
-					"-lcrypto",
-				);
 				PRODUCT_NAME = MHKKit;
 			};
 			name = Release;
