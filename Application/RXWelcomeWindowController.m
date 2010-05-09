@@ -231,15 +231,15 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         [self close];
         [self performSelector:@selector(_beginNewGame) withObject:nil afterDelay:0.0];
     } else {
-        if ([[error domain] isEqualToString:RXErrorDomain] && [error code] == kRXErrInstallerCancelled) {
-            // delete the shared base directory's content
-            NSString* shared_base = [[(RXWorld*)g_world worldSharedBase] path];
-            NSArray* content = BZFSContentsOfDirectory(shared_base, NULL);
-            NSEnumerator* content_e = [content objectEnumerator];
-            NSString* dir;
-            while ((dir = [content_e nextObject]))
-                BZFSRemoveItemAtURL([NSURL fileURLWithPath:[shared_base stringByAppendingPathComponent:dir]], NULL);
-        } else
+        // delete the shared base directory's content
+        NSString* shared_base = [[(RXWorld*)g_world worldSharedBase] path];
+        NSArray* content = BZFSContentsOfDirectory(shared_base, NULL);
+        NSEnumerator* content_e = [content objectEnumerator];
+        NSString* dir;
+        while ((dir = [content_e nextObject]))
+            BZFSRemoveItemAtURL([NSURL fileURLWithPath:[shared_base stringByAppendingPathComponent:dir]], NULL);
+        
+        if (!([[error domain] isEqualToString:RXErrorDomain] && [error code] == kRXErrInstallerCancelled))
             [NSApp presentError:error];
     }
 }
@@ -260,7 +260,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 
 - (void)_stopWaitingForDisc:(NSDictionary*)mount_paths {
     if (!waitedOnDisc)
-        return
+        return;
     
     [installer updatePathsWithMountPaths:mount_paths];
     waitedOnDisc = nil;
