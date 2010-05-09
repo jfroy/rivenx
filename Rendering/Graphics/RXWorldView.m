@@ -375,14 +375,14 @@ static NSString* required_extensions[] = {
     CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
     CVDisplayLinkSetOutputCallback(_displayLink, &rx_render_output_callback, self);
     
-    // working color space
-    if ([GTMSystemVersion isLeopardOrGreater])
+    // color spaces
+    if ([GTMSystemVersion isLeopardOrGreater]) {
         _workingColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGBLinear);
-    else
+        _sRGBColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    } else {
         _workingColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
-    
-    // sRGB color space
-    _sRGBColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+        _sRGBColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
+    }
     
     // get the default cursor from the world
     _cursor = [[g_world defaultCursor] retain];
