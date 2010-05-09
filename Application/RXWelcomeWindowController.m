@@ -459,7 +459,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 
 - (void)_performMountScan:(NSString*)path {
     BOOL usable_mount = [self _checkPathContent:path removable:YES];
-    if (!usable_mount && installer)
+    if (!usable_mount && installer && waitedOnDisc)
         [[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:path];
 }
 
