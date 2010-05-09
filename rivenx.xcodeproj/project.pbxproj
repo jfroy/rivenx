@@ -138,6 +138,7 @@
 		316E1F3B0E77810200F28E2A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
 		316E1F3D0E77810800F28E2A /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384B08C6A73E004B7FD0 /* CoreServices.framework */; };
 		316E1F3F0E77810F00F28E2A /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313C7E9F08CCFB4D00950A70 /* ApplicationServices.framework */; };
+		316EF00C1196405A00039B24 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311138A60F23FB000009C6C1 /* GLUT.framework */; };
 		317403940CDC1A67006F3523 /* RXGameState.m in Sources */ = {isa = PBXBuildFile; fileRef = 317403930CDC1A67006F3523 /* RXGameState.m */; };
 		31766E62102FAC02001762A9 /* RXDynamicBitfield.m in Sources */ = {isa = PBXBuildFile; fileRef = 31766E61102FAC02001762A9 /* RXDynamicBitfield.m */; };
 		317ACC910F285BE10040FFFD /* MHKMoviePlayer_main.m in Sources */ = {isa = PBXBuildFile; fileRef = 317ACC8D0F285BE10040FFFD /* MHKMoviePlayer_main.m */; };
@@ -680,6 +681,7 @@
 				3153E7F40DE5ABC900DF63B8 /* Carbon.framework in Frameworks */,
 				315D438C0E328582003F7EDD /* Sparkle.framework in Frameworks */,
 				312EBAA40FD1FB2800D65E22 /* Python.framework in Frameworks */,
+				316EF00C1196405A00039B24 /* GLUT.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
