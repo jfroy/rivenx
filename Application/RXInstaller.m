@@ -64,6 +64,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [dataArchives release];
     [assetsPath release];
     [assetsArchives release];
+    [allPath release];
+    [allArchives release];
     [extrasPath release];
     
     [discsToProcess release];
@@ -169,6 +171,14 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     while ((archive = [e nextObject])) {
         if (![archive_names containsObject:archive]) {
             [archive_paths addObject:[assetsPath stringByAppendingPathComponent:archive]];
+            [archive_names addObject:archive];
+        }
+    }
+    
+    e = [allArchives objectEnumerator];
+    while ((archive = [e nextObject])) {
+        if (![archive_names containsObject:archive]) {
+            [archive_paths addObject:[allPath stringByAppendingPathComponent:archive]];
             [archive_names addObject:archive];
         }
     }
@@ -369,6 +379,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [dataArchives release];
     [assetsPath release];
     [assetsArchives release];
+    [allPath release];
+    [allArchives release];
     [extrasPath release];
     [currentDisc release];
     
@@ -390,6 +402,17 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     }
     [assetsPath retain];
     [assetsArchives retain];
+    
+    allPath = [mount_paths objectForKey:@"all path"];
+    if ((id)allPath == (id)[NSNull null]) {
+        allPath = nil;
+        allArchives = nil;
+    } else {    
+        allArchives = [mount_paths objectForKey:@"all archives"];
+        assert((id)allArchives != (id)[NSNull null]);
+    }
+    [allPath retain];
+    [allArchives retain];
     
     extrasPath = [mount_paths objectForKey:@"extras path"];
     if ((id)extrasPath == (id)[NSNull null])

@@ -256,7 +256,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     dome_slider_background_position.y = 250;
     
     // the trapeze rect is emcompasses the bottom part of the trapeze on jspit 276
-    trapeze_rect = NSMakeRect(310, 172, 16, 36);
+    trapeze_rect = NSMakeRect(295, 251, 16, 36);
     
     // register for movie rate change notifications
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -4513,7 +4513,9 @@ DEFINE_COMMAND(xvga1300_carriage) {
             
             // check where the mouse was pressed, and if it is inside the
             // trapeze region, set mouse_was_pressed to YES and exit the loop
-            if (NSMouseInRect(mouse_down_event.location, trapeze_rect, NO)) {
+            rx_core_rect_t core_pos = RXTransformRectWorldToCore(NSMakeRect(mouse_down_event.location.x, mouse_down_event.location.y, 0.0f, 0.0f));
+            NSPoint core_pos_ns = NSMakePoint(core_pos.left, core_pos.top);
+            if (NSMouseInRect(core_pos_ns, trapeze_rect, NO)) {
                 mouse_was_pressed = YES;
                 break;
             }

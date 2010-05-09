@@ -39,6 +39,19 @@
     return archive;
 }
 
+- (BOOL)application:(NSApplication *)application openFile:(NSString *)filename {
+    NSError *error = nil;
+    
+    [self willChangeValueForKey:@"archive"];
+    id old_archive = archive;
+    archive = [[MHKArchive alloc] initWithPath:filename error:&error];
+    [old_archive release];
+    [self didChangeValueForKey:@"archive"];
+    
+    if(error) [NSApp presentError:error];
+    return (archive) ? YES : NO;
+}
+
 - (IBAction)openDocument:(id)sender {
     // Let's select a document!
     
@@ -65,19 +78,6 @@
         NSDictionary *dict = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:QTMovieFlatten];
         [[qtView movie] writeToFile:[panel filename] withAttributes:dict];
     }
-}
-
-- (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename {
-    NSError *error = nil;
-    
-    [self willChangeValueForKey:@"archive"];
-    id old_archive = archive;
-    archive = [[MHKArchive alloc] initWithPath:filename error:&error];
-    [old_archive release];
-    [self didChangeValueForKey:@"archive"];
-    
-    if(error) [NSApp presentError:error];
-    return (archive) ? YES : NO;
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification {

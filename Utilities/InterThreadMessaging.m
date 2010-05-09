@@ -80,8 +80,10 @@ static void removeMessagePortForThread(NSThread* thread) {
 
 @implementation NSThread (InterThreadMessaging)
 + (void)prepareForInterThreadMessages {
-    if (useSystemThreadPerformSelector()) return;
-    [InterThreadManager class]; // Force the class initialization.
+    if (useSystemThreadPerformSelector())
+        return;
+    
+    [InterThreadManager class];
     createMessagePortForThread([NSThread currentThread], [NSRunLoop currentRunLoop]);
 }
 @end

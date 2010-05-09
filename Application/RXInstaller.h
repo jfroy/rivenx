@@ -36,6 +36,9 @@
     NSString* assetsPath;
     NSArray* assetsArchives;
     
+    NSString* allPath;
+    NSArray* allArchives;
+    
     NSString* extrasPath;
     
     BOOL didRun;

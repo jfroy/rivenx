@@ -221,7 +221,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // we're done with the installer
     [_installingTitleField unbind:@"value"];
     [installer removeObserver:self forKeyPath:@"progress"];
-    [installer release];
+    [installer release], installer = nil;
     
     // if the installation was successful, set a flag in our defaults informing us
     // that we are installed and kick up the game; otherwise, let the application
@@ -231,15 +231,15 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         [self close];
         [self performSelector:@selector(_beginNewGame) withObject:nil afterDelay:0.0];
     } else {
-        if ([[error domain] isEqualToString:RXErrorDomain] && [error code] == kRXErrInstallerCancelled) {
-            // delete the shared base directory's content
-            NSString* shared_base = [[(RXWorld*)g_world worldSharedBase] path];
-            NSArray* content = BZFSContentsOfDirectory(shared_base, NULL);
-            NSEnumerator* content_e = [content objectEnumerator];
-            NSString* dir;
-            while ((dir = [content_e nextObject]))
-                BZFSRemoveItemAtURL([NSURL fileURLWithPath:[shared_base stringByAppendingPathComponent:dir]], NULL);
-        } else
+        // delete the shared base directory's content
+        NSString* shared_base = [[(RXWorld*)g_world worldSharedBase] path];
+        NSArray* content = BZFSContentsOfDirectory(shared_base, NULL);
+        NSEnumerator* content_e = [content objectEnumerator];
+        NSString* dir;
+        while ((dir = [content_e nextObject]))
+            BZFSRemoveItemAtURL([NSURL fileURLWithPath:[shared_base stringByAppendingPathComponent:dir]], NULL);
+        
+        if (!([[error domain] isEqualToString:RXErrorDomain] && [error code] == kRXErrInstallerCancelled))
             [NSApp presentError:error];
     }
 }
@@ -260,7 +260,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 
 - (void)_stopWaitingForDisc:(NSDictionary*)mount_paths {
     if (!waitedOnDisc)
-        return
+        return;
     
     [installer updatePathsWithMountPaths:mount_paths];
     waitedOnDisc = nil;
@@ -459,7 +459,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 
 - (void)_performMountScan:(NSString*)path {
     BOOL usable_mount = [self _checkPathContent:path removable:YES];
-    if (!usable_mount && installer)
+    if (!usable_mount && installer && waitedOnDisc)
         [[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:path];
 }
 
@@ -487,6 +487,9 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     // keep a reference to ourselves
     scanningThread = [NSThread currentThread];
+    
+    // inter-thread messaging
+    [NSThread prepareForInterThreadMessages];
     
     // scan currently mounted media
     [self performSelectorOnMainThread:@selector(_scanMountedMedia) withObject:nil waitUntilDone:NO];
