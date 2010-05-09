@@ -488,6 +488,9 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // keep a reference to ourselves
     scanningThread = [NSThread currentThread];
     
+    // inter-thread messaging
+    [NSThread prepareForInterThreadMessages];
+    
     // scan currently mounted media
     [self performSelectorOnMainThread:@selector(_scanMountedMedia) withObject:nil waitUntilDone:NO];
     
