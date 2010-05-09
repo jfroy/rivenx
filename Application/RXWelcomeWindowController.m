@@ -221,7 +221,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // we're done with the installer
     [_installingTitleField unbind:@"value"];
     [installer removeObserver:self forKeyPath:@"progress"];
-    [installer release];
+    [installer release], installer = nil;
     
     // if the installation was successful, set a flag in our defaults informing us
     // that we are installed and kick up the game; otherwise, let the application
