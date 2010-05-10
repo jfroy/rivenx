@@ -736,8 +736,8 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     }
     
     NSRect scale_rect = RXRenderScaleRect();
-    [_scaleFilter setValue:[NSNumber numberWithFloat:scale_rect.size.width] forKey:kCIInputScaleKey];
-    [_scaleFilter setValue:[NSNumber numberWithFloat:scale_rect.size.width / scale_rect.size.height] forKey:kCIInputAspectRatioKey];
+    [_scaleFilter setValue:[NSNumber numberWithFloat:scale_rect.size.width] forKey:@"inputScale"];
+    [_scaleFilter setValue:[NSNumber numberWithFloat:scale_rect.size.width / scale_rect.size.height] forKey:@"inputAspectRatio"];
     
     // let others know that the surface has changed size
 #if defined(DEBUG)
@@ -1233,8 +1233,8 @@ major_number.minor_number major_number.minor_number.release_number
 //                cardImage = [_multiplyBlendFilter valueForKey:kCIOutputImageKey];
 //            }
             
-            [_scaleFilter setValue:cardImage forKey:kCIInputImageKey];
-            scaledCardImage = [_scaleFilter valueForKey:kCIOutputImageKey];
+            [_scaleFilter setValue:cardImage forKey:@"inputImage"];
+            scaledCardImage = [_scaleFilter valueForKey:@"outputImage"];
             
             // render the scaled card texture; note that we need to inset the image by one pixel to avoid garbage pixels output by the lanczos filter
             rx_rect_t contentRect = RXEffectiveRendererFrame();
