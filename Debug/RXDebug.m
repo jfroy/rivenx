@@ -51,6 +51,8 @@ void rx_print_exception_backtrace(NSException* e) {
             [ls launch];
         } @catch (NSException* e) {
             RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"FAILED TO LAUNCH atos TO SYMBOLIFICATE EXCEPTION BACKTRACE: %@", [e description]);
+            NSString* string_stack = [[args subarrayWithRange:NSMakeRange(2, [args count] - 2)] componentsJoinedByString:@"\n"];
+            RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"%@", string_stack);
         }
         [ls release];
     } else
