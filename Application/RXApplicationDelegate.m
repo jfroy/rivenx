@@ -469,6 +469,13 @@
     if (!gameState)
         return;
     
+    // don't autosave on aspit 1, 3 and 4 (the main menus)
+    RXSimpleCardDescriptor* scd = [gameState currentCard];
+    if (!scd)
+        return;
+    if ([scd->stackKey isEqualToString:@"aspit"] && (scd->cardID == 1 || scd->cardID == 3 || scd->cardID == 4))
+        return;
+    
     if ([gameState writeToURL:autosaveURL updateURL:NO error:NULL])
         [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:autosaveURL];
 }
