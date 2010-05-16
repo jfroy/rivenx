@@ -2207,10 +2207,12 @@
 			baseConfigurationReference = 31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */;
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"DEBUG=1",
 				);
+				ONLY_ACTIVE_ARCH = NO;
 			};
 			name = "Beta Release";
 		};
