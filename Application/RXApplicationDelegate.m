@@ -476,6 +476,7 @@
     if ([scd->stackKey isEqualToString:@"aspit"] && (scd->cardID == 1 || scd->cardID == 3 || scd->cardID == 4))
         return;
     
+    // FIXME: the autosave should contain extra data to point to the actual saved game such that if we load the autosave, saving will continue to go in the actual saved game
     if ([gameState writeToURL:autosaveURL updateURL:NO error:NULL])
         [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:autosaveURL];
 }
