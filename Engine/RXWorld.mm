@@ -416,7 +416,14 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         
         // set the active card to that of the new game state
         RXSimpleCardDescriptor* scd = [_gameState currentCard];
+        
+        // NOTE: some cards except hotspot handling to be disabled when they open because
+        //       almost always they are opening as a result of a mouse down action; to work
+        //       around this fact, disable hotspot handling right now and queue up the enable
+        //       hotspot handling method on the script thread after changing the active card
+        [(RXCardState*)_cardRenderer disableHotspotHandling];
         [(RXCardState*)_cardRenderer setActiveCardWithStack:scd->stackKey ID:scd->cardID waitUntilDone:NO];
+        [(RXCardState*)_cardRenderer performSelector:@selector(enableHotspotHandling) withObject:nil inThread:_scriptThread waitUntilDone:NO];
     }
 }
 
