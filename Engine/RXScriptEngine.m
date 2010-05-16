@@ -810,7 +810,12 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     [logPrefix deleteCharactersInRange:NSMakeRange([logPrefix length] - 4, 4)];
     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@}", logPrefix);
 #endif
-
+    
+    // clear all active hotspots
+    OSSpinLockLock(&_active_hotspots_lock);
+    [_active_hotspots removeAllObjects];
+    OSSpinLockUnlock(&_active_hotspots_lock);
+    
     // we can show the mouse again (if we hid it) if the execution depth is
     // back to 0 (e.g. there are no more scripts running after this one)
     if (_programExecutionDepth == 0)

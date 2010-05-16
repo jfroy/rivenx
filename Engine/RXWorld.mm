@@ -415,20 +415,24 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         _gameStateToLoad = nil;
         
         // set the active card to that of the new game state
-        RXSimpleCardDescriptor* scd = [_gameState currentCard];
-        
         // NOTE: some cards except hotspot handling to be disabled when they open because
         //       almost always they are opening as a result of a mouse down action; to work
         //       around this fact, disable hotspot handling right now and queue up the enable
         //       hotspot handling method on the script thread after changing the active card
+        RXSimpleCardDescriptor* scd = [_gameState currentCard];
+        
         [(RXCardState*)_cardRenderer disableHotspotHandling];
         [(RXCardState*)_cardRenderer setActiveCardWithStack:scd->stackKey ID:scd->cardID waitUntilDone:NO];
         [(RXCardState*)_cardRenderer performSelector:@selector(enableHotspotHandling) withObject:nil inThread:_scriptThread waitUntilDone:NO];
     }
 }
 
-- (void)_fadeOutFinished {
-    [g_worldView fadeInWithDuration:0.5 completionDelegate:nil selector:nil];
+- (void)_loadGameFadeInFinished {
+    [(RXCardState*)_cardRenderer showMouseCursor];
+}
+
+- (void)_loadGameFadeOutFinished {
+    [g_worldView fadeInWithDuration:0.5 completionDelegate:self selector:@selector(_loadGameFadeInFinished)];
     [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
 }
 
@@ -443,7 +447,8 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
     [self initializeRendering];
     
     // fade out over 0.5 seconds and load the new game when the fade completes
-    [g_worldView fadeOutWithDuration:0.5 completionDelegate:self selector:@selector(_fadeOutFinished)];
+    [(RXCardState*)_cardRenderer hideMouseCursor];
+    [g_worldView fadeOutWithDuration:0.5 completionDelegate:self selector:@selector(_loadGameFadeOutFinished)];
 }
 
 #pragma mark -

@@ -63,7 +63,4 @@
 
 - (void)setWorldBaseOverride:(NSString*)path;
 
-- (RXGameState*)gameState;
-- (void)loadGameState:(RXGameState*)gameState;
-
 @end

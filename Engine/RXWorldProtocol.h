@@ -35,6 +35,7 @@
 - (void)toggleFullscreen;
 
 - (RXGameState*)gameState;
+- (void)loadGameState:(RXGameState*)gameState;
 
 - (NSDictionary*)stackDescriptorForKey:(NSString*)stackKey;
 - (RXStack*)activeStackWithKey:(NSString*)stackKey;

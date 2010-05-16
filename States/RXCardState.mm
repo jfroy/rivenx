@@ -147,6 +147,7 @@ static void rx_release_owner_applier(const void* value, void* context) {
 @interface RXCardState (RXCardStatePrivate)
 - (void)_initializeRendering;
 - (void)_updateActiveSources;
+- (void)_clearActiveCard;
 @end
 
 @implementation RXCardState
@@ -1318,6 +1319,48 @@ init_failure:
 #pragma mark -
 #pragma mark card switching
 
+- (void)_loadNewGameStateAndShowCursor {
+    // WARNING: MUST RUN ON THE MAIN THREAD
+    if (!pthread_main_np())
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                       reason:@"_loadNewGameStateAndShowCursor: MUST RUN ON MAIN THREAD"
+                                     userInfo:nil];
+    
+    RXGameState* gs = [[RXGameState alloc] init];
+    [g_world loadGameState:gs];
+    [gs release];
+    
+    // show the mouse cursor again (balances the hideMouseCursor in -beginEndCredits; we do this after
+    // calling newDocument: since loading a new game state hides the cursor and thus garantees that the
+    // cursor won't flash on the screen until the new game has loaded in
+    [self showMouseCursor];
+}
+
+- (void)_endCreditsAndBeginNewGame {
+    // WARNING: MUST RUN ON THE MAIN THREAD
+    if (!pthread_main_np())
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                       reason:@"_endCreditsAndBeginNewGame: MUST RUN ON MAIN THREAD"
+                                     userInfo:nil];
+    
+    // clear the active card
+    [self clearActiveCardWaitingUntilDone:YES];
+    
+    // disable credits rendering mode now that the active card has been cleared
+    OSSpinLockLock(&_render_lock);
+    _render_credits = NO;
+    OSSpinLockUnlock(&_render_lock);
+    
+    // load a new game; note that we cannot use newDocument: since that method is disabled while
+    // there is activity on the script thread (as expressed by hotspot handling being disabled, 
+    // which is going to be the case when this method executes)
+    // NOTE: clearActiveCardWaitingUntilDone: will have queued a notification on the main thread
+    //       with a nil card (as expected); this notification will however interfere with the normal
+    //       game loading sequence if we don't handle it before we execute loadGameState:, and so we
+    //       queue up another method that will load a new game state and call showMouseCursor
+    [self performSelectorOnMainThread:@selector(_loadNewGameStateAndShowCursor) withObject:nil waitUntilDone:NO];
+}
+
 - (void)_postCardSwitchNotification:(RXCard*)newCard {
     // WARNING: MUST RUN ON THE MAIN THREAD
     [[NSNotificationCenter defaultCenter] postNotificationName:@"RXActiveCardDidChange" object:newCard];
@@ -1419,6 +1462,9 @@ init_failure:
     
     // wipe out the transition queue
     [_transitionQueue removeAllObjects];
+    
+    // wipe out all movies
+    [self disableAllMoviesOnNextScreenUpdate];
     
     // synthesize and activate an empty sound group
     RXSoundGroup* sgroup = [RXSoundGroup new];
@@ -1940,6 +1986,9 @@ init_failure:
         
         // set credits state to 1 (first fade-in picture)
         _credits_state = 1;
+    } else if (_credits_state == 24) {
+        // credits have ended, just return
+        return;
     } else {
         // bind the credits texture on image unit 0
         glActiveTexture(GL_TEXTURE0); glReportError();
@@ -2073,21 +2122,19 @@ init_failure:
         _credits_state++;
         
         // if we've reached the end of the last credits state, free credits
-        // resources and go back to aspit 1 in a new game
+        // resources and begin a new game
         if (_credits_state == 24) {
-            // start a new game
-            [[NSApp delegate] performSelectorOnMainThread:@selector(newDocument:) withObject:nil waitUntilDone:YES];
-            
-            // show the mouse cursor again (balances the hideMouseCursor in -beginEndCredits
-            [self showMouseCursor];
-            
             // delete credits resources
             glDeleteTextures(1, &_credits_texture);
-            free(_credits_texture_buffer);
-            _credits_texture_buffer = nil;
+            free(_credits_texture_buffer), _credits_texture_buffer = nil;
             
-            // disable credits rendering and return
-            _render_credits = NO;
+            // end the credits and begin a new game; note that we'll remain in credit rendering mode
+            // until the active card has been cleared but we won't be rendering anything by checking
+            // that _credits_state == 24 at the beginning of this method
+            // NOTE: we can't use performSelector:withObject:inThread: since the render thread isn't
+            //       configured for inter-thread messaging (Tiger support)
+            [self performSelectorOnMainThread:@selector(_endCreditsAndBeginNewGame) withObject:nil waitUntilDone:NO];
+            
             return;
         }
     }
