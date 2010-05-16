@@ -335,6 +335,7 @@
     if ([self isGameLoadingAndSavingDisabled])
         return;
     
+    // FIXME: we need to clear the autosave somehow such that Riven X doesn't load back the card just before the end credits on the next launch
     RXGameState* gs = [[RXGameState alloc] init];
     [[RXWorld sharedWorld] loadGameState:gs];
     [gs release];
