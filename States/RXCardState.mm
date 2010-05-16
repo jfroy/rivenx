@@ -2075,11 +2075,11 @@ init_failure:
         // if we've reached the end of the last credits state, free credits
         // resources and go back to aspit 1 in a new game
         if (_credits_state == 24) {
-            // FIXME: hook up the new document action and use that instead
-            [self setActiveCardWithStack:@"aspit" ID:[[g_world activeStackWithKey:@"aspit"] entryCardID] waitUntilDone:NO];
+            // start a new game
+            [[NSApp delegate] performSelectorOnMainThread:@selector(newDocument:) withObject:nil waitUntilDone:YES];
             
-            // show the mouse cursor again
-            [self performSelectorOnMainThread:@selector(showMouseCursor) withObject:nil waitUntilDone:NO];
+            // show the mouse cursor again (balances the hideMouseCursor in -beginEndCredits
+            [self showMouseCursor];
             
             // delete credits resources
             glDeleteTextures(1, &_credits_texture);
