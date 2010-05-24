@@ -15,8 +15,7 @@ enum {
 typedef uint32_t BZFSOperationType;
 
 
-@interface BZFSOperation : NSObject {   
-@private
+@interface BZFSOperation : NSObject {
     FSFileOperationRef _op;
     OptionBits _options;
     
@@ -46,5 +45,6 @@ typedef uint32_t BZFSOperationType;
 - (FSFileOperationStage)stage;
 - (NSDictionary*)status;
 - (NSError*)error;
+- (BOOL)cancelled;
 
 @end

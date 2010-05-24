@@ -140,15 +140,25 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     }
     
     totalBytesCopied += [[[copy_op status] objectForKey:(NSString*)kFSOperationBytesCompleteKey] unsignedLongLongValue];
+    NSError* copy_error = [[copy_op error] retain];
+    BOOL cancelled = [copy_op cancelled];
     
     [copy_op removeObserver:self forKeyPath:@"status"];
     [copy_op release];
     
-    NSDictionary* permissions = [NSDictionary dictionaryWithObject:[NSNumber numberWithUnsignedInt:0664] forKey:NSFilePosixPermissions];
-    BZFSSetAttributesOfItemAtPath([destination stringByAppendingPathComponent:[path lastPathComponent]], permissions, error);
+    if (cancelled && !copy_error)
+        copy_error = [[RXError errorWithDomain:RXErrorDomain code:kRXErrInstallerCancelled userInfo:nil] retain];
     
-    if (modalSession && [NSApp runModalSession:modalSession] != NSRunContinuesResponse)
-        ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerCancelled, nil, error);
+    if (error)
+        *error = [copy_error retain];
+    if (copy_error) {
+        [copy_error release];
+        return NO;
+    }
+    
+    NSDictionary* permissions = [NSDictionary dictionaryWithObject:[NSNumber numberWithUnsignedInt:0664] forKey:NSFilePosixPermissions];
+    if (!BZFSSetAttributesOfItemAtPath([destination stringByAppendingPathComponent:[path lastPathComponent]], permissions, error))
+        return NO;
     
     return YES;
 }

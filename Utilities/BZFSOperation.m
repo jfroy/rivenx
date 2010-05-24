@@ -26,7 +26,12 @@ static CFStringRef _BZFSOperationDescribeObjCObject(const void* info) {
 }
 
 static void _BZFSOperationStatusCallback(FSFileOperationRef fileOp, const char* currentItem, FSFileOperationStage stage, OSStatus error, CFDictionaryRef statusDictionary, void* info) {
-    [(BZFSOperation*)info _updateStatus:[NSString stringWithUTF8String:currentItem] stage:stage error:[RXError errorWithDomain:NSOSStatusErrorDomain code:error userInfo:nil] status:(NSDictionary*)statusDictionary];
+    CFStringRef path = CFStringCreateWithFileSystemRepresentation(kCFAllocatorDefault, currentItem);
+    [(BZFSOperation*)info _updateStatus:(NSString*)path
+                                  stage:stage
+                                  error:((error != noErr) ? [RXError errorWithDomain:NSOSStatusErrorDomain code:error userInfo:nil] : nil)
+                                 status:(NSDictionary*)statusDictionary];
+    CFRelease(path);
 }
 
 @implementation BZFSOperation
@@ -86,7 +91,7 @@ BailOut:
     [self willChangeValueForKey:@"error"];
     
     old = _item;
-    _item = [item copy];
+    _item = [item retain];
     [old release];
     
     _stage = stage;
@@ -96,7 +101,7 @@ BailOut:
     [old release];
     
     old = _error;
-    _error = [error copy];
+    _error = [error retain];
     [old release];
     
     [self didChangeValueForKey:@"error"];
@@ -157,6 +162,10 @@ BailOut:
 
 - (NSError*)error {
     return _error;
+}
+
+- (BOOL)cancelled {
+    return _cancelled;
 }
 
 @end
