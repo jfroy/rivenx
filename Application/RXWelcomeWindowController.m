@@ -370,6 +370,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     NSString* assets_path = nil;
     NSString* all_path = nil;
     NSString* extras_path = nil;
+    NSString* myst2_path = nil;
     
     NSEnumerator* enumerator = [content objectEnumerator];
     NSString* item;
@@ -381,6 +382,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
             assets_path = item_path;
         else if ([item caseInsensitiveCompare:@"All"] == NSOrderedSame)
             all_path = item_path;
+        else if ([item caseInsensitiveCompare:@"Myst2"] == NSOrderedSame)
+            myst2_path = item_path;
         else if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame)
             extras_path = item_path;
     }
@@ -419,8 +422,23 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         enumerator = [content objectEnumerator];
         while ((item = [enumerator nextObject])) {
             NSString* item_path = [data_path stringByAppendingPathComponent:item];
-            if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame)
+            if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame) {
                 extras_path = item_path;
+                break;
+            }
+        }
+        
+        // also check in 'Myst2' (Exile edition)
+        if (!extras_path && myst2_path) {
+            content = BZFSContentsOfDirectory(myst2_path, &error);
+            enumerator = [content objectEnumerator];
+            while ((item = [enumerator nextObject])) {
+                NSString* item_path = [data_path stringByAppendingPathComponent:item];
+                if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame) {
+                    extras_path = item_path;
+                    break;
+                }
+            }
         }
     }
     
