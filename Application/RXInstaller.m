@@ -82,6 +82,10 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     NSArray* content = [dataArchives filteredArrayUsingPredicate:predicate];
     if ([content count])
         return YES;
+    content = [allArchives filteredArrayUsingPredicate:predicate];
+    if ([content count])
+        return YES;
+    
     return NO;
 }
 
