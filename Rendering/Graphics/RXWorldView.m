@@ -125,6 +125,9 @@ static NSString* required_extensions[] = {
         case kCGLRendererIntel900ID:
             renderer_name = @"Intel 900";
             break;
+        case kCGLRendererIntelX3100ID:
+            renderer_name = @"Intel X3100";
+            break;
         case kCGLRendererMesa3DFXID:
             renderer_name = @"Mesa 3DFX";
             break;
@@ -667,6 +670,9 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"now using virtual screen %d driven by the \"%@\" renderer; VRAM: %ld MB total, %.2f MB free",
         [_renderContext currentVirtualScreen], [RXWorldView rendererNameForID:renderer], _totalVRAM / 1024 / 1024, [self currentFreeVRAM] / 1024.0 / 1024.0);
     
+    renderer &= kCGLRendererIDMatchingMask;
+    _intelGraphics = (renderer == kCGLRendererIntel900ID || renderer == kCGLRendererIntelX3100ID) ? YES : NO;
+    
     // determine OpenGL version and features
     [self _determineGLVersion:_renderContextCGL];
     [self _determineGLFeatures:_renderContextCGL];
@@ -750,8 +756,8 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _cardTexture); glReportError();
     
     // texture parameters
-    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glReportError();
@@ -1198,7 +1204,7 @@ major_number.minor_number major_number.minor_number.release_number
         // bind the window surface FBO
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); glReportError();
         
-        if (_useCoreImage) {
+        if (_useCoreImage && !_intelGraphics) {
             glUseProgram(0); glReportError();
             [gl_state bindVertexArrayObject:0];
             

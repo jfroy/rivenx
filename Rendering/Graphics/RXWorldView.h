@@ -65,6 +65,7 @@
     
     BOOL _glInitialized;
     BOOL _useCoreImage;
+    BOOL _intelGraphics;
     BOOL _tornDown;
 }
 
