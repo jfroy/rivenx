@@ -721,18 +721,6 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
         _scaleFilter = [[CIFilter filterWithName:@"CILanczosScaleTransform"] retain];
         assert(_scaleFilter);
         [_scaleFilter setDefaults];
-        
-//        _fadeColorFilter = [[CIFilter filterWithName:@"CIConstantColorGenerator"] retain];
-//        assert(_fadeColorFilter);
-//        [_fadeColorFilter setDefaults];
-//        
-//        _multiplyBlendFilter = [[CIFilter filterWithName:@"CIMultiplyBlendMode"] retain];
-//        assert(_multiplyBlendFilter);
-//        [_multiplyBlendFilter setDefaults];
-//        
-//        _cropFilter = [[CIFilter filterWithName:@"CICrop"] retain];
-//        assert(_cropFilter);
-//        [_cropFilter setDefaults];
     }
     
     NSRect scale_rect = RXRenderScaleRect();
@@ -1217,22 +1205,7 @@ major_number.minor_number major_number.minor_number.release_number
             CIImage* cardImage = [CIImage imageWithTexture:_cardTexture size:CGSizeMake(kRXCardViewportSize.width, kRXCardViewportSize.height) flipped:0 colorSpace:_sRGBColorSpace];
 //            CGRect cardImageExtent = [cardImage extent];
             CIImage* scaledCardImage;
-            
-//            if (fadeInterpolator) {
-//                float fadeValue = [fadeInterpolator value];
-//                CIColor* fadeColor = [CIColor colorWithRed:fadeValue green:fadeValue blue:fadeValue alpha:1.0f];
-//                [_fadeColorFilter setValue:fadeColor forKey:kCIInputColorKey];
-//                
-//                CIVector* cropVector = [CIVector vectorWithX:cardImageExtent.origin.x Y:cardImageExtent.origin.y Z:cardImageExtent.size.width W:cardImageExtent.size.height];
-//                [_cropFilter setValue:[_fadeColorFilter valueForKey:kCIOutputImageKey] forKey:kCIInputImageKey];
-//                [_cropFilter setValue:cropVector forKey:@"inputRectangle"];
-//                
-//                [_multiplyBlendFilter setValue:cardImage forKey:kCIInputImageKey];
-//                [_multiplyBlendFilter setValue:[_cropFilter valueForKey:kCIOutputImageKey] forKey:@"inputBackgroundImage"];
-//                
-//                cardImage = [_multiplyBlendFilter valueForKey:kCIOutputImageKey];
-//            }
-            
+                        
             [_scaleFilter setValue:cardImage forKey:@"inputImage"];
             scaledCardImage = [_scaleFilter valueForKey:@"outputImage"];
             
@@ -1246,13 +1219,6 @@ major_number.minor_number major_number.minor_number.release_number
             
             glActiveTexture(GL_TEXTURE0); glReportError();
             glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _cardTexture); glReportError();
-            
-//            if (fadeInterpolator) {
-//                float fadeValue = [fadeInterpolator value];
-//                glUniform4f(_modulateColorLocation, fadeValue, fadeValue, fadeValue, 1.f); glReportError();
-//            } else {
-//                glUniform4f(_modulateColorLocation, 1.f, 1.f, 1.f, 1.f); glReportError();
-//            }
             
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
             
