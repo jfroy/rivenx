@@ -28,7 +28,7 @@
 #import "States/RXCardState.h"
 
 
-NSObject* g_world = nil;
+NSObject <RXWorldProtocol>* g_world = nil;
 
 @interface RXWorld (RXWorldRendering)
 - (void)_initializeRendering;

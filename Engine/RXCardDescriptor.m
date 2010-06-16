@@ -127,6 +127,11 @@ struct _RXCardDescriptorPrimer {
     if (!self)
         return nil;
     
+    if (!stack) {
+        [self release];
+        return nil;
+    }
+    
     // NOTE: weak reference to the stack
     _parent = stack;
     _ID = cardID;

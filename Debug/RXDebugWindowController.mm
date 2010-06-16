@@ -121,6 +121,7 @@ static PyMethodDef rivenx_methods[] = {
     [[consoleView textStorage] beginEditing];
     [[consoleView textStorage] appendAttributedString:attr_str];
     [[consoleView textStorage] endEditing];
+    [attr_str release];
 
     PyObject* main_module = PyImport_AddModule("__main__");
     PyObject* global_dict = PyModule_GetDict(main_module);
@@ -163,6 +164,7 @@ static PyMethodDef rivenx_methods[] = {
         [command_names addObject:external_name];
     }
     
+    [opstream release];
     return command_names;
 }
 

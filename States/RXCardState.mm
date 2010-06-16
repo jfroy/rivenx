@@ -514,7 +514,6 @@ init_failure:
         
         positions[0] = kRXCardViewportSize.width; positions[1] = 0.0f;
         tex_coords0[0] = kRXCardViewportSize.width; tex_coords0[1] = kRXCardViewportSize.height;
-        positions += 4; tex_coords0 += 4;
     }
     
     // configure the VAs
@@ -667,7 +666,7 @@ init_failure:
 #pragma mark -
 #pragma mark audio rendering
 
-- (CFMutableArrayRef)_createSourceArrayFromSoundSets:(NSArray*)sets callbacks:(CFArrayCallBacks*)callbacks {
+- (CFMutableArrayRef)_newSourceArrayFromSoundSets:(NSArray*)sets callbacks:(CFArrayCallBacks*)callbacks {
     // create an array of sources that need to be deactivated
     CFMutableArrayRef sources = CFArrayCreateMutable(NULL, 0, callbacks);
     
@@ -684,8 +683,8 @@ init_failure:
     return sources;
 }
 
-- (CFMutableArrayRef)_createSourceArrayFromSoundSet:(NSSet*)s callbacks:(CFArrayCallBacks*)callbacks {
-    return [self _createSourceArrayFromSoundSets:[NSArray arrayWithObject:s] callbacks:callbacks];
+- (CFMutableArrayRef)_newSourceArrayFromSoundSet:(NSSet*)s callbacks:(CFArrayCallBacks*)callbacks {
+    return [self _newSourceArrayFromSoundSets:[NSArray arrayWithObject:s] callbacks:callbacks];
 }
 
 - (void)_appendToSourceArray:(CFMutableArrayRef)sources soundSets:(NSArray*)sets {  
@@ -728,8 +727,8 @@ init_failure:
     [_activeDataSounds minusSet:soundsToRemove];
     
     // swap the active sources array
-    CFMutableArrayRef newActiveSources = [self _createSourceArrayFromSoundSets:[NSArray arrayWithObjects:_activeSounds, _activeDataSounds, nil]
-                                                                     callbacks:&g_weakAudioSourceArrayCallbacks];
+    CFMutableArrayRef newActiveSources = [self _newSourceArrayFromSoundSet:[NSArray arrayWithObjects:_activeSounds, _activeDataSounds, nil]
+                                                                 callbacks:&g_weakAudioSourceArrayCallbacks];
     CFMutableArrayRef oldActiveSources = _activeSources;
     
     // swap _activeSources
@@ -752,7 +751,7 @@ init_failure:
     
     // remove the sources for all expired sounds from the sound to source map and prepare the detach and delete array
     if (!_sourcesToDelete)
-        _sourcesToDelete = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_deleteOnReleaseAudioSourceArrayCallbacks];
+        _sourcesToDelete = [self _newSourceArrayFromSoundSet:soundsToRemove callbacks:&g_deleteOnReleaseAudioSourceArrayCallbacks];
     else
         [self _appendToSourceArray:_sourcesToDelete soundSet:soundsToRemove];
     
@@ -920,8 +919,8 @@ init_failure:
     
     // schedule a fade out ramp for all to-be-removed sources if the fade out flag is on
     if (soundGroup->fadeOutRemovedSounds) {
-        CFMutableArrayRef sourcesToRemove = [self _createSourceArrayFromSoundSet:soundsToRemove
-                                                                       callbacks:&g_weakAudioSourceArrayCallbacks];
+        CFMutableArrayRef sourcesToRemove = [self _newSourceArrayFromSoundSet:soundsToRemove
+                                                                    callbacks:&g_weakAudioSourceArrayCallbacks];
         renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_GAIN_RAMP_DURATION);
         CFRelease(sourcesToRemove);
         
@@ -1046,17 +1045,17 @@ init_failure:
     // let's get a bit more attention
     thread_extended_policy_data_t extendedPolicy;
     extendedPolicy.timeshare = false;
-    kern_return_t kr = thread_policy_set(pthread_mach_thread_np(pthread_self()),
-                                         THREAD_EXTENDED_POLICY,
-                                         (thread_policy_t)&extendedPolicy,
-                                         THREAD_EXTENDED_POLICY_COUNT);
+    thread_policy_set(pthread_mach_thread_np(pthread_self()),
+                      THREAD_EXTENDED_POLICY,
+                      (thread_policy_t)&extendedPolicy,
+                      THREAD_EXTENDED_POLICY_COUNT);
     
     thread_precedence_policy_data_t precedencePolicy;
     precedencePolicy.importance = 63;
-    kr = thread_policy_set(pthread_mach_thread_np(pthread_self()),
-                           THREAD_PRECEDENCE_POLICY,
-                           (thread_policy_t)&precedencePolicy,
-                           THREAD_PRECEDENCE_POLICY_COUNT);
+    thread_policy_set(pthread_mach_thread_np(pthread_self()),
+                      THREAD_PRECEDENCE_POLICY,
+                      (thread_policy_t)&precedencePolicy,
+                      THREAD_PRECEDENCE_POLICY_COUNT);
     
     uint32_t cycles = 0;
     while (1) {
@@ -2726,6 +2725,7 @@ exit_flush_tasks:
     NSData* png_data = [image_rep representationUsingType:NSPNGFileType properties:nil];
     [png_data writeToFile:png_path options:0 error:NULL];
     
+    [desc release];
     [image_rep release];
 }
 

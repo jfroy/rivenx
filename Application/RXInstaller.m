@@ -284,12 +284,16 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         return NO;
     
     RXCardDescriptor* cdesc = [RXCardDescriptor descriptorWithStack:bspit ID:284];
-    if (!cdesc)
+    if (!cdesc) {
+        [bspit release];
         return YES;
+    }
     
     RXCard* bspit_284 = [[RXCard alloc] initWithCardDescriptor:cdesc];
+    [bspit release];
     if (!bspit_284)
         return YES;
+    
     [bspit_284 load];
     
     uintptr_t hotspot_id = 9;
@@ -307,15 +311,14 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:[md_programs objectAtIndex:0]];
     [bspit_284 release];
-    [bspit release];
     
     NSMutableArray* dp = [comp decompiledScript];
-    if (!comp || !dp)
+    [comp release];
+    if (!dp)
         return YES;
     
     NSDictionary* opcode = [dp objectAtIndex:4];
     BOOL need_patch = RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_ACTIVATE_SLST) && RX_OPCODE_ARG(opcode, 0) == 3;
-    [comp release];
     
     if (need_patch) {
         NSBundle* bundle = [NSBundle mainBundle];
