@@ -42,10 +42,8 @@
 #define __CAComponent_h__
 
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <CoreServices/CoreServices.h>
 #else
 	#include <ConditionalMacros.h>
-	#include <CoreServices.h>
 #endif
 
 #include "CAComponentDescription.h"
@@ -54,17 +52,17 @@ class CAComponent
 {
 public:
 	CAComponent ()
-		: mComp (0), mDesc(), mManuName(0), mAUName(0), mCompName(0), mCompInfo (0) {}
+		: mComp (0), mDesc(), mManuName(0), mAUName(0), mCompName(0) {}
 		
 		// if next is specifed that is used to find the next component after that one
-	CAComponent (const ComponentDescription& inDesc, CAComponent* next = 0);
+	CAComponent (const AudioComponentDescription& inDesc, CAComponent* next = 0);
 	
 	CAComponent (const CAComponent& y) 
-		: mComp (0), mDesc(), mManuName(0), mAUName(0), mCompName(0), mCompInfo (0) { *this = y; }
+		: mComp (0), mDesc(), mManuName(0), mAUName(0), mCompName(0) { *this = y; }
 
-	CAComponent (const Component& comp);
+	CAComponent (const AudioComponent& comp);
 	
-	CAComponent (const ComponentInstance& compInst);
+	CAComponent (const AudioComponentInstance& compInst);
 
 	CAComponent (OSType inType, OSType inSubtype = 0, OSType inManu = 0);
 	
@@ -85,30 +83,29 @@ public:
 		
 		// Return value of NULL indicates a problem getting that information from the component
 	CFStringRef		GetCompName () const { SetCompNames(); return mCompName; }
-	CFStringRef		GetCompInfo () const { SetCompInfo(); return mCompInfo; }
 	
 	const CAComponentDescription&	Desc () const { return mDesc; }
 			
-	OSStatus		Open (ComponentInstance& outInst) const 
+	OSStatus		Open (AudioComponentInstance& outInst) const 
 	{
-		return OpenAComponent (Comp(), &outInst);
+		return AudioComponentInstanceNew (Comp(), &outInst);
   	}
 
-	OSStatus			GetResourceVersion (UInt32 &outVersion) const;
+	OSStatus			GetVersion (UInt32 &outVersion) const;
 	
-	const Component&		Comp() const { return mComp; }
+	const AudioComponent&		Comp() const { return mComp; }
 	
-	void			Print(FILE* file = stdout) const;
+	void				Print(FILE* file = stdout) const;
 
 	OSStatus			Save (CFPropertyListRef *outData) const;
 		
 	OSStatus			Restore (CFPropertyListRef &inData);
 	
 private:
-	Component mComp;
+	AudioComponent mComp;
 	CAComponentDescription mDesc;
 	
-	CFStringRef mManuName, mAUName, mCompName, mCompInfo;
+	CFStringRef mManuName, mAUName, mCompName;
 
 	void	SetCompNames () const;
 	void	SetCompInfo () const;

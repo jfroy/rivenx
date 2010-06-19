@@ -399,7 +399,7 @@
     
     if (_hotspotsIDMap)
         NSFreeMapTable(_hotspotsIDMap);
-    _hotspotsIDMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
+    _hotspotsIDMap = NSCreateMapTable(NSIntegerMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
     if (_hotspots_name_map)
         NSFreeMapTable(_hotspots_name_map);
     _hotspots_name_map = NSCreateMapTable(NSObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);

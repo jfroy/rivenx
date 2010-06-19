@@ -38,95 +38,51 @@
 			STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
 			POSSIBILITY OF SUCH DAMAGE.
 */
-#warning TEMP WORKAROUND
-#include <CoreServices/CoreServices.h>
-#include <CoreFoundation/CFByteOrder.h>
+#if !defined(__CAHALAudioStream_h__)
+#define __CAHALAudioStream_h__
 
-CF_INLINE Float64 CASwapFloat64HostToBig(Float64 inValue)
+//==================================================================================================
+//	Includes
+//==================================================================================================
+
+//	Super Class Includes
+#include "CAHALAudioObject.h"
+
+//==================================================================================================
+//	CAHALAudioStream
+//==================================================================================================
+
+class CAHALAudioStream
+:
+	public	CAHALAudioObject
 {
-	union {
-		Float64 f;
-		SInt64 i;
-	} x;
-	x.f = inValue;	
-	x.i = CFSwapInt64HostToBig(x.i);
-	return x.f;
-}
 
-CF_INLINE Float64 CASwapFloat64BigToHost(Float64 inValue)
-{
-	union {
-		Float64 f;
-		SInt64 i;
-	} x;
-	x.f = inValue;	
-	x.i = CFSwapInt64BigToHost(x.i);
-	return x.f;
-}
+//	Construction/Destruction
+public:
+					CAHALAudioStream(AudioObjectID inAudioStream);
+	virtual			~CAHALAudioStream();
 
-CF_INLINE Float32 CASwapFloat32HostToBig(Float32 inValue)
-{
-	union {
-		Float32 f;
-		SInt32 i;
-	} x;
-	x.f = inValue;	
-	x.i = CFSwapInt32HostToBig(x.i);
-	return x.f;
-}
+//	Attributes
+public:
+	UInt32			GetDirection() const;
+	UInt32			GetTerminalType() const;
+	UInt32			GetStartingChannel() const;
+	UInt32			GetLatency() const;
 
-CF_INLINE Float32 CASwapFloat32BigToHost(Float32 inValue)
-{
-	union {
-		Float32 f;
-		SInt32 i;
-	} x;
-	x.f = inValue;	
-	x.i = CFSwapInt32BigToHost(x.i);
-	return x.f;
-}
+//	Format Info
+public:
+	void			GetCurrentVirtualFormat(AudioStreamBasicDescription& outFormat) const;
+	void			SetCurrentVirtualFormat(const AudioStreamBasicDescription& inFormat);
+	UInt32			GetNumberAvailableVirtualFormats() const;
+	void			GetAvailableVirtualFormats(UInt32& ioNumberFormats, AudioStreamRangedDescription* outFormats) const;
+	void			GetAvailableVirtualFormatByIndex(UInt32 inIndex, AudioStreamRangedDescription& outFormat) const;
 
+	void			GetCurrentPhysicalFormat(AudioStreamBasicDescription& outFormat) const;
+	void			SetCurrentPhysicalFormat(const AudioStreamBasicDescription& inFormat);
+	UInt32			GetNumberAvailablePhysicalFormats() const;
+	void			GetAvailablePhysicalFormats(UInt32& ioNumberFormats, AudioStreamRangedDescription* outFormats) const;
+	void			GetAvailablePhysicalFormatByIndex(UInt32 inIndex, AudioStreamRangedDescription& outFormat) const;
 
-CF_INLINE Float64 CASwapFloat64HostToLittle(Float64 inValue)
-{
-	union {
-		Float64 f;
-		SInt64 i;
-	} x;
-	x.f = inValue;	
-	x.i = CFSwapInt64HostToLittle(x.i);
-	return x.f;
-}
+};
 
-CF_INLINE Float64 CASwapFloat64LittleToHost(Float64 inValue)
-{
-	union {
-		Float64 f;
-		SInt64 i;
-	} x;
-	x.f = inValue;	
-	x.i = CFSwapInt64LittleToHost(x.i);
-	return x.f;
-}
-
-CF_INLINE Float32 CASwapFloat32HostToLittle(Float32 inValue)
-{
-	union {
-		Float32 f;
-		SInt32 i;
-	} x;
-	x.f = inValue;	
-	x.i = CFSwapInt32HostToLittle(x.i);
-	return x.f;
-}
-
-CF_INLINE Float32 CASwapFloat32LittleToHost(Float32 inValue)
-{
-	union {
-		Float32 f;
-		SInt32 i;
-	} x;
-	x.f = inValue;	
-	x.i = CFSwapInt32LittleToHost(x.i);
-	return x.f;
-}
+#endif

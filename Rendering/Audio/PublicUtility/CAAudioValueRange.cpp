@@ -146,3 +146,99 @@ bool	CAAudioValueRange::Union(const AudioValueRange& x, const AudioValueRange& y
 	}
 	return isDisjoint;
 }
+
+void	CAAudioValueRange_ComputeUnion(const AudioValueRange& inRange, const CAAudioValueRangeList& inRangeList, CAAudioValueRangeList& outUnion)
+{
+	//	this method assumes that the ranges in inRangeList are disjoint and that they are sorted from low to high and
+	outUnion.clear();
+	
+	//	start at the beginning of inRangeList
+	CAAudioValueRangeList::const_iterator theIterator = inRangeList.begin();
+	
+	//	iterate through inRangeList and add all the ranges that are strictly less than inRange
+	while((theIterator != inRangeList.end()) && CAAudioValueRange::IsStrictlyLessThan(*theIterator, inRange))
+	{
+		//	put this range in the union
+		outUnion.push_back(*theIterator);
+		
+		//	go to the next one
+		std::advance(theIterator, 1);
+	}
+	
+	if(theIterator != inRangeList.end())
+	{
+		if(!CAAudioValueRange::IsStrictlyGreaterThan(*theIterator, inRange))
+		{
+			//	inRange intersects the range that theIterator points at, but might actually intersect several contiguous ranges
+			
+			//	initialize the starting point, noting that we can skip the current one since we already know it's in the intersection
+			CAAudioValueRangeList::const_iterator theGreaterIterator = theIterator;
+			std::advance(theGreaterIterator, 1);
+			
+			//	iterate until we find a range that is strictly greater than inRange
+			while((theGreaterIterator != inRangeList.end()) && !CAAudioValueRange::IsStrictlyGreaterThan(*theGreaterIterator, inRange))
+			{
+				//	go to the next one
+				std::advance(theGreaterIterator, 1);
+			}
+			
+			//	theGreaterIterator now points at either one past the highest range in the intersection or the end of the vector
+			//	Either way, we have to adjust it to point at the true highest range in the intersection
+			std::advance(theGreaterIterator, -1);
+			
+			//	now theIterator points at the lowest range in the intersection and theGreaterIterator points at the highest
+			//	so we can compute the coagulated range
+			AudioValueRange theCoagulation;
+			theCoagulation.mMinimum = std::min(theIterator->mMinimum, inRange.mMinimum);
+			theCoagulation.mMaximum = std::max(theGreaterIterator->mMaximum, inRange.mMaximum);
+			
+			//	add the coagulation to the union
+			outUnion.push_back(theCoagulation);
+			
+			//	adjust theIterator to point at the next range for processing
+			theIterator = theGreaterIterator;
+			std::advance(theIterator, 1);
+		}
+		else
+		{
+			//	the range theIterator points at is strictly greater than inRange, so insert inRange in front of it and we're done
+			outUnion.push_back(inRange);
+		}
+			
+		//	we need to now copy the remaining higher ranges in inRangeList into the union
+		while(theIterator != inRangeList.end())
+		{
+			//	put this range in the union
+			outUnion.push_back(*theIterator);
+			
+			//	go to the next one
+			std::advance(theIterator, 1);
+		}
+	}
+	else
+	{
+		//	inRange is larger than all of the ranges in inRangeList, so just add it onto the end of the union and we're done
+		//	This is also the case if inRangeList is empty
+		outUnion.push_back(inRange);
+	}
+}
+
+void	CAAudioValueRange_ComputeIntersection(const AudioValueRange& inRange, const CAAudioValueRangeList& inRangeList, CAAudioValueRangeList& outIntersections)
+{
+	outIntersections.clear();
+	//	iterate through the list and compute the intersections
+	CAAudioValueRangeList::const_iterator theIterator = inRangeList.begin();
+	while(theIterator != inRangeList.end())
+	{
+		//	figure out if the range intersects
+		AudioValueRange theIntersection;
+		if(CAAudioValueRange::Intersection(inRange, *theIterator, theIntersection))
+		{
+			//	it does, so add the intersection to the return list
+			outIntersections.push_back(theIntersection);
+		}
+		
+		//	go to the next one
+		std::advance(theIterator, 1);
+	}
+}

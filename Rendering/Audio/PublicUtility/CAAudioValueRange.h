@@ -51,9 +51,9 @@
 #else
 	#include <CoreAudioTypes.h>
 #endif
-
 //	Standard Library Includes
 #include <functional>
+#include <vector>
 
 //=============================================================================
 //	CAAudioValueRange
@@ -106,5 +106,9 @@ inline bool	operator!=(const AudioValueRange& x, const AudioValueRange& y)						
 inline bool	operator<=(const AudioValueRange& x, const AudioValueRange& y)								{ return (x < y) || (x == y); }
 inline bool	operator>=(const AudioValueRange& x, const AudioValueRange& y)								{ return !(x < y); }
 inline bool	operator>(const AudioValueRange& x, const AudioValueRange& y)								{ return !((x < y) || (x == y)); }
+
+typedef	std::vector<CAAudioValueRange>	CAAudioValueRangeList;
+void	CAAudioValueRange_ComputeUnion(const AudioValueRange& inRange, const CAAudioValueRangeList& inRangeList, CAAudioValueRangeList& outUnion);
+void	CAAudioValueRange_ComputeIntersection(const AudioValueRange& inRange, const CAAudioValueRangeList& inRangeList, CAAudioValueRangeList& outIntersections);
 
 #endif

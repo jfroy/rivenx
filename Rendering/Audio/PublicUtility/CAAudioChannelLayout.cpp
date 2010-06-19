@@ -44,6 +44,7 @@
 
 //	Self Include
 #include "CAAudioChannelLayout.h"
+#include "CAAutoDisposer.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -54,7 +55,7 @@
 AudioChannelLayout*	CAAudioChannelLayout::Create(UInt32 inNumberChannelDescriptions)
 {
 	UInt32 theSize = CalculateByteSize(inNumberChannelDescriptions);
-	AudioChannelLayout* theAnswer = static_cast<AudioChannelLayout*>(calloc(1, theSize));
+	AudioChannelLayout* theAnswer = static_cast<AudioChannelLayout*>(CA_calloc(1, theSize));
 	if(theAnswer != NULL)
 	{
 		SetAllToUnknown(*theAnswer, inNumberChannelDescriptions);

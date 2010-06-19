@@ -50,6 +50,8 @@
 
 class CAAudioFileFormats {
 public:
+	enum { noErr = 0 };
+
 	struct DataFormatInfo {
 		DataFormatInfo() : mVariants(NULL) { }
 		~DataFormatInfo() { delete[] mVariants; }
@@ -80,7 +82,7 @@ public:
 		CFStringRef						mFileTypeName;
 		CFArrayRef						mExtensions;
 		int								mNumDataFormats;
-		DataFormatInfo *				mDataFormats;
+		DataFormatInfo *				mDataFormats;		// NULL until loaded!
 		
 		int		NumberOfExtensions() { return mExtensions ? CFArrayGetCount(mExtensions) : 0; }
 		char *	GetExtension(int index, char *buf, int buflen) {
@@ -98,6 +100,7 @@ public:
 					return false;
 				}
 		bool	AnyWritableFormats();
+		void	LoadDataFormats();
 		
 #if DEBUG
 		void	DebugPrint();
@@ -105,7 +108,7 @@ public:
 	};
 	
 private:	// use Instance()
-	CAAudioFileFormats();
+	CAAudioFileFormats(bool loadDataFormats);
 	~CAAudioFileFormats();
 public:
 	
@@ -128,7 +131,7 @@ public:
 	
 	FileFormatInfo *	FindFileFormat(UInt32 formatID);
 
-	static CAAudioFileFormats *	Instance();
+	static CAAudioFileFormats *	Instance(bool loadDataFormats=true);
 
 private:	
 	static CAAudioFileFormats *	sInstance;

@@ -43,9 +43,7 @@
 
 #include "CAStreamBasicDescription.h"
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <CoreServices/CoreServices.h>
 #else
-	#include <AssertMacros.h>
 #endif
 
 // ____________________________________________________________________________

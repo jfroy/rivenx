@@ -193,7 +193,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
             @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Failed to load Cursors.plist." userInfo:nil];
         
         // load cursors
-        _cursors = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 20);
+        _cursors = NSCreateMapTable(NSIntegerMapKeyCallBacks, NSObjectMapValueCallBacks, 20);
         
         NSEnumerator* cursorEnum = [cursorMetadata keyEnumerator];
         NSString* cursorKey;

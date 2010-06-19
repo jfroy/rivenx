@@ -45,6 +45,9 @@
 //	Includes
 //==================================================================================================
 
+//	PublicUtility Includes
+#include "CADebugMacros.h"
+
 //	System Includes
 #include <CoreAudio/AudioHardware.h>
 
@@ -131,9 +134,10 @@ public:
 //	Operations
 public:
 	bool								IsEmpty() const																			{ return mAddressList.empty(); }
-	UInt32								GetNumberItems() const																	{ return mAddressList.size(); }
+	UInt32								GetNumberItems() const																	{ return ToUInt32(mAddressList.size()); }
 	void								GetItemByIndex(UInt32 inIndex, AudioObjectPropertyAddress& outAddress) const			{ if(inIndex < mAddressList.size()) { outAddress = mAddressList.at(inIndex); } }
 	const AudioObjectPropertyAddress*   GetItems() const																		{ return &(*mAddressList.begin()); }
+	AudioObjectPropertyAddress*			GetItems()																				{ return &(*mAddressList.begin()); }
 	
 	bool								HasItem(const AudioObjectPropertyAddress& inAddress) const								{ AddressList::const_iterator theIterator = std::find_if(mAddressList.begin(), mAddressList.end(), std::bind1st(CAPropertyAddress::CongruentEqualTo(), inAddress)); return theIterator != mAddressList.end(); }
 	bool								HasExactItem(const AudioObjectPropertyAddress& inAddress) const							{ AddressList::const_iterator theIterator = std::find_if(mAddressList.begin(), mAddressList.end(), std::bind1st(CAPropertyAddress::EqualTo(), inAddress)); return theIterator != mAddressList.end(); }

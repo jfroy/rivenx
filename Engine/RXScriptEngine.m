@@ -193,6 +193,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     NSCharacterSet* colon_character_set = [NSCharacterSet characterSetWithCharactersInString:@":"];
     
+/*
     void* iterator = 0;
     struct objc_method_list* mlist;
     while ((mlist = class_nextMethodList(self, &iterator))) {
@@ -214,6 +215,28 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
             }
         }
     }
+*/
+    uint32_t mlist_count;
+    Method* mlist = class_copyMethodList(self, &mlist_count);
+    for (uint32_t method_index = 0; method_index < mlist_count; ++method_index) {
+        Method m = mlist[method_index];
+        SEL m_sel = method_getName(m);
+        NSString* method_selector_string = NSStringFromSelector(m_sel);
+        if ([method_selector_string hasPrefix:@"_external_"]) {
+            NSRange first_colon_range = [method_selector_string rangeOfCharacterFromSet:colon_character_set options:NSLiteralSearch];
+            NSRange range = NSMakeRange([(NSString*)@"_external_" length], first_colon_range.location - [(NSString*)@"_external_" length]);
+            NSString* external_name = [[method_selector_string substringWithRange:range] lowercaseString];
+#if defined(DEBUG) && DEBUG > 1
+            RXLog(kRXLoggingEngine, kRXLoggingLevelDebug, @"registering external command: %@", external_name);
+#endif
+            rx_command_dispatch_entry_t* command_dispatch = (rx_command_dispatch_entry_t*)malloc(sizeof(rx_command_dispatch_entry_t));
+            command_dispatch->sel = m_sel;
+            command_dispatch->imp = (rx_command_imp_t)method_getImplementation(m);
+            NSMapInsertKnownAbsent(_riven_external_command_dispatch_map, external_name, command_dispatch);
+        }
+        
+    }
+    free(mlist);
 }
 
 + (BOOL)accessInstanceVariablesDirectly {
@@ -241,7 +264,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     _dynamic_texture_cache = [NSMutableDictionary new];
     _picture_cache = [NSMutableDictionary new];
     
-    code_movie_map = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
+    code_movie_map = NSCreateMapTable(NSIntegerMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
     _movies_to_reset = [NSMutableSet new];
     
     _screen_update_disable_counter = 0;

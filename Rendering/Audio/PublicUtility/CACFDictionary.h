@@ -53,6 +53,13 @@
 #endif
 
 //=============================================================================
+//	Types
+//=============================================================================
+
+class	CACFArray;
+class	CACFString;
+
+//=============================================================================
 //	CACFDictionary
 //=============================================================================
 
@@ -118,6 +125,11 @@ public:
 	
 	bool					GetCFTypeWithCStringKey(const char* inKey, CFTypeRef& outValue) const;
 
+	void					GetCACFString(const CFStringRef inKey, CACFString& outItem) const;
+	void					GetCACFArray(const CFStringRef inKey, CACFArray& outItem) const;
+	void					GetCACFDictionary(const CFStringRef inKey, CACFDictionary& outItem) const;
+	
+	bool					AddBool(const CFStringRef inKey, bool inValue);
 	bool					AddSInt32(const CFStringRef inKey, SInt32 inValue);
 	bool					AddUInt32(const CFStringRef inKey, UInt32 inValue);
 	bool					AddSInt64(const CFStringRef inKey, SInt64 inValue);
@@ -130,6 +142,7 @@ public:
 	bool					AddDictionary(const CFStringRef inKey, const CFDictionaryRef inValue);
 	bool					AddData(const CFStringRef inKey, const CFDataRef inValue);
 	bool					AddCFType(const CFStringRef inKey, const CFTypeRef inValue);
+	bool					AddURL(const CFStringRef inKey, const CFURLRef inValue);
 	
 	bool					AddCFTypeWithCStringKey(const char* inKey, const CFTypeRef inValue);
 	bool					AddCString(const CFStringRef inKey, const char* inValue);

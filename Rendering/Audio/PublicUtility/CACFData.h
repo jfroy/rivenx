@@ -47,9 +47,13 @@
 
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
 	#include <CoreAudio/CoreAudioTypes.h>
+	#include <CoreFoundation/CFData.h>
 #else
 	#include <CoreAudioTypes.h>
+	#include <CFData.h>
 #endif
+
+#include "CADebugMacros.h"
 
 //=============================================================================
 //	CACFData
@@ -85,12 +89,12 @@ public:
 	CFDataRef	GetCFData() const { return mCFData; }
 	CFDataRef	CopyCFData() const { if(mCFData != NULL) { CFRetain(mCFData); } return mCFData; }
 	
-	UInt32		GetSize() const { return CFDataGetLength(mCFData); }
+	UInt32		GetSize() const { return ToUInt32(CFDataGetLength(mCFData)); }
 	const void*	GetDataPtr() const { return CFDataGetBytePtr(mCFData); }
 	void		CopyData(UInt32 inStartOffset, void* outData, UInt32 inDataSize) const { CFRange theRange = { inStartOffset, inDataSize }; CFDataGetBytes(mCFData, theRange, static_cast<UInt8*>(outData)); }
 	
-	SInt32		GetSInt32() const { SInt32 theAnswer = 0; CopyData(0, &theAnswer, sizeof(SInt32)); return theAnswer; }
-	Float32		GetFloat32() const { Float32 theAnswer = 0; CopyData(0, &theAnswer, sizeof(Float32)); return theAnswer; }
+	SInt32		GetSInt32() const { SInt32 theAnswer = 0; CopyData(0, &theAnswer, SizeOf32(SInt32)); return theAnswer; }
+	Float32		GetFloat32() const { Float32 theAnswer = 0; CopyData(0, &theAnswer, SizeOf32(Float32)); return theAnswer; }
 
 };
 

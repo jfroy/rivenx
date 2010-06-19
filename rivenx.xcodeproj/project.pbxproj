@@ -52,7 +52,6 @@
 		31333F6C09B01A9200DB6FC7 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384A08C6A73E004B7FD0 /* CoreFoundation.framework */; };
 		31333F8809B01B2600DB6FC7 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3145384B08C6A73E004B7FD0 /* CoreServices.framework */; };
 		3133D9AF0D5CDDC1004DAD5E /* BZFSOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 3133D9AE0D5CDDC1004DAD5E /* BZFSOperation.m */; };
-		313C7DE708CCFA4600950A70 /* NSFontAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 313C7DE508CCFA4600950A70 /* NSFontAdditions.m */; };
 		313C7EA008CCFB4D00950A70 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313C7E9F08CCFB4D00950A70 /* ApplicationServices.framework */; };
 		313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 313C7EFB08CD057500950A70 /* Riven301.ttf */; };
 		3141EEE80A84930000DCCEEE /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
@@ -387,8 +386,6 @@
 		3133D9A80D5CDC45004DAD5E /* PHSErrorMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PHSErrorMacros.h; sourceTree = "<group>"; };
 		3133D9AD0D5CDDC1004DAD5E /* BZFSOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BZFSOperation.h; sourceTree = "<group>"; };
 		3133D9AE0D5CDDC1004DAD5E /* BZFSOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BZFSOperation.m; sourceTree = "<group>"; };
-		313C7DE408CCFA4600950A70 /* NSFontAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSFontAdditions.h; sourceTree = "<group>"; };
-		313C7DE508CCFA4600950A70 /* NSFontAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSFontAdditions.m; sourceTree = "<group>"; };
 		313C7E9F08CCFB4D00950A70 /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = /System/Library/Frameworks/ApplicationServices.framework; sourceTree = "<absolute>"; };
 		313C7EFB08CD057500950A70 /* Riven301.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Riven301.ttf; sourceTree = "<group>"; };
 		3145383F08C6A5F4004B7FD0 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
@@ -849,8 +846,6 @@
 		313C7DE108CCF9FD00950A70 /* AppKit Additions */ = {
 			isa = PBXGroup;
 			children = (
-				313C7DE408CCFA4600950A70 /* NSFontAdditions.h */,
-				313C7DE508CCFA4600950A70 /* NSFontAdditions.m */,
 			);
 			name = "AppKit Additions";
 			sourceTree = "<group>";
@@ -1622,7 +1617,6 @@
 				31225ABE08C4216D0055628F /* RXStack.m in Sources */,
 				31225AC408C421790055628F /* RXCard.m in Sources */,
 				315547E208C4C44F00A2AA7A /* RXApplicationDelegate.m in Sources */,
-				313C7DE708CCFA4600950A70 /* NSFontAdditions.m in Sources */,
 				31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */,
 				316C37B40987227800AC2C8E /* RXCardState.mm in Sources */,
 				93FDAD3B098A789100D94CD0 /* BDAlias.m in Sources */,
@@ -2036,6 +2030,8 @@
 					"DEBUG_GL=1",
 					"DEBUG_AUDIO=1",
 				);
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Debug;
@@ -2045,6 +2041,8 @@
 			baseConfigurationReference = 31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */;
 			buildSettings = {
 				DEPLOYMENT_POSTPROCESSING = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 			};
 			name = Release;
 		};
@@ -2212,6 +2210,8 @@
 					"$(inherited)",
 					"DEBUG=1",
 				);
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				ONLY_ACTIVE_ARCH = NO;
 			};
 			name = "Beta Release";

@@ -40,15 +40,20 @@
 */
 #include "CAAudioUnit.h"
 
+#if !TARGET_OS_IPHONE
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
+	#include <CoreServices/../Frameworks/CarbonCore.framework/Headers/Components.h>
 	#include <AudioUnit/MusicDevice.h>
+	#include <dlfcn.h>
 #else
+	#include <Components.h>
 	#include <MusicDevice.h>
 #endif
+#endif
 
+#include "CAXException.h"
 #include "CAReferenceCounted.h"
 #include "AUOutputBL.h" //this is for the Preroll only
-
 
 struct StackAUChannelInfo {
 		StackAUChannelInfo (UInt32 inSize) : mChanInfo ((AUChannelInfo*)malloc (inSize)) {}
@@ -57,14 +62,18 @@ struct StackAUChannelInfo {
 	AUChannelInfo* mChanInfo;
 };
 
-
+// is this symbol is not defined then we use the default setting which is that fast dispatch
+// is supported on a desktop environment
+#ifndef CA_AU_USE_FAST_DISPATCH
+	#define CA_AU_USE_FAST_DISPATCH !TARGET_OS_IPHONE
+#endif
 
 class CAAudioUnit::AUState : public CAReferenceCounted  {
 public:
-	AUState (Component inComp)
+	AUState (AudioComponent inComp)
 						: mUnit(0), mNode (0)
 						{ 
-							OSStatus result = ::OpenAComponent (inComp, &mUnit); 
+							OSStatus result = ::AudioComponentInstanceNew (inComp, &mUnit); 
 							if (result)
 								throw result;
 							Init();
@@ -84,20 +93,22 @@ public:
 	OSStatus			GetParameter(AudioUnitParameterID inID, AudioUnitScope scope, AudioUnitElement element,
 											Float32 &outValue) const
 	{
+#if CA_AU_USE_FAST_DISPATCH
 			if (mGetParamProc != NULL) {
-				return reinterpret_cast<AudioUnitGetParameterProc>(mGetParamProc) (mConnInstanceStorage, 
-										inID, scope, element, &outValue);
+				return (mGetParamProc) (mConnInstanceStorage, inID, scope, element, &outValue);
 			}							
+#endif
 		return AudioUnitGetParameter(mUnit, inID, scope, element, &outValue);
 	}
 
 	OSStatus			SetParameter(AudioUnitParameterID inID, AudioUnitScope scope, AudioUnitElement element,
 											Float32 value, UInt32 bufferOffsetFrames)
 	{
+#if CA_AU_USE_FAST_DISPATCH
 			if (mSetParamProc != NULL) {
-				return reinterpret_cast<AudioUnitSetParameterProc>(mSetParamProc) (mConnInstanceStorage, 
-										inID, scope, element, value, bufferOffsetFrames);
+				return (mSetParamProc) (mConnInstanceStorage, inID, scope, element, value, bufferOffsetFrames);
 			}							
+#endif
 			return AudioUnitSetParameter(mUnit, inID, scope, element, value, bufferOffsetFrames);
 	}
 	
@@ -107,25 +118,28 @@ public:
 								UInt32                        inNumberFrames,
 								AudioBufferList *             ioData)
 	{
+#if CA_AU_USE_FAST_DISPATCH
 		if (mRenderProc != NULL) {
-			return reinterpret_cast<AudioUnitRenderProc>(mRenderProc) (mConnInstanceStorage, 
-									ioActionFlags, inTimeStamp, inOutputBusNumber, inNumberFrames, ioData);
+			return (mRenderProc) (mConnInstanceStorage, ioActionFlags, inTimeStamp, inOutputBusNumber, inNumberFrames, ioData);
 		}							
+#endif
 		return AudioUnitRender(mUnit, ioActionFlags, inTimeStamp, inOutputBusNumber, inNumberFrames, ioData);
 	}
 	
+#if !TARGET_OS_IPHONE
 	OSStatus		MIDIEvent (UInt32					inStatus,
 								UInt32					inData1,
 								UInt32					inData2,
 								UInt32					inOffsetSampleFrame)
 	{
 #if !TARGET_OS_WIN32
+#if CA_AU_USE_FAST_DISPATCH
 		if (mMIDIEventProc != NULL) {
-			return reinterpret_cast<MusicDeviceMIDIEventProc>(mMIDIEventProc) (mConnInstanceStorage, 
-									inStatus, inData1, inData2, inOffsetSampleFrame);
+			return (mMIDIEventProc) (mConnInstanceStorage, inStatus, inData1, inData2, inOffsetSampleFrame);
 		}
+#endif
 		return MusicDeviceMIDIEvent (mUnit, inStatus, inData1, inData2, inOffsetSampleFrame);
-#else
+#else	// ON WINDOWS _ NO MIDI EVENT dispatch
 		return paramErr;
 #endif
 	}
@@ -137,6 +151,11 @@ public:
 									const MusicDeviceNoteParams * inParams)
 	{
 #if !TARGET_OS_WIN32
+#if CA_AU_USE_FAST_DISPATCH
+		if (mStartNoteProc != NULL) {
+			return (mStartNoteProc) (mConnInstanceStorage, inInstrument, inGroupID, outNoteInstanceID, inOffsetSampleFrame, inParams);
+		}
+#endif
 		return MusicDeviceStartNote (mUnit, inInstrument, inGroupID, outNoteInstanceID, inOffsetSampleFrame, inParams);
 #else
 		return paramErr;
@@ -147,42 +166,76 @@ public:
 									UInt32						inOffsetSampleFrame)
 	{
 #if !TARGET_OS_WIN32
+#if CA_AU_USE_FAST_DISPATCH
+		if (mStopNoteProc != NULL) {
+			return (mStopNoteProc) (mConnInstanceStorage, inGroupID, inNoteInstanceID, inOffsetSampleFrame);
+		}
+#endif
 		return MusicDeviceStopNote (mUnit, inGroupID, inNoteInstanceID, inOffsetSampleFrame);
 #else
 		return paramErr;
 #endif
 	}
+#endif// !TARGET_OS_IPHONE
 
 private:
 	// get the fast dispatch pointers
 	void Init() 
 	{
+#if CA_AU_USE_FAST_DISPATCH
 		UInt32 size = sizeof(AudioUnitRenderProc);
 		if (AudioUnitGetProperty(mUnit, kAudioUnitProperty_FastDispatch,
 								kAudioUnitScope_Global, kAudioUnitRenderSelect,
 								&mRenderProc, &size) != noErr)
 			mRenderProc = NULL;
+		
+		size = sizeof(AudioUnitGetParameterProc);
 		if (AudioUnitGetProperty(mUnit, kAudioUnitProperty_FastDispatch,
 								kAudioUnitScope_Global, kAudioUnitGetParameterSelect,
 								&mGetParamProc, &size) != noErr)
 			mGetParamProc = NULL;
+		
+		size = sizeof(AudioUnitSetParameterProc);
 		if (AudioUnitGetProperty(mUnit, kAudioUnitProperty_FastDispatch,
 								kAudioUnitScope_Global, kAudioUnitSetParameterSelect,
 								&mSetParamProc, &size) != noErr)
 			mSetParamProc = NULL;
 
+		size = sizeof(MusicDeviceMIDIEventProc);
 		if (AudioUnitGetProperty(mUnit, kAudioUnitProperty_FastDispatch,
 								kAudioUnitScope_Global, kMusicDeviceMIDIEventSelect,
 								&mMIDIEventProc, &size) != noErr)
 			mMIDIEventProc = NULL;
+
+		size = sizeof(MusicDeviceStartNoteProc);
+		if (AudioUnitGetProperty(mUnit, kAudioUnitProperty_FastDispatch,
+								kAudioUnitScope_Global, kMusicDeviceStartNoteSelect,
+								&mStartNoteProc, &size) != noErr)
+			mStartNoteProc = NULL;
+
+		size = sizeof(MusicDeviceStopNoteProc);
+		if (AudioUnitGetProperty(mUnit, kAudioUnitProperty_FastDispatch,
+								kAudioUnitScope_Global, kMusicDeviceStopNoteSelect,
+								&mStopNoteProc, &size) != noErr)
+			mStopNoteProc = NULL;
 		
-		if (mRenderProc || mGetParamProc || mSetParamProc || mMIDIEventProc)
-			mConnInstanceStorage = GetComponentInstanceStorage(mUnit);
-		else
+		if (mRenderProc || mGetParamProc || mSetParamProc || mMIDIEventProc || mStartNoteProc || mStopNoteProc) {
+			mConnInstanceStorage = GetComponentInstanceStorage ( mUnit );
+		} else
 			mConnInstanceStorage = NULL;
+#else
+		mConnInstanceStorage = NULL;
+#endif
 	}
 	
-	ProcPtr						mRenderProc, mGetParamProc, mSetParamProc, mMIDIEventProc;
+#if CA_AU_USE_FAST_DISPATCH
+	AudioUnitRenderProc			mRenderProc;
+	AudioUnitGetParameterProc	mGetParamProc; 
+	AudioUnitSetParameterProc	mSetParamProc;
+	MusicDeviceMIDIEventProc	mMIDIEventProc;
+	MusicDeviceStartNoteProc	mStartNoteProc;
+	MusicDeviceStopNoteProc		mStopNoteProc;
+#endif
 
 	void *						mConnInstanceStorage;
 
@@ -197,7 +250,7 @@ private:
 CAAudioUnit::AUState::~AUState ()
 {
 	if (mUnit && (mNode == 0)) {
-		::CloseComponent (mUnit);
+		::AudioComponentInstanceDispose (mUnit);
 	}
 	mNode = 0;
 	mUnit = 0;
@@ -216,7 +269,7 @@ OSStatus		CAAudioUnit::Open (const CAComponent& inComp, CAAudioUnit &outUnit)
 }
 
 CAAudioUnit::CAAudioUnit (const AudioUnit& inUnit)
-	: mComp (inUnit), mDataPtr (new AUState (-1, inUnit))
+	: mComp (inUnit), mDataPtr (new AUState (kCAAU_DoNotKnowIfAUNode, inUnit))
 {
 }
 
@@ -271,6 +324,20 @@ bool			CAAudioUnit::operator== (const AudioUnit& y) const
 	if (!mDataPtr) return false;
 	return mDataPtr->mUnit == y;
 }
+
+OSStatus		CAAudioUnit::RemovePropertyListener (AudioUnitPropertyID		inID,
+												AudioUnitPropertyListenerProc	inProc,
+												void *							inProcUserData)
+{
+		// we call this first. If it fails we call the old API as the failure can
+		// mean that the AU doesn't implement that selector.
+	OSStatus result = AudioUnitRemovePropertyListenerWithUserData(AU(), inID, 
+									inProc, inProcUserData);
+	#if !__LP64__ && !TARGET_OS_IPHONE
+		if (result) result = AudioUnitRemovePropertyListener (AU(), inID, inProc);
+	#endif									
+	return result;
+}	
 
 #pragma mark __State Management	
 
@@ -672,7 +739,7 @@ OSStatus	CAAudioUnit::GetChannelLayout (AudioUnitScope 		inScope,
 	
 	AudioChannelLayout *layout = (AudioChannelLayout*)malloc (size);
 
-	require_noerr (result = AudioUnitGetProperty (AU(), kAudioUnitProperty_AudioChannelLayout,
+	ca_require_noerr (result = AudioUnitGetProperty (AU(), kAudioUnitProperty_AudioChannelLayout,
 									inScope, inEl, layout, &size), home);
 
 	outLayout = CAAudioChannelLayout (layout);
@@ -759,17 +826,17 @@ OSStatus	CAAudioUnit::SetSampleRate (Float64			inSampleRate)
 	OSStatus result;
 	
 	UInt32 elCount;
-	require_noerr (result = GetElementCount(kAudioUnitScope_Input, elCount), home);
+	ca_require_noerr (result = GetElementCount(kAudioUnitScope_Input, elCount), home);
 	if (elCount) {
 		for (unsigned int i = 0; i < elCount; ++i) {
-			require_noerr (result = SetSampleRate (kAudioUnitScope_Input, i, inSampleRate), home);
+			ca_require_noerr (result = SetSampleRate (kAudioUnitScope_Input, i, inSampleRate), home);
 		}
 	}
 
-	require_noerr (result = GetElementCount(kAudioUnitScope_Output, elCount), home);
+	ca_require_noerr (result = GetElementCount(kAudioUnitScope_Output, elCount), home);
 	if (elCount) {
 		for (unsigned int i = 0; i < elCount; ++i) {
-			require_noerr (result = SetSampleRate (kAudioUnitScope_Output, i, inSampleRate), home);
+			ca_require_noerr (result = SetSampleRate (kAudioUnitScope_Output, i, inSampleRate), home);
 		}
 	}
 	
@@ -796,7 +863,7 @@ OSStatus	CAAudioUnit::SetNumberChannels (AudioUnitScope	inScope,
 	CAStreamBasicDescription desc;
 	OSStatus result = GetFormat (inScope, inEl, desc);
 		if (result) return result;
-	desc.SetCanonical (inChans, desc.IsInterleaved());
+	desc.SetAUCanonical (inChans, desc.IsInterleaved());
 	result = SetFormat (inScope, inEl, desc);
 	return result;
 }
@@ -934,7 +1001,7 @@ OSStatus	CAAudioUnit::ConfigureDynamicScope (AudioUnitScope 		inScope,
 	CAStreamBasicDescription desc;
 	desc.mSampleRate = inSampleRate;
 	for (unsigned int i = 0; i < inNumElements; ++i) {
-		desc.SetCanonical (inChannelsPerElement[i], false);
+		desc.SetAUCanonical (inChannelsPerElement[i], false);
 		result = SetFormat (inScope, i, desc);
 		if (result)
 			return result;
@@ -995,12 +1062,14 @@ OSStatus	CAAudioUnit::SetAUPreset (CFPropertyListRef &inData)
 								&inData, sizeof (CFPropertyListRef));
 }
 
+#if !TARGET_OS_IPHONE
 OSStatus	CAAudioUnit::SetAUPresetFromDocument (CFPropertyListRef &inData)
 {
 	return AudioUnitSetProperty (AU(), kAudioUnitProperty_ClassInfoFromDocument,
 								kAudioUnitScope_Global, 0,
 								&inData, sizeof (CFPropertyListRef));
 }
+#endif
 
 OSStatus	CAAudioUnit::GetPresentPreset (AUPreset &outData) const
 {
@@ -1008,7 +1077,8 @@ OSStatus	CAAudioUnit::GetPresentPreset (AUPreset &outData) const
 	OSStatus result = AudioUnitGetProperty (AU(), kAudioUnitProperty_PresentPreset,
 								kAudioUnitScope_Global, 0,
 								&outData, &dataSize);
-#ifndef __LP64__
+#if !TARGET_OS_IPHONE
+#ifndef __LP64__ 
 	if (result == kAudioUnitErr_InvalidProperty) {
 		dataSize = sizeof(outData);
 		result = AudioUnitGetProperty (AU(), kAudioUnitProperty_CurrentPreset,
@@ -1022,6 +1092,7 @@ OSStatus	CAAudioUnit::GetPresentPreset (AUPreset &outData) const
 		}
 	}
 #endif
+#endif
 	return result;
 }
 	
@@ -1030,6 +1101,7 @@ OSStatus	CAAudioUnit::SetPresentPreset (AUPreset &inData)
 	OSStatus result = AudioUnitSetProperty (AU(), kAudioUnitProperty_PresentPreset,
 								kAudioUnitScope_Global, 0,
 								&inData, sizeof (AUPreset));
+#if !TARGET_OS_IPHONE
 #ifndef __LP64__
 	if (result == kAudioUnitErr_InvalidProperty) {
 		result = AudioUnitSetProperty (AU(), kAudioUnitProperty_CurrentPreset,
@@ -1037,15 +1109,20 @@ OSStatus	CAAudioUnit::SetPresentPreset (AUPreset &inData)
 								&inData, sizeof (AUPreset));
 	}
 #endif
+#endif
 	return result;
 }
 
 bool		CAAudioUnit::HasCustomView () const
 {
+#if !TARGET_OS_IPHONE
 	UInt32 dataSize = 0;
-	OSStatus result = GetPropertyInfo(kAudioUnitProperty_GetUIComponentList,
+	OSStatus result = -4/*unimpErr*/;
+#ifndef __LP64__
+	result = GetPropertyInfo(kAudioUnitProperty_GetUIComponentList,
                                         kAudioUnitScope_Global, 0,
-                                        &dataSize, NULL);
+                                        &dataSize, NULL);	
+#endif
 	if (result || !dataSize) {
 		dataSize = 0;
 		result = GetPropertyInfo(kAudioUnitProperty_CocoaUI,
@@ -1055,6 +1132,10 @@ bool		CAAudioUnit::HasCustomView () const
 			return false;
 	}
 	return true;
+#else
+	return false;
+#endif
+
 }
 
 OSStatus		CAAudioUnit::GetParameter(AudioUnitParameterID inID, AudioUnitScope scope, AudioUnitElement element,
@@ -1069,6 +1150,7 @@ OSStatus		CAAudioUnit::SetParameter(AudioUnitParameterID inID, AudioUnitScope sc
 	return mDataPtr ? mDataPtr->SetParameter (inID, scope, element, value, bufferOffsetFrames) : paramErr;
 }
 
+#if !TARGET_OS_IPHONE
 OSStatus		CAAudioUnit::MIDIEvent (UInt32			inStatus,
 								UInt32					inData1,
 								UInt32					inData2,
@@ -1093,6 +1175,8 @@ OSStatus	CAAudioUnit::StopNote (MusicDeviceGroupID		inGroupID,
 {
 	return mDataPtr ? mDataPtr->StopNote (inGroupID, inNoteInstanceID, inOffsetSampleFrame) : paramErr;
 }
+#endif
+
 
 #pragma mark __Render
 
@@ -1103,65 +1187,6 @@ OSStatus		CAAudioUnit::Render (AudioUnitRenderActionFlags 			* ioActionFlags,
 												AudioBufferList				* ioData)
 {
 	return mDataPtr ? mDataPtr->Render (ioActionFlags, inTimeStamp, inOutputBusNumber, inNumberFrames, ioData) : paramErr;
-}
-
-static AURenderCallbackStruct sRenderCallback;
-static OSStatus PrerollRenderProc (	void 						* /*inRefCon*/, 
-								AudioUnitRenderActionFlags		* /*inActionFlags*/,
-								const AudioTimeStamp 			* /*inTimeStamp*/, 
-								UInt32 							/*inBusNumber*/,
-								UInt32							/*inNumFrames*/, 
-								AudioBufferList 				*ioData)
-{
-	AudioBuffer *buf = ioData->mBuffers;
-	for (UInt32 i = ioData->mNumberBuffers; i--; ++buf)
-		memset((Byte *)buf->mData, 0, buf->mDataByteSize);
-
-	return noErr;
-}
-
-OSStatus 	CAAudioUnit::Preroll (UInt32 inFrameSize)
-{
-	CAStreamBasicDescription desc;
-	OSStatus result = GetFormat (kAudioUnitScope_Input, 0, desc);
-	bool hasInput = false;
-			//we have input	
-	if (result == noErr) 
-	{
-		sRenderCallback.inputProc = PrerollRenderProc;
-		sRenderCallback.inputProcRefCon = 0;
-		
-		result = SetProperty (kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 
-								0, &sRenderCallback, sizeof(sRenderCallback));
-		if (result) return result;
-		hasInput = true;
-	}
-	
-	AudioUnitRenderActionFlags flags = 0;
-	AudioTimeStamp time;
-	memset (&time, 0, sizeof(time));
-	time.mFlags = kAudioTimeStampSampleTimeValid;
-
-	CAStreamBasicDescription outputFormat;
-	require_noerr (result = GetFormat (kAudioUnitScope_Output, 0, outputFormat), home);
-	{
-		AUOutputBL list (outputFormat, inFrameSize);
-		list.Prepare ();
-		
-		require_noerr (result = Render (&flags, &time, 0, inFrameSize, list.ABL()), home);
-		require_noerr (result = GlobalReset(), home);
-	}
-
-home:
-	if (hasInput) {
-            // remove our installed callback
-		sRenderCallback.inputProc = 0;
-		sRenderCallback.inputProcRefCon = 0;
-		
-		SetProperty (kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 
-								0, &sRenderCallback, sizeof(sRenderCallback));
-	}
-	return result;
 }
 
 #pragma mark __CAAUChanHelper
@@ -1219,6 +1244,7 @@ CAAUChanHelper&		CAAUChanHelper::operator= (const CAAUChanHelper &c)
 	
 	return *this; 
 }
+
 
 #pragma mark __Print Utilities
 

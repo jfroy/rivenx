@@ -43,13 +43,13 @@ BOOL BZFSCreateDirectoryExtended(NSString* path, NSString* group, uint32_t permi
     if (group)
         [attributes setObject:group forKey:NSFileGroupOwnerAccountName];
     
-    if ([fm respondsToSelector:@selector(createDirectoryAtPath:withIntermediateDirectories:attributes:error:)])
+//    if ([fm respondsToSelector:@selector(createDirectoryAtPath:withIntermediateDirectories:attributes:error:)])
         success = [fm createDirectoryAtPath:path withIntermediateDirectories:NO attributes:attributes error:error];
-    else {
-        success = [fm createDirectoryAtPath:path attributes:attributes];
-        if (!success && error)
-            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
-    }
+//    else {
+//        success = [fm createDirectoryAtPath:path attributes:attributes];
+//        if (!success && error)
+//            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
+//    }
     return success;
 }
 
@@ -68,13 +68,13 @@ BOOL BZFSCreateDirectoryURL(NSURL* url, NSError** error) {
 NSArray* BZFSContentsOfDirectory(NSString* path, NSError** error) {
     NSArray* contents;
     NSFileManager* fm = [NSFileManager defaultManager];
-    if ([fm respondsToSelector:@selector(contentsOfDirectoryAtPath:error:)])
+//    if ([fm respondsToSelector:@selector(contentsOfDirectoryAtPath:error:)])
         contents = [fm contentsOfDirectoryAtPath:path error:error];
-    else {
-        contents = [fm directoryContentsAtPath:path];
-        if (!contents && error)
-            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
-    }
+//    else {
+//        contents = [fm directoryContentsAtPath:path];
+//        if (!contents && error)
+//            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
+//    }
     return contents;
 }
 
@@ -105,13 +105,13 @@ NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_i
 NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error) {
     NSDictionary* attributes;
     NSFileManager* fm = [NSFileManager defaultManager];
-    if ([fm respondsToSelector:@selector(attributesOfItemAtPath:error:)])
+//    if ([fm respondsToSelector:@selector(attributesOfItemAtPath:error:)])
         attributes = [fm attributesOfItemAtPath:path error:error];
-    else {
-        attributes = [fm fileAttributesAtPath:path traverseLink:NO];
-        if (!attributes && error)
-            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
-    }
+//    else {
+//        attributes = [fm fileAttributesAtPath:path traverseLink:NO];
+//        if (!attributes && error)
+//            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
+//    }
     return attributes;
 }
 
@@ -122,13 +122,13 @@ NSDictionary* BZFSAttributesOfItemAtURL(NSURL* url, NSError** error) {
 BOOL BZFSSetAttributesOfItemAtPath(NSString* path, NSDictionary* attributes, NSError** error) {
     BOOL success;
     NSFileManager* fm = [NSFileManager defaultManager];
-    if ([fm respondsToSelector:@selector(setAttributes:ofItemAtPath:error:)])
+//    if ([fm respondsToSelector:@selector(setAttributes:ofItemAtPath:error:)])
         success = [fm setAttributes:attributes ofItemAtPath:path error:error];
-    else {
-        success = [fm changeFileAttributes:attributes atPath:path];
-        if (!success && error)
-            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
-    }
+//    else {
+//        success = [fm changeFileAttributes:attributes atPath:path];
+//        if (!success && error)
+//            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
+//    }
     return success;
 }
 
@@ -137,13 +137,14 @@ BOOL BZFSRemoveItemAtURL(NSURL* url, NSError** error) {
     NSFileManager* fm = [NSFileManager defaultManager];
     if ([fm respondsToSelector:@selector(removeItemAtURL:error:)])
         success = [fm removeItemAtURL:url error:error];
-    else if ([fm respondsToSelector:@selector(removeItemAtPath:error:)])
+//    else if ([fm respondsToSelector:@selector(removeItemAtPath:error:)])
+    else
         success = [fm removeItemAtPath:[url path] error:error];
-    else {
-        success = [fm removeFileAtPath:[url path] handler:nil];
-        if (!success && error)
-            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
-    }
+//    else {
+//        success = [fm removeFileAtPath:[url path] handler:nil];
+//        if (!success && error)
+//            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
+//    }
     return success;
 }
 

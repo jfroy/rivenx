@@ -70,6 +70,11 @@ AudioObjectID	CAHALAudioObject::GetObjectID() const
 	return mObjectID;
 }
 
+void	CAHALAudioObject::SetObjectID(AudioObjectID inObjectID)
+{
+	mObjectID = inObjectID;
+}
+
 AudioClassID	CAHALAudioObject::GetClassID() const
 {
 	//	set up the return value
@@ -306,12 +311,12 @@ AudioObjectID	CAHALAudioObject::GetOwnedObjectByIndex(AudioClassID inClass, UInt
 	return theAnswer;
 }
 
-bool	CAHALAudioObject::HasProperty(AudioObjectPropertyAddress& inAddress) const
+bool	CAHALAudioObject::HasProperty(const AudioObjectPropertyAddress& inAddress) const
 {
 	return AudioObjectHasProperty(mObjectID, &inAddress);
 }
 
-bool	CAHALAudioObject::IsPropertySettable(AudioObjectPropertyAddress& inAddress) const
+bool	CAHALAudioObject::IsPropertySettable(const AudioObjectPropertyAddress& inAddress) const
 {
 	Boolean isSettable = false;
 	OSStatus theError = AudioObjectIsPropertySettable(mObjectID, &inAddress, &isSettable);
@@ -319,7 +324,7 @@ bool	CAHALAudioObject::IsPropertySettable(AudioObjectPropertyAddress& inAddress)
 	return isSettable != 0;
 }
 
-UInt32	CAHALAudioObject::GetPropertyDataSize(AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData) const
+UInt32	CAHALAudioObject::GetPropertyDataSize(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData) const
 {
 	UInt32 theDataSize = 0;
 	OSStatus theError = AudioObjectGetPropertyDataSize(mObjectID, &inAddress, inQualifierDataSize, inQualifierData, &theDataSize);
@@ -327,25 +332,25 @@ UInt32	CAHALAudioObject::GetPropertyDataSize(AudioObjectPropertyAddress& inAddre
 	return theDataSize;
 }
 
-void	CAHALAudioObject::GetPropertyData(AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32& ioDataSize, void* outData) const
+void	CAHALAudioObject::GetPropertyData(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32& ioDataSize, void* outData) const
 {
 	OSStatus theError = AudioObjectGetPropertyData(mObjectID, &inAddress, inQualifierDataSize, inQualifierData, &ioDataSize, outData);
 	ThrowIfError(theError, CAException(theError), "CAHALAudioObject::GetPropertyData: got an error getting the property data");
 }
 
-void	CAHALAudioObject::SetPropertyData(AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32 inDataSize, const void* inData)
+void	CAHALAudioObject::SetPropertyData(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32 inDataSize, const void* inData)
 {
 	OSStatus theError = AudioObjectSetPropertyData(mObjectID, &inAddress, inQualifierDataSize, inQualifierData, inDataSize, inData);
 	ThrowIfError(theError, CAException(theError), "CAHALAudioObject::SetPropertyData: got an error setting the property data");
 }
 
-void	CAHALAudioObject::AddPropertyListener(AudioObjectPropertyAddress& inAddress, AudioObjectPropertyListenerProc inListenerProc, void* inClientData)
+void	CAHALAudioObject::AddPropertyListener(const AudioObjectPropertyAddress& inAddress, AudioObjectPropertyListenerProc inListenerProc, void* inClientData)
 {
 	OSStatus theError = AudioObjectAddPropertyListener(mObjectID, &inAddress, inListenerProc, inClientData);
 	ThrowIfError(theError, CAException(theError), "CAHALAudioObject::AddPropertyListener: got an error adding a property listener");
 }
 
-void	CAHALAudioObject::RemovePropertyListener(AudioObjectPropertyAddress& inAddress, AudioObjectPropertyListenerProc inListenerProc, void* inClientData)
+void	CAHALAudioObject::RemovePropertyListener(const AudioObjectPropertyAddress& inAddress, AudioObjectPropertyListenerProc inListenerProc, void* inClientData)
 {
 	OSStatus theError = AudioObjectRemovePropertyListener(mObjectID, &inAddress, inListenerProc, inClientData);
 	ThrowIfError(theError, CAException(theError), "CAHALAudioObject::RemovePropertyListener: got an error removing a property listener");
