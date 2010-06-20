@@ -727,8 +727,8 @@ init_failure:
     [_activeDataSounds minusSet:soundsToRemove];
     
     // swap the active sources array
-    CFMutableArrayRef newActiveSources = [self _newSourceArrayFromSoundSet:[NSArray arrayWithObjects:_activeSounds, _activeDataSounds, nil]
-                                                                 callbacks:&g_weakAudioSourceArrayCallbacks];
+    CFMutableArrayRef newActiveSources = [self _newSourceArrayFromSoundSets:[NSArray arrayWithObjects:_activeSounds, _activeDataSounds, nil]
+                                                                  callbacks:&g_weakAudioSourceArrayCallbacks];
     CFMutableArrayRef oldActiveSources = _activeSources;
     
     // swap _activeSources
