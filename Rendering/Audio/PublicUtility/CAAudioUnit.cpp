@@ -334,6 +334,8 @@ OSStatus		CAAudioUnit::RemovePropertyListener (AudioUnitPropertyID		inID,
 	OSStatus result = AudioUnitRemovePropertyListenerWithUserData(AU(), inID, 
 									inProc, inProcUserData);
 	#if !__LP64__ && !TARGET_OS_IPHONE
+        typedef OSStatus (*AudioUnitRemovePropertyListener_ptr)(AudioUnit, AudioUnitPropertyID, AudioUnitPropertyListenerProc);
+        AudioUnitRemovePropertyListener_ptr AudioUnitRemovePropertyListener = (AudioUnitRemovePropertyListener_ptr)dlsym(RTLD_DEFAULT, "AudioUnitRemovePropertyListener");
 		if (result) result = AudioUnitRemovePropertyListener (AU(), inID, inProc);
 	#endif									
 	return result;
