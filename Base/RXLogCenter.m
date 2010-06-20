@@ -11,6 +11,8 @@
 #import <asl.h>
 
 #import "Base/RXLogCenter.h"
+
+#import "Base/RXErrors.h"
 #import "Base/RXLogging.h"
 
 #import "Utilities/GTMObjectSingleton.h"

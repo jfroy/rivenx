@@ -7,6 +7,7 @@
 //
 
 #import "BZFSUtilities.h"
+#import "PHSErrorMacros.h"
 
 
 NSString* const BZFSErrorDomain = @"BZFSErrorDomain";

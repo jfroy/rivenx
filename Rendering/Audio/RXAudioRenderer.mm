@@ -8,8 +8,9 @@
 
 #import <algorithm>
 
-#import <CoreFoundation/CoreFoundation.h>
 #import <libkern/OSAtomic.h>
+#import <CoreFoundation/CoreFoundation.h>
+#import <CoreServices/CoreServices.h>
 
 #import "Base/RXAtomic.h"
 #import "Base/RXLogging.h"
