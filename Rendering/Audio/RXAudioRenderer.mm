@@ -247,10 +247,6 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
 #endif
             
             // create a new graph node with the converter AU
-            //CAComponentDescription cd;
-            //cd.componentType = kAudioUnitType_FormatConverter;
-            //cd.componentSubType = kAudioUnitSubType_AUConverter;
-            //cd.componentManufacturer = kAudioUnitManufacturer_Apple;
             AudioComponentDescription acd;
             acd.componentType = kAudioUnitType_FormatConverter;
             acd.componentSubType = kAudioUnitSubType_AUConverter;
@@ -263,7 +259,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
             AudioUnit converter_au;
             XThrowIfError(AUGraphAddNode(graph, &acd, &converter_node), "AUGraphAddNode kAudioUnitSubType_AUConverter");
             XThrowIfError(AUGraphNodeInfo(graph, converter_node, NULL, &converter_au), "AUGraphNodeInfo");
-            //XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &converter_node), "AUGraphNewNode kAudioUnitSubType_AUConverter");
+            //XThrowIfError(AUGraphNewNode(graph, &acd, 0, NULL, &converter_node), "AUGraphNewNode kAudioUnitSubType_AUConverter");
             //XThrowIfError(AUGraphGetNodeInfo(graph, converter_node, NULL, NULL, NULL, &converter_au), "AUGraphGetNodeInfo");
             CAAudioUnit converter = CAAudioUnit(converter_node, converter_au);
             
@@ -664,7 +660,6 @@ OSStatus AudioRenderer::MixerPostRenderNotify(const AudioTimeStamp* inTimeStamp,
 }
 
 void AudioRenderer::CreateGraph() {
-    CAComponentDescription cd;
     AudioComponentDescription acd;
     acd.componentType = 0;
     acd.componentSubType = 0;
@@ -681,14 +676,14 @@ void AudioRenderer::CreateGraph() {
     acd.componentType = kAudioUnitType_Output;
     acd.componentSubType = kAudioUnitSubType_DefaultOutput;
     XThrowIfError(AUGraphAddNode(graph, &acd, &output_node), "AUGraphAddNode kAudioUnitSubType_DefaultOutput");
-    //XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &output_node), "AUGraphNewNode");
+    //XThrowIfError(AUGraphNewNode(graph, &acd, 0, NULL, &output_node), "AUGraphNewNode");
     
     // add in the stereo mixer
     AUNode mixer_node;
     acd.componentType = kAudioUnitType_Mixer;
     acd.componentSubType = kAudioUnitSubType_StereoMixer;
     XThrowIfError(AUGraphAddNode(graph, &acd, &mixer_node), "AUGraphAddNode kAudioUnitSubType_StereoMixer");
-    //XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &mixer_node), "AUGraphNewNode");
+    //XThrowIfError(AUGraphNewNode(graph, &acd, 0, NULL, &mixer_node), "AUGraphNewNode");
     
     // open the graph so that the mixer and AUHAL units are instanciated
     XThrowIfError(AUGraphOpen(graph), "AUGraphOpen");
