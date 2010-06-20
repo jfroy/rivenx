@@ -2642,10 +2642,7 @@ exit_render:
     
     // CI mode info
     if (renderCoreImageMode) {
-        if ([g_worldView isUsingCoreImage])
-            snprintf(debug_buffer, 100, "using Core Image");
-        else
-            snprintf(debug_buffer, 100, "using OpenGL");
+        snprintf(debug_buffer, 100, "using OpenGL");
         
         background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
         background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);

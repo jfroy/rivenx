@@ -433,9 +433,6 @@ static NSString* required_extensions[] = {
     [_cursor release];
     [_gl_extensions release];
     
-    [_scaleFilter release];
-    [_ciContext release];
-    
     [_fadeInterpolator release];
     
     [super dealloc];
@@ -567,19 +564,6 @@ static NSString* required_extensions[] = {
     
     _displayColorSpace = CGColorSpaceCreateWithPlatformColorSpace(displayProfile);
     CMCloseProfile(displayProfile);
-    
-    CGLLockContext(_renderContextCGL);
-    
-    // re-create the CoreImage context with the new output color space
-    NSDictionary* options = [NSDictionary dictionaryWithObjectsAndKeys:
-        (id)_workingColorSpace, kCIContextWorkingColorSpace,
-        (id)_displayColorSpace, kCIContextOutputColorSpace,
-        nil];
-    [_ciContext release];
-    _ciContext = [[CIContext contextWithCGLContext:_renderContextCGL pixelFormat:_cglPixelFormat options:options] retain];
-    assert(_ciContext);
-    
-    CGLUnlockContext(_renderContextCGL);
 }
 
 - (void)viewDidMoveToWindow {
@@ -722,16 +706,14 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     // update the card coordinates
     [self _updateCardCoordinates];
     
-    // update the scale filter
-    if (!_scaleFilter) {
-        _scaleFilter = [[CIFilter filterWithName:@"CILanczosScaleTransform"] retain];
-        assert(_scaleFilter);
-        [_scaleFilter setDefaults];
-    }
-    
+    // if we'll be applying scaling, switch the MAG filter on the card texture to linear
+    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _cardTexture);
     NSRect scale_rect = RXRenderScaleRect();
-    [_scaleFilter setValue:[NSNumber numberWithFloat:scale_rect.size.width] forKey:@"inputScale"];
-    [_scaleFilter setValue:[NSNumber numberWithFloat:scale_rect.size.width / scale_rect.size.height] forKey:@"inputAspectRatio"];
+    if (scale_rect.size.width != 1.0f || scale_rect.size.height != 1.0f)
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    else
+        glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glReportError();
     
     // let others know that the surface has changed size
 #if defined(DEBUG)
@@ -756,8 +738,8 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _cardTexture); glReportError();
     
     // texture parameters
-    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glReportError();
@@ -900,11 +882,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
 
 - (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx {
     // set background color to black
-#if defined(DEBUG)
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-#else
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-#endif
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
     // disable most features that we don't need
     glDisable(GL_BLEND);
@@ -914,7 +892,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     glDisable(GL_ALPHA_TEST);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_SCISSOR_TEST);
-    if (GLEW_APPLE_flush_buffer_range)
+    if (GLEW_ARB_multisample)
         glDisable(GL_MULTISAMPLE_ARB);
     
     // pixel store state
@@ -1128,14 +1106,6 @@ major_number.minor_number major_number.minor_number.release_number
 #pragma mark -
 #pragma mark rendering
 
-- (BOOL)isUsingCoreImage {
-    return _useCoreImage;
-}
-
-- (void)setUseCoreImage:(BOOL)flag {
-    _useCoreImage = flag;
-}
-
 - (void)fadeOutWithDuration:(NSTimeInterval)duration completionDelegate:(id)completionDelegate selector:(SEL)completionSel {
     float start = (_fadeInterpolator) ? [_fadeInterpolator value] : 0.0f;
     RXAnimation* animation = [[RXCannedAnimation alloc] initWithDuration:duration];
@@ -1197,40 +1167,23 @@ major_number.minor_number major_number.minor_number.release_number
     
     if (_cardRenderer.target) {
         // bind the card FBO, clear the color buffer and call down to the card renderer
-        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _cardFBO); glReportError();
-        glClear(GL_COLOR_BUFFER_BIT);
+        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _cardFBO);
+        glClear(GL_COLOR_BUFFER_BIT); glReportError();
         _cardRenderer.render.imp(_cardRenderer.target, _cardRenderer.render.sel, outputTime, cgl_ctx, _cardFBO);
         
         // bind the window surface FBO
-        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); glReportError();
+        glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
         
-        if (_useCoreImage && !_intelGraphics) {
-            glUseProgram(0); glReportError();
-            [gl_state bindVertexArrayObject:0];
-            
-            CIImage* cardImage = [CIImage imageWithTexture:_cardTexture size:CGSizeMake(kRXCardViewportSize.width, kRXCardViewportSize.height) flipped:0 colorSpace:_sRGBColorSpace];
-//            CGRect cardImageExtent = [cardImage extent];
-            CIImage* scaledCardImage;
-                        
-            [_scaleFilter setValue:cardImage forKey:@"inputImage"];
-            scaledCardImage = [_scaleFilter valueForKey:@"outputImage"];
-            
-            // render the scaled card texture; note that we need to inset the image by one pixel to avoid garbage pixels output by the lanczos filter
-            rx_rect_t contentRect = RXEffectiveRendererFrame();
-            CGRect contentCGRect = CGRectMake(contentRect.origin.x, contentRect.origin.y, contentRect.size.width, contentRect.size.height);
-            [_ciContext drawImage:scaledCardImage inRect:contentCGRect fromRect:CGRectInset([scaledCardImage extent], 1, 1)];
-        } else {
-            glUseProgram(_cardProgram); glReportError();
-            [gl_state bindVertexArrayObject:_cardVAO];
-            
-            glActiveTexture(GL_TEXTURE0); glReportError();
-            glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _cardTexture); glReportError();
-            
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
-            
-            glUseProgram(0); glReportError();
-            [gl_state bindVertexArrayObject:0];
-        }
+        glUseProgram(_cardProgram);
+        [gl_state bindVertexArrayObject:_cardVAO];
+        
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _cardTexture);
+        
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
+        
+        glUseProgram(0);
+        [gl_state bindVertexArrayObject:0];
         
         // call down to the card renderer again, this time to perform rendering into the system framebuffer
         _cardRenderer.renderInMainRT.imp(_cardRenderer.target, _cardRenderer.render.sel, cgl_ctx);
@@ -1242,19 +1195,17 @@ major_number.minor_number major_number.minor_number.release_number
             
             glUseProgram(_solidColorProgram);
             glUniform4f(_solidColorLocation, 0.0f, 0.0f, 0.0f, _fadeValue);
-            glReportError();
             
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
             glEnable(GL_BLEND);
-            glReportError();
             
             [gl_state bindVertexArrayObject:_fadeLayerVAO];
             
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); glReportError();
             
             glDisable(GL_BLEND);
-            glUseProgram(0); glReportError();
+            glUseProgram(0);
             [gl_state bindVertexArrayObject:0];
             
             if ([_fadeInterpolator isDone]) {
@@ -1266,7 +1217,7 @@ major_number.minor_number major_number.minor_number.release_number
     }
     
     // glFlush and swap the front and back buffers
-    CGLFlushDrawable(cgl_ctx);
+    CGLFlushDrawable(cgl_ctx); glReportError();
     
     // finally call down to the card renderer one last time to let it take post-flush actions
     if (_cardRenderer.target)

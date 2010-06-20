@@ -111,8 +111,6 @@
     
     [window setContentView:_worldView];
     [window makeKeyAndOrderFront:self];
-    
-    [_worldView setUseCoreImage:_fullscreen];
 }
 
 - (void)windowWillClose:(NSNotification*)notification {

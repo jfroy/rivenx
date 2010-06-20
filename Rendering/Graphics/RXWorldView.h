@@ -20,12 +20,6 @@
     NSOpenGLContext* _loadContext;
     CGLContextObj _loadContextCGL;
     
-    CIContext* _ciContext;
-    CIFilter* _scaleFilter;
-    CIFilter* _fadeColorFilter;
-    CIFilter* _multiplyBlendFilter;
-    CIFilter* _cropFilter;
-    
     io_service_t _acceleratorService;
     
     GLuint _glMajorVersion;
@@ -64,7 +58,6 @@
     float _fadeValue;
     
     BOOL _glInitialized;
-    BOOL _useCoreImage;
     BOOL _intelGraphics;
     BOOL _tornDown;
 }
