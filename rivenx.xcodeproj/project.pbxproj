@@ -43,6 +43,8 @@
 		312F4DB60DC263F600B3AF0D /* RXMovie.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D9B0DC263F400B3AF0D /* RXMovie.m */; };
 		312F4DBF0DC263F600B3AF0D /* RXTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DAD0DC263F400B3AF0D /* RXTransition.m */; };
 		312F4DC20DC263F600B3AF0D /* RXWorldView.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DB30DC263F400B3AF0D /* RXWorldView.m */; };
+		3131F1DB11CD9104007C30EC /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
+		3131F1EF11CD95BD007C30EC /* GTMSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 311400070D58F0230099AF69 /* GTMSystemVersion.m */; };
 		31333F5A09B01A3700DB6FC7 /* rxaudio_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */; };
 		31333F6709B01A7D00DB6FC7 /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
 		31333F6809B01A7D00DB6FC7 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
@@ -1510,6 +1512,7 @@
 				31200FBC0F3F8448006E6EF7 /* CAXException.cpp in Sources */,
 				31200FC00F3F8495006E6EF7 /* CAStreamBasicDescription.cpp in Sources */,
 				31B644BF10033A15008AD8E0 /* CAAUParameter.cpp in Sources */,
+				3131F1DB11CD9104007C30EC /* RXErrors.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1592,6 +1595,7 @@
 				316C38B10F469FDE00EFB7FB /* CAPThread.cpp in Sources */,
 				316C38B30F469FE800EFB7FB /* CADebugger.cpp in Sources */,
 				316C38DE0F46B53900EFB7FB /* CAAUParameter.cpp in Sources */,
+				3131F1EF11CD95BD007C30EC /* GTMSystemVersion.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
