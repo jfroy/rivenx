@@ -53,8 +53,6 @@
 //	on X, use the Unix routine, otherwise use Debugger()
 #if TARGET_API_MAC_OSX
 	#include <signal.h>
-#else
-	#include <MacTypes.h>
 #endif
 
 //=============================================================================
@@ -67,7 +65,7 @@ void	CADebuggerStop()
 		#if	TARGET_API_MAC_OSX
 			raise(SIGINT);
 		#else
-			Debugger();
+			__debugbreak();
 		#endif
 	#endif
 }

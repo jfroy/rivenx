@@ -153,7 +153,7 @@ bool	CAGuard::WaitFor(UInt64 inNanos)
 
 	struct timespec	theTimeSpec;
 	static const UInt64	kNanosPerSecond = 1000000000ULL;
-	if(inNanos > kNanosPerSecond)
+	if(inNanos >= kNanosPerSecond)
 	{
 		theTimeSpec.tv_sec = static_cast<UInt32>(inNanos / kNanosPerSecond);
 		theTimeSpec.tv_nsec = static_cast<UInt32>(inNanos % kNanosPerSecond);
@@ -285,12 +285,13 @@ bool	CAGuard::WaitUntil(UInt64 inNanos)
 #endif
 		theAnswer = WaitFor(inNanos - theCurrentNanos);
 	}
-#if	Log_Errors
 	else
 	{
+#if	Log_Errors
 		DebugMessageN2("CAGuard::WaitUntil: Time has expired before waiting, now: %.0f, requested: %.0f", (double)theCurrentNanos, (double)inNanos);
-	}
 #endif
+		theAnswer = true;
+	}
 
 	return theAnswer;
 }

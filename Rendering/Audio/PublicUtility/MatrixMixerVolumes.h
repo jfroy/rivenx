@@ -42,8 +42,6 @@
 #define __MatrixMixerVolumes_h__
 
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-//#include <CoreServices/CoreServices.h>
-//#include <CoreAudio/CoreAudio.h>
 	#include <AudioUnit/AudioUnit.h>
 #else
 	#include <AudioUnit.h>

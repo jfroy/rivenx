@@ -42,15 +42,16 @@
 #define __CAFilePathUtils_h__
 
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <CoreServices/CoreServices.h>
 	#include <CoreFoundation/CoreFoundation.h>
 #else
 	#include <TargetConditionals.h>
-	#include <CoreServices.h>
 	#include <CoreFoundation.h>
 #endif
 
+struct FSRef;
+
 OSStatus	PosixPathToParentFSRefAndName(const char *path, FSRef &outParentDir, CFStringRef &outFileName);
+
 #if !TARGET_OS_WIN32
 	#include <libgen.h>
 #else

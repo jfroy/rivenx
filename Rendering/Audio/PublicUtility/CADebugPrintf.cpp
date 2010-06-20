@@ -73,7 +73,7 @@
 			if(sDebugPrintfSideFile == NULL)
 			{
 				char theFileName[1024];
-				sprintf(theFileName, CoreAudio_UseSideFile, getpid());
+				snprintf(theFileName, sizeof(theFileName), CoreAudio_UseSideFile, getpid());
 				sDebugPrintfSideFile = fopen(theFileName, "a+");
 				DebugPrintfRtn(DebugPrintfFileComma "\n------------------------------\n");
 			}

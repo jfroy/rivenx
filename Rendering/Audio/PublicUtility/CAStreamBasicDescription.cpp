@@ -47,11 +47,40 @@
 	#include <CFByteOrder.h>
 #endif
 
-#if TARGET_OS_WIN32
-	#include <stddef.h>
-#endif
-
 #pragma mark	This file needs to compile on earlier versions of the OS, so please keep that in mind when editing it
+
+char *CAStringForOSType (OSType t, char *writeLocation)
+{
+	char *p = writeLocation;
+	unsigned char str[4], *q = str;
+	*(UInt32 *)str = CFSwapInt32HostToBig(t);
+
+	bool hasNonPrint = false;
+	for (int i = 0; i < 4; ++i) {
+		if (!(isprint(*q) && *q != '\\')) {
+			hasNonPrint = true;
+			break;
+		}
+	}
+	
+	if (hasNonPrint)
+		p += sprintf (p, "0x");
+	else
+		*p++ = '\'';
+		
+	for (int i = 0; i < 4; ++i) {
+		if (hasNonPrint) {
+			p += sprintf(p, "%02X", *q++);
+		} else {
+			*p++ = *q++;
+		}
+	}
+	if (!hasNonPrint)
+		*p++ = '\'';
+	*p = '\0';
+	return writeLocation;
+}
+
 
 const AudioStreamBasicDescription	CAStreamBasicDescription::sEmpty = { 0.0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
@@ -71,15 +100,15 @@ CAStreamBasicDescription::CAStreamBasicDescription(double inSampleRate,		UInt32 
 	mReserved = 0;
 }
 
-void CAStreamBasicDescription::PrintFormat2(FILE *f, const char *indent, const char *name) const
+char *CAStreamBasicDescription::AsString(char *buf, size_t _bufsize) const
 {
-	fprintf(f, "%s%s ", indent, name);
-	char formatID[5];
-	*(UInt32 *)formatID = CFSwapInt32HostToBig(mFormatID);
-	formatID[4] = '\0';
-	fprintf(f, "%2d ch, %6.0f Hz, '%-4.4s' (0x%08X) ",		
-				(int)NumberChannels(), mSampleRate, formatID,
-				(int)mFormatFlags);
+	int bufsize = (int)_bufsize;	// must be signed to protect against overflow
+	char *theBuffer = buf;
+	int nc;
+	char formatID[24];
+	CAStringForOSType (mFormatID, formatID);
+	nc = snprintf(buf, bufsize, "%2d ch, %6.0f Hz, %s (0x%08X) ", (int)NumberChannels(), mSampleRate, formatID, (int)mFormatFlags);
+	buf += nc; if ((bufsize -= nc) <= 0) goto exit;
 	if (mFormatID == kAudioFormatLinearPCM) {
 		bool isInt = !(mFormatFlags & kLinearPCMFormatFlagIsFloat);
 		int wordSize = SampleWordSize();
@@ -91,19 +120,27 @@ void CAStreamBasicDescription::PrintFormat2(FILE *f, const char *indent, const c
 		char packed[32];
 		if (wordSize > 0 && PackednessIsSignificant()) {
 			if (mFormatFlags & kLinearPCMFormatFlagIsPacked)
-				sprintf(packed, "packed in %d bytes", wordSize);
+				snprintf(packed, sizeof(packed), "packed in %d bytes", wordSize);
 			else
-				sprintf(packed, "unpacked in %d bytes", wordSize);
+				snprintf(packed, sizeof(packed), "unpacked in %d bytes", wordSize);
 		} else
 			packed[0] = '\0';
 		const char *align = (wordSize > 0 && AlignmentIsSignificant()) ?
 			((mFormatFlags & kLinearPCMFormatFlagIsAlignedHigh) ? " high-aligned" : " low-aligned") : "";
 		const char *deinter = (mFormatFlags & kAudioFormatFlagIsNonInterleaved) ? ", deinterleaved" : "";
 		const char *commaSpace = (packed[0]!='\0') || (align[0]!='\0') ? ", " : "";
+		char bitdepth[20];
+
+		int fracbits = (mFormatFlags & kLinearPCMFormatFlagsSampleFractionMask) >> kLinearPCMFormatFlagsSampleFractionShift;
+		if (fracbits > 0)
+			snprintf(bitdepth, sizeof(bitdepth), "%d.%d", (int)mBitsPerChannel - fracbits, fracbits);
+		else
+			snprintf(bitdepth, sizeof(bitdepth), "%d", (int)mBitsPerChannel);
 		
-		fprintf(f, "%d-bit%s%s %s%s%s%s%s",
-			(int)mBitsPerChannel, endian, sign, floatInt, 
+		nc = snprintf(buf, bufsize, "%s-bit%s%s %s%s%s%s%s",
+			bitdepth, endian, sign, floatInt, 
 			commaSpace, packed, align, deinter);
+		// buf += nc; if ((bufsize -= nc) <= 0) goto exit;
 	} else if (mFormatID == 'alac') {	//	kAudioFormatAppleLossless
 		int sourceBits = 0;
 		switch (mFormatFlags)
@@ -122,15 +159,18 @@ void CAStreamBasicDescription::PrintFormat2(FILE *f, const char *indent, const c
     			break;
 		}
 		if (sourceBits)
-			fprintf(f, "from %d-bit source, ", sourceBits);
+			nc = snprintf(buf, bufsize, "from %d-bit source, ", sourceBits);
 		else
-			fprintf(f, "from UNKNOWN source bit depth, ");
-			
-		fprintf(f, "%d frames/packet", (int)mFramesPerPacket);
+			nc = snprintf(buf, bufsize, "from UNKNOWN source bit depth, ");
+		buf += nc; if ((bufsize -= nc) <= 0) goto exit;
+		nc = snprintf(buf, bufsize, "%d frames/packet", (int)mFramesPerPacket);
+		//	buf += nc; if ((bufsize -= nc) <= 0) goto exit;
 	}
 	else
-		fprintf(f, "%d bits/channel, %d bytes/packet, %d frames/packet, %d bytes/frame", 
+		nc = snprintf(buf, bufsize, "%d bits/channel, %d bytes/packet, %d frames/packet, %d bytes/frame", 
 			(int)mBitsPerChannel, (int)mBytesPerPacket, (int)mFramesPerPacket, (int)mBytesPerFrame);
+exit:
+	return theBuffer;
 }
 
 void	CAStreamBasicDescription::NormalizeLinearPCMFormat(AudioStreamBasicDescription& ioDescription)
@@ -140,10 +180,10 @@ void	CAStreamBasicDescription::NormalizeLinearPCMFormat(AudioStreamBasicDescript
 	{
 		//  the canonical linear PCM format
 		ioDescription.mFormatFlags = kAudioFormatFlagsCanonical;
-		ioDescription.mBytesPerPacket = sizeof(AudioSampleType) * ioDescription.mChannelsPerFrame;
+		ioDescription.mBytesPerPacket = SizeOf32(AudioSampleType) * ioDescription.mChannelsPerFrame;
 		ioDescription.mFramesPerPacket = 1;
-		ioDescription.mBytesPerFrame = sizeof(AudioSampleType) * ioDescription.mChannelsPerFrame;
-		ioDescription.mBitsPerChannel = 8 * sizeof(AudioSampleType);
+		ioDescription.mBytesPerFrame = SizeOf32(AudioSampleType) * ioDescription.mChannelsPerFrame;
+		ioDescription.mBitsPerChannel = 8 * SizeOf32(AudioSampleType);
 	}
 }
 
@@ -195,7 +235,7 @@ void	CAStreamBasicDescription::FillOutFormat(AudioStreamBasicDescription& ioDesc
 	}
 }
 
-void	CAStreamBasicDescription::GetSimpleName(const AudioStreamBasicDescription& inDescription, char* outName, bool inAbbreviate)
+void	CAStreamBasicDescription::GetSimpleName(const AudioStreamBasicDescription& inDescription, char* outName, UInt32 inMaxNameLength, bool inAbbreviate)
 {
 	switch(inDescription.mFormatID)
 	{
@@ -258,22 +298,22 @@ void	CAStreamBasicDescription::GetSimpleName(const AudioStreamBasicDescription& 
 					{
 						if(thePackingString != NULL)
 						{
-							sprintf(outName, "%s %d Ch %s %s %s%d/%s%d", theMixabilityString, (int)inDescription.mChannelsPerFrame, theEndianString, thePackingString, theKindString, (int)inDescription.mBitsPerChannel, theKindString, (int)(inDescription.mBytesPerFrame / inDescription.mChannelsPerFrame) * 8);
+							snprintf(outName, inMaxNameLength, "%s %d Ch %s %s %s%d/%s%d", theMixabilityString, (int)inDescription.mChannelsPerFrame, theEndianString, thePackingString, theKindString, (int)inDescription.mBitsPerChannel, theKindString, (int)(inDescription.mBytesPerFrame / inDescription.mChannelsPerFrame) * 8);
 						}
 						else
 						{
-							sprintf(outName, "%s %d Ch %s %s%d", theMixabilityString, (int)inDescription.mChannelsPerFrame, theEndianString, theKindString, (int)inDescription.mBitsPerChannel);
+							snprintf(outName, inMaxNameLength, "%s %d Ch %s %s%d", theMixabilityString, (int)inDescription.mChannelsPerFrame, theEndianString, theKindString, (int)inDescription.mBitsPerChannel);
 						}
 					}
 					else
 					{
 						if(thePackingString != NULL)
 						{
-							sprintf(outName, "%s %d Ch %s %s%d/%s%d", theMixabilityString, (int)inDescription.mChannelsPerFrame, thePackingString, theKindString, (int)inDescription.mBitsPerChannel, theKindString, (int)((inDescription.mBytesPerFrame / inDescription.mChannelsPerFrame) * 8));
+							snprintf(outName, inMaxNameLength, "%s %d Ch %s %s%d/%s%d", theMixabilityString, (int)inDescription.mChannelsPerFrame, thePackingString, theKindString, (int)inDescription.mBitsPerChannel, theKindString, (int)((inDescription.mBytesPerFrame / inDescription.mChannelsPerFrame) * 8));
 						}
 						else
 						{
-							sprintf(outName, "%s %d Ch %s%d", theMixabilityString, (int)inDescription.mChannelsPerFrame, theKindString, (int)inDescription.mBitsPerChannel);
+							snprintf(outName, inMaxNameLength, "%s %d Ch %s%d", theMixabilityString, (int)inDescription.mChannelsPerFrame, theKindString, (int)inDescription.mBitsPerChannel);
 						}
 					}
 				}
@@ -283,22 +323,22 @@ void	CAStreamBasicDescription::GetSimpleName(const AudioStreamBasicDescription& 
 					{
 						if(thePackingString != NULL)
 						{
-							sprintf(outName, "%s %d Channel %d Bit %s %s Aligned %s in %d Bits", theMixabilityString, (int)inDescription.mChannelsPerFrame, (int)inDescription.mBitsPerChannel, theEndianString, theKindString, thePackingString, (int)(inDescription.mBytesPerFrame / inDescription.mChannelsPerFrame) * 8);
+							snprintf(outName, inMaxNameLength, "%s %d Channel %d Bit %s %s Aligned %s in %d Bits", theMixabilityString, (int)inDescription.mChannelsPerFrame, (int)inDescription.mBitsPerChannel, theEndianString, theKindString, thePackingString, (int)(inDescription.mBytesPerFrame / inDescription.mChannelsPerFrame) * 8);
 						}
 						else
 						{
-							sprintf(outName, "%s %d Channel %d Bit %s %s", theMixabilityString, (int)inDescription.mChannelsPerFrame, (int)inDescription.mBitsPerChannel, theEndianString, theKindString);
+							snprintf(outName, inMaxNameLength, "%s %d Channel %d Bit %s %s", theMixabilityString, (int)inDescription.mChannelsPerFrame, (int)inDescription.mBitsPerChannel, theEndianString, theKindString);
 						}
 					}
 					else
 					{
 						if(thePackingString != NULL)
 						{
-							sprintf(outName, "%s %d Channel %d Bit %s Aligned %s in %d Bits", theMixabilityString, (int)inDescription.mChannelsPerFrame, (int)inDescription.mBitsPerChannel, theKindString, thePackingString, (int)(inDescription.mBytesPerFrame / inDescription.mChannelsPerFrame) * 8);
+							snprintf(outName, inMaxNameLength, "%s %d Channel %d Bit %s Aligned %s in %d Bits", theMixabilityString, (int)inDescription.mChannelsPerFrame, (int)inDescription.mBitsPerChannel, theKindString, thePackingString, (int)(inDescription.mBytesPerFrame / inDescription.mChannelsPerFrame) * 8);
 						}
 						else
 						{
-							sprintf(outName, "%s %d Channel %d Bit %s", theMixabilityString, (int)inDescription.mChannelsPerFrame, (int)inDescription.mBitsPerChannel, theKindString);
+							snprintf(outName, inMaxNameLength, "%s %d Channel %d Bit %s", theMixabilityString, (int)inDescription.mChannelsPerFrame, (int)inDescription.mBitsPerChannel, theKindString);
 						}
 					}
 				}
@@ -306,11 +346,11 @@ void	CAStreamBasicDescription::GetSimpleName(const AudioStreamBasicDescription& 
 			break;
 		
 		case kAudioFormatAC3:
-			strcpy(outName, "AC-3");
+			strlcpy(outName, "AC-3", sizeof(outName));
 			break;
 		
 		case kAudioFormat60958AC3:
-			strcpy(outName, "AC-3 for SPDIF");
+			strlcpy(outName, "AC-3 for SPDIF", sizeof(outName));
 			break;
 		
 		default:
@@ -517,5 +557,17 @@ bool	CAStreamBasicDescription::IsEqual(const AudioStreamBasicDescription &other,
 
 bool SanityCheck(const AudioStreamBasicDescription& x)
 {
-	return (x.mSampleRate >= 0.);
+	// This function returns false if there are sufficiently insane values in any field.
+	// It is very conservative so even some very unlikely values will pass.
+	// This is just meant to catch the case where the data from a file is corrupted.
+	
+	return 
+		(x.mSampleRate >= 0.)	
+		&& (x.mBytesPerPacket < 1000000)
+		&& (x.mFramesPerPacket < 1000000)
+		&& (x.mBytesPerFrame < 1000000)
+		&& (x.mChannelsPerFrame <= 1024)
+		&& (x.mBitsPerChannel <= 1024)
+		&& (x.mFormatID != 0)
+		&& !(x.mFormatID == kAudioFormatLinearPCM && (x.mFramesPerPacket != 1 || x.mBytesPerPacket != x.mBytesPerFrame));
 }

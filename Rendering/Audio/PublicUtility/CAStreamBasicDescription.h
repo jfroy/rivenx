@@ -55,10 +55,19 @@
 
 #pragma mark	This file needs to compile on more earlier versions of the OS, so please keep that in mind when editing it
 
+extern char *CAStringForOSType (OSType t, char *writeLocation);
+
 // define Leopard specific symbols for backward compatibility if applicable
 #if COREAUDIOTYPES_VERSION < 1050
 typedef Float32 AudioSampleType;
 enum { kAudioFormatFlagsCanonical = kAudioFormatFlagIsFloat | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked };
+#endif
+#if COREAUDIOTYPES_VERSION < 1051
+typedef Float32 AudioUnitSampleType;
+enum {
+	kLinearPCMFormatFlagsSampleFractionShift    = 7,
+	kLinearPCMFormatFlagsSampleFractionMask     = (0x3F << kLinearPCMFormatFlagsSampleFractionShift),
+};
 #endif
 
 //	define the IsMixable format flag for all versions of the system
@@ -127,6 +136,11 @@ public:
 		return !IsPCM() || !(mFormatFlags & kAudioFormatFlagIsNonInterleaved);
 	}
 	
+	bool	IsNativeEndian() const
+	{
+		return (mFormatFlags & kAudioFormatFlagIsBigEndian) == kAudioFormatFlagsNativeEndian;
+	}
+	
 	// for sanity with interleaved/deinterleaved possibilities, never access mChannelsPerFrame, use these:
 	UInt32	NumberInterleavedChannels() const	{ return IsInterleaved() ? mChannelsPerFrame : 1; }	
 	UInt32	NumberChannelStreams() const		{ return IsInterleaved() ? 1 : mChannelsPerFrame; }
@@ -154,14 +168,51 @@ public:
 				// note: leaves sample rate untouched
 	{
 		mFormatID = kAudioFormatLinearPCM;
+		int sampleSize = SizeOf32(AudioSampleType);
 		mFormatFlags = kAudioFormatFlagsCanonical;
-		mBitsPerChannel = 8 * sizeof(AudioSampleType);
+		mBitsPerChannel = 8 * sampleSize;
 		mChannelsPerFrame = nChannels;
 		mFramesPerPacket = 1;
 		if (interleaved)
-			mBytesPerPacket = mBytesPerFrame = nChannels * sizeof(AudioSampleType);
+			mBytesPerPacket = mBytesPerFrame = nChannels * sampleSize;
 		else {
-			mBytesPerPacket = mBytesPerFrame = sizeof(AudioSampleType);
+			mBytesPerPacket = mBytesPerFrame = sampleSize;
+			mFormatFlags |= kAudioFormatFlagIsNonInterleaved;
+		}
+	}
+	
+	bool	IsCanonical() const
+	{
+		if (mFormatID != kAudioFormatLinearPCM) return false;
+		UInt32 reqFormatFlags;
+		UInt32 flagsMask = (kLinearPCMFormatFlagIsFloat | kLinearPCMFormatFlagIsBigEndian | kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked | kLinearPCMFormatFlagIsAlignedHigh | kLinearPCMFormatFlagsSampleFractionMask);
+		bool interleaved = (mFormatFlags & kAudioFormatFlagIsNonInterleaved) == 0;
+		unsigned sampleSize = SizeOf32(AudioSampleType);
+		reqFormatFlags = kAudioFormatFlagsCanonical;
+		UInt32 reqFrameSize = interleaved ? (mChannelsPerFrame * sampleSize) : sampleSize;
+
+		return ((mFormatFlags & flagsMask) == reqFormatFlags
+			&& mBitsPerChannel == 8 * sampleSize
+			&& mFramesPerPacket == 1
+			&& mBytesPerFrame == reqFrameSize
+			&& mBytesPerPacket == reqFrameSize);
+	}
+	
+	void	SetAUCanonical(UInt32 nChannels, bool interleaved)
+	{
+		mFormatID = kAudioFormatLinearPCM;
+#if CA_PREFER_FIXED_POINT
+		mFormatFlags = kAudioFormatFlagsCanonical | (kAudioUnitSampleFractionBits << kLinearPCMFormatFlagsSampleFractionShift);
+#else
+		mFormatFlags = kAudioFormatFlagsCanonical;
+#endif
+		mChannelsPerFrame = nChannels;
+		mFramesPerPacket = 1;
+		mBitsPerChannel = 8 * SizeOf32(AudioUnitSampleType);
+		if (interleaved)
+			mBytesPerPacket = mBytesPerFrame = nChannels * SizeOf32(AudioUnitSampleType);
+		else {
+			mBytesPerPacket = mBytesPerFrame = SizeOf32(AudioUnitSampleType);
 			mFormatFlags |= kAudioFormatFlagIsNonInterleaved;
 		}
 	}
@@ -190,28 +241,32 @@ public:
 	
 	bool	IsEqual(const AudioStreamBasicDescription &other, bool interpretingWildcards=true) const;
 	
-	void	Print() const
-	{
+	void	Print() const {
 		Print (stdout);
 	}
 
-	void	Print(FILE* file) const
-	{
+	void	Print(FILE* file) const {
 		PrintFormat (file, "", "AudioStreamBasicDescription:");	
 	}
 
-	void PrintFormat(FILE *f, const char *indent, const char *name) const {
-		PrintFormat2(f, indent, name);
-		fprintf(f, "\n");
+	void	PrintFormat(FILE *f, const char *indent, const char *name) const {
+		char buf[256];
+		fprintf(f, "%s%s %s\n", indent, name, AsString(buf, sizeof(buf)));
 	}
-	void PrintFormat2(FILE *f, const char *indent, const char *name) const; // no trailing newline
+	
+	void	PrintFormat2(FILE *f, const char *indent, const char *name) const { // no trailing newline
+		char buf[256];
+		fprintf(f, "%s%s %s", indent, name, AsString(buf, sizeof(buf)));
+	}
+
+	char *	AsString(char *buf, size_t bufsize) const;
 
 	static void Print (const AudioStreamBasicDescription &inDesc) 
 	{ 
 		CAStreamBasicDescription desc(inDesc);
 		desc.Print ();
 	}
-
+	
 	OSStatus			Save(CFPropertyListRef *outData) const;
 		
 	OSStatus			Restore(CFPropertyListRef &inData);
@@ -221,7 +276,7 @@ public:
 	static void			NormalizeLinearPCMFormat(AudioStreamBasicDescription& ioDescription);
 	static void			ResetFormat(AudioStreamBasicDescription& ioDescription);
 	static void			FillOutFormat(AudioStreamBasicDescription& ioDescription, const AudioStreamBasicDescription& inTemplateDescription);
-	static void			GetSimpleName(const AudioStreamBasicDescription& inDescription, char* outName, bool inAbbreviate);
+	static void			GetSimpleName(const AudioStreamBasicDescription& inDescription, char* outName, UInt32 inMaxNameLength, bool inAbbreviate);
 #if CoreAudio_Debug
 	static void			PrintToLog(const AudioStreamBasicDescription& inDesc);
 #endif

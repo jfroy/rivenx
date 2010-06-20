@@ -39,11 +39,7 @@
 			POSSIBILITY OF SUCH DAMAGE.
 */
 #include "CABufferList.h"
-#if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <CoreServices/CoreServices.h>
-#else
-	#include <Endian.h>
-#endif
+#include "CAByteOrder.h"
 
 void		CABufferList::AllocateBuffers(UInt32 nBytes)
 {
@@ -124,22 +120,22 @@ void		CABufferList::DeallocateBuffers()
     
 }
 
-extern "C" void CAShowAudioBufferList(const AudioBufferList *abl, int framesToPrint, int wordSize)
+static void show(const AudioBufferList &abl, int framesToPrint, int wordSize, const char *label, const char *fmtstr=NULL)
 {
-	printf("AudioBufferList @ %p:\n", abl);
-	const AudioBuffer *buf = abl->mBuffers;
-	for (UInt32 i = 0; i < abl->mNumberBuffers; ++i, ++buf) {
-		printf("  [%2d]: %2dch, %5d bytes @ %8p", 
-			(int)i, (int)buf->mNumberChannels, (int)buf->mDataByteSize, buf->mData);
-		if (framesToPrint) {
+	printf("%s %p (%d fr%s):\n", label ? label : "AudioBufferList", &abl, framesToPrint, fmtstr ? fmtstr : "");
+	const AudioBuffer *buf = abl.mBuffers;
+	for (UInt32 i = 0; i < abl.mNumberBuffers; ++i, ++buf) {
+		printf("    [%2d] %5dbytes %dch @ %p", (int)i, (int)buf->mDataByteSize, (int)buf->mNumberChannels, buf->mData);
+		if (framesToPrint && buf->mData != NULL) {
 			printf(":");
 			Byte *p = (Byte *)buf->mData;
 			for (int j = framesToPrint * buf->mNumberChannels; --j >= 0; )
 				switch (wordSize) {
-				case 0:
+				case 0:	// native float
 					printf(" %6.3f", *(Float32 *)p);
 					p += sizeof(Float32);
 					break;
+				// positive: big endian
 				case 1:
 				case -1:
 					printf(" %02X", *p);
@@ -157,8 +153,12 @@ extern "C" void CAShowAudioBufferList(const AudioBufferList *abl, int framesToPr
 					printf(" %08X", (unsigned int)CFSwapInt32BigToHost(*(UInt32 *)p));
 					p += 4;
 					break;
+				case 10:
+					printf(" %6.3f", CASwapFloat32BigToHost(*(Float32 *)p));
+					p += sizeof(Float32);
+					break;
 				case -2:
-					printf(" %04X", EndianU16_LtoN(*(UInt16 *)p));
+					printf(" %04X", CFSwapInt16LittleToHost(*(UInt16 *)p));
 					p += 2;
 					break;
 				case -3:
@@ -166,12 +166,87 @@ extern "C" void CAShowAudioBufferList(const AudioBufferList *abl, int framesToPr
 					p += 3;
 					break;
 				case -4:
-					printf(" %08X", (unsigned int)CFSwapInt32BigToHost(*(UInt32 *)p));
+					printf(" %08X", (unsigned int)CFSwapInt32LittleToHost(*(UInt32 *)p));
 					p += 4;
+					break;
+				case -10:
+					printf(" %6.3f", CASwapFloat32LittleToHost(*(Float32 *)p));
+					p += sizeof(Float32);
 					break;
 				}
 		}
 		printf("\n");
 	}
+}
+
+void CAShowAudioBufferList(const AudioBufferList &abl, int framesToPrint, const AudioStreamBasicDescription &asbd, const char *label)
+{
+	CAStreamBasicDescription fmt(asbd);
+	int wordSize = 1;
+	char fmtstr[80] = { 0 };
+	
+	if (fmt.mFormatID == kAudioFormatLinearPCM) {
+		if (fmt.mFormatFlags & kLinearPCMFormatFlagIsFloat) {
+			if (fmt.mBitsPerChannel == 32) {
+				if (fmt.mFormatFlags & kLinearPCMFormatFlagIsBigEndian) {
+					wordSize = 10;
+					strcpy(fmtstr, ", BEF");
+				} else {
+					wordSize = -10;
+					strcpy(fmtstr, ", LEF");
+				}
+			}
+		} else {
+			wordSize = fmt.SampleWordSize();
+			if (wordSize > 0) {
+#if CA_PREFER_FIXED_POINT
+				int fracbits = (asbd.mFormatFlags & kLinearPCMFormatFlagsSampleFractionMask) >> kLinearPCMFormatFlagsSampleFractionShift;
+				if (fracbits > 0)
+					sprintf(fmtstr, ", %d.%d-bit", (int)asbd.mBitsPerChannel - fracbits, fracbits);
+				else
+#endif
+					sprintf(fmtstr, ", %d-bit", (int)asbd.mBitsPerChannel);
+
+				if (!(fmt.mFormatFlags & kLinearPCMFormatFlagIsBigEndian)) {
+					wordSize = -wordSize;
+					strcat(fmtstr, " LEI");
+				} else {
+					strcat(fmtstr, " BEI");
+				}
+			}
+		}
+	}
+	show(abl, framesToPrint, wordSize, label, fmtstr);
+}
+
+void CAShowAudioBufferList(const AudioBufferList &abl, int framesToPrint, int wordSize, const char *label)
+{
+	show(abl, framesToPrint, wordSize, label);
+}
+
+extern "C" void CAShowAudioBufferList(const AudioBufferList *abl, int framesToPrint, int wordSize)
+{
+	show(*abl, framesToPrint, wordSize, NULL);
+}
+
+// if the return result is odd, there was a null buffer.
+extern "C" int CrashIfClientProvidedBogusAudioBufferList(const AudioBufferList *abl, bool nullok)
+{
+	const AudioBuffer *buf = abl->mBuffers, *bufend = buf + abl->mNumberBuffers;
+	int sum = 0;	// defeat attempts by the compiler to optimize away the code that touches the buffers
+	int anyNull = 0;
+	for ( ; buf < bufend; ++buf) {
+		const int *p = (const int *)buf->mData;
+		if (p == NULL) {
+			anyNull = 1;
+			if (nullok) continue;
+		}
+		unsigned datasize = buf->mDataByteSize;
+		if (datasize >= sizeof(int)) {
+			sum += p[0];
+			sum += p[datasize / sizeof(int) - 1];
+		}
+	}
+	return anyNull | (sum & ~1);
 }
 

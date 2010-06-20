@@ -41,8 +41,14 @@
 #ifndef _SpectralProcesor_H_
 #define _SpectralProcesor_H_
  
- 
-#include <AUBase.h>
+#if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
+#include <CoreAudio/CoreAudioTypes.h>
+#include <CoreFoundation/CoreFoundation.h>
+#else
+#include <CoreAudioTypes.h>
+#include <CoreFoundation.h>
+#endif
+
 #include <Accelerate/Accelerate.h>
 
 #include "CAAutoDisposer.h"
@@ -77,11 +83,10 @@ public:
 	void HanningWindow(); // set up a hanning window
 	void SineWindow();
 	
-	//new
-	void GetFrequencies(Float32* freqs, Float32 sampleRate);				// only for process forward
-	void GetMagnitude(AudioBufferList* inCopy, Float32* min, Float32* max); // only for process forward
+	void GetFrequencies(Float32* freqs, Float32 sampleRate);				// only for processed forward
+	void GetMagnitude(AudioBufferList* inCopy, Float32* min, Float32* max); // only for processed forward
 	
-	bool ProcessForwards(UInt32 inNumFrames, AudioBufferList* inInput);
+	virtual bool ProcessForwards(UInt32 inNumFrames, AudioBufferList* inInput);
 	bool ProcessBackwards(UInt32 inNumFrames, AudioBufferList* outOutput);
 
 
@@ -97,14 +102,13 @@ protected:
 	void CopyOutput(UInt32 inNumFrames, AudioBufferList* inOutput);
 	void ProcessSpectrum(UInt32 inFFTSize, SpectralBufferList* inSpectra);
 	
-private:
 	UInt32 mFFTSize;
 	UInt32 mHopSize;
 	UInt32 mNumChannels;
 	UInt32 mMaxFrames;
 
 	UInt32 mLog2FFTSize;
-	UInt32 mFFTMask;
+	UInt32 mFFTMask; 
 	UInt32 mFFTByteSize;
 	UInt32 mIOBufSize;
 	UInt32 mIOMask;

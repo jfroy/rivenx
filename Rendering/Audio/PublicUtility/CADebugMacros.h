@@ -68,6 +68,21 @@
 	#define CACopy4CCToCString(theCString, the4CC)	{ theCString[0] = ((char*)&the4CC)[3]; theCString[1] = ((char*)&the4CC)[2]; theCString[2] = ((char*)&the4CC)[1]; theCString[3] = ((char*)&the4CC)[0]; theCString[4] = 0; }
 #endif
 
+//	This is a macro that does a sizeof and casts the result to a UInt32. This is useful for all the
+//	places where -wshorten64-32 catches assigning a sizeof expression to a UInt32.
+//	For want of a better place to park this, we'll park it here.
+#define	SizeOf32(X)	((UInt32)sizeof(X))
+
+//	This is a macro that does a offsetof and casts the result to a UInt32. This is useful for all the
+//	places where -wshorten64-32 catches assigning an offsetof expression to a UInt32.
+//	For want of a better place to park this, we'll park it here.
+#define	OffsetOf32(X, Y)	((UInt32)offsetof(X, Y))
+
+//	This macro casts the expression to a UInt32. It is called out specially to allow us to track casts
+//	that have been added purely to avert -wshorten64-32 warnings on 64 bit platforms.
+//	For want of a better place to park this, we'll park it here.
+#define	ToUInt32(X)	((UInt32)(X))
+
 #pragma mark	Basic Definitions
 
 #if	DEBUG || CoreAudio_Debug
@@ -77,7 +92,7 @@
 	
 	//	basic debugging print routines
 	#if	TARGET_OS_MAC && !TARGET_API_MAC_CARBON
-		extern pascal void DebugStr(const unsigned char* debuggerMsg);
+		extern void DebugStr(const unsigned char* debuggerMsg);
 		#define	DebugMessage(msg)	DebugStr("\p"msg)
 		#define DebugMessageN1(msg, N1)
 		#define DebugMessageN2(msg, N1, N2)
@@ -86,7 +101,7 @@
 		#include "CADebugPrintf.h"
 		
 		#if	(CoreAudio_FlushDebugMessages && !CoreAudio_UseSysLog) || defined(CoreAudio_UseSideFile)
-			#define	FlushRtn	;fflush(DebugPrintfFile)
+			#define	FlushRtn	,fflush(DebugPrintfFile)
 		#else
 			#define	FlushRtn
 		#endif
@@ -106,7 +121,7 @@
 			#define DebugMessageN9(msg, N1, N2, N3, N4, N5, N6, N7, N8, N9)	DebugPrintfRtn(DebugPrintfFileComma "%p %.4f: "msg"\n", pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4, N5, N6, N7, N8, N9) FlushRtn
 		#elif	CoreAudio_TimeStampMessages
 			#include "CAHostTimeBase.h"
-			#define	DebugMessage(msg)										DebugPrintfRtn(DebugPrintfFileComma "%.4f: %s"DebugPrintfLineEnding, pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), msg) FlushRtn
+			#define	DebugMessage(msg)										DebugPrintfRtn(DebugPrintfFileComma "%.4f: %s"DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), msg) FlushRtn
 			#define DebugMessageN1(msg, N1)									DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1) FlushRtn
 			#define DebugMessageN2(msg, N1, N2)								DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2) FlushRtn
 			#define DebugMessageN3(msg, N1, N2, N3)							DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3) FlushRtn
@@ -130,7 +145,9 @@
 		#endif
 	#endif
 	void	DebugPrint(const char *fmt, ...);	// can be used like printf
-	#define DEBUGPRINT(msg) DebugPrint msg		// have to double-parenthesize arglist (see Debugging.h)
+	#ifndef DEBUGPRINT
+		#define DEBUGPRINT(msg) DebugPrint msg		// have to double-parenthesize arglist (see Debugging.h)
+	#endif
 	#if VERBOSE
 		#define vprint(msg) DEBUGPRINT(msg)
 	#else
@@ -155,7 +172,9 @@
 	#define DebugMessageN7(msg, N1, N2, N3, N4, N5, N6, N7)
 	#define DebugMessageN8(msg, N1, N2, N3, N4, N5, N6, N7, N8)
 	#define DebugMessageN9(msg, N1, N2, N3, N4, N5, N6, N7, N8, N9)
-	#define DEBUGPRINT(msg)
+	#ifndef DEBUGPRINT
+		#define DEBUGPRINT(msg)
+	#endif
 	#define vprint(msg)
 	#define	STOP
 #endif
@@ -221,9 +240,9 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				goto inHandler;															\
 			}
 
-#define	FailIfKernelError(inKernelError, inException, inMessage)						\
+#define	FailIfKernelError(inKernelError, inAction, inHandler, inMessage)				\
 			{																			\
-				kern_return_t __Err = (inKernelError);									\
+				unsigned int __Err = (inKernelError);									\
 				if(__Err != 0)															\
 				{																		\
 					DebugMessageN1(inMessage ", Error: 0x%X", __Err);					\
@@ -233,7 +252,7 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				}																		\
 			}
 
-#define	FailIfError(inError, inException, inMessage)									\
+#define	FailIfError(inError, inAction, inHandler, inMessage)							\
 			{																			\
 				SInt32 __Err = (inError);												\
 				if(__Err != 0)															\
@@ -266,7 +285,7 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 
 #define	ThrowIfKernelError(inKernelError, inException, inMessage)						\
 			{																			\
-				kern_return_t __Err = (inKernelError);									\
+				unsigned int __Err = (inKernelError);									\
 				if(__Err != 0)															\
 				{																		\
 					DebugMessageN1(inMessage ", Error: 0x%X", __Err);					\
@@ -356,7 +375,7 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				goto inHandler;															\
 			}
 
-#define	FailIfKernelError(inKernelError, inException, inMessage)						\
+#define	FailIfKernelError(inKernelError, inAction, inHandler, inMessage)				\
 			if((inKernelError) != 0)													\
 			{																			\
 				STOP;																	\
@@ -364,7 +383,7 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				goto inHandler;															\
 			}
 
-#define	FailIfError(inError, inException, inMessage)									\
+#define	FailIfError(inError, inAction, inHandler, inMessage)							\
 			if((inError) != 0)															\
 			{																			\
 				STOP;																	\
@@ -390,7 +409,7 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 
 #define	ThrowIfKernelError(inKernelError, inException, inMessage)						\
 			{																			\
-				kern_return_t __Err = (inKernelError);									\
+				unsigned int __Err = (inKernelError);									\
 				if(__Err != 0)															\
 				{																		\
 					Throw(inException);													\

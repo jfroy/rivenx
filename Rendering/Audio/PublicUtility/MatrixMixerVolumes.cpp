@@ -39,6 +39,7 @@
 			POSSIBILITY OF SUCH DAMAGE.
 */
 #include "MatrixMixerVolumes.h"
+#include "CAXException.h"
 
 OSStatus	NumberChannels (AudioUnit 		 	au,
 							AudioUnitScope		inScope,
@@ -52,15 +53,15 @@ OSStatus PrintBuses (FILE* file, char* str, AudioUnit au, AudioUnitScope inScope
 	UInt32 busCount;
 	UInt32 theSize = sizeof(busCount);
 
-	require_noerr (result = AudioUnitGetProperty (au, kAudioUnitProperty_ElementCount,	
+	ca_require_noerr (result = AudioUnitGetProperty (au, kAudioUnitProperty_ElementCount,	
 							inScope, 0, &busCount, &theSize), home);
 		
 	fprintf (file, "\t%s Elements:\n\t\t", str);
 	for (UInt32 i = 0; i < busCount; ++i) {
 		Float32 val;
-		require_noerr (result = AudioUnitGetParameter (au, kMatrixMixerParam_Enable, inScope, i, &val), home);
+		ca_require_noerr (result = AudioUnitGetParameter (au, kMatrixMixerParam_Enable, inScope, i, &val), home);
 		UInt32 numChans;
-		require_noerr (result = NumberChannels (au, inScope, i, numChans), home);
+		ca_require_noerr (result = NumberChannels (au, inScope, i, numChans), home);
 		char frameCharStart = (val != 0 ? '[' : '{');
 		char frameCharEnd = (val != 0 ? ']' : '}');
 		fprintf (file, "%d:%c%d, %c%c  ", (int)i, frameCharStart, (int)numChans, (val != 0 ? 'T' : 'F'), frameCharEnd);
@@ -78,14 +79,14 @@ void	PrintMatrixMixerVolumes (FILE* file, AudioUnit au)
 	OSStatus result;
 	
 // this call will fail if the unit is NOT initialized as it would present an incomplete state	
-	require_noerr (result = AudioUnitGetProperty (au, kAudioUnitProperty_MatrixDimensions,	
+	ca_require_noerr (result = AudioUnitGetProperty (au, kAudioUnitProperty_MatrixDimensions,	
 							kAudioUnitScope_Global, 0, dims, &theSize), home);
 
 	theSize = ((dims[0] + 1) * (dims[1] + 1)) * sizeof(Float32);
 	
 	theVols	= static_cast<Float32*> (malloc (theSize));
 	
-	require_noerr (result = AudioUnitGetProperty (au, kAudioUnitProperty_MatrixLevels,	
+	ca_require_noerr (result = AudioUnitGetProperty (au, kAudioUnitProperty_MatrixLevels,	
 							kAudioUnitScope_Global, 0, theVols, &theSize), home);
 
 home:

@@ -41,52 +41,37 @@
 #ifndef __CAReferenceCounted_h__
 #define __CAReferenceCounted_h__
 
-#if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <libkern/OSAtomic.h>
-#else
-	#include <CoreServices.h>
-#endif
-
-#if TARGET_OS_WIN32
-	#include "CAWindows.h"
-#endif
+#include "CAAtomic.h"
 
 // base class for reference-counted objects
 class CAReferenceCounted {
 public:
 	CAReferenceCounted() : mRefCount(1) {}
 	
-#if TARGET_OS_WIN32
-	void	retain() { IncrementAtomic(&mRefCount); }
-#else
-	void	retain() { OSAtomicIncrement32Barrier(&mRefCount); }
-#endif
+	void	retain() { CAAtomicIncrement32(&mRefCount); }
 	
 	void	release() 
 			{ 
-#if TARGET_OS_WIN32
-				SInt32 rc = DecrementAtomic(&mRefCount);
-				if (rc == 1) {
-#else
-				SInt32 rc = OSAtomicDecrement32Barrier(&mRefCount);
+				SInt32 rc = CAAtomicDecrement32 (&mRefCount);
 				if (rc == 0) {
-#endif
-					delete this;
+					releaseObject();
 				}
 			}
 
 protected:
     virtual	~CAReferenceCounted() { }
 	
+	virtual void releaseObject () 
+			{ 
+				delete this; 
+			}
+	
+	SInt32	GetReferenceCount() const { return mRefCount; }
 private:
-#if TARGET_OS_WIN32
 	SInt32		mRefCount;
-#else
-	int32_t		mRefCount;
-#endif
 
 	CAReferenceCounted(const CAReferenceCounted &a) : mRefCount(0) { }
-	CAReferenceCounted operator=(const CAReferenceCounted &a) { return *this; }
+	CAReferenceCounted &operator=(const CAReferenceCounted &a) { return *this; }
 };
 
 

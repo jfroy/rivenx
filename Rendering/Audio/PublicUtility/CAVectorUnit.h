@@ -43,11 +43,13 @@
 
 #include <TargetConditionals.h>
 #include "CAVectorUnitTypes.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <CoreServices/CoreServices.h>
+	#include <CoreFoundation/CFBase.h>
 #else
-	#include <MacTypes.h>
+	#include "CFBase.h"
 #endif
 
 // Unify checks for vector units into a single function.
@@ -64,11 +66,6 @@ public:
 private:
 	static SInt32		CheckVectorUnit();
 	
-#if TARGET_OS_WIN32
-	static SInt32		IsSSE3Available();
-	static SInt32		IsSSE2Available();
-	static bool			IsCpuidAvailable();
-#endif
 	static int sVectorUnitType;
 };
 

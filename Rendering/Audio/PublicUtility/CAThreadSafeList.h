@@ -198,7 +198,7 @@ private:
 	{
 		Node *node = mFreeList.pop_atomic();
 		if (node == NULL)
-			node = (Node *)malloc(sizeof(Node));
+			node = (Node *)CA_malloc(sizeof(Node));
 		return node;
 	}
 	

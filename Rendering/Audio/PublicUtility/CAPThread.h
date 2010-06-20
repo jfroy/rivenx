@@ -47,9 +47,9 @@
 
 //	System Includes
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <CoreAudio/CoreAudioTypes.h>
+	#include <CoreFoundation/CFBase.h>
 #else
-	#include <CoreAudioTypes.h>
+	#include <CFBase.h>
 #endif
 
 #if TARGET_OS_MAC
@@ -99,10 +99,26 @@ public:
 //	Properties
 public:
 #if TARGET_OS_MAC
+	typedef pthread_t		NativeThread;
+
+	NativeThread			GetNativeThread() { return mPThread; }
+	static NativeThread		GetCurrentThread() { return pthread_self(); }
+	static bool				IsNativeThreadsEqual(NativeThread a, NativeThread b) { return (a==b); }
+
+	bool					operator==(NativeThread b) { return pthread_equal(mPThread,b); }
+
 	pthread_t				GetPThread() const { return mPThread; }
 	bool					IsCurrentThread() const { return (0 != mPThread) && (pthread_self() == mPThread); }
 	bool					IsRunning() const { return 0 != mPThread; }
 #elif TARGET_OS_WIN32
+	typedef unsigned long	NativeThread;
+	
+	NativeThread			GetNativeThread() { return mThreadID; }
+	static NativeThread		GetCurrentThread() { return GetCurrentThreadId(); }
+	static bool				IsNativeThreadsEqual(NativeThread a, NativeThread b) { return (a==b); }
+
+	bool					operator ==(NativeThread b) { return (mThreadID==b); }
+
 	HANDLE					GetThreadHandle() const { return mThreadHandle; }
 	UInt32					GetThreadID() const { return mThreadID; }
 	bool					IsCurrentThread() const { return (0 != mThreadID) && (GetCurrentThreadId() == mThreadID); }
@@ -122,7 +138,11 @@ public:
 	
 	bool					WillAutoDelete() const { return mAutoDelete; }
 	void					SetAutoDelete(bool b) { mAutoDelete = b; }
-		
+
+#if CoreAudio_Debug	
+	void					DebugPriority(const char *label);
+#endif
+	
 //	Actions
 public:
 	virtual void			Start();
@@ -141,7 +161,7 @@ protected:
     UInt32					mSpawningThreadPriority;
 #elif TARGET_OS_WIN32
 	HANDLE					mThreadHandle;
-	UInt32					mThreadID;
+	unsigned long			mThreadID;
 #endif
 	ThreadRoutine			mThreadRoutine;
 	void*					mThreadParameter;

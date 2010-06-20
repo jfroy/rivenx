@@ -44,7 +44,8 @@
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
 	#include <libkern/OSAtomic.h>
 #else
-	#include <DriverSynchronization.h>
+//	#include <DriverSynchronization.h>
+#include <CAAtomic.h>
 #endif
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_4
@@ -74,6 +75,8 @@ public:
 	}
 	
 	bool	empty() { return mHead == NULL; }
+	
+	T *		head() { return mHead; }
 	
 	// atomic routines
 	void	push_atomic(T *item)
@@ -150,7 +153,7 @@ public:
 		return reversed.mHead;
 	}
 	
-	bool	compare_and_swap(T *oldvalue, T *newvalue, T **pvalue)
+	static bool	compare_and_swap(T *oldvalue, T *newvalue, T **pvalue)
 	{
 #if TARGET_OS_MAC
 	#if __LP64__
@@ -161,12 +164,46 @@ public:
 			return ::CompareAndSwap(UInt32(oldvalue), UInt32(newvalue), (UInt32 *)pvalue);
 	#endif
 #else
-			return ::CompareAndSwap(UInt32(oldvalue), UInt32(newvalue), (UInt32 *)pvalue);
+			//return ::CompareAndSwap(UInt32(oldvalue), UInt32(newvalue), (UInt32 *)pvalue);
+			return CAAtomicCompareAndSwap32Barrier(SInt32(oldvalue), SInt32(newvalue), (SInt32*)pvalue);
 #endif
 	}
 	
 protected:
 	T *		mHead;
 };
+
+#if ((MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5) && !TARGET_OS_WIN32)
+#include <libkern/OSAtomic.h>
+
+class CAAtomicStack {
+public:
+	CAAtomicStack(size_t nextPtrOffset) : mNextPtrOffset(nextPtrOffset) { /*OSQueueHead h = OS_ATOMIC_QUEUE_INIT; mHead = h;*/ mHead.opaque1 = 0; mHead.opaque2 = 0;
+ }
+	// a subset of the above
+	void	push_atomic(void *p) { OSAtomicEnqueue(&mHead, p, mNextPtrOffset); }
+	void	push_NA(void *p) { push_atomic(p); }
+
+	void *	pop_atomic() { return OSAtomicDequeue(&mHead, mNextPtrOffset); }
+	void *	pop_atomic_single_reader() { return pop_atomic(); }
+	void *	pop_NA() { return pop_atomic(); }
+	
+private:
+	OSQueueHead		mHead;
+	size_t			mNextPtrOffset;
+};
+
+// syntactic sugar
+template <class T>
+class TAtomicStack2 : public CAAtomicStack {
+public:
+	TAtomicStack2(size_t nextPtrOffset) : CAAtomicStack(nextPtrOffset) { }
+	
+	T *	pop_atomic() { return (T *)CAAtomicStack::pop_atomic(); }
+	T *	pop_atomic_single_reader() { return pop_atomic(); }
+	T *	pop_NA() { return pop_atomic(); }
+};
+
+#endif // MAC_OS_X_VERSION_MAX_ALLOWED && !TARGET_OS_WIN32
 
 #endif // __TStack_h__

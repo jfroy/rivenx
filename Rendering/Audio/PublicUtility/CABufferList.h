@@ -43,14 +43,12 @@
 
 #include <stddef.h>
 #include "CAStreamBasicDescription.h"
-#if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <CoreServices/CoreServices.h>
-#else
-	#include <AssertMacros.h>
-#endif
+#include "CAXException.h"
 
+void CAShowAudioBufferList(const AudioBufferList &abl, int framesToPrint, const AudioStreamBasicDescription &fmt, const char *label=NULL);
+void CAShowAudioBufferList(const AudioBufferList &abl, int framesToPrint, int wordSize, const char *label=NULL);
 extern "C" void CAShowAudioBufferList(const AudioBufferList *abl, int framesToPrint, int wordSize);
-				// wordSize: 0 = float32, else integer word size, negative if little-endian
+extern "C" int CrashIfClientProvidedBogusAudioBufferList(const AudioBufferList *abl, bool nullOK=false);
 
 /* ____________________________________________________________________________
 //	CABufferList - variable length buffer list
@@ -81,7 +79,7 @@ protected:
 		mName(name),
 		mBufferMemory(NULL)
 	{
-		check(numBuffers > 0 /*&& channelsPerBuffer > 0*/);
+		//XAssert(numBuffers > 0 /*&& channelsPerBuffer > 0*/);
 		mNumberBuffers = numBuffers;
 		AudioBuffer *buf = mBuffers;
 		for (UInt32 i = mNumberBuffers; i--; ++buf) {
@@ -118,7 +116,7 @@ public:
 	void		SetBytes(UInt32 nBytes, void *data)
 	{
 		VerifyNotTrashingOwnedBuffer();
-		check(mNumberBuffers == 1);
+		XAssert(mNumberBuffers == 1);
 		mBuffers[0].mDataByteSize = nBytes;
 		mBuffers[0].mData = data;
 	}
@@ -150,7 +148,7 @@ public:
 		VerifyNotTrashingOwnedBuffer();
 		AudioBuffer *mybuf = mBuffers, *srcbuf = blp->mBuffers;
 		for (UInt32 i = mNumberBuffers; i--; ++mybuf, ++srcbuf) {
-			check(nBytes <= srcbuf->mDataByteSize);
+			XAssert(nBytes <= srcbuf->mDataByteSize);
 			memcpy((Byte *)mybuf->mData + mybuf->mDataByteSize, srcbuf->mData, nBytes);
 			mybuf->mDataByteSize += nBytes;
 		}
@@ -202,7 +200,7 @@ public:
 		VerifyNotTrashingOwnedBuffer();
 		AudioBuffer *buf = mBuffers;
 		for (UInt32 i = mNumberBuffers; i--; ++buf) {
-			check(nBytes <= buf->mDataByteSize);
+			XAssert(nBytes <= buf->mDataByteSize);
 			buf->mData = (Byte *)buf->mData + nBytes;
 			buf->mDataByteSize -= nBytes;
 		}
@@ -287,7 +285,7 @@ protected:
 	{
 		// This needs to be called from places where we are modifying the buffer list.
 		// It's an error to modify the buffer pointers or lengths if we own the buffer memory.
-		check(mBufferMemory == NULL);
+		XAssert(mBufferMemory == NULL);
 	}
 
 	const char *						mName;	// for debugging

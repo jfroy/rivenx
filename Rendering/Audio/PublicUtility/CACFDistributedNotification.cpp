@@ -38,73 +38,63 @@
 			STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
 			POSSIBILITY OF SUCH DAMAGE.
 */
-#if !defined(__CABasicSineOscillator_h__)
-#define __CABasicSineOscillator_h__
-
 //==================================================================================================
 //	Includes
 //==================================================================================================
 
-//	System Includes
-#include <math.h>
+//	Self Include
+#include "CACFDistributedNotification.h"
+
+//	PublicUtility Includes
+#include "CADebugMacros.h"
 
 //==================================================================================================
-//	CABasicSineOscillator
-//
-//	A sine wave oscillator that uses an iterative function to calculate sine but does not support
-//	modulation of any kind.
+//	CACFDistributedNotification
 //==================================================================================================
 
-class CABasicSineOscillator
+void	CACFDistributedNotification::AddObserver(const void* inObserver, CFNotificationCallback inCallback, CFStringRef inName, CFNotificationSuspensionBehavior inSuspensionBehavior)
 {
-
-//	Construction/Destruction
-public:
-	CABasicSineOscillator(double inSampleRate, double inFrequency, double inVolumeScalar)
-	:
-		mSampleRate(inSampleRate),
-		mFrequency(inFrequency),
-		mVolumeScalar(inVolumeScalar),
-		mOmega(0),
-		mB(0),
-		mY1(0),
-		mY2(0)
-	{ 
-		Reset();
-	}
-	
-	~CABasicSineOscillator()
-	{
-	}
-
-//	Operations
-public:
-	double	NextValue()
-	{
-		double theAnswer = (mB * mY1) - mY2;
-		mY2 = mY1;
-		mY1 = theAnswer;
-		return mVolumeScalar * theAnswer;
-	}
-	
-	void	Reset()
-	{
-		mOmega = (2 * M_PI * mFrequency) / mSampleRate;
-		mB = 2 * cos(mOmega);
-		mY1 = 0;
-		mY2 = sin(-mOmega);
-	}
-
-//	Implementation
-private:
-	double	mSampleRate;
-	double	mFrequency;
-	double	mVolumeScalar;
-	double	mOmega;
-	double	mB;
-	double	mY1;
-	double	mY2;
-
-};
-
+#if	!TARGET_OS_IPHONE
+	CFNotificationCenterRef theCenter = CFNotificationCenterGetDistributedCenter();
+	CFNotificationSuspensionBehavior theSuspensionBehavior = inSuspensionBehavior;
+#else
+	CFNotificationCenterRef theCenter = CFNotificationCenterGetDarwinNotifyCenter();
+	CFNotificationSuspensionBehavior theSuspensionBehavior = 0;
 #endif
+	 
+	CFNotificationCenterAddObserver(theCenter, inObserver, inCallback, inName, NULL, theSuspensionBehavior);
+}
+
+void	CACFDistributedNotification::RemoveObserver(const void* inObserver, CFStringRef inName)
+{
+#if	!TARGET_OS_IPHONE
+	CFNotificationCenterRef theCenter = CFNotificationCenterGetDistributedCenter();
+#else
+	CFNotificationCenterRef theCenter = CFNotificationCenterGetDarwinNotifyCenter();
+#endif
+	 
+	CFNotificationCenterRemoveObserver(theCenter, inObserver, inName, NULL);
+}
+
+void	CACFDistributedNotification::PostNotification(CFStringRef inName, CFDictionaryRef inUserInfo, bool inPostToAllSessions)
+{
+#if	!TARGET_OS_IPHONE
+	CFNotificationCenterRef theCenter = CFNotificationCenterGetDistributedCenter();
+	CFDictionaryRef theUserInfo = inUserInfo;
+	CFOptionFlags theFlags = kCFNotificationDeliverImmediately;
+	if(inPostToAllSessions)
+	{
+		theFlags += kCFNotificationPostToAllSessions;
+	}
+#else
+	//	flag unsupported features
+	Assert(inUserInfo == NULL, "CACFDistributedNotification::PostNotification: distributed notifications do not support a payload");
+	Assert(inPostToAllSessions, "CACFDistributedNotification::PostNotification: distributed notifications do not support per-session delivery");
+	
+	CFNotificationCenterRef theCenter = CFNotificationCenterGetDarwinNotifyCenter();
+	CFDictionaryRef theUserInfo = NULL;
+	CFOptionFlags theFlags = 0;
+#endif
+	 
+	 CFNotificationCenterPostNotificationWithOptions(theCenter, inName, NULL, theUserInfo, theFlags);
+}
