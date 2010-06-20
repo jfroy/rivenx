@@ -47,8 +47,6 @@
 #include "CAAUParameter.h"
 #include "CAAUMIDIMap.h"
 
-#include <CoreServices/../Frameworks/CarbonCore.framework/Headers/MacErrors.h>
-
 #pragma mark __CAStreamBasicDescription
 
 static const CFStringRef kSampleRate = CFSTR("sample rate");
@@ -162,10 +160,10 @@ OSStatus		CAComponent::Restore (CFPropertyListRef &inData)
 
 	Clear();
 
-	mComp = AudioComponentFindNext (NULL, &mDesc);
+	mComp = FindNextComponent (NULL, &mDesc);
 		// this will restore the current flags...
 	if (mComp)
-		AudioComponentGetDescription (Comp(), &mDesc);
+		GetComponentInfo (Comp(), &mDesc, NULL, NULL, NULL);
 
 	return noErr;
 }
@@ -232,7 +230,8 @@ OSStatus	CAAudioChannelLayout::Restore (CFPropertyListRef &inData)
 	if (CFGetTypeID (inData) != CFDictionaryGetTypeID()) return paramErr;
 	CACFDictionary dict(static_cast<CFDictionaryRef>(inData), false);
 
-	RefCountedLayout *temp = NULL;
+	ACLRefCounter *temp = NULL;
+	UInt32 size = 0;
 	AudioChannelLayout* layout;
 	
 	CFArrayRef descs = NULL;
@@ -242,7 +241,8 @@ OSStatus	CAAudioChannelLayout::Restore (CFPropertyListRef &inData)
 		numDescs = CFArrayGetCount (descs);
 	}
 	
-	temp = RefCountedLayout::CreateWithNumberChannelDescriptions(numDescs);
+	size = numDescs * sizeof (AudioChannelDescription) + offsetof(AudioChannelLayout, mChannelDescriptions[0]);
+	temp = new ACLRefCounter (size);
 	layout = temp->GetLayout();
 		
 	if (!dict.GetUInt32 (kACLTagKey, layout->mChannelLayoutTag))
@@ -275,10 +275,10 @@ OSStatus	CAAudioChannelLayout::Restore (CFPropertyListRef &inData)
 				goto badget;
 		}
 	}
-	if (mLayout)
-		mLayout->release();
+	if (mLayoutHolder)
+		mLayoutHolder->release();
 
-	mLayout = temp;
+	mLayoutHolder = temp;
 	
 	return noErr;
 

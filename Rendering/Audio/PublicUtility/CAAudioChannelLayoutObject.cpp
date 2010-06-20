@@ -45,9 +45,10 @@
 	#include <AudioFormat.h>
 #endif
 
+
 CAAudioChannelLayout::CAAudioChannelLayout ()
 {
-	mLayout = RefCountedLayout::CreateWithNumberChannelDescriptions(0);
+	mLayoutHolder = new ACLRefCounter (offsetof(AudioChannelLayout, mChannelDescriptions));
 }
 
 //=============================================================================
@@ -56,46 +57,51 @@ CAAudioChannelLayout::CAAudioChannelLayout ()
 CAAudioChannelLayout::CAAudioChannelLayout (UInt32 inNumberChannels, bool inChooseSurround)
 {		
 		// this chooses default layouts based on the number of channels...
-	AudioChannelLayoutTag tag;
+	UInt32 theSize = CalculateByteSize (inNumberChannels);
+		
+	mLayoutHolder = new ACLRefCounter (theSize);
+	
+	AudioChannelLayout* layout = mLayoutHolder->GetLayout();
+
+	layout->mNumberChannelDescriptions = inNumberChannels;
 	
 	switch (inNumberChannels) 
 	{
-		default:
-			// here we have a "broken" layout, in the sense that we haven't any idea how to lay this out
-			mLayout = RefCountedLayout::CreateWithNumberChannelDescriptions(inNumberChannels);
-			SetAllToUnknown(*mLayout->GetLayout(), inNumberChannels);
-			return; // don't fall into the tag case
 		case 1:
-			tag = kAudioChannelLayoutTag_Mono;
+			layout->mChannelLayoutTag = kAudioChannelLayoutTag_Mono;
 			break;
 		case 2:
-			tag = inChooseSurround ? kAudioChannelLayoutTag_Binaural : kAudioChannelLayoutTag_Stereo;
+			layout->mChannelLayoutTag = inChooseSurround ? kAudioChannelLayoutTag_Binaural : kAudioChannelLayoutTag_Stereo;
 			break;
 		case 4:
-			tag = inChooseSurround ? kAudioChannelLayoutTag_Ambisonic_B_Format : kAudioChannelLayoutTag_AudioUnit_4;
+			layout->mChannelLayoutTag = inChooseSurround ? kAudioChannelLayoutTag_Ambisonic_B_Format : kAudioChannelLayoutTag_AudioUnit_4;
 			break;
 		case 5:
-			tag = inChooseSurround ? kAudioChannelLayoutTag_AudioUnit_5_0 : kAudioChannelLayoutTag_AudioUnit_5;
+			layout->mChannelLayoutTag = inChooseSurround ? kAudioChannelLayoutTag_AudioUnit_5_0 : kAudioChannelLayoutTag_AudioUnit_5;
 			break;
 		case 6:
-			tag = inChooseSurround ? kAudioChannelLayoutTag_AudioUnit_6_0 : kAudioChannelLayoutTag_AudioUnit_6;
+			layout->mChannelLayoutTag = inChooseSurround ? kAudioChannelLayoutTag_AudioUnit_6_0 : kAudioChannelLayoutTag_AudioUnit_6;
 			break;
 		case 7:
-			tag = kAudioChannelLayoutTag_AudioUnit_7_0;
+			layout->mChannelLayoutTag = kAudioChannelLayoutTag_AudioUnit_7_0;
 			break;
 		case 8:
-			tag = kAudioChannelLayoutTag_AudioUnit_8;
+			layout->mChannelLayoutTag = kAudioChannelLayoutTag_AudioUnit_8;
+			break;
+		default:
+			// here we have a "broken" layout, in the sense that we haven't any idea how to lay this out
+			// the layout itself is all set to zeros
+			// ### no longer true ###
+			SetAllToUnknown(*layout, inNumberChannels);
 			break;
 	}
-	
-	mLayout = RefCountedLayout::CreateWithLayoutTag(tag);
 }
 
 //=============================================================================
 //	CAAudioChannelLayout::CAAudioChannelLayout
 //=============================================================================
 CAAudioChannelLayout::CAAudioChannelLayout (AudioChannelLayoutTag inLayoutTag)
-	: mLayout(NULL)
+	: mLayoutHolder(NULL)
 {
 	SetWithTag(inLayoutTag);
 }
@@ -104,7 +110,7 @@ CAAudioChannelLayout::CAAudioChannelLayout (AudioChannelLayoutTag inLayoutTag)
 //	CAAudioChannelLayout::CAAudioChannelLayout
 //=============================================================================
 CAAudioChannelLayout::CAAudioChannelLayout (const CAAudioChannelLayout &c)
-	: mLayout(NULL)
+	: mLayoutHolder(NULL)
 {
 	*this = c;
 }
@@ -114,7 +120,7 @@ CAAudioChannelLayout::CAAudioChannelLayout (const CAAudioChannelLayout &c)
 //	CAAudioChannelLayout::AudioChannelLayout
 //=============================================================================
 CAAudioChannelLayout::CAAudioChannelLayout (const AudioChannelLayout* inChannelLayout)
-	: mLayout(NULL)
+	: mLayoutHolder(NULL)
 {
 	*this = inChannelLayout;
 }
@@ -124,9 +130,9 @@ CAAudioChannelLayout::CAAudioChannelLayout (const AudioChannelLayout* inChannelL
 //=============================================================================
 CAAudioChannelLayout::~CAAudioChannelLayout ()
 {
-	if (mLayout) {
-		mLayout->release();
-		mLayout = NULL;
+	if (mLayoutHolder) {
+		mLayoutHolder->release();
+		mLayoutHolder = NULL;
 	}
 }
 
@@ -135,12 +141,12 @@ CAAudioChannelLayout::~CAAudioChannelLayout ()
 //=============================================================================
 CAAudioChannelLayout& CAAudioChannelLayout::operator= (const CAAudioChannelLayout &c)
 {
-	if (mLayout != c.mLayout) {
-		if (mLayout)
-			mLayout->release();
+	if (mLayoutHolder != c.mLayoutHolder) {
+		if (mLayoutHolder)
+			mLayoutHolder->release();
 	
-		if ((mLayout = c.mLayout) != NULL)
-			mLayout->retain();
+		if ((mLayoutHolder = c.mLayoutHolder) != NULL)
+			mLayoutHolder->retain();
 	}
 	
 	return *this;
@@ -148,29 +154,35 @@ CAAudioChannelLayout& CAAudioChannelLayout::operator= (const CAAudioChannelLayou
 
 CAAudioChannelLayout&	CAAudioChannelLayout::operator= (const AudioChannelLayout* inChannelLayout)
 {
-	if (mLayout && &mLayout->Layout() == inChannelLayout)
+	if (mLayoutHolder && mLayoutHolder->mLayout == inChannelLayout)
 		return *this;
 		
-	if (mLayout)
-		mLayout->release();
+	if (mLayoutHolder)
+		mLayoutHolder->release();
 
 	if (inChannelLayout == NULL) 
 	{
-		mLayout = RefCountedLayout::CreateWithNumberChannelDescriptions(0);
+		mLayoutHolder = new ACLRefCounter ();
 	}
 	else
 	{
-		mLayout = RefCountedLayout::CreateWithLayout(inChannelLayout);
+		UInt32 theSize = CalculateByteSize (inChannelLayout->mNumberChannelDescriptions);
+		
+		mLayoutHolder = new ACLRefCounter (theSize);
+		
+		memcpy(mLayoutHolder->mLayout, inChannelLayout, theSize);
 	}
 	return *this;
 }
 
 void	CAAudioChannelLayout::SetWithTag(AudioChannelLayoutTag inTag)
 {
-	if (mLayout)
-		mLayout->release();
+	if (mLayoutHolder)
+		mLayoutHolder->release();
 	
-	mLayout = RefCountedLayout::CreateWithLayoutTag(inTag);
+	mLayoutHolder = new ACLRefCounter(offsetof(AudioChannelLayout, mChannelDescriptions[0]));
+	AudioChannelLayout* layout = mLayoutHolder->GetLayout();
+	layout->mChannelLayoutTag = inTag;
 }
 
 //=============================================================================
@@ -178,7 +190,7 @@ void	CAAudioChannelLayout::SetWithTag(AudioChannelLayoutTag inTag)
 //=============================================================================
 bool		CAAudioChannelLayout::operator== (const CAAudioChannelLayout &c) const
 {
-	if (mLayout == c.mLayout)
+	if (mLayoutHolder == c.mLayoutHolder)
 		return true;
 	return Layout() == c.Layout();
 }

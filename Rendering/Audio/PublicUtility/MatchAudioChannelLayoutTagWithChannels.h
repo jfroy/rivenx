@@ -38,46 +38,34 @@
 			STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
 			POSSIBILITY OF SUCH DAMAGE.
 */
-#if !defined(__CAHALAudioSystemObject_h__)
-#define __CAHALAudioSystemObject_h__
+#ifndef __MatchAudioChannelLayoutTagWithChannels_h__
+#define __MatchAudioChannelLayoutTagWithChannels_h__
 
-//==================================================================================================
-//	Includes
-//==================================================================================================
+//	System Includes
+#if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
+	#include <CoreAudio/CoreAudioTypes.h>
+#else
+	#include <CoreAudioTypes.h>
+#endif
 
-//	Super Class Includes
-#include "CAHALAudioObject.h"
+/*
+MatchAudioChannelLayoutTagWithChannels determines whether an AudioChannelLayoutTag 
+matches the channel descriptions in an AudioChannelLayout.
+*/
 
-//==================================================================================================
-//	CAHALAudioSystemObject
-//==================================================================================================
+Boolean MatchAudioChannelLayoutTagWithChannels(
+		AudioChannelLayoutTag 	inTag, 
+		AudioChannelLayout		*inLayout);
 
-class CAHALAudioSystemObject
-:
-	public	CAHALAudioObject
-{
+/*
+FindTagForMatchAudioChannelLayoutInAnyOrder determines whether there is any AudioChannelLayoutTag that contains the same
+channel labels as inLayout. If there is the first one that matches is returned in outTag and the function returns true.
+Otherwise the function returns false.
+*/
 
-//	Construction/Destruction
-public:
-					CAHALAudioSystemObject();
-	virtual			~CAHALAudioSystemObject();
+Boolean FindTagForMatchAudioChannelLayoutInAnyOrder(
+		AudioChannelLayout		*inLayout, 
+		AudioChannelLayoutTag 	&outTag);
 
-//	Audio Device List Management
-public:
-	UInt32			GetNumberAudioDevices() const;
-	void			GetAudioDevices(UInt32& ioNumberAudioDevices, AudioObjectID* outAudioDevices) const;
-	AudioObjectID	GetAudioDeviceAtIndex(UInt32 inIndex) const;
-	AudioObjectID	GetAudioDeviceForUID(CFStringRef inUID) const;
-
-//	Default Device Management
-public:
-	AudioObjectID	GetDefaultAudioDevice(bool inIsInput, bool inIsSystem) const;
-	void			SetDefaultAudioDevice(bool inIsInput, bool inIsSystem, AudioObjectID inNewDefaultDevice);
-	
-//	PlugIns
-public:
-	AudioObjectID	GetAudioPlugInForBundleID(CFStringRef inBundleID) const;
-
-};
 
 #endif

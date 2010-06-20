@@ -86,7 +86,6 @@ public:
 	static UInt64	GetCurrentTimeInNanos();
 
 	static Float64	GetFrequency() { if(!sIsInited) { Initialize(); } return sFrequency; }
-	static Float64	GetInverseFrequency() { if(!sIsInited) { Initialize(); } return sInverseFrequency; }
 	static UInt32	GetMinimumDelta() { if(!sIsInited) { Initialize(); } return sMinDelta; }
 
 	static UInt64	AbsoluteHostDeltaToNanos(UInt64 inStartTime, UInt64 inEndTime);
@@ -98,7 +97,6 @@ private:
 	static bool		sIsInited;
 	
 	static Float64	sFrequency;
-	static Float64	sInverseFrequency;
 	static UInt32	sMinDelta;
 	static UInt32	sToNanosNumerator;
 	static UInt32	sToNanosDenominator;

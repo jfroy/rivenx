@@ -76,7 +76,7 @@ AUOutputBL::~AUOutputBL()
 		delete[] mBufferMemory;
 
 	if (mBufferList)
-		delete [] (Byte *)mBufferList;
+		delete [] mBufferList;
 }
 
 void 	AUOutputBL::Prepare (UInt32 inNumFrames, bool inWantNullBufferIfAllocated) 

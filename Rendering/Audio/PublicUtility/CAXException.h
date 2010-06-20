@@ -49,30 +49,8 @@
 #endif
 #include "CADebugMacros.h"
 #include <ctype.h>
-//#include <stdio.h>
+#include <stdio.h>
 #include <string.h>
-
-
-class CAX4CCString {
-public:
-	CAX4CCString(OSStatus error) {
-		// see if it appears to be a 4-char-code
-		char *str = mStr;
-		*(UInt32 *)(str + 1) = CFSwapInt32HostToBig(error);
-		if (isprint(str[1]) && isprint(str[2]) && isprint(str[3]) && isprint(str[4])) {
-			str[0] = str[5] = '\'';
-			str[6] = '\0';
-		} else if (error > -200000 && error < 200000)
-			// no, format it as an integer
-			sprintf(str, "%d", (int)error);
-		else
-			sprintf(str, "0x%x", (int)error);
-	}
-	const char *get() const { return mStr; }
-	operator const char *() const { return mStr; }
-private:
-	char mStr[16];
-};
 
 // An extended exception class that includes the name of the failed operation
 class CAXException {
@@ -86,8 +64,7 @@ public:
 				memcpy(mOperation, operation, sizeof(mOperation) - 1);
 				mOperation[sizeof(mOperation) - 1] = '\0';
 			} else
-
-			strlcpy(mOperation, operation, sizeof(mOperation));
+				strcpy(mOperation, operation);
 		}
 	
 	char *FormatError(char *str) const
@@ -102,9 +79,21 @@ public:
 	
 	typedef void (*WarningHandler)(const char *msg, OSStatus err);
 	
+	/*static void Throw(const char *operation, OSStatus err)
+	{
+		throw CAXException(operation, err);
+	}*/
+	
 	static char *FormatError(char *str, OSStatus error)
 	{
-		strcpy(str, CAX4CCString(error));
+		// see if it appears to be a 4-char-code
+		*(UInt32 *)(str + 1) = CFSwapInt32HostToBig(error);
+		if (isprint(str[1]) && isprint(str[2]) && isprint(str[3]) && isprint(str[4])) {
+			str[0] = str[5] = '\'';
+			str[6] = '\0';
+		} else
+			// no, format it as an integer
+			sprintf(str, "%d", (int)error);
 		return str;
 	}
 	
@@ -120,208 +109,78 @@ private:
 };
 
 #if	DEBUG || CoreAudio_Debug
-	#define XThrowIfError(error, operation)										\
+	#define XThrowIfError(error, operation) \
 		do {																	\
 			OSStatus __err = error;												\
-			if (__err) {														\
-				DebugMessageN2("about to throw %s: %s", CAX4CCString(__err).get(), operation);\
+			if (__err) {															\
+				char __buf[12];													\
+				DebugMessageN2("error %s: %s\n", CAXException::FormatError(__buf, __err), operation);\
 				STOP;															\
-				throw CAXException(operation, __err);							\
+				throw CAXException(operation, __err);		\
 			}																	\
 		} while (0)
 
-	#define XThrowIf(condition, error, operation)								\
+	#define XThrowIf(condition, error, operation) \
 		do {																	\
 			if (condition) {													\
 				OSStatus __err = error;											\
-				DebugMessageN2("about to throw %s: %s", CAX4CCString(__err).get(), operation);\
+				char __buf[12];													\
+				DebugMessageN2("error %s: %s\n", CAXException::FormatError(__buf, __err), operation);\
 				STOP;															\
-				throw CAXException(operation, __err);							\
+				throw CAXException(operation, __err);		\
 			}																	\
 		} while (0)
 
-	#define XRequireNoError(error, label)										\
-		do {																	\
-			OSStatus __err = error;												\
-			if (__err) {														\
-				DebugMessageN2("about to throw %s: %s", CAX4CCString(__err).get(), #error);\
+	#define XRequireNoError(error, label) \
+		do { \
+			OSStatus __err = error; \
+			if (__err) { \
+				char __buf[12];													\
+				DebugMessageN2("error %s: %s\n", CAXException::FormatError(__buf, __err), #error);\
 				STOP;															\
-				goto label;														\
-			}																	\
-		} while (0)
-	
-	#define XAssert(assertion)													\
-		do {																	\
-			if (!(assertion)) {													\
-				DebugMessageN1("error: failed assertion: %s", #assertion);		\
-				STOP;															\
-			}																	\
+				goto label; \
+			} \
 		} while (0)
 	
-	#define XAssertNoError(error)												\
-		do {																	\
-			OSStatus __err = error;												\
-			if (__err) {														\
-				DebugMessageN2("error %s: %s", CAX4CCString(__err).get(), #error);\
+	#define XAssertNoError(error) \
+		do { \
+			OSStatus __err = error; \
+			if (__err) { \
+				char __buf[12];													\
+				DebugMessageN2("error %s: %s\n", CAXException::FormatError(__buf, __err), #error);\
 				STOP;															\
-			}																	\
+			} \
 		} while (0)
-
-	#define ca_require_noerr(errorCode, exceptionLabel)							\
-		do																		\
-		{																		\
-			int evalOnceErrorCode = (errorCode);								\
-			if ( __builtin_expect(0 != evalOnceErrorCode, 0) )					\
-			{																	\
-				DebugMessageN5("ca_require_noerr: [%s, %d] (goto %s;) %s:%d",	\
-					#errorCode,	evalOnceErrorCode,		 						\
-					#exceptionLabel,											\
-					__FILE__,													\
-					__LINE__);													\
-				goto exceptionLabel;											\
-			}																	\
-		} while ( 0 )
-
-	#define ca_verify_noerr(errorCode)											\
-		do																		\
-		{																		\
-			int evalOnceErrorCode = (errorCode);								\
-			if ( __builtin_expect(0 != evalOnceErrorCode, 0) )					\
-			{																	\
-				DebugMessageN4("ca_verify_noerr: [%s, %d] %s:%d",				\
-					#errorCode,	evalOnceErrorCode,								\
-					__FILE__,													\
-					__LINE__);													\
-			}																	\
-		} while ( 0 )
-
-	#define ca_debug_string(message)											\
-		do																		\
-		{																		\
-			DebugMessageN3("ca_debug_string: %s %s:%d",							\
-				message,														\
-				__FILE__,														\
-				__LINE__);														\
-		} while ( 0 )
-
-
-	#define ca_verify(assertion)												\
-		do																		\
-		{																		\
-			if ( __builtin_expect(!(assertion), 0) )							\
-			{																	\
-				DebugMessageN3("ca_verify: %s %s:%d",							\
-					#assertion,													\
-					__FILE__,													\
-					__LINE__);													\
-			}																	\
-		} while ( 0 )
-
-	#define ca_require(assertion, exceptionLabel)								\
-		do																		\
-		{																		\
-			if ( __builtin_expect(!(assertion), 0) )							\
-			{																	\
-				DebugMessageN4("ca_require: %s %s %s:%d",						\
-					#assertion,													\
-					#exceptionLabel,											\
-					__FILE__,													\
-					__LINE__);													\
-				goto exceptionLabel;											\
-			}																	\
-		} while ( 0 )
-
-   #define ca_check(assertion)													\
-      do																		\
-      {																			\
-          if ( __builtin_expect(!(assertion), 0) )								\
-          {																		\
-              DebugMessageN3("ca_check: %s %s:%d",							\
-                  #assertion,													\
-                  __FILE__,														\
-                  __LINE__);													\
-          }																		\
-      } while ( 0 )
-		
+	
 #else
-	#define XThrowIfError(error, operation)										\
+	#define XThrowIfError(error, operation) \
 		do {																	\
 			OSStatus __err = error;												\
-			if (__err) {														\
-				throw CAXException(operation, __err);							\
+			if (__err) {															\
+				throw CAXException(operation, __err);		\
 			}																	\
 		} while (0)
 
-	#define XThrowIf(condition, error, operation)								\
+	#define XThrowIf(condition, error, operation) \
 		do {																	\
 			if (condition) {													\
 				OSStatus __err = error;											\
-				throw CAXException(operation, __err);							\
+				throw CAXException(operation, __err);		\
 			}																	\
 		} while (0)
 
-	#define XRequireNoError(error, label)										\
+	#define XRequireNoError(error, label) \
 		do {																	\
 			OSStatus __err = error;												\
-			if (__err) {														\
-				goto label;														\
+			if (__err) {															\
+				goto label;		\
 			}																	\
 		} while (0)
 
-	#define XAssert(assertion)													\
+	#define XAssertNoError(error) \
 		do {																	\
+			/*OSStatus __err =*/ error;												\
 		} while (0)
-
-	#define XAssertNoError(error)												\
-		do {																	\
-			/*OSStatus __err =*/ error;											\
-		} while (0)
-
-	#define ca_require_noerr(errorCode, exceptionLabel)							\
-		do																		\
-		{																		\
-			if ( __builtin_expect(0 != (errorCode), 0) )						\
-			{																	\
-				goto exceptionLabel;											\
-			}																	\
-		} while ( 0 )
-
-	#define ca_verify_noerr(errorCode)											\
-		do																		\
-		{																		\
-			if ( 0 != (errorCode) )												\
-			{																	\
-			}																	\
-		} while ( 0 )
-
-	#define ca_debug_string(message)
-
-	#define ca_verify(assertion)												\
-		do																		\
-		{																		\
-			if ( !(assertion) )													\
-			{																	\
-			}																	\
-		} while ( 0 )
-
-	#define ca_require(assertion, exceptionLabel)								\
-		do																		\
-		{																		\
-			if ( __builtin_expect(!(assertion), 0) )							\
-			{																	\
-				goto exceptionLabel;											\
-			}																	\
-		} while ( 0 )
-
-   #define ca_check(assertion)													\
-		do																		\
-		{																		\
-			if ( !(assertion) )													\
-			{																	\
-			}																	\
-		} while ( 0 )
-
-
 #endif
 
 #define XThrow(error, operation) XThrowIf(true, error, operation)

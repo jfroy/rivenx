@@ -46,9 +46,8 @@
 #include "CACFDictionary.h"
 
 //	PublicUtility Includes
-#include "CACFArray.h"
-#include "CACFNumber.h"
 #include "CACFString.h"
+#include "CACFNumber.h"
 
 //=============================================================================
 //	CACFDictionary
@@ -61,7 +60,7 @@ bool	CACFDictionary::HasKey(const CFStringRef inKey) const
 
 UInt32	CACFDictionary::Size () const
 {
-	return ToUInt32(CFDictionaryGetCount(mCFDictionary));
+	return CFDictionaryGetCount(mCFDictionary);
 }
 
 void	CACFDictionary::GetKeys (const void **keys) const
@@ -312,58 +311,6 @@ bool	CACFDictionary::GetCFTypeWithCStringKey(const char* inKey, CFTypeRef& outVa
 	return theAnswer;
 }
 
-void	CACFDictionary::GetCACFString(const CFStringRef inKey, CACFString& outValue) const
-{
-	outValue = static_cast<CFStringRef>(NULL);
-	CFTypeRef theValue = NULL;
-	if(GetCFType(inKey, theValue))
-	{
-		if((theValue != NULL) && (CFGetTypeID(theValue) == CFStringGetTypeID()))
-		{
-			outValue = static_cast<CFStringRef>(theValue);
-		}
-	}
-}
-	
-void	CACFDictionary::GetCACFArray(const CFStringRef inKey, CACFArray& outValue) const
-{
-	outValue = static_cast<CFArrayRef>(NULL);
-	CFTypeRef theValue = NULL;
-	if(GetCFType(inKey, theValue))
-	{
-		if((theValue != NULL) && (CFGetTypeID(theValue) == CFArrayGetTypeID()))
-		{
-			outValue = static_cast<CFArrayRef>(theValue);
-		}
-	}
-}
-	
-void	CACFDictionary::GetCACFDictionary(const CFStringRef inKey, CACFDictionary& outValue) const
-{
-	outValue = static_cast<CFDictionaryRef>(NULL);
-	CFTypeRef theValue = NULL;
-	if(GetCFType(inKey, theValue))
-	{
-		if((theValue != NULL) && (CFGetTypeID(theValue) == CFDictionaryGetTypeID()))
-		{
-			outValue = static_cast<CFDictionaryRef>(theValue);
-		}
-	}
-}
-
-bool	CACFDictionary::AddBool(const CFStringRef inKey, bool inValue)
-{
-	bool theAnswer = false;
-	
-	if(mMutable && (mCFDictionary != NULL))
-	{
-		CACFBoolean theValue(inValue);
-		theAnswer = AddCFType(inKey, theValue.GetCFBoolean());
-	}
-	
-	return theAnswer;
-}
-
 bool	CACFDictionary::AddSInt32(const CFStringRef inKey, SInt32 inValue)
 {
 	bool theAnswer = false;
@@ -503,19 +450,6 @@ bool	CACFDictionary::AddData(const CFStringRef inKey, const CFDataRef inValue)
 }
 
 bool	CACFDictionary::AddCFType(const CFStringRef inKey, const CFTypeRef inValue)
-{
-	bool theAnswer = false;
-	
-	if(mMutable && (mCFDictionary != NULL))
-	{
-		CFDictionarySetValue(mCFDictionary, inKey, inValue);
-		theAnswer = true;
-	}
-	
-	return theAnswer;
-}
-
-bool	CACFDictionary::AddURL(const CFStringRef inKey, const CFURLRef inValue)
 {
 	bool theAnswer = false;
 	

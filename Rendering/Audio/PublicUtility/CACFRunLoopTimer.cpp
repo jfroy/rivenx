@@ -38,63 +38,69 @@
 			STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
 			POSSIBILITY OF SUCH DAMAGE.
 */
-//==================================================================================================
+//=============================================================================
 //	Includes
-//==================================================================================================
+//=============================================================================
 
-//	Self Include
-#include "CACFDistributedNotification.h"
-
-//	PublicUtility Includes
+#include "CACFRunLoopTimer.h"
 #include "CADebugMacros.h"
+#include "CAException.h"
 
-//==================================================================================================
-//	CACFDistributedNotification
-//==================================================================================================
+//=============================================================================
+//	CACFRunLoopTimer
+//=============================================================================
 
-void	CACFDistributedNotification::AddObserver(const void* inObserver, CFNotificationCallback inCallback, CFStringRef inName, CFNotificationSuspensionBehavior inSuspensionBehavior)
+CACFRunLoopTimer::CACFRunLoopTimer(CFAbsoluteTime inFireTime, CFTimeInterval inFireInterval)
+:
+	mRunLoopTimer(NULL)
 {
-#if	!TARGET_OS_IPHONE
-	CFNotificationCenterRef theCenter = CFNotificationCenterGetDistributedCenter();
-	CFNotificationSuspensionBehavior theSuspensionBehavior = inSuspensionBehavior;
-#else
-	CFNotificationCenterRef theCenter = CFNotificationCenterGetDarwinNotifyCenter();
-	CFNotificationSuspensionBehavior theSuspensionBehavior = 0;
-#endif
-	 
-	CFNotificationCenterAddObserver(theCenter, inObserver, inCallback, inName, NULL, theSuspensionBehavior);
-}
-
-void	CACFDistributedNotification::RemoveObserver(const void* inObserver, CFStringRef inName)
-{
-#if	!TARGET_OS_IPHONE
-	CFNotificationCenterRef theCenter = CFNotificationCenterGetDistributedCenter();
-#else
-	CFNotificationCenterRef theCenter = CFNotificationCenterGetDarwinNotifyCenter();
-#endif
-	 
-	CFNotificationCenterRemoveObserver(theCenter, inObserver, inName, NULL);
-}
-
-void	CACFDistributedNotification::PostNotification(CFStringRef inName, CFDictionaryRef inUserInfo, bool inPostToAllSessions)
-{
-#if	!TARGET_OS_IPHONE
-	CFNotificationCenterRef theCenter = CFNotificationCenterGetDistributedCenter();
-	CFDictionaryRef theUserInfo = inUserInfo;
-	CFOptionFlags theFlags = kCFNotificationDeliverImmediately;
-	if(inPostToAllSessions)
-	{
-		theFlags += kCFNotificationPostToAllSessions;
-	}
-#else
-	//	flag unsupported features
-	Assert(inUserInfo == NULL, "CACFDistributedNotification::PostNotification: distributed notifications do not support a payload");
-	Assert(inPostToAllSessions, "CACFDistributedNotification::PostNotification: distributed notifications do not support per-session delivery");
+	//	initialize the context
+	mRunLoopTimerContext.version = 0;
+	mRunLoopTimerContext.info = this;
+	mRunLoopTimerContext.retain = NULL;
+	mRunLoopTimerContext.release = NULL;
+	mRunLoopTimerContext.copyDescription = NULL;
 	
-	CFNotificationCenterRef theCenter = CFNotificationCenterGetDarwinNotifyCenter();
-	CFDictionaryRef theUserInfo = NULL;
-	CFOptionFlags theFlags = 0;
-#endif
-	 
-	 CFNotificationCenterPostNotificationWithOptions(theCenter, inName, NULL, theUserInfo, theFlags);
+	mRunLoopTimer = CFRunLoopTimerCreate(NULL, inFireTime, inFireInterval, 0, 0, (CFRunLoopTimerCallBack)TimerCallBack, &mRunLoopTimerContext);
+	ThrowIf(mRunLoopTimer == NULL, CAException('what'), "CACFRunLoopTimer::CACFRunLoopTimer: couldn't create the timer object");
+}
+
+CACFRunLoopTimer::~CACFRunLoopTimer()
+{
+	CFRunLoopTimerInvalidate(mRunLoopTimer);
+	CFRelease(mRunLoopTimer);
+}
+
+void	CACFRunLoopTimer::FireAt(CFAbsoluteTime inFireTime)
+{
+	CFRunLoopTimerSetNextFireDate(mRunLoopTimer, inFireTime);
+}
+
+void	CACFRunLoopTimer::Cancel()
+{
+	static const CFAbsoluteTime kLongTimeInTheFuture = 1000000000000.0;
+	FireIn(kLongTimeInTheFuture);
+}
+
+void	CACFRunLoopTimer::Fire()
+{
+}
+
+void	CACFRunLoopTimer::TimerCallBack(CFRunLoopTimerRef /*inTimer*/, CACFRunLoopTimer* inTimerObject)
+{
+	#if	Time_Notification_Thread
+		Float64 theStartTime = (Float64)CAHostTimeBase::GetCurrentTimeInNanos();
+		printf("-->CACFRunLoopTimer::TimerCallBack at: %.3f\n", theStartTime / 1000000.0);
+	#endif
+
+	if(inTimerObject != NULL)
+	{
+		inTimerObject->Fire();
+	}
+
+	#if	Time_Notification_Thread
+		Float64 theEndTime = (Float64)CAHostTimeBase::GetCurrentTimeInNanos();
+		printf("<--CACFRunLoopTimer::TimerCallBack at: %.3f duration: %.3f\n", theEndTime / 1000000.0, (theStartTime - theEndTime) / 1000000.0);
+		fflush(stdout);
+	#endif
 }

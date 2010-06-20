@@ -41,49 +41,8 @@
 #if !defined(__CAPtr_h__)
 #define __CAPtr_h__
 
-#include <stdlib.h>		// for malloc
+#include <stdlib.h>		// for malloc, calloc
 #include <new>			// for bad_alloc
-#include <string.h>		// for memset
-
-inline void* CA_malloc(size_t size)
-{
-	void* p = malloc(size);
-	if (!p && size) throw std::bad_alloc();
-	return p;
-}
-
-inline void* CA_realloc(void* old, size_t size)
-{
-#if TARGET_OS_WIN32
-	void* p = realloc(old, size);
-#else
-	void* p = reallocf(old, size); // reallocf ensures the old pointer is freed if memory is full (p is NULL).
-#endif
-	if (!p && size) throw std::bad_alloc();
-	return p;
-}
-
-#ifndef UINTPTR_MAX
-#if __LP64__
-#define UINTPTR_MAX	  18446744073709551615ULL
-#else
-#define UINTPTR_MAX	  4294967295U
-#endif
-#endif
-
-inline void* CA_calloc(size_t n, size_t size)
-{	
-	// ensure that multiplication will not overflow
-	if (n && UINTPTR_MAX / n < size) throw std::bad_alloc();
-	
-	size_t nsize = n*size;
-	void* p = malloc(nsize);
-	if (!p && nsize) throw std::bad_alloc();
-
-	memset(p, 0, nsize);
-	return p;
-}
-
 
 // helper class for automatic conversions
 template <typename T>
@@ -120,7 +79,10 @@ public:
 			if (n > maxItems) 
 				throw std::bad_alloc();
 
-			ptr_ = static_cast<T*>(clear ? CA_calloc(n, sizeof(T)) : CA_malloc(n * sizeof(T)));
+			ptr_ = static_cast<T*>(clear ? calloc(n, sizeof(T)) : malloc(n * sizeof(T)));
+
+			if (!ptr_) 
+				throw std::bad_alloc();
 		}
 	
 	~CAAutoFree() { free(); }
@@ -131,18 +93,24 @@ public:
 		if (numItems > maxItems) throw std::bad_alloc();
 		
 		free();
-		ptr_ = static_cast<T*>(clear ? CA_calloc(numItems, sizeof(T)) : CA_malloc(numItems * sizeof(T)));
+		ptr_ = static_cast<T*>(clear ? calloc(numItems, sizeof(T)) : malloc(numItems * sizeof(T)));
+		if (!ptr_) 
+			throw std::bad_alloc();
 	}
 	
 	void allocBytes(size_t numBytes, bool clear = false) 
 	{
 		free();
-		ptr_ = static_cast<T*>(clear ? CA_calloc(1, numBytes) : CA_malloc(numBytes));
+		ptr_ = static_cast<T*>(clear ? calloc(1, numBytes) : malloc(numBytes));
+		if (!ptr_) 
+			throw std::bad_alloc();
 	}
 	
 	void reallocBytes(size_t numBytes) 
 	{
-		ptr_ = static_cast<T*>(CA_realloc(ptr_, numBytes));
+		ptr_ = static_cast<T*>(realloc(ptr_, numBytes));
+		if (!ptr_) 
+			throw std::bad_alloc();
 	}
 
 	void reallocItems(size_t numItems) 
@@ -150,7 +118,9 @@ public:
 		size_t maxItems = ~size_t(0) / sizeof(T);
 		if (numItems > maxItems) throw std::bad_alloc();
 		
-		ptr_ = static_cast<T*>(CA_realloc(ptr_, numItems * sizeof(T)));
+		ptr_ = static_cast<T*>(realloc(ptr_, numItems * sizeof(T)));
+		if (!ptr_) 
+			throw std::bad_alloc();
 	}
 	
 	template <typename U>

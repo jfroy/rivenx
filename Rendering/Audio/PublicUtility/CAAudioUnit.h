@@ -42,17 +42,15 @@
 #define __CAAudioUnit_h__
 
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
+	#include <CoreServices/CoreServices.h>
 	#include <CoreAudio/CoreAudio.h>
 	#include <AudioUnit/AudioUnit.h>
-	#if !TARGET_OS_IPHONE
-		#include <AudioUnit/MusicDevice.h>
-	#endif
 	#include <AudioToolbox/AUGraph.h>
 #else
 	#include <ConditionalMacros.h>
+	#include <CoreServices.h>
 	#include <CoreAudioTypes.h>
 	#include <AudioUnit.h>
-	#include <MusicDevice.h>
 	#include <AUGraph.h>
 	#include <MusicDevice.h>
 #endif
@@ -76,10 +74,6 @@ class CAAUChanHelper;
 // NOT const whereas those that don't change the externally related state of the AU are not const
 
 class CAAudioUnit {
-	enum {
-		paramErr = -50,
-		badComponentSelector = (long)0x80008002
-	};
 public:
 	typedef std::vector<AudioChannelLayoutTag> 	ChannelTagVector;
 	typedef ChannelTagVector::iterator 			ChannelTagVectorIter;
@@ -116,7 +110,7 @@ public:
 
 	const CAComponent&		Comp() const { return mComp; }
 	
-	bool					FromAUGraph () const { return GetAUNode() != 0 && GetAUNode() != kCAAU_DoNotKnowIfAUNode; }
+	bool					FromAUGraph () const { return GetAUNode() != 0 || GetAUNode() != -1; }
 	
 	AUNode					GetAUNode () const;
 	operator AUNode () const { return GetAUNode(); }
@@ -164,6 +158,8 @@ public:
 								return AudioUnitReset (AU(), kAudioUnitScope_Global, 0);
 							}
 
+	OSStatus 				Preroll (UInt32 inFrameSize);
+
 	OSStatus				AddRenderNotify (AURenderCallback   inProc, void *inProcRefCon)
 							{
 								return AudioUnitAddRenderNotify (AU(), inProc, inProcRefCon);
@@ -183,9 +179,28 @@ public:
 	
 	OSStatus				RemovePropertyListener (AudioUnitPropertyID				inID,
 													AudioUnitPropertyListenerProc	inProc,
-													void *							inProcUserData);
+													void *							inProcUserData)
+							{
+									// this is a compile time check
+								#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4
+										// this is a run time check
+										// this API is only available on 10_5 systems
+										// on pre 10.5 systems this is weak linked - so the symbol won't be designed
+									OSStatus result = badComponentSelector;
+									if (AudioUnitRemovePropertyListenerWithUserData != NULL) {
+										result = AudioUnitRemovePropertyListenerWithUserData(AU(), inID, 
+																inProc, inProcUserData);
+									}
+									#if !__LP64__
+										if (result) result = AudioUnitRemovePropertyListener (AU(), inID, inProc);
+									#endif
+									return result;
+								#else
+									return AudioUnitRemovePropertyListener (AU(), inID, inProc);
+								#endif
+							}	
 	
-#if !TARGET_OS_IPHONE
+
 // Fast dispatch support for MIDI Effects or Music Devices	
 	OSStatus				MIDIEvent (UInt32					inStatus,
 										UInt32					inData1,
@@ -212,7 +227,6 @@ public:
 	OSStatus				StopNote (MusicDeviceGroupID		inGroupID,
 									NoteInstanceID				inNoteInstanceID,
 									UInt32						inOffsetSampleFrame);
-#endif
 
 #pragma mark __Format Utilities
 		// typically you ask this about an AU
@@ -381,9 +395,7 @@ private:
 											bool				checkOutput, 
 											const AUChannelInfo *info, 
 											UInt32				numInfo) const;
-	enum {
-			kCAAU_DoNotKnowIfAUNode = -1
-	};
+	
 };
 
 class CAAUChanHelper {

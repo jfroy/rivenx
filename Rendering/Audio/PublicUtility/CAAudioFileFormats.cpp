@@ -44,10 +44,10 @@
 
 CAAudioFileFormats *CAAudioFileFormats::sInstance = NULL;
 
-CAAudioFileFormats *CAAudioFileFormats::Instance(bool loadDataFormats)
+CAAudioFileFormats *CAAudioFileFormats::Instance()
 {
 	if (sInstance == NULL)
-		sInstance = new CAAudioFileFormats(loadDataFormats);
+		sInstance = new CAAudioFileFormats;
 	return sInstance;
 }
 
@@ -69,12 +69,13 @@ static int CompareFileFormatNames(const void *va, const void *vb)
 		kCFCompareCaseInsensitive | kCFCompareLocalized);
 }
 
-CAAudioFileFormats::CAAudioFileFormats(bool loadDataFormats) : 
+CAAudioFileFormats::CAAudioFileFormats() : 
 	mNumFileFormats(0), mFileFormats(NULL)
 {
 	OSStatus err;
 	UInt32 size;
-	UInt32 *fileTypes = NULL;
+	UInt32 *fileTypes = NULL, *writableFormats = NULL, *readableFormats = NULL;
+	int nWritableFormats, nReadableFormats;
 	
 	// get all file types
 	err = AudioFileGetGlobalInfoSize(kAudioFileGlobalInfo_WritableTypes, 0, NULL, &size);
@@ -83,6 +84,22 @@ CAAudioFileFormats::CAAudioFileFormats(bool loadDataFormats) :
 	mFileFormats = new FileFormatInfo[mNumFileFormats];
 	fileTypes = new UInt32[mNumFileFormats];
 	err = AudioFileGetGlobalInfo(kAudioFileGlobalInfo_WritableTypes, 0, NULL, &size, fileTypes);
+	if (err != noErr) goto bail;
+	
+	// get all writable formats
+	err = AudioFormatGetPropertyInfo(kAudioFormatProperty_EncodeFormatIDs, 0, NULL, &size);
+	if (err != noErr) goto bail;
+	nWritableFormats = size / sizeof(UInt32);
+	writableFormats = new UInt32[nWritableFormats];
+	err = AudioFormatGetProperty(kAudioFormatProperty_EncodeFormatIDs, 0, NULL, &size, writableFormats);
+	if (err != noErr) goto bail;
+	
+	// get all readable formats
+	err = AudioFormatGetPropertyInfo(kAudioFormatProperty_DecodeFormatIDs, 0, NULL, &size);
+	if (err != noErr) goto bail;
+	nReadableFormats = size / sizeof(UInt32);
+	readableFormats = new UInt32[nReadableFormats];
+	err = AudioFormatGetProperty(kAudioFormatProperty_DecodeFormatIDs, 0, NULL, &size, readableFormats);
 	if (err != noErr) goto bail;
 	
 	// get info for each file type
@@ -109,98 +126,71 @@ CAAudioFileFormats::CAAudioFileFormats(bool loadDataFormats) :
 		// file data formats
 		ffi->mNumDataFormats = 0;
 		ffi->mDataFormats = NULL;
-		
-		if (loadDataFormats)
-			ffi->LoadDataFormats();
+
+		err = AudioFileGetGlobalInfoSize(kAudioFileGlobalInfo_AvailableFormatIDs, 
+				sizeof(UInt32), &filetype, &size);
+		if (err == noErr) {
+			ffi->mNumDataFormats = size / sizeof(OSType);
+			OSType *formatIDs = new OSType[ffi->mNumDataFormats];
+			err = AudioFileGetGlobalInfo(kAudioFileGlobalInfo_AvailableFormatIDs,
+				sizeof(UInt32), &filetype, &size, formatIDs);
+			if (err == noErr) {
+				ffi->mDataFormats = new DataFormatInfo[ffi->mNumDataFormats];
+				for (int j = 0; j < ffi->mNumDataFormats; ++j) {
+					int k;
+					bool anyBigEndian = false, anyLittleEndian = false;
+					DataFormatInfo *dfi = &ffi->mDataFormats[j];
+					dfi->mFormatID = formatIDs[j];
+					dfi->mReadable = (dfi->mFormatID == kAudioFormatLinearPCM);
+					dfi->mWritable = (dfi->mFormatID == kAudioFormatLinearPCM);
+					for (k = 0; k < nReadableFormats; ++k)
+						if (readableFormats[k] == dfi->mFormatID) {
+							dfi->mReadable = true;
+							break;
+						}
+					for (k = 0; k < nWritableFormats; ++k)
+						if (writableFormats[k] == dfi->mFormatID) {
+							dfi->mWritable = true;
+							break;
+						}
+					
+					dfi->mNumVariants = 0;
+					AudioFileTypeAndFormatID tf = { filetype, dfi->mFormatID };
+					err = AudioFileGetGlobalInfoSize(kAudioFileGlobalInfo_AvailableStreamDescriptionsForFormat,
+						sizeof(AudioFileTypeAndFormatID), &tf, &size);
+					if (err == noErr) {
+						dfi->mNumVariants = size / sizeof(AudioStreamBasicDescription);
+						dfi->mVariants = new AudioStreamBasicDescription[dfi->mNumVariants];
+						err = AudioFileGetGlobalInfo(kAudioFileGlobalInfo_AvailableStreamDescriptionsForFormat,
+							sizeof(AudioFileTypeAndFormatID), &tf, &size, dfi->mVariants);
+						if (err) {
+							dfi->mNumVariants = 0;
+							delete[] dfi->mVariants;
+							dfi->mVariants = NULL;
+						} else {
+							for (k = 0; k < dfi->mNumVariants; ++k) {
+								AudioStreamBasicDescription *desc = &dfi->mVariants[k];
+								if (desc->mBitsPerChannel > 8) {
+									if (desc->mFormatFlags & kAudioFormatFlagIsBigEndian)
+										anyBigEndian = true;
+									else
+										anyLittleEndian = true;
+								}
+							}
+						}
+					}
+					
+					dfi->mEitherEndianPCM = (anyBigEndian && anyLittleEndian);
+				}
+			}
+			delete[] formatIDs;
+		}
 	}
 
 	// sort file formats by name
 	qsort(mFileFormats, mNumFileFormats, sizeof(FileFormatInfo), CompareFileFormatNames);
 bail:
 	delete[] fileTypes;
-}
-
-void	CAAudioFileFormats::FileFormatInfo::LoadDataFormats()
-{
-	if (mDataFormats != NULL) return;
-	
-	UInt32 *writableFormats = NULL, *readableFormats = NULL;
-	int nWritableFormats, nReadableFormats;
-	// get all writable formats
-	UInt32 size;
-	OSStatus err = AudioFormatGetPropertyInfo(kAudioFormatProperty_EncodeFormatIDs, 0, NULL, &size);
-	if (err != noErr) goto bail;
-	nWritableFormats = size / sizeof(UInt32);
-	writableFormats = new UInt32[nWritableFormats];
-	err = AudioFormatGetProperty(kAudioFormatProperty_EncodeFormatIDs, 0, NULL, &size, writableFormats);
-	if (err != noErr) goto bail;
-	
-	// get all readable formats
-	err = AudioFormatGetPropertyInfo(kAudioFormatProperty_DecodeFormatIDs, 0, NULL, &size);
-	if (err != noErr) goto bail;
-	nReadableFormats = size / sizeof(UInt32);
-	readableFormats = new UInt32[nReadableFormats];
-	err = AudioFormatGetProperty(kAudioFormatProperty_DecodeFormatIDs, 0, NULL, &size, readableFormats);
-	if (err != noErr) goto bail;
-	
-	err = AudioFileGetGlobalInfoSize(kAudioFileGlobalInfo_AvailableFormatIDs, sizeof(UInt32), &mFileTypeID, &size);
-	if (err == noErr) {
-		mNumDataFormats = size / sizeof(OSType);
-		OSType *formatIDs = new OSType[mNumDataFormats];
-		err = AudioFileGetGlobalInfo(kAudioFileGlobalInfo_AvailableFormatIDs,
-			sizeof(UInt32), &mFileTypeID, &size, formatIDs);
-		if (err == noErr) {
-			mDataFormats = new DataFormatInfo[mNumDataFormats];
-			for (int j = 0; j < mNumDataFormats; ++j) {
-				int k;
-				bool anyBigEndian = false, anyLittleEndian = false;
-				DataFormatInfo *dfi = &mDataFormats[j];
-				dfi->mFormatID = formatIDs[j];
-				dfi->mReadable = (dfi->mFormatID == kAudioFormatLinearPCM);
-				dfi->mWritable = (dfi->mFormatID == kAudioFormatLinearPCM);
-				for (k = 0; k < nReadableFormats; ++k)
-					if (readableFormats[k] == dfi->mFormatID) {
-						dfi->mReadable = true;
-						break;
-					}
-				for (k = 0; k < nWritableFormats; ++k)
-					if (writableFormats[k] == dfi->mFormatID) {
-						dfi->mWritable = true;
-						break;
-					}
-				
-				dfi->mNumVariants = 0;
-				AudioFileTypeAndFormatID tf = { mFileTypeID, dfi->mFormatID };
-				err = AudioFileGetGlobalInfoSize(kAudioFileGlobalInfo_AvailableStreamDescriptionsForFormat,
-					sizeof(AudioFileTypeAndFormatID), &tf, &size);
-				if (err == noErr) {
-					dfi->mNumVariants = size / sizeof(AudioStreamBasicDescription);
-					dfi->mVariants = new AudioStreamBasicDescription[dfi->mNumVariants];
-					err = AudioFileGetGlobalInfo(kAudioFileGlobalInfo_AvailableStreamDescriptionsForFormat,
-						sizeof(AudioFileTypeAndFormatID), &tf, &size, dfi->mVariants);
-					if (err) {
-						dfi->mNumVariants = 0;
-						delete[] dfi->mVariants;
-						dfi->mVariants = NULL;
-					} else {
-						for (k = 0; k < dfi->mNumVariants; ++k) {
-							AudioStreamBasicDescription *desc = &dfi->mVariants[k];
-							if (desc->mBitsPerChannel > 8) {
-								if (desc->mFormatFlags & kAudioFormatFlagIsBigEndian)
-									anyBigEndian = true;
-								else
-									anyLittleEndian = true;
-							}
-						}
-					}
-				}
-				
-				dfi->mEitherEndianPCM = (anyBigEndian && anyLittleEndian);
-			}
-		}
-		delete[] formatIDs;
-	}
-bail:
 	delete[] readableFormats;
 	delete[] writableFormats;
 }
@@ -211,18 +201,8 @@ bool	CAAudioFileFormats::InferDataFormatFromFileFormat(AudioFileTypeID filetype,
 	// if the file format only supports one data format
 	for (int i = 0; i < mNumFileFormats; ++i) {
 		FileFormatInfo *ffi = &mFileFormats[i];
-		ffi->LoadDataFormats();
-		if (ffi->mFileTypeID == filetype && ffi->mNumDataFormats > 0) {
+		if (ffi->mFileTypeID == filetype && ffi->mNumDataFormats == 1) {
 			DataFormatInfo *dfi = &ffi->mDataFormats[0];
-			if (ffi->mNumDataFormats > 1) {
-				// file can contain multiple data formats. Take PCM if it's there.
-				for (int j = 0; j < ffi->mNumDataFormats; ++j) {
-					if (ffi->mDataFormats[j].mFormatID == kAudioFormatLinearPCM) {
-						dfi = &ffi->mDataFormats[j];
-						break;
-					}
-				}
-			}
 			memset(&fmt, 0, sizeof(fmt));
 			fmt.mFormatID = dfi->mFormatID;
 			if (dfi->mNumVariants > 0) {
@@ -281,7 +261,6 @@ bool	CAAudioFileFormats::InferFileFormatFromDataFormat(const CAStreamBasicDescri
 	FileFormatInfo *theFileFormat = NULL;
 	for (int i = 0; i < mNumFileFormats; ++i) {
 		FileFormatInfo *ffi = &mFileFormats[i];
-		ffi->LoadDataFormats();
 		DataFormatInfo *dfi = ffi->mDataFormats, *dfiend = dfi + ffi->mNumDataFormats;
 		for ( ; dfi < dfiend; ++dfi)
 			if (dfi->mFormatID == fmt.mFormatID) {
@@ -300,7 +279,6 @@ bool	CAAudioFileFormats::IsKnownDataFormat(OSType dataFormat)
 {
 	for (int i = 0; i < mNumFileFormats; ++i) {
 		FileFormatInfo *ffi = &mFileFormats[i];
-		ffi->LoadDataFormats();
 		DataFormatInfo *dfi = ffi->mDataFormats, *dfiend = dfi + ffi->mNumDataFormats;
 		for ( ; dfi < dfiend; ++dfi)
 			if (dfi->mFormatID == dataFormat)
@@ -321,7 +299,6 @@ CAAudioFileFormats::FileFormatInfo *	CAAudioFileFormats::FindFileFormat(UInt32 f
 
 bool	CAAudioFileFormats::FileFormatInfo::AnyWritableFormats()
 {
-	LoadDataFormats();
 	DataFormatInfo *dfi = mDataFormats, *dfiend = dfi + mNumDataFormats;
 	for ( ; dfi < dfiend; ++dfi)
 		if (dfi->mWritable)
@@ -394,7 +371,6 @@ void	CAAudioFileFormats::FileFormatInfo::DebugPrint()
 		GetExtension(i, ftype, sizeof(ftype));
 		printf(" .%s", ftype);
 	}
-	LoadDataFormats();
 	printf("\n  Formats:\n");
 	for (i = 0; i < mNumDataFormats; ++i)
 		mDataFormats[i].DebugPrint();
@@ -403,7 +379,7 @@ void	CAAudioFileFormats::FileFormatInfo::DebugPrint()
 void	CAAudioFileFormats::DataFormatInfo::DebugPrint()
 {
 	char buf[20];
-	static const char *ny[] = { "not ", "" };
+	static char *ny[] = { "not ", "" };
 	printf("    '%s': %sreadable %swritable\n", OSTypeToStr(buf, mFormatID), ny[mReadable], ny[mWritable]);
 	for (int i = 0; i < mNumVariants; ++i) {
 		CAStreamBasicDescription desc(mVariants[i]);

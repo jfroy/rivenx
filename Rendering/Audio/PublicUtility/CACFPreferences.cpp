@@ -46,7 +46,6 @@
 #include "CACFPreferences.h"
 
 //	PublicUtility Includes
-#include "CACFDistributedNotification.h"
 #include "CADebugMacros.h"
 
 //==================================================================================================
@@ -248,7 +247,7 @@ void	CACFPreferences::MarkPrefsClean(bool inCurrentUser, bool inCurrentHost)
 
 void	CACFPreferences::SendNotification(CFStringRef inName)
 {
-	CACFDistributedNotification::PostNotification(inName, NULL, true);
+	CFNotificationCenterPostNotificationWithOptions(CFNotificationCenterGetDistributedCenter(), inName, NULL, NULL, kCFNotificationDeliverImmediately + kCFNotificationPostToAllSessions);
 }
 
 bool	CACFPreferences::ArePrefsOutOfDate(bool inCurrentUser, bool inCurrentHost)

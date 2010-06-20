@@ -45,8 +45,6 @@
 //	Includes
 //=============================================================================
 
-#include "CADebugMacros.h"
-
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
 	#include <CoreAudio/CoreAudioTypes.h>
 	#include <CoreFoundation/CFString.h>
@@ -91,7 +89,7 @@ public:
 public:
 	CFStringRef		GetCFString() const { return mCFString; }
 	CFStringRef		CopyCFString() const { if(mCFString != NULL) { CFRetain(mCFString); } return mCFString; }
-	UInt32			GetLength() const { UInt32 theAnswer = 0; if(mCFString != NULL) { theAnswer = ToUInt32(CFStringGetLength(mCFString)); } return theAnswer; }
+	UInt32			GetLength() const { UInt32 theAnswer = 0; if(mCFString != NULL) { theAnswer = CFStringGetLength(mCFString); } return theAnswer; }
 	UInt32			GetByteLength(CFStringEncoding inEncoding = kCFStringEncodingUTF8) const { UInt32 theAnswer = 0; if(mCFString != NULL) { theAnswer = GetStringByteLength(mCFString, inEncoding); } return theAnswer; }
 	void			GetCString(char* outString, UInt32& ioStringSize, CFStringEncoding inEncoding = kCFStringEncodingUTF8) const { GetCString(mCFString, outString, ioStringSize, inEncoding); }
 	void			GetUnicodeString(UInt16* outString, UInt32& ioStringSize) const { GetUnicodeString(mCFString, outString, ioStringSize); }
@@ -151,7 +149,7 @@ public:
 public:
 	CFMutableStringRef	GetCFMutableString() const { return mCFMutableString; }
 	CFMutableStringRef	CopyCFMutableString() const { if(mCFMutableString != NULL) { CFRetain(mCFMutableString); } return mCFMutableString; }
-	UInt32				GetLength() const { UInt32 theAnswer = 0; if(mCFMutableString != NULL) { theAnswer = ToUInt32(CFStringGetLength(mCFMutableString)); } return theAnswer; }
+	UInt32				GetLength() const { UInt32 theAnswer = 0; if(mCFMutableString != NULL) { theAnswer = CFStringGetLength(mCFMutableString); } return theAnswer; }
 	UInt32				GetByteLength(CFStringEncoding inEncoding = kCFStringEncodingUTF8) const { UInt32 theAnswer = 0; if(mCFMutableString != NULL) { theAnswer = CACFString::GetStringByteLength(mCFMutableString, inEncoding); } return theAnswer; }
 	void				GetCString(char* outString, UInt32& ioStringSize, CFStringEncoding inEncoding = kCFStringEncodingUTF8) const { CACFString::GetCString(mCFMutableString, outString, ioStringSize, inEncoding); }
 	void				GetUnicodeString(UInt16* outString, UInt32& ioStringSize) const { CACFString::GetUnicodeString(mCFMutableString, outString, ioStringSize); }

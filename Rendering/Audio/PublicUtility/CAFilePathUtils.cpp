@@ -41,13 +41,6 @@
 #include "CAFilePathUtils.h"
 #include <string.h>
 
-#if !CA_NO_CORE_SERVICES
-#if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <CoreServices/CoreServices.h> // FSRef
-#else
-	#include <CoreServices.h>
-#endif
-
 OSStatus	PosixPathToParentFSRefAndName(const char *path, FSRef &outParentDir, CFStringRef &outFileName)
 {
 	// convert C string to CFString
@@ -76,7 +69,6 @@ OSStatus	PosixPathToParentFSRefAndName(const char *path, FSRef &outParentDir, CF
 	
 	return err;
 }
-#endif // !CA_NO_CORE_SERVICES
 
 
 #if TARGET_OS_WIN32

@@ -70,8 +70,8 @@ void	CAAudioBufferList::Destroy(AudioBufferList* inBufferList)
 
 UInt32	CAAudioBufferList::CalculateByteSize(UInt32 inNumberBuffers)
 {
-	UInt32 theSize = SizeOf32(AudioBufferList) - SizeOf32(AudioBuffer);
-	theSize += inNumberBuffers * SizeOf32(AudioBuffer);
+	UInt32 theSize = sizeof(AudioBufferList) - sizeof(AudioBuffer);
+	theSize += inNumberBuffers * sizeof(AudioBuffer);
 	return theSize;
 }
 
@@ -151,7 +151,7 @@ void	CAAudioBufferList::Copy(const AudioBufferList& inSource, UInt32 inStartingS
 void	CAAudioBufferList::CopyChannel(const AudioBuffer& inSource, UInt32 inSourceChannel, AudioBuffer& outDestination, UInt32 inDestinationChannel)
 {
 	//  set up the stuff for the loop
-	UInt32 theNumberFramesToCopy = outDestination.mDataByteSize / (outDestination.mNumberChannels * SizeOf32(Float32));
+	UInt32 theNumberFramesToCopy = outDestination.mDataByteSize / (outDestination.mNumberChannels * sizeof(Float32));
 	const Float32* theSource = static_cast<const Float32*>(inSource.mData);
 	Float32* theDestination = static_cast<Float32*>(outDestination.mData);
 	
@@ -176,7 +176,7 @@ void	CAAudioBufferList::Sum(const AudioBufferList& inSourceBufferList, AudioBuff
 	{
 		Float32* theSourceBuffer = static_cast<Float32*>(inSourceBufferList.mBuffers[theBufferIndex].mData);
 		Float32* theSummedBuffer = static_cast<Float32*>(ioSummedBufferList.mBuffers[theBufferIndex].mData);
-		UInt32 theNumberSamplesToMix = ioSummedBufferList.mBuffers[theBufferIndex].mDataByteSize / SizeOf32(Float32);
+		UInt32 theNumberSamplesToMix = ioSummedBufferList.mBuffers[theBufferIndex].mDataByteSize / sizeof(Float32);
 		if((theSourceBuffer != NULL) && (theSummedBuffer != NULL) && (theNumberSamplesToMix > 0))
 		{
 			while(theNumberSamplesToMix > 0)
@@ -198,7 +198,7 @@ bool	CAAudioBufferList::HasData(AudioBufferList& inBufferList)
 		if(inBufferList.mBuffers[theBufferIndex].mData != NULL)
 		{
 			UInt32* theBuffer = (UInt32*)inBufferList.mBuffers[theBufferIndex].mData;
-			UInt32 theNumberSamples = inBufferList.mBuffers[theBufferIndex].mDataByteSize / SizeOf32(UInt32);
+			UInt32 theNumberSamples = inBufferList.mBuffers[theBufferIndex].mDataByteSize / sizeof(UInt32);
 			for(UInt32 theSampleIndex = 0; !hasData && (theSampleIndex < theNumberSamples); ++theSampleIndex)
 			{
 				hasData = theBuffer[theSampleIndex] != 0;
@@ -221,5 +221,5 @@ void	CAAudioBufferList::PrintToLog(const AudioBufferList& inBufferList)
 }
 #endif
 
-AudioBufferList CAAudioBufferList::sEmptyBufferList = { 0, { { 0, 0, NULL } } };
+AudioBufferList CAAudioBufferList::sEmptyBufferList = { 0, { 0, 0, NULL } };
 		

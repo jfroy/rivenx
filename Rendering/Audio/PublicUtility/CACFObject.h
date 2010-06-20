@@ -93,7 +93,6 @@ public:
 };
 
 typedef	CACFObject<CFBundleRef>	CACFBundle;
-typedef	CACFObject<CFTypeRef>	CACFType;
 typedef	CACFObject<CFUUIDRef>	CACFUUID;
 typedef	CACFObject<CFURLRef>	CACFURL;
 

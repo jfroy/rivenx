@@ -107,22 +107,16 @@ class CAVolumeCurve
 public:
 	enum
 	{
-					kLinearCurve		= 0,
-					kPow1Over3Curve		= 1,
-					kPow1Over2Curve		= 2,
-					kPow3Over4Curve		= 3,
-					kPow3Over2Curve		= 4,
-					kPow2Over1Curve		= 5,
-					kPow3Over1Curve		= 6,
-					kPow4Over1Curve		= 7,
-					kPow5Over1Curve		= 8,
-					kPow6Over1Curve		= 9,
-					kPow7Over1Curve		= 10,
-					kPow8Over1Curve		= 11,
-					kPow9Over1Curve		= 12,
-					kPow10Over1Curve	= 13,
-					kPow11Over1Curve	= 14,
-					kPow12Over1Curve	= 15
+					kLinearCurve	= 0,
+					kPow1Over3Curve	= 1,
+					kPow1Over2Curve	= 2,
+					kPow3Over4Curve	= 3,
+					kPow3Over2Curve	= 4,
+					kPow2Over1Curve	= 5,
+					kPow3Over1Curve	= 6,
+					kPow4Over1Curve	= 7,
+					kPow5Over1Curve	= 8,
+					kPow6Over1Curve	= 9
 	};
 
 //	Construction/Destruction
@@ -132,8 +126,6 @@ public:
 
 //	Attributes
 public:
-	UInt32			GetTag() const			{ return mTag; }
-	void			SetTag(UInt32 inTag)	{ mTag = inTag; }
 	SInt32			GetMinimumRaw() const;
 	SInt32			GetMaximumRaw() const;
 	Float64			GetMinimumDB() const;
@@ -160,7 +152,6 @@ public:
 private:
 	typedef	std::map<CARawPoint, CADBPoint>	CurveMap;
 	
-	UInt32			mTag;
 	CurveMap		mCurveMap;
 	bool			mIsApplyingTransferFunction;
 	UInt32			mTransferFunction;

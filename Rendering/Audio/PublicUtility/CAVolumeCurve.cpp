@@ -52,7 +52,6 @@
 
 CAVolumeCurve::CAVolumeCurve()
 :
-	mTag(0),
 	mCurveMap(),
 	mIsApplyingTransferFunction(true),
 	mTransferFunction(kPow2Over1Curve),
@@ -183,42 +182,6 @@ void	CAVolumeCurve::SetTransferFunction(int inTransferFunction)
 		case kPow6Over1Curve:
 			mIsApplyingTransferFunction = true;
 			mRawToScalarExponentNumerator = 6.0;
-			mRawToScalarExponentDenominator = 1.0;
-			break;
-		
-		case kPow7Over1Curve:
-			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 7.0;
-			mRawToScalarExponentDenominator = 1.0;
-			break;
-		
-		case kPow8Over1Curve:
-			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 8.0;
-			mRawToScalarExponentDenominator = 1.0;
-			break;
-		
-		case kPow9Over1Curve:
-			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 9.0;
-			mRawToScalarExponentDenominator = 1.0;
-			break;
-		
-		case kPow10Over1Curve:
-			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 10.0;
-			mRawToScalarExponentDenominator = 1.0;
-			break;
-		
-		case kPow11Over1Curve:
-			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 11.0;
-			mRawToScalarExponentDenominator = 1.0;
-			break;
-		
-		case kPow12Over1Curve:
-			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 12.0;
 			mRawToScalarExponentDenominator = 1.0;
 			break;
 		

@@ -42,9 +42,11 @@
 #define __CAComponentDescription_h__
 
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
+	#include <CoreServices/CoreServices.h>
 	#include <AudioUnit/AudioUnit.h>
 #else
 	#include <ConditionalMacros.h>
+	#include <CoreServices.h>
 	#include <AudioUnit.h>
 #endif
 
@@ -52,18 +54,27 @@
 #include <stdio.h>
 #include <string.h>
 
-void CAShowComponentDescription(const AudioComponentDescription *desc);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void CAShowComponentDescription(const ComponentDescription *desc);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 // ____________________________________________________________________________
 //
 //	CAComponentDescription
-class CAComponentDescription : public AudioComponentDescription {
+class CAComponentDescription : public ComponentDescription {
 public:
-	CAComponentDescription() { memset (this, 0, sizeof (AudioComponentDescription)); }
+	CAComponentDescription() { memset (this, 0, sizeof (ComponentDescription)); }
 	
 	CAComponentDescription (OSType inType, OSType inSubtype = 0, OSType inManu = 0);
 
-	CAComponentDescription(const AudioComponentDescription& desc) { memcpy (this, &desc, sizeof (AudioComponentDescription)); }
+	CAComponentDescription(const ComponentDescription& desc) { memcpy (this, &desc, sizeof (ComponentDescription)); }
 		
 	// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 	//
@@ -98,10 +109,10 @@ public:
 	OSType	SubType () const { return componentSubType; }
 	OSType 	Manu () const { return componentManufacturer; }
 
-	int		Count() const { return AudioComponentCount(const_cast<CAComponentDescription*>(this)); }
+	int		Count() const { return CountComponents(const_cast<CAComponentDescription*>(this)); }
 	
 		// does a semantic match where "wild card" values for type, subtype, manu will match
-	bool	Matches (const AudioComponentDescription &desc) const;
+	bool	Matches (const ComponentDescription &desc) const;
 	
 	// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 	//
@@ -113,21 +124,21 @@ public:
 	OSStatus			Restore (CFPropertyListRef &inData);
 
 private:
-	static void _CAShowComponentDescription (const AudioComponentDescription *desc, FILE* file);
-	friend void CAShowComponentDescription (const AudioComponentDescription *desc);
+	static void _CAShowComponentDescription (const ComponentDescription *desc, FILE* file);
+	friend void CAShowComponentDescription (const ComponentDescription *desc);
 };
 
-inline bool	operator< (const AudioComponentDescription& x, const AudioComponentDescription& y)
+inline bool	operator< (const ComponentDescription& x, const ComponentDescription& y)
 {
-	return memcmp (&x, &y, offsetof (AudioComponentDescription, componentFlags)) < 0;
+	return memcmp (&x, &y, offsetof (ComponentDescription, componentFlags)) < 0;
 }
 
-inline bool	operator== (const AudioComponentDescription& x, const AudioComponentDescription& y)
+inline bool	operator== (const ComponentDescription& x, const ComponentDescription& y)
 {
-	return !memcmp (&x, &y, offsetof (AudioComponentDescription, componentFlags));
+	return !memcmp (&x, &y, offsetof (ComponentDescription, componentFlags));
 }
 
-inline bool	operator!= (const AudioComponentDescription& x, const AudioComponentDescription& y)
+inline bool	operator!= (const ComponentDescription& x, const ComponentDescription& y)
 {
 	return !(x == y);
 }

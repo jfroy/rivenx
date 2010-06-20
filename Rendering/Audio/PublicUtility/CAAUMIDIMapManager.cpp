@@ -46,7 +46,7 @@ CAAUMIDIMapManager::CAAUMIDIMapManager()
 	hotMapping = false;	
 }
 
-static void FillInMap (CAAUMIDIMap &map, AUBase &That)
+void FillInMap (CAAUMIDIMap &map, AUBase &That)
 {
 	AudioUnitParameterInfo info;
 	That.GetParameterInfo (map.mScope, map.mParameterID, info);
@@ -125,7 +125,7 @@ bool CAAUMIDIMapManager::HandleHotMapping(UInt8 	inStatus,
 										  AUBase	&That)
 { //used to set the hot map info
 
-	if (inStatus == 0xf0) return false;
+	if (inStatus == 0xf0) return noErr;
 	
 	if (!hotMapping) return false;
 	hotMapping = false;

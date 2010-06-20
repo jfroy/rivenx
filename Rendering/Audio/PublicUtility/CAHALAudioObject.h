@@ -45,9 +45,6 @@
 //	Includes
 //==================================================================================================
 
-//	PublicUtility Includes
-#include "CADebugMacros.h"
-
 //	System Includes
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
 	#include <CoreAudio/CoreAudio.h>
@@ -66,65 +63,42 @@ class CAHALAudioObject
 
 //	Construction/Destruction
 public:
-								CAHALAudioObject(AudioObjectID inObjectID);
-	virtual						~CAHALAudioObject();
+					CAHALAudioObject(AudioObjectID inObjectID);
+	virtual			~CAHALAudioObject();
 
 //	Attributes
 public:
-	AudioObjectID				GetObjectID() const;
-	void						SetObjectID(AudioObjectID inObjectID);
-	AudioClassID				GetClassID() const;
-	AudioObjectID				GetOwnerObjectID() const;
-	CFStringRef					CopyOwningPlugInBundleID() const;
-	CFStringRef					CopyName() const;
-	CFStringRef					CopyManufacturer() const;
-	CFStringRef					CopyNameForElement(AudioObjectPropertyScope inScope, AudioObjectPropertyElement inElement) const;
-	CFStringRef					CopyCategoryNameForElement(AudioObjectPropertyScope inScope, AudioObjectPropertyElement inElement) const;
-	CFStringRef					CopyNumberNameForElement(AudioObjectPropertyScope inScope, AudioObjectPropertyElement inElement) const;
+	AudioObjectID	GetObjectID() const;
+	AudioClassID	GetClassID() const;
+	AudioObjectID	GetOwnerObjectID() const;
+	CFStringRef		CopyOwningPlugInBundleID() const;
+	CFStringRef		CopyName() const;
+	CFStringRef		CopyManufacturer() const;
+	CFStringRef		CopyNameForElement(AudioObjectPropertyScope inScope, AudioObjectPropertyElement inElement) const;
+	CFStringRef		CopyCategoryNameForElement(AudioObjectPropertyScope inScope, AudioObjectPropertyElement inElement) const;
+	CFStringRef		CopyNumberNameForElement(AudioObjectPropertyScope inScope, AudioObjectPropertyElement inElement) const;
 
 //	Owned Objects
 public:
-	UInt32						GetNumberOwnedObjects(AudioClassID inClass) const;
-	void						GetAllOwnedObjects(AudioClassID inClass, UInt32& ioNumberObjects, AudioObjectID* ioObjectIDs) const;
-	AudioObjectID				GetOwnedObjectByIndex(AudioClassID inClass, UInt32 inIndex);
+	UInt32			GetNumberOwnedObjects(AudioClassID inClass) const;
+	void			GetAllOwnedObjects(AudioClassID inClass, UInt32& ioNumberObjects, AudioObjectID* ioObjectIDs) const;
+	AudioObjectID	GetOwnedObjectByIndex(AudioClassID inClass, UInt32 inIndex);
 	
 //	Property Operations
 public:
-	bool						HasProperty(const AudioObjectPropertyAddress& inAddress) const;
-	bool						IsPropertySettable(const AudioObjectPropertyAddress& inAddress) const;
-	UInt32						GetPropertyDataSize(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData) const;
+	bool			HasProperty(AudioObjectPropertyAddress& inAddress) const;
+	bool			IsPropertySettable(AudioObjectPropertyAddress& inAddress) const;
 	
-	void						GetPropertyData(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32& ioDataSize, void* outData) const;
-	void						SetPropertyData(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32 inDataSize, const void* inData);
+	UInt32			GetPropertyDataSize(AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData) const;
+	void			GetPropertyData(AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32& ioDataSize, void* outData) const;
+	void			SetPropertyData(AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize, const void* inQualifierData, UInt32 inDataSize, const void* inData);
 	
-	UInt32						GetPropertyData_UInt32(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL) const										{ UInt32 theAnswer = 0; UInt32 theDataSize = SizeOf32(UInt32); GetPropertyData(inAddress, inQualifierDataSize, inQualifierData, theDataSize, &theAnswer); return theAnswer; }
-	void						SetPropertyData_UInt32(const AudioObjectPropertyAddress& inAddress, UInt32 inValue, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)								{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(UInt32), &inValue); }
-
-	Float32						GetPropertyData_Float32(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL) const										{ Float32 theAnswer = 0; UInt32 theDataSize = SizeOf32(Float32); GetPropertyData(inAddress, inQualifierDataSize, inQualifierData, theDataSize, &theAnswer); return theAnswer; }
-	void						SetPropertyData_Float32(const AudioObjectPropertyAddress& inAddress, Float32 inValue, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)							{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(Float32), &inValue); }
-
-	Float64						GetPropertyData_Float64(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL) const										{ Float64 theAnswer = 0; UInt32 theDataSize = SizeOf32(Float64); GetPropertyData(inAddress, inQualifierDataSize, inQualifierData, theDataSize, &theAnswer); return theAnswer; }
-	void						SetPropertyData_Float64(const AudioObjectPropertyAddress& inAddress, Float64 inValue, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)							{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(Float64), &inValue); }
-
-	CFTypeRef					GetPropertyData_CFType(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL) const										{ CFTypeRef theAnswer = NULL; UInt32 theDataSize = SizeOf32(CFTypeRef); GetPropertyData(inAddress, inQualifierDataSize, inQualifierData, theDataSize, &theAnswer); return theAnswer; }
-	void						SetPropertyData_CFType(const AudioObjectPropertyAddress& inAddress, UInt32 inValue, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)								{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(CFTypeRef), &inValue); }
-
-	CFStringRef					GetPropertyData_CFString(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL) const										{ CFStringRef theAnswer = NULL; UInt32 theDataSize = SizeOf32(CFStringRef); GetPropertyData(inAddress, inQualifierDataSize, inQualifierData, theDataSize, &theAnswer); return theAnswer; }
-	void						SetPropertyData_CFString(const AudioObjectPropertyAddress& inAddress, UInt32 inValue, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)							{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(CFStringRef), &inValue); }
-
-	template <class T> void		GetPropertyData_Struct(const AudioObjectPropertyAddress& inAddress, T& outStruct, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL) const							{ UInt32 theDataSize = SizeOf32(T); GetPropertyData(inAddress, inQualifierDataSize, inQualifierData, theDataSize, &outStruct); }
-	template <class T> void		SetPropertyData_Struct(const AudioObjectPropertyAddress& inAddress, T& inStruct, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)								{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(T), &inStruct); }
-
-	template <class T> UInt32	GetPropertyData_ArraySize(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL) const									{ return GetPropertyDataSize(inAddress, inQualifierDataSize, inQualifierData) / SizeOf32(T); }
-	template <class T> void		GetPropertyData_Array(const AudioObjectPropertyAddress& inAddress, UInt32& ioNumberItems, T* outArray, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL) const	{ UInt32 theDataSize = ioNumberItems * SizeOf32(T); GetPropertyData(inAddress, inQualifierDataSize, inQualifierData, theDataSize, outArray); ioNumberItems = theDataSize / SizeOf32(T); }
-	template <class T> void		SetPropertyData_Array(const AudioObjectPropertyAddress& inAddress, UInt32 inNumberItems, T* inArray, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)			{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, inNumberItems * SizeOf32(T), inArray); }
-	
-	void						AddPropertyListener(const AudioObjectPropertyAddress& inAddress, AudioObjectPropertyListenerProc inListenerProc, void* inClientData);
-	void						RemovePropertyListener(const AudioObjectPropertyAddress& inAddress, AudioObjectPropertyListenerProc inListenerProc, void* inClientData);
+	void			AddPropertyListener(AudioObjectPropertyAddress& inAddress, AudioObjectPropertyListenerProc inListenerProc, void* inClientData);
+	void			RemovePropertyListener(AudioObjectPropertyAddress& inAddress, AudioObjectPropertyListenerProc inListenerProc, void* inClientData);
 
 //	Implementation
-protected:
-	AudioObjectID				mObjectID;
+private:
+	AudioObjectID	mObjectID;
 
 };
 

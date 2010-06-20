@@ -48,31 +48,27 @@
 //	PublicUtility Includes
 #include "CAAutoDisposer.h"
 #include "CACFData.h"
-#include "CACFDistributedNotification.h"
 #include "CACFNumber.h"
 
 //	Stamdard Library Includes
 #include <string.h>
 #include <sys/fcntl.h>
+#include <sys/stat.h>
 
 //==================================================================================================
 //	CASettingsStorage
 //==================================================================================================
 
-CASettingsStorage::CASettingsStorage(const char* inSettingsFilePath, mode_t inSettingsFileAccessMode)
+CASettingsStorage::CASettingsStorage(const char* inSettingsFilePath)
 {
-	size_t theLength = strlen(inSettingsFilePath);
+	UInt32 theLength = strlen(inSettingsFilePath);
 	mSettingsFilePath = new char[theLength + 2];
-	strlcpy(mSettingsFilePath, inSettingsFilePath, theLength + 2);
-	
-	mSettingsFileAccessMode = inSettingsFileAccessMode;
+	strcpy(mSettingsFilePath, inSettingsFilePath);
 	
 	mSettingsCache = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
 	
 	mSettingsCacheTime.tv_sec = 0;
 	mSettingsCacheTime.tv_nsec = 0;
-	
-	mSettingsCacheForceRefresh = true;
 }
 
 CASettingsStorage::~CASettingsStorage()
@@ -540,12 +536,15 @@ void	CASettingsStorage::RemoveAllValues()
 
 void	CASettingsStorage::SendNotification(CFStringRef inName, CFDictionaryRef inData, bool inPostToAllSessions) const
 {
-	CACFDistributedNotification::PostNotification(inName, inData, inPostToAllSessions);
-}
-
-void	CASettingsStorage::ForceRefresh()
-{
-	mSettingsCacheForceRefresh = true;
+	//	initialize the flags for the message
+	CFOptionFlags theFlags = kCFNotificationDeliverImmediately;
+	if(inPostToAllSessions)
+	{
+		theFlags += kCFNotificationPostToAllSessions;
+	}
+	
+	//	send the message
+	CFNotificationCenterPostNotificationWithOptions(CFNotificationCenterGetDistributedCenter(), inName, NULL, inData, theFlags);
 }
 
 inline bool	operator<(const struct timespec& inX, const struct timespec& inY)
@@ -566,7 +565,7 @@ void	CASettingsStorage::RefreshSettings()
 	if(theStatError == 0)
 	{
 		//	stat says there is something there, only have to do work if we either don't have a cache or the cache is out of date
-		if((mSettingsCache == NULL) || (mSettingsCacheTime < theFileInfo.st_mtimespec) || mSettingsCacheForceRefresh)
+		if((mSettingsCache == NULL) || (mSettingsCacheTime < theFileInfo.st_mtimespec))
 		{
 			//	open the file
 			FILE* theFile = fopen(mSettingsFilePath, "r");
@@ -578,7 +577,7 @@ void	CASettingsStorage::RefreshSettings()
 				{
 					//	get the length of the file
 					fseek(theFile, 0, SEEK_END);
-					size_t theFileLength = ftell(theFile);
+					UInt32 theFileLength = ftell(theFile);
 					fseek(theFile, 0, SEEK_SET);
 					
 					if(theFileLength > 0)
@@ -593,7 +592,7 @@ void	CASettingsStorage::RefreshSettings()
 						flock(fileno(theFile), LOCK_UN);
 						
 						//	put it into a CFData object
-						CACFData theRawFileDataCFData(static_cast<Byte*>(theRawFileData), static_cast<UInt32>(theFileLength));
+						CACFData theRawFileDataCFData(static_cast<Byte*>(theRawFileData), theFileLength);
 						
 						//	get rid of the existing cache
 						if(mSettingsCache != NULL)
@@ -615,12 +614,11 @@ void	CASettingsStorage::RefreshSettings()
 				
 				//	close the file
 				fclose(theFile);
-				mSettingsCacheForceRefresh = false;
 			}
 		}
 	}
 	
-	if((theStatError != 0) || (!theSettingsWereCached && (theFileInfo.st_mtimespec < mSettingsCacheTime)))
+	if(!theSettingsWereCached && (theFileInfo.st_mtimespec < mSettingsCacheTime))
 	{
 		//	we get here if either there isn't a file or something wacky happenned while parsing it
 		//	all we do here is make sure that the member variables are set to their initial values
@@ -651,17 +649,8 @@ void	CASettingsStorage::SaveSettings()
 			int theError = flock(fileno(theFile), LOCK_EX);
 			if(theError == 0)
 			{
-				//	set the file access mode if necessary
-				if(mSettingsFileAccessMode != 0)
-				{
-					fchmod(fileno(theFile), mSettingsFileAccessMode);
-				}
-				
 				//	write the data
 				fwrite(theNewRawPrefsCFData.GetDataPtr(), theNewRawPrefsCFData.GetSize(), 1, theFile);
-				
-				//	flush the file to be sure it is all on disk
-				fflush(theFile);
 				
 				//	release the lock
 				flock(fileno(theFile), LOCK_UN);

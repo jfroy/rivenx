@@ -38,16 +38,9 @@
 			STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
 			POSSIBILITY OF SUCH DAMAGE.
 */
-#ifndef _CABitOperations_h_
-#define _CABitOperations_h_
+#ifndef _BitOperations_h_
+#define _BitOperations_h_
 
-#if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-    //#include <CoreServices/../Frameworks/CarbonCore.framework/Headers/MacTypes.h>
-	#include <CoreFoundation/CFBase.h>
-#else
-//	#include <MacTypes.h>
-	#include "CFBase.h"
-#endif
 #include <TargetConditionals.h>
 
 // return whether a number is a power of two
@@ -177,15 +170,6 @@ inline UInt32 MSBitPos(UInt32 x)
 inline UInt32 MSBit(UInt32 x)
 {
 	return 1UL << MSBitPos(x);
-}
-
-// Division optimized for power of 2 denominators
-inline UInt32 DivInt(UInt32 numerator, UInt32 denominator)
-{
-	if(IsPowerOfTwo(denominator))
-		return numerator >> (31 - CountLeadingZeroes(denominator));
-	else
-		return numerator/denominator;
 }
 
 #endif

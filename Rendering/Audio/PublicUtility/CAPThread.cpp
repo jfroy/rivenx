@@ -341,35 +341,11 @@ UInt32 WINAPI	CAPThread::Entry(CAPThread* inCAPThread)
 	return theAnswer;
 }
 
+//	a definition of this function here for now
 extern "C"
 Boolean CompareAndSwap(UInt32 inOldValue, UInt32 inNewValue, UInt32* inOldValuePtr)
 {
 	return InterlockedCompareExchange((volatile LONG*)inOldValuePtr, inNewValue, inOldValue) == inOldValue;
 }
 
-#endif
-
-#if CoreAudio_Debug
-void	CAPThread::DebugPriority(const char *label)
-{
-#if !TARGET_OS_WIN32
-	if (mTimeConstraintSet)
-		printf("CAPThread::%s %p: pri=<time constraint>, spawning pri=%d, scheduled pri=%d\n", label, this, 
-		(int)mSpawningThreadPriority, (mPThread != NULL) ? (int)GetScheduledPriority() : -1);
-	else
-		printf("CAPThread::%s %p: pri=%d%s, spawning pri=%d, scheduled pri=%d\n", label, this, (int)mPriority, mFixedPriority ? " fixed" : "", 
-		(int)mSpawningThreadPriority, (mPThread != NULL) ? (int)GetScheduledPriority() : -1);
-#else
-	if (mTimeConstraintSet)
-	{
-		printf("CAPThread::%s %p: pri=<time constraint>, spawning pri=%d, scheduled pri=%d\n", label, this, 
-		(int)mPriority, (mThreadHandle != NULL) ? (int)GetScheduledPriority() : -1);
-	}
-	else
-	{
-		printf("CAPThread::%s %p: pri=%d%s, spawning pri=%d, scheduled pri=%d\n", label, this, (int)mPriority, mFixedPriority ? " fixed" : "", 
-		(int)mPriority, (mThreadHandle != NULL) ? (int)GetScheduledPriority() : -1);
-	}
-#endif
-}
 #endif

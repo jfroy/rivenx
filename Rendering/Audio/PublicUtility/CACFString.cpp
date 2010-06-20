@@ -50,15 +50,15 @@
 
 UInt32	CACFString::GetStringByteLength(CFStringRef inCFString, CFStringEncoding inEncoding)
 {
-	CFIndex theAnswer = 0;
+	UInt32 theAnswer = 0;
 	
 	if(inCFString != NULL)
 	{
 		CFRange theRange = { 0, CFStringGetLength(inCFString) };
-		CFStringGetBytes(inCFString, theRange, inEncoding, 0, false, NULL, 0x7FFFFFFF, &theAnswer);
+		CFStringGetBytes(inCFString, theRange, inEncoding, 0, false, NULL, 0x7FFFFFFF, (CFIndex*)&theAnswer);
 	}
 	
-	return UInt32(theAnswer);
+	return theAnswer;
 }
 
 void	CACFString::GetCString(CFStringRef inCFString, char* outString, UInt32& ioStringSize, CFStringEncoding inEncoding)
@@ -71,7 +71,7 @@ void	CACFString::GetCString(CFStringRef inCFString, char* outString, UInt32& ioS
 			CFRange theRange = { 0, CFStringGetLength(inCFString) };
 			CFStringGetBytes(inCFString, theRange, inEncoding, 0, false, (UInt8*)outString, ioStringSize - 1, &theLength);
 			outString[theLength] = 0;
-			ioStringSize = ToUInt32(theLength) + 1;
+			ioStringSize = theLength + 1;
 		}
 		else
 		{
@@ -93,7 +93,7 @@ void	CACFString::GetUnicodeString(CFStringRef inCFString, UInt16* outString, UIn
 				theStringRange.length = ioStringSize;
 			}
 			CFStringGetCharacters(inCFString, theStringRange, outString);
-			ioStringSize = ToUInt32(theStringRange.length);
+			ioStringSize = theStringRange.length;
 		}
 		else
 		{

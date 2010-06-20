@@ -46,9 +46,7 @@
 #include "CACFArray.h"
 
 //	PublicUtility Includes
-#include "CACFDictionary.h"
 #include "CACFNumber.h"
-#include "CACFString.h"
 
 //=============================================================================
 //	CACFArray
@@ -76,7 +74,7 @@ bool	CACFArray::GetIndexOfItem(const void* inItem, UInt32& outIndex) const
 		if(theIndex != -1)
 		{
 			theAnswer = true;
-			outIndex = ToUInt32(theIndex);
+			outIndex = theIndex;
 		}
 	}
 	return theAnswer;
@@ -276,23 +274,6 @@ bool	CACFArray::GetData(UInt32 inIndex, CFDataRef& outItem) const
 	return theAnswer;
 }
 
-bool	CACFArray::GetUUID(UInt32 inIndex, CFUUIDRef& outItem) const
-{
-	bool theAnswer = false;
-	
-	CFTypeRef theItem = NULL;
-	if(GetCFType(inIndex, theItem))
-	{
-		if((theItem != NULL) && (CFGetTypeID(theItem) == CFUUIDGetTypeID()))
-		{
-			outItem = static_cast<CFUUIDRef>(theItem);
-			theAnswer = true;
-		}
-	}
-	
-	return theAnswer;
-}
-
 bool	CACFArray::GetCFType(UInt32 inIndex, CFTypeRef& outItem) const
 {
 	bool theAnswer = false;
@@ -301,61 +282,6 @@ bool	CACFArray::GetCFType(UInt32 inIndex, CFTypeRef& outItem) const
 	{
 		outItem = CFArrayGetValueAtIndex(mCFArray, inIndex);
 		theAnswer = outItem != NULL;
-	}
-	
-	return theAnswer;
-}
-
-void	CACFArray::GetCACFString(UInt32 inIndex, CACFString& outItem) const
-{
-	outItem = static_cast<CFStringRef>(NULL);
-	CFTypeRef theItem = NULL;
-	if(GetCFType(inIndex, theItem))
-	{
-		if((theItem != NULL) && (CFGetTypeID(theItem) == CFStringGetTypeID()))
-		{
-			outItem = static_cast<CFStringRef>(theItem);
-		}
-	}
-}
-
-void	CACFArray::GetCACFArray(UInt32 inIndex, CACFArray& outItem) const
-{
-	outItem = static_cast<CFArrayRef>(NULL);
-	CFTypeRef theItem = NULL;
-	if(GetCFType(inIndex, theItem))
-	{
-		if((theItem != NULL) && (CFGetTypeID(theItem) == CFArrayGetTypeID()))
-		{
-			outItem = static_cast<CFArrayRef>(theItem);
-		}
-	}
-}
-
-void	CACFArray::GetCACFDictionary(UInt32 inIndex, CACFDictionary& outItem) const
-{
-	outItem = static_cast<CFDictionaryRef>(NULL);
-	CFTypeRef theItem = NULL;
-	if(GetCFType(inIndex, theItem))
-	{
-		if((theItem != NULL) && (CFGetTypeID(theItem) == CFDictionaryGetTypeID()))
-		{
-			outItem = static_cast<CFDictionaryRef>(theItem);
-		}
-	}
-}
-
-bool	CACFArray::AppendBool(bool inItem)
-{
-	bool theAnswer = false;
-	
-	if((mCFArray != NULL) && mMutable)
-	{
-		CACFBoolean theItem(inItem);
-		if(theItem.IsValid())
-		{
-			theAnswer = AppendCFType(theItem.GetCFBoolean());
-		}
 	}
 	
 	return theAnswer;
@@ -485,22 +411,6 @@ bool	CACFArray::AppendCFType(const CFTypeRef inItem)
 	{
 		CFArrayAppendValue(mCFArray, inItem);
 		theAnswer = true;
-	}
-	
-	return theAnswer;
-}
-
-bool	CACFArray::InsertBool(UInt32 inIndex, bool inItem)
-{
-	bool theAnswer = false;
-	
-	if((mCFArray != NULL) && mMutable)
-	{
-		CACFBoolean theItem(inItem);
-		if(theItem.IsValid())
-		{
-			theAnswer = InsertCFType(inIndex, theItem.GetCFBoolean());
-		}
 	}
 	
 	return theAnswer;
@@ -637,22 +547,6 @@ bool	CACFArray::InsertCFType(UInt32 inIndex, const CFTypeRef inItem)
 			CFArrayAppendValue(mCFArray, inItem);
 		}
 		theAnswer = true;
-	}
-	
-	return theAnswer;
-}
-
-bool	CACFArray::SetBool(UInt32 inIndex, bool inItem)
-{
-	bool theAnswer = false;
-	
-	if((mCFArray != NULL) && mMutable && (inIndex <= GetNumberItems()))
-	{
-		CACFBoolean theItem(inItem);
-		if(theItem.IsValid())
-		{
-			theAnswer = SetCFType(inIndex, theItem.GetCFBoolean());
-		}
 	}
 	
 	return theAnswer;

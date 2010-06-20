@@ -73,7 +73,7 @@
 		#if	CoreAudio_UseSysLog
 			#include <sys/syslog.h>
 			#define	DebugPrintfRtn	syslog
-			#define	DebugPrintfFile	LOG_NOTICE
+			#define	DebugPrintfFile	LOG_ERR
 			#define	DebugPrintfLineEnding	""
 			#define	DebugPrintfFileComma	DebugPrintfFile,
 		#elif defined(CoreAudio_UseSideFile)

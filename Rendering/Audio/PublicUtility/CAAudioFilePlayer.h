@@ -38,30 +38,55 @@
 			STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
 			POSSIBILITY OF SUCH DAMAGE.
 */
-#if !defined(__CACFDistributedNotification_h__)
-#define __CACFDistributedNotification_h__
+#ifndef __CAAudioFilePlayer_h__
+#define __CAAudioFilePlayer_h__
 
-//==================================================================================================
-//	Includes
-//==================================================================================================
+#if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
+	#include <AudioUnit/AudioUnit.h>
+#else
+	#include <AudioUnit.h>
+#endif
+#include "CAAudioFileStreamer.h"
 
-//	System Includes
-#include <CoreAudio/CoreAudioTypes.h>
-#include <CoreFoundation/CoreFoundation.h>
-
-//==================================================================================================
-//	CACFDistributedNotification
-//==================================================================================================
-
-class CACFDistributedNotification
-{
-
-//	Operations
+// Simple player -- owns an output unit
+class CAAudioFilePlayer : public CAAudioFileReader {
 public:
-	static void		AddObserver(const void* inObserver, CFNotificationCallback inCallback, CFStringRef inName, CFNotificationSuspensionBehavior inSuspensionBehavior = CFNotificationSuspensionBehaviorCoalesce);
-	static void		RemoveObserver(const void* inObserver, CFStringRef inName);
-	static void		PostNotification(CFStringRef inName, CFDictionaryRef inUserInfo, bool inPostToAllSessions);
+	CAAudioFilePlayer(int nBuffers, UInt32 bufferSizeFrames);
+#if !TARGET_OS_WIN32
+	CAAudioFilePlayer(int nBuffers, UInt32 bufferSizeFrames, AudioDeviceID theDevice);
+#endif
+	virtual ~CAAudioFilePlayer();
 
+	// $$$ to add: change HAL I/O buffer size
+
+	virtual void	Start();
+	virtual void	Stop();
+	void			SetVolume(double volume);		// 0-1
+#if !TARGET_OS_WIN32
+	void			SetDevice(AudioDeviceID theDevice);
+#endif
+	void			SetFile(const FSRef &inFile, bool forceStereoOutput=false, UInt32 inTrackNum = 0);
+
+	AudioUnit		GetOutputUnit() { return mOutputUnit; }
+
+protected:
+	// our virtual methods:
+	virtual void	SetupChannelMapping(bool forceStereoOutput);
+
+protected:
+	static OSStatus	InputProc(
+							void *						inRefCon,
+							AudioUnitRenderActionFlags *ioActionFlags,
+							const AudioTimeStamp *		inTimeStamp,
+							UInt32 						inBusNumber,
+							UInt32 						inNumberFrames,
+							AudioBufferList *			ioData);
+
+	OSStatus		GetPlayBuffer(
+							UInt32						inNumberFrames,
+							AudioBufferList *			ioData);
+
+	AudioUnit		mOutputUnit;
 };
 
-#endif
+#endif // __CAAudioFilePlayer_h__

@@ -130,7 +130,6 @@ public:
 
 	SInt8		GetSInt8() const { SInt8 theAnswer = 0; if(mCFNumber != NULL) { CFNumberGetValue(mCFNumber, kCFNumberSInt8Type, &theAnswer); } return theAnswer; }
 	SInt32		GetSInt32() const { SInt32 theAnswer = 0; if(mCFNumber != NULL) { CFNumberGetValue(mCFNumber, kCFNumberSInt32Type, &theAnswer); } return theAnswer; }
-	UInt32		GetUInt32() const { UInt32 theAnswer = 0; if(mCFNumber != NULL) { CFNumberGetValue(mCFNumber, kCFNumberSInt32Type, &theAnswer); } return theAnswer; }
 	Float32		GetFloat32() const { Float32 theAnswer = 0.0f; if(mCFNumber != NULL) { CFNumberGetValue(mCFNumber, kCFNumberFloat32Type, &theAnswer); } return theAnswer; }
 	Float32		GetFixed32() const;
 	Float64		GetFixed64() const;

@@ -57,9 +57,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "CADebugMacros.h"
-#include "CAAutoDisposer.h"
-
 #if !HAL_Build
 	#include "CAReferenceCounted.h"
 #endif
@@ -79,7 +76,7 @@ public:
 	static AudioChannelLayout*	Create(UInt32 inNumberChannelDescriptions);
 	static void					Destroy(AudioChannelLayout* inChannelLayout);
 	static UInt32				CalculateByteSize(UInt32 inNumberChannelDescriptions) { 
-									return OffsetOf32(AudioChannelLayout, mChannelDescriptions) + inNumberChannelDescriptions * SizeOf32(AudioChannelDescription);
+									return offsetof(AudioChannelLayout, mChannelDescriptions) + inNumberChannelDescriptions * sizeof(AudioChannelDescription);
 								}
 	static void					SetAllToUnknown(AudioChannelLayout& outChannelLayout, UInt32 inNumberChannelDescriptions);
 	static UInt32				NumberChannels(const AudioChannelLayout& inLayout);
@@ -106,12 +103,12 @@ public:
 	void						SetWithTag(AudioChannelLayoutTag inTag);
 
 	bool						IsValid() const { return NumberChannels() > 0; }
-	UInt32						Size() const { return mLayout ? mLayout->Size() : 0; }
+	UInt32						Size() const { return mLayoutHolder ? mLayoutHolder->Size() : 0; }
 	
-	UInt32						NumberChannels() const { return mLayout ? mLayout->NumberChannels() : 0; }
+	UInt32						NumberChannels() const { return mLayoutHolder->NumberChannels(); }
 	
 	AudioChannelLayoutTag		Tag() const { return Layout().mChannelLayoutTag; }
-	const AudioChannelLayout&	Layout() const { return mLayout->Layout(); }
+	const AudioChannelLayout&	Layout() const { return mLayoutHolder->Layout(); }
 	operator const AudioChannelLayout *() const { return &Layout(); }
 	
 	void						Print () const { Print (stdout); }
@@ -121,52 +118,27 @@ public:
 	OSStatus					Restore (CFPropertyListRef &inData);
 	
 private:
-	class RefCountedLayout : public CAReferenceCounted {
-		void *	operator new(size_t size, size_t aclSize)
-		{
-			return CA_malloc(sizeof(RefCountedLayout) - sizeof(AudioChannelLayout) + aclSize);
-		}
-		
-		void	operator delete(void *mem)
-		{
-			free(mem);
-		}
-		
-		
-		RefCountedLayout(UInt32 inDataSize) :
-			mByteSize(inDataSize)
-		{ 
-			memset(&mACL, 0, inDataSize);
-		}
-		
+	class ACLRefCounter : public CAReferenceCounted {
 	public:
-		static RefCountedLayout *CreateWithNumberChannelDescriptions(unsigned nChannels) {
-								size_t size = CAAudioChannelLayout::CalculateByteSize(nChannels);
-								return new(size) RefCountedLayout(size);
-							}
-
-		static RefCountedLayout *CreateWithLayout(const AudioChannelLayout *layout) {
-								size_t size = CAAudioChannelLayout::CalculateByteSize(layout->mNumberChannelDescriptions);
-								RefCountedLayout *acl = new(size) RefCountedLayout(size);
-								memcpy(&acl->mACL, layout, size);
-								return acl;
-							}
-		static RefCountedLayout *CreateWithLayoutTag(AudioChannelLayoutTag layoutTag) {
-								RefCountedLayout *acl = CreateWithNumberChannelDescriptions(0);
-								acl->mACL.mChannelLayoutTag = layoutTag;
-								return acl;
-							}
+				ACLRefCounter (UInt32 inDataSize) 
+				{ 
+					if (inDataSize < offsetof(AudioChannelLayout, mChannelDescriptions))
+						inDataSize = offsetof(AudioChannelLayout, mChannelDescriptions);
+						
+					mLayout = static_cast<AudioChannelLayout*>(malloc (inDataSize));
+					memset (mLayout, 0, inDataSize);
+					mByteSize = inDataSize;
+				}
 	
-		const AudioChannelLayout & 	Layout() const { return mACL; }
+		const AudioChannelLayout & 	Layout() const { return *mLayout; }
 		
 		UInt32						Size () const { return mByteSize; }
 		
-		UInt32						NumberChannels() { return CAAudioChannelLayout::NumberChannels(Layout()); }
+		UInt32						NumberChannels() { return mLayout ? CAAudioChannelLayout::NumberChannels(Layout()) : 0; }
 		
 	private:
-		const UInt32		mByteSize;
-		AudioChannelLayout 	mACL;
-		// * * * mACL is variable length and thus must be last * * *
+		AudioChannelLayout 	*mLayout;
+		UInt32				mByteSize;
 		
 			// only the constructors can change the actual state of the layout
 		friend CAAudioChannelLayout::CAAudioChannelLayout (UInt32 inNumberChannels, bool inChooseSurround);
@@ -174,16 +146,16 @@ private:
 		friend CAAudioChannelLayout& CAAudioChannelLayout::operator= (const AudioChannelLayout* inChannelLayout);
 		friend void CAAudioChannelLayout::SetWithTag(AudioChannelLayoutTag inTag);
 		
-		AudioChannelLayout * 	GetLayout() { return &mACL; }
+		AudioChannelLayout * 	GetLayout() { return mLayout; }
+		~ACLRefCounter() { if (mLayout) { free(mLayout); mLayout = NULL; } }
 	
 	private:
-		// prohibited methods: private and unimplemented.
-		RefCountedLayout();
-		RefCountedLayout(const RefCountedLayout& c);
-		RefCountedLayout& operator=(const RefCountedLayout& c);
+		ACLRefCounter () : mLayout(NULL) { }
+		ACLRefCounter(const ACLRefCounter& c) : mLayout(NULL) { }
+		ACLRefCounter& operator=(const ACLRefCounter& c) { return *this; }
 	};
 	
-	RefCountedLayout		*mLayout;
+	ACLRefCounter				*mLayoutHolder;
 #endif	//	HAL_Build
 
 };
