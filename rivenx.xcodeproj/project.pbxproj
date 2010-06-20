@@ -2034,8 +2034,6 @@
 					"DEBUG_GL=1",
 					"DEBUG_AUDIO=1",
 				);
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Debug;
@@ -2045,8 +2043,6 @@
 			baseConfigurationReference = 31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */;
 			buildSettings = {
 				DEPLOYMENT_POSTPROCESSING = YES;
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
 			};
 			name = Release;
 		};
@@ -2214,8 +2210,6 @@
 					"$(inherited)",
 					"DEBUG=1",
 				);
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				ONLY_ACTIVE_ARCH = NO;
 			};
 			name = "Beta Release";
