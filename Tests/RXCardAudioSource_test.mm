@@ -7,18 +7,18 @@
  *
  */
 
-#import <Foundation/Foundation.h>
-
 #import <sysexits.h>
 #import <fcntl.h>
 #import <unistd.h>
+
+#import <Foundation/Foundation.h>
+#import <AudioToolbox/ExtendedAudioFile.h>
 
 #import <MHKKit/MHKAudioDecompression.h>
 
 #import "Base/RXThreadUtilities.h"
 #import "Base/RXLogging.h"
 
-#import "Rendering/Audio/PublicUtility/CAAudioFile.h"
 #import "Rendering/Audio/PublicUtility/CAPThread.h"
 #import "Rendering/Audio/PublicUtility/CAGuard.h"
 
@@ -29,7 +29,7 @@ using namespace RX;
 
 
 @interface EAFDecompressor : NSObject <MHKAudioDecompression> {
-    CAAudioFile* audioFile;
+    ExtAudioFileRef audioFile;
     UInt32 clientBytesPerFrame;
 }
 
@@ -49,42 +49,55 @@ using namespace RX;
     }
     
     RXOLog(@"opening %s", syspath);
-    audioFile = new CAAudioFile();
-    audioFile->Open(syspath);
+    CFURLRef url = CFURLCreateFromFileSystemRepresentation(kCFAllocatorDefault, (const UInt8*)syspath, strlen(syspath), false);
+    assert(ExtAudioFileOpenURL(url, &audioFile) == noErr);
+    CFRelease(url);
+    
+    AudioStreamBasicDescription file_asbd;
+    UInt32 prop_size = sizeof(AudioStreamBasicDescription);
+    assert(ExtAudioFileGetProperty(audioFile, kExtAudioFileProperty_FileDataFormat, &prop_size, &file_asbd) == noErr);
     
     // set client format to canonical + interleaved
     CAStreamBasicDescription clientFormat;
     clientFormat.mSampleRate = 44100.0;
-    clientFormat.SetCanonical(audioFile->GetFileDataFormat().mChannelsPerFrame, true);
-    audioFile->SetClientFormat(clientFormat);
+    clientFormat.SetCanonical(file_asbd.mChannelsPerFrame, true);
+    assert(ExtAudioFileSetProperty(audioFile, kExtAudioFileProperty_ClientDataFormat, sizeof(AudioStreamBasicDescription), &clientFormat) == noErr);
     
     clientBytesPerFrame = [self outputFormat].mBytesPerFrame;
+    assert(clientBytesPerFrame > 0);
     
     RXOLog(@"%u bpf, %lld frames", clientBytesPerFrame, [self frameCount]);
     return self;
 }
 
 - (void)dealloc {
-    if (audioFile) delete audioFile;
+    if (audioFile)
+        ExtAudioFileDispose(audioFile);
 
     [super dealloc];
 }
 
 - (AudioStreamBasicDescription)outputFormat {
-    return audioFile->GetClientDataFormat();
+    AudioStreamBasicDescription asbd;
+    UInt32 size = sizeof(AudioStreamBasicDescription);
+    ExtAudioFileGetProperty(audioFile, kExtAudioFileProperty_ClientDataFormat, &size, &asbd);
+    return asbd;
 }
 
 - (SInt64)frameCount {
-    return audioFile->GetNumberFrames();
+    SInt64 frames;
+    UInt32 size = sizeof(SInt64);
+    ExtAudioFileGetProperty(audioFile, kExtAudioFileProperty_FileLengthFrames, &size, &frames);
+    return frames;
 }
 
 - (void)reset {
-    audioFile->Seek(0);
+    ExtAudioFileSeek(audioFile, 0);
 }
 
 - (void)fillAudioBufferList:(AudioBufferList *)abl {
     UInt32 frames = abl->mBuffers[0].mDataByteSize / clientBytesPerFrame;
-    audioFile->Read(frames, abl);
+    ExtAudioFileRead(audioFile, &frames, abl);
 }
 
 @end
