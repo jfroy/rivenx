@@ -1723,7 +1723,7 @@ init_failure:
         // if the position has changed, setup a position interpolator
         float final_position = _inventory_frames[inv_i].origin.x;
         if ((pos_interpolator && pos_interpolator->end != final_position) ||
-            (!pos_interpolator && pos_x != final_position && pos_x >= 0.0f))
+            (!pos_interpolator && pos_x != final_position))
         {
             duration = (pos_interpolator) ? [[pos_interpolator animation] progress] : 1.0;
             [pos_interpolator release];
