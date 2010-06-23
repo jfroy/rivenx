@@ -71,36 +71,6 @@
     return (_fullscreen) ? _fullscreenWindow : _window;
 }
 
-- (void)_toggleFullscreenSnow {
-    if (_fullscreen) {
-        _defaultPresentationOptions = [NSApp presentationOptions];
-        [NSApp setPresentationOptions:(NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar)];
-        
-        [_window setLevel:NSStatusWindowLevel + 1];
-        [_window setStyleMask:NSBorderlessWindowMask];
-        [_window setFrame:[[_window screen] frame] display:YES animate:YES];
-        [_window setCanHide:NO];
-        [_window enableCursorRects];
-        [_window setCollectionBehavior:NSWindowCollectionBehaviorManaged];
-    } else {
-        [NSApp setPresentationOptions:_defaultPresentationOptions];
-        
-        [_window setLevel:NSNormalWindowLevel];
-        [_window setStyleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask];
-        
-        NSRect screenRect = [[_window screen] frame];
-        NSRect contentViewRect = NSMakeRect(0, 0, kRXRendererViewportSize.width, kRXRendererViewportSize.height);
-        NSRect windowRect = [_window frameRectForContentRect:contentViewRect];
-        windowRect.origin = NSMakePoint((screenRect.size.width / 2) - (windowRect.size.width / 2),
-                                        (screenRect.size.height / 2) - (windowRect.size.height / 2));
-        [_window setFrame:windowRect display:YES animate:YES];
-        
-        [_window setCanHide:YES];
-        [_window enableCursorRects];
-        [_window setCollectionBehavior:NSWindowCollectionBehaviorManaged];
-    }
-}
-
 - (void)_toggleFullscreen {
     // the _fullscreen attribute has been updated when this is called
     NSWindow* window = [self _renderingWindow];
