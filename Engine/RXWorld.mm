@@ -414,6 +414,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         _gameState = _gameStateToLoad;
         _gameStateToLoad = nil;
         
+        // post a notification informing everyone that a new game state has been loaded
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"RXGameStateLoadedNotification" object:_gameState userInfo:nil];
+        
         // set the active card to that of the new game state
         // NOTE: some cards except hotspot handling to be disabled when they open because
         //       almost always they are opening as a result of a mouse down action; to work

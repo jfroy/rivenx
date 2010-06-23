@@ -86,6 +86,11 @@ typedef struct {
     
     BOOL played_one_whark_solo;
     NSRect trapeze_rect;
+    
+    BOOL intro_scheduled_atrus_give_books;
+    BOOL intro_atrus_gave_books;
+    BOOL intro_scheduled_cho_take_book;
+    BOOL intro_cho_took_book;
 }
 
 - (id)initWithController:(id<RXScriptEngineControllerProtocol>)ctlr;
