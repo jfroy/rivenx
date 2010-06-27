@@ -5365,8 +5365,11 @@ DEFINE_COMMAND(xbookclick) {
     else
         [controller setMouseCursor:RX_CURSOR_FORWARD];
     
-    // show the mouse cursor
-    [self _showMouseCursor];
+    // show the mouse cursor; we use the controller directly because although
+    // we can assume the cursor is hidden right now, it empirically will not
+    // be hidden by the script engine at this point (since the gehn sequence
+    // is not a "blocking" movie because of this external
+    [controller showMouseCursor];
     
     // track the mouse until the link window expires, detecting if the player
     // clicks inside the link region and updating the cursor as it enters and
@@ -5410,7 +5413,7 @@ DEFINE_COMMAND(xbookclick) {
     }
     
     // hide the mouse cursor again and reset it to the forward cursor
-    [self _hideMouseCursor];
+    [controller hideMouseCursor];
     [controller setMouseCursor:RX_CURSOR_FORWARD];
     
     // if the mouse was not pressed and this is an endgame movie, start the
@@ -5483,9 +5486,6 @@ DEFINE_COMMAND(xbookclick) {
     // otherwise just wait for the movie to end
     else
         DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, movie_code);
-    
-    // show the mouse cursor again
-    [self _showMouseCursor];
 }
 
 DEFINE_COMMAND(xorollcredittime) {

@@ -1218,6 +1218,10 @@ init_failure:
 }
 
 - (void)update {
+    // WARNING: MUST RUN ON THE SCRIPT THREAD
+    if ([NSThread currentThread] != [g_world scriptThread])
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"update MUST RUN ON SCRIPT THREAD" userInfo:nil];
+    
     // if we'll queue a transition, hide the cursor; we want to do this before waiting for any ongoing transition so that if there is one,
     // when it completes the cursor won't flash on screen (race condition between this thread and the render thread)
     if ([_transitionQueue count] > 0 && !_disable_transition_dequeueing)
@@ -1295,13 +1299,13 @@ init_failure:
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"updated render state, front card=%@", _front_render_state->card);
 #endif
     
-    // if the front card has changed, we need to reap the back render state's card, put the front card in it, and show the mouse cursor
+    // if the front card has changed, we need to reap the back render state's card and put the front card in it
     if (_front_render_state->new_card) {
         // reclaim the back render state's card
         [_back_render_state->card release];
         _back_render_state->card = _front_render_state->card;
         
-        // show the mouse cursor now that the card switch is done
+        // show the mouse cursor again (matches the hideMousrCursor in setActiveCardWithSimpleDescriptor
         [self showMouseCursor];
     }
 }
@@ -1426,6 +1430,13 @@ init_failure:
         [sengine closeCard];
     }
     
+    // if the back state's new_card field is YES, we are performing a switch card before we ran a single
+    // screen update for the previous card; in such a case, we need to show the mouse cursor, otherwise
+    // the counter will become unbalanced (since -update normally performs a show mouse cursor to match
+    // the hide mouse cursor in setActiveCardWithSimpleDescriptor)
+    if (_back_render_state->new_card)
+        [self showMouseCursor];
+    
     // setup the back render state; notice that the ownership of new_card is
     // transferred to the back render state and thus we will not need a release
     // elsewhere to match the card's allocation
@@ -1441,7 +1452,7 @@ init_failure:
     // notify that the front card has changed
     [self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:new_card waitUntilDone:NO];
     
-    // run the prepare for rendering script on the new card
+    // run the open card script on the new card
     [sengine openCard];
 }
 
@@ -1475,7 +1486,7 @@ init_failure:
     [self activateSoundGroup:sgroup];
     [sgroup release];
     
-    // hide the mouse cursor
+    // must hide the mouse cursor since -update will perform a show mouse cursor
     [self hideMouseCursor];
     
     // fake a swap render state
@@ -2766,6 +2777,9 @@ exit_flush_tasks:
     
     int32_t updated_counter = OSAtomicDecrement32Barrier(&_cursor_hide_counter);
     assert(updated_counter >= 0);
+#if defined(DEBUG) && DEBUG > 1
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"showMouseCursor; counter=%d", updated_counter);
+#endif
     
     if (updated_counter == 0) {
         // if the hotspot handling disable counter is at 0, updateHotspotState
@@ -2773,8 +2787,7 @@ exit_flush_tasks:
         if (_hotspot_handling_disable_counter > 0)
             [g_worldView setCursor:_hidden_cursor];
     
-        [_hidden_cursor release];
-        _hidden_cursor = nil;
+        [_hidden_cursor release], _hidden_cursor = nil;
     }
 }
 
@@ -2783,6 +2796,9 @@ exit_flush_tasks:
     
     int32_t updated_counter = OSAtomicIncrement32Barrier(&_cursor_hide_counter);
     assert(updated_counter >= 0);
+#if defined(DEBUG) && DEBUG > 1
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"hideMouseCursor; counter=%d", updated_counter);
+#endif
     
     if (updated_counter == 1) {
         _hidden_cursor = [[g_worldView cursor] retain];
