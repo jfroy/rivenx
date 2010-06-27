@@ -262,8 +262,8 @@
                 picture_record->bitmap_id,
                 original_rect.size.width,
                 original_rect.size.height,
-                picture_record->width,
-                picture_record->height);
+                picture_record->rect.right - picture_record->rect.left,
+                picture_record->rect.bottom - picture_record->rect.top);
 #endif
         
         // adjust the display rect to anchor the picture to the top-left corner
