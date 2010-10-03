@@ -30,12 +30,12 @@ extern const uint32_t MHK_RSRC_signature_integer;
 
 #pragma pack(push, 1)
 typedef struct {
-    char signature[4];
+    uint32_t signature;
     uint32_t content_length;
 } MHK_chunk_header;
 
 typedef struct {
-    char signature[4];
+    uint32_t signature;
     uint32_t rsrc_total_size;
     uint32_t total_archive_size;
     uint32_t rsrc_dir_absolute_offset;

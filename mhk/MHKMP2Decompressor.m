@@ -271,7 +271,9 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         
         // find the next frame sync
         while (size_left_in_buffer >= 4) {
-            uint32_t mpeg_header = CFSwapInt32BigToHost(*(uint32_t*)read_buffer);
+            uint32_t mpeg_header;
+            memcpy(&mpeg_header, read_buffer, sizeof(uint32_t));
+            mpeg_header = CFSwapInt32BigToHost(mpeg_header);
             if (!_valid_mpeg_audio_frame_header_predicate(mpeg_header)) {
                 buffer_position++;
                 size_left_in_buffer--;

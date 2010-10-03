@@ -60,7 +60,7 @@
     
     // handle byte order and check header
     MHK_chunk_header_fton(&chunk_header);
-    if (*(uint32_t *)chunk_header.signature != MHK_MHWK_signature_integer)
+    if (chunk_header.signature != MHK_MHWK_signature_integer)
         ReturnNULLWithError(MHKErrorDomain, errDamagedResource, nil, error);
     
     // since resource lengths are computed in the archive, we need to do some checking here
@@ -103,7 +103,7 @@
         MHK_chunk_header_fton(&chunk_header);
         
         // do we have a winner?
-        if (*(uint32_t *)chunk_header.signature == MHK_Data_signature_integer)
+        if (chunk_header.signature == MHK_Data_signature_integer)
             break;
         
         // advance the position to the next chunk
@@ -111,7 +111,7 @@
     } while (resource_offset < resource_eof);
     
     // did we score?
-    if (*(uint32_t *)chunk_header.signature != MHK_Data_signature_integer)
+    if (chunk_header.signature != MHK_Data_signature_integer)
         ReturnNULLWithError(MHKErrorDomain, errDamagedResource, nil, error);
     
     // read the Data chunk content header

@@ -1574,20 +1574,25 @@ init_failure:
         double fps_inverse = 1.0 / r->water_fx.sfxe->record->fps;
         if (r->water_fx.frame_timestamp == 0 || RXTimingTimestampDelta(outputTime->hostTime, r->water_fx.frame_timestamp) >= fps_inverse) {
             // run the water microprogram for the current sfxe frame
-            uint16_t* mp = (uint16_t*)BUFFER_OFFSET(r->water_fx.sfxe->record, r->water_fx.sfxe->offsets[r->water_fx.current_frame]);
+            union {
+                uint16_t* p_int16;
+                void* p_void;
+            } mp;
+            mp.p_void = BUFFER_OFFSET(r->water_fx.sfxe->record, r->water_fx.sfxe->offsets[r->water_fx.current_frame]);
+            
             uint16_t draw_row = r->water_fx.sfxe->record->rect.top;
-            while (*mp != 4) {
-                if (*mp == 1) {
+            while (*mp.p_int16 != 4) {
+                if (*mp.p_int16 == 1) {
                     draw_row++;
-                } else if (*mp == 3) {
-                    memcpy(BUFFER_OFFSET(_water_draw_buffer, (draw_row * kRXCardViewportSize.width + mp[1]) << 2),
-                           BUFFER_OFFSET(_water_readback_buffer, (mp[3] * kRXCardViewportSize.width + mp[2]) << 2),
-                           mp[4] << 2);
-                    mp += 4;
+                } else if (*mp.p_int16 == 3) {
+                    memcpy(BUFFER_OFFSET(_water_draw_buffer, (draw_row * kRXCardViewportSize.width + mp.p_int16[1]) << 2),
+                           BUFFER_OFFSET(_water_readback_buffer, (mp.p_int16[3] * kRXCardViewportSize.width + mp.p_int16[2]) << 2),
+                           mp.p_int16[4] << 2);
+                    mp.p_int16 += 4;
                 } else
                     abort();
                 
-                mp++;
+                mp.p_int16++;
             }
             
             // update the dynamic RT texture from the water draw buffer

@@ -232,7 +232,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 
 - (uint16_t)cardIDFromRMAPCode:(uint32_t)code {
     uint32_t* rmap_data = (uint32_t*)[_rmapData bytes];
-    uint32_t* rmap_end = (uint32_t*)((uint8_t*)[_rmapData bytes] + [_rmapData length]);
+    uint32_t* rmap_end = (uint32_t*)BUFFER_OFFSET([_rmapData bytes], [_rmapData length]);
     uint16_t card_id = 0;
 #if defined(__LITTLE_ENDIAN__)
     code = CFSwapInt32(code);

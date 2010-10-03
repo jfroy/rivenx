@@ -385,7 +385,7 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     MHK_chunk_header_fton(&header);
     
     // check the header
-    if (*(uint32_t *)header.signature != MHK_MHWK_signature_integer || header.content_length != archive_size - sizeof(MHK_chunk_header))
+    if (header.signature != MHK_MHWK_signature_integer || header.content_length != archive_size - sizeof(MHK_chunk_header))
         return NO;
     
     // read the rsrc header
@@ -396,7 +396,7 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     MHK_RSRC_header_fton(&rsrc_header);
     
     // check the rsrc header
-    if (*(uint32_t *)rsrc_header.signature != MHK_RSRC_signature_integer || rsrc_header.total_archive_size != archive_size)
+    if (rsrc_header.signature != MHK_RSRC_signature_integer || rsrc_header.total_archive_size != archive_size)
         return NO;
     
     // cache the information we'll really need

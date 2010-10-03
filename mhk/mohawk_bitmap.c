@@ -181,7 +181,11 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
     Pixel_8 file_color_table_storage[256][3];
     
     // storage for the color table
-    Pixel_8888 color_table_storage[256];
+    union {
+        Pixel_8888 p_8888[256];
+        Pixel_F p_float[256];
+        void* p_void;
+    } color_table_storage;
     
     // file color table
     vImage_Buffer fct_buffer;
@@ -201,7 +205,7 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
     ct_buffer.rowBytes = 256 * 4;
     ct_buffer.width = 256;
     ct_buffer.height = 1;
-    ct_buffer.data = color_table_storage;
+    ct_buffer.data = color_table_storage.p_void;
     
     // create the ARGB8888 color table
     err = vImageConvert_RGB888toARGB8888(&fct_buffer, NULL, 0xff, &ct_buffer, false, kvImageNoFlags);
@@ -271,7 +275,7 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
     client_buffer.data = pixels;
     
     // do the entire color lookup operation in one sweet function call
-    err = vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, (Pixel_F*)color_table_storage, kvImageNoFlags);
+    err = vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, color_table_storage.p_float, kvImageNoFlags);
     if (err)
         goto AbortReadIndexedPixels;
     
@@ -289,8 +293,11 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
     // storage for the file color table
     Pixel_8 file_color_table_storage[256][3];
     
-    // storage for the color table
-    Pixel_8888 color_table_storage[256];
+    union {
+        Pixel_8888 p_8888[256];
+        Pixel_F p_float[256];
+        void* p_void;
+    } color_table_storage;
     
     // file color table
     vImage_Buffer fct_buffer;
@@ -310,7 +317,7 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
     ct_buffer.rowBytes = 256 * 4;
     ct_buffer.width = 256;
     ct_buffer.height = 1;
-    ct_buffer.data = color_table_storage;
+    ct_buffer.data = color_table_storage.p_void;
     
     // create the ARGB8888 color table
     err = vImageConvert_RGB888toARGB8888(&fct_buffer, NULL, 0xff, &ct_buffer, false, kvImageNoFlags);
@@ -773,7 +780,7 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
     client_buffer.data = pixels;
     
     // do the entire color lookup operation in one sweet function call
-    err = vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, (Pixel_F *)color_table_storage, kvImageNoFlags);
+    err = vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, color_table_storage.p_float, kvImageNoFlags);
     if (err)
         goto AbortReadCompressedIndexedPixels;
     
