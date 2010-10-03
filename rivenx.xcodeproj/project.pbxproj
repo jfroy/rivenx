@@ -969,9 +969,9 @@
 		31B78EC40C88F25F00227E0F /* Configuration */ = {
 			isa = PBXGroup;
 			children = (
-				317ACCB80F285C490040FFFD /* MHKMoviePlayer.xcconfig */,
 				31B78EC50C88F25F00227E0F /* Base.xcconfig */,
 				31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */,
+				317ACCB80F285C490040FFFD /* MHKMoviePlayer.xcconfig */,
 				31B78EC70C88F25F00227E0F /* RivenX.xcconfig */,
 			);
 			path = Configuration;
@@ -2034,6 +2034,7 @@
 					"DEBUG_GL=1",
 					"DEBUG_AUDIO=1",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Debug;
@@ -2043,6 +2044,7 @@
 			baseConfigurationReference = 31B78EC60C88F25F00227E0F /* DebugRelease.xcconfig */;
 			buildSettings = {
 				DEPLOYMENT_POSTPROCESSING = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 			};
 			name = Release;
 		};
@@ -2210,6 +2212,7 @@
 					"$(inherited)",
 					"DEBUG=1",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				ONLY_ACTIVE_ARCH = NO;
 			};
 			name = "Beta Release";
