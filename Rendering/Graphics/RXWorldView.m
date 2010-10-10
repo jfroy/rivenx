@@ -517,24 +517,28 @@ static NSString* required_extensions[] = {
     return YES;
 }
 
-- (void)mouseDown:(NSEvent*)theEvent {
-    [[g_world cardRenderer] mouseDown:theEvent];
+- (void)mouseDown:(NSEvent*)event {
+    [[g_world cardRenderer] mouseDown:event];
 }
 
-- (void)mouseUp:(NSEvent*)theEvent {
-    [[g_world cardRenderer] mouseUp:theEvent];
+- (void)mouseUp:(NSEvent*)event {
+    [[g_world cardRenderer] mouseUp:event];
 }
 
-- (void)mouseMoved:(NSEvent*)theEvent {
-    [[g_world cardRenderer] mouseMoved:theEvent];
+- (void)mouseMoved:(NSEvent*)event {
+    [[g_world cardRenderer] mouseMoved:event];
 }
 
-- (void)mouseDragged:(NSEvent*)theEvent {
-    [[g_world cardRenderer] mouseDragged:theEvent];
+- (void)mouseDragged:(NSEvent*)event {
+    [[g_world cardRenderer] mouseDragged:event];
 }
 
-- (void)keyDown:(NSEvent*)theEvent {
-    [[g_world cardRenderer] keyDown:theEvent];
+- (void)swipeWithEvent:(NSEvent*)event {
+    [[g_world cardRenderer] swipeWithEvent:event];
+}
+
+- (void)keyDown:(NSEvent*)event {
+    [[g_world cardRenderer] keyDown:event];
 }
 
 - (void)resetCursorRects {

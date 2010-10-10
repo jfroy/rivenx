@@ -561,6 +561,7 @@
 		31F4F03B0F35461C00A68652 /* RXMovieProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXMovieProxy.m; sourceTree = "<group>"; };
 		31FA569D0C5AD15D005DE22F /* RXErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXErrors.h; sourceTree = "<group>"; };
 		31FA569E0C5AD15D005DE22F /* RXErrors.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXErrors.m; sourceTree = "<group>"; };
+		31FCC1A11261160600EFEAA9 /* auto_spinlock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = auto_spinlock.h; sourceTree = "<group>"; };
 		31FE33AB101BBC4100C30CD1 /* debug_notification.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = debug_notification.py; sourceTree = "<group>"; };
 		31FF29670D41996E00E3B5FF /* dump_save.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = dump_save.m; sourceTree = "<group>"; };
 		31FF29D40D425BFE00E3B5FF /* GameVariables.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = GameVariables.plist; sourceTree = "<group>"; };
@@ -989,6 +990,7 @@
 				3133D9AE0D5CDDC1004DAD5E /* BZFSOperation.m */,
 				316721D90D27FB3200FB2C0E /* integer_pair_hash.c */,
 				316721D80D27FB3200FB2C0E /* integer_pair_hash.h */,
+				31FCC1A11261160600EFEAA9 /* auto_spinlock.h */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";

@@ -23,6 +23,8 @@
 
 #import "Application/RXApplicationDelegate.h"
 
+#import "Utilities/auto_spinlock.h"
+
 #if defined(DEBUG)
 #import <GLUT/glut.h>
 #endif
@@ -2837,40 +2839,23 @@ exit_flush_tasks:
         [self updateHotspotState];
 }
 
-- (void)updateHotspotState {
-    // NOTE: this method must run on the main thread and will bounce itself there if needed
-    if (!pthread_main_np()) {
-        [self performSelectorOnMainThread:@selector(updateHotspotState) withObject:nil waitUntilDone:NO];
-        return;
-    }
+- (void)_updateHotspotState_nolock {
+    // WARNING: MUST RUN ON THE MAIN THREAD
+    if (!pthread_main_np())
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                       reason:@"_updateHotspotState_nolock: MUST RUN ON MAIN THREAD"
+                                     userInfo:nil];
     
-    // when we're on edge values of the hotspot handling disable counter, we need to update the load / save UI
-    // (because it basically means we're starting to execute some script as a response of user action)
-    if (_hotspot_handling_disable_counter == 0)
-        [(RXApplicationDelegate*)[NSApp delegate] setDisableGameLoadingAndSaving:NO];
-    else if (_hotspot_handling_disable_counter == 1)
-        [(RXApplicationDelegate*)[NSApp delegate] setDisableGameLoadingAndSaving:YES];
-    
-    // if hotspot handling is disabled, simply return
+    // check if hotspot handling is disabled again (last time, this is only to handle the situation where we might have slept a little while on the spin lock
     if (_hotspot_handling_disable_counter > 0)
         return;
-    
-    // hotspot updates cannot occur during a card switch
-    OSSpinLockLock(&_state_swap_lock);
-    
-    // check if hotspot handling is disabled again (last time, this is only to handle the situation where we might
-    // have slept a little while on the spin lock
-    if (_hotspot_handling_disable_counter > 0) {
-        OSSpinLockUnlock(&_state_swap_lock);
-        return;
-    }
     
     // get the mouse vector using the getter since it will take the spin lock and return a copy
     NSRect mouse_vector = [self mouseVector];
     
     // get the front card's active hotspots
     NSArray* active_hotspots = [sengine activeHotspots];
-
+    
     // update the active status of the inventory based on the position of the mouse
     if (NSMouseInRect(mouse_vector.origin, [(NSView*)g_worldView bounds], NO) && mouse_vector.origin.y < kRXInventorySize.height)
         _inventory_has_focus = YES;
@@ -2956,11 +2941,33 @@ exit_flush_tasks:
         if (old >= (RXHotspot*)0x1000)
             [old release];
     }
-    
-    OSSpinLockUnlock(&_state_swap_lock);
 }
 
-- (void)_handleInventoryMouseDown:(NSEvent*)event inventoryIndex:(uint32_t)index {
+- (void)updateHotspotState {
+    // NOTE: this method must run on the main thread and will bounce itself there if needed
+    if (!pthread_main_np()) {
+        [self performSelectorOnMainThread:@selector(updateHotspotState) withObject:nil waitUntilDone:NO];
+        return;
+    }
+    
+    // when we're on edge values of the hotspot handling disable counter, we need to update the load / save UI
+    // (because it basically means we're starting to execute some script as a response of user action)
+    if (_hotspot_handling_disable_counter == 0)
+        [(RXApplicationDelegate*)[NSApp delegate] setDisableGameLoadingAndSaving:NO];
+    else if (_hotspot_handling_disable_counter == 1)
+        [(RXApplicationDelegate*)[NSApp delegate] setDisableGameLoadingAndSaving:YES];
+    
+    // if hotspot handling is disabled, simply return
+    if (_hotspot_handling_disable_counter > 0)
+        return;
+    
+    // hotspot updates cannot occur during a card switch
+    auto_spinlock state_lock(&_state_swap_lock);
+    
+    [self _updateHotspotState_nolock];
+}
+
+- (void)_handleInventoryMouseDownWithItemIndex:(uint32_t)index {
     // WARNING: this method assumes the state swap lock has been taken by the caller
     
     if (index >= RX_MAX_INVENTORY_ITEMS)
@@ -3041,23 +3048,7 @@ exit_flush_tasks:
     [self updateHotspotState];
 }
 
-- (void)mouseDown:(NSEvent*)event {
-    // update the mouse vector
-    OSSpinLockLock(&_mouse_state_lock);
-    _mouse_vector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
-    _mouse_vector.size = NSZeroSize;
-    _mouse_timestamp = [event timestamp];
-    _last_mouse_down_event.location = _mouse_vector.origin;
-    _last_mouse_down_event.timestamp = _mouse_timestamp;
-    OSSpinLockUnlock(&_mouse_state_lock);
-    
-    // if hotspot handling is disabled, simply return
-    if (_hotspot_handling_disable_counter > 0)
-        return;
-    
-    // cannot use the front card during state swaps
-    OSSpinLockLock(&_state_swap_lock);
-    
+- (void)_performMouseDown {
     // if the current hotspot is valid, send it a mouse down event; if the current "hotspot" is an inventory item, handle that too
     if (_current_hotspot >= (RXHotspot*)0x1000) {
         // remember the last hotspot for which we've sent a "mouse down" message
@@ -3071,13 +3062,36 @@ exit_flush_tasks:
         
         // let the script engine run mouse down scripts
         [sengine performSelector:@selector(mouseDownInHotspot:) withObject:_current_hotspot inThread:[g_world scriptThread]];
-    } else if (_current_hotspot)
-        [self _handleInventoryMouseDown:event inventoryIndex:(uint32_t)_current_hotspot - 1];
-    
-    OSSpinLockUnlock(&_state_swap_lock);
+    }
+    else if (_current_hotspot)
+        [self _handleInventoryMouseDownWithItemIndex:(uint32_t)_current_hotspot - 1];
     
     // we do not need to call updateHotspotState from mouse down, since handling inventory hotspots would be difficult there 
     // (can't retain a non-valid pointer value, e.g. can't store the dummy _current_hotspot value into _mouse_down_hotspot
+}
+
+- (void)mouseDown:(NSEvent*)event {
+    NSPoint mouse_point = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
+    
+    // update the mouse vector
+    OSSpinLockLock(&_mouse_state_lock);
+    _mouse_vector.origin = mouse_point;
+    _mouse_vector.size = NSZeroSize;
+    _mouse_timestamp = [event timestamp];
+    
+    _last_mouse_down_event.location = _mouse_vector.origin;
+    _last_mouse_down_event.timestamp = _mouse_timestamp;
+    OSSpinLockUnlock(&_mouse_state_lock);
+    
+    // if hotspot handling is disabled, simply return
+    if (_hotspot_handling_disable_counter > 0)
+        return;
+    
+    // cannot use the front card during state swaps
+    auto_spinlock state_lock(&_state_swap_lock);
+    
+    // perform the mouse down
+    [self _performMouseDown];
 }
 
 - (void)mouseUp:(NSEvent*)event {
@@ -3096,6 +3110,146 @@ exit_flush_tasks:
     // finally we need to update the hotspot state; updateHotspotState will take care of sending the mouse up event if there is a
     // mouse down hotspot and the mouse is still over that hotspot
     [self updateHotspotState];
+}
+
+- (BOOL)_isMouseOverHotspot:(RXHotspot*)desired_hotspot activeHotspots:(NSArray*)active_hotspots mouseLocation:(NSPoint)mouse_origin {
+    RXHotspot* hotspot = nil;
+    for (hotspot in active_hotspots) {
+        if (NSMouseInRect(mouse_origin, [hotspot worldFrame], NO))
+            break;
+    }
+    
+    return (hotspot == desired_hotspot) ? YES: NO;
+}
+
+- (void)swipeWithEvent:(NSEvent*)event {
+    NSRect mouse_vector = [self mouseVector];
+    
+    // if hotspot handling is disabled or the mouse is down, do nothing
+    BOOL mouse_down = isfinite(mouse_vector.size.width);
+    
+    if (_hotspot_handling_disable_counter > 0 || mouse_down)
+        return;
+    
+    // based on the swipe direction, look up one of the standard movement hotspots in the active set and generate a "mouse down" event if we find one
+    NSArray* eligible_names;
+    if ([event deltaX] < 0.0)
+        eligible_names = [NSArray arrayWithObjects:@"right", @"afr", nil];
+    else if ([event deltaX] > 0.0)
+        eligible_names = [NSArray arrayWithObjects:@"left", @"afl", nil];
+    else if ([event deltaY] < 0.0)
+        eligible_names = [NSArray arrayWithObjects:@"up", nil];
+    else if ([event deltaY] > 0.0)
+        eligible_names = [NSArray arrayWithObjects:@"down", nil];
+    else
+        eligible_names = nil;
+    
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"swipe %@", event);
+#endif
+    
+    // if we didn't recognize the swipe direction, we're done
+    if (eligible_names == nil)
+        return;
+    
+    // so, to guarantee that we're going to maintain a consistent state in Riven X, we'll need to pretend that the mouse has moved over the eligible hotspot
+    // moused down on it, then moused up, all within the rules of how events are handled; moving the mouse as such implies running the mouse exited handler
+    // of the current hotspot, doing the work, then figuring out what is under the mouse after the swipe and running a mouse entered handler if it is over
+    // a hotspot
+    
+    // cannot use the front card during state swaps
+    auto_spinlock state_lock(&_state_swap_lock);
+    
+    // try to find an eligible hotspot
+    RXHotspot* swipe_hotspot = nil;
+    for (NSString* name in eligible_names) {
+        swipe_hotspot = [sengine activeHotspotWithName:name];
+        if (swipe_hotspot)
+            break;
+    }
+    
+    // if we did not find any eligible hotspot, we're done
+    if (swipe_hotspot == nil)
+        return;
+    
+    // instant-move the mouse inside of the chosen hotspot; we do this by finding a mouse location that will put the cursor over the eligile hotspot
+    
+    // get the frame for the target hotspot
+    NSRect hotspot_frame = [swipe_hotspot worldFrame];
+    
+    // get the front card's active hotspots
+    NSArray* active_hotspots = [sengine activeHotspots];
+    
+    // find a swipe origin that will put the cursor over the swipe hotspot
+    
+    // bottom left corner
+    NSPoint swipe_origin = NSMakePoint(hotspot_frame.origin.x, hotspot_frame.origin.y + 1.0);
+    BOOL in_swipe_hotspot = [self _isMouseOverHotspot:swipe_hotspot activeHotspots:active_hotspots mouseLocation:swipe_origin];
+    if (!in_swipe_hotspot) {
+        // top left corner
+        swipe_origin = NSMakePoint(hotspot_frame.origin.x + hotspot_frame.size.width - 1.0, hotspot_frame.origin.y + 1.0);
+        in_swipe_hotspot = [self _isMouseOverHotspot:swipe_hotspot activeHotspots:active_hotspots mouseLocation:swipe_origin];
+        
+        if (!in_swipe_hotspot) {
+            // bottom right corner
+            swipe_origin = NSMakePoint(hotspot_frame.origin.x, hotspot_frame.origin.y + hotspot_frame.size.height);
+            in_swipe_hotspot = [self _isMouseOverHotspot:swipe_hotspot activeHotspots:active_hotspots mouseLocation:swipe_origin];
+            
+            if (!in_swipe_hotspot) {
+                // top right corner
+                swipe_origin = NSMakePoint(hotspot_frame.origin.x + hotspot_frame.size.width - 1.0, hotspot_frame.origin.y + hotspot_frame.size.height);
+                in_swipe_hotspot = [self _isMouseOverHotspot:swipe_hotspot activeHotspots:active_hotspots mouseLocation:swipe_origin];
+                
+                if (!in_swipe_hotspot) {
+                    // center
+                    swipe_origin = NSMakePoint(hotspot_frame.origin.x + (hotspot_frame.size.width / 2.0),
+                                               hotspot_frame.origin.y + (hotspot_frame.size.height / 2.0));
+                    in_swipe_hotspot = [self _isMouseOverHotspot:swipe_hotspot activeHotspots:active_hotspots mouseLocation:swipe_origin];
+                    
+                    // give up at this point
+                }
+            }
+        }
+    }
+    
+    // if we did not find a location where the mouse is over the swipe hotspot, we're done :(
+    if (!in_swipe_hotspot)
+        return;
+    
+    NSRect previous_mouse_vector;
+    {
+        auto_spinlock mouse_lock(&_mouse_state_lock);
+        
+        // we need to copy the current mouse vector to restore it after the swipe
+        previous_mouse_vector = _mouse_vector;
+        
+        _mouse_vector.origin = swipe_origin;
+        _mouse_vector.size.width = INFINITY;
+        _mouse_vector.size.height = INFINITY;
+        _mouse_timestamp = [event timestamp];
+    }
+    
+    // updateHotspotState will take care of sending the mouse up event if there is a mouse down hotspot and the mouse is still over that hotspot; we use the
+    // _nolock version here because we've already taken the state swap lock
+    [self _updateHotspotState_nolock];
+    
+    // we can now finally generate a mouse down event; we do this by changing the mouse vector's size from INFINITY to zero
+    {
+        auto_spinlock mouse_lock(&_mouse_state_lock);
+        _mouse_vector.size = NSZeroSize;
+    }
+    
+    // perform the mouse down
+    [self _performMouseDown];
+    
+    // restore the mouse's position
+    {
+        auto_spinlock mouse_lock(&_mouse_state_lock);
+        _mouse_vector = previous_mouse_vector;
+    }
+    
+    // update the hotspot state again
+    [self _updateHotspotState_nolock];
 }
 
 - (void)keyDown:(NSEvent*)event {

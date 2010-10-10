@@ -27,6 +27,7 @@ typedef struct {
 @interface RXScriptEngine : NSObject <RXScriptEngineProtocol> {
     id<RXScriptEngineControllerProtocol> controller;
     RXCard* _card;
+    OSSpinLock _card_lock;
     
     // program execution
     uint32_t _programExecutionDepth;

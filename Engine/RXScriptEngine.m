@@ -256,6 +256,8 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     controller = ctlr;
     
+    _card_lock = OS_SPINLOCK_INIT;
+    
     logPrefix = [NSMutableString new];
     
     _active_hotspots_lock = OS_SPINLOCK_INIT;
@@ -361,9 +363,13 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     if (c == _card)
         return;
     
+    OSSpinLockLock(&_card_lock);
+    
     id old = _card;
     _card = [c retain];
     [old release];
+    
+    OSSpinLockUnlock(&_card_lock);
     
     [self _emptyPictureCaches];
     _schedule_movie_proxy_reset = YES;
@@ -868,10 +874,20 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     // WARNING: WILL BE CALLED BY THE MAIN THREAD
     
     OSSpinLockLock(&_active_hotspots_lock);
-    NSArray* hotspots = [[_active_hotspots copy] autorelease];
+    NSArray* hotspots = [_active_hotspots copy];
     OSSpinLockUnlock(&_active_hotspots_lock);
     
-    return hotspots;
+    return [hotspots autorelease];
+}
+
+- (RXHotspot*)activeHotspotWithName:(NSString*)name {
+    // WARNING: WILL BE CALLED BY THE MAIN THREAD
+    
+    OSSpinLockLock(&_card_lock);
+    RXHotspot* hotspot = [(RXHotspot*)NSMapGet([_card hotspotsNameMap], name) retain];
+    OSSpinLockUnlock(&_card_lock);
+    
+    return [hotspot autorelease];
 }
 
 - (void)mouseInsideHotspot:(RXHotspot*)hotspot {
