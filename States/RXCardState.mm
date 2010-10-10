@@ -2846,10 +2846,6 @@ exit_flush_tasks:
                                        reason:@"_updateHotspotState_nolock: MUST RUN ON MAIN THREAD"
                                      userInfo:nil];
     
-    // check if hotspot handling is disabled again (last time, this is only to handle the situation where we might have slept a little while on the spin lock
-    if (_hotspot_handling_disable_counter > 0)
-        return;
-    
     // get the mouse vector using the getter since it will take the spin lock and return a copy
     NSRect mouse_vector = [self mouseVector];
     
@@ -2963,6 +2959,10 @@ exit_flush_tasks:
     
     // hotspot updates cannot occur during a card switch
     auto_spinlock state_lock(&_state_swap_lock);
+    
+    // check if hotspot handling is disabled again (last time, this is only to handle the situation where we might have slept a little while on the spin lock
+    if (_hotspot_handling_disable_counter > 0)
+        return;
     
     [self _updateHotspotState_nolock];
 }
@@ -3160,6 +3160,10 @@ exit_flush_tasks:
     // cannot use the front card during state swaps
     auto_spinlock state_lock(&_state_swap_lock);
     
+    // check if hotspot handling is disabled again (last time, this is only to handle the situation where we might have slept a little while on the spin lock
+    if (_hotspot_handling_disable_counter > 0)
+        return;
+    
     // try to find an eligible hotspot
     RXHotspot* swipe_hotspot = nil;
     for (NSString* name in eligible_names) {
@@ -3229,6 +3233,9 @@ exit_flush_tasks:
         _mouse_timestamp = [event timestamp];
     }
     
+    // hide the mouse cursor to avoid the cursor flashing as we artificially move the cursor around
+    [self hideMouseCursor];
+    
     // updateHotspotState will take care of sending the mouse up event if there is a mouse down hotspot and the mouse is still over that hotspot; we use the
     // _nolock version here because we've already taken the state swap lock
     [self _updateHotspotState_nolock];
@@ -3250,6 +3257,9 @@ exit_flush_tasks:
     
     // update the hotspot state again
     [self _updateHotspotState_nolock];
+    
+    // balance the hideMouseCursor done above
+    [self showMouseCursor];
 }
 
 - (void)keyDown:(NSEvent*)event {
