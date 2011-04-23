@@ -20,7 +20,6 @@
 #import "Engine/RXWorld.h"
 #import "Engine/RXCursors.h"
 
-#import "Utilities/GTMObjectSingleton.h"
 #import "Utilities/BZFSUtilities.h"
 
 #import "Rendering/Audio/RXAudioRenderer.h"
@@ -40,6 +39,14 @@ NSObject <RXWorldProtocol>* g_world = nil;
 // disable automatic KVC
 + (BOOL)accessInstanceVariablesDirectly {
     return NO;
+}
+
++ (RXWorld*)sharedWorld
+{
+    // WARNING: the first call to this method is not thread safe
+    if (g_world == nil)
+        g_world = [RXWorld new];
+    return (RXWorld*)g_world;
 }
 
 - (void)_initEngineVariables {
@@ -81,7 +88,9 @@ NSObject <RXWorldProtocol>* g_world = nil;
     _worldBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent], kCFURLPOSIXPathStyle, true);
     
     FSRef sharedFolderRef;
-    if (FSFindFolder(kLocalDomain, kSharedUserDataFolderType, kDontCreateFolder, &sharedFolderRef) != noErr) {
+    OSErr os_err = FSFindFolder(kLocalDomain, kSharedUserDataFolderType, kDontCreateFolder, &sharedFolderRef);
+    if (os_err != noErr) {
+        error = [NSError errorWithDomain:NSOSStatusErrorDomain code:os_err userInfo:nil];
         @throw [NSException exceptionWithName:@"RXFilesystemException"
                                        reason:@"Riven X was unable to locate your Mac's Shared folder."
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
@@ -111,9 +120,6 @@ NSObject <RXWorldProtocol>* g_world = nil;
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
     }
 }
-
-
-GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
 
 - (id)init {
     self = [super init];

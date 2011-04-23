@@ -104,23 +104,7 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-    return self;
-}
-
-- (NSUInteger)retainCount {
-    return UINT_MAX;
-}
-
-- (id)retain {
-    return self;
-}
-
-- (void)release {
-    
-}
-
-- (id)autorelease {
-    return self;
+    return [self retain];
 }
 
 - (GLuint)standardProgramWithFragmentShaderName:(NSString*)name
