@@ -22,7 +22,7 @@
 @interface MHKArchive : NSObject {
     NSURL* mhk_url;
     
-    SInt16 forkRef;
+    FSIORefNum forkRef;
     uint32_t archive_size;
     
     BOOL initialized;
@@ -76,9 +76,11 @@
 
 @end
 
+#if !defined(__LP64__)
 @interface MHKArchive (MHKArchiveQuickTimeAdditions)
 - (Movie)movieWithID:(uint16_t)movieID error:(NSError**)errorPtr;
 @end
+#endif
 
 @interface MHKArchive (MHKArchiveWAVAdditions)
 - (NSDictionary*)soundDescriptorWithID:(uint16_t)soundID error:(NSError**)error;

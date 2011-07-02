@@ -63,26 +63,19 @@
 
 class CAAudioUnitOutputCapturer {
 public:
+	enum { noErr = 0 };
+
 	CAAudioUnitOutputCapturer(AudioUnit au, CFURLRef outputFileURL, AudioFileTypeID fileType, const AudioStreamBasicDescription &format, UInt32 busNumber = 0) :
 		mFileOpen(false),
 		mClientFormatSet(false),
 		mAudioUnit(au),
 		mExtAudioFile(NULL),
 		mBusNumber (busNumber)
-	{
-		FSRef fsref;
-		if (CFURLGetFSRef(outputFileURL, &fsref))
-			FSDeleteObject(&fsref);
-		
-		CFURLRef directory = CFURLCreateCopyDeletingLastPathComponent(NULL, outputFileURL);
-		CFStringRef filename = CFURLCopyLastPathComponent(outputFileURL);
-		if (CFURLGetFSRef(directory, &fsref)) {
-			OSStatus err = ExtAudioFileCreateNew(&fsref, filename, fileType, &format, NULL, &mExtAudioFile);
-			if (!err)
-				mFileOpen = true;
-		}
-		CFRelease(directory);
-		CFRelease(filename);
+	{	
+		CFShow(outputFileURL);
+		OSStatus err = ExtAudioFileCreateWithURL(outputFileURL, fileType, &format, NULL, kAudioFileFlags_EraseFile, &mExtAudioFile);
+		if (!err)
+			mFileOpen = true;
 	}
 	
 	void	Start() {
@@ -94,7 +87,6 @@ public:
 				ExtAudioFileSetProperty(mExtAudioFile, kExtAudioFileProperty_ClientDataFormat, size, &clientFormat);
 				mClientFormatSet = true;
 			}
-			
 			ExtAudioFileWriteAsync(mExtAudioFile, 0, NULL);	// initialize async writes
 			AudioUnitAddRenderNotify(mAudioUnit, RenderCallback, this);
 		}
@@ -128,7 +120,8 @@ private:
 			CAAudioUnitOutputCapturer *This = (CAAudioUnitOutputCapturer *)inRefCon;
 			static int TEMP_kAudioUnitRenderAction_PostRenderError	= (1 << 8);
 			if (This->mBusNumber == inBusNumber && !(*ioActionFlags & TEMP_kAudioUnitRenderAction_PostRenderError)) {
-				ExtAudioFileWriteAsync(This->mExtAudioFile, inNumberFrames, ioData);
+				OSStatus result = ExtAudioFileWriteAsync(This->mExtAudioFile, inNumberFrames, ioData);
+				if (result) DebugMessageN1("ERROR WRITING FRAMES: %d\n", (int)result);
 			}
 		}
 		return noErr;

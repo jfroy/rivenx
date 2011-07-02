@@ -101,6 +101,7 @@ public:
 					Locker(CAMutex& inMutex) : mMutex(inMutex), mNeedsRelease(false) { mNeedsRelease = mMutex.Lock(); }
 					~Locker() { if(mNeedsRelease) { mMutex.Unlock(); } }
 	
+	
 	private:
 					Locker(const Locker&);
 		Locker&		operator=(const Locker&);
@@ -111,8 +112,24 @@ public:
 		bool		mNeedsRelease;
 	
 	};
+
+// Unlocker
+	class Unlocker
+	{
+	public:
+						Unlocker(CAMutex& inMutex);
+						~Unlocker();
+		
+	private:
+		CAMutex&	mMutex;
+		bool		mNeedsLock;
+		
+		// Hidden definitions of copy ctor, assignment operator
+		Unlocker(const Unlocker& copy);				// Not implemented
+		Unlocker& operator=(const Unlocker& copy);	// Not implemented
+	};
 	
-		// you can use this with Try - if you take the lock in try, pass in the outWasLocked var
+// you can use this with Try - if you take the lock in try, pass in the outWasLocked var
 	class Tryer {
 	
 	//	Construction/Destruction

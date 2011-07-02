@@ -18,10 +18,10 @@
 
 typedef struct {
     void* data_base;
-    uint32_t data_base_size;
+    ByteCount data_base_size;
     
     void* data;
-    uint32_t data_size;
+    ByteCount data_size;
     
     SInt16 fork;
     uint64_t fork_offset;
@@ -56,8 +56,8 @@ static OSStatus _buffered_linear_read_fork(MHK_fork_io_buffer* io_buffer, const 
     ByteCount local_actual = 0;
     
     // how many bytes can be read from the buffer, and how many bytes do we have left to supply
-    UInt32 available_from_buffer = 0;
-    uint32_t size_left = requested;
+    ByteCount available_from_buffer = 0;
+    ByteCount size_left = requested;
     
     // while we need to supply bytes
     while (size_left > 0) {
@@ -126,7 +126,7 @@ OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* 
     client_buffer.data = pixels;
     
     // convert the image to ARGB8888
-    err = vImageConvert_RGB888toARGB8888(&file_buffer, NULL, 0xff, &client_buffer, false, kvImageNoFlags);
+    err = (OSStatus)vImageConvert_RGB888toARGB8888(&file_buffer, NULL, 0xff, &client_buffer, false, kvImageNoFlags);
     if (err != kvImageNoError)
         goto AbortReadBGRPixels;
     
@@ -135,7 +135,7 @@ OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* 
         case MHK_RGBA_UNSIGNED_BYTE_PACKED: {
             // ABGR -> RGBA
             const uint8_t permute_vector[4] = {3, 2, 1, 0};
-            err = vImagePermuteChannels_ARGB8888(&client_buffer, &client_buffer, permute_vector, kvImageNoFlags);
+            err = (OSStatus)vImagePermuteChannels_ARGB8888(&client_buffer, &client_buffer, permute_vector, kvImageNoFlags);
             if (err != kvImageNoError)
                 goto AbortReadBGRPixels;
             break;
@@ -143,7 +143,7 @@ OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* 
         case MHK_ARGB_UNSIGNED_BYTE_PACKED: {
             // ABGR -> ARGB
             const uint8_t permute_vector[4] = {0, 3, 2, 1};
-            err = vImagePermuteChannels_ARGB8888(&client_buffer, &client_buffer, permute_vector, kvImageNoFlags);
+            err = (OSStatus)vImagePermuteChannels_ARGB8888(&client_buffer, &client_buffer, permute_vector, kvImageNoFlags);
             if (err != kvImageNoError)
                 goto AbortReadBGRPixels;
             break;
@@ -158,7 +158,7 @@ OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* 
 #else
             // ABGR -> BGRA
             const uint8_t permute_vector[4] = {1, 2, 3, 0};
-            err = vImagePermuteChannels_ARGB8888(&client_buffer, &client_buffer, permute_vector, kvImageNoFlags);
+            err = (OSStatus)vImagePermuteChannels_ARGB8888(&client_buffer, &client_buffer, permute_vector, kvImageNoFlags);
             if (err != kvImageNoError)
                 goto AbortReadBGRPixels;
 #endif
@@ -181,7 +181,7 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
     Pixel_8 file_color_table_storage[256][3];
     
     // storage for the color table
-    Pixel_8888 color_table_storage[256];
+    Pixel_F color_table_storage[256];
     
     // file color table
     vImage_Buffer fct_buffer;
@@ -204,7 +204,7 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
     ct_buffer.data = color_table_storage;
     
     // create the ARGB8888 color table
-    err = vImageConvert_RGB888toARGB8888(&fct_buffer, NULL, 0xff, &ct_buffer, false, kvImageNoFlags);
+    err = (OSStatus)vImageConvert_RGB888toARGB8888(&fct_buffer, NULL, 0xff, &ct_buffer, false, kvImageNoFlags);
     if (err != kvImageNoError)
         goto AbortReadIndexedPixels;
     
@@ -213,7 +213,7 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
         case MHK_RGBA_UNSIGNED_BYTE_PACKED: {
             // ABGR -> RGBA
             const uint8_t permute_vector[4] = {3, 2, 1, 0};
-            err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
+            err = (OSStatus)vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
             if (err != kvImageNoError)
                 goto AbortReadIndexedPixels;
             break;
@@ -221,7 +221,7 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
         case MHK_ARGB_UNSIGNED_BYTE_PACKED: {
             // ABGR -> ARGB
             const uint8_t permute_vector[4] = {0, 3, 2, 1};
-            err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
+            err = (OSStatus)vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
             if (err != kvImageNoError)
                 goto AbortReadIndexedPixels;
             break;
@@ -236,7 +236,7 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
 #else
             // ABGR -> BGRA
             const uint8_t permute_vector[4] = {1, 2, 3, 0};
-            err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
+            err = (OSStatus)vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
             if (err != kvImageNoError)
                 goto AbortReadIndexedPixels;
 #endif
@@ -271,7 +271,7 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
     client_buffer.data = pixels;
     
     // do the entire color lookup operation in one sweet function call
-    err = vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, (Pixel_F*)color_table_storage, kvImageNoFlags);
+    err = (OSStatus)vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, color_table_storage, kvImageNoFlags);
     if (err)
         goto AbortReadIndexedPixels;
     
@@ -290,7 +290,7 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
     Pixel_8 file_color_table_storage[256][3];
     
     // storage for the color table
-    Pixel_8888 color_table_storage[256];
+    Pixel_F color_table_storage[256];
     
     // file color table
     vImage_Buffer fct_buffer;
@@ -313,7 +313,7 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
     ct_buffer.data = color_table_storage;
     
     // create the ARGB8888 color table
-    err = vImageConvert_RGB888toARGB8888(&fct_buffer, NULL, 0xff, &ct_buffer, false, kvImageNoFlags);
+    err = (OSStatus)vImageConvert_RGB888toARGB8888(&fct_buffer, NULL, 0xff, &ct_buffer, false, kvImageNoFlags);
     if (err != kvImageNoError)
         goto AbortReadCompressedIndexedPixels;
     
@@ -322,7 +322,7 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
         case MHK_RGBA_UNSIGNED_BYTE_PACKED: {
             // ABGR -> RGBA
             const uint8_t permute_vector[4] = {3, 2, 1, 0};
-            err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
+            err = (OSStatus)vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
             if (err != kvImageNoError)
                 goto AbortReadCompressedIndexedPixels;
             break;
@@ -330,7 +330,7 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
         case MHK_ARGB_UNSIGNED_BYTE_PACKED: {
             // ABGR -> ARGB
             const uint8_t permute_vector[4] = {0, 3, 2, 1};
-            err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
+            err = (OSStatus)vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
             if (err != kvImageNoError)
                 goto AbortReadCompressedIndexedPixels;
             break;
@@ -345,7 +345,7 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
 #else
             // ABGR -> BGRA
             const uint8_t permute_vector[4] = {1, 2, 3, 0};
-            err = vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
+            err = (OSStatus)vImagePermuteChannels_ARGB8888(&ct_buffer, &ct_buffer, permute_vector, kvImageNoFlags);
             if (err != kvImageNoError)
                 goto AbortReadCompressedIndexedPixels;
 #endif
@@ -773,7 +773,7 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
     client_buffer.data = pixels;
     
     // do the entire color lookup operation in one sweet function call
-    err = vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, (Pixel_F *)color_table_storage, kvImageNoFlags);
+    err = (OSStatus)vImageLookupTable_Planar8toPlanarF(&file_buffer, &client_buffer, color_table_storage, kvImageNoFlags);
     if (err)
         goto AbortReadCompressedIndexedPixels;
     

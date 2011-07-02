@@ -38,13 +38,10 @@
 			STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
 			POSSIBILITY OF SUCH DAMAGE.
 */
-#include <CoreServices/CoreServices.h>
-
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
 	#include <CoreAudio/CoreAudioTypes.h>
 #else
 	#include <CoreAudioTypes.h>
-	#include <DriverServices.h> // for CompareAndSwap
 #endif
 
 
@@ -52,11 +49,7 @@
 #define CARingBuffer_Header
 
 enum {
-	kCARingBufferError_WayBehind = -2, // both fetch times are earlier than buffer start time
-	kCARingBufferError_SlightlyBehind = -1, // fetch start time is earlier than buffer start time (fetch end time OK)
 	kCARingBufferError_OK = 0,
-	kCARingBufferError_SlightlyAhead = 1, // fetch end time is later than buffer end time (fetch start time OK)
-	kCARingBufferError_WayAhead = 2, // both fetch times are later than buffer end time
 	kCARingBufferError_TooMuch = 3, // fetch start time is earlier than buffer start time and fetch end time is later than buffer end time
 	kCARingBufferError_CPUOverload = 4 // the reader is unable to get enough CPU cycles to capture a consistent snapshot of the time bounds
 };
@@ -87,7 +80,7 @@ public:
 							
 							// Return false for failure (buffer not large enough).
 				
-	CARingBufferError	Fetch(AudioBufferList *abl, UInt32 nFrames, SampleTime frameNumber, bool aheadOK);
+	CARingBufferError	Fetch(AudioBufferList *abl, UInt32 nFrames, SampleTime frameNumber);
 								// will alter mNumDataBytes of the buffers
 	
 	CARingBufferError	GetTimeBounds(SampleTime &startTime, SampleTime &endTime);
@@ -96,7 +89,7 @@ protected:
 
 	int						FrameOffset(SampleTime frameNumber) { return (frameNumber & mCapacityFramesMask) * mBytesPerFrame; }
 
-	CARingBufferError	CheckTimeBounds(SampleTime startRead, SampleTime endRead, bool aheadOK);
+	CARingBufferError		ClipTimeBounds(SampleTime& startRead, SampleTime& endRead);
 	
 	// these should only be called from Store.
 	SampleTime				StartTime() const { return mTimeBoundsQueue[mTimeBoundsQueuePtr & kGeneralRingTimeBoundsQueueMask].mStartTime; }

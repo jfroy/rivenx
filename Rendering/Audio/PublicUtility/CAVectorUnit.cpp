@@ -42,14 +42,17 @@
 
 #if !TARGET_OS_WIN32
 	#include <sys/sysctl.h>
+#elif HAS_IPP
+	#include "ippdefs.h"
+	#include "ippcore.h"
 #endif
 
-int CAVectorUnit::sVectorUnitType = kVecUninitialized;
+int gCAVectorUnitType = kVecUninitialized;
 
 #if TARGET_OS_WIN32
 // Use cpuid to check if SSE2 is available.
 // Before calling this function make sure cpuid is available
-SInt32 CAVectorUnit::IsSSE2Available()
+static SInt32 IsSSE2Available()
 {
 	int return_value;
 
@@ -68,7 +71,7 @@ SInt32 CAVectorUnit::IsSSE2Available()
 
 // Use cpuid to check if SSE3 is available.
 // Before calling this function make sure cpuid is available
-SInt32 CAVectorUnit::IsSSE3Available()
+static SInt32 IsSSE3Available()
 {
 	SInt32 return_value;
 
@@ -88,7 +91,7 @@ SInt32 CAVectorUnit::IsSSE3Available()
 // Return true if the cpuid instruction is available.
 // The cpuid instruction is available if bit 21 in the EFLAGS register can be changed
 // This function may not work on Intel CPUs prior to Pentium (didn't test)
-bool CAVectorUnit::IsCpuidAvailable()
+static bool IsCpuidAvailable()
 {
 	SInt32 return_value = 0x0;
 	_asm{
@@ -111,26 +114,37 @@ end_cpuid_identify:
 
 #endif
 
-SInt32	CAVectorUnit::CheckVectorUnit()
+SInt32	CAVectorUnit_Examine()
 {
 	int result = kVecNone;
 	
 #if TARGET_OS_WIN32
-	
-	// On Windows we use cpuid to detect the vector unit because it works on Intel and AMD.
-	// The IPP library does not detect SSE on AMD processors.
-	if (IsCpuidAvailable())
+#if HAS_IPP	
+	// Initialize the static IPP library! This needs to be done before
+	// any IPP function calls, otherwise we may have a performance penalty
+	int status = ippStaticInit();
+	if ( status == ippStsNonIntelCpu )
 	{
-		if(IsSSE3Available())
+		IppCpuType cpuType = ippGetCpuType();
+		if ( cpuType >= ippCpuSSE || cpuType <= ippCpuSSE42 )
+			ippStaticInitCpu( cpuType );
+	}
+#endif
+	{
+		// On Windows we use cpuid to detect the vector unit because it works on Intel and AMD.
+		// The IPP library does not detect SSE on AMD processors.
+		if (IsCpuidAvailable())
 		{
-			result = kVecSSE3;
-		}
-		else if(IsSSE2Available())
-		{
-			result = kVecSSE2;
+			if(IsSSE3Available())
+			{
+				result = kVecSSE3;
+			}
+			else if(IsSSE2Available())
+			{
+				result = kVecSSE2;
+			}
 		}
 	}
-
 #elif TARGET_OS_MAC
 #if DEBUG
 	if (getenv("CA_NoVector")) {
@@ -160,10 +174,12 @@ SInt32	CAVectorUnit::CheckVectorUnit()
 			if (!error && answer)
 				result = kVecSSE2;
 		}
+	#elif (TARGET_CPU_ARM) && defined(_ARM_ARCH_7)
+		result = kVecNeon;
 	#endif
 	}
 #endif
-	sVectorUnitType = result;
+	gCAVectorUnitType = result;
 	return result;
 }
 

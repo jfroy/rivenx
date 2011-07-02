@@ -41,6 +41,13 @@
 #include "CAFilePathUtils.h"
 #include <string.h>
 
+#if !CA_NO_CORE_SERVICES
+#if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
+	#include <CoreServices/CoreServices.h> // FSRef
+#else
+	#include <CoreServices.h>
+#endif
+
 OSStatus	PosixPathToParentFSRefAndName(const char *path, FSRef &outParentDir, CFStringRef &outFileName)
 {
 	// convert C string to CFString
@@ -54,8 +61,8 @@ OSStatus	PosixPathToParentFSRefAndName(const char *path, FSRef &outParentDir, CF
 	CFRelease(cfFullPath);
 	// get the directory portion of the URL
 	CFURLRef dirurl = CFURLCreateCopyDeletingLastPathComponent(NULL, fullurl);
-	// get the directory's FSSpec
-	OSStatus err = CFURLGetFSRef(dirurl, &outParentDir) ? OSStatus(noErr) : OSStatus(fnfErr);
+	// get the directory's FSRef
+	OSStatus err = CFURLGetFSRef(dirurl, &outParentDir) ? OSStatus(noErr) : OSStatus(kAudio_FileNotFoundError);
 	CFRelease(dirurl);
 	
 	CFStringRef lastPathComponent = CFURLCopyLastPathComponent(fullurl);
@@ -69,6 +76,7 @@ OSStatus	PosixPathToParentFSRefAndName(const char *path, FSRef &outParentDir, CF
 	
 	return err;
 }
+#endif // !CA_NO_CORE_SERVICES
 
 
 #if TARGET_OS_WIN32

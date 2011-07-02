@@ -41,6 +41,8 @@
 #ifndef _CABundleLocker_h_
 #define _CABundleLocker_h_
 
+#include <TargetConditionals.h>
+ 
 /*
 some bundle operations are not thread safe, notably CFCopyLocalizedStringFromTableInBundle
 */

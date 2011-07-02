@@ -18,17 +18,8 @@
 
 __BEGIN_DECLS
 
-struct rx_thread_storage {
-    char* name;
-};
-typedef struct rx_thread_storage rx_thread_storage_t;
-
-extern void RXInitThreading();
-
-extern struct rx_thread_storage* RXGetThreadStorage();
-
-extern char const* RXGetThreadName(void);
-extern void RXSetThreadName(char const* name);
+char* RXCopyThreadName(void);
+void RXSetThreadName(char const* name);
 
 #if defined(__OBJC__)
 extern void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name);

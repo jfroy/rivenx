@@ -37,6 +37,7 @@ enum {
 
 #if defined(__OBJC__)
 
+#import <Foundation/Foundation.h>
 #import "Base/PHSErrorMacros.h"
 
 extern NSString* const RXErrorDomain;

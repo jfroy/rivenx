@@ -9,7 +9,9 @@ mkdir -p "$SYMROOT"
 mkdir -p "$DSTROOT"
 
 make distclean
-./configure --prefix="$DSTROOT" --arch=$CURRENT_ARCH --extra-cflags="-arch $CURRENT_ARCH" --extra-ldflags="-arch $CURRENT_ARCH" --target-path="$SYMROOT" \
+./configure --prefix="$DSTROOT" --arch=$CURRENT_ARCH \
+	--target-path="$SYMROOT" \
+	--cc=clang \
 	--disable-static --enable-shared --disable-stripping \
 	--disable-ffmpeg --disable-ffplay --disable-ffserver \
 	--enable-pthreads --disable-network \

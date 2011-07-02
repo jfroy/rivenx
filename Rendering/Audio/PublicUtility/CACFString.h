@@ -45,6 +45,8 @@
 //	Includes
 //=============================================================================
 
+#include "CADebugMacros.h"
+
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
 	#include <CoreAudio/CoreAudioTypes.h>
 	#include <CoreFoundation/CFString.h>
@@ -67,8 +69,8 @@ public:
 					CACFString(const char* inCString, CFStringEncoding inCStringEncoding, bool inWillRelease = true) : mCFString(CFStringCreateWithCString(NULL, inCString, inCStringEncoding)), mWillRelease(inWillRelease) {}
 					~CACFString() { Release(); }
 					CACFString(const CACFString& inString) : mCFString(inString.mCFString), mWillRelease(inString.mWillRelease) { Retain(); }
-	CACFString&		operator=(const CACFString& inString) { Release(); mCFString = inString.mCFString; mWillRelease = inString.mWillRelease; Retain(); return *this; }
-	CACFString&		operator=(CFStringRef inCFString) { Release(); mCFString = inCFString; mWillRelease = true; return *this; }
+	CACFString&		operator=(const CACFString& inString) { if (inString.mCFString != mCFString) { Release(); mCFString = inString.mCFString; mWillRelease = inString.mWillRelease; Retain(); } return *this; }
+	CACFString&		operator=(CFStringRef inCFString) { if (inCFString != mCFString) { Release(); mCFString = inCFString; } mWillRelease = true; Retain(); return *this; }
 
 private:
 	void			Retain() { if(mWillRelease && (mCFString != NULL)) { CFRetain(mCFString); } }
@@ -82,6 +84,7 @@ public:
 	void			AllowRelease() { mWillRelease = true; }
 	void			DontAllowRelease() { mWillRelease = false; }
 	bool			IsValid() const { return mCFString != NULL; }
+	bool			IsEqualTo(CFStringRef inString) const { bool theAnswer = false; if(mCFString != NULL) { theAnswer = CFStringCompare(inString, mCFString, 0) == kCFCompareEqualTo; } return theAnswer; }
 	bool			StartsWith(CFStringRef inString) const { bool theAnswer = false; if(mCFString != NULL) { theAnswer = CFStringHasPrefix(mCFString, inString); } return theAnswer; }
 	bool			EndsWith(CFStringRef inString) const { bool theAnswer = false; if(mCFString != NULL) { theAnswer = CFStringHasSuffix(mCFString, inString); } return theAnswer; }
 
@@ -89,13 +92,15 @@ public:
 public:
 	CFStringRef		GetCFString() const { return mCFString; }
 	CFStringRef		CopyCFString() const { if(mCFString != NULL) { CFRetain(mCFString); } return mCFString; }
-	UInt32			GetLength() const { UInt32 theAnswer = 0; if(mCFString != NULL) { theAnswer = CFStringGetLength(mCFString); } return theAnswer; }
+	CFStringRef&	GetStorage() { Release(); mWillRelease = true; return mCFString; }
+	UInt32			GetLength() const { UInt32 theAnswer = 0; if(mCFString != NULL) { theAnswer = ToUInt32(CFStringGetLength(mCFString)); } return theAnswer; }
 	UInt32			GetByteLength(CFStringEncoding inEncoding = kCFStringEncodingUTF8) const { UInt32 theAnswer = 0; if(mCFString != NULL) { theAnswer = GetStringByteLength(mCFString, inEncoding); } return theAnswer; }
 	void			GetCString(char* outString, UInt32& ioStringSize, CFStringEncoding inEncoding = kCFStringEncodingUTF8) const { GetCString(mCFString, outString, ioStringSize, inEncoding); }
 	void			GetUnicodeString(UInt16* outString, UInt32& ioStringSize) const { GetUnicodeString(mCFString, outString, ioStringSize); }
 	SInt32			GetAsInteger() { return GetAsInteger(mCFString); }
 	Float64			GetAsFloat64() { return GetAsFloat64(mCFString); }
 
+	static UInt32	GetStringLength(CFStringRef inCFString)  { UInt32 theAnswer = 0; if(inCFString != NULL) { theAnswer = ToUInt32(CFStringGetLength(inCFString)); } return theAnswer; }
 	static UInt32	GetStringByteLength(CFStringRef inCFString, CFStringEncoding inEncoding = kCFStringEncodingUTF8);
 	static void		GetCString(CFStringRef inCFString, char* outString, UInt32& ioStringSize, CFStringEncoding inEncoding = kCFStringEncodingUTF8);
 	static void		GetUnicodeString(CFStringRef inCFString, UInt16* outString, UInt32& ioStringSize);
@@ -141,6 +146,7 @@ public:
 	void				AllowRelease() { mWillRelease = true; }
 	void				DontAllowRelease() { mWillRelease = false; }
 	bool				IsValid() { return mCFMutableString != NULL; }
+	bool				IsEqualTo(CFStringRef inString) const { bool theAnswer = false; if(mCFMutableString != NULL) { theAnswer = CFStringCompare(inString, mCFMutableString, 0) == kCFCompareEqualTo; } return theAnswer; }
 	bool				StartsWith(CFStringRef inString) const { bool theAnswer = false; if(mCFMutableString != NULL) { theAnswer = CFStringHasPrefix(mCFMutableString, inString); } return theAnswer; }
 	bool				EndsWith(CFStringRef inString) const { bool theAnswer = false; if(mCFMutableString != NULL) { theAnswer = CFStringHasSuffix(mCFMutableString, inString); } return theAnswer; }
 	void				Append(CFStringRef inString) { if(mCFMutableString != NULL) { CFStringAppend(mCFMutableString, inString); } }
@@ -149,7 +155,7 @@ public:
 public:
 	CFMutableStringRef	GetCFMutableString() const { return mCFMutableString; }
 	CFMutableStringRef	CopyCFMutableString() const { if(mCFMutableString != NULL) { CFRetain(mCFMutableString); } return mCFMutableString; }
-	UInt32				GetLength() const { UInt32 theAnswer = 0; if(mCFMutableString != NULL) { theAnswer = CFStringGetLength(mCFMutableString); } return theAnswer; }
+	UInt32				GetLength() const { UInt32 theAnswer = 0; if(mCFMutableString != NULL) { theAnswer = ToUInt32(CFStringGetLength(mCFMutableString)); } return theAnswer; }
 	UInt32				GetByteLength(CFStringEncoding inEncoding = kCFStringEncodingUTF8) const { UInt32 theAnswer = 0; if(mCFMutableString != NULL) { theAnswer = CACFString::GetStringByteLength(mCFMutableString, inEncoding); } return theAnswer; }
 	void				GetCString(char* outString, UInt32& ioStringSize, CFStringEncoding inEncoding = kCFStringEncodingUTF8) const { CACFString::GetCString(mCFMutableString, outString, ioStringSize, inEncoding); }
 	void				GetUnicodeString(UInt16* outString, UInt32& ioStringSize) const { CACFString::GetUnicodeString(mCFMutableString, outString, ioStringSize); }

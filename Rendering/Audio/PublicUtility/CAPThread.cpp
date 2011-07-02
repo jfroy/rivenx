@@ -68,7 +68,7 @@
 
 //#define	Log_SetPriority						1
 
-CAPThread::CAPThread(ThreadRoutine inThreadRoutine, void* inParameter, UInt32 inPriority, bool inFixedPriority, bool inAutoDelete)
+CAPThread::CAPThread(ThreadRoutine inThreadRoutine, void* inParameter, UInt32 inPriority, bool inFixedPriority, bool inAutoDelete, const char* inThreadName)
 :
 #if TARGET_OS_MAC
 	mPThread(0),
@@ -88,9 +88,17 @@ CAPThread::CAPThread(ThreadRoutine inThreadRoutine, void* inParameter, UInt32 in
 	mFixedPriority(inFixedPriority),
 	mAutoDelete(inAutoDelete)
 {
+	if(inThreadName != NULL)
+	{
+		strlcpy(mThreadName, inThreadName, kMaxThreadNameLength);
+	}
+	else
+	{
+		memset(mThreadName, 0, kMaxThreadNameLength);
+	}
 }
 
-CAPThread::CAPThread(ThreadRoutine inThreadRoutine, void* inParameter, UInt32 inPeriod, UInt32 inComputation, UInt32 inConstraint, bool inIsPreemptible, bool inAutoDelete)
+CAPThread::CAPThread(ThreadRoutine inThreadRoutine, void* inParameter, UInt32 inPeriod, UInt32 inComputation, UInt32 inConstraint, bool inIsPreemptible, bool inAutoDelete, const char* inThreadName)
 :
 #if TARGET_OS_MAC
 	mPThread(0),
@@ -110,6 +118,14 @@ CAPThread::CAPThread(ThreadRoutine inThreadRoutine, void* inParameter, UInt32 in
 	mFixedPriority(false),
 	mAutoDelete(inAutoDelete)
 {
+	if(inThreadName != NULL)
+	{
+		strlcpy(mThreadName, inThreadName, kMaxThreadNameLength);
+	}
+	else
+	{
+		memset(mThreadName, 0, kMaxThreadNameLength);
+	}
 }
 
 CAPThread::~CAPThread()
@@ -127,6 +143,15 @@ UInt32	CAPThread::GetScheduledPriority()
 		theAnswer = GetThreadPriority(mThreadHandle);
 	}
 	return theAnswer;
+#endif
+}
+
+UInt32	CAPThread::GetScheduledPriority(NativeThread thread)
+{
+#if TARGET_OS_MAC
+    return getScheduledPriority( thread, CAPTHREAD_SCHEDULED_PRIORITY );
+#elif TARGET_OS_WIN32
+	return 0;	// ???
 #endif
 }
 
@@ -236,6 +261,19 @@ void*	CAPThread::Entry(CAPThread* inCAPThread)
 {
 	void* theAnswer = NULL;
 
+#if TARGET_OS_MAC
+	inCAPThread->mPThread = pthread_self();
+#elif TARGET_OS_WIN32
+	// do we need to do something here?
+#endif
+	
+#if	!TARGET_OS_IPHONE && (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6)
+	if(inCAPThread->mThreadName[0] != 0)
+	{
+		pthread_setname_np(inCAPThread->mThreadName);
+	}
+#endif
+
 	try 
 	{
 		if(inCAPThread->mTimeConstraintSet)
@@ -341,11 +379,47 @@ UInt32 WINAPI	CAPThread::Entry(CAPThread* inCAPThread)
 	return theAnswer;
 }
 
-//	a definition of this function here for now
 extern "C"
 Boolean CompareAndSwap(UInt32 inOldValue, UInt32 inNewValue, UInt32* inOldValuePtr)
 {
 	return InterlockedCompareExchange((volatile LONG*)inOldValuePtr, inNewValue, inOldValue) == inOldValue;
 }
 
+#endif
+
+void	CAPThread::SetName(const char* inThreadName)
+{
+	if(inThreadName != NULL)
+	{
+		strlcpy(mThreadName, inThreadName, kMaxThreadNameLength);
+	}
+	else
+	{
+		memset(mThreadName, 0, kMaxThreadNameLength);
+	}
+}
+
+#if CoreAudio_Debug
+void	CAPThread::DebugPriority(const char *label)
+{
+#if !TARGET_OS_WIN32
+	if (mTimeConstraintSet)
+		printf("CAPThread::%s %p: pri=<time constraint>, spawning pri=%d, scheduled pri=%d\n", label, this, 
+		(int)mSpawningThreadPriority, (mPThread != NULL) ? (int)GetScheduledPriority() : -1);
+	else
+		printf("CAPThread::%s %p: pri=%d%s, spawning pri=%d, scheduled pri=%d\n", label, this, (int)mPriority, mFixedPriority ? " fixed" : "", 
+		(int)mSpawningThreadPriority, (mPThread != NULL) ? (int)GetScheduledPriority() : -1);
+#else
+	if (mTimeConstraintSet)
+	{
+		printf("CAPThread::%s %p: pri=<time constraint>, spawning pri=%d, scheduled pri=%d\n", label, this, 
+		(int)mPriority, (mThreadHandle != NULL) ? (int)GetScheduledPriority() : -1);
+	}
+	else
+	{
+		printf("CAPThread::%s %p: pri=%d%s, spawning pri=%d, scheduled pri=%d\n", label, this, (int)mPriority, mFixedPriority ? " fixed" : "", 
+		(int)mPriority, (mThreadHandle != NULL) ? (int)GetScheduledPriority() : -1);
+	}
+#endif
+}
 #endif

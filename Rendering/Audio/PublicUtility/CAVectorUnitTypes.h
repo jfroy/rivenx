@@ -46,7 +46,8 @@ enum {
 	kVecNone = 0,
 	kVecAltivec = 1,
 	kVecSSE2 = 100,
-	kVecSSE3 = 101
+	kVecSSE3 = 101,
+	kVecNeon = 200
 };
 
 #endif

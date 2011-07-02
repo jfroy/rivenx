@@ -13,8 +13,8 @@
 // include GLee first and everywhere in order for CGLMacro to work correctly
 #include "Rendering/Graphics/GL/glew.h"
 
-#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) + (bytes))
-#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) - (bytes))
+#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uintptr_t)(buffer) + (bytes))
+#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uintptr_t)(buffer) - (bytes))
 
 #include "RXLogging.h"
 

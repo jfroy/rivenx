@@ -71,7 +71,7 @@ protected:
 };
 
 #define	CATry								try{
-#define CACatch								}catch(const CAException& inException) {} catch(...) {}
+#define CACatch								} catch(...) {}
 #define	CASwallowException(inExpression)	try { inExpression; } catch(...) {}
 
 #endif

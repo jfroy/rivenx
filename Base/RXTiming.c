@@ -12,7 +12,8 @@
 double g_RXTimebase = 0.0;
 double g_RX1_Timebase = 0.0;
 
-extern void RXTimingUpdateTimebase() {
+void RXTimingUpdateTimebase(void)
+{
     mach_timebase_info_data_t info;
     kern_return_t err = mach_timebase_info(&info);
     assert(err == KERN_SUCCESS);

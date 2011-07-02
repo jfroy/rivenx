@@ -59,14 +59,14 @@ public:
 						mMixMap = new Float32[numIns * numOuts]; 
 						memset (mMixMap, 0, ByteSize());
 					}
-				
+								
 				~CAMixMap () { delete [] mMixMap; }
 	
 	CAMixMap&	operator=(const CAMixMap& mm) 
 				{ 
 					if (mMixMap) { delete [] mMixMap; mMixMap = NULL; }
 					mIns = mm.mIns; mOuts = mm.mOuts;
-					if (NumIns()) { 
+					if (NumIns() && NumOuts()) { 
 						mMixMap = new Float32 [ NumIns() * NumOuts() ];
 						memcpy (mMixMap, mm.mMixMap, ByteSize());
 					}
@@ -101,6 +101,35 @@ public:
 	Float32*	MM() { return mMixMap; }
 	const Float32*	MM() const { return mMixMap; }
 	UInt32		ByteSize () const { return NumIns() * NumOuts() * sizeof(Float32); }
+
+	UInt32		CountActiveInputs(UInt32 inOutputChannel)
+				{
+					UInt32 sum = 0;
+					for (UInt32 i = 0, k = inOutputChannel; i < mIns; ++i, k+=mOuts) {
+						if (mMixMap[k] != 0.f) sum++;
+					}
+					return sum;
+				}
+				
+	void		Normalize()
+				{
+					// ensure that no output channel will sum over unity.
+					Float32* mixmap = mMixMap;
+					Float32 maxsum = 0.f;
+					for (UInt32 j = 0; j < mOuts; ++j) {
+						Float32 sum = 0.f;
+						for (UInt32 i = 0, k = j; i < mIns; ++i, k+=mOuts) {
+							sum += mixmap[k];
+						}
+						if (sum > maxsum) maxsum = sum;
+					}
+					
+					if (maxsum == 0.f) return;
+					Float32 scale = 1.f / maxsum;
+					for (UInt32 i = 0; i < mIns * mOuts; ++i) {
+						mixmap[i] *= scale;
+					}
+				}
 	
 	void		Print ()
 				{
@@ -112,6 +141,7 @@ public:
 						printf("\n");
 					}
 				}
+				
 private:
 	UInt32	mIns;
 	UInt32	mOuts;

@@ -12,12 +12,18 @@
 #import "Engine/RXWorld.h"
 
 #import "Utilities/BZFSUtilities.h"
-#import "Utilities/GTMObjectSingleton.h"
 
 
 @implementation RXArchiveManager
 
-GTMOBJECT_SINGLETON_BOILERPLATE(RXArchiveManager, sharedArchiveManager)
++ (RXArchiveManager*)sharedArchiveManager
+{
+    // WARNING: the first call to this method is not thread safe
+    static RXArchiveManager* shared = nil;
+    if (shared == nil)
+        shared = [RXArchiveManager new];
+    return shared;
+}
 
 + (NSPredicate*)anyArchiveFilenamePredicate {
     static NSPredicate* predicate = nil;

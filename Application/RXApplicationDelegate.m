@@ -159,34 +159,18 @@
     return NO;
 }
 
-- (BOOL)_checkQuickTime {
+- (BOOL)_checkQuickTime
+{
     // check that the user has QuickTime 7.6.2 or later
     NSArray* qtkit_vers = [[[NSBundle bundleWithIdentifier:@"com.apple.QTKit"] objectForInfoDictionaryKey:@"CFBundleShortVersionString"] componentsSeparatedByString:@"."];
     if (!qtkit_vers || [qtkit_vers count] == 0)
         qtkit_vers = [NSArray arrayWithObjects:@"0", nil];
     
-#if defined(TEST_QUICKTIME_CHECK)
-    qtkit_vers = [NSArray arrayWithObjects:@"7", @"6", @"1", nil];
-#endif
+    int major = ([qtkit_vers count] > 0) ? [[qtkit_vers objectAtIndex:0] intValue] : 0;
+    int minor = ([qtkit_vers count] > 1) ? [[qtkit_vers objectAtIndex:1] intValue] : 0;
+    int bugfix = ([qtkit_vers count] > 2) ? [[qtkit_vers objectAtIndex:2] intValue] : 0;
     
-    BOOL quicktime_too_old = NO;
-    if ([qtkit_vers count] > 0)
-        if ([[qtkit_vers objectAtIndex:0] intValue] < 7)
-            quicktime_too_old = YES;
-    
-    if ([qtkit_vers count] > 1) {
-        if ([[qtkit_vers objectAtIndex:1] intValue] < 6)
-            quicktime_too_old = YES;
-    } else
-        quicktime_too_old = YES;
-    
-    if ([qtkit_vers count] > 2) {
-        if ([[qtkit_vers objectAtIndex:2] intValue] < 2)
-            quicktime_too_old = YES;
-    } else
-        quicktime_too_old = YES;
-    
-    if (!quicktime_too_old)
+    if (major > 7 || (major == 7 && minor > 6) || (major == 7 && minor == 6 && bugfix >= 2))
         return YES;
     
     // if QuickTime is too old, tell the user about the Cinepak problem and offer them to launch SU

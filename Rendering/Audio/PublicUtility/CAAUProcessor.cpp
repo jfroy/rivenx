@@ -39,6 +39,7 @@
 			POSSIBILITY OF SUCH DAMAGE.
 */
 #include "CAAUProcessor.h"						
+#include "CAXException.h"
 
 static OSStatus SilenceInputCallback (void 		*inRefCon, 
 					AudioUnitRenderActionFlags *ioActionFlags, 
@@ -84,6 +85,65 @@ inline OSStatus		SetInputCallback (CAAudioUnit &inUnit, AURenderCallbackStruct &
 											sizeof(inInputCallback));
 }
 
+static AURenderCallbackStruct sRenderCallback;
+static OSStatus PrerollRenderProc (	void 						* /*inRefCon*/, 
+								AudioUnitRenderActionFlags		* /*inActionFlags*/,
+								const AudioTimeStamp 			* /*inTimeStamp*/, 
+								UInt32 							/*inBusNumber*/,
+								UInt32							/*inNumFrames*/, 
+								AudioBufferList 				*ioData)
+{
+	AudioBuffer *buf = ioData->mBuffers;
+	for (UInt32 i = ioData->mNumberBuffers; i--; ++buf)
+		memset((Byte *)buf->mData, 0, buf->mDataByteSize);
+
+	return noErr;
+}
+
+OSStatus 	Preroll (CAAudioUnit & inAU, UInt32 inFrameSize)
+{
+	CAStreamBasicDescription desc;
+	OSStatus result = inAU.GetFormat (kAudioUnitScope_Input, 0, desc);
+	bool hasInput = false;
+			//we have input	
+	if (result == noErr) 
+	{
+		sRenderCallback.inputProc = PrerollRenderProc;
+		sRenderCallback.inputProcRefCon = 0;
+		
+		result = inAU.SetProperty (kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 
+								0, &sRenderCallback, sizeof(sRenderCallback));
+		if (result) return result;
+		hasInput = true;
+	}
+	
+	AudioUnitRenderActionFlags flags = 0;
+	AudioTimeStamp time;
+	memset (&time, 0, sizeof(time));
+	time.mFlags = kAudioTimeStampSampleTimeValid;
+
+	CAStreamBasicDescription outputFormat;
+	ca_require_noerr (result = inAU.GetFormat (kAudioUnitScope_Output, 0, outputFormat), home);
+	{
+		AUOutputBL list (outputFormat, inFrameSize);
+		list.Prepare ();
+		
+		ca_require_noerr (result = inAU.Render (&flags, &time, 0, inFrameSize, list.ABL()), home);
+	}
+
+home:
+	if (hasInput) {
+            // remove our installed callback
+		sRenderCallback.inputProc = 0;
+		sRenderCallback.inputProcRefCon = 0;
+		
+		inAU.SetProperty (kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 
+								0, &sRenderCallback, sizeof(sRenderCallback));
+	}
+	return result;
+}
+
+
 OSStatus		CAAUProcessor::EstablishInputCallback (AURenderCallbackStruct &inInputCallback)
 {
 	OSStatus result = SetInputCallback (mUnit, inInputCallback);
@@ -102,6 +162,13 @@ OSStatus		CAAUProcessor::SetAUPreset (CFPropertyListRef 			inPreset)
 									&inPreset, 
 									sizeof(inPreset));
 }
+
+OSStatus		CAAUProcessor::SetParameter (AudioUnitParameterID inID, AudioUnitScope scope, AudioUnitElement element,
+											Float32 value, UInt32 bufferOffsetFrames)
+{
+	return mUnit.SetParameter(inID, scope, element, value, bufferOffsetFrames);
+}
+
 
 UInt32			CAAUProcessor::MaxFramesPerRender () const
 {
@@ -133,10 +200,10 @@ OSStatus		CAAUProcessor::Reinitialize (UInt32 inNewMaxFrames)
 	OSStatus result;
 	CAStreamBasicDescription inputDesc, outputDesc;
 	
-	require_noerr (result = mUnit.GetFormat (kAudioUnitScope_Input, 0, inputDesc), home);
-	require_noerr (result = mUnit.GetFormat (kAudioUnitScope_Output, 0, outputDesc), home);
+	ca_require_noerr (result = mUnit.GetFormat (kAudioUnitScope_Input, 0, inputDesc), home);
+	ca_require_noerr (result = mUnit.GetFormat (kAudioUnitScope_Output, 0, outputDesc), home);
 	
-	require_noerr (result = DoInitialisation (inputDesc, outputDesc, mNumInputSamples, inNewMaxFrames), home);
+	ca_require_noerr (result = DoInitialisation (inputDesc, outputDesc, mNumInputSamples, inNewMaxFrames), home);
 	
 home:
 	return result;
@@ -157,15 +224,16 @@ OSStatus		CAAUProcessor::DoInitialisation (const CAStreamBasicDescription 	&inIn
 	
 		// first check that we can do this number of channels
 	if (mUnit.CanDo (inInputFormat.NumberChannels(), inOutputFormat.NumberChannels()) == false)
-		require_noerr (result = kAudioUnitErr_FailedInitialization, home);
+		ca_require_noerr (result = kAudioUnitErr_FailedInitialization, home);
 	
 	// just uninitialise the AU as a matter of course
-	require_noerr (result = mUnit.Uninitialize(), home);
+	ca_require_noerr (result = mUnit.Uninitialize(), home);
 
-	require_noerr (result = mUnit.SetFormat (kAudioUnitScope_Input, 0, inInputFormat), home); 
-	require_noerr (result = mUnit.SetFormat (kAudioUnitScope_Output, 0, inOutputFormat), home); 
-	require_noerr (result = SetMaxFramesPerRender (inMaxFrames), home);
+	ca_require_noerr (result = mUnit.SetFormat (kAudioUnitScope_Input, 0, inInputFormat), home); 
+	ca_require_noerr (result = mUnit.SetFormat (kAudioUnitScope_Output, 0, inOutputFormat), home); 
+	ca_require_noerr (result = SetMaxFramesPerRender (inMaxFrames), home);
 	
+#if !TARGET_OS_IPHONE
 		// if we're any AU but an offline AU, we should tell it that we've processing offline
 	if (!IsOfflineAU()) {
 		UInt32 isOffline = (IsOfflineContext() ? 1 : 0);
@@ -178,10 +246,11 @@ OSStatus		CAAUProcessor::DoInitialisation (const CAStreamBasicDescription 	&inIn
 												kAudioUnitScope_Global, 0,
 												&mNumInputSamples, sizeof(mNumInputSamples));
 	}
+#endif
 	
-	require_noerr (result = mUnit.Initialize(), home);
+	ca_require_noerr (result = mUnit.Initialize(), home);
 
-	require_noerr (result = SetInputCallback (mUnit, mUserCallback), home);
+	ca_require_noerr (result = SetInputCallback (mUnit, mUserCallback), home);
 	
 	// finally reset our time stamp
 	// the time stamp we use with the AU Render - only sample count is valid
@@ -253,6 +322,7 @@ void		CAAUProcessor::CalculateRemainderSamples (Float64 inSampleRate)
 	}
 }
 
+#if !TARGET_OS_IPHONE
 CFStringRef		CAAUProcessor::GetOLPreflightName () const
 {
 	if (OfflineAUNeedsPreflight()) 
@@ -281,6 +351,7 @@ bool		CAAUProcessor::OfflineAUNeedsPreflight () const
 	}
 	return false;
 }
+#endif
 
 OSStatus	CAAUProcessor::Preflight (bool inProcessPreceedingTail)
 {
@@ -306,7 +377,7 @@ OSStatus	CAAUProcessor::Preflight (bool inProcessPreceedingTail)
 		if ((IsOfflineContext() == false && inProcessPreceedingTail) || IsOfflineContext())
 		{
 			// re-establish the user's input callback
-			require_noerr (result = SetInputCallback (mUnit, mUserCallback), home);
+			ca_require_noerr (result = SetInputCallback (mUnit, mUserCallback), home);
 
 			// Consume the number of input samples indicated by the AU's latency or tail
 			// based on whether the AU is being used in an offline context or not.
@@ -321,7 +392,7 @@ OSStatus	CAAUProcessor::Preflight (bool inProcessPreceedingTail)
 					// from the file and convert them to float for processing
 				AudioUnitRenderActionFlags renderFlags = 0;
 				mPreflightABL->Prepare();
-				require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, numFrames, mPreflightABL->ABL()), home);
+				ca_require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, numFrames, mPreflightABL->ABL()), home);
 		
 				mRenderTimeStamp.mSampleTime += numFrames;
 				latSamps -= numFrames;
@@ -332,22 +403,23 @@ OSStatus	CAAUProcessor::Preflight (bool inProcessPreceedingTail)
 		else
 		{
 			// processing real-time but not processing preceeding tail, so we should preroll the AU
-			require_noerr (result = mUnit.Preroll(numFrames), home);
+			ca_require_noerr (result = Preroll(mUnit, numFrames), home);
 			
 			// re-establish the user's input callback
-			require_noerr (result = SetInputCallback (mUnit, mUserCallback), home);
+			ca_require_noerr (result = SetInputCallback (mUnit, mUserCallback), home);
 			
 			mRenderTimeStamp.mSampleTime = 0;
 		}
 	}
+#if !TARGET_OS_IPHONE
 	else
 	{
 			// re-establish the user's input callback
-		require_noerr (result = SetInputCallback (mUnit, mUserCallback), home);
+		ca_require_noerr (result = SetInputCallback (mUnit, mUserCallback), home);
 		
 		UInt32 preflightRequirements;
 		UInt32 size; size = sizeof(preflightRequirements);
-		require_noerr (result = mUnit.GetProperty (kAudioUnitOfflineProperty_PreflightRequirements,
+		ca_require_noerr (result = mUnit.GetProperty (kAudioUnitOfflineProperty_PreflightRequirements,
 												kAudioUnitScope_Global, 0,
 												&preflightRequirements, &size), home);
 												
@@ -359,7 +431,7 @@ OSStatus	CAAUProcessor::Preflight (bool inProcessPreceedingTail)
 				// give the offline unit all of its input data to allow it to prepare its processing
 				AudioUnitRenderActionFlags renderFlags = kAudioOfflineUnitRenderAction_Preflight;
 				mPreflightABL->Prepare();
-				require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, numFrames, mPreflightABL->ABL()), home);
+				ca_require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, numFrames, mPreflightABL->ABL()), home);
 				mRenderTimeStamp.mSampleTime += numFrames;
 		
 				if (renderFlags & kAudioOfflineUnitRenderAction_Complete)
@@ -369,6 +441,7 @@ OSStatus	CAAUProcessor::Preflight (bool inProcessPreceedingTail)
 		// the time stamp we use with the AU Render - only sample count is valid
 		mRenderTimeStamp.mSampleTime = 0;
 	}
+#endif
 
 	if (result == noErr) {
 		mPreflightDone = true;
@@ -378,17 +451,18 @@ home:
 	return result;
 }
 
+#if !TARGET_OS_IPHONE
 OSStatus 	CAAUProcessor::OfflineAUPreflight (UInt32 inNumFrames, bool &outIsDone)
 {
 	if (!IsOfflineAU())
-		return paramErr;
+		return -50/*paramErr*/;
 	if (mNumInputSamples == 0)
-		return paramErr;
+		return -50/*paramErr*/;
 
 	UInt32 preflightRequirements;
 	UInt32 size = sizeof(preflightRequirements);
 	OSStatus result;
-	require_noerr (result = mUnit.GetProperty (kAudioUnitOfflineProperty_PreflightRequirements,
+	ca_require_noerr (result = mUnit.GetProperty (kAudioUnitOfflineProperty_PreflightRequirements,
 												kAudioUnitScope_Global, 0,
 												&preflightRequirements, &size), home);
 												
@@ -397,7 +471,7 @@ OSStatus 	CAAUProcessor::OfflineAUPreflight (UInt32 inNumFrames, bool &outIsDone
 	{
 		AudioUnitRenderActionFlags renderFlags = kAudioOfflineUnitRenderAction_Preflight;
 		mPreflightABL->Prepare();
-		require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, inNumFrames, mPreflightABL->ABL()), home);
+		ca_require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, inNumFrames, mPreflightABL->ABL()), home);
 		mRenderTimeStamp.mSampleTime += inNumFrames;
 		
 		if (renderFlags & kAudioOfflineUnitRenderAction_Complete) {
@@ -418,6 +492,7 @@ OSStatus 	CAAUProcessor::OfflineAUPreflight (UInt32 inNumFrames, bool &outIsDone
 home:
 	return result;
 }
+#endif
 
 void SetBufferListToNumFrames (AudioBufferList &list, UInt32 inNumFrames)
 {
@@ -544,19 +619,20 @@ OSStatus	CAAUProcessor::PostProcess (AudioBufferList 	*ioData,
 	
 	AudioUnitRenderActionFlags renderFlags = 0;
 	OSStatus result;
-	require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, ioNumFrames, ioData), home);
+	ca_require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, ioNumFrames, ioData), home);
 	mRenderTimeStamp.mSampleTime += ioNumFrames;
 	mTailSamplesRemaining -= ioNumFrames;
 	outIsSilence = (renderFlags & kAudioUnitRenderAction_OutputIsSilence);
 			
 	if (outDone) {
-		require_noerr (result = SetInputCallback (mUnit, mUserCallback), home);
+		ca_require_noerr (result = SetInputCallback (mUnit, mUserCallback), home);
 		mUnit.GlobalReset (); //flush this out, as we're done with this phase
 	}
 home:
 	return result;
 }		
 
+#if !TARGET_OS_IPHONE
 Float32		CAAUProcessor::GetOLPercentComplete ()
 {
 	if (!IsOfflineContext())
@@ -584,4 +660,4 @@ Float32		CAAUProcessor::GetOLPercentComplete ()
 
 	return mLastPercentReported;
 }
-
+#endif

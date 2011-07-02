@@ -106,9 +106,6 @@ __END_DECLS
 - (NSCursor*)cursor;
 - (void)setCursor:(NSCursor*)cursor;
 
-- (BOOL)isUsingCoreImage;
-- (void)setUseCoreImage:(BOOL)flag;
-
 - (void)fadeOutWithDuration:(NSTimeInterval)duration completionDelegate:(id)completionDelegate selector:(SEL)completionSel;
 - (void)fadeInWithDuration:(NSTimeInterval)duration completionDelegate:(id)completionDelegate selector:(SEL)completionSel;
 

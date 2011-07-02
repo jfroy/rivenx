@@ -42,15 +42,15 @@
 #define __CAAudioUnit_h__
 
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <CoreServices/CoreServices.h>
-	#include <CoreAudio/CoreAudio.h>
+	#include <CoreAudio/CoreAudioTypes.h>
 	#include <AudioUnit/AudioUnit.h>
 	#include <AudioToolbox/AUGraph.h>
+	#include <AudioUnit/MusicDevice.h>
 #else
 	#include <ConditionalMacros.h>
-	#include <CoreServices.h>
 	#include <CoreAudioTypes.h>
 	#include <AudioUnit.h>
+	#include <MusicDevice.h>
 	#include <AUGraph.h>
 	#include <MusicDevice.h>
 #endif
@@ -74,6 +74,10 @@ class CAAUChanHelper;
 // NOT const whereas those that don't change the externally related state of the AU are not const
 
 class CAAudioUnit {
+	enum {
+		paramErr = -50,
+		badComponentSelector = (long)0x80008002
+	};
 public:
 	typedef std::vector<AudioChannelLayoutTag> 	ChannelTagVector;
 	typedef ChannelTagVector::iterator 			ChannelTagVectorIter;
@@ -110,7 +114,9 @@ public:
 
 	const CAComponent&		Comp() const { return mComp; }
 	
-	bool					FromAUGraph () const { return GetAUNode() != 0 || GetAUNode() != -1; }
+	const CAComponentDescription& Desc() const { return mComp.Desc(); }
+	
+	bool					FromAUGraph () const { return GetAUNode() != 0 && GetAUNode() != kCAAU_DoNotKnowIfAUNode; }
 	
 	AUNode					GetAUNode () const;
 	operator AUNode () const { return GetAUNode(); }
@@ -148,7 +154,21 @@ public:
 												UInt32						inOutputBusNumber,
 												UInt32						inNumberFrames,
 												AudioBufferList				* ioData);
-															
+
+	OSStatus				Process (AudioUnitRenderActionFlags 			& ioActionFlags,
+												const AudioTimeStamp 		& inTimeStamp,
+												UInt32						inNumberFrames,
+												AudioBufferList				& ioData);
+	
+	OSStatus				ProcessMultiple (AudioUnitRenderActionFlags 	& ioActionFlags,
+												const AudioTimeStamp		& inTimeStamp,
+												UInt32						inNumberFrames,
+												UInt32						inNumberInputBufferLists,
+												const AudioBufferList **	inInputBufferLists,
+												UInt32						inNumberOutputBufferLists,
+												AudioBufferList **			ioOutputBufferLists);
+
+	
 	OSStatus				Reset (AudioUnitScope scope, AudioUnitElement element)
 							{
 								return AudioUnitReset (AU(), scope, element);
@@ -157,8 +177,6 @@ public:
 							{
 								return AudioUnitReset (AU(), kAudioUnitScope_Global, 0);
 							}
-
-	OSStatus 				Preroll (UInt32 inFrameSize);
 
 	OSStatus				AddRenderNotify (AURenderCallback   inProc, void *inProcRefCon)
 							{
@@ -179,29 +197,8 @@ public:
 	
 	OSStatus				RemovePropertyListener (AudioUnitPropertyID				inID,
 													AudioUnitPropertyListenerProc	inProc,
-													void *							inProcUserData)
-							{
-									// this is a compile time check
-								#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4
-										// this is a run time check
-										// this API is only available on 10_5 systems
-										// on pre 10.5 systems this is weak linked - so the symbol won't be designed
-									OSStatus result = badComponentSelector;
-									if (AudioUnitRemovePropertyListenerWithUserData != NULL) {
-										result = AudioUnitRemovePropertyListenerWithUserData(AU(), inID, 
-																inProc, inProcUserData);
-									}
-									#if !__LP64__
-										if (result) result = AudioUnitRemovePropertyListener (AU(), inID, inProc);
-									#endif
-									return result;
-								#else
-									return AudioUnitRemovePropertyListener (AU(), inID, inProc);
-								#endif
-							}	
+													void *							inProcUserData);
 	
-
-// Fast dispatch support for MIDI Effects or Music Devices	
 	OSStatus				MIDIEvent (UInt32					inStatus,
 										UInt32					inData1,
 										UInt32					inData2,
@@ -348,6 +345,10 @@ public:
 
 	OSStatus				SetBypass 		(bool				inBypass) const;
 	
+	OSStatus				GetMaxFramesPerSlice (UInt32& outMaxFrames) const;
+	
+	OSStatus				SetMaxFramesPerSlice (UInt32 inMaxFrames);
+	
 	Float64					Latency () const;
 	
 		// these calls just deal with the global preset state
@@ -395,7 +396,9 @@ private:
 											bool				checkOutput, 
 											const AUChannelInfo *info, 
 											UInt32				numInfo) const;
-	
+	enum {
+			kCAAU_DoNotKnowIfAUNode = -1
+	};
 };
 
 class CAAUChanHelper {

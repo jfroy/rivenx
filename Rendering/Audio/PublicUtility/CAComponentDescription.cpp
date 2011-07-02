@@ -39,53 +39,22 @@
 			POSSIBILITY OF SUCH DAMAGE.
 */
 #include "CAComponentDescription.h"
+#include "CAStreamBasicDescription.h"
 #include <ctype.h>
 
-extern "C" void CAShowComponentDescription(const ComponentDescription *desc)
+void CAShowComponentDescription(const AudioComponentDescription *desc)
 {
 	CAComponentDescription::_CAShowComponentDescription (desc, stdout);
 }
 
-
-
-
-char *StringForOSType (OSType t, char *writeLocation)
-{
-	char *p = writeLocation;
-	unsigned char str[4], *q = str;
-	*(UInt32 *)str = CFSwapInt32HostToBig(t);
-
-	bool hasNonPrint = false;
-	for (int i = 0; i < 4; ++i) {
-		if (!(isprint(*q) && *q != '\\')) {
-			hasNonPrint = true;
-			break;
-		}
-	}
-	
-	if (hasNonPrint)
-		p += sprintf (p, "0x");
-		
-	for (int i = 0; i < 4; ++i) {
-		if (hasNonPrint) {
-			p += sprintf(p, "%02X", *q++);
-		} else {
-			*p++ = *q++;
-		}
-	}
-	*p = '\0';
-	return writeLocation;
-}
-
-
-void 	CAComponentDescription::_CAShowComponentDescription(const ComponentDescription *desc, FILE* file)
+void 	CAComponentDescription::_CAShowComponentDescription(const AudioComponentDescription *desc, FILE* file)
 {
 	if (desc)
 	{
 		char str[24];
-		fprintf (file, "ComponentDescription: %s - ", StringForOSType(desc->componentType, str));
-		fprintf (file, "%s - ", StringForOSType(desc->componentSubType, str));
-		fprintf (file, "%s", StringForOSType(desc->componentManufacturer, str));		
+		fprintf (file, "AudioComponentDescription: %s - ", CAStringForOSType(desc->componentType, str));
+		fprintf (file, "%s - ", CAStringForOSType(desc->componentSubType, str));
+		fprintf (file, "%s", CAStringForOSType(desc->componentManufacturer, str));		
 		fprintf (file, ", 0x%X, 0x%X\n", (int)desc->componentFlags, (int)desc->componentFlagsMask);
 	}
 }
@@ -118,7 +87,7 @@ inline bool _MatchTest (const OSType &inTypeA, const OSType &inTypeB)
 	return ((inTypeA == inTypeB) || (!inTypeA && !inTypeB) || (inTypeA && !inTypeB) || (!inTypeA && inTypeB)); 
 }
 
-bool	CAComponentDescription::Matches (const ComponentDescription &desc) const
+bool	CAComponentDescription::Matches (const AudioComponentDescription &desc) const
 {
 	bool matches = false;
 		

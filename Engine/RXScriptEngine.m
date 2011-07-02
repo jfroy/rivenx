@@ -193,6 +193,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     NSCharacterSet* colon_character_set = [NSCharacterSet characterSetWithCharactersInString:@":"];
     
+/*
     void* iterator = 0;
     struct objc_method_list* mlist;
     while ((mlist = class_nextMethodList(self, &iterator))) {
@@ -214,6 +215,28 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
             }
         }
     }
+*/
+    uint32_t mlist_count;
+    Method* mlist = class_copyMethodList(self, &mlist_count);
+    for (uint32_t method_index = 0; method_index < mlist_count; ++method_index) {
+        Method m = mlist[method_index];
+        SEL m_sel = method_getName(m);
+        NSString* method_selector_string = NSStringFromSelector(m_sel);
+        if ([method_selector_string hasPrefix:@"_external_"]) {
+            NSRange first_colon_range = [method_selector_string rangeOfCharacterFromSet:colon_character_set options:NSLiteralSearch];
+            NSRange range = NSMakeRange([(NSString*)@"_external_" length], first_colon_range.location - [(NSString*)@"_external_" length]);
+            NSString* external_name = [[method_selector_string substringWithRange:range] lowercaseString];
+#if defined(DEBUG) && DEBUG > 1
+            RXLog(kRXLoggingEngine, kRXLoggingLevelDebug, @"registering external command: %@", external_name);
+#endif
+            rx_command_dispatch_entry_t* command_dispatch = (rx_command_dispatch_entry_t*)malloc(sizeof(rx_command_dispatch_entry_t));
+            command_dispatch->sel = m_sel;
+            command_dispatch->imp = (rx_command_imp_t)method_getImplementation(m);
+            NSMapInsertKnownAbsent(_riven_external_command_dispatch_map, external_name, command_dispatch);
+        }
+        
+    }
+    free(mlist);
 }
 
 + (BOOL)accessInstanceVariablesDirectly {
@@ -233,6 +256,8 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     controller = ctlr;
     
+    _card_lock = OS_SPINLOCK_INIT;
+    
     logPrefix = [NSMutableString new];
     
     _active_hotspots_lock = OS_SPINLOCK_INIT;
@@ -241,7 +266,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     _dynamic_texture_cache = [NSMutableDictionary new];
     _picture_cache = [NSMutableDictionary new];
     
-    code_movie_map = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
+    code_movie_map = NSCreateMapTable(NSIntegerMapKeyCallBacks, NSObjectMapValueCallBacks, 0);
     _movies_to_reset = [NSMutableSet new];
     
     _screen_update_disable_counter = 0;
@@ -259,10 +284,10 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     trapeze_rect = NSMakeRect(295, 251, 16, 36);
     
     // register for movie rate change notifications
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(_handleBlockingMovieFinishedPlaying:)
-                                                 name:RXMoviePlaybackDidEndNotification
-                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleBlockingMovieFinishedPlaying:) name:RXMoviePlaybackDidEndNotification object:nil];
+    
+    // register for game state loaded notifications o we can reset ourselves properly
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_handleGameStateLoaded:) name:@"RXGameStateLoadedNotification" object:nil];
     
     return self;
 }
@@ -290,6 +315,20 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     [logPrefix release];
     
     [super dealloc];
+}
+
+#pragma mark -
+#pragma mark game state
+
+- (void)_handleGameStateLoaded:(NSNotification*)notification {
+    RXGameState* gs = [g_world gameState];
+    
+    played_one_whark_solo = [gs unsigned32ForKey:@"played_one_whark_solo"];
+    
+    intro_scheduled_atrus_give_books = [gs unsigned32ForKey:@"intro_scheduled_atrus_give_books"];
+    intro_atrus_gave_books = [gs unsigned32ForKey:@"intro_atrus_gave_books"];
+    intro_scheduled_cho_take_book = [gs unsigned32ForKey:@"intro_scheduled_cho_take_book"];
+    intro_cho_took_book = [gs unsigned32ForKey:@"intro_cho_took_book"];
 }
 
 #pragma mark -
@@ -324,9 +363,13 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     if (c == _card)
         return;
     
+    OSSpinLockLock(&_card_lock);
+    
     id old = _card;
     _card = [c retain];
     [old release];
+    
+    OSSpinLockUnlock(&_card_lock);
     
     [self _emptyPictureCaches];
     _schedule_movie_proxy_reset = YES;
@@ -831,10 +874,20 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     // WARNING: WILL BE CALLED BY THE MAIN THREAD
     
     OSSpinLockLock(&_active_hotspots_lock);
-    NSArray* hotspots = [[_active_hotspots copy] autorelease];
+    NSArray* hotspots = [_active_hotspots copy];
     OSSpinLockUnlock(&_active_hotspots_lock);
     
-    return hotspots;
+    return [hotspots autorelease];
+}
+
+- (RXHotspot*)activeHotspotWithName:(NSString*)name {
+    // WARNING: WILL BE CALLED BY THE MAIN THREAD
+    
+    OSSpinLockLock(&_card_lock);
+    RXHotspot* hotspot = [(RXHotspot*)NSMapGet([_card hotspotsNameMap], name) retain];
+    OSSpinLockUnlock(&_card_lock);
+    
+    return [hotspot autorelease];
 }
 
 - (void)mouseInsideHotspot:(RXHotspot*)hotspot {
@@ -1032,6 +1085,18 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     // WARNING: WILL RUN ON MAIN THREAD
     if (_blocking_movie)
         [(RXMovie*)_blocking_movie gotoEnd];
+    
+    if (!intro_atrus_gave_books && intro_scheduled_atrus_give_books) {
+        [[self class] cancelPreviousPerformRequestsWithTarget:self selector:@selector(_enableAtrusJournal) object:nil];
+        [[self class] cancelPreviousPerformRequestsWithTarget:self selector:@selector(_enableTrapBook) object:nil];
+        [self performSelector:@selector(_enableAtrusJournal)];
+        [self performSelector:@selector(_enableTrapBook)];
+    }
+    
+    if (!intro_cho_took_book && intro_scheduled_cho_take_book) {
+        [[self class] cancelPreviousPerformRequestsWithTarget:self selector:@selector(_disableTrapBook) object:nil];
+        [self performSelector:@selector(_disableTrapBook)];
+    }
 }
 
 - (void)_handleBlockingMovieFinishedPlaying:(NSNotification*)notification {
@@ -2328,18 +2393,32 @@ DEFINE_COMMAND(xatrapbookclose) {
 
 - (void)_enableTrapBook {
     [[g_world gameState] setUnsigned32:1 forKey:@"atrapbook"];
+    intro_atrus_gave_books = YES;
+    [[g_world gameState] setUnsigned32:1 forKey:@"intro_atrus_gave_books"];
 }
 
 - (void)_disableTrapBook {
     [[g_world gameState] setUnsigned32:0 forKey:@"atrapbook"];
+    intro_cho_took_book = YES;
+    [[g_world gameState] setUnsigned32:1 forKey:@"intro_cho_took_book"];
 }
 
 - (void)_scheduleInventoryEnableMessages {
+    if (intro_atrus_gave_books)
+        return;
+    
+    intro_scheduled_atrus_give_books = YES;
+    [[g_world gameState] setUnsigned32:1 forKey:@"intro_scheduled_atrus_give_books"];
     [self performSelector:@selector(_enableAtrusJournal) withObject:nil afterDelay:30.0];
     [self performSelector:@selector(_enableTrapBook) withObject:nil afterDelay:68.0];
 }
 
 - (void)_scheduleChoTrapBookDisableMessage {
+    if (intro_cho_took_book)
+        return;
+    
+    intro_scheduled_cho_take_book = YES;
+    [[g_world gameState] setUnsigned32:1 forKey:@"intro_scheduled_cho_take_book"];
     [self performSelector:@selector(_disableTrapBook) withObject:nil afterDelay:62.0];
 }
 
@@ -4332,8 +4411,9 @@ DEFINE_COMMAND(xgrviewer) {
         event_timer = nil;
     }
 
-    // we have no played a solo
+    // we have now played a solo
     played_one_whark_solo = YES;
+    [gs setUnsigned32:1 forKey:@"played_one_whark_solo"];
 }
 
 DEFINE_COMMAND(xgwharksnd) {
@@ -5301,8 +5381,11 @@ DEFINE_COMMAND(xbookclick) {
     else
         [controller setMouseCursor:RX_CURSOR_FORWARD];
     
-    // show the mouse cursor
-    [self _showMouseCursor];
+    // show the mouse cursor; we use the controller directly because although
+    // we can assume the cursor is hidden right now, it empirically will not
+    // be hidden by the script engine at this point (since the gehn sequence
+    // is not a "blocking" movie because of this external
+    [controller showMouseCursor];
     
     // track the mouse until the link window expires, detecting if the player
     // clicks inside the link region and updating the cursor as it enters and
@@ -5346,7 +5429,7 @@ DEFINE_COMMAND(xbookclick) {
     }
     
     // hide the mouse cursor again and reset it to the forward cursor
-    [self _hideMouseCursor];
+    [controller hideMouseCursor];
     [controller setMouseCursor:RX_CURSOR_FORWARD];
     
     // if the mouse was not pressed and this is an endgame movie, start the
@@ -5419,9 +5502,6 @@ DEFINE_COMMAND(xbookclick) {
     // otherwise just wait for the movie to end
     else
         DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, movie_code);
-    
-    // show the mouse cursor again
-    [self _showMouseCursor];
 }
 
 DEFINE_COMMAND(xorollcredittime) {

@@ -318,3 +318,22 @@ bool	CAMutex::IsOwnedByCurrentThread() const
 
 	return theAnswer;
 }
+
+
+CAMutex::Unlocker::Unlocker(CAMutex& inMutex)
+:	mMutex(inMutex),
+	mNeedsLock(false)
+{
+	Assert(mMutex.IsOwnedByCurrentThread(), "Major problem: Unlocker attempted to unlock a mutex not owned by the current thread!");
+
+	mMutex.Unlock();
+	mNeedsLock = true;
+}
+
+CAMutex::Unlocker::~Unlocker()
+{
+	if(mNeedsLock)
+	{
+		mMutex.Lock();
+	}
+}

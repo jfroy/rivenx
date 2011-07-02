@@ -20,7 +20,6 @@
 #import "Engine/RXWorld.h"
 #import "Engine/RXCursors.h"
 
-#import "Utilities/GTMObjectSingleton.h"
 #import "Utilities/BZFSUtilities.h"
 
 #import "Rendering/Audio/RXAudioRenderer.h"
@@ -28,7 +27,7 @@
 #import "States/RXCardState.h"
 
 
-NSObject* g_world = nil;
+NSObject <RXWorldProtocol>* g_world = nil;
 
 @interface RXWorld (RXWorldRendering)
 - (void)_initializeRendering;
@@ -40,6 +39,14 @@ NSObject* g_world = nil;
 // disable automatic KVC
 + (BOOL)accessInstanceVariablesDirectly {
     return NO;
+}
+
++ (RXWorld*)sharedWorld
+{
+    // WARNING: the first call to this method is not thread safe
+    if (g_world == nil)
+        g_world = [RXWorld new];
+    return (RXWorld*)g_world;
 }
 
 - (void)_initEngineVariables {
@@ -81,7 +88,9 @@ NSObject* g_world = nil;
     _worldBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent], kCFURLPOSIXPathStyle, true);
     
     FSRef sharedFolderRef;
-    if (FSFindFolder(kLocalDomain, kSharedUserDataFolderType, kDontCreateFolder, &sharedFolderRef) != noErr) {
+    OSErr os_err = FSFindFolder(kLocalDomain, kSharedUserDataFolderType, kDontCreateFolder, &sharedFolderRef);
+    if (os_err != noErr) {
+        error = [NSError errorWithDomain:NSOSStatusErrorDomain code:os_err userInfo:nil];
         @throw [NSException exceptionWithName:@"RXFilesystemException"
                                        reason:@"Riven X was unable to locate your Mac's Shared folder."
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
@@ -112,9 +121,6 @@ NSObject* g_world = nil;
     }
 }
 
-
-GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
-
 - (id)init {
     self = [super init];
     if (!self)
@@ -128,7 +134,6 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
             @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"initSingleton: MAIN THREAD ONLY" userInfo:nil];
         
         // initialize threading
-        RXInitThreading();
         RXSetThreadName("main");
         
         // initialize timing
@@ -143,7 +148,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
             [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
         
         // seed random
-        srandom(time(NULL));
+        srandom((unsigned)time(NULL));
         
         // initialize the engine variables
         _engineVariablesLock = OS_SPINLOCK_INIT;
@@ -193,7 +198,7 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
             @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Failed to load Cursors.plist." userInfo:nil];
         
         // load cursors
-        _cursors = NSCreateMapTable(NSIntMapKeyCallBacks, NSObjectMapValueCallBacks, 20);
+        _cursors = NSCreateMapTable(NSIntegerMapKeyCallBacks, NSObjectMapValueCallBacks, 20);
         
         NSEnumerator* cursorEnum = [cursorMetadata keyEnumerator];
         NSString* cursorKey;
@@ -413,6 +418,9 @@ GTMOBJECT_SINGLETON_BOILERPLATE(RXWorld, sharedWorld)
         [_gameState release];
         _gameState = _gameStateToLoad;
         _gameStateToLoad = nil;
+        
+        // post a notification informing everyone that a new game state has been loaded
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"RXGameStateLoadedNotification" object:_gameState userInfo:nil];
         
         // set the active card to that of the new game state
         // NOTE: some cards except hotspot handling to be disabled when they open because

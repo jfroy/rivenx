@@ -218,7 +218,7 @@ Float32		CAAUParameter::GetValue() const
 	return value;
 }
 
-CFStringRef CreateLocalizedStringForParameterValue ( double					inParameterValue,
+static CFStringRef CreateLocalizedStringForParameterValue ( double					inParameterValue,
 													 const CAAUParameter *	inParameter,
 													 UInt32					inDigits,
 													 UInt32					minDigits) {	
@@ -276,13 +276,13 @@ CFStringRef CreateLocalizedStringForParameterValue ( double					inParameterValue
 	return formattedNumberString;
 }
 
-CFStringRef CreateLocalizedStringForParameterValue ( double					inParameterValue,
+static CFStringRef CreateLocalizedStringForParameterValue ( double					inParameterValue,
 													 const CAAUParameter *	inParameter,
 													 UInt32					inDigits) {	
 	return CreateLocalizedStringForParameterValue (inParameterValue, inParameter, inDigits, 1);
 }
 
-double ValueForLocalizedParameterString (CFStringRef string, const CAAUParameter * inParameter) {
+static double ValueForLocalizedParameterString (CFStringRef string, const CAAUParameter * inParameter) {
 	CFLocaleRef currentLocale = CFLocaleCopyCurrent(); 
 	CFNumberFormatterRef numberFormatter = CFNumberFormatterCreate (NULL, currentLocale, kCFNumberFormatterDecimalStyle);
 
@@ -323,7 +323,7 @@ CFStringRef CAAUParameter::GetStringFromValueCopy(const Float32 *value) const
 		OSStatus err = AudioUnitGetProperty (mAudioUnit, 
 											kAudioUnitProperty_ParameterStringFromValue,
 											mScope, 
-											mParameterID, 
+											0, 
 											&stringValue, 
 											&propertySize);
 		
@@ -351,7 +351,7 @@ Float32 CAAUParameter::GetValueFromString(CFStringRef str) const
 		OSStatus err = AudioUnitGetProperty (mAudioUnit, 
 										kAudioUnitProperty_ParameterValueFromString,
 										mScope, 
-										mParameterID, 
+										0, 
 										&valueString, 
 										&propertySize);
 										

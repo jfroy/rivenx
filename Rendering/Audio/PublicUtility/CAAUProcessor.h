@@ -41,10 +41,14 @@
 #ifndef __CAAUProcessor_h__
 #define __CAAUProcessor_h__
 
+#include <AudioToolbox/AudioToolbox.h>
 #include "CAStreamBasicDescription.h"
 #include "CAAudioUnit.h"
 #include "AUOutputBL.h"
 
+#if TARGET_OS_IPHONE
+	#include <AssertMacros.h>
+#endif
 /*
 	This class wraps an AU (using the CAAudioUnit helper class) to use that AU for processing data
 	It can be used in a RealTime context (rendering data with RT constraints) or in an OffLine context
@@ -109,6 +113,9 @@ public:
 	OSStatus				EstablishInputCallback (AURenderCallbackStruct &inInputCallback);
 	
 	OSStatus				SetAUPreset (CFPropertyListRef 			inPreset);
+	
+	OSStatus				SetParameter (AudioUnitParameterID inID, AudioUnitScope scope, AudioUnitElement element,
+											Float32 value, UInt32 bufferOffsetFrames = 0);
 	
 		// a result of zero here signifies an error
 	UInt32					MaxFramesPerRender () const;
@@ -229,6 +236,7 @@ public:
 	// set this to 0, to use the AU's tail time with no adjustment
 	void					SetMaxTailTime (Float64 inTailTimeSecs) { mMaxTailTime = inTailTimeSecs; }
 
+#if !TARGET_OS_IPHONE
 	// if this is NULL, then there is no explicit (optional or required) preflight requirement of the AU
 	// if this is valid, then the AU either requires or optionally requires preflighting. The default
 	// behaviour in this case is that the processor will preflight. This name can be used to preset
@@ -244,6 +252,7 @@ public:
 	// this provides a rough approximation of the progress of an Offline Processing operation (both for the
 	// preflight and the render phases)
 	Float32					GetOLPercentComplete ();
+#endif
 	
 private:
 	CAAudioUnit 			mUnit;

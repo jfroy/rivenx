@@ -12,6 +12,8 @@
 #import "Rendering/Graphics/RXMovie.h"
 #import "Engine/RXWorldProtocol.h"
 
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 
 NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotification";
 

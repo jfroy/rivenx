@@ -32,7 +32,7 @@ PyAPI_FUNC(void) Py_InitializeEx(int) __attribute__((weak_import));
 // pointer to python controller
 static RXDebugWindowController* rx_debug_window_controller;
 
-PyObject* rivenx_CaptureStdout(PyObject* self, PyObject* pArgs) {
+static PyObject* rivenx_CaptureStdout(PyObject* self, PyObject* pArgs) {
     char* log_string = NULL;
     if (!PyArg_ParseTuple(pArgs, "s", &log_string))
         return NULL;
@@ -42,7 +42,7 @@ PyObject* rivenx_CaptureStdout(PyObject* self, PyObject* pArgs) {
     Py_RETURN_NONE;
 }
 
-PyObject* rivenx_CaptureStderr(PyObject* self, PyObject* pArgs) {
+static PyObject* rivenx_CaptureStderr(PyObject* self, PyObject* pArgs) {
     char* log_string = NULL;
     if (!PyArg_ParseTuple(pArgs, "s", &log_string))
         return NULL;
@@ -121,6 +121,7 @@ static PyMethodDef rivenx_methods[] = {
     [[consoleView textStorage] beginEditing];
     [[consoleView textStorage] appendAttributedString:attr_str];
     [[consoleView textStorage] endEditing];
+    [attr_str release];
 
     PyObject* main_module = PyImport_AddModule("__main__");
     PyObject* global_dict = PyModule_GetDict(main_module);
@@ -163,6 +164,7 @@ static PyMethodDef rivenx_methods[] = {
         [command_names addObject:external_name];
     }
     
+    [opstream release];
     return command_names;
 }
 

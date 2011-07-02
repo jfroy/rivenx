@@ -35,7 +35,7 @@
 #endif
 
 
-static void* allocateVirtualBuffer(UInt32 bufferLength) {
+static void* allocateVirtualBuffer(size_t bufferLength) {
     kern_return_t error = KERN_SUCCESS;
     vm_address_t originalAddress = (vm_address_t)NULL;
     vm_address_t realAddress = (vm_address_t)NULL;
@@ -132,7 +132,7 @@ errorReturn:
     return NULL;
 }
 
-static void deallocateVirtualBuffer(void* buffer, UInt32 bufferLength)
+static void deallocateVirtualBuffer(void* buffer, size_t bufferLength)
 {
     kern_return_t error;
 
@@ -148,7 +148,7 @@ static void deallocateVirtualBuffer(void* buffer, UInt32 bufferLength)
 
 @implementation VirtualRingBuffer
 
-- (id)initWithLength:(UInt32)length {
+- (id)initWithLength:(size_t)length {
     self = [super init];
     if (!self)
         return nil;
@@ -207,11 +207,11 @@ static void deallocateVirtualBuffer(void* buffer, UInt32 bufferLength)
 // Read operations
 //
 
-- (UInt32)lengthAvailableToReadReturningPointer:(void**)returnedReadPointer {
+- (size_t)lengthAvailableToReadReturningPointer:(void**)returnedReadPointer {
     // Assumptions:
     // returnedReadPointer != NULL
 
-    UInt32 length;
+    size_t length;
     // Read this pointer exactly once, so we're safe in case it is changed in another thread
     void* localWritePointer = writePointer;
 
@@ -231,7 +231,7 @@ static void deallocateVirtualBuffer(void* buffer, UInt32 bufferLength)
     return length;
 }
 
-- (void)didReadLength:(UInt32)length {
+- (void)didReadLength:(size_t)length {
     // Assumptions:
     // [self lengthAvailableToReadReturningPointer:] currently returns a value >= length
     // length > 0
@@ -258,11 +258,11 @@ static void deallocateVirtualBuffer(void* buffer, UInt32 bufferLength)
 // Write operations
 //
 
-- (UInt32)lengthAvailableToWriteReturningPointer:(void**)returnedWritePointer {
+- (size_t)lengthAvailableToWriteReturningPointer:(void**)returnedWritePointer {
     // Assumptions:
     // returnedWritePointer != NULL
     
-    UInt32 length;
+    size_t length;
     // Read this pointer exactly once, so we're safe in case it is changed in another thread
     void* localReadPointer = readPointer;
     
@@ -284,7 +284,7 @@ static void deallocateVirtualBuffer(void* buffer, UInt32 bufferLength)
     return length;
 }
 
-- (void)didWriteLength:(UInt32)length {
+- (void)didWriteLength:(size_t)length {
     // Assumptions:
     // [self lengthAvailableToWriteReturningPointer:] currently returns a value >= length
     // length > 0

@@ -43,9 +43,7 @@
 
 #include "CAStreamBasicDescription.h"
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <CoreServices/CoreServices.h>
 #else
-	#include <AssertMacros.h>
 #endif
 
 // ____________________________________________________________________________
@@ -107,8 +105,8 @@ private:
 
 // don't want to copy these.. can if you want, but more code to write!
 	AUOutputBL () {}
-	AUOutputBL (const AUOutputBL &c) {}
-	AUOutputBL& operator= (const AUOutputBL& c) { return *this; }
+	AUOutputBL (const AUOutputBL &c);
+	AUOutputBL& operator= (const AUOutputBL& c);
 };
 
 #endif // __AUOutputBL_h__

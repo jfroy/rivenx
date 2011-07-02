@@ -21,6 +21,7 @@
 - (void)closeCard;
 
 - (NSArray*)activeHotspots;
+- (RXHotspot*)activeHotspotWithName:(NSString*)name;
 - (void)mouseInsideHotspot:(RXHotspot*)hotspot;
 - (void)mouseExitedHotspot:(RXHotspot*)hotspot;
 - (void)mouseDownInHotspot:(RXHotspot*)hotspot;

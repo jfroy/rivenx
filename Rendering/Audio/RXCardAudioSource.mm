@@ -41,17 +41,13 @@ CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float 
     _loopBuffer = 0;
     
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
-    CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> initialized with decompressor %p"), this, decompressor);
-    RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-    CFRelease(rxar_debug);
+    RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> initialized with decompressor %p"), this, decompressor);
 #endif
 }
 
 CardAudioSource::~CardAudioSource() throw(CAXException) {
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
-    CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> deallocating"), this);
-    RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-    CFRelease(rxar_debug);
+    RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> deallocating"), this);
 #endif
     
     OSSpinLockLock(&_task_lock);
@@ -80,9 +76,7 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
         *ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
         
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 2
-        CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because disabled, no renderer, no decompressor or no decompression buffer"), this);
-        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-        CFRelease(rxar_debug);
+        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because disabled, no renderer, no decompressor or no decompression buffer"), this);
 #endif
         
         [render_buffer release];
@@ -103,9 +97,7 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
         *ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
         
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 2
-        CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of sample starvation"), this);
-        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-        CFRelease(rxar_debug);
+        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of sample starvation"), this);
 #endif
         
         [render_buffer release];
@@ -118,9 +110,7 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
         [render_buffer didReadLength:optimalBytesToRead];
     } else {
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 2
-        CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of partial sample starvation"), this);
-        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-        CFRelease(rxar_debug);
+        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> rendering silence because of partial sample starvation"), this);
 #endif
         memcpy(ioData->mBuffers[0].mData, readBuffer, availableBytes);
         [render_buffer didReadLength:availableBytes];
@@ -134,9 +124,12 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
 void CardAudioSource::RenderTask() throw() {
     if (!_decompressor || !_decompressionBuffer)
         return;
+    
     OSSpinLockLock(&_task_lock);
-    if (!_decompressor || !_decompressionBuffer)
+    if (!_decompressor || !_decompressionBuffer) {
+        OSSpinLockUnlock(&_task_lock);
         return;
+    }
 
     task(_bytesPerTask);
     
@@ -145,9 +138,7 @@ void CardAudioSource::RenderTask() throw() {
 
 void CardAudioSource::task(uint32_t byte_limit) throw() {
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 2
-    CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> tasking"), this);
-    RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-    CFRelease(rxar_debug);
+    RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> tasking"), this);
 #endif
     
     // get how many bytes are available in the decompression ring buffer and a suitable write pointer
@@ -158,9 +149,7 @@ void CardAudioSource::task(uint32_t byte_limit) throw() {
     UInt32 bytes_to_fill = (available_bytes < byte_limit) ? available_bytes : byte_limit;
     if (bytes_to_fill == 0) {
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 2
-        CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> no space for tasking, bailing out"), this);
-        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-        CFRelease(rxar_debug);
+        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> no space for tasking, bailing out"), this);
 #endif
         return;
     }
@@ -172,9 +161,7 @@ void CardAudioSource::task(uint32_t byte_limit) throw() {
     uint32_t frames_to_fill = format.BytesToFrames(bytes_to_fill);
     if (frames_to_fill == 0) {
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 2
-        CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> no space for tasking at least one frame, bailing out"), this);
-        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-        CFRelease(rxar_debug);
+        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> no space for tasking at least one frame, bailing out"), this);
 #endif
         return;
     }
@@ -187,12 +174,10 @@ void CardAudioSource::task(uint32_t byte_limit) throw() {
         if (_loop) {
             [_decompressor reset];
             _bufferedFrames = 0;
-            available_frames = [_decompressor frameCount];
+            available_frames = (uint32_t)[_decompressor frameCount];
         } else {
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
-            CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> no frames left to decode, bailing out"), this);
-            RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-            CFRelease(rxar_debug);
+            RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> no frames left to decode, bailing out"), this);
 #endif
             return;
         }
@@ -235,9 +220,7 @@ void CardAudioSource::task(uint32_t byte_limit) throw() {
 
 void CardAudioSource::Reset() throw() {
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
-    CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x> resetting self and decompressor %p"), this, _decompressor);
-    RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-    CFRelease(rxar_debug);
+    RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> resetting self and decompressor %p"), this, _decompressor);
 #endif
 
     OSSpinLockLock(&_task_lock);

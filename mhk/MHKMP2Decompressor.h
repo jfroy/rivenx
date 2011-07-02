@@ -28,7 +28,7 @@
     UInt32 _bytes_to_drop;
     
     SInt64 _packet_index;
-    UInt32 _available_packets;
+    size_t _available_packets;
     void* _packet_buffer;
     void* _current_packet;
     

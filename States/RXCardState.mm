@@ -23,6 +23,8 @@
 
 #import "Application/RXApplicationDelegate.h"
 
+#import "Utilities/auto_spinlock.h"
+
 #if defined(DEBUG)
 #import <GLUT/glut.h>
 #endif
@@ -180,7 +182,7 @@ static void rx_release_owner_applier(const void* value, void* context) {
     sengine = [[RXScriptEngine alloc] initWithController:self];
     
     // get the cache line size
-    size_t cache_line_size = [[RXHardwareProfiler sharedHardwareProfiler] cacheLineSize];
+    size_t cache_line_size = [RXHardwareProfiler cacheLineSize];
     
     // allocate enough cache lines to store 2 render states without overlap (to avoid false sharing)
     uint32_t render_state_cache_line_count = cache_line_size / sizeof(struct rx_card_state_render_state);
@@ -514,7 +516,6 @@ init_failure:
         
         positions[0] = kRXCardViewportSize.width; positions[1] = 0.0f;
         tex_coords0[0] = kRXCardViewportSize.width; tex_coords0[1] = kRXCardViewportSize.height;
-        positions += 4; tex_coords0 += 4;
     }
     
     // configure the VAs
@@ -667,7 +668,7 @@ init_failure:
 #pragma mark -
 #pragma mark audio rendering
 
-- (CFMutableArrayRef)_createSourceArrayFromSoundSets:(NSArray*)sets callbacks:(CFArrayCallBacks*)callbacks {
+- (CFMutableArrayRef)_newSourceArrayFromSoundSets:(NSArray*)sets callbacks:(CFArrayCallBacks*)callbacks {
     // create an array of sources that need to be deactivated
     CFMutableArrayRef sources = CFArrayCreateMutable(NULL, 0, callbacks);
     
@@ -684,8 +685,8 @@ init_failure:
     return sources;
 }
 
-- (CFMutableArrayRef)_createSourceArrayFromSoundSet:(NSSet*)s callbacks:(CFArrayCallBacks*)callbacks {
-    return [self _createSourceArrayFromSoundSets:[NSArray arrayWithObject:s] callbacks:callbacks];
+- (CFMutableArrayRef)_newSourceArrayFromSoundSet:(NSSet*)s callbacks:(CFArrayCallBacks*)callbacks {
+    return [self _newSourceArrayFromSoundSets:[NSArray arrayWithObject:s] callbacks:callbacks];
 }
 
 - (void)_appendToSourceArray:(CFMutableArrayRef)sources soundSets:(NSArray*)sets {  
@@ -728,8 +729,8 @@ init_failure:
     [_activeDataSounds minusSet:soundsToRemove];
     
     // swap the active sources array
-    CFMutableArrayRef newActiveSources = [self _createSourceArrayFromSoundSets:[NSArray arrayWithObjects:_activeSounds, _activeDataSounds, nil]
-                                                                     callbacks:&g_weakAudioSourceArrayCallbacks];
+    CFMutableArrayRef newActiveSources = [self _newSourceArrayFromSoundSets:[NSArray arrayWithObjects:_activeSounds, _activeDataSounds, nil]
+                                                                  callbacks:&g_weakAudioSourceArrayCallbacks];
     CFMutableArrayRef oldActiveSources = _activeSources;
     
     // swap _activeSources
@@ -752,7 +753,7 @@ init_failure:
     
     // remove the sources for all expired sounds from the sound to source map and prepare the detach and delete array
     if (!_sourcesToDelete)
-        _sourcesToDelete = [self _createSourceArrayFromSoundSet:soundsToRemove callbacks:&g_deleteOnReleaseAudioSourceArrayCallbacks];
+        _sourcesToDelete = [self _newSourceArrayFromSoundSet:soundsToRemove callbacks:&g_deleteOnReleaseAudioSourceArrayCallbacks];
     else
         [self _appendToSourceArray:_sourcesToDelete soundSet:soundsToRemove];
     
@@ -920,8 +921,8 @@ init_failure:
     
     // schedule a fade out ramp for all to-be-removed sources if the fade out flag is on
     if (soundGroup->fadeOutRemovedSounds) {
-        CFMutableArrayRef sourcesToRemove = [self _createSourceArrayFromSoundSet:soundsToRemove
-                                                                       callbacks:&g_weakAudioSourceArrayCallbacks];
+        CFMutableArrayRef sourcesToRemove = [self _newSourceArrayFromSoundSet:soundsToRemove
+                                                                    callbacks:&g_weakAudioSourceArrayCallbacks];
         renderer->RampSourcesGain(sourcesToRemove, 0.0f, RX_AUDIO_GAIN_RAMP_DURATION);
         CFRelease(sourcesToRemove);
         
@@ -1046,17 +1047,17 @@ init_failure:
     // let's get a bit more attention
     thread_extended_policy_data_t extendedPolicy;
     extendedPolicy.timeshare = false;
-    kern_return_t kr = thread_policy_set(pthread_mach_thread_np(pthread_self()),
-                                         THREAD_EXTENDED_POLICY,
-                                         (thread_policy_t)&extendedPolicy,
-                                         THREAD_EXTENDED_POLICY_COUNT);
+    thread_policy_set(pthread_mach_thread_np(pthread_self()),
+                      THREAD_EXTENDED_POLICY,
+                      (thread_policy_t)&extendedPolicy,
+                      THREAD_EXTENDED_POLICY_COUNT);
     
     thread_precedence_policy_data_t precedencePolicy;
     precedencePolicy.importance = 63;
-    kr = thread_policy_set(pthread_mach_thread_np(pthread_self()),
-                           THREAD_PRECEDENCE_POLICY,
-                           (thread_policy_t)&precedencePolicy,
-                           THREAD_PRECEDENCE_POLICY_COUNT);
+    thread_policy_set(pthread_mach_thread_np(pthread_self()),
+                      THREAD_PRECEDENCE_POLICY,
+                      (thread_policy_t)&precedencePolicy,
+                      THREAD_PRECEDENCE_POLICY_COUNT);
     
     uint32_t cycles = 0;
     while (1) {
@@ -1219,6 +1220,10 @@ init_failure:
 }
 
 - (void)update {
+    // WARNING: MUST RUN ON THE SCRIPT THREAD
+    if ([NSThread currentThread] != [g_world scriptThread])
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"update MUST RUN ON SCRIPT THREAD" userInfo:nil];
+    
     // if we'll queue a transition, hide the cursor; we want to do this before waiting for any ongoing transition so that if there is one,
     // when it completes the cursor won't flash on screen (race condition between this thread and the render thread)
     if ([_transitionQueue count] > 0 && !_disable_transition_dequeueing)
@@ -1296,13 +1301,13 @@ init_failure:
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"updated render state, front card=%@", _front_render_state->card);
 #endif
     
-    // if the front card has changed, we need to reap the back render state's card, put the front card in it, and show the mouse cursor
+    // if the front card has changed, we need to reap the back render state's card and put the front card in it
     if (_front_render_state->new_card) {
         // reclaim the back render state's card
         [_back_render_state->card release];
         _back_render_state->card = _front_render_state->card;
         
-        // show the mouse cursor now that the card switch is done
+        // show the mouse cursor again (matches the hideMousrCursor in setActiveCardWithSimpleDescriptor
         [self showMouseCursor];
     }
 }
@@ -1427,6 +1432,13 @@ init_failure:
         [sengine closeCard];
     }
     
+    // if the back state's new_card field is YES, we are performing a switch card before we ran a single
+    // screen update for the previous card; in such a case, we need to show the mouse cursor, otherwise
+    // the counter will become unbalanced (since -update normally performs a show mouse cursor to match
+    // the hide mouse cursor in setActiveCardWithSimpleDescriptor)
+    if (_back_render_state->new_card)
+        [self showMouseCursor];
+    
     // setup the back render state; notice that the ownership of new_card is
     // transferred to the back render state and thus we will not need a release
     // elsewhere to match the card's allocation
@@ -1442,7 +1454,7 @@ init_failure:
     // notify that the front card has changed
     [self performSelectorOnMainThread:@selector(_postCardSwitchNotification:) withObject:new_card waitUntilDone:NO];
     
-    // run the prepare for rendering script on the new card
+    // run the open card script on the new card
     [sengine openCard];
 }
 
@@ -1476,7 +1488,7 @@ init_failure:
     [self activateSoundGroup:sgroup];
     [sgroup release];
     
-    // hide the mouse cursor
+    // must hide the mouse cursor since -update will perform a show mouse cursor
     [self hideMouseCursor];
     
     // fake a swap render state
@@ -1564,20 +1576,25 @@ init_failure:
         double fps_inverse = 1.0 / r->water_fx.sfxe->record->fps;
         if (r->water_fx.frame_timestamp == 0 || RXTimingTimestampDelta(outputTime->hostTime, r->water_fx.frame_timestamp) >= fps_inverse) {
             // run the water microprogram for the current sfxe frame
-            uint16_t* mp = (uint16_t*)BUFFER_OFFSET(r->water_fx.sfxe->record, r->water_fx.sfxe->offsets[r->water_fx.current_frame]);
+            union {
+                uint16_t* p_int16;
+                void* p_void;
+            } mp;
+            mp.p_void = BUFFER_OFFSET(r->water_fx.sfxe->record, r->water_fx.sfxe->offsets[r->water_fx.current_frame]);
+            
             uint16_t draw_row = r->water_fx.sfxe->record->rect.top;
-            while (*mp != 4) {
-                if (*mp == 1) {
+            while (*mp.p_int16 != 4) {
+                if (*mp.p_int16 == 1) {
                     draw_row++;
-                } else if (*mp == 3) {
-                    memcpy(BUFFER_OFFSET(_water_draw_buffer, (draw_row * kRXCardViewportSize.width + mp[1]) << 2),
-                           BUFFER_OFFSET(_water_readback_buffer, (mp[3] * kRXCardViewportSize.width + mp[2]) << 2),
-                           mp[4] << 2);
-                    mp += 4;
+                } else if (*mp.p_int16 == 3) {
+                    memcpy(BUFFER_OFFSET(_water_draw_buffer, (draw_row * kRXCardViewportSize.width + mp.p_int16[1]) << 2),
+                           BUFFER_OFFSET(_water_readback_buffer, (mp.p_int16[3] * kRXCardViewportSize.width + mp.p_int16[2]) << 2),
+                           mp.p_int16[4] << 2);
+                    mp.p_int16 += 4;
                 } else
                     abort();
                 
-                mp++;
+                mp.p_int16++;
             }
             
             // update the dynamic RT texture from the water draw buffer
@@ -1724,7 +1741,7 @@ init_failure:
         // if the position has changed, setup a position interpolator
         float final_position = _inventory_frames[inv_i].origin.x;
         if ((pos_interpolator && pos_interpolator->end != final_position) ||
-            (!pos_interpolator && pos_x != final_position && pos_x >= 0.0f))
+            (!pos_interpolator && pos_x != final_position))
         {
             duration = (pos_interpolator) ? [[pos_interpolator animation] progress] : 1.0;
             [pos_interpolator release];
@@ -1795,7 +1812,7 @@ init_failure:
             
             if ((new_flags & inv_bit) && !(old_flags & inv_bit)) {
                 // the fade-in animation a little bit more complex...
-                alpha_interpolator = [RXChainingInterpolator new];
+                alpha_interpolator = (RXLinearInterpolator*)[RXChainingInterpolator new];
                 RXLinearInterpolator* interpolator;
                 
                 // first add a 0->0 interpolator for 0.5 seconds, but only if
@@ -2579,7 +2596,7 @@ exit_render:
         if (hotspot >= (RXHotspot*)0x1000)
             snprintf(debug_buffer, 100, "hotspot: %s", [[hotspot description] cStringUsingEncoding:NSASCIIStringEncoding]);
         else if (hotspot)
-            snprintf(debug_buffer, 100, "hotspot: inventory %d", (int)hotspot);
+            snprintf(debug_buffer, 100, "hotspot: inventory %lu", (uintptr_t)hotspot);
         else
             snprintf(debug_buffer, 100, "hotspot: none");
         
@@ -2643,10 +2660,7 @@ exit_render:
     
     // CI mode info
     if (renderCoreImageMode) {
-        if ([g_worldView isUsingCoreImage])
-            snprintf(debug_buffer, 100, "using Core Image");
-        else
-            snprintf(debug_buffer, 100, "using OpenGL");
+        snprintf(debug_buffer, 100, "using OpenGL");
         
         background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
         background_strip[9] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
@@ -2726,6 +2740,7 @@ exit_flush_tasks:
     NSData* png_data = [image_rep representationUsingType:NSPNGFileType properties:nil];
     [png_data writeToFile:png_path options:0 error:NULL];
     
+    [desc release];
     [image_rep release];
 }
 
@@ -2769,6 +2784,9 @@ exit_flush_tasks:
     
     int32_t updated_counter = OSAtomicDecrement32Barrier(&_cursor_hide_counter);
     assert(updated_counter >= 0);
+#if defined(DEBUG) && DEBUG > 1
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"showMouseCursor; counter=%d", updated_counter);
+#endif
     
     if (updated_counter == 0) {
         // if the hotspot handling disable counter is at 0, updateHotspotState
@@ -2776,8 +2794,7 @@ exit_flush_tasks:
         if (_hotspot_handling_disable_counter > 0)
             [g_worldView setCursor:_hidden_cursor];
     
-        [_hidden_cursor release];
-        _hidden_cursor = nil;
+        [_hidden_cursor release], _hidden_cursor = nil;
     }
 }
 
@@ -2786,6 +2803,9 @@ exit_flush_tasks:
     
     int32_t updated_counter = OSAtomicIncrement32Barrier(&_cursor_hide_counter);
     assert(updated_counter >= 0);
+#if defined(DEBUG) && DEBUG > 1
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"hideMouseCursor; counter=%d", updated_counter);
+#endif
     
     if (updated_counter == 1) {
         _hidden_cursor = [[g_worldView cursor] retain];
@@ -2819,40 +2839,19 @@ exit_flush_tasks:
         [self updateHotspotState];
 }
 
-- (void)updateHotspotState {
-    // NOTE: this method must run on the main thread and will bounce itself there if needed
-    if (!pthread_main_np()) {
-        [self performSelectorOnMainThread:@selector(updateHotspotState) withObject:nil waitUntilDone:NO];
-        return;
-    }
-    
-    // when we're on edge values of the hotspot handling disable counter, we need to update the load / save UI
-    // (because it basically means we're starting to execute some script as a response of user action)
-    if (_hotspot_handling_disable_counter == 0)
-        [(RXApplicationDelegate*)[NSApp delegate] setDisableGameLoadingAndSaving:NO];
-    else if (_hotspot_handling_disable_counter == 1)
-        [(RXApplicationDelegate*)[NSApp delegate] setDisableGameLoadingAndSaving:YES];
-    
-    // if hotspot handling is disabled, simply return
-    if (_hotspot_handling_disable_counter > 0)
-        return;
-    
-    // hotspot updates cannot occur during a card switch
-    OSSpinLockLock(&_state_swap_lock);
-    
-    // check if hotspot handling is disabled again (last time, this is only to handle the situation where we might
-    // have slept a little while on the spin lock
-    if (_hotspot_handling_disable_counter > 0) {
-        OSSpinLockUnlock(&_state_swap_lock);
-        return;
-    }
+- (void)_updateHotspotState_nolock {
+    // WARNING: MUST RUN ON THE MAIN THREAD
+    if (!pthread_main_np())
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                       reason:@"_updateHotspotState_nolock: MUST RUN ON MAIN THREAD"
+                                     userInfo:nil];
     
     // get the mouse vector using the getter since it will take the spin lock and return a copy
     NSRect mouse_vector = [self mouseVector];
     
     // get the front card's active hotspots
     NSArray* active_hotspots = [sengine activeHotspots];
-
+    
     // update the active status of the inventory based on the position of the mouse
     if (NSMouseInRect(mouse_vector.origin, [(NSView*)g_worldView bounds], NO) && mouse_vector.origin.y < kRXInventorySize.height)
         _inventory_has_focus = YES;
@@ -2938,11 +2937,37 @@ exit_flush_tasks:
         if (old >= (RXHotspot*)0x1000)
             [old release];
     }
-    
-    OSSpinLockUnlock(&_state_swap_lock);
 }
 
-- (void)_handleInventoryMouseDown:(NSEvent*)event inventoryIndex:(uint32_t)index {
+- (void)updateHotspotState {
+    // NOTE: this method must run on the main thread and will bounce itself there if needed
+    if (!pthread_main_np()) {
+        [self performSelectorOnMainThread:@selector(updateHotspotState) withObject:nil waitUntilDone:NO];
+        return;
+    }
+    
+    // when we're on edge values of the hotspot handling disable counter, we need to update the load / save UI
+    // (because it basically means we're starting to execute some script as a response of user action)
+    if (_hotspot_handling_disable_counter == 0)
+        [(RXApplicationDelegate*)[NSApp delegate] setDisableGameLoadingAndSaving:NO];
+    else if (_hotspot_handling_disable_counter == 1)
+        [(RXApplicationDelegate*)[NSApp delegate] setDisableGameLoadingAndSaving:YES];
+    
+    // if hotspot handling is disabled, simply return
+    if (_hotspot_handling_disable_counter > 0)
+        return;
+    
+    // hotspot updates cannot occur during a card switch
+    auto_spinlock state_lock(&_state_swap_lock);
+    
+    // check if hotspot handling is disabled again (last time, this is only to handle the situation where we might have slept a little while on the spin lock
+    if (_hotspot_handling_disable_counter > 0)
+        return;
+    
+    [self _updateHotspotState_nolock];
+}
+
+- (void)_handleInventoryMouseDownWithItemIndex:(uint32_t)index {
     // WARNING: this method assumes the state swap lock has been taken by the caller
     
     if (index >= RX_MAX_INVENTORY_ITEMS)
@@ -3023,23 +3048,7 @@ exit_flush_tasks:
     [self updateHotspotState];
 }
 
-- (void)mouseDown:(NSEvent*)event {
-    // update the mouse vector
-    OSSpinLockLock(&_mouse_state_lock);
-    _mouse_vector.origin = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
-    _mouse_vector.size = NSZeroSize;
-    _mouse_timestamp = [event timestamp];
-    _last_mouse_down_event.location = _mouse_vector.origin;
-    _last_mouse_down_event.timestamp = _mouse_timestamp;
-    OSSpinLockUnlock(&_mouse_state_lock);
-    
-    // if hotspot handling is disabled, simply return
-    if (_hotspot_handling_disable_counter > 0)
-        return;
-    
-    // cannot use the front card during state swaps
-    OSSpinLockLock(&_state_swap_lock);
-    
+- (void)_performMouseDown {
     // if the current hotspot is valid, send it a mouse down event; if the current "hotspot" is an inventory item, handle that too
     if (_current_hotspot >= (RXHotspot*)0x1000) {
         // remember the last hotspot for which we've sent a "mouse down" message
@@ -3053,13 +3062,36 @@ exit_flush_tasks:
         
         // let the script engine run mouse down scripts
         [sengine performSelector:@selector(mouseDownInHotspot:) withObject:_current_hotspot inThread:[g_world scriptThread]];
-    } else if (_current_hotspot)
-        [self _handleInventoryMouseDown:event inventoryIndex:(uint32_t)_current_hotspot - 1];
-    
-    OSSpinLockUnlock(&_state_swap_lock);
+    }
+    else if (_current_hotspot)
+        [self _handleInventoryMouseDownWithItemIndex:(uintptr_t)_current_hotspot - 1];
     
     // we do not need to call updateHotspotState from mouse down, since handling inventory hotspots would be difficult there 
     // (can't retain a non-valid pointer value, e.g. can't store the dummy _current_hotspot value into _mouse_down_hotspot
+}
+
+- (void)mouseDown:(NSEvent*)event {
+    NSPoint mouse_point = [(NSView*)g_worldView convertPoint:[event locationInWindow] fromView:nil];
+    
+    // update the mouse vector
+    OSSpinLockLock(&_mouse_state_lock);
+    _mouse_vector.origin = mouse_point;
+    _mouse_vector.size = NSZeroSize;
+    _mouse_timestamp = [event timestamp];
+    
+    _last_mouse_down_event.location = _mouse_vector.origin;
+    _last_mouse_down_event.timestamp = _mouse_timestamp;
+    OSSpinLockUnlock(&_mouse_state_lock);
+    
+    // if hotspot handling is disabled, simply return
+    if (_hotspot_handling_disable_counter > 0)
+        return;
+    
+    // cannot use the front card during state swaps
+    auto_spinlock state_lock(&_state_swap_lock);
+    
+    // perform the mouse down
+    [self _performMouseDown];
 }
 
 - (void)mouseUp:(NSEvent*)event {
@@ -3078,6 +3110,156 @@ exit_flush_tasks:
     // finally we need to update the hotspot state; updateHotspotState will take care of sending the mouse up event if there is a
     // mouse down hotspot and the mouse is still over that hotspot
     [self updateHotspotState];
+}
+
+- (BOOL)_isMouseOverHotspot:(RXHotspot*)desired_hotspot activeHotspots:(NSArray*)active_hotspots mouseLocation:(NSPoint)mouse_origin {
+    RXHotspot* hotspot = nil;
+    for (hotspot in active_hotspots) {
+        if (NSMouseInRect(mouse_origin, [hotspot worldFrame], NO))
+            break;
+    }
+    
+    return (hotspot == desired_hotspot) ? YES: NO;
+}
+
+- (void)swipeWithEvent:(NSEvent*)event {
+    NSRect mouse_vector = [self mouseVector];
+    
+    // if hotspot handling is disabled or the mouse is down, do nothing
+    BOOL mouse_down = isfinite(mouse_vector.size.width);
+    
+    if (_hotspot_handling_disable_counter > 0 || mouse_down)
+        return;
+    
+    // based on the swipe direction, look up one of the standard movement hotspots in the active set and generate a "mouse down" event if we find one
+    NSArray* eligible_names;
+    if ([event deltaX] < 0.0)
+        eligible_names = [NSArray arrayWithObjects:@"right", @"afr", nil];
+    else if ([event deltaX] > 0.0)
+        eligible_names = [NSArray arrayWithObjects:@"left", @"afl", nil];
+    else if ([event deltaY] < 0.0)
+        eligible_names = [NSArray arrayWithObjects:@"up", nil];
+    else if ([event deltaY] > 0.0)
+        eligible_names = [NSArray arrayWithObjects:@"down", nil];
+    else
+        eligible_names = nil;
+    
+#if defined(DEBUG)
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"swipe %@", event);
+#endif
+    
+    // if we didn't recognize the swipe direction, we're done
+    if (eligible_names == nil)
+        return;
+    
+    // so, to guarantee that we're going to maintain a consistent state in Riven X, we'll need to pretend that the mouse has moved over the eligible hotspot
+    // moused down on it, then moused up, all within the rules of how events are handled; moving the mouse as such implies running the mouse exited handler
+    // of the current hotspot, doing the work, then figuring out what is under the mouse after the swipe and running a mouse entered handler if it is over
+    // a hotspot
+    
+    // cannot use the front card during state swaps
+    auto_spinlock state_lock(&_state_swap_lock);
+    
+    // check if hotspot handling is disabled again (last time, this is only to handle the situation where we might have slept a little while on the spin lock
+    if (_hotspot_handling_disable_counter > 0)
+        return;
+    
+    // try to find an eligible hotspot
+    RXHotspot* swipe_hotspot = nil;
+    for (NSString* name in eligible_names) {
+        swipe_hotspot = [sengine activeHotspotWithName:name];
+        if (swipe_hotspot)
+            break;
+    }
+    
+    // if we did not find any eligible hotspot, we're done
+    if (swipe_hotspot == nil)
+        return;
+    
+    // instant-move the mouse inside of the chosen hotspot; we do this by finding a mouse location that will put the cursor over the eligile hotspot
+    
+    // get the frame for the target hotspot
+    NSRect hotspot_frame = [swipe_hotspot worldFrame];
+    
+    // get the front card's active hotspots
+    NSArray* active_hotspots = [sengine activeHotspots];
+    
+    // find a swipe origin that will put the cursor over the swipe hotspot
+    
+    // bottom left corner
+    NSPoint swipe_origin = NSMakePoint(hotspot_frame.origin.x, hotspot_frame.origin.y + 1.0);
+    BOOL in_swipe_hotspot = [self _isMouseOverHotspot:swipe_hotspot activeHotspots:active_hotspots mouseLocation:swipe_origin];
+    if (!in_swipe_hotspot) {
+        // top left corner
+        swipe_origin = NSMakePoint(hotspot_frame.origin.x + hotspot_frame.size.width - 1.0, hotspot_frame.origin.y + 1.0);
+        in_swipe_hotspot = [self _isMouseOverHotspot:swipe_hotspot activeHotspots:active_hotspots mouseLocation:swipe_origin];
+        
+        if (!in_swipe_hotspot) {
+            // bottom right corner
+            swipe_origin = NSMakePoint(hotspot_frame.origin.x, hotspot_frame.origin.y + hotspot_frame.size.height);
+            in_swipe_hotspot = [self _isMouseOverHotspot:swipe_hotspot activeHotspots:active_hotspots mouseLocation:swipe_origin];
+            
+            if (!in_swipe_hotspot) {
+                // top right corner
+                swipe_origin = NSMakePoint(hotspot_frame.origin.x + hotspot_frame.size.width - 1.0, hotspot_frame.origin.y + hotspot_frame.size.height);
+                in_swipe_hotspot = [self _isMouseOverHotspot:swipe_hotspot activeHotspots:active_hotspots mouseLocation:swipe_origin];
+                
+                if (!in_swipe_hotspot) {
+                    // center
+                    swipe_origin = NSMakePoint(hotspot_frame.origin.x + (hotspot_frame.size.width / 2.0),
+                                               hotspot_frame.origin.y + (hotspot_frame.size.height / 2.0));
+                    in_swipe_hotspot = [self _isMouseOverHotspot:swipe_hotspot activeHotspots:active_hotspots mouseLocation:swipe_origin];
+                    
+                    // give up at this point
+                }
+            }
+        }
+    }
+    
+    // if we did not find a location where the mouse is over the swipe hotspot, we're done :(
+    if (!in_swipe_hotspot)
+        return;
+    
+    NSRect previous_mouse_vector;
+    {
+        auto_spinlock mouse_lock(&_mouse_state_lock);
+        
+        // we need to copy the current mouse vector to restore it after the swipe
+        previous_mouse_vector = _mouse_vector;
+        
+        _mouse_vector.origin = swipe_origin;
+        _mouse_vector.size.width = INFINITY;
+        _mouse_vector.size.height = INFINITY;
+        _mouse_timestamp = [event timestamp];
+    }
+    
+    // hide the mouse cursor to avoid the cursor flashing as we artificially move the cursor around
+    [self hideMouseCursor];
+    
+    // updateHotspotState will take care of sending the mouse up event if there is a mouse down hotspot and the mouse is still over that hotspot; we use the
+    // _nolock version here because we've already taken the state swap lock
+    [self _updateHotspotState_nolock];
+    
+    // we can now finally generate a mouse down event; we do this by changing the mouse vector's size from INFINITY to zero
+    {
+        auto_spinlock mouse_lock(&_mouse_state_lock);
+        _mouse_vector.size = NSZeroSize;
+    }
+    
+    // perform the mouse down
+    [self _performMouseDown];
+    
+    // restore the mouse's position
+    {
+        auto_spinlock mouse_lock(&_mouse_state_lock);
+        _mouse_vector = previous_mouse_vector;
+    }
+    
+    // update the hotspot state again
+    [self _updateHotspotState_nolock];
+    
+    // balance the hideMouseCursor done above
+    [self showMouseCursor];
 }
 
 - (void)keyDown:(NSEvent*)event {

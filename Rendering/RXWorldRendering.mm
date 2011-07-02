@@ -60,45 +60,21 @@
                                              screen:screen];
     
     [_window setLevel:NSNormalWindowLevel];
-    NSRect screenRect = [screen frame];
-    [_window setFrameOrigin:NSMakePoint((screenRect.size.width / 2) - ([_window frame].size.width / 2),
-                                        (screenRect.size.height / 2) - ([_window frame].size.height / 2))];
+    NSString* encoded_frame = [[NSUserDefaults standardUserDefaults] objectForKey:@"WindowFrame"];
+    if (encoded_frame) {
+        NSRect saved_frame = NSRectFromString(encoded_frame);
+        [_window setFrameOrigin:saved_frame.origin];
+    } else {
+        NSRect screen_frame = [screen frame];
+        [_window setFrameOrigin:NSMakePoint(screen_frame.origin.x + (screen_frame.size.width / 2) - ([_window frame].size.width / 2),
+                                            screen_frame.origin.y + (screen_frame.size.height / 2) - ([_window frame].size.height / 2))];
+    }
     [_window setCanHide:YES];
     [self _initializeRenderingWindow:_window];
 }
 
 - (NSWindow*)_renderingWindow {
     return (_fullscreen) ? _fullscreenWindow : _window;
-}
-
-- (void)_toggleFullscreenSnow {
-    if (_fullscreen) {
-        _defaultPresentationOptions = [NSApp presentationOptions];
-        [NSApp setPresentationOptions:(NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar)];
-        
-        [_window setLevel:NSStatusWindowLevel + 1];
-        [_window setStyleMask:NSBorderlessWindowMask];
-        [_window setFrame:[[_window screen] frame] display:YES animate:YES];
-        [_window setCanHide:NO];
-        [_window enableCursorRects];
-        [_window setCollectionBehavior:NSWindowCollectionBehaviorManaged];
-    } else {
-        [NSApp setPresentationOptions:_defaultPresentationOptions];
-        
-        [_window setLevel:NSNormalWindowLevel];
-        [_window setStyleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask];
-        
-        NSRect screenRect = [[_window screen] frame];
-        NSRect contentViewRect = NSMakeRect(0, 0, kRXRendererViewportSize.width, kRXRendererViewportSize.height);
-        NSRect windowRect = [_window frameRectForContentRect:contentViewRect];
-        windowRect.origin = NSMakePoint((screenRect.size.width / 2) - (windowRect.size.width / 2),
-                                        (screenRect.size.height / 2) - (windowRect.size.height / 2));
-        [_window setFrame:windowRect display:YES animate:YES];
-        
-        [_window setCanHide:YES];
-        [_window enableCursorRects];
-        [_window setCollectionBehavior:NSWindowCollectionBehaviorManaged];
-    }
 }
 
 - (void)_toggleFullscreen {
@@ -111,12 +87,30 @@
     
     [window setContentView:_worldView];
     [window makeKeyAndOrderFront:self];
-    
-    [_worldView setUseCoreImage:_fullscreen];
 }
 
 - (void)windowWillClose:(NSNotification*)notification {
     [NSApp terminate:nil];
+}
+
+- (void)windowDidChangeScreen:(NSNotification*)notification {
+    // if the window-mode window has been moved to a different screen, we need to move the fullscreen window along
+    NSWindow* window = [notification object];
+    if (window == _fullscreenWindow)
+        return;
+    
+    [_fullscreenWindow setFrame:[[window screen] frame] display:NO];
+}
+
+- (void)windowDidMove:(NSNotification*)notification {
+    // save the frame of the window-mode window so that we can place the window at the same location
+    // on a subsequent launch (or put the fullscreen window on the right screen)
+    NSWindow* window = [notification object];
+    if (window == _fullscreenWindow)
+        return;
+    
+    NSString* encoded_frame = NSStringFromRect([window frame]);
+    [[NSUserDefaults standardUserDefaults] setObject:encoded_frame forKey:@"WindowFrame"];
 }
 
 - (void)_initializeRendering {
@@ -135,13 +129,35 @@
                                                       options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionInitial
                                                       context:[_engineVariables objectForKey:@"rendering"]];
     
-    // create our windows on the main screen; on Snow Leopard and later, we only need one window
-    NSScreen* mainScreen = [NSScreen mainScreen];
-    [self _initializeWindow:mainScreen];
-    [self _initializeFullscreenWindow:mainScreen];
-    
     // set the initial fullscreen state
     _fullscreen = [[NSUserDefaults standardUserDefaults] boolForKey:@"Fullscreen"];
+    
+    // get the saved window frame and determine the best screen to use if we're going to start fullscreen
+    NSString* encoded_frame = [[NSUserDefaults standardUserDefaults] objectForKey:@"WindowFrame"];
+    NSScreen* best_screen = [NSScreen mainScreen];
+    if (encoded_frame) {
+        NSRect saved_frame = NSRectFromString(encoded_frame);
+        CGFloat max_area = 0.0;
+        
+        NSEnumerator* screen_enum = [[NSScreen screens] objectEnumerator];
+        NSScreen* screen;
+        while ((screen = [screen_enum nextObject])) {
+            NSRect intersection = NSIntersectionRect([screen frame], saved_frame);
+            CGFloat area = intersection.size.width * intersection.size.height;
+            if (area > max_area) {
+                max_area = area;
+                best_screen = screen;
+            }
+        }
+        
+        // if max_area is 0, the saved frame is not on any active screen; simpy clear out the saved frame
+        if (max_area == 0.0)
+            [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"WindowFrame"];
+    }
+    
+    // create our windows
+    [self _initializeWindow:best_screen];
+    [self _initializeFullscreenWindow:best_screen];
     
     NSWindow* window = [self _renderingWindow];
     
@@ -169,7 +185,9 @@
     audioRenderer->Start();
     
     // initialize QuickTime
+#if !__LP64__
     EnterMovies();
+#endif
 }
 
 @end

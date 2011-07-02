@@ -59,7 +59,13 @@ bool	CAProcess::ProcessExists(pid_t inPID)
 	if(theAnswer)
 	{
 		//	according to kill(2), the process exists if kill(pid, 0) returns 0
-		theAnswer = kill(inPID, 0) == 0;
+		int wasKilled = kill(inPID, 0);
+		if(wasKilled != 0)
+		{
+			//	The kill call failed for some reason, but there is only one error code that
+			//	that indicates that the process doesn't exist.
+			theAnswer = errno != ESRCH;
+		}
 	}
 
 	

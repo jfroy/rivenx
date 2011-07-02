@@ -40,10 +40,13 @@
 */
 #include "CARingBuffer.h"
 #include "CABitOperations.h"
+#include "CAAutoDisposer.h"
+#include "CAAtomic.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <algorithm>
+#include <libkern/OSAtomic.h>
 
 CARingBuffer::CARingBuffer() :
 	mBuffers(NULL), mNumberChannels(0), mCapacityFrames(0), mCapacityBytes(0)
@@ -71,7 +74,7 @@ void	CARingBuffer::Allocate(int nChannels, UInt32 bytesPerFrame, UInt32 capacity
 
 	// put everything in one memory allocation, first the pointers, then the deinterleaved channels
 	UInt32 allocSize = (mCapacityBytes + sizeof(Byte *)) * nChannels;
-	Byte *p = (Byte *)malloc(allocSize);
+	Byte *p = (Byte *)CA_malloc(allocSize);
 	memset(p, 0, allocSize);
 	mBuffers = (Byte **)p;
 	p += nChannels * sizeof(Byte *);
@@ -126,6 +129,16 @@ inline void FetchABL(AudioBufferList *abl, int destOffset, Byte **buffers, int s
 	while (--nchannels >= 0) {
 		memcpy((Byte *)dest->mData + destOffset, *buffers + srcOffset, nbytes);
 		++buffers;
+		++dest;
+	}
+}
+
+inline void ZeroABL(AudioBufferList *abl, int destOffset, int nbytes)
+{
+	int nBuffers = abl->mNumberBuffers;
+	AudioBuffer *dest = abl->mBuffers;
+	while (--nBuffers >= 0) {
+		memset((Byte *)dest->mData + destOffset, 0, nbytes);
 		++dest;
 	}
 }
@@ -194,8 +207,7 @@ void	CARingBuffer::SetTimeBounds(SampleTime startTime, SampleTime endTime)
 	mTimeBoundsQueue[index].mStartTime = startTime;
 	mTimeBoundsQueue[index].mEndTime = endTime;
 	mTimeBoundsQueue[index].mUpdateCounter = nextPtr;
-	
-	CompareAndSwap(mTimeBoundsQueuePtr, mTimeBoundsQueuePtr + 1, &mTimeBoundsQueuePtr);
+	CAAtomicCompareAndSwap32Barrier(mTimeBoundsQueuePtr, mTimeBoundsQueuePtr + 1, (SInt32*)&mTimeBoundsQueuePtr);
 }
 
 CARingBufferError	CARingBuffer::GetTimeBounds(SampleTime &startTime, SampleTime &endTime)
@@ -216,44 +228,41 @@ CARingBufferError	CARingBuffer::GetTimeBounds(SampleTime &startTime, SampleTime 
 	return kCARingBufferError_CPUOverload;
 }
 
-CARingBufferError	CARingBuffer::CheckTimeBounds(SampleTime startRead, SampleTime endRead, bool aheadOK)
+CARingBufferError	CARingBuffer::ClipTimeBounds(SampleTime& startRead, SampleTime& endRead)
 {
 	SampleTime startTime, endTime;
 	
 	CARingBufferError err = GetTimeBounds(startTime, endTime);
 	if (err) return err;
-
-	if (startRead < startTime)
-	{
-		if (endRead > endTime)
-			return kCARingBufferError_TooMuch;
 	
-		if (endRead < startTime)
-			return kCARingBufferError_WayBehind;
-		else
-			return kCARingBufferError_SlightlyBehind;
-	}
-	
-	if (endRead > endTime)	// we are going to read chunks of zeros its okay
-	{
-		if (aheadOK)
-			return kCARingBufferError_OK;
-		else if (startRead > endTime)
-			return kCARingBufferError_WayAhead;
-		else
-			return kCARingBufferError_SlightlyAhead;
-	}
+	startRead = std::max(startRead, startTime);
+	endRead = std::min(endRead, endTime);
+	endRead = std::max(endRead, startRead);
 	
 	return kCARingBufferError_OK;	// success
 }
 
-CARingBufferError	CARingBuffer::Fetch(AudioBufferList *abl, UInt32 nFrames, SampleTime startRead, bool aheadOK)
+CARingBufferError	CARingBuffer::Fetch(AudioBufferList *abl, UInt32 nFrames, SampleTime startRead)
 {
 	SampleTime endRead = startRead + nFrames;
-	CARingBufferError err;
-	
-	err = CheckTimeBounds(startRead, endRead, aheadOK);
+
+	SampleTime startRead0 = startRead;
+	SampleTime endRead0 = endRead;
+	SampleTime size;
+		
+	CARingBufferError err = ClipTimeBounds(startRead, endRead);
 	if (err) return err;
+	size = endRead - startRead;
+	
+	SInt32 destStartOffset = startRead - startRead0; 
+	if (destStartOffset > 0) {
+		ZeroABL(abl, 0, destStartOffset * mBytesPerFrame);
+	}
+
+	SInt32 destEndSize = endRead0 - endRead; 
+	if (destEndSize > 0) {
+		ZeroABL(abl, destStartOffset + size, destEndSize * mBytesPerFrame);
+	}
 	
 	Byte **buffers = mBuffers;
 	int offset0 = FrameOffset(startRead);
@@ -261,11 +270,11 @@ CARingBufferError	CARingBuffer::Fetch(AudioBufferList *abl, UInt32 nFrames, Samp
 	int nbytes;
 	
 	if (offset0 < offset1) {
-		FetchABL(abl, 0, buffers, offset0, nbytes = offset1 - offset0);
+		FetchABL(abl, destStartOffset, buffers, offset0, nbytes = offset1 - offset0);
 	} else {
 		nbytes = mCapacityBytes - offset0;
-		FetchABL(abl, 0, buffers, offset0, nbytes);
-		FetchABL(abl, nbytes, buffers, 0, offset1);
+		FetchABL(abl, destStartOffset, buffers, offset0, nbytes);
+		FetchABL(abl, destStartOffset + nbytes, buffers, 0, offset1);
 		nbytes += offset1;
 	}
 
@@ -277,5 +286,5 @@ CARingBufferError	CARingBuffer::Fetch(AudioBufferList *abl, UInt32 nFrames, Samp
 		dest++;
 	}
 
-	return CheckTimeBounds(startRead, endRead, aheadOK);
+	return noErr;
 }

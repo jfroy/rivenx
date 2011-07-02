@@ -7,8 +7,7 @@
  *
  */
 
-#include <CoreFoundation/CoreFoundation.h>
-#include <Foundation/NSAutoreleasePool.h>
+#include <Foundation/Foundation.h>
 
 #include <sysexits.h>
 #include <fcntl.h>

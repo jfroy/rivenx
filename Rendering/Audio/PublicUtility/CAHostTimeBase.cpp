@@ -45,6 +45,7 @@
 #include "CAHostTimeBase.h"
 
 Float64	CAHostTimeBase::sFrequency = 0;
+Float64	CAHostTimeBase::sInverseFrequency = 0;
 UInt32	CAHostTimeBase::sMinDelta = 0;
 UInt32	CAHostTimeBase::sToNanosNumerator = 0;
 UInt32	CAHostTimeBase::sToNanosDenominator = 0;
@@ -87,7 +88,7 @@ void	CAHostTimeBase::Initialize()
 		sFromNanosDenominator = sToNanosNumerator;
 		sFrequency = static_cast<Float64>(*((UInt64*)&theFrequency));
 	#endif
-
+	sInverseFrequency = 1.0 / sFrequency;
 	
 	#if	Log_Host_Time_Base_Parameters
 		DebugMessage(  "Host Time Base Parameters");

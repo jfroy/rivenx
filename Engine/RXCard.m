@@ -168,7 +168,7 @@
             NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndex:0];
             if (RX_BRANCH_VAR_NAME_EQ(opcode, @"pcage") && RX_CASE_VAL_EQ(case0, 1)) {
                 NSMutableArray* block = [case0 objectForKey:@"block"];
-                uint32_t n = [block count];
+                uint32_t n = (uint32_t)[block count];
                 for (uint32_t i = 0; i < n; i++) {
                     opcode = [block objectAtIndex:i];
                     if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_SET_VARIABLE) && RX_VAR_NAME_EQ(RX_OPCODE_ARG(opcode, 0), @"atrapbook")) {
@@ -262,8 +262,8 @@
                 picture_record->bitmap_id,
                 original_rect.size.width,
                 original_rect.size.height,
-                picture_record->width,
-                picture_record->height);
+                picture_record->rect.right - picture_record->rect.left,
+                picture_record->rect.bottom - picture_record->rect.top);
 #endif
         
         // adjust the display rect to anchor the picture to the top-left corner
@@ -399,7 +399,7 @@
     
     if (_hotspotsIDMap)
         NSFreeMapTable(_hotspotsIDMap);
-    _hotspotsIDMap = NSCreateMapTable(NSIntMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
+    _hotspotsIDMap = NSCreateMapTable(NSIntegerMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
     if (_hotspots_name_map)
         NSFreeMapTable(_hotspots_name_map);
     _hotspots_name_map = NSCreateMapTable(NSObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
@@ -647,30 +647,42 @@
 #endif
         
         // alias the offset table for convenience
-        sfxe->offsets = (uint32_t*)BUFFER_OFFSET(sfxe->record, sfxe->record->offset_table);
+        union {
+            uint32_t* p_int32;
+            void* p_void;
+        } u;
+        u.p_void = sfxe->record;
+        sfxe->offsets = BUFFER_OFFSET(u.p_int32, sfxe->record->offset_table);
 
 #if defined(__LITTLE_ENDIAN__)
         // byte swap the offsets and the program
         for (uint16_t fi = 0; fi < sfxe->record->frame_count; fi++) {
             sfxe->offsets[fi] = CFSwapInt32(sfxe->offsets[fi]);
             
-            uint16_t* mp = (uint16_t*)BUFFER_OFFSET(sfxe->record, sfxe->offsets[fi]);
-            *mp = CFSwapInt16(*mp);
-            while (*mp != 4) {
-                if (*mp == 3) {
-                    mp[1] = CFSwapInt16(mp[1]);
-                    mp[2] = CFSwapInt16(mp[2]);
-                    mp[3] = CFSwapInt16(mp[3]);
-                    mp[4] = CFSwapInt16(mp[4]);
-                    mp += 4;
-                } else if (*mp != 1)
+            union {
+                uint16_t* p_int16;
+                void* p_void;
+            } mp;
+            mp.p_void = sfxe->record;
+            mp.p_int16 = BUFFER_OFFSET(mp.p_int16, sfxe->offsets[fi]);
+            
+            *mp.p_int16 = CFSwapInt16(*mp.p_int16);
+            while (*mp.p_int16 != 4) {
+                if (*mp.p_int16 == 3) {
+                    mp.p_int16[1] = CFSwapInt16(mp.p_int16[1]);
+                    mp.p_int16[2] = CFSwapInt16(mp.p_int16[2]);
+                    mp.p_int16[3] = CFSwapInt16(mp.p_int16[3]);
+                    mp.p_int16[4] = CFSwapInt16(mp.p_int16[4]);
+                    mp.p_int16 += 4;
+                }
+                else if (*mp.p_int16 != 1)
                     abort();
                 
-                mp++;
-                *mp = CFSwapInt16(*mp);
+                mp.p_int16++;
+                *mp.p_int16 = CFSwapInt16(*mp.p_int16);
             }
             
-            assert(mp <= (uint16_t*)BUFFER_OFFSET(sfxe->record, sfxe_size));
+            assert(mp.p_void <= (void*)BUFFER_OFFSET(sfxe->record, sfxe_size));
         }
 #endif
     }

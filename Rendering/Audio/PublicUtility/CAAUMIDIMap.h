@@ -429,7 +429,7 @@ public:
 								
 								
 								// WE ARE ASSUMING YOU HAVE SET THIS UP PROPERLY!!!!! (or this will crash cause it will be NULL)
-								return mTransType->fromlinear((inLinearValue * (high - low)) + low);
+								return (Float32)mTransType->fromlinear((inLinearValue * (high - low)) + low);
 	}
 		
 

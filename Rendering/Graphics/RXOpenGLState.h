@@ -15,7 +15,7 @@
     CGLContextObj cgl_ctx;
     
     GLuint _vao_binding;
-    GLint _unpack_client_storage;
+    GLenum _unpack_client_storage;
 }
 
 - (id)initWithContext:(CGLContextObj)context;

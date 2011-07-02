@@ -19,11 +19,12 @@
 #include "RXLogging.h"
 #endif
 
-#if defined(DEBUG)
+#if defined(DEBUG_GL)
 
 #if defined(__APPLE__)
 
-extern void glReportErrorWithFileLineCGLMacro(CGLContextObj cgl_ctx, const char* file, const char* function, const int line) {
+void glReportErrorWithFileLineCGLMacro(CGLContextObj cgl_ctx, const char* file, const char* function, const int line)
+{
     GLenum err = glGetError();
 #if defined(RIVENX)
     if (GL_NO_ERROR != err) {
@@ -38,7 +39,8 @@ extern void glReportErrorWithFileLineCGLMacro(CGLContextObj cgl_ctx, const char*
 
 #endif // __APPLE__
 
-void glReportErrorWithFileLine(const char* file, const char* function, const int line) {
+void glReportErrorWithFileLine(const char* file, const char* function, const int line)
+{
 #if defined(__APPLE__)
     CGL_MACRO_DECLARE_CONTEXT()
     glReportErrorWithFileLineCGLMacro(CGL_MACRO_CONTEXT, file, function, line);
@@ -47,4 +49,4 @@ void glReportErrorWithFileLine(const char* file, const char* function, const int
 #endif // __APPLE__
 }
 
-#endif // DEBUG
+#endif // DEBUG_GL

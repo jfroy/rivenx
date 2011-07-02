@@ -54,6 +54,15 @@
 	#include <CoreFoundation.h>
 #endif
 
+#include "CADebugMacros.h"
+
+//=============================================================================
+//	Types
+//=============================================================================
+
+class	CACFDictionary;
+class	CACFString;
+
 //=============================================================================
 //	CACFArray
 //=============================================================================
@@ -63,7 +72,7 @@ class CACFArray
 
 //	Construction/Destruction
 public:
-						CACFArray(bool inRelease)													: mCFArray(CFArrayCreateMutable(NULL, 0, &kCFTypeArrayCallBacks)), mRelease(inRelease), mMutable(true) {}
+						CACFArray(bool inRelease = true)											: mCFArray(CFArrayCreateMutable(NULL, 0, &kCFTypeArrayCallBacks)), mRelease(inRelease), mMutable(true) {}
 						CACFArray(UInt32 inMaxNumberItems, bool inRelease)							: mCFArray(CFArrayCreateMutable(NULL, inMaxNumberItems, &kCFTypeArrayCallBacks)), mRelease(inRelease), mMutable(true) {}
 						CACFArray(CFArrayRef inCFArray, bool inRelease)								: mCFArray(const_cast<CFMutableArrayRef>(inCFArray)), mRelease(inRelease), mMutable(false) {}
 						CACFArray(CFMutableArrayRef inCFArray, bool inRelease)						: mCFArray(inCFArray), mRelease(inRelease), mMutable(true) {}
@@ -99,7 +108,7 @@ public:
 
 //	Item Operations
 public:
-	UInt32				GetNumberItems() const														{ UInt32 theAnswer = 0; if(mCFArray != NULL) { theAnswer = CFArrayGetCount(mCFArray); } return theAnswer; }
+	UInt32				GetNumberItems() const														{ UInt32 theAnswer = 0; if(mCFArray != NULL) { theAnswer = ToUInt32(CFArrayGetCount(mCFArray)); } return theAnswer; }
 	bool				HasItem(const void* inItem) const;
 	void				RemoveItem(const void* inItem)												{ UInt32 theIndex; if(CanModify() && GetIndexOfItem(inItem, theIndex)) { RemoveItemAtIndex(theIndex); } }
 	bool				GetIndexOfItem(const void* inItem, UInt32& outIndex) const;
@@ -120,8 +129,14 @@ public:
 	bool				GetArray(UInt32 inIndex, CFArrayRef& outItem) const;
 	bool				GetDictionary(UInt32 inIndex, CFDictionaryRef& outItem) const;
 	bool				GetData(UInt32 inIndex, CFDataRef& outItem) const;
+	bool				GetUUID(UInt32 inIndex, CFUUIDRef& outItem) const;
 	bool				GetCFType(UInt32 inIndex, CFTypeRef& outItem) const;
 	
+	void				GetCACFString(UInt32 inIndex, CACFString& outItem) const;
+	void				GetCACFArray(UInt32 inIndex, CACFArray& outItem) const;
+	void				GetCACFDictionary(UInt32 inIndex, CACFDictionary& outItem) const;
+	
+	bool				AppendBool(bool inItem);
 	bool				AppendSInt32(SInt32 inItem);
 	bool				AppendUInt32(UInt32 inItem);
 	bool				AppendSInt64(SInt64 inItem);
@@ -134,6 +149,7 @@ public:
 	bool				AppendData(const CFDataRef inItem);
 	bool				AppendCFType(const CFTypeRef inItem);
 	
+	bool				InsertBool(UInt32 inIndex, bool inItem);
 	bool				InsertSInt32(UInt32 inIndex, SInt32 inItem);
 	bool				InsertUInt32(UInt32 inIndex, UInt32 inItem);
 	bool				InsertSInt64(UInt32 inIndex, SInt64 inItem);
@@ -146,6 +162,7 @@ public:
 	bool				InsertData(UInt32 inIndex, const CFDataRef inItem);
 	bool				InsertCFType(UInt32 inIndex, const CFTypeRef inItem);
 	
+	bool				SetBool(UInt32 inIndex, bool inItem);
 	bool				SetSInt32(UInt32 inIndex, SInt32 inItem);
 	bool				SetUInt32(UInt32 inIndex, UInt32 inItem);
 	bool				SetSInt64(UInt32 inIndex, SInt64 inItem);

@@ -89,7 +89,7 @@ struct _RXCardDescriptorPrimer {
 }
 
 - (NSUInteger)hash {
-    return integer_pair_hash((int)[stackKey hash], (int)cardID);
+    return hash_combine([stackKey hash], cardID);
 }
 
 - (BOOL)isEqual:(id)object {
@@ -126,6 +126,11 @@ struct _RXCardDescriptorPrimer {
     self = [super init];
     if (!self)
         return nil;
+    
+    if (!stack) {
+        [self release];
+        return nil;
+    }
     
     // NOTE: weak reference to the stack
     _parent = stack;

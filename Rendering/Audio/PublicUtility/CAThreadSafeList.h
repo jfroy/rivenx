@@ -55,8 +55,7 @@ private:
 		EEventType	mEventType;
 		T			mObject;
 		
-		void	set_next(Node *node) { mNext = node; }
-		Node *	get_next() { return mNext; }
+		Node *&	next() { return mNext; }
 	};
 
 public:
@@ -70,8 +69,8 @@ public:
 		
 		T & operator * () const { return mNode->mObject; }
 		
-		iterator & operator ++ () { mNode = mNode->get_next(); return *this; }	// preincrement
-		iterator operator ++ (int) { iterator tmp = *this; mNode = mNode->get_next(); return tmp; } // postincrement
+		iterator & operator ++ () { mNode = mNode->next(); return *this; }	// preincrement
+		iterator operator ++ (int) { iterator tmp = *this; mNode = mNode->next(); return tmp; } // postincrement
 		
 	private:
 		Node *		mNode;
@@ -198,7 +197,7 @@ private:
 	{
 		Node *node = mFreeList.pop_atomic();
 		if (node == NULL)
-			node = (Node *)malloc(sizeof(Node));
+			node = (Node *)CA_malloc(sizeof(Node));
 		return node;
 	}
 	

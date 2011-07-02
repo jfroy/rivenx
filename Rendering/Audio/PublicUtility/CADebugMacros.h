@@ -68,16 +68,30 @@
 	#define CACopy4CCToCString(theCString, the4CC)	{ theCString[0] = ((char*)&the4CC)[3]; theCString[1] = ((char*)&the4CC)[2]; theCString[2] = ((char*)&the4CC)[1]; theCString[3] = ((char*)&the4CC)[0]; theCString[4] = 0; }
 #endif
 
+//	This is a macro that does a sizeof and casts the result to a UInt32. This is useful for all the
+//	places where -wshorten64-32 catches assigning a sizeof expression to a UInt32.
+//	For want of a better place to park this, we'll park it here.
+#define	SizeOf32(X)	((UInt32)sizeof(X))
+
+//	This is a macro that does a offsetof and casts the result to a UInt32. This is useful for all the
+//	places where -wshorten64-32 catches assigning an offsetof expression to a UInt32.
+//	For want of a better place to park this, we'll park it here.
+#define	OffsetOf32(X, Y)	((UInt32)offsetof(X, Y))
+
+//	This macro casts the expression to a UInt32. It is called out specially to allow us to track casts
+//	that have been added purely to avert -wshorten64-32 warnings on 64 bit platforms.
+//	For want of a better place to park this, we'll park it here.
+#define	ToUInt32(X)	((UInt32)(X))
+
 #pragma mark	Basic Definitions
 
 #if	DEBUG || CoreAudio_Debug
-	
 	// can be used to break into debugger immediately, also see CADebugger
 	#define BusError()		(*(long *)0 = 0)
 	
 	//	basic debugging print routines
 	#if	TARGET_OS_MAC && !TARGET_API_MAC_CARBON
-		extern pascal void DebugStr(const unsigned char* debuggerMsg);
+		extern void DebugStr(const unsigned char* debuggerMsg);
 		#define	DebugMessage(msg)	DebugStr("\p"msg)
 		#define DebugMessageN1(msg, N1)
 		#define DebugMessageN2(msg, N1, N2)
@@ -86,7 +100,7 @@
 		#include "CADebugPrintf.h"
 		
 		#if	(CoreAudio_FlushDebugMessages && !CoreAudio_UseSysLog) || defined(CoreAudio_UseSideFile)
-			#define	FlushRtn	;fflush(DebugPrintfFile)
+			#define	FlushRtn	,fflush(DebugPrintfFile)
 		#else
 			#define	FlushRtn
 		#endif
@@ -94,28 +108,33 @@
 		#if		CoreAudio_ThreadStampMessages
 			#include <pthread.h>
 			#include "CAHostTimeBase.h"
-			#define	DebugMessage(msg)										DebugPrintfRtn(DebugPrintfFileComma "%p %.4f: %s"DebugPrintfLineEnding, pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), msg) FlushRtn
-			#define DebugMessageN1(msg, N1)									DebugPrintfRtn(DebugPrintfFileComma "%p %.4f: "msg"\n", pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1) FlushRtn
-			#define DebugMessageN2(msg, N1, N2)								DebugPrintfRtn(DebugPrintfFileComma "%p %.4f: "msg"\n", pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2) FlushRtn
-			#define DebugMessageN3(msg, N1, N2, N3)							DebugPrintfRtn(DebugPrintfFileComma "%p %.4f: "msg"\n", pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3) FlushRtn
-			#define DebugMessageN4(msg, N1, N2, N3, N4)						DebugPrintfRtn(DebugPrintfFileComma "%p %.4f: "msg"\n", pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4) FlushRtn
-			#define DebugMessageN5(msg, N1, N2, N3, N4, N5)					DebugPrintfRtn(DebugPrintfFileComma "%p %.4f: "msg"\n", pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4, N5) FlushRtn
-			#define DebugMessageN6(msg, N1, N2, N3, N4, N5, N6)				DebugPrintfRtn(DebugPrintfFileComma "%p %.4f: "msg"\n", pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4, N5, N6) FlushRtn
-			#define DebugMessageN7(msg, N1, N2, N3, N4, N5, N6, N7)			DebugPrintfRtn(DebugPrintfFileComma "%p %.4f: "msg"\n", pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4, N5, N6, N7) FlushRtn
-			#define DebugMessageN8(msg, N1, N2, N3, N4, N5, N6, N7, N8)		DebugPrintfRtn(DebugPrintfFileComma "%p %.4f: "msg"\n", pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4, N5, N6, N7, N8) FlushRtn
-			#define DebugMessageN9(msg, N1, N2, N3, N4, N5, N6, N7, N8, N9)	DebugPrintfRtn(DebugPrintfFileComma "%p %.4f: "msg"\n", pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4, N5, N6, N7, N8, N9) FlushRtn
+			#if TARGET_RT_64_BIT
+				#define	DebugPrintfThreadIDFormat	"%16p"
+			#else
+				#define	DebugPrintfThreadIDFormat	"%8p"
+			#endif
+			#define	DebugMessage(msg)										DebugPrintfRtn(DebugPrintfFileComma "%17qd: " DebugPrintfThreadIDFormat " %s"DebugPrintfLineEnding, CAHostTimeBase::GetCurrentTimeInNanos(), pthread_self(), msg) FlushRtn
+			#define DebugMessageN1(msg, N1)									DebugPrintfRtn(DebugPrintfFileComma "%17qd: " DebugPrintfThreadIDFormat " "msg"\n", CAHostTimeBase::GetCurrentTimeInNanos(), pthread_self(), N1) FlushRtn
+			#define DebugMessageN2(msg, N1, N2)								DebugPrintfRtn(DebugPrintfFileComma "%17qd: " DebugPrintfThreadIDFormat " "msg"\n", CAHostTimeBase::GetCurrentTimeInNanos(), pthread_self(), N1, N2) FlushRtn
+			#define DebugMessageN3(msg, N1, N2, N3)							DebugPrintfRtn(DebugPrintfFileComma "%17qd: " DebugPrintfThreadIDFormat " "msg"\n", CAHostTimeBase::GetCurrentTimeInNanos(), pthread_self(), N1, N2, N3) FlushRtn
+			#define DebugMessageN4(msg, N1, N2, N3, N4)						DebugPrintfRtn(DebugPrintfFileComma "%17qd: " DebugPrintfThreadIDFormat " "msg"\n", CAHostTimeBase::GetCurrentTimeInNanos(), pthread_self(), N1, N2, N3, N4) FlushRtn
+			#define DebugMessageN5(msg, N1, N2, N3, N4, N5)					DebugPrintfRtn(DebugPrintfFileComma "%17qd: " DebugPrintfThreadIDFormat " "msg"\n", CAHostTimeBase::GetCurrentTimeInNanos(), pthread_self(), N1, N2, N3, N4, N5) FlushRtn
+			#define DebugMessageN6(msg, N1, N2, N3, N4, N5, N6)				DebugPrintfRtn(DebugPrintfFileComma "%17qd: " DebugPrintfThreadIDFormat " "msg"\n", CAHostTimeBase::GetCurrentTimeInNanos(), pthread_self(), N1, N2, N3, N4, N5, N6) FlushRtn
+			#define DebugMessageN7(msg, N1, N2, N3, N4, N5, N6, N7)			DebugPrintfRtn(DebugPrintfFileComma "%17qd: " DebugPrintfThreadIDFormat " "msg"\n", CAHostTimeBase::GetCurrentTimeInNanos(), pthread_self(), N1, N2, N3, N4, N5, N6, N7) FlushRtn
+			#define DebugMessageN8(msg, N1, N2, N3, N4, N5, N6, N7, N8)		DebugPrintfRtn(DebugPrintfFileComma "%17qd: " DebugPrintfThreadIDFormat " "msg"\n", CAHostTimeBase::GetCurrentTimeInNanos(), pthread_self(), N1, N2, N3, N4, N5, N6, N7, N8) FlushRtn
+			#define DebugMessageN9(msg, N1, N2, N3, N4, N5, N6, N7, N8, N9)	DebugPrintfRtn(DebugPrintfFileComma "%17qd: " DebugPrintfThreadIDFormat " "msg"\n", CAHostTimeBase::GetCurrentTimeInNanos(), pthread_self(), N1, N2, N3, N4, N5, N6, N7, N8, N9) FlushRtn
 		#elif	CoreAudio_TimeStampMessages
 			#include "CAHostTimeBase.h"
-			#define	DebugMessage(msg)										DebugPrintfRtn(DebugPrintfFileComma "%.4f: %s"DebugPrintfLineEnding, pthread_self(), ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), msg) FlushRtn
-			#define DebugMessageN1(msg, N1)									DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1) FlushRtn
-			#define DebugMessageN2(msg, N1, N2)								DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2) FlushRtn
-			#define DebugMessageN3(msg, N1, N2, N3)							DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3) FlushRtn
-			#define DebugMessageN4(msg, N1, N2, N3, N4)						DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4) FlushRtn
-			#define DebugMessageN5(msg, N1, N2, N3, N4, N5)					DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4, N5) FlushRtn
-			#define DebugMessageN6(msg, N1, N2, N3, N4, N5, N6)				DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4, N5, N6) FlushRtn
-			#define DebugMessageN7(msg, N1, N2, N3, N4, N5, N6, N7)			DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4, N5, N6, N7) FlushRtn
-			#define DebugMessageN8(msg, N1, N2, N3, N4, N5, N6, N7, N8)		DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4, N5, N6, N7, N8) FlushRtn
-			#define DebugMessageN9(msg, N1, N2, N3, N4, N5, N6, N7, N8, N9)	DebugPrintfRtn(DebugPrintfFileComma "%.4f: "msg DebugPrintfLineEnding, ((Float64)(CAHostTimeBase::GetCurrentTimeInNanos()) / 1000000.0), N1, N2, N3, N4, N5, N6, N7, N8, N9) FlushRtn
+			#define	DebugMessage(msg)										DebugPrintfRtn(DebugPrintfFileComma "%17qd: %s"DebugPrintfLineEnding, CAHostTimeBase::GetCurrentTimeInNanos(), msg) FlushRtn
+			#define DebugMessageN1(msg, N1)									DebugPrintfRtn(DebugPrintfFileComma "%17qd: "msg DebugPrintfLineEnding, CAHostTimeBase::GetCurrentTimeInNanos(), N1) FlushRtn
+			#define DebugMessageN2(msg, N1, N2)								DebugPrintfRtn(DebugPrintfFileComma "%17qd: "msg DebugPrintfLineEnding, CAHostTimeBase::GetCurrentTimeInNanos(), N1, N2) FlushRtn
+			#define DebugMessageN3(msg, N1, N2, N3)							DebugPrintfRtn(DebugPrintfFileComma "%17qd: "msg DebugPrintfLineEnding, CAHostTimeBase::GetCurrentTimeInNanos(), N1, N2, N3) FlushRtn
+			#define DebugMessageN4(msg, N1, N2, N3, N4)						DebugPrintfRtn(DebugPrintfFileComma "%17qd: "msg DebugPrintfLineEnding, CAHostTimeBase::GetCurrentTimeInNanos(), N1, N2, N3, N4) FlushRtn
+			#define DebugMessageN5(msg, N1, N2, N3, N4, N5)					DebugPrintfRtn(DebugPrintfFileComma "%17qd: "msg DebugPrintfLineEnding, CAHostTimeBase::GetCurrentTimeInNanos(), N1, N2, N3, N4, N5) FlushRtn
+			#define DebugMessageN6(msg, N1, N2, N3, N4, N5, N6)				DebugPrintfRtn(DebugPrintfFileComma "%17qd: "msg DebugPrintfLineEnding, CAHostTimeBase::GetCurrentTimeInNanos(), N1, N2, N3, N4, N5, N6) FlushRtn
+			#define DebugMessageN7(msg, N1, N2, N3, N4, N5, N6, N7)			DebugPrintfRtn(DebugPrintfFileComma "%17qd: "msg DebugPrintfLineEnding, CAHostTimeBase::GetCurrentTimeInNanos(), N1, N2, N3, N4, N5, N6, N7) FlushRtn
+			#define DebugMessageN8(msg, N1, N2, N3, N4, N5, N6, N7, N8)		DebugPrintfRtn(DebugPrintfFileComma "%17qd: "msg DebugPrintfLineEnding, CAHostTimeBase::GetCurrentTimeInNanos(), N1, N2, N3, N4, N5, N6, N7, N8) FlushRtn
+			#define DebugMessageN9(msg, N1, N2, N3, N4, N5, N6, N7, N8, N9)	DebugPrintfRtn(DebugPrintfFileComma "%17qd: "msg DebugPrintfLineEnding, CAHostTimeBase::GetCurrentTimeInNanos(), N1, N2, N3, N4, N5, N6, N7, N8, N9) FlushRtn
 		#else
 			#define	DebugMessage(msg)										DebugPrintfRtn(DebugPrintfFileComma "%s"DebugPrintfLineEnding, msg) FlushRtn
 			#define DebugMessageN1(msg, N1)									DebugPrintfRtn(DebugPrintfFileComma msg DebugPrintfLineEnding, N1) FlushRtn
@@ -130,18 +149,46 @@
 		#endif
 	#endif
 	void	DebugPrint(const char *fmt, ...);	// can be used like printf
-	#define DEBUGPRINT(msg) DebugPrint msg		// have to double-parenthesize arglist (see Debugging.h)
+	#ifndef DEBUGPRINT
+		#define DEBUGPRINT(msg) DebugPrint msg		// have to double-parenthesize arglist (see Debugging.h)
+	#endif
 	#if VERBOSE
 		#define vprint(msg) DEBUGPRINT(msg)
 	#else
 		#define vprint(msg)
 	#endif
 	
+	// Original macro keeps its function of turning on and off use of CADebuggerStop() for both asserts and throws.
+	// For backwards compat, it overrides any setting of the two sub-macros.
 	#if	CoreAudio_StopOnFailure
 		#include "CADebugger.h"
+		#undef CoreAudio_StopOnAssert
+		#define CoreAudio_StopOnAssert 1
+		#undef CoreAudio_StopOnThrow
+		#define CoreAudio_StopOnThrow 1
 		#define STOP	CADebuggerStop()
 	#else
-		#define	STOP
+		#define STOP
+	#endif
+
+	#if CoreAudio_StopOnAssert
+		#if !CoreAudio_StopOnFailure
+			#include "CADebugger.h"
+			#define STOP
+		#endif
+		#define __ASSERT_STOP CADebuggerStop()
+	#else
+		#define __ASSERT_STOP
+	#endif
+
+	#if CoreAudio_StopOnThrow
+		#if !CoreAudio_StopOnFailure
+			#include "CADebugger.h"
+			#define STOP
+		#endif
+		#define __THROW_STOP CADebuggerStop()
+	#else
+		#define __THROW_STOP
 	#endif
 
 #else
@@ -155,13 +202,19 @@
 	#define DebugMessageN7(msg, N1, N2, N3, N4, N5, N6, N7)
 	#define DebugMessageN8(msg, N1, N2, N3, N4, N5, N6, N7, N8)
 	#define DebugMessageN9(msg, N1, N2, N3, N4, N5, N6, N7, N8, N9)
-	#define DEBUGPRINT(msg)
+	#ifndef DEBUGPRINT
+		#define DEBUGPRINT(msg)
+	#endif
 	#define vprint(msg)
 	#define	STOP
+	#define __ASSERT_STOP
+	#define __THROW_STOP
 #endif
 
 void	LogError(const char *fmt, ...);			// writes to syslog (and stderr if debugging)
 void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debugging)
+
+#define	NO_ACTION	(void)0
 
 #if	DEBUG || CoreAudio_Debug
 
@@ -171,7 +224,14 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 			if(!(inCondition))															\
 			{																			\
 				DebugMessage(inMessage);												\
-				STOP;																	\
+				__ASSERT_STOP;																	\
+			}
+
+#define	AssertFileLine(inCondition, inMessage)											\
+			if(!(inCondition))															\
+			{																			\
+				DebugMessageN3("%s, line %d: %s", __FILE__, __LINE__, inMessage);		\
+				__ASSERT_STOP;															\
 			}
 
 #define	AssertNoError(inError, inMessage)												\
@@ -181,7 +241,7 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				{																		\
 					char __4CC[5] = CA4CCToCString(__Err);								\
 					DebugMessageN2(inMessage ", Error: %d (%s)", (int)__Err, __4CC);		\
-					STOP;																\
+					__ASSERT_STOP;														\
 				}																		\
 			}
 
@@ -191,7 +251,16 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				if(__Err != 0)															\
 				{																		\
 					DebugMessageN1(inMessage ", Error: 0x%X", __Err);					\
-					STOP;																\
+					__ASSERT_STOP;														\
+				}																		\
+			}
+
+#define	AssertNotNULL(inPtr, inMessage)													\
+			{																			\
+				if((inPtr) == NULL)														\
+				{																		\
+					DebugMessage(inMessage);											\
+					__ASSERT_STOP;														\
 				}																		\
 			}
 
@@ -221,9 +290,9 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				goto inHandler;															\
 			}
 
-#define	FailIfKernelError(inKernelError, inException, inMessage)						\
+#define	FailIfKernelError(inKernelError, inAction, inHandler, inMessage)				\
 			{																			\
-				kern_return_t __Err = (inKernelError);									\
+				unsigned int __Err = (inKernelError);									\
 				if(__Err != 0)															\
 				{																		\
 					DebugMessageN1(inMessage ", Error: 0x%X", __Err);					\
@@ -233,7 +302,7 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				}																		\
 			}
 
-#define	FailIfError(inError, inException, inMessage)									\
+#define	FailIfError(inError, inAction, inHandler, inMessage)							\
 			{																			\
 				SInt32 __Err = (inError);												\
 				if(__Err != 0)															\
@@ -246,9 +315,54 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				}																		\
 			}
 
+#define	FailIfNoMessage(inCondition, inHandler, inMessage)								\
+			if(inCondition)																\
+			{																			\
+				STOP;																	\
+				goto inHandler;															\
+			}
+
+#define	FailWithActionNoMessage(inCondition, inAction, inHandler, inMessage)			\
+			if(inCondition)																\
+			{																			\
+				STOP;																	\
+				{ inAction; }															\
+				goto inHandler;															\
+			}
+
+#define	FailIfNULLNoMessage(inPointer, inAction, inHandler, inMessage)					\
+			if((inPointer) == NULL)														\
+			{																			\
+				STOP;																	\
+				{ inAction; }															\
+				goto inHandler;															\
+			}
+
+#define	FailIfKernelErrorNoMessage(inKernelError, inAction, inHandler, inMessage)		\
+			{																			\
+				unsigned int __Err = (inKernelError);									\
+				if(__Err != 0)															\
+				{																		\
+					STOP;																\
+					{ inAction; }														\
+					goto inHandler;														\
+				}																		\
+			}
+
+#define	FailIfErrorNoMessage(inError, inAction, inHandler, inMessage)					\
+			{																			\
+				SInt32 __Err = (inError);												\
+				if(__Err != 0)															\
+				{																		\
+					STOP;																\
+					{ inAction; }														\
+					goto inHandler;														\
+				}																		\
+			}
+
 #if defined(__cplusplus)
 
-#define Throw(inException)  STOP; throw (inException)
+#define Throw(inException)  __THROW_STOP; throw (inException)
 
 #define	ThrowIf(inCondition, inException, inMessage)									\
 			if(inCondition)																\
@@ -266,7 +380,7 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 
 #define	ThrowIfKernelError(inKernelError, inException, inMessage)						\
 			{																			\
-				kern_return_t __Err = (inKernelError);									\
+				unsigned int __Err = (inKernelError);									\
 				if(__Err != 0)															\
 				{																		\
 					DebugMessageN1(inMessage ", Error: 0x%X", __Err);					\
@@ -312,15 +426,17 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 #define	Assert(inCondition, inMessage)													\
 			if(!(inCondition))															\
 			{																			\
-				STOP;																	\
+				__ASSERT_STOP;															\
 			}
+
+#define AssertFileLine(inCondition, inMessage) Assert(inCondition, inMessage)
 
 #define	AssertNoError(inError, inMessage)												\
 			{																			\
 				SInt32 __Err = (inError);												\
 				if(__Err != 0)															\
 				{																		\
-					STOP;																\
+					__ASSERT_STOP;														\
 				}																		\
 			}
 
@@ -329,7 +445,15 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				unsigned int __Err = (unsigned int)(inError);							\
 				if(__Err != 0)															\
 				{																		\
-					STOP;																\
+					__ASSERT_STOP;														\
+				}																		\
+			}
+
+#define	AssertNotNULL(inPtr, inMessage)													\
+			{																			\
+				if((inPtr) == NULL)														\
+				{																		\
+					__ASSERT_STOP;														\
 				}																		\
 			}
 
@@ -356,7 +480,7 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				goto inHandler;															\
 			}
 
-#define	FailIfKernelError(inKernelError, inException, inMessage)						\
+#define	FailIfKernelError(inKernelError, inAction, inHandler, inMessage)				\
 			if((inKernelError) != 0)													\
 			{																			\
 				STOP;																	\
@@ -364,7 +488,7 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				goto inHandler;															\
 			}
 
-#define	FailIfError(inError, inException, inMessage)									\
+#define	FailIfError(inError, inAction, inHandler, inMessage)							\
 			if((inError) != 0)															\
 			{																			\
 				STOP;																	\
@@ -372,9 +496,54 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 				goto inHandler;															\
 			}
 
+#define	FailIfNoMessage(inCondition, inHandler, inMessage)								\
+			if(inCondition)																\
+			{																			\
+				STOP;																	\
+				goto inHandler;															\
+			}
+
+#define	FailWithActionNoMessage(inCondition, inAction, inHandler, inMessage)			\
+			if(inCondition)																\
+			{																			\
+				STOP;																	\
+				{ inAction; }															\
+				goto inHandler;															\
+			}
+
+#define	FailIfNULLNoMessage(inPointer, inAction, inHandler, inMessage)					\
+			if((inPointer) == NULL)														\
+			{																			\
+				STOP;																	\
+				{ inAction; }															\
+				goto inHandler;															\
+			}
+
+#define	FailIfKernelErrorNoMessage(inKernelError, inAction, inHandler, inMessage)		\
+			{																			\
+				unsigned int __Err = (inKernelError);									\
+				if(__Err != 0)															\
+				{																		\
+					STOP;																\
+					{ inAction; }														\
+					goto inHandler;														\
+				}																		\
+			}
+
+#define	FailIfErrorNoMessage(inError, inAction, inHandler, inMessage)					\
+			{																			\
+				SInt32 __Err = (inError);												\
+				if(__Err != 0)															\
+				{																		\
+					STOP;																\
+					{ inAction; }														\
+					goto inHandler;														\
+				}																		\
+			}
+
 #if defined(__cplusplus)
 
-#define Throw(inException)  STOP; throw (inException)
+#define Throw(inException)  __THROW_STOP; throw (inException)
 
 #define	ThrowIf(inCondition, inException, inMessage)									\
 			if(inCondition)																\
@@ -390,7 +559,7 @@ void	LogWarning(const char *fmt, ...);		// writes to syslog (and stderr if debug
 
 #define	ThrowIfKernelError(inKernelError, inException, inMessage)						\
 			{																			\
-				kern_return_t __Err = (inKernelError);									\
+				unsigned int __Err = (inKernelError);									\
 				if(__Err != 0)															\
 				{																		\
 					Throw(inException);													\

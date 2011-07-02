@@ -8,8 +8,9 @@
 
 #import <algorithm>
 
-#import <CoreFoundation/CoreFoundation.h>
 #import <libkern/OSAtomic.h>
+#import <CoreFoundation/CoreFoundation.h>
+#import <CoreServices/CoreServices.h>
 
 #import "Base/RXAtomic.h"
 #import "Base/RXLogging.h"
@@ -23,6 +24,7 @@
 
 #import "Rendering/Audio/PublicUtility/CAComponentDescription.h"
 #import "Rendering/Audio/PublicUtility/CAAUParameter.h"
+#import "Rendering/Audio/PublicUtility/CAStreamBasicDescription.h"
 
 namespace RX {
 
@@ -242,22 +244,24 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
             // we need to create a converter AU and connect it to the mixer, plugging the source as the converter's render callback
             
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
-            CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> creating ancillary converter for source %p on bus %u"), this, source, source->bus);
-            RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-            CFRelease(rxar_debug);
+            RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::AudioRenderer: 0x%x> creating ancillary converter for source %p on bus %u"), this, source, source->bus);
 #endif
             
             // create a new graph node with the converter AU
-            CAComponentDescription cd;
-            cd.componentType = kAudioUnitType_FormatConverter;
-            cd.componentSubType = kAudioUnitSubType_AUConverter;
-            cd.componentManufacturer = kAudioUnitManufacturer_Apple;
+            AudioComponentDescription acd;
+            acd.componentType = kAudioUnitType_FormatConverter;
+            acd.componentSubType = kAudioUnitSubType_AUConverter;
+            acd.componentManufacturer = kAudioUnitManufacturer_Apple;
+            acd.componentFlags = 0;
+            acd.componentFlagsMask = 0;
             
             // convert to a CAAudioUnit object
             AUNode converter_node;
             AudioUnit converter_au;
-            XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &converter_node), "AUGraphNewNode kAudioUnitSubType_AUConverter");
-            XThrowIfError(AUGraphGetNodeInfo(graph, converter_node, NULL, NULL, NULL, &converter_au), "AUGraphGetNodeInfo");
+            XThrowIfError(AUGraphAddNode(graph, &acd, &converter_node), "AUGraphAddNode kAudioUnitSubType_AUConverter");
+            XThrowIfError(AUGraphNodeInfo(graph, converter_node, NULL, &converter_au), "AUGraphNodeInfo");
+            //XThrowIfError(AUGraphNewNode(graph, &acd, 0, NULL, &converter_node), "AUGraphNewNode kAudioUnitSubType_AUConverter");
+            //XThrowIfError(AUGraphGetNodeInfo(graph, converter_node, NULL, NULL, NULL, &converter_au), "AUGraphGetNodeInfo");
             CAAudioUnit converter = CAAudioUnit(converter_node, converter_au);
             
             // set the input and output formats of the converter
@@ -296,9 +300,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
         (*busAllocationVector)[source->bus] = true;
         
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
-        CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> attached source %p to bus %u"), this, source, source->bus);
-        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-        CFRelease(rxar_debug);
+        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::AudioRenderer: 0x%x> attached source %p to bus %u"), this, source, source->bus);
 #endif
     }
     
@@ -322,9 +324,7 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw (CAXException) {
         XThrowIf(source->rendererPtr != this, paramErr, "AudioRenderer::DetachSources: tried to detach a source not attached to the renderer");
         
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
-        CFStringRef rxar_debug = CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioRenderer: 0x%x> detaching source %p from bus %u"), this, source, source->bus);
-        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, rxar_debug);
-        CFRelease(rxar_debug);
+        RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::AudioRenderer: 0x%x> detaching source %p from bus %u"), this, source, source->bus);
 #endif
         
         // if this source has no node, then it was connected directly to the mixer and we so we need to reset the mixer's render callback to the silence callback
@@ -661,7 +661,12 @@ OSStatus AudioRenderer::MixerPostRenderNotify(const AudioTimeStamp* inTimeStamp,
 }
 
 void AudioRenderer::CreateGraph() {
-    CAComponentDescription cd;
+    AudioComponentDescription acd;
+    acd.componentType = 0;
+    acd.componentSubType = 0;
+    acd.componentManufacturer = kAudioUnitManufacturer_Apple;
+    acd.componentFlags = 0;
+    acd.componentFlagsMask = 0;
     AudioUnit au;
 
     // main processing graph
@@ -669,27 +674,29 @@ void AudioRenderer::CreateGraph() {
     
     // add the default output AU to the graph
     AUNode output_node;
-    cd.componentType = kAudioUnitType_Output;
-    cd.componentSubType = kAudioUnitSubType_DefaultOutput;
-    cd.componentManufacturer = kAudioUnitManufacturer_Apple;
-    XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &output_node), "AUGraphNewNode");
+    acd.componentType = kAudioUnitType_Output;
+    acd.componentSubType = kAudioUnitSubType_DefaultOutput;
+    XThrowIfError(AUGraphAddNode(graph, &acd, &output_node), "AUGraphAddNode kAudioUnitSubType_DefaultOutput");
+    //XThrowIfError(AUGraphNewNode(graph, &acd, 0, NULL, &output_node), "AUGraphNewNode");
     
     // add in the stereo mixer
     AUNode mixer_node;
-    cd.componentType = kAudioUnitType_Mixer;
-    cd.componentSubType = kAudioUnitSubType_StereoMixer;
-    cd.componentManufacturer = kAudioUnitManufacturer_Apple;
-    XThrowIfError(AUGraphNewNode(graph, &cd, 0, NULL, &mixer_node), "AUGraphNewNode");
+    acd.componentType = kAudioUnitType_Mixer;
+    acd.componentSubType = kAudioUnitSubType_StereoMixer;
+    XThrowIfError(AUGraphAddNode(graph, &acd, &mixer_node), "AUGraphAddNode kAudioUnitSubType_StereoMixer");
+    //XThrowIfError(AUGraphNewNode(graph, &acd, 0, NULL, &mixer_node), "AUGraphNewNode");
     
     // open the graph so that the mixer and AUHAL units are instanciated
     XThrowIfError(AUGraphOpen(graph), "AUGraphOpen");
     
-    // het the output unit
-    XThrowIfError(AUGraphGetNodeInfo(graph, output_node, NULL, NULL, NULL, &au), "AUGraphGetNodeInfo");
+    // get the output unit
+    XThrowIfError(AUGraphNodeInfo(graph, output_node, NULL, &au), "AUGraphNodeInfo");
+    //XThrowIfError(AUGraphGetNodeInfo(graph, output_node, NULL, NULL, NULL, &au), "AUGraphGetNodeInfo");
     output = new CAAudioUnit(output_node, au);
     
     // get the mixer unit
-    XThrowIfError(AUGraphGetNodeInfo(graph, mixer_node, NULL, NULL, NULL, &au), "AUGraphGetNodeInfo");
+    XThrowIfError(AUGraphNodeInfo(graph, mixer_node, NULL, &au), "AUGraphNodeInfo");
+    //XThrowIfError(AUGraphGetNodeInfo(graph, mixer_node, NULL, NULL, NULL, &au), "AUGraphGetNodeInfo");
     mixer = new CAAudioUnit(mixer_node, au);
     
     // configure the format and channel layout of the output and mixer units

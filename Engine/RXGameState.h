@@ -44,7 +44,6 @@
 - (int64_t)signed64ForKey:(NSString*)key;
 - (void)setSigned64:(int64_t)value forKey:(NSString*)key;
 
-
 - (BOOL)isKeySet:(NSString*)key;
 
 - (RXSimpleCardDescriptor*)currentCard;
