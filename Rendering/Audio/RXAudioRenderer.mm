@@ -24,6 +24,7 @@
 
 #import "Rendering/Audio/PublicUtility/CAComponentDescription.h"
 #import "Rendering/Audio/PublicUtility/CAAUParameter.h"
+#import "Rendering/Audio/PublicUtility/CAStreamBasicDescription.h"
 
 namespace RX {
 

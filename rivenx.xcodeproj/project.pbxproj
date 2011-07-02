@@ -153,6 +153,7 @@
 		3186C9C3102E3CE0004E81D2 /* RXTextureBroker.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DAB0DC263F400B3AF0D /* RXTextureBroker.m */; };
 		3186C9E5102E47F4004E81D2 /* RXTexture.m in Sources */ = {isa = PBXBuildFile; fileRef = 3186C9E4102E47F4004E81D2 /* RXTexture.m */; };
 		318AFC2E13BF9DC8000402B7 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 318AFC2D13BF9DC8000402B7 /* QuartzCore.framework */; };
+		318AFC2F13BFA4B5000402B7 /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31200FBF0F3F8495006E6EF7 /* CAStreamBasicDescription.cpp */; };
 		318CB4640E04917A00BD2C38 /* RXGameState_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 318CB4630E04917A00BD2C38 /* RXGameState_test.m */; };
 		318CB4FD0E05C60C00BD2C38 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		3196B9360D945CC100BC818E /* RXTiming.c in Sources */ = {isa = PBXBuildFile; fileRef = 3196B9350D945CC100BC818E /* RXTiming.c */; };
@@ -1659,6 +1660,7 @@
 				3165A576110BB13B004E71F1 /* glew.c in Sources */,
 				3167EF021115057C002DDE6D /* RXWindow.m in Sources */,
 				31E9334A1127B0CE00188488 /* RXWelcomeWindowController.m in Sources */,
+				318AFC2F13BFA4B5000402B7 /* CAStreamBasicDescription.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1799,6 +1801,7 @@
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				PRODUCT_NAME = MHKKit;
+				SKIP_INSTALL = YES;
 			};
 			name = Debug;
 		};
@@ -1823,6 +1826,7 @@
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				PRODUCT_NAME = MHKKit;
+				SKIP_INSTALL = YES;
 			};
 			name = "Beta Release";
 		};
@@ -1847,6 +1851,7 @@
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				PRODUCT_NAME = MHKKit;
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
@@ -2049,7 +2054,6 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-fstack-protector",
 					"-fblocks",
@@ -2107,7 +2111,6 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-fstack-protector",
 					"-fblocks",
@@ -2322,7 +2325,6 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.6;
-				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = (
 					"-fstack-protector",
 					"-fblocks",

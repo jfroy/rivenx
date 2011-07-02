@@ -53,6 +53,8 @@
 #include "CAReferenceCounted.h"
 #include "AUOutputBL.h" //this is for the Preroll only
 
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 struct StackAUChannelInfo {
 		StackAUChannelInfo (UInt32 inSize) : mChanInfo ((AUChannelInfo*)malloc (inSize)) {}
 		~StackAUChannelInfo() { free (mChanInfo); }
@@ -375,8 +377,8 @@ bool		CAAudioUnit::CanDo (	int 				inChannelsIn,
 		// is expected to deal with same channel valance in and out
 	if (result) 
 	{
-		if (Comp().Desc().IsEffect() && (inChannelsIn == inChannelsOut)
-			|| Comp().Desc().IsOffline() && (inChannelsIn == inChannelsOut))
+		if ((Comp().Desc().IsEffect() && (inChannelsIn == inChannelsOut))
+			|| (Comp().Desc().IsOffline() && (inChannelsIn == inChannelsOut)))
 		{
 			return true;
 		}
