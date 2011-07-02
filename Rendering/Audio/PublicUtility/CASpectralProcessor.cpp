@@ -44,7 +44,7 @@
 #include "CABitOperations.h"
 
 
-#include <vecLib/vectorOps.h>
+#include <Accelerate/Accelerate.h>
 
 
 #define OFFSETOF(class, field)((size_t)&((class*)0)->field)

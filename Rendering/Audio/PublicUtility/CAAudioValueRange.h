@@ -77,6 +77,7 @@ public:
 //  Operations
 public:
 	static bool			ContainsValue(const AudioValueRange& inRange, Float64 inValue)					{ return (inValue >= inRange.mMinimum) && (inValue <= inRange.mMaximum); }
+	static Float64		BoundValue(const AudioValueRange& inRange, Float64 inValue);
 	static Float64		PickCommonSampleRate(const AudioValueRange& inRange);
 	static bool			IsStrictlyLessThan(const AudioValueRange& x, const AudioValueRange& y)			{ return x.mMaximum < y.mMinimum; }
 	static bool			IsStrictlyGreaterThan(const AudioValueRange& x, const AudioValueRange& y)		{ return x.mMinimum > y.mMaximum; }
@@ -109,6 +110,6 @@ inline bool	operator>(const AudioValueRange& x, const AudioValueRange& y)							
 
 typedef	std::vector<CAAudioValueRange>	CAAudioValueRangeList;
 void	CAAudioValueRange_ComputeUnion(const AudioValueRange& inRange, const CAAudioValueRangeList& inRangeList, CAAudioValueRangeList& outUnion);
-void	CAAudioValueRange_ComputeIntersection(const AudioValueRange& inRange, const CAAudioValueRangeList& inRangeList, CAAudioValueRangeList& outIntersections);
+void	CAAudioValueRange_ComputeIntersection(UInt32 inNumberRangeList1Items, AudioValueRange inRangeList1[], const CAAudioValueRangeList& inRangeList2, CAAudioValueRangeList& outIntersections);
 
 #endif

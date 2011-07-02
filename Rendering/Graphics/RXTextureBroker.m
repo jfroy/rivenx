@@ -7,7 +7,6 @@
 //
 
 #import "Rendering/Graphics/RXTextureBroker.h"
-#import "Utilities/GTMObjectSingleton.h"
 
 
 @interface RXBrokeredTexture : RXTexture {
@@ -136,7 +135,15 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     return bucket->tex_ids[tex_index];
 }
 
-GTMOBJECT_SINGLETON_BOILERPLATE(RXTextureBroker, sharedTextureBroker)
++ (RXTextureBroker*)sharedTextureBroker
+{
+    static RXTextureBroker* broker = nil;
+    if (broker == nil)
+    {
+        broker = [RXTextureBroker new];
+    }
+    return broker;
+}
 
 - (void)_createBucketWithSize:(rx_size_t)size {
     if (_bucket_count == _bucket_capacity) {

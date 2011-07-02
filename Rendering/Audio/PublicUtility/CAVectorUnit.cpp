@@ -47,7 +47,7 @@
 	#include "ippcore.h"
 #endif
 
-int CAVectorUnit::sVectorUnitType = kVecUninitialized;
+int gCAVectorUnitType = kVecUninitialized;
 
 #if TARGET_OS_WIN32
 // Use cpuid to check if SSE2 is available.
@@ -114,7 +114,7 @@ end_cpuid_identify:
 
 #endif
 
-SInt32	CAVectorUnit::CheckVectorUnit()
+SInt32	CAVectorUnit_Examine()
 {
 	int result = kVecNone;
 	
@@ -174,10 +174,12 @@ SInt32	CAVectorUnit::CheckVectorUnit()
 			if (!error && answer)
 				result = kVecSSE2;
 		}
+	#elif (TARGET_CPU_ARM) && defined(_ARM_ARCH_7)
+		result = kVecNeon;
 	#endif
 	}
 #endif
-	sVectorUnitType = result;
+	gCAVectorUnitType = result;
 	return result;
 }
 

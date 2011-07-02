@@ -96,6 +96,11 @@ bool	operator== (const AudioChannelLayout &x, const AudioChannelLayout &y)
 	return !memcmp (&x, &y, theSize1);
 }
 
+bool	operator!= (const AudioChannelLayout &x, const AudioChannelLayout &y)
+{
+	return !(x == y);
+}
+
 // counting the one bits in a word
 inline UInt32 CountOnes(UInt32 x)
 {

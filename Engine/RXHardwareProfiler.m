@@ -11,27 +11,11 @@
 
 #import "RXHardwareProfiler.h"
 
-#import "GTMObjectSingleton.h"
-
 
 @implementation RXHardwareProfiler
 
-// disable automatic KVC
-+ (BOOL)accessInstanceVariablesDirectly {
-    return NO;
-}
-
-GTMOBJECT_SINGLETON_BOILERPLATE(RXHardwareProfiler, sharedHardwareProfiler)
-
-- (id)init {
-    self = [super init];
-    if (!self)
-        return nil;
-    
-    return self;
-}
-
-- (size_t)cacheLineSize {
++ (size_t)cacheLineSize
+{
     uint64_t cache_line_size = 0;
     size_t len = sizeof(uint64_t);
     int err = sysctlbyname("hw.cachelinesize", (void*)&cache_line_size, &len, NULL, 0);

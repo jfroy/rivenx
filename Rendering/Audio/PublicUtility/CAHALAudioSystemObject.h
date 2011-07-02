@@ -68,6 +68,7 @@ public:
 	void			GetAudioDevices(UInt32& ioNumberAudioDevices, AudioObjectID* outAudioDevices) const;
 	AudioObjectID	GetAudioDeviceAtIndex(UInt32 inIndex) const;
 	AudioObjectID	GetAudioDeviceForUID(CFStringRef inUID) const;
+	void			LogBasicDeviceInfo();
 
 //	Default Device Management
 public:

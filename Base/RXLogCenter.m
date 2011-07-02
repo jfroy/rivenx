@@ -15,15 +15,24 @@
 #import "Base/RXErrors.h"
 #import "Base/RXLogging.h"
 
-#import "Utilities/GTMObjectSingleton.h"
 #import "Utilities/BZFSUtilities.h"
 
 
 @implementation RXLogCenter
 
-GTMOBJECT_SINGLETON_BOILERPLATE(RXLogCenter, sharedLogCenter)
++ (RXLogCenter*)sharedLogCenter
+{
+    static RXLogCenter* center = nil;
+    if (center == nil)
+    {
+        center = [RXLogCenter new];
+    }
+    
+    return center;
+}
 
-- (id)init {
+- (id)init
+{
     self = [super init];
     if (!self)
         return nil;

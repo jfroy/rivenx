@@ -174,7 +174,7 @@ void CardAudioSource::task(uint32_t byte_limit) throw() {
         if (_loop) {
             [_decompressor reset];
             _bufferedFrames = 0;
-            available_frames = [_decompressor frameCount];
+            available_frames = (uint32_t)[_decompressor frameCount];
         } else {
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
             RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> no frames left to decode, bailing out"), this);

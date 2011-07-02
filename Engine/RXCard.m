@@ -168,7 +168,7 @@
             NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndex:0];
             if (RX_BRANCH_VAR_NAME_EQ(opcode, @"pcage") && RX_CASE_VAL_EQ(case0, 1)) {
                 NSMutableArray* block = [case0 objectForKey:@"block"];
-                uint32_t n = [block count];
+                uint32_t n = (uint32_t)[block count];
                 for (uint32_t i = 0; i < n; i++) {
                     opcode = [block objectAtIndex:i];
                     if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_SET_VARIABLE) && RX_VAR_NAME_EQ(RX_OPCODE_ARG(opcode, 0), @"atrapbook")) {

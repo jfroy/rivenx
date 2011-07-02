@@ -134,7 +134,6 @@ NSObject <RXWorldProtocol>* g_world = nil;
             @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"initSingleton: MAIN THREAD ONLY" userInfo:nil];
         
         // initialize threading
-        RXInitThreading();
         RXSetThreadName("main");
         
         // initialize timing
@@ -149,7 +148,7 @@ NSObject <RXWorldProtocol>* g_world = nil;
             [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
         
         // seed random
-        srandom(time(NULL));
+        srandom((unsigned)time(NULL));
         
         // initialize the engine variables
         _engineVariablesLock = OS_SPINLOCK_INIT;

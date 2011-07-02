@@ -74,7 +74,7 @@
 
 #include <dlfcn.h>
 
-void* NSGLGetProcAddress (const GLubyte *name)
+static void* NSGLGetProcAddress (const GLubyte *name)
 {
   static void* image = NULL;
   if (NULL == image) 
@@ -9961,7 +9961,7 @@ extern GLenum wglewContextInit (void);
 extern GLenum glxewContextInit (void);
 #endif /* _WIN32 */
 
-GLenum glewInit ()
+GLenum glewInit (void)
 {
   GLenum r;
   if ( (r = glewContextInit()) ) return r;

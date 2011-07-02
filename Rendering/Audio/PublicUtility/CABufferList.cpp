@@ -44,17 +44,17 @@
 void		CABufferList::AllocateBuffers(UInt32 nBytes)
 {
 	if (nBytes <= GetNumBytes()) return;
-	
-	if (mNumberBuffers > 1)
+
+	if (mABL.mNumberBuffers > 1)
 		// align successive buffers for Altivec and to take alternating
 		// cache line hits by spacing them by odd multiples of 16
 		nBytes = ((nBytes + 15) & ~15) | 16;
-	UInt32 memorySize = nBytes * mNumberBuffers;
+	UInt32 memorySize = nBytes * mABL.mNumberBuffers;
 	Byte *newMemory = new Byte[memorySize], *p = newMemory;
 	memset(newMemory, 0, memorySize);	// get page faults now, not later
 	
-	AudioBuffer *buf = mBuffers;
-	for (UInt32 i = mNumberBuffers; i--; ++buf) {
+	AudioBuffer *buf = mABL.mBuffers;
+	for (UInt32 i = mABL.mNumberBuffers; i--; ++buf) {
 		if (buf->mData != NULL && buf->mDataByteSize > 0)
 			// preserve existing buffer contents
 			memcpy(p, buf->mData, buf->mDataByteSize);
@@ -64,13 +64,14 @@ void		CABufferList::AllocateBuffers(UInt32 nBytes)
 	}
 	Byte *oldMemory = mBufferMemory;
 	mBufferMemory = newMemory;
+	mBufferCapacity = nBytes;
 	delete[] oldMemory;
 }
 
 void		CABufferList::AllocateBuffersAndCopyFrom(UInt32 nBytes, CABufferList *inSrcList, CABufferList *inSetPtrList)
 {
-	if (mNumberBuffers != inSrcList->mNumberBuffers) return;
-	if (mNumberBuffers != inSetPtrList->mNumberBuffers) return;
+	if (mABL.mNumberBuffers != inSrcList->mABL.mNumberBuffers) return;
+	if (mABL.mNumberBuffers != inSetPtrList->mABL.mNumberBuffers) return;
 	if (nBytes <= GetNumBytes()) {
 		CopyAllFrom(inSrcList, inSetPtrList);
 		return;
@@ -78,18 +79,18 @@ void		CABufferList::AllocateBuffersAndCopyFrom(UInt32 nBytes, CABufferList *inSr
 	inSetPtrList->VerifyNotTrashingOwnedBuffer();
 	UInt32 fromByteSize = inSrcList->GetNumBytes();
 	
-	if (mNumberBuffers > 1)
+	if (mABL.mNumberBuffers > 1)
 		// align successive buffers for Altivec and to take alternating
 		// cache line hits by spacing them by odd multiples of 16
 		nBytes = ((nBytes + 15) & ~15) | 16;
-	UInt32 memorySize = nBytes * mNumberBuffers;
+	UInt32 memorySize = nBytes * mABL.mNumberBuffers;
 	Byte *newMemory = new Byte[memorySize], *p = newMemory;
 	memset(newMemory, 0, memorySize);	// make buffer "hot"
 	
-	AudioBuffer *buf = mBuffers;
-	AudioBuffer *ptrBuf = inSetPtrList->mBuffers;
-	AudioBuffer *srcBuf = inSrcList->mBuffers;
-	for (UInt32 i = mNumberBuffers; i--; ++buf, ++ptrBuf, ++srcBuf) {
+	AudioBuffer *buf = mABL.mBuffers;
+	AudioBuffer *ptrBuf = inSetPtrList->mABL.mBuffers;
+	AudioBuffer *srcBuf = inSrcList->mABL.mBuffers;
+	for (UInt32 i = mABL.mNumberBuffers; i--; ++buf, ++ptrBuf, ++srcBuf) {
 		if (srcBuf->mData != NULL && srcBuf->mDataByteSize > 0)
 			// preserve existing buffer contents
 			memmove(p, srcBuf->mData, srcBuf->mDataByteSize);
@@ -101,6 +102,7 @@ void		CABufferList::AllocateBuffersAndCopyFrom(UInt32 nBytes, CABufferList *inSr
 	}
 	Byte *oldMemory = mBufferMemory;
 	mBufferMemory = newMemory;
+	mBufferCapacity = nBytes;
 	if (inSrcList != inSetPtrList)
 		inSrcList->BytesConsumed(fromByteSize);
 	delete[] oldMemory;
@@ -108,14 +110,15 @@ void		CABufferList::AllocateBuffersAndCopyFrom(UInt32 nBytes, CABufferList *inSr
 
 void		CABufferList::DeallocateBuffers()
 {
-	AudioBuffer *buf = mBuffers;
-	for (UInt32 i = mNumberBuffers; i--; ++buf) {
+	AudioBuffer *buf = mABL.mBuffers;
+	for (UInt32 i = mABL.mNumberBuffers; i--; ++buf) {
 		buf->mData = NULL;
 		buf->mDataByteSize = 0;
 	}
 	if (mBufferMemory != NULL) {
 		delete[] mBufferMemory;
 		mBufferMemory = NULL;
+		mBufferCapacity = 0;
 	}
     
 }
@@ -199,12 +202,10 @@ void CAShowAudioBufferList(const AudioBufferList &abl, int framesToPrint, const 
 		} else {
 			wordSize = fmt.SampleWordSize();
 			if (wordSize > 0) {
-#if CA_PREFER_FIXED_POINT
 				int fracbits = (asbd.mFormatFlags & kLinearPCMFormatFlagsSampleFractionMask) >> kLinearPCMFormatFlagsSampleFractionShift;
 				if (fracbits > 0)
 					sprintf(fmtstr, ", %d.%d-bit", (int)asbd.mBitsPerChannel - fracbits, fracbits);
 				else
-#endif
 					sprintf(fmtstr, ", %d-bit", (int)asbd.mBitsPerChannel);
 
 				if (!(fmt.mFormatFlags & kLinearPCMFormatFlagIsBigEndian)) {

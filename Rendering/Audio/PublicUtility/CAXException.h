@@ -58,12 +58,7 @@ public:
 	CAX4CCString(OSStatus error) {
 		// see if it appears to be a 4-char-code
 		char *str = mStr;
-		union {
-			char* p_char;
-			uint32_t* p_int32;
-		} u;
-		u.p_char = (str + 1);
-		*u.p_int32 = CFSwapInt32HostToBig(error);
+		*(UInt32 *)(str + 1) = CFSwapInt32HostToBig(error);
 		if (isprint(str[1]) && isprint(str[2]) && isprint(str[3]) && isprint(str[4])) {
 			str[0] = str[5] = '\'';
 			str[6] = '\0';
@@ -130,7 +125,7 @@ private:
 			OSStatus __err = error;												\
 			if (__err) {														\
 				DebugMessageN2("about to throw %s: %s", CAX4CCString(__err).get(), operation);\
-				STOP;															\
+				__THROW_STOP;															\
 				throw CAXException(operation, __err);							\
 			}																	\
 		} while (0)
@@ -140,7 +135,7 @@ private:
 			if (condition) {													\
 				OSStatus __err = error;											\
 				DebugMessageN2("about to throw %s: %s", CAX4CCString(__err).get(), operation);\
-				STOP;															\
+				__THROW_STOP;															\
 				throw CAXException(operation, __err);							\
 			}																	\
 		} while (0)
@@ -158,8 +153,8 @@ private:
 	#define XAssert(assertion)													\
 		do {																	\
 			if (!(assertion)) {													\
-				DebugMessageN1("error: failed assertion: %s", #assertion);		\
-				STOP;															\
+				DebugMessageN3("[%s, %d] error: failed assertion: %s", __FILE__, __LINE__, #assertion);		\
+				__ASSERT_STOP;															\
 			}																	\
 		} while (0)
 	
@@ -275,6 +270,8 @@ private:
 
 	#define XAssert(assertion)													\
 		do {																	\
+			if (!(assertion)) {													\
+			}																	\
 		} while (0)
 
 	#define XAssertNoError(error)												\

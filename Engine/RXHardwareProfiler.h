@@ -9,12 +9,8 @@
 #import <Foundation/Foundation.h>
 
 
-@interface RXHardwareProfiler : NSObject {
+@interface RXHardwareProfiler : NSObject
 
-}
-
-+ (RXHardwareProfiler*)sharedHardwareProfiler;
-
-- (size_t)cacheLineSize;
++ (size_t)cacheLineSize;
 
 @end

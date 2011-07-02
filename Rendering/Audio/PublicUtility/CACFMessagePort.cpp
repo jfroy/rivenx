@@ -53,7 +53,8 @@
 CACFLocalMessagePort::CACFLocalMessagePort(CFStringRef inName, CFMessagePortCallBack inPortCallBack, CFMessagePortInvalidationCallBack inInvalidationCallBack, void* inUserData)
 :
 	mMessagePort(NULL),
-	mRunLoopSource(NULL)
+	mRunLoopSource(NULL),
+	mDispatchQueue(NULL)
 {
 	//	create the CFMessagePort
 	CFMessagePortContext theContext = { 0, inUserData, NULL, NULL, NULL };
@@ -65,24 +66,37 @@ CACFLocalMessagePort::CACFLocalMessagePort(CFStringRef inName, CFMessagePortCall
 		{
 			CFMessagePortSetInvalidationCallBack(mMessagePort, inInvalidationCallBack);
 		}
-	
-		//	get the run loop source
-		mRunLoopSource = CFMessagePortCreateRunLoopSource(NULL, mMessagePort, 0);
 	}
 }
 
 CACFLocalMessagePort::~CACFLocalMessagePort()
 {
+	if(mRunLoopSource != NULL)
+	{
+		CFRelease(mRunLoopSource);
+	}
 	if(mMessagePort != NULL)
 	{
 		CFMessagePortInvalidate(mMessagePort);
 		CFRelease(mMessagePort);
 	}
-	
-	if(mRunLoopSource != NULL)
+}
+
+CFRunLoopSourceRef	CACFLocalMessagePort::GetRunLoopSource() const
+{
+	Assert(mDispatchQueue == NULL, "CACFLocalMessagePort::SetDispatchQueue: should have both a run loop source and a dispatch queue");
+	if(mRunLoopSource == NULL)
 	{
-		CFRelease(mRunLoopSource);
+		const_cast<CACFLocalMessagePort*>(this)->mRunLoopSource = CFMessagePortCreateRunLoopSource(NULL, mMessagePort, 0);
 	}
+	return mRunLoopSource;
+}
+
+void	CACFLocalMessagePort::SetDispatchQueue(dispatch_queue_t inDispatchQueue)
+{
+	Assert(mRunLoopSource == NULL, "CACFLocalMessagePort::SetDispatchQueue: should have both a run loop source and a dispatch queue");
+	mDispatchQueue = inDispatchQueue;
+	CFMessagePortSetDispatchQueue(mMessagePort, mDispatchQueue);
 }
 
 //=============================================================================
@@ -92,7 +106,8 @@ CACFLocalMessagePort::~CACFLocalMessagePort()
 CACFRemoteMessagePort::CACFRemoteMessagePort(CFStringRef inName, CFMessagePortInvalidationCallBack inInvalidationCallBack)
 :
 	mMessagePort(NULL),
-	mRunLoopSource(NULL)
+	mRunLoopSource(NULL),
+	mDispatchQueue(NULL)
 {
 	//	create the CFMessagePort
 	mMessagePort = CFMessagePortCreateRemote(NULL, inName);
@@ -108,22 +123,35 @@ CACFRemoteMessagePort::CACFRemoteMessagePort(CFStringRef inName, CFMessagePortIn
 		{
 			CFMessagePortSetInvalidationCallBack(mMessagePort, inInvalidationCallBack);
 		}
-	
-		//	get the run loop source
-		mRunLoopSource = CFMessagePortCreateRunLoopSource(NULL, mMessagePort, 0);
 	}
 }
 
 CACFRemoteMessagePort::~CACFRemoteMessagePort()
 {
+	if(mRunLoopSource != NULL)
+	{
+		CFRelease(mRunLoopSource);
+	}
 	if(mMessagePort != NULL)
 	{
 		//CFMessagePortInvalidate(mMessagePort);
 		CFRelease(mMessagePort);
 	}
-	
-	if(mRunLoopSource != NULL)
+}
+
+CFRunLoopSourceRef	CACFRemoteMessagePort::GetRunLoopSource() const
+{
+	Assert(mDispatchQueue == NULL, "CACFRemoteMessagePort::SetDispatchQueue: should have both a run loop source and a dispatch queue");
+	if(mRunLoopSource == NULL)
 	{
-		CFRelease(mRunLoopSource);
+		const_cast<CACFRemoteMessagePort*>(this)->mRunLoopSource = CFMessagePortCreateRunLoopSource(NULL, mMessagePort, 0);
 	}
+	return mRunLoopSource;
+}
+
+void	CACFRemoteMessagePort::SetDispatchQueue(dispatch_queue_t inDispatchQueue)
+{
+	Assert(mRunLoopSource == NULL, "CACFRemoteMessagePort::SetDispatchQueue: should have both a run loop source and a dispatch queue");
+	mDispatchQueue = inDispatchQueue;
+	CFMessagePortSetDispatchQueue(mMessagePort, mDispatchQueue);
 }

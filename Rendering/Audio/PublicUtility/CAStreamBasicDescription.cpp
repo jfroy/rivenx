@@ -84,6 +84,17 @@ char *CAStringForOSType (OSType t, char *writeLocation)
 
 const AudioStreamBasicDescription	CAStreamBasicDescription::sEmpty = { 0.0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
+CAStreamBasicDescription::CAStreamBasicDescription() 
+{ 
+	memset (this, 0, sizeof(AudioStreamBasicDescription)); 
+}
+	
+CAStreamBasicDescription::CAStreamBasicDescription(const AudioStreamBasicDescription &desc)
+{
+	SetFrom(desc);
+}
+
+
 CAStreamBasicDescription::CAStreamBasicDescription(double inSampleRate,		UInt32 inFormatID,
 									UInt32 inBytesPerPacket,	UInt32 inFramesPerPacket,
 									UInt32 inBytesPerFrame,		UInt32 inChannelsPerFrame,
@@ -187,6 +198,32 @@ void	CAStreamBasicDescription::NormalizeLinearPCMFormat(AudioStreamBasicDescript
 	}
 }
 
+void	CAStreamBasicDescription::NormalizeLinearPCMFormat(bool inNativeEndian, AudioStreamBasicDescription& ioDescription)
+{
+	//  the only thing that changes is to make mixable linear PCM into the canonical linear PCM format
+	if((ioDescription.mFormatID == kAudioFormatLinearPCM) && ((ioDescription.mFormatFlags & kIsNonMixableFlag) == 0))
+	{
+		//  the canonical linear PCM format
+		ioDescription.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
+		if(inNativeEndian)
+		{
+#if TARGET_RT_BIG_ENDIAN
+			ioDescription.mFormatFlags |= kAudioFormatFlagIsBigEndian;
+#endif
+		}
+		else
+		{
+#if TARGET_RT_LITTLE_ENDIAN
+			ioDescription.mFormatFlags |= kAudioFormatFlagIsBigEndian;
+#endif
+		}
+		ioDescription.mBytesPerPacket = SizeOf32(AudioSampleType) * ioDescription.mChannelsPerFrame;
+		ioDescription.mFramesPerPacket = 1;
+		ioDescription.mBytesPerFrame = SizeOf32(AudioSampleType) * ioDescription.mChannelsPerFrame;
+		ioDescription.mBitsPerChannel = 8 * SizeOf32(AudioSampleType);
+	}
+}
+
 void	CAStreamBasicDescription::ResetFormat(AudioStreamBasicDescription& ioDescription)
 {
 	ioDescription.mSampleRate = 0;
@@ -235,8 +272,15 @@ void	CAStreamBasicDescription::FillOutFormat(AudioStreamBasicDescription& ioDesc
 	}
 }
 
-void	CAStreamBasicDescription::GetSimpleName(const AudioStreamBasicDescription& inDescription, char* outName, UInt32 inMaxNameLength, bool inAbbreviate)
+void	CAStreamBasicDescription::GetSimpleName(const AudioStreamBasicDescription& inDescription, char* outName, UInt32 inMaxNameLength, bool inAbbreviate, bool inIncludeSampleRate)
 {
+	if(inIncludeSampleRate)
+	{
+		int theCharactersWritten = snprintf(outName, inMaxNameLength, "%.0f ", inDescription.mSampleRate);
+		outName += theCharactersWritten;
+		inMaxNameLength -= theCharactersWritten;
+	}
+	
 	switch(inDescription.mFormatID)
 	{
 		case kAudioFormatLinearPCM:
@@ -505,8 +549,8 @@ static bool MatchFormatFlags(const AudioStreamBasicDescription& x, const AudioSt
 			yFlags = yFlags & ~kAudioFormatFlagIsBigEndian;
 		}
 		
-		//	if the number of channels is 0 or 1, we don't care about non-interleavedness
-		if (x.mChannelsPerFrame <= 1 && y.mChannelsPerFrame <= 1) {
+		//	if the number of channels is 1, we don't care about non-interleavedness
+		if (x.mChannelsPerFrame == 1 && y.mChannelsPerFrame == 1) {
 			xFlags &= ~kLinearPCMFormatFlagIsNonInterleaved;
 			yFlags &= ~kLinearPCMFormatFlagIsNonInterleaved;
 		}
@@ -517,7 +561,7 @@ static bool MatchFormatFlags(const AudioStreamBasicDescription& x, const AudioSt
 bool	operator==(const AudioStreamBasicDescription& x, const AudioStreamBasicDescription& y)
 {
 	//	the semantics for equality are:
-	//		1) Values must match exactly
+	//		1) Values must match exactly -- except for PCM format flags, see above.
 	//		2) wildcard's are ignored in the comparison
 	
 #define MATCH(name) ((x.name) == 0 || (y.name) == 0 || (x.name) == (y.name))
@@ -563,6 +607,7 @@ bool SanityCheck(const AudioStreamBasicDescription& x)
 	
 	return 
 		(x.mSampleRate >= 0.)	
+		&& (x.mSampleRate < 3e6)	// SACD sample rate is 2.8224 MHz
 		&& (x.mBytesPerPacket < 1000000)
 		&& (x.mFramesPerPacket < 1000000)
 		&& (x.mBytesPerFrame < 1000000)
@@ -571,3 +616,172 @@ bool SanityCheck(const AudioStreamBasicDescription& x)
 		&& (x.mFormatID != 0)
 		&& !(x.mFormatID == kAudioFormatLinearPCM && (x.mFramesPerPacket != 1 || x.mBytesPerPacket != x.mBytesPerFrame));
 }
+
+bool CAStreamBasicDescription::FromText(const char *inTextDesc, AudioStreamBasicDescription &fmt)
+{
+	const char *p = inTextDesc;
+	
+	memset(&fmt, 0, sizeof(fmt));
+
+	bool isPCM = true;	// until proven otherwise
+	UInt32 pcmFlags = kAudioFormatFlagIsPacked | kAudioFormatFlagIsSignedInteger;
+
+	if (p[0] == '-')	// previously we required a leading dash on PCM formats
+		++p;
+
+	if (p[0] == 'B' && p[1] == 'E') {
+		pcmFlags |= kLinearPCMFormatFlagIsBigEndian;
+		p += 2;
+	} else if (p[0] == 'L' && p[1] == 'E') {
+		p += 2;
+	} else {
+		// default is native-endian
+#if TARGET_RT_BIG_ENDIAN
+		pcmFlags |= kLinearPCMFormatFlagIsBigEndian;
+#endif
+	}
+	if (p[0] == 'F') {
+		pcmFlags = (pcmFlags & ~kAudioFormatFlagIsSignedInteger) | kAudioFormatFlagIsFloat;
+		++p;
+	} else {
+		if (p[0] == 'U') {
+			pcmFlags &= ~kAudioFormatFlagIsSignedInteger;
+			++p;
+		}
+		if (p[0] == 'I')
+			++p;
+		else {
+			// it's not PCM; presumably some other format (NOT VALIDATED; use AudioFormat for that)
+			isPCM = false;
+			p = inTextDesc;	// go back to the beginning
+			char buf[4] = { ' ',' ',' ',' ' };
+			for (int i = 0; i < 4; ++i) {
+				if (*p != '\\') {
+					if ((buf[i] = *p++) == '\0') {
+						// special-case for 'aac'
+						if (i != 3) return false;
+						--p;	// keep pointing at the terminating null
+						buf[i] = ' ';
+						break;
+					}
+				} else {
+					// "\xNN" is a hex byte
+					if (*++p != 'x') return false;
+					int x;
+					if (sscanf(++p, "%02X", &x) != 1) return false;
+					buf[i] = x;
+					p += 2;
+				}
+			}
+			
+			if (strchr("-@/#", buf[3])) {
+				// further special-casing for 'aac'
+				buf[3] = ' ';
+				--p;
+			}
+			
+			fmt.mFormatID = CFSwapInt32BigToHost(*(UInt32 *)buf);
+		}
+	}
+	
+	if (isPCM) {
+		fmt.mFormatID = kAudioFormatLinearPCM;
+		fmt.mFormatFlags = pcmFlags;
+		fmt.mFramesPerPacket = 1;
+		fmt.mChannelsPerFrame = 1;
+		int bitdepth = 0, fracbits = 0;
+		while (isdigit(*p))
+			bitdepth = 10 * bitdepth + *p++ - '0';
+		if (*p == '.') {
+			++p;
+			if (!isdigit(*p)) {
+				fprintf(stderr, "Expected fractional bits following '.'\n");
+				goto Bail;
+			}
+			while (isdigit(*p))
+				fracbits = 10 * fracbits + *p++ - '0';
+			bitdepth += fracbits;
+			fmt.mFormatFlags |= (fracbits << kLinearPCMFormatFlagsSampleFractionShift);
+		}
+		fmt.mBitsPerChannel = bitdepth;
+		fmt.mBytesPerPacket = fmt.mBytesPerFrame = (bitdepth + 7) / 8;
+		if (bitdepth & 7) {
+			// assume unpacked. (packed odd bit depths are describable but not supported in AudioConverter.)
+			fmt.mFormatFlags &= ~kLinearPCMFormatFlagIsPacked;
+			// alignment matters; default to high-aligned. use ':L_' for low.
+			fmt.mFormatFlags |= kLinearPCMFormatFlagIsAlignedHigh;
+		}
+	}
+	if (*p == '@') {
+		++p;
+		while (isdigit(*p))
+			fmt.mSampleRate = 10 * fmt.mSampleRate + (*p++ - '0');
+	}
+	if (*p == '/') {
+		UInt32 flags = 0;
+		while (true) {
+			char c = *++p;
+			if (c >= '0' && c <= '9')
+				flags = (flags << 4) | (c - '0');
+			else if (c >= 'A' && c <= 'F')
+				flags = (flags << 4) | (c - 'A' + 10);
+			else if (c >= 'a' && c <= 'f')
+				flags = (flags << 4) | (c - 'a' + 10);
+			else break;
+		}
+		fmt.mFormatFlags = flags;
+	}
+	if (*p == '#') {
+		++p;
+		while (isdigit(*p))
+			fmt.mFramesPerPacket = 10 * fmt.mFramesPerPacket + (*p++ - '0');
+	}
+	if (*p == ':') {
+		++p;
+		fmt.mFormatFlags &= ~kLinearPCMFormatFlagIsPacked;
+		if (*p == 'L')
+			fmt.mFormatFlags &= ~kLinearPCMFormatFlagIsAlignedHigh;
+		else if (*p == 'H')
+			fmt.mFormatFlags |= kLinearPCMFormatFlagIsAlignedHigh;
+		else
+			goto Bail;
+		++p;
+		int bytesPerFrame = 0;
+		while (isdigit(*p))
+			bytesPerFrame = 10 * bytesPerFrame + (*p++ - '0');
+		fmt.mBytesPerFrame = fmt.mBytesPerPacket = bytesPerFrame;
+	}
+	if (*p == ',') {
+		++p;
+		int ch = 0;
+		while (isdigit(*p))
+			ch = 10 * ch + (*p++ - '0');
+		fmt.mChannelsPerFrame = ch;
+		if (*p == 'D') {
+			++p;
+			if (fmt.mFormatID != kAudioFormatLinearPCM) {
+				fprintf(stderr, "non-interleaved flag invalid for non-PCM formats\n");
+				goto Bail;
+			}
+			fmt.mFormatFlags |= kAudioFormatFlagIsNonInterleaved;
+		} else {
+			if (*p == 'I') ++p;	// default
+			if (fmt.mFormatID == kAudioFormatLinearPCM)
+				fmt.mBytesPerPacket = fmt.mBytesPerFrame *= ch;
+		}
+	}
+	if (*p != '\0') {
+		fprintf(stderr, "extra characters at end of format string: %s\n", p);
+		goto Bail;
+	}
+	return true;
+
+Bail:
+	fprintf(stderr, "Invalid format string: %s\n", inTextDesc);
+	fprintf(stderr, "Syntax of format strings is: \n");
+	return false;
+}
+
+const char *CAStreamBasicDescription::sTextParsingUsageString = 
+	"format[@sample_rate_hz][/format_flags][#frames_per_packet][:LHbytesPerFrame][,channelsDI].\n"
+	"Format for PCM is [-][BE|LE]{F|I|UI}{bitdepth}; else a 4-char format code (e.g. aac, alac).\n";

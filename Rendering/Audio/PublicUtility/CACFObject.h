@@ -68,7 +68,7 @@ public:
 					~CACFObject() { Release(); }
 					CACFObject(const CACFObject& inObject) : mCFObject(inObject.mCFObject), mWillRelease(inObject.mWillRelease) { Retain(); }
 	CACFObject&		operator=(const CACFObject& inObject) { Release(); mCFObject = inObject.mCFObject; mWillRelease = inObject.mWillRelease; Retain(); return *this; }
-	CACFObject&		operator=(CFObjectType inCFObject) { Release(); mCFObject = inCFObject; mWillRelease = true; return *this; }
+	CACFObject&		operator=(CFObjectType inCFObject) { Release(); mCFObject = inCFObject; mWillRelease = true; Retain(); return *this; }
 
 private:
 	void			Retain() { if(mWillRelease && (mCFObject != NULL)) { CFRetain(mCFObject); } }
@@ -92,9 +92,10 @@ public:
 
 };
 
-typedef	CACFObject<CFBundleRef>	CACFBundle;
-typedef	CACFObject<CFTypeRef>	CACFType;
-typedef	CACFObject<CFUUIDRef>	CACFUUID;
-typedef	CACFObject<CFURLRef>	CACFURL;
+typedef	CACFObject<CFBundleRef>			CACFBundle;
+typedef	CACFObject<CFPropertyListRef>	CACFPropertyList;
+typedef	CACFObject<CFTypeRef>			CACFType;
+typedef	CACFObject<CFUUIDRef>			CACFUUID;
+typedef	CACFObject<CFURLRef>			CACFURL;
 
 #endif

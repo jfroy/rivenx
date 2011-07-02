@@ -69,6 +69,7 @@
 //=============================================================================
 
 bool	operator== (const AudioChannelLayout &x, const AudioChannelLayout &y);
+bool	operator!= (const AudioChannelLayout &x, const AudioChannelLayout &y);
 
 extern "C" void 	CAShowAudioChannelLayout (FILE* file, const AudioChannelLayout *layout);
 
@@ -102,6 +103,7 @@ public:
 	CAAudioChannelLayout&		operator= (const AudioChannelLayout* inChannelLayout);
 	CAAudioChannelLayout&		operator= (const CAAudioChannelLayout& c);
 	bool						operator== (const CAAudioChannelLayout &c) const;
+	bool						operator!= (const CAAudioChannelLayout &c) const;
 
 	void						SetWithTag(AudioChannelLayoutTag inTag);
 
@@ -122,7 +124,7 @@ public:
 	
 private:
 	class RefCountedLayout : public CAReferenceCounted {
-		void *	operator new(size_t size, size_t aclSize)
+		void *	operator new(size_t /* size */, size_t aclSize)
 		{
 			return CA_malloc(sizeof(RefCountedLayout) - sizeof(AudioChannelLayout) + aclSize);
 		}

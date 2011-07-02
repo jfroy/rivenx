@@ -28,9 +28,9 @@
     return NO;
 }
 
-- (NSUInteger)hash {
-    // WARNING: WILL BREAK ON 64-BIT
-    return integer_pair_hash((int)parent, (int)twav_id);
+- (NSUInteger)hash
+{
+    return hash_combine(hash_intptr((uintptr_t)parent), twav_id);
 }
 
 - (NSString*)description {

@@ -42,12 +42,10 @@
 #define __CAAudioUnit_h__
 
 #if !defined(__COREAUDIO_USE_FLAT_INCLUDES__)
-	#include <CoreAudio/CoreAudio.h>
+	#include <CoreAudio/CoreAudioTypes.h>
 	#include <AudioUnit/AudioUnit.h>
-	#if !TARGET_OS_IPHONE
-		#include <AudioUnit/MusicDevice.h>
-	#endif
 	#include <AudioToolbox/AUGraph.h>
+	#include <AudioUnit/MusicDevice.h>
 #else
 	#include <ConditionalMacros.h>
 	#include <CoreAudioTypes.h>
@@ -116,6 +114,8 @@ public:
 
 	const CAComponent&		Comp() const { return mComp; }
 	
+	const CAComponentDescription& Desc() const { return mComp.Desc(); }
+	
 	bool					FromAUGraph () const { return GetAUNode() != 0 && GetAUNode() != kCAAU_DoNotKnowIfAUNode; }
 	
 	AUNode					GetAUNode () const;
@@ -154,7 +154,21 @@ public:
 												UInt32						inOutputBusNumber,
 												UInt32						inNumberFrames,
 												AudioBufferList				* ioData);
-															
+
+	OSStatus				Process (AudioUnitRenderActionFlags 			& ioActionFlags,
+												const AudioTimeStamp 		& inTimeStamp,
+												UInt32						inNumberFrames,
+												AudioBufferList				& ioData);
+	
+	OSStatus				ProcessMultiple (AudioUnitRenderActionFlags 	& ioActionFlags,
+												const AudioTimeStamp		& inTimeStamp,
+												UInt32						inNumberFrames,
+												UInt32						inNumberInputBufferLists,
+												const AudioBufferList **	inInputBufferLists,
+												UInt32						inNumberOutputBufferLists,
+												AudioBufferList **			ioOutputBufferLists);
+
+	
 	OSStatus				Reset (AudioUnitScope scope, AudioUnitElement element)
 							{
 								return AudioUnitReset (AU(), scope, element);
@@ -185,8 +199,6 @@ public:
 													AudioUnitPropertyListenerProc	inProc,
 													void *							inProcUserData);
 	
-#if !TARGET_OS_IPHONE
-// Fast dispatch support for MIDI Effects or Music Devices	
 	OSStatus				MIDIEvent (UInt32					inStatus,
 										UInt32					inData1,
 										UInt32					inData2,
@@ -212,7 +224,6 @@ public:
 	OSStatus				StopNote (MusicDeviceGroupID		inGroupID,
 									NoteInstanceID				inNoteInstanceID,
 									UInt32						inOffsetSampleFrame);
-#endif
 
 #pragma mark __Format Utilities
 		// typically you ask this about an AU
@@ -333,6 +344,10 @@ public:
 	bool					GetBypass 		() const;
 
 	OSStatus				SetBypass 		(bool				inBypass) const;
+	
+	OSStatus				GetMaxFramesPerSlice (UInt32& outMaxFrames) const;
+	
+	OSStatus				SetMaxFramesPerSlice (UInt32 inMaxFrames);
 	
 	Float64					Latency () const;
 	

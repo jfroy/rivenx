@@ -61,8 +61,8 @@ OSStatus	PosixPathToParentFSRefAndName(const char *path, FSRef &outParentDir, CF
 	CFRelease(cfFullPath);
 	// get the directory portion of the URL
 	CFURLRef dirurl = CFURLCreateCopyDeletingLastPathComponent(NULL, fullurl);
-	// get the directory's FSSpec
-	OSStatus err = CFURLGetFSRef(dirurl, &outParentDir) ? OSStatus(noErr) : OSStatus(fnfErr);
+	// get the directory's FSRef
+	OSStatus err = CFURLGetFSRef(dirurl, &outParentDir) ? OSStatus(noErr) : OSStatus(kAudio_FileNotFoundError);
 	CFRelease(dirurl);
 	
 	CFStringRef lastPathComponent = CFURLCopyLastPathComponent(fullurl);

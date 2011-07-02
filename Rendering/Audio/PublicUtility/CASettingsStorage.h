@@ -62,11 +62,14 @@ class CASettingsStorage
 
 //	Construction/Destruction
 public:
-							CASettingsStorage(const char* inSettingsFilePath, mode_t inSettingsFileAccessMode = 0);
+							CASettingsStorage(const char* inSettingsFilePath, mode_t inSettingsFileAccessMode = 0, CFPropertyListFormat inSettingsCacheFormat = kCFPropertyListXMLFormat_v1_0, bool inIsSingleProcessOnly = false);
 							~CASettingsStorage();
 
 //	Operations
 public:
+	UInt32					GetNumberKeys() const;
+	void					GetKeys(UInt32 inNumberKeys, UInt32& outNumberKeys, CFStringRef* outKeys) const;
+
 	void					CopyBoolValue(const CFStringRef inKey, bool& outValue, bool inDefaultValue = false) const;
 	void					CopySInt32Value(const CFStringRef inKey, SInt32& outValue, SInt32 inDefaultValue = 0) const;
 	void					CopyUInt32Value(const CFStringRef inKey, UInt32& outValue, UInt32 inDefaultValue = 0) const;
@@ -108,8 +111,10 @@ private:
 	char*					mSettingsFilePath;
 	mode_t					mSettingsFileAccessMode;
 	CFMutableDictionaryRef	mSettingsCache;
+	CFPropertyListFormat	mSettingsCacheFormat;
 	struct timespec			mSettingsCacheTime;
 	bool					mSettingsCacheForceRefresh;
+	bool					mIsSingleProcessOnly;
 
 };
 

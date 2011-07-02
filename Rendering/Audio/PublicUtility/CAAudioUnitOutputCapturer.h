@@ -120,8 +120,8 @@ private:
 			CAAudioUnitOutputCapturer *This = (CAAudioUnitOutputCapturer *)inRefCon;
 			static int TEMP_kAudioUnitRenderAction_PostRenderError	= (1 << 8);
 			if (This->mBusNumber == inBusNumber && !(*ioActionFlags & TEMP_kAudioUnitRenderAction_PostRenderError)) {
-				OSStatus result = ExtAudioFileWrite(This->mExtAudioFile, inNumberFrames, ioData);
-				if (result) DebugMessageN1("ERROR WRITING FRAMES: %d\n", result);
+				OSStatus result = ExtAudioFileWriteAsync(This->mExtAudioFile, inNumberFrames, ioData);
+				if (result) DebugMessageN1("ERROR WRITING FRAMES: %d\n", (int)result);
 			}
 		}
 		return noErr;

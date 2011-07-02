@@ -569,7 +569,7 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
         ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr);
     
     // we only support 32 bits for archive sizes
-    if (fork_size > ULONG_MAX)
+    if (fork_size > UINT_MAX)
         ReturnFromInitWithError(MHKErrorDomain, errFileTooLarge, nil, errorPtr);
     archive_size = (uint32_t)fork_size;
     
@@ -692,7 +692,7 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
         return nil;
     }
     
-    NSData* resourceData = [[NSData alloc] initWithBytesNoCopy:buffer length:[fh length] freeWhenDone:YES];
+    NSData* resourceData = [[NSData alloc] initWithBytesNoCopy:buffer length:(NSUInteger)[fh length] freeWhenDone:YES];
     
     [fh release];
     return [resourceData autorelease];
@@ -727,7 +727,7 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
         return nil;
     }
     
-    return [[[NSData alloc] initWithBytesNoCopy:buffer length:[fh length] freeWhenDone:YES] autorelease];
+    return [[[NSData alloc] initWithBytesNoCopy:buffer length:(NSUInteger)[fh length] freeWhenDone:YES] autorelease];
 }
 
 - (void)_fileDidAlloc {

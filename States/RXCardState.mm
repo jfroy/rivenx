@@ -182,7 +182,7 @@ static void rx_release_owner_applier(const void* value, void* context) {
     sengine = [[RXScriptEngine alloc] initWithController:self];
     
     // get the cache line size
-    size_t cache_line_size = [[RXHardwareProfiler sharedHardwareProfiler] cacheLineSize];
+    size_t cache_line_size = [RXHardwareProfiler cacheLineSize];
     
     // allocate enough cache lines to store 2 render states without overlap (to avoid false sharing)
     uint32_t render_state_cache_line_count = cache_line_size / sizeof(struct rx_card_state_render_state);
@@ -1812,7 +1812,7 @@ init_failure:
             
             if ((new_flags & inv_bit) && !(old_flags & inv_bit)) {
                 // the fade-in animation a little bit more complex...
-                alpha_interpolator = [RXChainingInterpolator new];
+                alpha_interpolator = (RXLinearInterpolator*)[RXChainingInterpolator new];
                 RXLinearInterpolator* interpolator;
                 
                 // first add a 0->0 interpolator for 0.5 seconds, but only if
@@ -2596,7 +2596,7 @@ exit_render:
         if (hotspot >= (RXHotspot*)0x1000)
             snprintf(debug_buffer, 100, "hotspot: %s", [[hotspot description] cStringUsingEncoding:NSASCIIStringEncoding]);
         else if (hotspot)
-            snprintf(debug_buffer, 100, "hotspot: inventory %d", (int)hotspot);
+            snprintf(debug_buffer, 100, "hotspot: inventory %lu", (uintptr_t)hotspot);
         else
             snprintf(debug_buffer, 100, "hotspot: none");
         
@@ -3064,7 +3064,7 @@ exit_flush_tasks:
         [sengine performSelector:@selector(mouseDownInHotspot:) withObject:_current_hotspot inThread:[g_world scriptThread]];
     }
     else if (_current_hotspot)
-        [self _handleInventoryMouseDownWithItemIndex:(uint32_t)_current_hotspot - 1];
+        [self _handleInventoryMouseDownWithItemIndex:(uintptr_t)_current_hotspot - 1];
     
     // we do not need to call updateHotspotState from mouse down, since handling inventory hotspots would be difficult there 
     // (can't retain a non-valid pointer value, e.g. can't store the dummy _current_hotspot value into _mouse_down_hotspot

@@ -56,48 +56,56 @@ inline UInt32 IsPowerOfTwo(UInt32 x)
 	return (x & (x-1)) == 0;
 }
 
-// count the leading zeroes in a word
-#ifdef __MWERKS__
+// count the leading zeros in a word
+// Metrowerks Codewarrior. powerpc native count leading zeros instruction:
+// I think it's safe to remove this ...
+//#define CountLeadingZeroes(x)  ((int)__cntlzw((unsigned int)x))
 
-// Metrowerks Codewarrior. powerpc native count leading zeroes instruction:
-#define CountLeadingZeroes(x)  ((int)__cntlzw((unsigned int)x))
-
-#elif TARGET_OS_WIN32
-
-static int CountLeadingZeroes( int arg )
+inline UInt32 CountLeadingZeroes(UInt32 arg)
 {
+// GNUC / LLVM has a builtin
+#if defined(__GNUC__)
+// on llvm and clang the result is defined for 0
+#if (TARGET_CPU_X86 || TARGET_CPU_X86_64) && !defined(__llvm__)
+	if (arg == 0) return 32;
+#endif	// TARGET_CPU_X86 || TARGET_CPU_X86_64
+	return __builtin_clz(arg);
+#elif TARGET_OS_WIN32
+	UInt32 tmp;
 	__asm{
 		bsr eax, arg
 		mov ecx, 63
 		cmovz eax, ecx
 		xor eax, 31
+		mov tmp, eax	// this moves the result in tmp to return.
     }
-    return arg;
-}
-
-#else 
-
-static __inline__ int CountLeadingZeroes(int arg) {
-#if TARGET_CPU_PPC || TARGET_CPU_PPC64
-	__asm__ volatile("cntlzw %0, %1" : "=r" (arg) : "r" (arg));
-	return arg;
-#elif TARGET_CPU_X86 || TARGET_CPU_X86_64
-	__asm__ volatile(
-				"bsrl %0, %0\n\t"
-				"movl $63, %%ecx\n\t"
-				"cmove %%ecx, %0\n\t"
-				"xorl $31, %0" 
-				: "=r" (arg) 
-				: "0" (arg) : "%ecx"
-			);
-	return arg;
+	return tmp;
 #else
-	if (arg == 0) return 32;
-	return __builtin_clz(arg);
-#endif
+#error "Unsupported architecture"
+#endif	// defined(__GNUC__)
 }
+// Alias (with different spelling)
+#define CountLeadingZeros CountLeadingZeroes
 
-#endif
+inline UInt32 CountLeadingZeroesLong(UInt64 arg)
+{
+// GNUC / LLVM has a builtin
+#if defined(__GNUC__)
+#if (TARGET_CPU_X86 || TARGET_CPU_X86_64) && !defined(__llvm__)
+	if (arg == 0) return 64;
+#endif	// TARGET_CPU_X86 || TARGET_CPU_X86_64
+	return __builtin_clzll(arg);
+#elif TARGET_OS_WIN32
+	UInt32 x = CountLeadingZeroes((UInt32)(arg >> 32));
+	if(x < 32)
+		return x;
+	else
+		return 32+CountLeadingZeroes((UInt32)arg);
+#else
+#error "Unsupported architecture"
+#endif	// defined(__GNUC__)
+}
+#define CountLeadingZerosLong CountLeadingZeroesLong
 
 // count trailing zeroes
 inline UInt32 CountTrailingZeroes(UInt32 x)
@@ -129,10 +137,16 @@ inline UInt32 Log2Ceil(UInt32 x)
 	return 32 - CountLeadingZeroes(x - 1);
 }
 
+// base 2 log of next power of two less or equal to x
+inline UInt32 Log2Floor(UInt32 x)
+{
+	return 32 - CountLeadingZeroes(x) - 1;
+}
+
 // next power of two greater or equal to x
 inline UInt32 NextPowerOfTwo(UInt32 x)
 {
-	return 1L << Log2Ceil(x);
+	return 1 << Log2Ceil(x);
 }
 
 // counting the one bits in a word
@@ -176,7 +190,7 @@ inline UInt32 MSBitPos(UInt32 x)
 // isolate the most significant bit
 inline UInt32 MSBit(UInt32 x)
 {
-	return 1UL << MSBitPos(x);
+	return 1 << MSBitPos(x);
 }
 
 // Division optimized for power of 2 denominators

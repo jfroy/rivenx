@@ -64,11 +64,12 @@ struct CAAudioTimeStamp
 
 //	Construction/Destruction
 public:
-						CAAudioTimeStamp()											{ memset(this, 0, sizeof(AudioTimeStamp)); }
-						CAAudioTimeStamp(const AudioTimeStamp& v)					{ memcpy(this, &v, sizeof(AudioTimeStamp)); }
-						CAAudioTimeStamp(Float64 inSampleTime)						{ memset(this, 0, sizeof(AudioTimeStamp)); mSampleTime = inSampleTime; mFlags = kAudioTimeStampSampleTimeValid; }
-						CAAudioTimeStamp(UInt64 inHostTime)							{ memset(this, 0, sizeof(AudioTimeStamp)); mHostTime = inHostTime; mFlags = kAudioTimeStampHostTimeValid; }
-						CAAudioTimeStamp(Float64 inSampleTime, UInt64 inHostTime)	{ memset(this, 0, sizeof(AudioTimeStamp)); mSampleTime = inSampleTime; mHostTime = inHostTime; mFlags = kAudioTimeStampSampleTimeValid | kAudioTimeStampHostTimeValid; }
+						CAAudioTimeStamp()																{ memset(this, 0, sizeof(AudioTimeStamp)); }
+						CAAudioTimeStamp(const AudioTimeStamp& v)										{ memcpy(this, &v, sizeof(AudioTimeStamp)); }
+						CAAudioTimeStamp(Float64 inSampleTime)											{ memset(this, 0, sizeof(AudioTimeStamp)); mSampleTime = inSampleTime; mFlags = kAudioTimeStampSampleTimeValid; }
+						CAAudioTimeStamp(UInt64 inHostTime)												{ memset(this, 0, sizeof(AudioTimeStamp)); mHostTime = inHostTime; mFlags = kAudioTimeStampHostTimeValid; }
+						CAAudioTimeStamp(Float64 inSampleTime, UInt64 inHostTime)						{ memset(this, 0, sizeof(AudioTimeStamp)); mSampleTime = inSampleTime; mHostTime = inHostTime; mFlags = kAudioTimeStampSampleTimeValid | kAudioTimeStampHostTimeValid; }
+						CAAudioTimeStamp(Float64 inSampleTime, UInt64 inHostTime, Float64 inRateScalar)	{ memset(this, 0, sizeof(AudioTimeStamp)); mSampleTime = inSampleTime; mHostTime = inHostTime; mRateScalar = inRateScalar; mFlags = kAudioTimeStampSampleTimeValid | kAudioTimeStampHostTimeValid | kAudioTimeStampRateScalarValid; }
 
 //	Assignment
 public:

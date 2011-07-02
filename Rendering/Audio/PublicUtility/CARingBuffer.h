@@ -49,11 +49,7 @@
 #define CARingBuffer_Header
 
 enum {
-	kCARingBufferError_WayBehind = -2, // both fetch times are earlier than buffer start time
-	kCARingBufferError_SlightlyBehind = -1, // fetch start time is earlier than buffer start time (fetch end time OK)
 	kCARingBufferError_OK = 0,
-	kCARingBufferError_SlightlyAhead = 1, // fetch end time is later than buffer end time (fetch start time OK)
-	kCARingBufferError_WayAhead = 2, // both fetch times are later than buffer end time
 	kCARingBufferError_TooMuch = 3, // fetch start time is earlier than buffer start time and fetch end time is later than buffer end time
 	kCARingBufferError_CPUOverload = 4 // the reader is unable to get enough CPU cycles to capture a consistent snapshot of the time bounds
 };
@@ -84,16 +80,16 @@ public:
 							
 							// Return false for failure (buffer not large enough).
 				
-	CARingBufferError	Fetch(AudioBufferList *abl, UInt32 nFrames, SampleTime frameNumber, bool aheadOK);
+	CARingBufferError	Fetch(AudioBufferList *abl, UInt32 nFrames, SampleTime frameNumber);
 								// will alter mNumDataBytes of the buffers
 	
 	CARingBufferError	GetTimeBounds(SampleTime &startTime, SampleTime &endTime);
 	
 protected:
 
-	int						FrameOffset(SampleTime frameNumber) { return (frameNumber % mCapacityFrames) * mBytesPerFrame; }
+	int						FrameOffset(SampleTime frameNumber) { return (frameNumber & mCapacityFramesMask) * mBytesPerFrame; }
 
-	CARingBufferError	CheckTimeBounds(SampleTime& startRead, SampleTime& endRead);
+	CARingBufferError		ClipTimeBounds(SampleTime& startRead, SampleTime& endRead);
 	
 	// these should only be called from Store.
 	SampleTime				StartTime() const { return mTimeBoundsQueue[mTimeBoundsQueuePtr & kGeneralRingTimeBoundsQueueMask].mStartTime; }
@@ -105,7 +101,7 @@ protected:
 	int						mNumberChannels;
 	UInt32					mBytesPerFrame;			// within one deinterleaved channel
 	UInt32					mCapacityFrames;		// per channel, must be a power of 2
-	//UInt32				mCapacityFramesMask;
+	UInt32					mCapacityFramesMask;
 	UInt32					mCapacityBytes;			// per channel
 	
 	// range of valid sample time in the buffer

@@ -47,7 +47,7 @@ OSStatus	NumberChannels (AudioUnit 		 	au,
 							UInt32				&outChans);
 
 
-OSStatus PrintBuses (FILE* file, char* str, AudioUnit au, AudioUnitScope inScope)
+OSStatus PrintBuses (FILE* file, const char* str, AudioUnit au, AudioUnitScope inScope)
 {
 	OSStatus result;
 	UInt32 busCount;

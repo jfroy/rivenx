@@ -116,13 +116,14 @@ public:
 	bool					GetUInt64(const CFStringRef inKey, UInt64& outValue) const;
 	bool					GetFloat32(const CFStringRef inKey, Float32& outValue) const;
 	bool					GetFloat64(const CFStringRef inKey, Float64& outValue) const;
+	bool					GetFixed32(const CFStringRef inKey, Float32& outValue) const;
 	bool					GetFixed64(const CFStringRef inKey, Float64& outValue) const;
 	bool					GetString(const CFStringRef inKey, CFStringRef& outValue) const;	
 	bool					GetArray(const CFStringRef inKey, CFArrayRef& outValue) const;	
 	bool					GetDictionary(const CFStringRef inKey, CFDictionaryRef& outValue) const;	
 	bool					GetData(const CFStringRef inKey, CFDataRef& outValue) const;
 	bool					GetCFType(const CFStringRef inKey, CFTypeRef& outValue) const;
-	
+	bool					GetURL(const CFStringRef inKey, CFURLRef& outValue) const;
 	bool					GetCFTypeWithCStringKey(const char* inKey, CFTypeRef& outValue) const;
 
 	void					GetCACFString(const CFStringRef inKey, CACFString& outItem) const;

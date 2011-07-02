@@ -106,16 +106,16 @@ UInt32	CAHALAudioStream::GetNumberAvailableVirtualFormats() const
 {
 	CAPropertyAddress theAddress(kAudioStreamPropertyAvailableVirtualFormats);
 	UInt32 theAnswer = GetPropertyDataSize(theAddress, 0, NULL);
-	theAnswer /= sizeof(AudioStreamRangedDescription);
+	theAnswer /= SizeOf32(AudioStreamRangedDescription);
 	return theAnswer;
 }
 
 void	CAHALAudioStream::GetAvailableVirtualFormats(UInt32& ioNumberFormats, AudioStreamRangedDescription* outFormats) const
 {
 	CAPropertyAddress theAddress(kAudioStreamPropertyAvailableVirtualFormats);
-	UInt32 theSize = ioNumberFormats * sizeof(AudioStreamRangedDescription);
+	UInt32 theSize = ioNumberFormats * SizeOf32(AudioStreamRangedDescription);
 	GetPropertyData(theAddress, 0, NULL, theSize, outFormats);
-	ioNumberFormats = theSize / sizeof(AudioStreamRangedDescription);
+	ioNumberFormats = theSize / SizeOf32(AudioStreamRangedDescription);
 }
 
 void	CAHALAudioStream::GetAvailableVirtualFormatByIndex(UInt32 inIndex, AudioStreamRangedDescription& outFormat) const
@@ -149,16 +149,16 @@ UInt32	CAHALAudioStream::GetNumberAvailablePhysicalFormats() const
 {
 	CAPropertyAddress theAddress(kAudioStreamPropertyAvailablePhysicalFormats);
 	UInt32 theAnswer = GetPropertyDataSize(theAddress, 0, NULL);
-	theAnswer /= sizeof(AudioStreamRangedDescription);
+	theAnswer /= SizeOf32(AudioStreamRangedDescription);
 	return theAnswer;
 }
 
 void	CAHALAudioStream::GetAvailablePhysicalFormats(UInt32& ioNumberFormats, AudioStreamRangedDescription* outFormats) const
 {
 	CAPropertyAddress theAddress(kAudioStreamPropertyAvailablePhysicalFormats);
-	UInt32 theSize = ioNumberFormats * sizeof(AudioStreamRangedDescription);
+	UInt32 theSize = ioNumberFormats * SizeOf32(AudioStreamRangedDescription);
 	GetPropertyData(theAddress, 0, NULL, theSize, outFormats);
-	ioNumberFormats = theSize / sizeof(AudioStreamRangedDescription);
+	ioNumberFormats = theSize / SizeOf32(AudioStreamRangedDescription);
 }
 
 void	CAHALAudioStream::GetAvailablePhysicalFormatByIndex(UInt32 inIndex, AudioStreamRangedDescription& outFormat) const

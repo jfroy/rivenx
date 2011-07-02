@@ -89,7 +89,7 @@ struct _RXCardDescriptorPrimer {
 }
 
 - (NSUInteger)hash {
-    return integer_pair_hash((int)[stackKey hash], (int)cardID);
+    return hash_combine([stackKey hash], cardID);
 }
 
 - (BOOL)isEqual:(id)object {

@@ -58,6 +58,7 @@ void	CACFDistributedNotification::AddObserver(const void* inObserver, CFNotifica
 	CFNotificationCenterRef theCenter = CFNotificationCenterGetDistributedCenter();
 	CFNotificationSuspensionBehavior theSuspensionBehavior = inSuspensionBehavior;
 #else
+	#pragma unused(inSuspensionBehavior)
 	CFNotificationCenterRef theCenter = CFNotificationCenterGetDarwinNotifyCenter();
 	CFNotificationSuspensionBehavior theSuspensionBehavior = 0;
 #endif

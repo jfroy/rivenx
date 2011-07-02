@@ -219,7 +219,7 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 }
 
 - (uint32_t)varIndexForName:(NSString*)name {
-    uint32_t n = [_varNames count];
+    uint32_t n = (uint32_t)[_varNames count];
     for (uint32_t i = 0; i < n; i++)
         if ([name isEqualToString:[_varNames objectAtIndex:i]])
             return i;

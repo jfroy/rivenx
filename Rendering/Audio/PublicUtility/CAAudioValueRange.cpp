@@ -52,6 +52,22 @@
 //	CAAudioValueRange
 //==================================================================================================
 
+Float64	CAAudioValueRange::BoundValue(const AudioValueRange& inRange, Float64 inValue)
+{
+	if (inValue <= inRange.mMinimum)
+	{
+		return inRange.mMinimum;
+	}
+	else if (inValue >= inRange.mMaximum)
+	{
+		return inRange.mMaximum;
+	}
+	else
+	{
+		return inValue;
+	}
+}
+
 Float64 CAAudioValueRange::PickCommonSampleRate(const AudioValueRange& inRange)
 {
 	//  This routine will pick a "common" sample rate from the give range of rates or the maximum
@@ -223,22 +239,18 @@ void	CAAudioValueRange_ComputeUnion(const AudioValueRange& inRange, const CAAudi
 	}
 }
 
-void	CAAudioValueRange_ComputeIntersection(const AudioValueRange& inRange, const CAAudioValueRangeList& inRangeList, CAAudioValueRangeList& outIntersections)
+void	CAAudioValueRange_ComputeIntersection(UInt32 inNumberRangeList1Items, AudioValueRange inRangeList1[], const CAAudioValueRangeList& inRangeList2, CAAudioValueRangeList& outIntersections)
 {
 	outIntersections.clear();
-	//	iterate through the list and compute the intersections
-	CAAudioValueRangeList::const_iterator theIterator = inRangeList.begin();
-	while(theIterator != inRangeList.end())
+	for(UInt32 theRangeList1Index = 0; theRangeList1Index < inNumberRangeList1Items; ++theRangeList1Index)
 	{
-		//	figure out if the range intersects
-		AudioValueRange theIntersection;
-		if(CAAudioValueRange::Intersection(inRange, *theIterator, theIntersection))
+		for(CAAudioValueRangeList::const_iterator theRangeList2Iterator = inRangeList2.begin(); theRangeList2Iterator != inRangeList2.end(); std::advance(theRangeList2Iterator, 1))
 		{
-			//	it does, so add the intersection to the return list
-			outIntersections.push_back(theIntersection);
+			AudioValueRange theIntersection;
+			if(CAAudioValueRange::Intersection(inRangeList1[theRangeList1Index], *theRangeList2Iterator, theIntersection))
+			{
+				outIntersections.push_back(theIntersection);
+			}
 		}
-		
-		//	go to the next one
-		std::advance(theIterator, 1);
 	}
 }

@@ -91,20 +91,60 @@ class CAStreamBasicDescription :
 //	Constants
 public:
 	static const AudioStreamBasicDescription	sEmpty;
-
+	
+	enum CommonPCMFormat {
+		kPCMFormatOther		= 0,
+		kPCMFormatFloat32	= 1,
+		kPCMFormatInt16		= 2,
+		kPCMFormatFixed824	= 3
+	};
+	
 //	Construction/Destruction
 public:
-	CAStreamBasicDescription() { memset (this, 0, sizeof(AudioStreamBasicDescription)); }
+	CAStreamBasicDescription();
 	
-	CAStreamBasicDescription(const AudioStreamBasicDescription &desc)
-	{
-		SetFrom(desc);
-	}
+	CAStreamBasicDescription(const AudioStreamBasicDescription &desc);
 	
 	CAStreamBasicDescription(		double inSampleRate,		UInt32 inFormatID,
 									UInt32 inBytesPerPacket,	UInt32 inFramesPerPacket,
 									UInt32 inBytesPerFrame,		UInt32 inChannelsPerFrame,
 									UInt32 inBitsPerChannel,	UInt32 inFormatFlags);
+
+	CAStreamBasicDescription(	double inSampleRate, UInt32 inNumChannels, CommonPCMFormat pcmf, bool inIsInterleaved) {
+		unsigned wordsize;
+
+		mSampleRate = inSampleRate;
+		mFormatID = kAudioFormatLinearPCM;
+		mFormatFlags = kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
+		mFramesPerPacket = 1;
+		mChannelsPerFrame = inNumChannels;
+		mBytesPerFrame = mBytesPerPacket = 0;
+		mReserved = 0;
+
+		switch (pcmf) {
+		default:
+			return;
+		case kPCMFormatFloat32:
+			wordsize = 4;
+			mFormatFlags |= kAudioFormatFlagIsFloat;
+			break;
+		case kPCMFormatInt16:
+			wordsize = 2;
+			mFormatFlags |= kAudioFormatFlagIsSignedInteger;
+			break;
+		case kPCMFormatFixed824:
+			wordsize = 4;
+			mFormatFlags |= kAudioFormatFlagIsSignedInteger | (24 << kLinearPCMFormatFlagsSampleFractionShift);
+			break;
+		}
+		mBitsPerChannel = wordsize * 8;
+		if (inIsInterleaved)
+			mBytesPerFrame = mBytesPerPacket = wordsize * inNumChannels;
+		else {
+			mFormatFlags |= kAudioFormatFlagIsNonInterleaved;
+			mBytesPerFrame = mBytesPerPacket = wordsize;
+		}
+	}
 
 //	Assignment
 	CAStreamBasicDescription&	operator=(const AudioStreamBasicDescription& v) { SetFrom(v); return *this; }
@@ -113,6 +153,12 @@ public:
 	{
 		memcpy(this, &desc, sizeof(AudioStreamBasicDescription));
 	}
+	
+	bool		FromText(const char *inTextDesc) { return FromText(inTextDesc, *this); }
+	static bool	FromText(const char *inTextDesc, AudioStreamBasicDescription &outDesc);
+					// return true if parsing was successful
+	
+	static const char *sTextParsingUsageString;
 	
 	// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 	//
@@ -134,6 +180,16 @@ public:
 	bool	IsInterleaved() const
 	{
 		return !IsPCM() || !(mFormatFlags & kAudioFormatFlagIsNonInterleaved);
+	}
+	
+	bool	IsSignedInteger() const
+	{
+		return IsPCM() && (mFormatFlags & kAudioFormatFlagIsSignedInteger);
+	}
+	
+	bool	IsFloat() const
+	{
+		return IsPCM() && (mFormatFlags & kAudioFormatFlagIsFloat);
 	}
 	
 	bool	IsNativeEndian() const
@@ -158,6 +214,56 @@ public:
 	bool	SameChannelsAndInterleaving(const CAStreamBasicDescription &a) const
 	{
 		return this->NumberChannels() == a.NumberChannels() && this->IsInterleaved() == a.IsInterleaved();
+	}
+	
+	bool	IdentifyCommonPCMFormat(CommonPCMFormat &outFormat, bool *outIsInterleaved=NULL) const
+	{	// return true if it's a valid PCM format.
+	
+		outFormat = kPCMFormatOther;
+		// trap out patently invalid formats.
+		if (mFormatID != kAudioFormatLinearPCM || mFramesPerPacket != 1 || mBytesPerFrame != mBytesPerPacket || mBitsPerChannel/8 > mBytesPerFrame || mChannelsPerFrame == 0)
+			return false;
+		bool interleaved = (mFormatFlags & kAudioFormatFlagIsNonInterleaved) == 0;
+		if (outIsInterleaved != NULL) *outIsInterleaved = interleaved;
+		unsigned wordsize = mBytesPerFrame;
+		if (interleaved) {
+			if (wordsize % mChannelsPerFrame != 0) return false;
+			wordsize /= mChannelsPerFrame;
+		}
+		
+		if ((mFormatFlags & kAudioFormatFlagIsBigEndian) == kAudioFormatFlagsNativeEndian
+		&& (mFormatFlags & kLinearPCMFormatFlagIsPacked)
+		&& wordsize * 8 == mBitsPerChannel) {
+			// packed and native endian, good
+			if (mFormatFlags & kLinearPCMFormatFlagIsFloat) {
+				// float: reject nonsense bits
+				if (mFormatFlags & (kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagsSampleFractionMask))
+					return false;
+				if (wordsize == 4)
+					outFormat = kPCMFormatFloat32;
+			} else if (mFormatFlags & kLinearPCMFormatFlagIsSignedInteger) {
+				// signed int
+				unsigned fracbits = (mFormatFlags & kLinearPCMFormatFlagsSampleFractionMask) >> kLinearPCMFormatFlagsSampleFractionShift;
+				if (wordsize == 4 && fracbits == 24)
+					outFormat = kPCMFormatFixed824;
+				else if (wordsize == 2 && fracbits == 0)
+					outFormat = kPCMFormatInt16;
+			}
+		}
+		return true;
+	}
+
+	bool IsCommonFloat32(bool *outIsInterleaved=NULL) const {
+		CommonPCMFormat fmt;
+		return IdentifyCommonPCMFormat(fmt, outIsInterleaved) && fmt == kPCMFormatFloat32;
+	}
+	bool IsCommonFixed824(bool *outIsInterleaved=NULL) const {
+		CommonPCMFormat fmt;
+		return IdentifyCommonPCMFormat(fmt, outIsInterleaved) && fmt == kPCMFormatFixed824;
+	}
+	bool IsCommonInt16(bool *outIsInterleaved=NULL) const {
+		CommonPCMFormat fmt;
+		return IdentifyCommonPCMFormat(fmt, outIsInterleaved) && fmt == kPCMFormatInt16;
 	}
 	
 	// _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
@@ -185,7 +291,7 @@ public:
 	{
 		if (mFormatID != kAudioFormatLinearPCM) return false;
 		UInt32 reqFormatFlags;
-		UInt32 flagsMask = (kLinearPCMFormatFlagIsFloat | kLinearPCMFormatFlagIsBigEndian | kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked | kLinearPCMFormatFlagIsAlignedHigh | kLinearPCMFormatFlagsSampleFractionMask);
+		UInt32 flagsMask = (kLinearPCMFormatFlagIsFloat | kLinearPCMFormatFlagIsBigEndian | kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked | kLinearPCMFormatFlagsSampleFractionMask);
 		bool interleaved = (mFormatFlags & kAudioFormatFlagIsNonInterleaved) == 0;
 		unsigned sampleSize = SizeOf32(AudioSampleType);
 		reqFormatFlags = kAudioFormatFlagsCanonical;
@@ -274,9 +380,10 @@ public:
 //	Operations
 	static bool			IsMixable(const AudioStreamBasicDescription& inDescription) { return (inDescription.mFormatID == kAudioFormatLinearPCM) && ((inDescription.mFormatFlags & kIsNonMixableFlag) == 0); }
 	static void			NormalizeLinearPCMFormat(AudioStreamBasicDescription& ioDescription);
+	static void			NormalizeLinearPCMFormat(bool inNativeEndian, AudioStreamBasicDescription& ioDescription);
 	static void			ResetFormat(AudioStreamBasicDescription& ioDescription);
 	static void			FillOutFormat(AudioStreamBasicDescription& ioDescription, const AudioStreamBasicDescription& inTemplateDescription);
-	static void			GetSimpleName(const AudioStreamBasicDescription& inDescription, char* outName, UInt32 inMaxNameLength, bool inAbbreviate);
+	static void			GetSimpleName(const AudioStreamBasicDescription& inDescription, char* outName, UInt32 inMaxNameLength, bool inAbbreviate, bool inIncludeSampleRate = false);
 #if CoreAudio_Debug
 	static void			PrintToLog(const AudioStreamBasicDescription& inDesc);
 #endif

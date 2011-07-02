@@ -107,10 +107,10 @@ public:
 	void						SetPropertyData_Float64(const AudioObjectPropertyAddress& inAddress, Float64 inValue, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)							{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(Float64), &inValue); }
 
 	CFTypeRef					GetPropertyData_CFType(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL) const										{ CFTypeRef theAnswer = NULL; UInt32 theDataSize = SizeOf32(CFTypeRef); GetPropertyData(inAddress, inQualifierDataSize, inQualifierData, theDataSize, &theAnswer); return theAnswer; }
-	void						SetPropertyData_CFType(const AudioObjectPropertyAddress& inAddress, UInt32 inValue, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)								{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(CFTypeRef), &inValue); }
+	void						SetPropertyData_CFType(const AudioObjectPropertyAddress& inAddress, CFTypeRef inValue, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)								{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(CFTypeRef), &inValue); }
 
 	CFStringRef					GetPropertyData_CFString(const AudioObjectPropertyAddress& inAddress, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL) const										{ CFStringRef theAnswer = NULL; UInt32 theDataSize = SizeOf32(CFStringRef); GetPropertyData(inAddress, inQualifierDataSize, inQualifierData, theDataSize, &theAnswer); return theAnswer; }
-	void						SetPropertyData_CFString(const AudioObjectPropertyAddress& inAddress, UInt32 inValue, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)							{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(CFStringRef), &inValue); }
+	void						SetPropertyData_CFString(const AudioObjectPropertyAddress& inAddress, CFStringRef inValue, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)							{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(CFStringRef), &inValue); }
 
 	template <class T> void		GetPropertyData_Struct(const AudioObjectPropertyAddress& inAddress, T& outStruct, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL) const							{ UInt32 theDataSize = SizeOf32(T); GetPropertyData(inAddress, inQualifierDataSize, inQualifierData, theDataSize, &outStruct); }
 	template <class T> void		SetPropertyData_Struct(const AudioObjectPropertyAddress& inAddress, T& inStruct, UInt32 inQualifierDataSize = 0, const void* inQualifierData = NULL)								{ SetPropertyData(inAddress, inQualifierDataSize, inQualifierData, SizeOf32(T), &inStruct); }
@@ -121,6 +121,12 @@ public:
 	
 	void						AddPropertyListener(const AudioObjectPropertyAddress& inAddress, AudioObjectPropertyListenerProc inListenerProc, void* inClientData);
 	void						RemovePropertyListener(const AudioObjectPropertyAddress& inAddress, AudioObjectPropertyListenerProc inListenerProc, void* inClientData);
+
+#if 0
+//#if defined(__BLOCKS__) && (__MAC_OS_X_VERSION_MAX_ALLOWED > __MAC_10_6)
+	void						AddPropertyListenerBlock(const AudioObjectPropertyAddress& inAddress, dispatch_queue_t inDispatchQueue, AudioObjectPropertyListenerBlock inListenerBlock);
+	void						RemovePropertyListenerBlock(const AudioObjectPropertyAddress& inAddress, dispatch_queue_t inDispatchQueue, AudioObjectPropertyListenerBlock inListenerBlock);
+#endif
 
 //	Implementation
 protected:

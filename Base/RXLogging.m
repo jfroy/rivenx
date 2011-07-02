@@ -40,13 +40,12 @@ void RXCFLog(const char* facility, int level, CFStringRef format, ...) {
     CFStringRef facilityString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, facility, NSASCIIStringEncoding, kCFAllocatorNull);
     CFDateRef now = CFDateCreate(kCFAllocatorDefault, CFAbsoluteTimeGetCurrent());
     
-    char const* threadName = RXGetThreadName();
-    if (!threadName)
-        threadName = "unknown";
+    char* threadName = RXCopyThreadName();
     
     CFStringRef logString = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, (CFStringRef)RX_log_format, now, threadName, facilityString, userString);
     [[RXLogCenter sharedLogCenter] log:(NSString*)logString facility:(NSString*)facilityString level:level];
     
+    free(threadName);
     CFRelease(logString);
     CFRelease(now);
     CFRelease(facilityString);
@@ -67,13 +66,12 @@ void RXLogv(const char* facility, int level, NSString* format, va_list args) {
     NSString* facilityString = [[NSString alloc] initWithCString:facility encoding:NSASCIIStringEncoding];
     NSDate* now = [NSDate new];
     
-    char const* threadName = RXGetThreadName();
-    if (!threadName)
-        threadName = "unknown";
+    char* threadName = RXCopyThreadName();
     
     NSString* logString = [[NSString alloc] initWithFormat:RX_log_format, now, threadName, facilityString, userString];
     [[RXLogCenter sharedLogCenter] log:logString facility:facilityString level:level];
     
+    free(threadName);
     [logString release];
     [now release];
     [facilityString release];

@@ -247,7 +247,7 @@ UInt32	CAHALAudioObject::GetNumberOwnedObjects(AudioClassID inClass) const
 	theAnswer = GetPropertyDataSize(theAddress, theQualifierSize, theQualifierData);
 	
 	//	calculate the number of object IDs
-	theAnswer /= sizeof(AudioObjectID);
+	theAnswer /= SizeOf32(AudioObjectID);
 	
 	return theAnswer;
 }
@@ -267,11 +267,11 @@ void	CAHALAudioObject::GetAllOwnedObjects(AudioClassID inClass, UInt32& ioNumber
 	}
 	
 	//	get the property data
-	UInt32 theDataSize = ioNumberObjects * sizeof(AudioClassID);
+	UInt32 theDataSize = ioNumberObjects * SizeOf32(AudioClassID);
 	GetPropertyData(theAddress, theQualifierSize, theQualifierData, theDataSize, ioObjectIDs);
 	
 	//	set the number of object IDs being returned
-	ioNumberObjects = theDataSize / sizeof(AudioObjectID);
+	ioNumberObjects = theDataSize / SizeOf32(AudioObjectID);
 }
 
 AudioObjectID	CAHALAudioObject::GetOwnedObjectByIndex(AudioClassID inClass, UInt32 inIndex)
@@ -290,7 +290,7 @@ AudioObjectID	CAHALAudioObject::GetOwnedObjectByIndex(AudioClassID inClass, UInt
 	
 	//	figure out how much space to allocate
 	UInt32 theDataSize = GetPropertyDataSize(theAddress, theQualifierSize, theQualifierData);
-	UInt32 theNumberObjectIDs = theDataSize / sizeof(AudioObjectID);
+	UInt32 theNumberObjectIDs = theDataSize / SizeOf32(AudioObjectID);
 	
 	//	set up the return value
 	AudioObjectID theAnswer = 0;
@@ -355,3 +355,20 @@ void	CAHALAudioObject::RemovePropertyListener(const AudioObjectPropertyAddress& 
 	OSStatus theError = AudioObjectRemovePropertyListener(mObjectID, &inAddress, inListenerProc, inClientData);
 	ThrowIfError(theError, CAException(theError), "CAHALAudioObject::RemovePropertyListener: got an error removing a property listener");
 }
+
+#if 0
+//#if defined(__BLOCKS__) && (__MAC_OS_X_VERSION_MAX_ALLOWED > __MAC_10_6)
+
+void	CAHALAudioObject::AddPropertyListenerBlock(const AudioObjectPropertyAddress& inAddress, dispatch_queue_t inDispatchQueue, AudioObjectPropertyListenerBlock inListenerBlock)
+{
+	OSStatus theError = AudioObjectAddPropertyListenerBlock(mObjectID, &inAddress, inDispatchQueue, inListenerBlock);
+	ThrowIfError(theError, CAException(theError), "CAHALAudioObject::AddPropertyListenerBlock: got an error adding a property listener");
+}
+
+void	CAHALAudioObject::RemovePropertyListenerBlock(const AudioObjectPropertyAddress& inAddress, dispatch_queue_t inDispatchQueue, AudioObjectPropertyListenerBlock inListenerBlock)
+{
+	OSStatus theError = AudioObjectRemovePropertyListenerBlock(mObjectID, &inAddress, inDispatchQueue, inListenerBlock);
+	ThrowIfError(theError, CAException(theError), "CAHALAudioObject::RemovePropertyListener: got an error removing a property listener");
+}
+
+#endif

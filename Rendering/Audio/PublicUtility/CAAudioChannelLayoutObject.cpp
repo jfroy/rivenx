@@ -184,6 +184,17 @@ bool		CAAudioChannelLayout::operator== (const CAAudioChannelLayout &c) const
 }
 
 //=============================================================================
+//	CAAudioChannelLayout::operator!=
+//=============================================================================
+bool		CAAudioChannelLayout::operator!= (const CAAudioChannelLayout &c) const
+{
+	if (mLayout == c.mLayout)
+		return false;
+
+	return !(Layout() == c.Layout());
+}
+
+//=============================================================================
 //	CAAudioChannelLayout::Print
 //=============================================================================
 void		CAAudioChannelLayout::Print (FILE* file) const

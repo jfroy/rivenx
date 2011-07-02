@@ -32,7 +32,7 @@ PyAPI_FUNC(void) Py_InitializeEx(int) __attribute__((weak_import));
 // pointer to python controller
 static RXDebugWindowController* rx_debug_window_controller;
 
-PyObject* rivenx_CaptureStdout(PyObject* self, PyObject* pArgs) {
+static PyObject* rivenx_CaptureStdout(PyObject* self, PyObject* pArgs) {
     char* log_string = NULL;
     if (!PyArg_ParseTuple(pArgs, "s", &log_string))
         return NULL;
@@ -42,7 +42,7 @@ PyObject* rivenx_CaptureStdout(PyObject* self, PyObject* pArgs) {
     Py_RETURN_NONE;
 }
 
-PyObject* rivenx_CaptureStderr(PyObject* self, PyObject* pArgs) {
+static PyObject* rivenx_CaptureStderr(PyObject* self, PyObject* pArgs) {
     char* log_string = NULL;
     if (!PyArg_ParseTuple(pArgs, "s", &log_string))
         return NULL;

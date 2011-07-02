@@ -64,12 +64,12 @@ void	CARingBuffer::Allocate(int nChannels, UInt32 bytesPerFrame, UInt32 capacity
 {
 	Deallocate();
 	
-	//capacityFrames = NextPowerOfTwo(capacityFrames);
+	capacityFrames = NextPowerOfTwo(capacityFrames);
 	
 	mNumberChannels = nChannels;
 	mBytesPerFrame = bytesPerFrame;
 	mCapacityFrames = capacityFrames;
-	//mCapacityFramesMask = capacityFrames - 1;
+	mCapacityFramesMask = capacityFrames - 1;
 	mCapacityBytes = bytesPerFrame * capacityFrames;
 
 	// put everything in one memory allocation, first the pointers, then the deinterleaved channels
@@ -228,7 +228,7 @@ CARingBufferError	CARingBuffer::GetTimeBounds(SampleTime &startTime, SampleTime 
 	return kCARingBufferError_CPUOverload;
 }
 
-CARingBufferError	CARingBuffer::CheckTimeBounds(SampleTime& startRead, SampleTime& endRead)
+CARingBufferError	CARingBuffer::ClipTimeBounds(SampleTime& startRead, SampleTime& endRead)
 {
 	SampleTime startTime, endTime;
 	
@@ -237,39 +237,12 @@ CARingBufferError	CARingBuffer::CheckTimeBounds(SampleTime& startRead, SampleTim
 	
 	startRead = std::max(startRead, startTime);
 	endRead = std::min(endRead, endTime);
-
-	if (startRead < startTime)
-	{
-		if (endRead > endTime)
-			return kCARingBufferError_TooMuch;
-	
-		if (endRead < startTime)
-			return kCARingBufferError_WayBehind;
-		else
-			return kCARingBufferError_SlightlyBehind;
-	}
-	
-	if (endRead > endTime)	// we are going to read chunks of zeros its okay
-	{
-		if (startRead > endTime)
-			return kCARingBufferError_WayAhead;
-		else
-			return kCARingBufferError_SlightlyAhead;
-	}
+	endRead = std::max(endRead, startRead);
 	
 	return kCARingBufferError_OK;	// success
 }
 
-CARingBufferError worse(CARingBufferError a, CARingBufferError b)
-{
-	// return the worst error.
-	CARingBufferError aa = a < 0 ? -a : a;
-	CARingBufferError bb = b < 0 ? -b : b;
-	if (aa > bb) return a;
-	return b;
-}
-
-CARingBufferError	CARingBuffer::Fetch(AudioBufferList *abl, UInt32 nFrames, SampleTime startRead, bool outOfBoundsOK)
+CARingBufferError	CARingBuffer::Fetch(AudioBufferList *abl, UInt32 nFrames, SampleTime startRead)
 {
 	SampleTime endRead = startRead + nFrames;
 
@@ -277,12 +250,9 @@ CARingBufferError	CARingBuffer::Fetch(AudioBufferList *abl, UInt32 nFrames, Samp
 	SampleTime endRead0 = endRead;
 	SampleTime size;
 		
-	CARingBufferError err = CheckTimeBounds(startRead, endRead);
+	CARingBufferError err = ClipTimeBounds(startRead, endRead);
+	if (err) return err;
 	size = endRead - startRead;
-	if (err) {
-		if (!outOfBoundsOK) return err;
-		if (size <= 0) return err; // there is nothing to read
-	}
 	
 	SInt32 destStartOffset = startRead - startRead0; 
 	if (destStartOffset > 0) {
@@ -316,13 +286,5 @@ CARingBufferError	CARingBuffer::Fetch(AudioBufferList *abl, UInt32 nFrames, Samp
 		dest++;
 	}
 
-	// have to check bounds again because the data may have been overwritten before we could finish reading it. 
-	OSStatus err2 = CheckTimeBounds(startRead, endRead);
-	err2 = worse(err, err2);
-	size = endRead - startRead;
-	if (err2) {
-		if (!outOfBoundsOK) return err2;
-		if (size <= 0) return err2; // there is nothing to read
-	}
-	return err2;
+	return noErr;
 }

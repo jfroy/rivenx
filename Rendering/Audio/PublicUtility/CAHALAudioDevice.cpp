@@ -236,7 +236,7 @@ UInt32	CAHALAudioDevice::GetNumberRelatedAudioDevices() const
 	if(HasProperty(theAddress))
 	{
 		theAnswer = GetPropertyDataSize(theAddress, 0, NULL);
-		theAnswer /= sizeof(AudioObjectID);
+		theAnswer /= SizeOf32(AudioObjectID);
 	}
 	return theAnswer;
 }
@@ -246,13 +246,13 @@ void	CAHALAudioDevice::GetRelatedAudioDevices(UInt32& ioNumberRelatedDevices, Au
 	CAPropertyAddress theAddress(kAudioDevicePropertyRelatedDevices);
 	if(HasProperty(theAddress))
 	{
-		UInt32 theSize = ioNumberRelatedDevices * sizeof(AudioObjectID);
+		UInt32 theSize = ioNumberRelatedDevices * SizeOf32(AudioObjectID);
 		GetPropertyData(theAddress, 0, NULL, theSize, outRelatedDevices);
-		ioNumberRelatedDevices = theSize / sizeof(AudioObjectID);
+		ioNumberRelatedDevices = theSize / SizeOf32(AudioObjectID);
 	}
 	else
 	{
-		UInt32 theSize = ioNumberRelatedDevices * sizeof(AudioObjectID);
+		UInt32 theSize = ioNumberRelatedDevices * SizeOf32(AudioObjectID);
 		memset(outRelatedDevices, 0, theSize);
 		ioNumberRelatedDevices = 0;
 	}
@@ -278,16 +278,16 @@ UInt32	CAHALAudioDevice::GetNumberStreams(bool inIsInput) const
 {
 	CAPropertyAddress theAddress(kAudioDevicePropertyStreams, inIsInput ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput);
 	UInt32 theAnswer = GetPropertyDataSize(theAddress, 0, NULL);
-	theAnswer /= sizeof(AudioObjectID);
+	theAnswer /= SizeOf32(AudioObjectID);
 	return theAnswer;
 }
 
 void	CAHALAudioDevice::GetStreams(bool inIsInput, UInt32& ioNumberStreams, AudioObjectID* outStreamList) const
 {
 	CAPropertyAddress theAddress(kAudioDevicePropertyStreams, inIsInput ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput);
-	UInt32 theSize = ioNumberStreams * sizeof(AudioObjectID);
+	UInt32 theSize = ioNumberStreams * SizeOf32(AudioObjectID);
 	GetPropertyData(theAddress, 0, NULL, theSize, outStreamList);
-	ioNumberStreams = theSize / sizeof(AudioObjectID);
+	ioNumberStreams = theSize / SizeOf32(AudioObjectID);
 }
 
 AudioObjectID	CAHALAudioDevice::GetStreamByIndex(bool inIsInput, UInt32 inIndex) const
@@ -420,7 +420,7 @@ UInt32	CAHALAudioDevice::GetNumberAvailableNominalSampleRateRanges() const
 	if(HasProperty(theAddress))
 	{
 		UInt32 theSize = GetPropertyDataSize(theAddress, 0, NULL);
-		theAnswer = theSize / sizeof(AudioValueRange);
+		theAnswer = theSize / SizeOf32(AudioValueRange);
 	}
 	return theAnswer;
 }
@@ -430,9 +430,9 @@ void	CAHALAudioDevice::GetAvailableNominalSampleRateRanges(UInt32& ioNumberRange
 	CAPropertyAddress theAddress(kAudioDevicePropertyAvailableNominalSampleRates);
 	if(HasProperty(theAddress))
 	{
-		UInt32 theSize = ioNumberRanges * sizeof(AudioValueRange);
+		UInt32 theSize = ioNumberRanges * SizeOf32(AudioValueRange);
 		GetPropertyData(theAddress, 0, NULL, theSize, outRanges);
-		ioNumberRanges = theSize / sizeof(AudioValueRange);
+		ioNumberRanges = theSize / SizeOf32(AudioValueRange);
 	}
 	else
 	{
@@ -517,6 +517,17 @@ AudioDeviceIOProcID	CAHALAudioDevice::CreateIOProcID(AudioDeviceIOProc inIOProc,
 	return theAnswer;
 }
 
+#if 0
+//#if defined(__BLOCKS__) && (__MAC_OS_X_VERSION_MAX_ALLOWED > __MAC_10_6)
+AudioDeviceIOProcID	CAHALAudioDevice::CreateIOProcIDWithBlock(dispatch_queue_t inDispatchQueue, AudioDeviceIOBlock inIOBlock)
+{
+	AudioDeviceIOProcID theAnswer = NULL;
+	OSStatus theError = AudioDeviceCreateIOProcIDWithBlock(&theAnswer, mObjectID, inDispatchQueue, inIOBlock);
+	ThrowIfError(theError, CAException(theError), "CAHALAudioDevice::CreateIOProcIDWithBlock: got an error creating the IOProc ID");
+	return theAnswer;
+}
+#endif
+
 void	CAHALAudioDevice::DestroyIOProcID(AudioDeviceIOProcID inIOProcID)
 {
 	OSStatus theError = AudioDeviceDestroyIOProcID(mObjectID, inIOProcID);
@@ -555,7 +566,7 @@ void	CAHALAudioDevice::GetIOProcStreamUsage(AudioDeviceIOProcID inIOProcID, bool
 {
 	//	make an AudioHardwareIOProcStreamUsage the right size
 	UInt32 theNumberStreams = GetNumberStreams(inIsInput);
-	UInt32 theSize = sizeof(void*) + sizeof(UInt32) + (theNumberStreams * sizeof(UInt32));
+	UInt32 theSize = SizeOf32(void*) + SizeOf32(UInt32) + (theNumberStreams * SizeOf32(UInt32));
 	CAAutoFree<AudioHardwareIOProcStreamUsage> theStreamUsage(theSize);
 	
 	//	set it up
@@ -577,7 +588,7 @@ void	CAHALAudioDevice::SetIOProcStreamUsage(AudioDeviceIOProcID inIOProcID, bool
 {
 	//	make an AudioHardwareIOProcStreamUsage the right size
 	UInt32 theNumberStreams = GetNumberStreams(inIsInput);
-	UInt32 theSize = sizeof(void*) + sizeof(UInt32) + (theNumberStreams * sizeof(UInt32));
+	UInt32 theSize = SizeOf32(void*) + SizeOf32(UInt32) + (theNumberStreams * SizeOf32(UInt32));
 	CAAutoFree<AudioHardwareIOProcStreamUsage> theStreamUsage(theSize);
 	
 	//	set it up
@@ -844,7 +855,7 @@ void	CAHALAudioDevice::SetStereoPanControlValue(AudioObjectPropertyScope inScope
 
 void	CAHALAudioDevice::GetStereoPanControlChannels(AudioObjectPropertyScope inScope, UInt32 inChannel, UInt32& outLeftChannel, UInt32& outRightChannel) const
 {
-	CAPropertyAddress theAddress(kAudioDevicePropertyStereoPan, inScope, inChannel);
+	CAPropertyAddress theAddress(kAudioDevicePropertyStereoPanChannels, inScope, inChannel);
 	UInt32 theValue[2] = { 0, 0 };
 	UInt32 theSize = 2 * sizeof(UInt32);
 	GetPropertyData(theAddress, 0, NULL, theSize, theValue);
@@ -960,7 +971,7 @@ UInt32	CAHALAudioDevice::GetNumberAvailableDataSources(AudioObjectPropertyScope 
 	if(HasProperty(theAddress))
 	{
 		UInt32 theSize = GetPropertyDataSize(theAddress, 0, NULL);
-		theAnswer = theSize / sizeof(UInt32);
+		theAnswer = theSize / SizeOf32(UInt32);
 	}
 	return theAnswer;
 }
@@ -969,9 +980,9 @@ void	CAHALAudioDevice::GetAvailableDataSources(AudioObjectPropertyScope inScope,
 {
 	CAPropertyAddress theAddress(kAudioDevicePropertyDataSources, inScope, inChannel);
 	UInt32 theNumberSources = std::min(GetNumberAvailableDataSources(inScope, inChannel), ioNumberSources);
-	UInt32 theSize = theNumberSources * sizeof(UInt32);
+	UInt32 theSize = theNumberSources * SizeOf32(UInt32);
 	GetPropertyData(theAddress, 0, NULL, theSize, outSources);
-	ioNumberSources = theSize / sizeof(UInt32);
+	ioNumberSources = theSize / SizeOf32(UInt32);
 }
 
 UInt32	CAHALAudioDevice::GetAvailableDataSourceByIndex(AudioObjectPropertyScope inScope, UInt32 inChannel, UInt32 inIndex) const
@@ -1032,7 +1043,7 @@ UInt32	CAHALAudioDevice::GetNumberAvailableDataDestinations(AudioObjectPropertyS
 	if(HasProperty(theAddress))
 	{
 		UInt32 theSize = GetPropertyDataSize(theAddress, 0, NULL);
-		theAnswer = theSize / sizeof(UInt32);
+		theAnswer = theSize / SizeOf32(UInt32);
 	}
 	return theAnswer;
 }
@@ -1041,9 +1052,9 @@ void	CAHALAudioDevice::GetAvailableDataDestinations(AudioObjectPropertyScope inS
 {
 	CAPropertyAddress theAddress(kAudioDevicePropertyPlayThruDestinations, inScope, inChannel);
 	UInt32 theNumberDestinations = std::min(GetNumberAvailableDataDestinations(inScope, inChannel), ioNumberDestinations);
-	UInt32 theSize = theNumberDestinations * sizeof(UInt32);
+	UInt32 theSize = theNumberDestinations * SizeOf32(UInt32);
 	GetPropertyData(theAddress, 0, NULL, theSize, outDestinations);
-	ioNumberDestinations = theSize / sizeof(UInt32);
+	ioNumberDestinations = theSize / SizeOf32(UInt32);
 }
 
 UInt32	CAHALAudioDevice::GetAvailableDataDestinationByIndex(AudioObjectPropertyScope inScope, UInt32 inChannel, UInt32 inIndex) const
@@ -1104,7 +1115,7 @@ UInt32	CAHALAudioDevice::GetNumberAvailableClockSources() const
 	if(HasProperty(theAddress))
 	{
 		UInt32 theSize = GetPropertyDataSize(theAddress, 0, NULL);
-		theAnswer = theSize / sizeof(UInt32);
+		theAnswer = theSize / SizeOf32(UInt32);
 	}
 	return theAnswer;
 }
@@ -1113,9 +1124,9 @@ void	CAHALAudioDevice::GetAvailableClockSources(UInt32& ioNumberSources, UInt32*
 {
 	CAPropertyAddress theAddress(kAudioDevicePropertyClockSources);
 	UInt32 theNumberSources = std::min(GetNumberAvailableClockSources(), ioNumberSources);
-	UInt32 theSize = theNumberSources * sizeof(UInt32);
+	UInt32 theSize = theNumberSources * SizeOf32(UInt32);
 	GetPropertyData(theAddress, 0, NULL, theSize, outSources);
-	ioNumberSources = theSize / sizeof(UInt32);
+	ioNumberSources = theSize / SizeOf32(UInt32);
 }
 
 UInt32	CAHALAudioDevice::GetAvailableClockSourceByIndex(UInt32 inIndex) const
@@ -1144,8 +1155,9 @@ CFStringRef	CAHALAudioDevice::CopyClockSourceNameForID(UInt32 inID) const
 UInt32	CAHALAudioDevice::GetClockSourceKindForID(UInt32 inID) const
 {
 	CAPropertyAddress theAddress(kAudioDevicePropertyClockSourceKindForID);
-	UInt32 theAnswer = inID;
-	UInt32 theSize = sizeof(UInt32);
-	GetPropertyData(theAddress, 0, NULL, theSize, &theAnswer);
+	UInt32 theAnswer = 0;
+	AudioValueTranslation theTranslation = { &inID, sizeof(UInt32), &theAnswer, sizeof(UInt32) };
+	UInt32 theSize = sizeof(AudioValueTranslation);
+	GetPropertyData(theAddress, 0, NULL, theSize, &theTranslation);
 	return theAnswer;
 }

@@ -56,8 +56,8 @@ CAVolumeCurve::CAVolumeCurve()
 	mCurveMap(),
 	mIsApplyingTransferFunction(true),
 	mTransferFunction(kPow2Over1Curve),
-	mRawToScalarExponentNumerator(2.0),
-	mRawToScalarExponentDenominator(1.0)
+	mRawToScalarExponentNumerator(2.0f),
+	mRawToScalarExponentDenominator(1.0f)
 {
 }
 
@@ -92,9 +92,9 @@ SInt32	CAVolumeCurve::GetMaximumRaw() const
 	return theAnswer;
 }
 
-Float64	CAVolumeCurve::GetMinimumDB() const
+Float32	CAVolumeCurve::GetMinimumDB() const
 {
-	Float64 theAnswer = 0;
+	Float32 theAnswer = 0;
 	
 	if(!mCurveMap.empty())
 	{
@@ -105,9 +105,9 @@ Float64	CAVolumeCurve::GetMinimumDB() const
 	return theAnswer;
 }
 
-Float64	CAVolumeCurve::GetMaximumDB() const
+Float32	CAVolumeCurve::GetMaximumDB() const
 {
-	Float64 theAnswer = 0;
+	Float32 theAnswer = 0;
 	
 	if(!mCurveMap.empty())
 	{
@@ -128,109 +128,109 @@ void	CAVolumeCurve::SetTransferFunction(int inTransferFunction)
 	{
 		case kLinearCurve:
 			mIsApplyingTransferFunction = false;
-			mRawToScalarExponentNumerator = 1.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 1.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 			
 		case kPow1Over3Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 1.0;
-			mRawToScalarExponentDenominator = 3.0;
+			mRawToScalarExponentNumerator = 1.0f;
+			mRawToScalarExponentDenominator = 3.0f;
 			break;
 			
 		case kPow1Over2Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 1.0;
-			mRawToScalarExponentDenominator = 2.0;
+			mRawToScalarExponentNumerator = 1.0f;
+			mRawToScalarExponentDenominator = 2.0f;
 			break;
 			
 		case kPow3Over4Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 3.0;
-			mRawToScalarExponentDenominator = 4.0;
+			mRawToScalarExponentNumerator = 3.0f;
+			mRawToScalarExponentDenominator = 4.0f;
 			break;
 			
 		case kPow3Over2Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 3.0;
-			mRawToScalarExponentDenominator = 2.0;
+			mRawToScalarExponentNumerator = 3.0f;
+			mRawToScalarExponentDenominator = 2.0f;
 			break;
 			
 		case kPow2Over1Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 2.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 2.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 			
 		case kPow3Over1Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 3.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 3.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 		
 		case kPow4Over1Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 4.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 4.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 		
 		case kPow5Over1Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 5.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 5.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 		
 		case kPow6Over1Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 6.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 6.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 		
 		case kPow7Over1Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 7.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 7.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 		
 		case kPow8Over1Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 8.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 8.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 		
 		case kPow9Over1Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 9.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 9.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 		
 		case kPow10Over1Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 10.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 10.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 		
 		case kPow11Over1Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 11.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 11.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 		
 		case kPow12Over1Curve:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 12.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 12.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 		
 		default:
 			mIsApplyingTransferFunction = true;
-			mRawToScalarExponentNumerator = 2.0;
-			mRawToScalarExponentDenominator = 1.0;
+			mRawToScalarExponentNumerator = 2.0f;
+			mRawToScalarExponentDenominator = 1.0f;
 			break;
 	};
 }
 
-void	CAVolumeCurve::AddRange(SInt32 inMinRaw, SInt32 inMaxRaw, Float64 inMinDB, Float64 inMaxDB)
+void	CAVolumeCurve::AddRange(SInt32 inMinRaw, SInt32 inMaxRaw, Float32 inMinDB, Float32 inMaxDB)
 {
 	CARawPoint theRaw(inMinRaw, inMaxRaw);
 	CADBPoint theDB(inMinDB, inMaxDB);
@@ -272,16 +272,16 @@ bool	CAVolumeCurve::CheckForContinuity() const
 	if(theIterator != mCurveMap.end())
 	{
 		SInt32 theRaw = theIterator->first.mMinimum;
-		Float64 theDB = theIterator->second.mMinimum;
+		Float32 theDB = theIterator->second.mMinimum;
 		do
 		{
 			SInt32 theRawMin = theIterator->first.mMinimum;
 			SInt32 theRawMax = theIterator->first.mMaximum;
 			SInt32 theRawRange = theRawMax - theRawMin;
 			
-			Float64 theDBMin = theIterator->second.mMinimum;
-			Float64 theDBMax = theIterator->second.mMaximum;
-			Float64 theDBRange = theDBMax - theDBMin;
+			Float32 theDBMin = theIterator->second.mMinimum;
+			Float32 theDBMax = theIterator->second.mMaximum;
+			Float32 theDBRange = theDBMax - theDBMin;
 
 			theAnswer = theRaw == theRawMin;
 			theAnswer = theDB == theDBMin;
@@ -297,11 +297,11 @@ bool	CAVolumeCurve::CheckForContinuity() const
 	return theAnswer;
 }
 
-SInt32	CAVolumeCurve::ConvertDBToRaw(Float64 inDB) const
+SInt32	CAVolumeCurve::ConvertDBToRaw(Float32 inDB) const
 {
 	//	clamp the value to the dB range
-	Float64 theOverallDBMin = GetMinimumDB();
-	Float64 theOverallDBMax = GetMaximumDB();
+	Float32 theOverallDBMin = GetMinimumDB();
+	Float32 theOverallDBMax = GetMaximumDB();
 	
 	if(inDB < theOverallDBMin) inDB = theOverallDBMin;
 	if(inDB > theOverallDBMax) inDB = theOverallDBMax;
@@ -320,11 +320,11 @@ SInt32	CAVolumeCurve::ConvertDBToRaw(Float64 inDB) const
 		SInt32 theRawMax = theIterator->first.mMaximum;
 		SInt32 theRawRange = theRawMax - theRawMin;
 		
-		Float64 theDBMin = theIterator->second.mMinimum;
-		Float64 theDBMax = theIterator->second.mMaximum;
-		Float64 theDBRange = theDBMax - theDBMin;
+		Float32 theDBMin = theIterator->second.mMinimum;
+		Float32 theDBMax = theIterator->second.mMaximum;
+		Float32 theDBRange = theDBMax - theDBMin;
 		
-		Float64 theDBPerRaw = theDBRange / static_cast<Float64>(theRawRange);
+		Float32 theDBPerRaw = theDBRange / static_cast<Float32>(theRawRange);
 		
 		//	figure out how many steps we are into this entry in the curve map
 		if(inDB > theDBMax)
@@ -336,11 +336,11 @@ SInt32	CAVolumeCurve::ConvertDBToRaw(Float64 inDB) const
 		{
 			//	it's somewhere within the current entry
 			//	figure out how many steps it is
-			Float64 theNumberRawSteps = inDB - theDBMin;
+			Float32 theNumberRawSteps = inDB - theDBMin;
 			theNumberRawSteps /= theDBPerRaw;
 			
 			//	only move in whole steps
-			theNumberRawSteps = round(theNumberRawSteps);
+			theNumberRawSteps = roundf(theNumberRawSteps);
 			
 			//	add this many steps to the answer
 			theAnswer += static_cast<SInt32>(theNumberRawSteps);
@@ -356,9 +356,9 @@ SInt32	CAVolumeCurve::ConvertDBToRaw(Float64 inDB) const
 	return theAnswer;
 }
 
-Float64	CAVolumeCurve::ConvertRawToDB(SInt32 inRaw) const
+Float32	CAVolumeCurve::ConvertRawToDB(SInt32 inRaw) const
 {
-	Float64 theAnswer = 0;
+	Float32 theAnswer = 0;
 	
 	//	clamp the raw value
 	SInt32 theOverallRawMin = GetMinimumRaw();
@@ -384,11 +384,11 @@ Float64	CAVolumeCurve::ConvertRawToDB(SInt32 inRaw) const
 		SInt32 theRawMax = theIterator->first.mMaximum;
 		SInt32 theRawRange = theRawMax - theRawMin;
 		
-		Float64 theDBMin = theIterator->second.mMinimum;
-		Float64 theDBMax = theIterator->second.mMaximum;
-		Float64 theDBRange = theDBMax - theDBMin;
+		Float32 theDBMin = theIterator->second.mMinimum;
+		Float32 theDBMax = theIterator->second.mMaximum;
+		Float32 theDBRange = theDBMax - theDBMin;
 		
-		Float64 theDBPerRaw = theDBRange / static_cast<Float64>(theRawRange);
+		Float32 theDBPerRaw = theDBRange / static_cast<Float32>(theRawRange);
 		
 		//	there might be more steps than the current map entry accounts for
 		SInt32 theRawStepsToAdd = std::min(theRawRange, theNumberRawSteps);
@@ -406,12 +406,12 @@ Float64	CAVolumeCurve::ConvertRawToDB(SInt32 inRaw) const
 	return theAnswer;
 }
 
-Float64	CAVolumeCurve::ConvertRawToScalar(SInt32 inRaw) const
+Float32	CAVolumeCurve::ConvertRawToScalar(SInt32 inRaw) const
 {
 	//	get some important values
-	Float64	theDBMin = GetMinimumDB();
-	Float64	theDBMax = GetMaximumDB();
-	Float64	theDBRange = theDBMax - theDBMin;
+	Float32	theDBMin = GetMinimumDB();
+	Float32	theDBMax = GetMaximumDB();
+	Float32	theDBRange = theDBMax - theDBMin;
 	SInt32	theRawMin = GetMinimumRaw();
 	SInt32	theRawMax = GetMaximumRaw();
 	SInt32	theRawRange = theRawMax - theRawMin;
@@ -421,46 +421,46 @@ Float64	CAVolumeCurve::ConvertRawToScalar(SInt32 inRaw) const
 	if(inRaw > theRawMax) inRaw = theRawMax;
 
 	//	calculate the distance in the range inRaw is
-	Float64 theAnswer = static_cast<Float64>(inRaw - theRawMin) / static_cast<Float64>(theRawRange);
+	Float32 theAnswer = static_cast<Float32>(inRaw - theRawMin) / static_cast<Float32>(theRawRange);
 
 	//	only apply a curve to the scalar values if the dB range is greater than 30
-	if(mIsApplyingTransferFunction && (theDBRange > 30.0))
+	if(mIsApplyingTransferFunction && (theDBRange > 30.0f))
 	{
-		theAnswer = pow(theAnswer, mRawToScalarExponentNumerator / mRawToScalarExponentDenominator);
+		theAnswer = powf(theAnswer, mRawToScalarExponentNumerator / mRawToScalarExponentDenominator);
 	}
 
 	return theAnswer;
 }
 
-Float64	CAVolumeCurve::ConvertDBToScalar(Float64 inDB) const
+Float32	CAVolumeCurve::ConvertDBToScalar(Float32 inDB) const
 {
 	SInt32 theRawValue = ConvertDBToRaw(inDB);
-	Float64 theAnswer = ConvertRawToScalar(theRawValue);
+	Float32 theAnswer = ConvertRawToScalar(theRawValue);
 	return theAnswer;
 }
 
-SInt32	CAVolumeCurve::ConvertScalarToRaw(Float64 inScalar) const
+SInt32	CAVolumeCurve::ConvertScalarToRaw(Float32 inScalar) const
 {
 	//	range the scalar value
-	inScalar = std::min(1.0, std::max(0.0, inScalar));
+	inScalar = std::min(1.0f, std::max(0.0f, inScalar));
 	
 	//	get some important values
-	Float64	theDBMin = GetMinimumDB();
-	Float64	theDBMax = GetMaximumDB();
-	Float64	theDBRange = theDBMax - theDBMin;
+	Float32	theDBMin = GetMinimumDB();
+	Float32	theDBMax = GetMaximumDB();
+	Float32	theDBRange = theDBMax - theDBMin;
 	SInt32	theRawMin = GetMinimumRaw();
 	SInt32	theRawMax = GetMaximumRaw();
 	SInt32	theRawRange = theRawMax - theRawMin;
 	
 	//	have to undo the curve if the dB range is greater than 30
-	if(mIsApplyingTransferFunction && (theDBRange > 30.0))
+	if(mIsApplyingTransferFunction && (theDBRange > 30.0f))
 	{
-		inScalar = pow(inScalar, mRawToScalarExponentDenominator / mRawToScalarExponentNumerator);
+		inScalar = powf(inScalar, mRawToScalarExponentDenominator / mRawToScalarExponentNumerator);
 	}
 	
 	//	now we can figure out how many raw steps this is
-	Float64 theNumberRawSteps = inScalar * static_cast<Float64>(theRawRange);
-	theNumberRawSteps = round(theNumberRawSteps);
+	Float32 theNumberRawSteps = inScalar * static_cast<Float32>(theRawRange);
+	theNumberRawSteps = roundf(theNumberRawSteps);
 	
 	//	the answer is the minimum raw value plus the number of raw steps
 	SInt32 theAnswer = theRawMin + static_cast<SInt32>(theNumberRawSteps);
@@ -468,9 +468,9 @@ SInt32	CAVolumeCurve::ConvertScalarToRaw(Float64 inScalar) const
 	return theAnswer;
 }
 
-Float64	CAVolumeCurve::ConvertScalarToDB(Float64 inScalar) const
+Float32	CAVolumeCurve::ConvertScalarToDB(Float32 inScalar) const
 {
 	SInt32 theRawValue = ConvertScalarToRaw(inScalar);
-	Float64 theAnswer = ConvertRawToDB(theRawValue);
+	Float32 theAnswer = ConvertRawToDB(theRawValue);
 	return theAnswer;
 }

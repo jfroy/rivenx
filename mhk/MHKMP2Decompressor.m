@@ -245,7 +245,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     _packet_count = 0;
     
     // start with say 1000 packets
-    size_t packet_table_length = 1000;
+    ssize_t packet_table_length = 1000;
     _packet_table = calloc(packet_table_length, sizeof(AudioStreamPacketDescription));
     if (!_packet_table) {
         free(read_buffer);
@@ -281,7 +281,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
             }
             
             // compute the frame length to seek to the next frame
-            uint32_t frame_length = _compute_mpeg_audio_frame_length(mpeg_header);
+            size_t frame_length = _compute_mpeg_audio_frame_length(mpeg_header);
                             
             // load up the packet description entry
             _packet_table[_packet_count].mStartOffset = source_position - size_left_in_buffer;
@@ -306,7 +306,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
             }
             
             // if the whole frame isn't in the buffer, fill it up
-            if (size_left_in_buffer < frame_length) {
+            if ((size_t)size_left_in_buffer < frame_length) {
                 memmove(read_buffer, read_buffer + buffer_position, size_left_in_buffer);
                 
                 size_left_in_buffer += [_data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:&local_error];
@@ -531,16 +531,16 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     
     // bytes_to_decompress is a fixed quantity which is set to the total number
     // of bytes to copy into the ABL
-    UInt32 bytes_to_decompress = abl->mBuffers[0].mDataByteSize;
+    size_t bytes_to_decompress = abl->mBuffers[0].mDataByteSize;
     assert(bytes_to_decompress % _decomp_absd.mBytesPerFrame == 0);
     
     // decompressed_bytes tracks the number of bytes that have been copied into
     // the ABL, and is essentially the ABL buffer offset
-    UInt32 decompressed_bytes = 0;
+    size_t decompressed_bytes = 0;
     
     // available_bytes is a volatile quatity used to track available bytes to
     // copy into the ABL buffer
-    UInt32 bytes_to_copy = 0;
+    size_t bytes_to_copy = 0;
     
     // if we have frames left from the last fill, copy them in
     if (_decompression_buffer_available > 0) {
@@ -592,7 +592,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
                 goto AbortFill;
             
             // compute the length of an integral number of packets that we can read, up to 50 packets
-            UInt32 bytes_to_read = _max_packet_size * 50;
+            uint32_t bytes_to_read = _max_packet_size * 50;
             if (bytes_to_read > [_data_source length] - [_data_source offsetInFile]) {
                 // explicit cast OK here, API limited to 32-bit read sizes
                 bytes_to_read = (UInt32)((([_data_source length] - [_data_source offsetInFile]) / _max_packet_size) * _max_packet_size);
@@ -600,7 +600,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
             
             // read the packets
             ssize_t bytes_read = [_data_source readDataOfLength:bytes_to_read inBuffer:_packet_buffer error:nil];
-            if (bytes_read != bytes_to_read)
+            if ((size_t)bytes_read != bytes_to_read)
                 goto AbortFill;
             
             // reset the packet buffer state

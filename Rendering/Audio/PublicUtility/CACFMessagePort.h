@@ -67,12 +67,14 @@ public:
 public:
 	bool				IsValid() const { return mMessagePort != NULL; }
 	CFMessagePortRef	GetMessagePortRef() const { return mMessagePort; }
-	CFRunLoopSourceRef	GetRunLoopSource() const { return mRunLoopSource; }
+	CFRunLoopSourceRef	GetRunLoopSource() const;
+	void				SetDispatchQueue(dispatch_queue_t inDispatchQueue);
 
 //	Implementation
 protected:
 	CFMessagePortRef	mMessagePort;
 	CFRunLoopSourceRef	mRunLoopSource;
+	dispatch_queue_t	mDispatchQueue;
 
 };
 
@@ -92,7 +94,8 @@ public:
 public:
 	bool				IsValid() const { return mMessagePort != NULL; }
 	CFMessagePortRef	GetMessagePortRef() const { return mMessagePort; }
-	CFRunLoopSourceRef	GetRunLoopSource() const { return mRunLoopSource; }
+	CFRunLoopSourceRef	GetRunLoopSource() const;
+	void				SetDispatchQueue(dispatch_queue_t inDispatchQueue);
 
 //	Operations
 public:
@@ -103,6 +106,7 @@ public:
 protected:
 	CFMessagePortRef	mMessagePort;
 	CFRunLoopSourceRef	mRunLoopSource;
+	dispatch_queue_t	mDispatchQueue;
 
 };
 

@@ -169,7 +169,7 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
     uint8_t* local_adpcm_buffer = adpcm_buffer;
     
     // ask the data source to read the compressed samples, and recompute frames_to_decompress
-    ssize_t read_length = [data_source readDataOfLength:bitstream_length inBuffer:adpcm_buffer error:nil];
+    int32_t read_length = (int32_t)[data_source readDataOfLength:bitstream_length inBuffer:adpcm_buffer error:nil];
     
     // we need an external read loop because of the fixed size read buffer
     uint32_t decompressed_frames = 0;
@@ -251,7 +251,7 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
             bitstream_length = READ_BUFFER_SIZE;
         
         // read some more data
-        read_length = [data_source readDataOfLength:bitstream_length inBuffer:adpcm_buffer error:nil];
+        read_length = (int32_t)[data_source readDataOfLength:bitstream_length inBuffer:adpcm_buffer error:nil];
         
         // reset the local adpcm buffer pointer
         local_adpcm_buffer = adpcm_buffer;

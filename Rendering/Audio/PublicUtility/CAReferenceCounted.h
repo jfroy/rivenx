@@ -65,13 +65,16 @@ protected:
 			{ 
 				delete this; 
 			}
-	
+
+#if DEBUG
+public:
+#endif
 	SInt32	GetReferenceCount() const { return mRefCount; }
 private:
 	SInt32		mRefCount;
 
-	CAReferenceCounted(const CAReferenceCounted &a) : mRefCount(0) { }
-	CAReferenceCounted &operator=(const CAReferenceCounted &a) { return *this; }
+	CAReferenceCounted(const CAReferenceCounted &a);
+	CAReferenceCounted &operator=(const CAReferenceCounted &a);
 };
 
 

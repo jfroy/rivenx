@@ -189,9 +189,9 @@
     
     soundDescriptor = [NSDictionary dictionaryWithObjectsAndKeys:@"tWAV", @"Type", 
         [NSNumber numberWithLongLong:file_offset], @"Samples Absolute Offset", 
-        [NSNumber numberWithUnsignedLong:samples_length], @"Samples Length", 
+        [NSNumber numberWithUnsignedInt:samples_length], @"Samples Length", 
         [NSNumber numberWithUnsignedShort:data_header.sampling_rate], @"Sampling Rate", 
-        [NSNumber numberWithUnsignedLong:data_header.frame_count], @"Frame Count", 
+        [NSNumber numberWithUnsignedInt:data_header.frame_count], @"Frame Count", 
         [NSNumber numberWithUnsignedChar:data_header.bit_depth], @"Bit Depth", 
         [NSNumber numberWithUnsignedChar:data_header.channel_count], @"Channel Count", 
         [NSNumber numberWithUnsignedShort:data_header.compression_type], @"Compression Type", 
@@ -222,7 +222,7 @@
         return nil;
     
     uint16_t compression_type = [[soundDescriptor objectForKey:@"Compression Type"] unsignedShortValue];
-    UInt32 channels = [[soundDescriptor objectForKey:@"Channel Count"] unsignedLongValue];
+    UInt32 channels = [[soundDescriptor objectForKey:@"Channel Count"] unsignedIntValue];
     SInt64 frames = [[soundDescriptor objectForKey:@"Frame Count"] longLongValue];
     double sr = [[soundDescriptor objectForKey:@"Sampling Rate"] doubleValue];
     

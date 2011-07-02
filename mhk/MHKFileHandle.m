@@ -30,7 +30,7 @@
     
     __offset = [[desc objectForKey:@"Offset"] longLongValue];
     __position = 0;
-    __length = [[desc objectForKey:@"Length"] unsignedLongValue];
+    __length = [[desc objectForKey:@"Length"] unsignedIntValue];
     
     return self;
 }
@@ -46,7 +46,7 @@
     
     __offset = [[sdesc objectForKey:@"Samples Absolute Offset"] longLongValue];
     __position = 0;
-    __length = [[sdesc objectForKey:@"Samples Length"] unsignedLongValue];
+    __length = [[sdesc objectForKey:@"Samples Length"] unsignedIntValue];
     
     return self;
 }
@@ -84,7 +84,7 @@
         length = __length - __position;
     
     // read the data from the file
-    UInt32 bytes_read = 0;
+    ByteCount bytes_read = 0;
     OSStatus err = FSReadFork(__forkRef, fsFromStart | forceReadMask, __offset + __position, length, buffer, &bytes_read);
     if (err && err != eofErr)
         ReturnValueWithError(-1, NSOSStatusErrorDomain, err, nil, error);

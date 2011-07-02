@@ -82,18 +82,20 @@ public:
 #if	TARGET_OS_MAC
 							kMinThreadPriority = 1,
 							kMaxThreadPriority = 63,
-							kDefaultThreadPriority = 31
+							kDefaultThreadPriority = 31,
+							kMaxThreadNameLength = 64
 #elif TARGET_OS_WIN32
 							kMinThreadPriority = 1,
 							kMaxThreadPriority = 31,
-							kDefaultThreadPriority = THREAD_PRIORITY_NORMAL
+							kDefaultThreadPriority = THREAD_PRIORITY_NORMAL,
+							kMaxThreadNameLength = 256
 #endif
 	};
 
 //	Construction/Destruction
 public:
-							CAPThread(ThreadRoutine inThreadRoutine, void* inParameter, UInt32 inPriority = kDefaultThreadPriority, bool inFixedPriority=false, bool inAutoDelete=false);
-							CAPThread(ThreadRoutine inThreadRoutine, void* inParameter, UInt32 inPeriod, UInt32 inComputation, UInt32 inConstraint, bool inIsPreemptible, bool inAutoDelete=false);
+							CAPThread(ThreadRoutine inThreadRoutine, void* inParameter, UInt32 inPriority = kDefaultThreadPriority, bool inFixedPriority=false, bool inAutoDelete=false, const char* inThreadName = NULL);
+							CAPThread(ThreadRoutine inThreadRoutine, void* inParameter, UInt32 inPeriod, UInt32 inComputation, UInt32 inConstraint, bool inIsPreemptible, bool inAutoDelete=false, const char* inThreadName = NULL);
 	virtual					~CAPThread();
 
 //	Properties
@@ -130,6 +132,7 @@ public:
 
 	UInt32					GetPriority() const { return mPriority; }
     UInt32					GetScheduledPriority();
+	static UInt32			GetScheduledPriority(NativeThread thread);
     void					SetPriority(UInt32 inPriority, bool inFixedPriority=false);
 
 	void					GetTimeConstraints(UInt32& outPeriod, UInt32& outComputation, UInt32& outConstraint, bool& outIsPreemptible) const { outPeriod = mPeriod; outComputation = mComputation; outConstraint = mConstraint; outIsPreemptible = mIsPreemptible; }
@@ -138,11 +141,13 @@ public:
 	
 	bool					WillAutoDelete() const { return mAutoDelete; }
 	void					SetAutoDelete(bool b) { mAutoDelete = b; }
+	
+	void					SetName(const char* inThreadName);
 
 #if CoreAudio_Debug	
 	void					DebugPriority(const char *label);
 #endif
-	
+
 //	Actions
 public:
 	virtual void			Start();
@@ -165,6 +170,7 @@ protected:
 #endif
 	ThreadRoutine			mThreadRoutine;
 	void*					mThreadParameter;
+	char					mThreadName[kMaxThreadNameLength];
 	SInt32					mPriority;
 	UInt32					mPeriod;
 	UInt32					mComputation;

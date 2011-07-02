@@ -42,7 +42,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string></string>
+	<string>1</string>
 	<key>LSEnvironment</key>
 	<dict>
 		<key>MinimumSystemVersion</key>

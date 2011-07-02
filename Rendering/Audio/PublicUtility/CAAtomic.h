@@ -53,6 +53,8 @@ full barrier.
 #if TARGET_OS_WIN32
 	#include <windows.h>
 	#include <intrin.h>
+	#pragma intrinsic(_InterlockedOr)
+	#pragma intrinsic(_InterlockedAnd)
 #else
 	#include <CoreFoundation/CFBase.h>
 	#include <libkern/OSAtomic.h>
@@ -238,9 +240,18 @@ inline int32_t CAAtomicDecrement32Barrier(volatile int32_t* theValue)
 #if __LP64__
 inline bool CAAtomicCompareAndSwap64Barrier( int64_t __oldValue, int64_t __newValue, volatile int64_t *__theValue )
 {
-	return OSAtomicCompareAndSwap64Barrier(__oldValue, __newValue, __theValue );
+	return OSAtomicCompareAndSwap64Barrier(__oldValue, __newValue, __theValue);
 }
 #endif
+
+inline bool CAAtomicCompareAndSwapPtrBarrier(void *__oldValue, void *__newValue, volatile void ** __theValue)
+{
+#if __LP64__
+	return CAAtomicCompareAndSwap64Barrier((int64_t)__oldValue, (int64_t)__newValue, (int64_t *)__theValue);
+#else
+	return CAAtomicCompareAndSwap32Barrier((int32_t)__oldValue, (int32_t)__newValue, (int32_t *)__theValue);
+#endif
+}
 
 /* Spinlocks.  These use memory barriers as required to synchronize access to shared
  * memory protected by the lock.  The lock operation spins, but employs various strategies

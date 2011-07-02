@@ -185,7 +185,9 @@
     audioRenderer->Start();
     
     // initialize QuickTime
+#if !__LP64__
     EnterMovies();
+#endif
 }
 
 @end

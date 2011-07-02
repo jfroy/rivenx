@@ -45,7 +45,9 @@
 //	Includes
 //==================================================================================================
 
+//	System Includes
 #include <CoreFoundation/CFMachPort.h>
+#include <mach/mach.h>
 
 //==================================================================================================
 //	CACFMachPort
@@ -72,6 +74,10 @@ public:
 	CFMachPortRef		GetMachPortRef() const { return mMachPort; }
 	mach_port_t			GetMachPort() const { return CFMachPortGetPort(mMachPort); }
 	CFRunLoopSourceRef	GetRunLoopSource() const { return mRunLoopSource; }
+
+//	Operations
+public:
+	kern_return_t		ReceiveMessage(UInt32 inMaxMessageSize, mach_msg_header_t* outMessage, mach_msg_timeout_t inTimeOut);
 
 //	Implementation
 protected:

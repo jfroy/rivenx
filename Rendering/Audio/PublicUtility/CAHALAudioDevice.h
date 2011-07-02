@@ -122,6 +122,10 @@ public:
 	bool				HasIOBufferSizeRange() const;
 	void				GetIOBufferSizeRange(UInt32& outMinimum, UInt32& outMaximum) const;
 	AudioDeviceIOProcID	CreateIOProcID(AudioDeviceIOProc inIOProc, void* inClientData);
+#if 0
+//#if defined(__BLOCKS__) && (__MAC_OS_X_VERSION_MAX_ALLOWED > __MAC_10_6)
+	AudioDeviceIOProcID	CreateIOProcIDWithBlock(dispatch_queue_t inDispatchQueue, AudioDeviceIOBlock inIOBlock);
+#endif
 	void				DestroyIOProcID(AudioDeviceIOProcID inIOProcID);
 	void				StartIOProc(AudioDeviceIOProcID inIOProcID);
 	void				StartIOProcAtTime(AudioDeviceIOProcID inIOProcID, AudioTimeStamp& ioStartTime, bool inIsInput, bool inIgnoreHardware);

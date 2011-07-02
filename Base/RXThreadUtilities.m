@@ -15,63 +15,18 @@
 #import "Utilities/InterThreadMessaging.h"
 #import "Utilities/GTMSystemVersion.h"
 
-static pthread_key_t rx_thread_storage_key = 0;
 
-static void _RXReleaseThreadStorage(void* p) {
-    struct rx_thread_storage* storage = (struct rx_thread_storage*)p;
-    if (storage->name)
-        free(storage->name);
-    free(storage);
+char* RXCopyThreadName(void)
+{
+    char* name = malloc(128);
+    name[0] = 0;
+    pthread_getname_np(pthread_self(), name, 128);
+    return name;
 }
 
-static struct rx_thread_storage* _RXCreateThreadStorage() {
-    struct rx_thread_storage* storage = calloc(1, sizeof(struct rx_thread_storage));
-    pthread_setspecific(rx_thread_storage_key, storage);
-    return storage;
-}
-
-struct rx_thread_storage* RXGetThreadStorage() {
-    assert(rx_thread_storage_key);
-    struct rx_thread_storage* storage = (struct rx_thread_storage*)pthread_getspecific(rx_thread_storage_key);
-    if (storage == NULL)
-        storage = _RXCreateThreadStorage();
-    return storage;
-}
-
-void RXInitThreading() {
-    if (!pthread_main_np()) {
-        RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"RXInitThreading must be called on the main thread");
-        abort();
-    }
-    
-    // if the thread storage key is not 0, we've initialized threading
-    if (rx_thread_storage_key)
-        return;
-    
-    pthread_key_create(&rx_thread_storage_key, _RXReleaseThreadStorage);
-}
-
-char const*  RXGetThreadName(void) {
-    return RXGetThreadStorage()->name;
-}
-
-void RXSetThreadName(char const* name) {
-    struct rx_thread_storage* ts = RXGetThreadStorage();
-    
-    size_t size = strlen(name) + 1;
-    if (ts->name)
-        free(ts->name);
-    ts->name = malloc(size);
-    strlcpy(ts->name, name, size);
-    
-    if ([GTMSystemVersion isLeopardOrGreater]) {
-        NSString* nsName = [[NSString alloc] initWithCStringNoCopy:ts->name length:size-1 freeWhenDone:NO];
-        [[NSThread currentThread] setName:nsName];
-        [nsName release];
-    }
-    
-    if ([GTMSystemVersion isSnowLeopardOrGreater])
-        pthread_setname_np(ts->name);
+void RXSetThreadName(char const* name)
+{
+    pthread_setname_np(name);
 }
 
 void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name) {
@@ -105,5 +60,5 @@ void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name) {
     
     // clean up
     ExitMoviesOnThread();
-    [p release];
+    [p drain];
 }

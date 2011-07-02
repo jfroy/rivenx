@@ -136,3 +136,27 @@ CACFMachPort::~CACFMachPort()
 		CFRelease(mMachPort);
 	}
 }
+
+kern_return_t	CACFMachPort::ReceiveMessage(UInt32 inMaxMessageSize, mach_msg_header_t* outMessage, mach_msg_timeout_t inTimeOut)
+{
+	//	snag the port
+	mach_port_t thePort = CFMachPortGetPort(mMachPort);
+
+	//	fill out the message header
+	outMessage->msgh_bits = 0;
+	outMessage->msgh_size = 0;
+	outMessage->msgh_remote_port = MACH_PORT_NULL;
+	outMessage->msgh_local_port = thePort;
+	outMessage->msgh_reserved = 0;
+	outMessage->msgh_id = 0;
+
+	//	figure the options
+	mach_msg_options_t theOptions = MACH_RCV_MSG;
+	if(inTimeOut > 0)
+	{
+		theOptions |= MACH_RCV_TIMEOUT;
+	}
+	
+	//	receive the messsage
+	return mach_msg(outMessage, theOptions, 0, inMaxMessageSize, thePort, inTimeOut, MACH_PORT_NULL);
+}

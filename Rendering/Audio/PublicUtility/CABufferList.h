@@ -73,16 +73,22 @@ public:
 		UInt32 numBuffers = format.NumberChannelStreams(), channelsPerBuffer = format.NumberInterleavedChannels();
 		return new(numBuffers) CABufferList(name, numBuffers, channelsPerBuffer);
 	}
+	static CABufferList *	New(const CAStreamBasicDescription &format) { return New("", format); }
+
+	static CABufferList *	New(UInt32 numBuffers, UInt32 channelsPerBuffer, const char *name="") {
+		return new(numBuffers) CABufferList(name, numBuffers, channelsPerBuffer);
+	}
 
 protected:
 	CABufferList(const char *name, UInt32 numBuffers, UInt32 channelsPerBuffer) :
 		mName(name),
-		mBufferMemory(NULL)
+		mBufferMemory(NULL),
+		mBufferCapacity(0)
 	{
 		//XAssert(numBuffers > 0 /*&& channelsPerBuffer > 0*/);
-		mNumberBuffers = numBuffers;
-		AudioBuffer *buf = mBuffers;
-		for (UInt32 i = mNumberBuffers; i--; ++buf) {
+		mABL.mNumberBuffers = numBuffers;
+		AudioBuffer *buf = mABL.mBuffers;
+		for (UInt32 i = mABL.mNumberBuffers; i--; ++buf) {
 			buf->mNumberChannels = channelsPerBuffer;
 			buf->mDataByteSize = 0;
 			buf->mData = NULL;
@@ -98,27 +104,23 @@ public:
 	
 	const char *				Name() { return mName; }
 	
-	const AudioBufferList &		GetBufferList() const { return *(AudioBufferList *)&mNumberBuffers; }
+	const AudioBufferList &		GetBufferList() const { return mABL; }
 	
-	AudioBufferList &			GetModifiableBufferList()
-	{
-		VerifyNotTrashingOwnedBuffer();
-		return _GetBufferList();
-	}
+	AudioBufferList &			GetModifiableBufferList() { return _GetBufferList(); }
 	
-	UInt32		GetNumberBuffers() const { return mNumberBuffers; }
+	UInt32		GetNumberBuffers() const { return mABL.mNumberBuffers; }
 	
 	UInt32		GetNumBytes() const
 	{
-		return mBuffers[0].mDataByteSize;
+		return mABL.mBuffers[0].mDataByteSize;
 	}
 	
 	void		SetBytes(UInt32 nBytes, void *data)
 	{
 		VerifyNotTrashingOwnedBuffer();
-		XAssert(mNumberBuffers == 1);
-		mBuffers[0].mDataByteSize = nBytes;
-		mBuffers[0].mData = data;
+		XAssert(mABL.mNumberBuffers == 1);
+		mABL.mBuffers[0].mDataByteSize = nBytes;
+		mABL.mBuffers[0].mData = data;
 	}
 	
 	void		CopyAllFrom(CABufferList *srcbl, CABufferList *ptrbl)
@@ -132,9 +134,9 @@ public:
 		// of the copied data, and srcbl's contents are consumed.
 		ptrbl->VerifyNotTrashingOwnedBuffer();
 		UInt32 nBytes = srcbl->GetNumBytes();
-		AudioBuffer *mybuf = mBuffers, *srcbuf = srcbl->mBuffers,
-					*ptrbuf = ptrbl->mBuffers;
-		for (UInt32 i = mNumberBuffers; i--; ++mybuf, ++srcbuf, ++ptrbuf) {
+		AudioBuffer *mybuf = mABL.mBuffers, *srcbuf = srcbl->mABL.mBuffers,
+					*ptrbuf = ptrbl->mABL.mBuffers;
+		for (UInt32 i = mABL.mNumberBuffers; i--; ++mybuf, ++srcbuf, ++ptrbuf) {
 			memmove(mybuf->mData, srcbuf->mData, srcbuf->mDataByteSize);
 			ptrbuf->mData = mybuf->mData;
 			ptrbuf->mDataByteSize = srcbuf->mDataByteSize;
@@ -143,12 +145,23 @@ public:
 			srcbl->BytesConsumed(nBytes);
 	}
 	
+	// copies data from another buffer list.
+	void		CopyDataFrom(const AudioBufferList &other)
+	{
+		for (unsigned i = 0; i < other.mNumberBuffers; ++i) {
+			XAssert(mBufferCapacity == 0 || other.mBuffers[i].mDataByteSize <= mBufferCapacity);
+			memcpy(mABL.mBuffers[i].mData, other.mBuffers[i].mData, 
+				mABL.mBuffers[i].mDataByteSize = other.mBuffers[i].mDataByteSize);
+		}
+	}
+	
 	void		AppendFrom(CABufferList *blp, UInt32 nBytes)
 	{
-		VerifyNotTrashingOwnedBuffer();
-		AudioBuffer *mybuf = mBuffers, *srcbuf = blp->mBuffers;
-		for (UInt32 i = mNumberBuffers; i--; ++mybuf, ++srcbuf) {
+		// this may mutate a buffer that owns memory.
+		AudioBuffer *mybuf = mABL.mBuffers, *srcbuf = blp->mABL.mBuffers;
+		for (UInt32 i = mABL.mNumberBuffers; i--; ++mybuf, ++srcbuf) {
 			XAssert(nBytes <= srcbuf->mDataByteSize);
+			XAssert(mBufferCapacity == 0 || mybuf->mDataByteSize + nBytes <= mBufferCapacity);
 			memcpy((Byte *)mybuf->mData + mybuf->mDataByteSize, srcbuf->mData, nBytes);
 			mybuf->mDataByteSize += nBytes;
 		}
@@ -159,10 +172,10 @@ public:
 					// for cases where an algorithm (e.g. SRC) requires some
 					// padding to create silence following end-of-file
 	{
-		VerifyNotTrashingOwnedBuffer();
+		XAssert(mBufferCapacity == 0 || desiredBufferSize <= mBufferCapacity);
 		if (GetNumBytes() > desiredBufferSize) return;
-		AudioBuffer *buf = mBuffers;
-		for (UInt32 i = mNumberBuffers; i--; ++buf) {
+		AudioBuffer *buf = mABL.mBuffers;
+		for (UInt32 i = mABL.mNumberBuffers; i--; ++buf) {
 			memset((Byte *)buf->mData + buf->mDataByteSize, 0, desiredBufferSize - buf->mDataByteSize);
 			buf->mDataByteSize = desiredBufferSize;
 		}
@@ -170,9 +183,9 @@ public:
 	
 	void		SetToZeroes(UInt32 nBytes)
 	{
-		VerifyNotTrashingOwnedBuffer();
-		AudioBuffer *buf = mBuffers;
-		for (UInt32 i = mNumberBuffers; i--; ++buf) {
+		XAssert(mBufferCapacity == 0 || nBytes <= mBufferCapacity);
+		AudioBuffer *buf = mABL.mBuffers;
+		for (UInt32 i = mABL.mNumberBuffers; i--; ++buf) {
 			memset((Byte *)buf->mData, 0, nBytes);
 			buf->mDataByteSize = nBytes;
 		}
@@ -183,13 +196,13 @@ public:
 		DeallocateBuffers();
 	}
 	
-	Boolean SameDataAs(const CABufferList* anotherBufferList)
+	Boolean		SameDataAs(const CABufferList* anotherBufferList)
 	{
 		// check to see if two buffer lists point to the same memory.
-		if (mNumberBuffers != anotherBufferList->mNumberBuffers) return false;
+		if (mABL.mNumberBuffers != anotherBufferList->mABL.mNumberBuffers) return false;
 		
-		for (UInt32 i = 0; i < mNumberBuffers; ++i) {
-			if (mBuffers[i].mData != anotherBufferList->mBuffers[i].mData) return false;
+		for (UInt32 i = 0; i < mABL.mNumberBuffers; ++i) {
+			if (mABL.mBuffers[i].mData != anotherBufferList->mABL.mBuffers[i].mData) return false;
 		}
 		return true;
 	}
@@ -198,8 +211,8 @@ public:
 					// advance buffer pointers, decrease buffer sizes
 	{
 		VerifyNotTrashingOwnedBuffer();
-		AudioBuffer *buf = mBuffers;
-		for (UInt32 i = mNumberBuffers; i--; ++buf) {
+		AudioBuffer *buf = mABL.mBuffers;
+		for (UInt32 i = mABL.mNumberBuffers; i--; ++buf) {
 			XAssert(nBytes <= buf->mDataByteSize);
 			buf->mData = (Byte *)buf->mData + nBytes;
 			buf->mDataByteSize -= nBytes;
@@ -220,9 +233,9 @@ public:
 	void		SetFrom(const AudioBufferList *abl, UInt32 nBytes)
 	{
 		VerifyNotTrashingOwnedBuffer();
-		AudioBuffer *mybuf = mBuffers;
+		AudioBuffer *mybuf = mABL.mBuffers;
 		const AudioBuffer *srcbuf = abl->mBuffers;
-		for (UInt32 i = mNumberBuffers; i--; ++mybuf, ++srcbuf) {
+		for (UInt32 i = mABL.mNumberBuffers; i--; ++mybuf, ++srcbuf) {
 			mybuf->mNumberChannels = srcbuf->mNumberChannels;
 			mybuf->mDataByteSize = nBytes;
 			mybuf->mData = srcbuf->mData;
@@ -236,7 +249,7 @@ public:
 	
 	AudioBufferList *	ToAudioBufferList(AudioBufferList *abl) const
 	{
-		memcpy(abl, &GetBufferList(), (char *)&abl->mBuffers[mNumberBuffers] - (char *)abl);
+		memcpy(abl, &GetBufferList(), (char *)&abl->mBuffers[mABL.mNumberBuffers] - (char *)abl);
 		return abl;
 	}
 	
@@ -247,14 +260,14 @@ public:
 	
 	void		UseExternalBuffer(Byte *ptr, UInt32 nBytes);
     
-	void		AdvanceBufferPointers(UInt32 nBytes)
+	void		AdvanceBufferPointers(UInt32 nBytes) // $$$ ReducingSize
 					// this is for bufferlists that function simply as
 					// an array of pointers into another bufferlist, being advanced,
 					// as in RenderOutput implementations
 	{
 		VerifyNotTrashingOwnedBuffer();
-		AudioBuffer *buf = mBuffers;
-		for (UInt32 i = mNumberBuffers; i--; ++buf) {
+		AudioBuffer *buf = mABL.mBuffers;
+		for (UInt32 i = mABL.mNumberBuffers; i--; ++buf) {
 			buf->mData = (Byte *)buf->mData + nBytes;
 			buf->mDataByteSize -= nBytes;
 		}
@@ -262,9 +275,9 @@ public:
 	
 	void		SetNumBytes(UInt32 nBytes)
 	{
-		VerifyNotTrashingOwnedBuffer();
-		AudioBuffer *buf = mBuffers;
-		for (UInt32 i = mNumberBuffers; i--; ++buf)
+		XAssert(mBufferCapacity == 0 || nBytes <= mBufferCapacity);
+		AudioBuffer *buf = mABL.mBuffers;
+		for (UInt32 i = mABL.mNumberBuffers; i--; ++buf)
 			buf->mDataByteSize = nBytes;
 	}
 
@@ -277,22 +290,24 @@ public:
 		if (mBufferMemory)
 			printf("  owned memory @ 0x%p:\n", mBufferMemory);
 	}
+	
+	UInt32		GetCapacityBytes() const { return mBufferCapacity; }
 
 protected:
-	AudioBufferList &	_GetBufferList() { return *(AudioBufferList *)&mNumberBuffers; }	// use with care
+	AudioBufferList &	_GetBufferList() { return mABL; }	// use with care
 							// if we make this public, then we lose ability to call VerifyNotTrashingOwnedBuffer
 	void				VerifyNotTrashingOwnedBuffer()
 	{
-		// This needs to be called from places where we are modifying the buffer list.
+		// This needs to be called from places where we are modifying the buffer pointers.
 		// It's an error to modify the buffer pointers or lengths if we own the buffer memory.
 		XAssert(mBufferMemory == NULL);
 	}
 
 	const char *						mName;	// for debugging
 	Byte *								mBufferMemory;
-	// the rest must exactly mirror the structure of AudioBufferList
-	UInt32								mNumberBuffers;
-	AudioBuffer							mBuffers[1];
+	UInt32								mBufferCapacity;	// max mDataByteSize of each buffer
+	AudioBufferList						mABL;
+	// don't add anything here
 };
 
 #endif // __CABufferList_h__

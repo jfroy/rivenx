@@ -40,31 +40,57 @@
 */
 #include "CAAUMIDIMap.h"
 
+struct AllMidiTransformers
+{
+	MIDILinearTransformer linearTrans; 
+	MIDILogTransformer logTrans;
+	MIDIExpTransformer expTrans;
+	MIDISqrtTransformer sqrtTrans;
+	MIDISquareTransformer squareTrans;
+	MIDICubeRtTransformer cubeRtTrans;
+	MIDICubeTransformer cubeTrans;
+};
 
-static MIDILinearTransformer linearTrans; 
-static MIDILogTransformer logTrans;
-static MIDIExpTransformer expTrans;
-static MIDISqrtTransformer sqrtTrans;
-static MIDISquareTransformer squareTrans;
-static MIDICubeRtTransformer cubeRtTrans;
-static MIDICubeTransformer cubeTrans;
+AllMidiTransformers* gAllMidiTransformers = NULL;
+
+#if TARGET_OS_MAC
+static pthread_once_t sOnce = PTHREAD_ONCE_INIT;
+
+static void InitAllMidiTransformers()
+{
+	gAllMidiTransformers = new AllMidiTransformers();
+}
+
+static void CheckInitAllMidiTransformers()
+{
+	pthread_once(&sOnce, InitAllMidiTransformers);
+}
+#endif
 
 MIDIValueTransformer *	CAAUMIDIMap::GetTransformer (UInt32 inFlags)
 {
+#if TARGET_OS_MAC
+	if (gAllMidiTransformers == NULL) 
+		CheckInitAllMidiTransformers();
+#else
+	if (gAllMidiTransformers == NULL) 
+		gAllMidiTransformers = new AllMidiTransformers();
+#endif
+	
 	if (AudioUnitDisplayTypeIsLogarithmic(inFlags))
-		return &logTrans;
+		return &gAllMidiTransformers->logTrans;
 	else if (AudioUnitDisplayTypeIsExponential(inFlags))
-		return &expTrans;
+		return &gAllMidiTransformers->expTrans;
 	else if (AudioUnitDisplayTypeIsSquareRoot(inFlags))
-		return &sqrtTrans;
+		return &gAllMidiTransformers->sqrtTrans;
 	else if (AudioUnitDisplayTypeIsSquared(inFlags))
-		return &squareTrans;
+		return &gAllMidiTransformers->squareTrans;
 	else if (AudioUnitDisplayTypeIsCubed(inFlags))
-		return &cubeTrans;
+		return &gAllMidiTransformers->cubeTrans;
 	else if (AudioUnitDisplayTypeIsCubeRoot(inFlags))
-		return &cubeRtTrans;
+		return &gAllMidiTransformers->cubeRtTrans;
 	else
-		return &linearTrans;
+		return &gAllMidiTransformers->linearTrans;
 }
 
 // The CALLER of this method must ensure that the status byte's MIDI Command matches!!!
