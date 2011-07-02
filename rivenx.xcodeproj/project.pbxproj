@@ -2274,7 +2274,7 @@
 		31EAEB3D0A92530E004CC449 /* Beta Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx-devel-bzr.xml";
+				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -2350,7 +2350,7 @@
 		31F3093908BE43C200417394 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx-devel-bzr.xml";
+				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
