@@ -12,6 +12,8 @@
 #import "Rendering/Graphics/RXMovie.h"
 #import "Engine/RXWorldProtocol.h"
 
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+
 
 NSString* const RXMoviePlaybackDidEndNotification = @"RXMoviePlaybackDidEndNotification";
 
@@ -101,7 +103,7 @@ enum {
     _playing_selection = NO;
     
     // cache the movie's current size
-    [[_movie attributeForKey:QTMovieNaturalSizeAttribute] getValue:&_current_size];
+    [[_movie attributeForKey:QTMovieCurrentSizeAttribute] getValue:&_current_size];
     
     // cache the movie's original duration
     _original_duration = [_movie duration];
