@@ -27,7 +27,6 @@ static pthread_mutex_t ffmpeg_mutex;
 
 struct ffmpeg_state {
     void* avcodec_handle;
-    void* avutil_handle;
     
     void (*avcodec_init)(void);
     void (*avcodec_register_all)(void);
@@ -206,14 +205,6 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         NSBundle* mhk_bundle = [NSBundle bundleForClass:[self class]];
         NSString* resource_path = [mhk_bundle resourcePath];
         char* error_string = NULL;
-        
-        // load libavutil
-        _ffmpeg_state.avutil_handle = dlopen([[resource_path stringByAppendingPathComponent:@"libavutil.dylib"] fileSystemRepresentation], RTLD_LAZY | RTLD_GLOBAL);
-        error_string = dlerror();
-        if (error_string)
-            fprintf(stderr, "%s\n", error_string);
-        if (!_ffmpeg_state.avutil_handle)
-            return;
         
         // load libavcodec
         _ffmpeg_state.avcodec_handle = dlopen([[resource_path stringByAppendingPathComponent:@"libavcodec.dylib"] fileSystemRepresentation], RTLD_LAZY | RTLD_GLOBAL);
