@@ -1400,7 +1400,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
             logPrefix, argv[0], argv[1], argv[2]);
 #endif
     
-    double duration;
+    double duration = 0.0;
     [self _playDataSoundWithID:argv[0] gain:(float)argv[1] / kRXSoundGainDivisor duration:&duration];
     CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
     
