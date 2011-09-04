@@ -8,9 +8,9 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "Application/RXVersionComparator.h"
-#import "Application/RXWelcomeWindowController.h"
 
+@class RXVersionComparator;
+@class RXWelcomeWindowController;
 
 @interface RXApplicationDelegate : NSObject {
 #if defined(DEBUG)
@@ -31,6 +31,7 @@
     BOOL disableGameSavingAndLoading;
     BOOL missedAutosave;
     BOOL wasFullscreen;
+    BOOL quicktimeGood;
 }
 
 - (IBAction)orderFrontAboutWindow:(id)sender;

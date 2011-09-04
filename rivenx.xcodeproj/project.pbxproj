@@ -1432,7 +1432,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "COPY_TOOL=\"${DEVELOPER_LIBRARY_DIR}/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nif [ ! -f \"${COPY_TOOL}\" ]; then\n\tCOPY_TOOL=\"/System/Library/PrivateFrameworks/DevToolsCore.framework/Resources/pbxcp\"\nfi\n\n# libavutil\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcodec\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n$COPY_TOOL -exclude .DS_Store -exclude CVS -exclude .svn -resolve-src-symlinks \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n";
+			shellScript = "COPY_TOOL=\"ditto\"\n\n# libavutil\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n#$COPY_TOOL \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcore\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcore.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n#$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcore.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcodec\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n#$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		314A02EE0B6E53D5003E92A1 /* Set Build Info and SU Feed */ = {

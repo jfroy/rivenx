@@ -9,6 +9,9 @@
 #import <ExceptionHandling/NSExceptionHandler.h>
 #import <Sparkle/SUUpdater.h>
 
+#import "Application/RXVersionComparator.h"
+#import "Application/RXWelcomeWindowController.h"
+
 #import "Application/RXApplicationDelegate.h"
 
 #import "Engine/RXWorld.h"
@@ -77,15 +80,20 @@
 #pragma mark error handling
 
 - (BOOL)attemptRecoveryFromError:(NSError*)error optionIndex:(NSUInteger)recoveryOptionIndex {
-    if ([error domain] == RXErrorDomain) {
-        switch ([error code]) {
+    if ([error domain] == RXErrorDomain)
+    {
+        switch ([error code])
+        {
             case kRXErrQuickTimeTooOld:
-                if (recoveryOptionIndex == 0) {
+                if (recoveryOptionIndex == 0)
+                {
                     // once to launch SU, and another time to make sure it becomes the active application
                     [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:@"com.apple.SoftwareUpdate" options:0 additionalEventParamDescriptor:nil launchIdentifier:NULL];
                     [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:@"com.apple.SoftwareUpdate" options:0 additionalEventParamDescriptor:nil launchIdentifier:NULL];
                 }
-                [NSApp terminate:self];
+                
+                // check for an app update before quitting
+                [[SUUpdater sharedUpdater] checkForUpdatesInBackground];
                 break;
             
             case kRXErrFailedToInitializeStack:
@@ -203,21 +211,23 @@
 #pragma mark -
 #pragma mark delegation and UI
 
-- (void)applicationWillFinishLaunching:(NSNotification*)notification {
+- (void)applicationWillFinishLaunching:(NSNotification*)notification
+{
     [[NSExceptionHandler defaultExceptionHandler] setDelegate:self];
     [[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:
         NSLogUncaughtExceptionMask | NSHandleUncaughtExceptionMask |
         NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
     
     // check if the system's QuickTime version is compatible and return if it is not
-    if (![self _checkQuickTime])
-        return;
+    quicktimeGood = [self _checkQuickTime];
     
     // initialize the world
-    [RXWorld sharedWorld];
+    if (quicktimeGood)
+        [RXWorld sharedWorld];
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification*)notification {
+- (void)applicationDidFinishLaunching:(NSNotification*)notification
+{
     // delete old world data
     [NSThread detachNewThreadSelector:@selector(_deleteOldDataStore:) toTarget:self withObject:nil];
     
@@ -233,13 +243,20 @@
     NSString* extension = [(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease];
     autosaveURL = [[NSURL fileURLWithPath:[[savedGamesDirectory stringByAppendingPathComponent:@"Autosave"] stringByAppendingPathExtension:extension]] retain];
     
+    // proceed no further if the QuickTime version was not suitable
+    if (!quicktimeGood)
+        return;
+    
     // if we're not installed, start the welcome controller; otherwise, if not
     // game has been loaded, load the last save game, or a new game if no such
     // save can be found
-    if (![[RXWorld sharedWorld] isInstalled]) {
+    if (![[RXWorld sharedWorld] isInstalled])
+    {
         welcomeController = [[RXWelcomeWindowController alloc] initWithWindowNibName:@"Welcome"];
         [welcomeController showWindow:nil];
-    } else if ([[RXWorld sharedWorld] gameState] == nil) {
+    }
+    else if ([[RXWorld sharedWorld] gameState] == nil)
+    {
         NSArray* recentGames = [[NSDocumentController sharedDocumentController] recentDocumentURLs];
         BOOL didLoadRecent = NO;
         if ([recentGames count] > 0)
@@ -308,8 +325,31 @@
         [g_world toggleFullscreen];
 }
 
-- (id <SUVersionComparison>)versionComparatorForUpdater:(SUUpdater*)updater {
+#pragma mark -
+#pragma mark SUUpdater delegate
+
+- (id <SUVersionComparison>)versionComparatorForUpdater:(SUUpdater*)updater
+{
     return versionComparator;
+}
+
+- (void)quitIfNoVisibleWindows:(NSTimer*)timer
+{
+    NSArray* windows = [NSWindow windowNumbersWithOptions:NSWindowNumberListAllSpaces];
+    if ([windows count] == 0)
+        [NSApp terminate:self];
+}
+
+- (void)updater:(SUUpdater*)updater didFindValidUpdate:(SUAppcastItem*)update
+{
+    if (!quicktimeGood)
+        [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(quitIfNoVisibleWindows:) userInfo:nil repeats:YES];
+}
+
+- (void)updaterDidNotFindUpdate:(SUUpdater*)update
+{
+    if (!quicktimeGood)
+        [NSApp terminate:self];
 }
 
 #pragma mark -
