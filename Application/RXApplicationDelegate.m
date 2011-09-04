@@ -80,15 +80,20 @@
 #pragma mark error handling
 
 - (BOOL)attemptRecoveryFromError:(NSError*)error optionIndex:(NSUInteger)recoveryOptionIndex {
-    if ([error domain] == RXErrorDomain) {
-        switch ([error code]) {
+    if ([error domain] == RXErrorDomain)
+    {
+        switch ([error code])
+        {
             case kRXErrQuickTimeTooOld:
-                if (recoveryOptionIndex == 0) {
+                if (recoveryOptionIndex == 0)
+                {
                     // once to launch SU, and another time to make sure it becomes the active application
                     [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:@"com.apple.SoftwareUpdate" options:0 additionalEventParamDescriptor:nil launchIdentifier:NULL];
                     [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:@"com.apple.SoftwareUpdate" options:0 additionalEventParamDescriptor:nil launchIdentifier:NULL];
                 }
-                [NSApp terminate:self];
+                
+                // check for an app update before quitting
+                [[SUUpdater sharedUpdater] checkForUpdatesInBackground];
                 break;
             
             case kRXErrFailedToInitializeStack:
@@ -238,11 +243,9 @@
     NSString* extension = [(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease];
     autosaveURL = [[NSURL fileURLWithPath:[[savedGamesDirectory stringByAppendingPathComponent:@"Autosave"] stringByAppendingPathExtension:extension]] retain];
     
+    // proceed no further if the QuickTime version was not suitable
     if (!quicktimeGood)
-    {
-        [updater checkForUpdates:self];
         return;
-    }
     
     // if we're not installed, start the welcome controller; otherwise, if not
     // game has been loaded, load the last save game, or a new game if no such
@@ -322,8 +325,31 @@
         [g_world toggleFullscreen];
 }
 
-- (id <SUVersionComparison>)versionComparatorForUpdater:(SUUpdater*)updater {
+#pragma mark -
+#pragma mark SUUpdater delegate
+
+- (id <SUVersionComparison>)versionComparatorForUpdater:(SUUpdater*)updater
+{
     return versionComparator;
+}
+
+- (void)quitIfNoVisibleWindows:(NSTimer*)timer
+{
+    NSArray* windows = [NSWindow windowNumbersWithOptions:NSWindowNumberListAllSpaces];
+    if ([windows count] == 0)
+        [NSApp terminate:self];
+}
+
+- (void)updater:(SUUpdater*)updater didFindValidUpdate:(SUAppcastItem*)update
+{
+    if (!quicktimeGood)
+        [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(quitIfNoVisibleWindows:) userInfo:nil repeats:YES];
+}
+
+- (void)updaterDidNotFindUpdate:(SUUpdater*)update
+{
+    if (!quicktimeGood)
+        [NSApp terminate:self];
 }
 
 #pragma mark -

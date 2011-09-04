@@ -9,7 +9,6 @@
 #import <Cocoa/Cocoa.h>
 
 
-@class SUUpdater;
 @class RXVersionComparator;
 @class RXWelcomeWindowController;
 
@@ -22,7 +21,6 @@
     IBOutlet NSTextField* versionField;
     IBOutlet NSTextField* copyrightField;
     
-    IBOutlet SUUpdater* updater;
     IBOutlet RXVersionComparator* versionComparator;
     
     RXWelcomeWindowController* welcomeController;
