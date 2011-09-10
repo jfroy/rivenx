@@ -16,7 +16,8 @@
     @abstract   An abstract method to compare two version strings.
     @discussion Should return NSOrderedAscending if b > a, NSOrderedDescending if b < a, and NSOrderedSame if they are equivalent.
 */
-- (NSComparisonResult)compareVersion:(NSString *)versionA toVersion:(NSString *)versionB {
+- (NSComparisonResult)compareVersion:(NSString*)versionA toVersion:(NSString*)versionB
+{
     // numeric version reset with the switch to bzr, which are identifid by a "bzr " prefix to the numerical version
     BOOL isVersionABZR = [versionA hasPrefix:@"bzr "];
     BOOL isVersionBBZR = [versionB hasPrefix:@"bzr "];
@@ -26,7 +27,8 @@
         return NSOrderedAscending;
     else if (!isVersionBBZR && isVersionABZR)
         return NSOrderedDescending;
-    else {
+    else
+    {
         int a = [[versionA substringFromIndex:4] intValue];
         int b = [[versionB substringFromIndex:4] intValue];
         if (b > a)

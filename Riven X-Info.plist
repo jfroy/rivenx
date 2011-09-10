@@ -26,7 +26,7 @@
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleGetInfoString</key>
-	<string>0.9.8, Copyright © 2005-2011 MacStorm.</string>
+	<string>0.9.9, Copyright © 2005-2011 MacStorm.</string>
 	<key>CFBundleIconFile</key>
 	<string>rivenx</string>
 	<key>CFBundleIdentifier</key>
@@ -38,13 +38,13 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.9.8</string>
+	<string>0.9.9</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
 	<array/>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>bzr 700</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.adventure-games</string>
 	<key>LSMinimumSystemVersion</key>
@@ -62,7 +62,7 @@
 	<key>SUExpectsDSASignature</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string></string>
+	<string>$APPCAST_URL</string>
 	<key>SUPublicDSAKeyFile</key>
 	<string>sparkle.pem</string>
 	<key>SUShowReleaseNotes</key>

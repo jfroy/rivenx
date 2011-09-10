@@ -280,16 +280,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		314959DA0E327D2800E49C83 /* copy_ffmpeg_license */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 12;
-			files = (
-			);
-			name = copy_ffmpeg_license;
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		314EF26409E45958002124D5 /* Copy Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 12;
@@ -1157,7 +1147,6 @@
 				3149598C0E327B2D00E49C83 /* Sources */,
 				3149598D0E327B2D00E49C83 /* Frameworks */,
 				3149598B0E327B2D00E49C83 /* Resources */,
-				314959DA0E327D2800E49C83 /* copy_ffmpeg_license */,
 				314959D90E327D0800E49C83 /* copy_ffmpeg */,
 			);
 			buildRules = (
@@ -1282,7 +1271,7 @@
 				31F3092F08BE43C100417394 /* Resources */,
 				31506B2A0F3E941000FAC3DB /* Copy Shaders */,
 				314EF26409E45958002124D5 /* Copy Frameworks */,
-				314A02EE0B6E53D5003E92A1 /* Set Build Info and SU Feed */,
+				314A02EE0B6E53D5003E92A1 /* Generate Build Strings */,
 			);
 			buildRules = (
 			);
@@ -1435,19 +1424,19 @@
 			shellScript = "COPY_TOOL=\"ditto\"\n\n# libavutil\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n#$COPY_TOOL \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcore\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcore.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n#$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcore.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcodec\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n#$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		314A02EE0B6E53D5003E92A1 /* Set Build Info and SU Feed */ = {
+		314A02EE0B6E53D5003E92A1 /* Generate Build Strings */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "Set Build Info and SU Feed";
+			name = "Generate Build Strings";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/usr/bin/env python";
-			shellScript = "import os\nimport plistlib\nimport re\nimport subprocess\nimport sys\nfrom os import path\n\nif not \"BUILT_PRODUCTS_DIR\" in os.environ:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# MACOSX_DEPLOYMENT_TARGET plays badly with Python\nif \"MACOSX_DEPLOYMENT_TARGET\" in os.environ:\n\tdel os.environ[\"MACOSX_DEPLOYMENT_TARGET\"]\n\n# add a few common directories to PATH\npath_entries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in path_entries: path_entries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in path_entries: path_entries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in path_entries: path_entries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(path_entries)\n\n# get build information\ncommit = subprocess.Popen('git rev-parse --short HEAD', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf8').strip()\nbranch = subprocess.Popen('git symbolic-ref -q HEAD', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf8').strip().replace('refs/heads/', '')\ndate = subprocess.Popen('date -u', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf8').strip()\n\n# output build strings\nbuild_strings = '\"BUILD_VERSION\" = \"%s\";\\n\"BUILD_DATE\" = \"%s\";\\n\"BUILD_BRANCH\" = \"%s\";\\n' % (commit, date, branch)\nresources_path = path.join(os.environ['TARGET_BUILD_DIR'], os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH'])\nbuild_strings_file = open(path.join(resources_path, u\"build.strings\"), 'w')\nbuild_strings_file.write(build_strings.encode('utf16'))\nbuild_strings_file.close()\n\n# process the Info.plist to set CFBundleVersion and the Sparkle feed URL\ninfo_plist_path = path.join(os.environ['TARGET_BUILD_DIR'], os.environ['INFOPLIST_PATH'])\ninfo_plist = plistlib. readPlist(info_plist_path)\n\ninfo_plist['CFBundleVersion'] = commit\ninfo_plist['SUFeedURL'] = os.environ['APPCAST_URL']\n\nplistlib.writePlist(info_plist, info_plist_path)\n";
+			shellScript = "import os\nimport subprocess\nimport sys\n\nif not \"BUILT_PRODUCTS_DIR\" in os.environ:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# MACOSX_DEPLOYMENT_TARGET plays badly with Python\nif \"MACOSX_DEPLOYMENT_TARGET\" in os.environ:\n\tdel os.environ[\"MACOSX_DEPLOYMENT_TARGET\"]\n\n# add a few common directories to PATH\npath_entries = os.environ['PATH'].split(':')\nif \"/usr/local/bin\" not in path_entries: path_entries.append(\"/usr/local/bin\")\nif \"/opt/local/bin\" not in path_entries: path_entries.append(\"/opt/local/bin\")\nif \"/sw/bin\" not in path_entries: path_entries.append(\"/sw/bin\")\nos.environ['PATH'] = ':'.join(path_entries)\n\n# get build information\ncommit = subprocess.Popen('git rev-parse --short HEAD', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf8').strip()\nbranch = subprocess.Popen('git symbolic-ref -q HEAD', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf8').strip().replace('refs/heads/', '')\ndate = subprocess.Popen('date -u', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf8').strip()\n\n# output build strings\nbuild_strings = '\"BUILD_VERSION\" = \"%s\";\\n\"BUILD_DATE\" = \"%s\";\\n\"BUILD_BRANCH\" = \"%s\";\\n' % (commit, date, branch)\nresources_path = os.path.join(os.environ['TARGET_BUILD_DIR'], os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH'])\nbuild_strings_file = open(os.path.join(resources_path, u\"build.strings\"), 'w')\nbuild_strings_file.write(build_strings.encode('utf16'))\nbuild_strings_file.close()\n";
 			showEnvVarsInLog = 0;
 		};
 		31C3571A0D92A6A700EDEF81 /* RunUnitTests */ = {
@@ -2281,7 +2270,10 @@
 					"ERROR_CLASS=RXError",
 				);
 				INFOPLIST_FILE = "Riven X-Info.plist";
+				INFOPLIST_OUTPUT_FORMAT = binary;
+				INFOPLIST_PREPROCESS = YES;
 				INSTALL_PATH = "$(USER_APPS_DIR)";
+				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PRODUCT_NAME = "Riven X";
 				WRAPPER_EXTENSION = app;
 			};
@@ -2357,7 +2349,10 @@
 					"ERROR_CLASS=RXError",
 				);
 				INFOPLIST_FILE = "Riven X-Info.plist";
+				INFOPLIST_OUTPUT_FORMAT = binary;
+				INFOPLIST_PREPROCESS = YES;
 				INSTALL_PATH = "$(USER_APPS_DIR)";
+				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PRODUCT_NAME = "Riven X";
 				WRAPPER_EXTENSION = app;
 			};
@@ -2373,7 +2368,10 @@
 					"ERROR_CLASS=RXError",
 				);
 				INFOPLIST_FILE = "Riven X-Info.plist";
+				INFOPLIST_OUTPUT_FORMAT = binary;
+				INFOPLIST_PREPROCESS = YES;
 				INSTALL_PATH = "$(USER_APPS_DIR)";
+				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PRODUCT_NAME = "Riven X";
 				WRAPPER_EXTENSION = app;
 			};
