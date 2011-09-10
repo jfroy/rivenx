@@ -46,7 +46,7 @@
     // setup the about box
     NSBundle* bundle = [NSBundle mainBundle];
     NSString* version_format = NSLocalizedStringFromTable(@"VERSION_FORMAT", @"About", nil);
-    NSString* version = [NSString stringWithFormat:@"branch '%@' r%@", NSLocalizedStringFromTable(@"BUILD_BRANCH", @"build", nil), NSLocalizedStringFromTable(@"BUILD_VERSION", @"build", nil)];
+    NSString* version = [NSString stringWithFormat:@"branch '%@' %@", NSLocalizedStringFromTable(@"BUILD_BRANCH", @"build", nil), NSLocalizedStringFromTable(@"BUILD_VERSION", @"build", nil)];
     
     [aboutBox center];
     [versionField setStringValue:[NSString stringWithFormat:version_format, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], version]];
