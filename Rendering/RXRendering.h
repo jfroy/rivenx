@@ -18,7 +18,6 @@
 #import "Graphics/GL/GL_debug.h"
 
 #import <QuartzCore/CoreVideo.h>
-#import <QuartzCore/CoreImage.h>
 
 #import "Engine/RXCoreStructures.h"
 
