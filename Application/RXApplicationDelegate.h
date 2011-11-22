@@ -12,7 +12,8 @@
 @class RXVersionComparator;
 @class RXWelcomeWindowController;
 
-@interface RXApplicationDelegate : NSObject {
+@interface RXApplicationDelegate : NSObject
+{
 #if defined(DEBUG)
     NSWindowController* debugConsoleWC;
 #endif
@@ -25,7 +26,7 @@
     
     RXWelcomeWindowController* welcomeController;
     
-    NSString* savedGamesDirectory;
+    NSURL* savedGamesDirectory;
     NSURL* autosaveURL;
     
     BOOL disableGameSavingAndLoading;

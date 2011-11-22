@@ -234,14 +234,14 @@
     // get the path to the saved games directory and create it if it doesn't exists
     NSArray* docsDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     if ([docsDir count] > 0)
-        savedGamesDirectory = [[[docsDir objectAtIndex:0] stringByAppendingPathComponent:@"Riven X Games"] retain];
+        savedGamesDirectory = [[NSURL alloc] initFileURLWithPath:[[docsDir objectAtIndex:0] stringByAppendingPathComponent:@"Riven X Games"] isDirectory:YES];
     else
-        savedGamesDirectory = [[@"~/Documents/Riven X Games" stringByExpandingTildeInPath] retain];
-    BZFSCreateDirectoryExtended(savedGamesDirectory, nil, 0700, NULL);
+        savedGamesDirectory = [[NSURL alloc] initFileURLWithPath:[@"~/Documents/Riven X Games" stringByExpandingTildeInPath] isDirectory:YES];
+    BZFSCreateDirectoryURLExtended(savedGamesDirectory, nil, 0700, NULL);
     
     // derive the autosave URL from the saved games directory
     NSString* extension = [(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease];
-    autosaveURL = [[NSURL fileURLWithPath:[[savedGamesDirectory stringByAppendingPathComponent:@"Autosave"] stringByAppendingPathExtension:extension]] retain];
+    autosaveURL = [[savedGamesDirectory URLByAppendingPathComponent:[@"Autosave" stringByAppendingPathExtension:extension] isDirectory:NO] retain];
     
     // proceed no further if the QuickTime version was not suitable
     if (!quicktimeGood)
@@ -365,7 +365,8 @@
     [gs release];
 }
 
-- (IBAction)openDocument:(id)sender {
+- (IBAction)openDocument:(id)sender
+{
     if ([self isGameLoadingAndSavingDisabled])
         return;
     
@@ -389,7 +390,9 @@
     if (wasFullscreen)
         [g_world toggleFullscreen];
     
-    NSInteger result = [panel runModalForDirectory:savedGamesDirectory file:nil types:types];
+    panel.directoryURL = savedGamesDirectory;
+    panel.allowedFileTypes = types;
+    NSInteger result = [panel runModal];
     
     if (wasFullscreen)
         [g_world toggleFullscreen];
@@ -417,25 +420,8 @@
     }
 }
 
-- (void)_saveAsPanelDidEnd:(NSSavePanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
-    if (returnCode == NSCancelButton || [self isGameLoadingAndSavingDisabled])
-        return;
-    
-    // dismiss the panel now
-    [panel orderOut:self];
-    
-    NSError* error = nil;
-    RXGameState* gameState = [g_world gameState];
-    if (![gameState writeToURL:[panel URL] error:&error]) {
-        [NSApp presentError:error];
-        return;
-    }
-    
-    // add the new save file to the recents
-    [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]]; 
-}
-
-- (IBAction)saveGameAs:(id)sender {
+- (IBAction)saveGameAs:(id)sender
+{
     if ([self isGameLoadingAndSavingDisabled])
         return;
     
@@ -452,12 +438,25 @@
         types = [NSArray arrayWithObject:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
     [panel setAllowedFileTypes:types];
     
-    [panel beginSheetForDirectory:savedGamesDirectory
-                             file:@"untitled"
-                   modalForWindow:[g_worldView window]
-                    modalDelegate:self
-                   didEndSelector:@selector(_saveAsPanelDidEnd:returnCode:contextInfo:)
-                      contextInfo:nil];
+    [panel beginSheetModalForWindow:[g_worldView window] completionHandler:^(NSInteger result)
+    {
+        if (result == NSCancelButton || [self isGameLoadingAndSavingDisabled])
+            return;
+        
+        // dismiss the panel now
+        [panel orderOut:self];
+        
+        NSError* error = nil;
+        RXGameState* gameState = [g_world gameState];
+        if (![gameState writeToURL:[panel URL] error:&error])
+        {
+            [NSApp presentError:error];
+            return;
+        }
+        
+        // add the new save file to the recents
+        [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]]; 
+    }];
 }
 
 - (BOOL)_openGameWithURL:(NSURL*)url {

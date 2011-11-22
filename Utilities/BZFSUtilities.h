@@ -17,27 +17,28 @@ enum {
 
 extern NSString* const BZFSErrorDomain;
 
-extern BOOL BZFSFileExists(NSString* path);
-extern BOOL BZFSFileURLExists(NSURL* url);
+BOOL BZFSFileExists(NSString* path);
+BOOL BZFSFileURLExists(NSURL* url);
 
-extern BOOL BZFSDirectoryExists(NSString* path);
-extern BOOL BZFSCreateDirectory(NSString* path, NSError** error);
+BOOL BZFSDirectoryExists(NSString* path);
+BOOL BZFSCreateDirectory(NSString* path, NSError** error);
 BOOL BZFSCreateDirectoryExtended(NSString* path, NSString* group, uint32_t permissions, NSError** error);
 
-extern BOOL BZFSDirectoryURLExists(NSURL* url);
-extern BOOL BZFSCreateDirectoryURL(NSURL* url, NSError** error);
+BOOL BZFSDirectoryURLExists(NSURL* url);
+BOOL BZFSCreateDirectoryURL(NSURL* url, NSError** error);
+BOOL BZFSCreateDirectoryURLExtended(NSURL* url, NSString* group, uint32_t permissions, NSError** error);
 
-extern NSArray* BZFSContentsOfDirectory(NSString* path, NSError** error);
-extern NSArray* BZFSContentsOfDirectoryURL(NSURL* url, NSError** error);
+NSArray* BZFSContentsOfDirectory(NSString* path, NSError** error);
+NSArray* BZFSContentsOfDirectoryURL(NSURL* url, NSError** error);
 
-extern NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_insensitive, NSError** error);
+NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_insensitive, NSError** error);
 
-extern NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error);
-extern NSDictionary* BZFSAttributesOfItemAtURL(NSURL* url, NSError** error);
-extern BOOL BZFSSetAttributesOfItemAtPath(NSString* path, NSDictionary* attributes, NSError** error);
+NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error);
+NSDictionary* BZFSAttributesOfItemAtURL(NSURL* url, NSError** error);
+BOOL BZFSSetAttributesOfItemAtPath(NSString* path, NSDictionary* attributes, NSError** error);
 
-extern BOOL BZFSRemoveItemAtURL(NSURL* url, NSError** error);
+BOOL BZFSRemoveItemAtURL(NSURL* url, NSError** error);
 
-extern NSFileHandle* BZFSCreateTemporaryFileInDirectory(NSURL* directory, NSString* filenameTemplate, NSURL** tempFileURL, NSError** error);
+NSFileHandle* BZFSCreateTemporaryFileInDirectory(NSURL* directory, NSString* filenameTemplate, NSURL** tempFileURL, NSError** error);
 
 __END_DECLS

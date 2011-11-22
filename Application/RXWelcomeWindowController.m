@@ -57,65 +57,6 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.google.com/products/catalog?hl=en&cid=11798540492054256128&sa=title"]];
 }
 
-- (void)_installFromFolderPanelDidEnd:(NSOpenPanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
-    alertOrPanelCurrentlyActive = NO;
-    
-    if (returnCode == NSCancelButton)
-        return;
-    
-    NSString* path = [[panel URL] path];
-    
-    BOOL removable, writable, unmountable;
-    NSString* description, *fsType;
-    if (![[NSWorkspace sharedWorkspace] getFileSystemInfoForPath:path isRemovable:&removable isWritable:&writable isUnmountable:&unmountable description:&description type:&fsType]) {
-        [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
-        return;
-    }
-    
-    if (removable) {
-        NSError* error;
-        NSDictionary* attributes = BZFSAttributesOfItemAtPath(path, &error);
-        if (!attributes) {
-            [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
-            return;
-        }
-        NSUInteger fs_init = [attributes fileSystemNumber];
-        
-        while (![path isEqualToString:@"/"]) {
-            NSString* parent = [path stringByDeletingLastPathComponent];
-            attributes = BZFSAttributesOfItemAtPath(parent, &error);
-            if (!attributes) {
-                [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
-                return;
-            }
-            
-            NSUInteger fs = [attributes fileSystemNumber];
-            if (fs != fs_init)
-                break;
-            
-            path = parent;
-        }
-        
-        [self _initializeInstallationUI];
-        [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"SCANNING_MEDIA", @"Welcome", NULL)];
-        [_cancelInstallButton setHidden:YES];
-        
-        [panel orderOut:self];
-        [self _showInstallationUI];
-        
-        [self performSelector:@selector(_performMountScanWithFeedback:) withObject:path inThread:scanningThread];
-    } else {
-        [self _initializeInstallationUI];
-        [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"SCANNING_MEDIA", @"Welcome", NULL)];
-        [_cancelInstallButton setHidden:YES];
-        
-        [panel orderOut:self];
-        [self _showInstallationUI];
-        
-        [self performSelector:@selector(_performFolderScanWithFeedback:) withObject:path inThread:scanningThread];
-    }
-}
-
 - (IBAction)installFromFolder:(id)sender {
     NSOpenPanel* panel = [NSOpenPanel openPanel];
     [panel setCanChooseFiles:NO];
@@ -131,7 +72,75 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [panel setPrompt:NSLocalizedString(@"CHOOSE", NULL)];
     [panel setTitle:NSLocalizedString(@"CHOOSE", NULL)];
     
-    [panel beginSheetForDirectory:@"/Volumes" file:nil types:nil modalForWindow:[self window] modalDelegate:self didEndSelector:@selector(_installFromFolderPanelDidEnd:returnCode:contextInfo:) contextInfo:nil];
+    [panel beginSheetModalForWindow:[self window] completionHandler:^(NSInteger result)
+    {
+        alertOrPanelCurrentlyActive = NO;
+        
+        if (result == NSCancelButton)
+            return;
+        
+        NSString* path = [[panel URL] path];
+        
+        BOOL removable, writable, unmountable;
+        NSString* description, *fsType;
+        if (![[NSWorkspace sharedWorkspace] getFileSystemInfoForPath:path isRemovable:&removable isWritable:&writable isUnmountable:&unmountable description:&description type:&fsType])
+        {
+            [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
+            return;
+        }
+        
+        if (removable)
+        {
+            NSError* error;
+            NSDictionary* attributes = BZFSAttributesOfItemAtPath(path, &error);
+            if (!attributes)
+            {
+                [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
+                return;
+            }
+            NSUInteger fs_init = [attributes fileSystemNumber];
+            
+            while (![path isEqualToString:@"/"])
+            {
+                NSString* parent = [path stringByDeletingLastPathComponent];
+                attributes = BZFSAttributesOfItemAtPath(parent, &error);
+                if (!attributes)
+                {
+                    [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
+                    return;
+                }
+                
+                NSUInteger fs = [attributes fileSystemNumber];
+                if (fs != fs_init)
+                    break;
+                
+                path = parent;
+            }
+            
+            [self _initializeInstallationUI];
+            [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"SCANNING_MEDIA", @"Welcome", NULL)];
+            [_cancelInstallButton setHidden:YES];
+            
+            [panel orderOut:self];
+            [self _showInstallationUI];
+            
+            [self performSelector:@selector(_performMountScanWithFeedback:) withObject:path inThread:scanningThread];
+        }
+        
+        // non-removable
+        else
+        {
+            [self _initializeInstallationUI];
+            [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"SCANNING_MEDIA", @"Welcome", NULL)];
+            [_cancelInstallButton setHidden:YES];
+            
+            [panel orderOut:self];
+            [self _showInstallationUI];
+            
+            [self performSelector:@selector(_performFolderScanWithFeedback:) withObject:path inThread:scanningThread];
+        }
+    }];
+    
     alertOrPanelCurrentlyActive = YES;
 }
 

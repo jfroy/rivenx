@@ -556,21 +556,22 @@ static NSString* required_extensions[] = {
     return YES;
 }
 
-- (void)_handleColorProfileChange:(NSNotification*)notification {
+- (void)_handleColorProfileChange:(NSNotification*)notification
+{
     CGDirectDisplayID ddid = CVDisplayLinkGetCurrentCGDisplay(_displayLink);
-    CMProfileRef displayProfile;
+    ColorSyncProfileRef displayProfile;
     
 #if defined(DEBUG)
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"updating display colorspace");
 #endif
     
     // ask ColorSync for our current display's profile
-    CMGetProfileByAVID((CMDisplayIDType)ddid, &displayProfile);
+    displayProfile = ColorSyncProfileCreateWithDisplayID(ddid);
     if (_displayColorSpace)
         CGColorSpaceRelease(_displayColorSpace);
     
     _displayColorSpace = CGColorSpaceCreateWithPlatformColorSpace(displayProfile);
-    CMCloseProfile(displayProfile);
+    CFRelease(displayProfile);
 }
 
 - (void)viewDidMoveToWindow {

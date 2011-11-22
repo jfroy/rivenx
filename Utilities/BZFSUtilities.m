@@ -34,8 +34,8 @@ BOOL BZFSDirectoryExists(NSString* path) {
     return YES;
 }
 
-BOOL BZFSCreateDirectoryExtended(NSString* path, NSString* group, uint32_t permissions, NSError** error) {
-    BOOL success;
+BOOL BZFSCreateDirectoryExtended(NSString* path, NSString* group, uint32_t permissions, NSError** error)
+{
     NSFileManager* fm = [NSFileManager defaultManager];
     
     NSMutableDictionary* attributes = [NSMutableDictionary dictionary];
@@ -44,14 +44,7 @@ BOOL BZFSCreateDirectoryExtended(NSString* path, NSString* group, uint32_t permi
     if (group)
         [attributes setObject:group forKey:NSFileGroupOwnerAccountName];
     
-//    if ([fm respondsToSelector:@selector(createDirectoryAtPath:withIntermediateDirectories:attributes:error:)])
-        success = [fm createDirectoryAtPath:path withIntermediateDirectories:NO attributes:attributes error:error];
-//    else {
-//        success = [fm createDirectoryAtPath:path attributes:attributes];
-//        if (!success && error)
-//            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
-//    }
-    return success;
+    return [fm createDirectoryAtPath:path withIntermediateDirectories:NO attributes:attributes error:error];
 }
 
 BOOL BZFSCreateDirectory(NSString* path, NSError** error) {
@@ -64,6 +57,11 @@ BOOL BZFSDirectoryURLExists(NSURL* url) {
 
 BOOL BZFSCreateDirectoryURL(NSURL* url, NSError** error) {
     return BZFSCreateDirectory([url path], error);
+}
+
+BOOL BZFSCreateDirectoryURLExtended(NSURL* url, NSString* group, uint32_t permissions, NSError** error)
+{
+    return BZFSCreateDirectoryExtended([url path], group, permissions, error);
 }
 
 NSArray* BZFSContentsOfDirectory(NSString* path, NSError** error) {

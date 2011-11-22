@@ -55,12 +55,11 @@ private:
     CAAudioUnit file_player_au;
 };
 
-AudioFileSource::AudioFileSource(const char* path) throw(CAXException) {
-    FSRef theRef;
+AudioFileSource::AudioFileSource(const char* path) throw(CAXException)
+{
     CFURLRef fileURL = CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8*)path, strlen(path) + 1, false);
-    CFURLGetFSRef(fileURL, &theRef);
+    XThrowIfError(AudioFileOpenURL(fileURL, kAudioFileReadPermission, 0, &audioFile), "AudioFileOpenURL");
     CFRelease(fileURL);
-    XThrowIfError(AudioFileOpen(&theRef, fsRdPerm, 0, &audioFile), "AudioFileOpen");
     
     // get the format of the file
     UInt32 propsize = sizeof(CAStreamBasicDescription);
@@ -194,7 +193,6 @@ int main (int argc, char * const argv[]) {
     }
     
     NSAutoreleasePool* p = [NSAutoreleasePool new];
-    RXInitThreading();
     
     pid_t pid = getpid();
     printf("pid: %d\nstarting in 5 seconds...\n", pid);
