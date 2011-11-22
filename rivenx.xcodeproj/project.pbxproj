@@ -457,6 +457,7 @@
 		317ACC8D0F285BE10040FFFD /* MHKMoviePlayer_main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHKMoviePlayer_main.m; sourceTree = "<group>"; };
 		317ACC8E0F285BE10040FFFD /* MHKQTPlayerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKQTPlayerController.h; sourceTree = "<group>"; };
 		317ACC8F0F285BE10040FFFD /* MHKQTPlayerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHKQTPlayerController.m; sourceTree = "<group>"; };
+		318161AD147C633100623EF2 /* Riven X.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = "Riven X.entitlements"; sourceTree = "<group>"; };
 		3185C43A0E06027800528220 /* sparkle.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sparkle.pem; sourceTree = "<group>"; };
 		3185C4710E06046D00528220 /* RXVersionComparator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVersionComparator.h; sourceTree = "<group>"; };
 		3185C4720E06046D00528220 /* RXVersionComparator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVersionComparator.m; sourceTree = "<group>"; };
@@ -532,7 +533,7 @@
 		31F1BEA50D3B03D000CFE301 /* about.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = about.png; sourceTree = "<group>"; };
 		31F1BED50D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; path = "Riven X Acknowledgments.pdf"; sourceTree = "<group>"; };
 		31F3093308BE43C100417394 /* Riven X.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Riven X.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		31F3093508BE43C100417394 /* Riven X-Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; name = "Riven X-Info.plist"; path = "../Riven X-Info.plist"; sourceTree = "<group>"; };
+		31F3093508BE43C100417394 /* Riven X-Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; path = "Riven X-Info.plist"; sourceTree = "<group>"; };
 		31F3095508BE5FA200417394 /* RXWorld.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWorld.h; sourceTree = "<group>"; };
 		31F3095608BE5FA200417394 /* RXWorld.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXWorld.mm; sourceTree = "<group>"; };
 		31F4EFE80F35312700A68652 /* RXScriptEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptEngine.h; sourceTree = "<group>"; };
@@ -692,6 +693,8 @@
 				31A9EC1D094D23F200C6A0AB /* States */,
 				31154B4D0B4990E9002FCEDD /* Shaders */,
 				31F3093C08BE43D500417394 /* Resources */,
+				318161AD147C633100623EF2 /* Riven X.entitlements */,
+				31F3093508BE43C100417394 /* Riven X-Info.plist */,
 				311FD3DA08C0426C0045BE11 /* cocoa_main.m */,
 				08FB7795FE84155DC02AAC07 /* Tools */,
 				31C357220D92A6C700EDEF81 /* Tests */,
@@ -1049,7 +1052,6 @@
 				315DA3CB118FED0F003E21BC /* patches */,
 				31B654A01102B9EF004818AC /* Rendering.strings */,
 				31F1BED50D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf */,
-				31F3093508BE43C100417394 /* Riven X-Info.plist */,
 				313C7EFB08CD057500950A70 /* Riven301.ttf */,
 				31EAC32A08FF38940018D8DA /* rivenx.icns */,
 				31DAAF210DDE21EF00D06D0C /* sounds */,
