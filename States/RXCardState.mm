@@ -2352,7 +2352,8 @@ exit_render:
     OSSpinLockUnlock(&_render_lock);
 }
 
-- (void)renderInMainRT:(CGLContextObj)cgl_ctx {
+- (void)renderInMainRT:(CGLContextObj)cgl_ctx
+{
     // draw the inventory
     [self _renderInventory:cgl_ctx];
     
@@ -2365,19 +2366,21 @@ exit_render:
     BOOL render_cardinfo = RXEngineGetBool(@"rendering.card_info");
     BOOL render_mouseinfo = RXEngineGetBool(@"rendering.mouse_info");
     BOOL render_movieinfo = RXEngineGetBool(@"rendering.movie_info");
-    BOOL renderCoreImageMode = RXEngineGetBool(@"rendering.cimode");
+    BOOL render_backend = RXEngineGetBool(@"rendering.backend");
     
     // early bail out if there's nothing to be done
-    if (!render_hotspots && !render_cardinfo && !render_mouseinfo && !render_movieinfo && !renderCoreImageMode)
+    if (!render_hotspots && !render_cardinfo && !render_mouseinfo && !render_movieinfo && !render_backend)
         return;
     
     // bind the debug rendering VAO
     [gl_state bindVertexArrayObject:_debugRenderVAO];
     
     // render hotspots
-    if (render_hotspots) {
+    if (render_hotspots)
+    {
         // need to take the render lock to avoid a race condition with the script thread executing a card swap
-        if (!front_card) {
+        if (!front_card)
+        {
             OSSpinLockLock(&_state_swap_lock);
             front_card = [_front_render_state->card retain];
             OSSpinLockUnlock(&_state_swap_lock);
@@ -2393,7 +2396,8 @@ exit_render:
         NSEnumerator* hotspots = [activeHotspots objectEnumerator];
         RXHotspot* hotspot;
         GLint primitive_index = 0;
-        while ((hotspot = [hotspots nextObject])) {
+        while ((hotspot = [hotspots nextObject]))
+        {
             _hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
             _hotspotDebugRenderElementCountArray[primitive_index] = 4;
             
@@ -2439,8 +2443,10 @@ exit_render:
         }
         
         uint32_t inv_count = 0;
-        if ([[g_world gameState] unsigned32ForKey:@"ainventory"]) {
-            for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++) {
+        if ([[g_world gameState] unsigned32ForKey:@"ainventory"])
+        {
+            for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++)
+            {
                 if (!(_inventory_flags & (1 << inventory_i)))
                     continue;
                 
@@ -2521,15 +2527,18 @@ exit_render:
     glVertexPointer(3, GL_FLOAT, 0, background_strip);
     
     // card info
-    if (render_cardinfo) {
+    if (render_cardinfo)
+    {
         // need to take the render lock to avoid a race condition with the script thread executing a card swap
-        if (!front_card) {
+        if (!front_card)
+        {
             OSSpinLockLock(&_state_swap_lock);
             front_card = [_front_render_state->card retain];
             OSSpinLockUnlock(&_state_swap_lock);
         }
         
-        if (front_card) {       
+        if (front_card)
+        {
             RXCardDescriptor* desc = [front_card descriptor];
             snprintf(debug_buffer, 100, "card: %s %d [rmap=%u]",
                 [[[desc parent] key] cStringUsingEncoding:NSASCIIStringEncoding],
@@ -2558,7 +2567,8 @@ exit_render:
     }
     
     // mouse info
-    if (render_mouseinfo) {
+    if (render_mouseinfo)
+    {
         NSRect mouse = [self mouseVector];
         
         float theta = 180.0f * atan2f(mouse.size.height, mouse.size.width) * M_1_PI;
@@ -2588,7 +2598,8 @@ exit_render:
     }
     
     // hotspots info (part 2)
-    if (render_hotspots) {
+    if (render_hotspots)
+    {
         OSSpinLockLock(&_state_swap_lock);
         RXHotspot* hotspot = (_current_hotspot >= (RXHotspot*)0x1000) ? [_current_hotspot retain] : _current_hotspot;
         OSSpinLockUnlock(&_state_swap_lock);
@@ -2624,8 +2635,10 @@ exit_render:
     }
     
     // movie info
-    if (render_movieinfo) {
-        if ([_active_movies count]) {
+    if (render_movieinfo)
+    {
+        if ([_active_movies count])
+        {
             RXMovie* movie = [_active_movies objectAtIndex:0];
             NSTimeInterval ct;
             QTGetTimeInterval([movie _noLockCurrentTime], &ct);
@@ -2634,7 +2647,9 @@ exit_render:
             QTGetTimeInterval([movie duration], &duration);
             
             snprintf(debug_buffer, 100, "movie display position: %f/%f", ct, duration);
-        } else {
+        }
+        else
+        {
             snprintf(debug_buffer, 100, "no active movie");
         }
         
@@ -2658,8 +2673,9 @@ exit_render:
         background_strip[10] = background_strip[7];
     }
     
-    // CI mode info
-    if (renderCoreImageMode) {
+    // backend info
+    if (render_backend)
+    {
         snprintf(debug_buffer, 100, "using OpenGL");
         
         background_strip[3] = background_origin.x + glutBitmapLength(GLUT_BITMAP_8_BY_13, (unsigned char*)debug_buffer);
