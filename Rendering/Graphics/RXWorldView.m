@@ -399,23 +399,26 @@ static NSString* required_extensions[] = {
     return self;
 }
 
-- (void)tearDown {
+- (void)tearDown
+{
     if (_tornDown)
         return;
+    
     _tornDown = YES;
 #if defined(DEBUG)
     RXOLog(@"tearing down");
 #endif  
     
-    // terminate notifications
+    // stop notifications
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
-    // terminate the dislay link
+    // stop the dislay link
     if (_displayLink)
         CVDisplayLinkStop(_displayLink);
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     [self tearDown];
     
     if (_displayLink)
