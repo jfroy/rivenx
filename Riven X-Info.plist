@@ -87,5 +87,7 @@
 	</array>
 	<key>UTImportedTypeDeclarations</key>
 	<array/>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
 </dict>
 </plist>
