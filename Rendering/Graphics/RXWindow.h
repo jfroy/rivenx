@@ -6,11 +6,8 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <AppKit/NSWindow.h>
 
 
-@interface RXWindow : NSWindow {
-
-}
-
+@interface RXWindow : NSWindow
 @end
