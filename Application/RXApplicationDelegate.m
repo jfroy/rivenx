@@ -233,10 +233,7 @@
     
     // get the path to the saved games directory and create it if it doesn't exists
     NSArray* docsDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    if ([docsDir count] > 0)
-        savedGamesDirectory = [[NSURL alloc] initFileURLWithPath:[[docsDir objectAtIndex:0] stringByAppendingPathComponent:@"Riven X Games"] isDirectory:YES];
-    else
-        savedGamesDirectory = [[NSURL alloc] initFileURLWithPath:[@"~/Documents/Riven X Games" stringByExpandingTildeInPath] isDirectory:YES];
+    savedGamesDirectory = [[NSURL alloc] initFileURLWithPath:[[docsDir objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"] isDirectory:YES];
     BZFSCreateDirectoryURLExtended(savedGamesDirectory, nil, 0700, NULL);
     
     // derive the autosave URL from the saved games directory
