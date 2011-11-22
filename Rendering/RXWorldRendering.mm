@@ -89,7 +89,9 @@
     [window makeKeyAndOrderFront:self];
 }
 
-- (void)windowWillClose:(NSNotification*)notification {
+- (void)windowWillClose:(NSNotification*)notification
+{
+    [_worldView tearDown];
     [NSApp terminate:nil];
 }
 
