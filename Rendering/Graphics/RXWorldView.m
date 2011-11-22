@@ -166,9 +166,8 @@ static NSString* required_extensions[] = {
     // copy the basic attributes
     memcpy(final_attribs, base_window_attribs, sizeof(base_window_attribs));
     
-    // if we're on Leopard and later, allow offline renderers
-    if ([GTMSystemVersion isLeopardOrGreater])
-        final_attribs[++pfa_index] = NSOpenGLPFAAllowOfflineRenderers;
+    // allow offline renderers
+    final_attribs[++pfa_index] = NSOpenGLPFAAllowOfflineRenderers;
     
     // request a 4x MSAA multisampling buffer by default (if context creation fails, we'll remove those)
     final_attribs[++pfa_index] = NSOpenGLPFASampleBuffers;
@@ -379,13 +378,8 @@ static NSString* required_extensions[] = {
     CVDisplayLinkSetOutputCallback(_displayLink, &rx_render_output_callback, self);
     
     // color spaces
-    if ([GTMSystemVersion isLeopardOrGreater]) {
-        _workingColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGBLinear);
-        _sRGBColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    } else {
-        _workingColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
-        _sRGBColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
-    }
+    _workingColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGBLinear);
+    _sRGBColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     
     // get the default cursor from the world
     _cursor = [[g_world defaultCursor] retain];

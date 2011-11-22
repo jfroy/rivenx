@@ -371,27 +371,20 @@
         return;
     
     NSOpenPanel* panel = [NSOpenPanel openPanel];
-    [panel setCanChooseFiles:YES];
-    [panel setCanChooseDirectories:NO];
-    [panel setAllowsMultipleSelection:NO];
-    
-    [panel setCanCreateDirectories:YES];
-    [panel setAllowsOtherFileTypes:NO];
-    [panel setCanSelectHiddenExtension:YES];
-    [panel setTreatsFilePackagesAsDirectories:NO];
-    
-    NSArray* types;
-    if ([GTMSystemVersion isLeopardOrGreater])
-        types = [NSArray arrayWithObject:@"org.macstorm.rivenx.game"];
-    else
-        types = [NSArray arrayWithObject:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
+    panel.canChooseFiles = YES;
+    panel.canChooseDirectories = NO;
+    panel.allowsMultipleSelection = NO;
+    panel.canCreateDirectories = YES;
+    panel.allowsOtherFileTypes = NO;
+    panel.canSelectHiddenExtension = YES;
+    panel.treatsFilePackagesAsDirectories = NO;
+    panel.directoryURL = savedGamesDirectory;
+    panel.allowedFileTypes = [NSArray arrayWithObject:@"org.macstorm.rivenx.game"];
     
     wasFullscreen = [g_world fullscreen];
     if (wasFullscreen)
         [g_world toggleFullscreen];
     
-    panel.directoryURL = savedGamesDirectory;
-    panel.allowedFileTypes = types;
     NSInteger result = [panel runModal];
     
     if (wasFullscreen)
@@ -426,17 +419,11 @@
         return;
     
     NSSavePanel* panel = [NSSavePanel savePanel];
-    [panel setCanCreateDirectories:YES];
-    [panel setAllowsOtherFileTypes:NO];
-    [panel setCanSelectHiddenExtension:YES];
-    [panel setTreatsFilePackagesAsDirectories:NO];
-    
-    NSArray* types;
-    if ([GTMSystemVersion isLeopardOrGreater])
-        types = [NSArray arrayWithObject:@"org.macstorm.rivenx.game"];
-    else
-        types = [NSArray arrayWithObject:[(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease]];
-    [panel setAllowedFileTypes:types];
+    panel.canCreateDirectories = YES;
+    panel.allowsOtherFileTypes = NO;
+    panel.canSelectHiddenExtension = YES;
+    panel.treatsFilePackagesAsDirectories = NO;
+    panel.allowedFileTypes = [NSArray arrayWithObject:@"org.macstorm.rivenx.game"];
     
     [panel beginSheetModalForWindow:[g_worldView window] completionHandler:^(NSInteger result)
     {
