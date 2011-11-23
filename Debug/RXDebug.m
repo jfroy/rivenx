@@ -7,20 +7,26 @@
  *
  */
 
-#import <Cocoa/Cocoa.h>
-
+#import "Base/RXBase.h"
 #import "Base/RXLogging.h"
 #import "Debug/RXDebug.h"
 
+#import <Foundation/NSException.h>
+#import <Foundation/NSScanner.h>
+#import <Foundation/NSTask.h>
 
-void rx_print_exception_backtrace(NSException* e) {
+
+void rx_print_exception_backtrace(NSException* e)
+{
     NSArray* stack = [[[e userInfo] objectForKey:NSStackTraceKey] componentsSeparatedByString:@"  "];
     if (!stack && [e respondsToSelector:@selector(callStackReturnAddresses)])
         stack = [e callStackReturnAddresses];
     
-    if (stack) {
+    if (stack)
+    {
         // sometimes, the value 0x1 makes its way as the last call stack return address; ignore it
-        if ([[stack lastObject] isKindOfClass:[NSString class]]) {
+        if ([[stack lastObject] isKindOfClass:[NSString class]])
+        {
             NSScanner* scanner = [[NSScanner alloc] initWithString:[stack lastObject]];
             uint32_t address;
             [scanner scanHexInt:&address];
@@ -38,7 +44,8 @@ void rx_print_exception_backtrace(NSException* e) {
         
         NSEnumerator* stack_enum = [stack objectEnumerator];
         id stack_p;
-        while ((stack_p = [stack_enum nextObject])) {
+        while ((stack_p = [stack_enum nextObject]))
+        {
             if ([stack_p isKindOfClass:[NSString class]])
                 [args addObject:stack_p];
             else
@@ -47,14 +54,18 @@ void rx_print_exception_backtrace(NSException* e) {
         
         [ls setLaunchPath:@"/usr/bin/atos"];
         [ls setArguments:args];
-        @try {
+        @try
+        {
             [ls launch];
-        } @catch (NSException* e) {
+        }
+        @catch (NSException* e)
+        {
             RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"FAILED TO LAUNCH atos TO SYMBOLIFICATE EXCEPTION BACKTRACE: %@", [e description]);
             NSString* string_stack = [[args subarrayWithRange:NSMakeRange(2, [args count] - 2)] componentsJoinedByString:@"\n"];
             RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"%@", string_stack);
         }
         [ls release];
-    } else
+    }
+    else
         RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"NO BACKTRACE AVAILABLE");
 }

@@ -12,12 +12,16 @@
 
 #import "Rendering/Graphics/RXWorldView.h"
 
-#import "Application/RXApplicationDelegate.h"
 #import "Base/RXThreadUtilities.h"
+#import "Application/RXApplicationDelegate.h"
 #import "Engine/RXWorldProtocol.h"
 #import "Utilities/GTMSystemVersion.h"
 
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
+
+#import <AppKit/NSApplication.h>
+#import <AppKit/NSOpenGL.h>
+#import <AppKit/NSWindow.h>
 
 #ifndef kCGLRendererIDMatchingMask
 #define kCGLRendererIDMatchingMask   0x00FE7F00

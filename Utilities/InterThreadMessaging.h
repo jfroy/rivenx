@@ -3,12 +3,10 @@
  * Created by toby on Tue Jun 19 2001.
  */
 
-#import <Foundation/Foundation.h>
+#import "Base/RXBase.h"
 
+#import <Foundation/NSThread.h>
 
-@interface NSThread (InterThreadMessaging)
-+ (void)prepareForInterThreadMessages;
-@end
 
 @interface NSObject (InterThreadMessaging)
 - (void)performSelector:(SEL)selector inThread:(NSThread*)thread;

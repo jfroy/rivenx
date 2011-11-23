@@ -8,7 +8,7 @@
 
 #import <mach/semaphore.h>
 
-#import <Cocoa/Cocoa.h>
+#import "Base/RXBase.h"
 
 #import "Engine/RXCardDescriptor.h"
 #import "Engine/RXCoreStructures.h"

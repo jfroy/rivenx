@@ -12,6 +12,7 @@
 #import "MHKADPCMDecompressor.h"
 #import "MHKMP2Decompressor.h"
 #import "MHKErrors.h"
+#import "Base/RXErrorMacros.h"
 
 
 @interface MHKFileHandle (Private)
@@ -21,7 +22,8 @@
 
 @implementation MHKArchive (MHKArchiveWAVAdditions)
 
-- (NSDictionary*)soundDescriptorWithID:(uint16_t)soundID error:(NSError**)error {
+- (NSDictionary*)soundDescriptorWithID:(uint16_t)soundID error:(NSError**)error
+{
     OSStatus err = noErr;
     ByteCount bytes_read = 0;
     SInt64 file_offset;
@@ -39,7 +41,7 @@
     // get the wave resource descriptor
     NSDictionary* descriptor = [self resourceDescriptorWithResourceType:@"tWAV" ID:soundID];
     if (!descriptor)
-        ReturnNULLWithError(MHKErrorDomain, errResourceNotFound, nil, error);
+        ReturnValueWithError(nil, MHKErrorDomain, errResourceNotFound, nil, error);
     
     // seek to the tWAV resource then seek to the data chunk
     SInt64 resource_offset = [[descriptor objectForKey:@"Offset"] longLongValue];
@@ -55,13 +57,13 @@
     // we need to have a standard MHWK chunk first
     err = FSReadFork(forkRef, fsFromStart, file_offset, sizeof(MHK_chunk_header), &chunk_header, &bytes_read);
     if (err)
-        ReturnNULLWithError(NSOSStatusErrorDomain, err, nil, error);
+        ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, error);
     file_offset += bytes_read;
     
     // handle byte order and check header
     MHK_chunk_header_fton(&chunk_header);
     if (chunk_header.signature != MHK_MHWK_signature_integer)
-        ReturnNULLWithError(MHKErrorDomain, errDamagedResource, nil, error);
+        ReturnValueWithError(nil, MHKErrorDomain, errDamagedResource, nil, error);
     
     // since resource lengths are computed in the archive, we need to do some checking here
     UInt32 resource_length = chunk_header.content_length + sizeof(MHK_chunk_header);
@@ -85,10 +87,10 @@
     uint32_t wave_signature;
     err = FSReadFork(forkRef, fsFromStart, file_offset, sizeof(uint32_t), &wave_signature, &bytes_read);
     if (err)
-        ReturnNULLWithError(NSOSStatusErrorDomain, err, nil, error);
+        ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, error);
     file_offset += bytes_read;
     if (wave_signature != MHK_WAVE_signature_integer)
-        ReturnNULLWithError(MHKErrorDomain, errDamagedResource, nil, error);
+        ReturnValueWithError(nil, MHKErrorDomain, errDamagedResource, nil, error);
     
     // compute the resource limit
     SInt64 resource_eof = resource_offset + chunk_header.content_length + sizeof(MHK_chunk_header);
@@ -98,7 +100,7 @@
         // read a chunk header structure
         err = FSReadFork(forkRef, fsFromStart, file_offset, sizeof(MHK_chunk_header), &chunk_header, &bytes_read);
         if (err)
-            ReturnNULLWithError(NSOSStatusErrorDomain, err, nil, error);
+            ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, error);
         file_offset += bytes_read;
         MHK_chunk_header_fton(&chunk_header);
         
@@ -112,13 +114,13 @@
     
     // did we score?
     if (chunk_header.signature != MHK_Data_signature_integer)
-        ReturnNULLWithError(MHKErrorDomain, errDamagedResource, nil, error);
+        ReturnValueWithError(nil, MHKErrorDomain, errDamagedResource, nil, error);
     
     // read the Data chunk content header
     MHK_WAVE_Data_chunk_header data_header;
     err = FSReadFork(forkRef, fsFromStart, file_offset, sizeof(MHK_WAVE_Data_chunk_header), &data_header, &bytes_read);
     if (err)
-        ReturnNULLWithError(NSOSStatusErrorDomain, err, nil, error);
+        ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, error);
     file_offset += bytes_read;
     MHK_WAVE_Data_chunk_header_fton(&data_header);
     
@@ -146,7 +148,7 @@
         for (unsigned char packet_index = 0; packet_index < 3; packet_index++) {
             err = FSReadFork(forkRef, fsFromStart, file_offset, sizeof(uint32_t), &mpeg_header, NULL);
             if (err)
-                ReturnNULLWithError(NSOSStatusErrorDomain, err, nil, error);
+                ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, error);
             
             // WE OMIT TO UPDATE file_offset ON PURPOSE SO THAT IT STILL POINTS AT THE BEGINNING OF THE FIRST MPEG FRAME
             
@@ -155,18 +157,18 @@
             
             // first 11 bits have to be 1s (MPEG packet sync)
             if ((mpeg_header & 0xFFE00000) != 0xFFE00000)
-                ReturnNULLWithError(MHKErrorDomain, errDamagedResource, nil, error);
+                ReturnValueWithError(nil, MHKErrorDomain, errDamagedResource, nil, error);
             
             // 2 bits - type must be 10 for MPEG v2
             if ((mpeg_header & 0x00180000) != 0x00100000)
-                ReturnNULLWithError(MHKErrorDomain, errDamagedResource, nil, error);
+                ReturnValueWithError(nil, MHKErrorDomain, errDamagedResource, nil, error);
             
             // 2 bits - layer must be 10 for layer II
             if ((mpeg_header & 0x00060000) != 0x00040000)
-                ReturnNULLWithError(MHKErrorDomain, errDamagedResource, nil, error);
+                ReturnValueWithError(nil, MHKErrorDomain, errDamagedResource, nil, error);
         }
     } else {
-        ReturnNILWithError(MHKErrorDomain, errDamagedResource, nil, error);
+        ReturnValueWithError(nil, MHKErrorDomain, errDamagedResource, nil, error);
     }
     
 #if defined(DEBUG) && DEBUG > 2
@@ -238,7 +240,7 @@
     else if (compression_type == MHK_WAVE_MP2)
         decompressor_class = [MHKMP2Decompressor class];
     else
-        ReturnNILWithError(MHKErrorDomain, errInvalidSoundDescriptor, nil, error);
+        ReturnValueWithError(nil, MHKErrorDomain, errInvalidSoundDescriptor, nil, error);
         
     // return a decompressor
     return [[[decompressor_class alloc] initWithChannelCount:channels frameCount:frames samplingRate:sr fileHandle:fh error:error] autorelease];

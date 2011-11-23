@@ -7,7 +7,7 @@
  *
  */
 
-#import <Foundation/Foundation.h>
+#import "Base/RXBase.h"
 
 #import <MHKKit/mohawk_core.h>
 #import <MHKKit/mohawk_bitmap.h>

@@ -12,6 +12,7 @@
 
 #import "MHKArchive.h"
 #import "MHKErrors.h"
+#import "Base/RXErrorMacros.h"
 
 
 @implementation MHKArchive (MHKArchiveBitmapAdditions)
@@ -20,7 +21,7 @@
     // get a resource descriptor
     NSDictionary* descriptor = [self resourceDescriptorWithResourceType:@"tBMP" ID:bitmapID];
     if (!descriptor)
-        ReturnNULLWithError(MHKErrorDomain, errResourceNotFound, nil, errorPtr);
+        ReturnValueWithError(nil, MHKErrorDomain, errResourceNotFound, nil, errorPtr);
     
     // seek to the tBMP resource
     SInt64 resource_offset = [[descriptor objectForKey:@"Offset"] longLongValue];
@@ -30,7 +31,7 @@
     ByteCount bytes_read = 0;
     OSStatus err = FSReadFork(forkRef, fsFromStart, resource_offset, sizeof(MHK_BITMAP_header), &bitmap_header, &bytes_read);
     if (err)
-        ReturnNULLWithError(NSOSStatusErrorDomain, err, nil, errorPtr);
+        ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, errorPtr);
     MHK_BITMAP_header_fton(&bitmap_header);
     
     // make the bitmap descriptor

@@ -7,12 +7,17 @@
 //
 
 #import "BZFSUtilities.h"
-#import "PHSErrorMacros.h"
+#import "Base/RXErrorMacros.h"
+
+#import <Foundation/NSBundle.h>
+#import <Foundation/NSFileManager.h>
+#import <Foundation/NSFileHandle.h>
 
 
 NSString* const BZFSErrorDomain = @"BZFSErrorDomain";
 
-BOOL BZFSFileExists(NSString* path) {
+BOOL BZFSFileExists(NSString* path)
+{
     BOOL isDirectory;
     if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory] == NO)
         return NO;
@@ -21,11 +26,13 @@ BOOL BZFSFileExists(NSString* path) {
     return YES; 
 }
 
-BOOL BZFSFileURLExists(NSURL* url) {
+BOOL BZFSFileURLExists(NSURL* url)
+{
     return BZFSFileExists([url path]);
 }
 
-BOOL BZFSDirectoryExists(NSString* path) {
+BOOL BZFSDirectoryExists(NSString* path)
+{
     BOOL isDirectory;
     if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory] == NO)
         return NO;
@@ -47,15 +54,18 @@ BOOL BZFSCreateDirectoryExtended(NSString* path, NSString* group, uint32_t permi
     return [fm createDirectoryAtPath:path withIntermediateDirectories:NO attributes:attributes error:error];
 }
 
-BOOL BZFSCreateDirectory(NSString* path, NSError** error) {
+BOOL BZFSCreateDirectory(NSString* path, NSError** error)
+{
     return BZFSCreateDirectoryExtended(path, nil, 0, error);
 }
 
-BOOL BZFSDirectoryURLExists(NSURL* url) {
+BOOL BZFSDirectoryURLExists(NSURL* url)
+{
     return BZFSDirectoryExists([url path]);
 }
 
-BOOL BZFSCreateDirectoryURL(NSURL* url, NSError** error) {
+BOOL BZFSCreateDirectoryURL(NSURL* url, NSError** error)
+{
     return BZFSCreateDirectory([url path], error);
 }
 
@@ -64,35 +74,34 @@ BOOL BZFSCreateDirectoryURLExtended(NSURL* url, NSString* group, uint32_t permis
     return BZFSCreateDirectoryExtended([url path], group, permissions, error);
 }
 
-NSArray* BZFSContentsOfDirectory(NSString* path, NSError** error) {
-    NSArray* contents;
+NSArray* BZFSContentsOfDirectory(NSString* path, NSError** error)
+{
     NSFileManager* fm = [NSFileManager defaultManager];
-//    if ([fm respondsToSelector:@selector(contentsOfDirectoryAtPath:error:)])
-        contents = [fm contentsOfDirectoryAtPath:path error:error];
-//    else {
-//        contents = [fm directoryContentsAtPath:path];
-//        if (!contents && error)
-//            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
-//    }
-    return contents;
+    return [fm contentsOfDirectoryAtPath:path error:error];
 }
 
-NSArray* BZFSContentsOfDirectoryURL(NSURL* url, NSError** error) {
+NSArray* BZFSContentsOfDirectoryURL(NSURL* url, NSError** error)
+{
     return BZFSContentsOfDirectory([url path], error);
 }
 
-NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_insensitive, NSError** error) {
+NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_insensitive, NSError** error)
+{
     NSArray* content = BZFSContentsOfDirectory(path, error);
     if (!content)
         return NO;
     
     NSEnumerator* enumerator = [content objectEnumerator];
     NSString* item;
-    while ((item = [enumerator nextObject])) {
-        if (case_insensitive) {
+    while ((item = [enumerator nextObject]))
+    {
+        if (case_insensitive)
+        {
             if ([item caseInsensitiveCompare:name] == NSOrderedSame)
                 return [path stringByAppendingPathComponent:item];
-        } else {
+        }
+        else
+        {
             if ([item compare:name] == NSOrderedSame)
                 return [path stringByAppendingPathComponent:item];
         }
@@ -101,53 +110,31 @@ NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_i
     return nil;
 }
 
-NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error) {
-    NSDictionary* attributes;
+NSDictionary* BZFSAttributesOfItemAtPath(NSString* path, NSError** error)
+{
     NSFileManager* fm = [NSFileManager defaultManager];
-//    if ([fm respondsToSelector:@selector(attributesOfItemAtPath:error:)])
-        attributes = [fm attributesOfItemAtPath:path error:error];
-//    else {
-//        attributes = [fm fileAttributesAtPath:path traverseLink:NO];
-//        if (!attributes && error)
-//            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
-//    }
-    return attributes;
+    return [fm attributesOfItemAtPath:path error:error];
 }
 
-NSDictionary* BZFSAttributesOfItemAtURL(NSURL* url, NSError** error) {
+NSDictionary* BZFSAttributesOfItemAtURL(NSURL* url, NSError** error)
+{
     return BZFSAttributesOfItemAtPath([url path], error);
 }
 
-BOOL BZFSSetAttributesOfItemAtPath(NSString* path, NSDictionary* attributes, NSError** error) {
-    BOOL success;
+BOOL BZFSSetAttributesOfItemAtPath(NSString* path, NSDictionary* attributes, NSError** error)
+{
     NSFileManager* fm = [NSFileManager defaultManager];
-//    if ([fm respondsToSelector:@selector(setAttributes:ofItemAtPath:error:)])
-        success = [fm setAttributes:attributes ofItemAtPath:path error:error];
-//    else {
-//        success = [fm changeFileAttributes:attributes atPath:path];
-//        if (!success && error)
-//            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
-//    }
-    return success;
+    return [fm setAttributes:attributes ofItemAtPath:path error:error];
 }
 
-BOOL BZFSRemoveItemAtURL(NSURL* url, NSError** error) {
-    BOOL success;
+BOOL BZFSRemoveItemAtURL(NSURL* url, NSError** error)
+{
     NSFileManager* fm = [NSFileManager defaultManager];
-    if ([fm respondsToSelector:@selector(removeItemAtURL:error:)])
-        success = [fm removeItemAtURL:url error:error];
-//    else if ([fm respondsToSelector:@selector(removeItemAtPath:error:)])
-    else
-        success = [fm removeItemAtPath:[url path] error:error];
-//    else {
-//        success = [fm removeFileAtPath:[url path] handler:nil];
-//        if (!success && error)
-//            *error = [RXError errorWithDomain:BZFSErrorDomain code:kBZFSErrUnknownError userInfo:nil];
-//    }
-    return success;
+    return [fm removeItemAtURL:url error:error];
 }
 
-NSFileHandle* BZFSCreateTemporaryFileInDirectory(NSURL* directory, NSString* filenameTemplate, NSURL** tempFileURL, NSError** error) {
+NSFileHandle* BZFSCreateTemporaryFileInDirectory(NSURL* directory, NSString* filenameTemplate, NSURL** tempFileURL, NSError** error)
+{
     char* t = malloc(PATH_MAX + 1);
     if (!t)
         ReturnValueWithPOSIXError(nil, nil, error);

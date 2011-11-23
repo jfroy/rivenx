@@ -17,6 +17,11 @@
 
 #import "Utilities/BZFSUtilities.h"
 
+#import <CoreServices/CoreServices.h>
+#import <Foundation/NSException.h>
+#import <Foundation/NSFileHandle.h>
+#import <Foundation/NSPathUtilities.h>
+
 
 @implementation RXLogCenter
 
@@ -24,10 +29,7 @@
 {
     static RXLogCenter* center = nil;
     if (center == nil)
-    {
         center = [RXLogCenter new];
-    }
-    
     return center;
 }
 
@@ -42,17 +44,21 @@
     // logs are put in the user's Logs folder
     FSRef logsFolder;
     OSErr oerr = FSFindFolder(kUserDomain, kLogsFolderType, true, &logsFolder);
-    if (oerr != noErr) {
+    if (oerr != noErr)
+    {
         error = [RXError errorWithDomain:NSOSStatusErrorDomain code:oerr userInfo:nil];
-        @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to find your logs folder." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to find your logs folder."
+            userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     
     NSURL* logsURL = [(NSURL*)CFURLCreateFromFSRef(NULL, &logsFolder) autorelease];
     _logsBase = [[[logsURL path] stringByAppendingPathComponent:@"Riven X"] retain];
-    if (!BZFSDirectoryExists(_logsBase)) {
+    if (!BZFSDirectoryExists(_logsBase))
+    {
         BOOL success = BZFSCreateDirectory(_logsBase, &error);
         if (!success)
-            @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create its logs folder in your Logs folder." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+            @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create its logs folder in your Logs folder."
+                userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     
     // map facilities to certain log files
@@ -64,9 +70,11 @@
     NSFileHandle* fh;
     
     fd = open([[_logsBase stringByAppendingPathComponent:@"Rendering.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
-    if (fd == -1) {
+    if (fd == -1)
+    {
         error = [RXError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
-        @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file."
+            userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
     [_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingRendering encoding:NSASCIIStringEncoding]];
@@ -74,25 +82,31 @@
     [_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingAudio encoding:NSASCIIStringEncoding]];
     
     fd = open([[_logsBase stringByAppendingPathComponent:@"Script.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
-    if (fd == -1) {
+    if (fd == -1)
+    {
         error = [RXError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
-        @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file."
+            userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
     [_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingScript encoding:NSASCIIStringEncoding]];
     
     fd = open([[_logsBase stringByAppendingPathComponent:@"Base.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
-    if (fd == -1) {
+    if (fd == -1)
+    {
         error = [RXError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
-        @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file."
+            userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
     [_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingBase encoding:NSASCIIStringEncoding]];
     
     fd = open([[_logsBase stringByAppendingPathComponent:@"Audio.log"] fileSystemRepresentation], O_WRONLY | O_APPEND | O_TRUNC | O_CREAT, 0600);
-    if (fd == -1) {
+    if (fd == -1)
+    {
         error = [RXError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
-        @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file." userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        @throw [NSException exceptionWithName:@"RXFilesystemException" reason:@"Riven X was unable to create a log file."
+            userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     fh = [[[NSFileHandle alloc] initWithFileDescriptor:fd closeOnDealloc:YES] autorelease];
     [_facilityFDMap setObject:fh forKey:[NSString stringWithCString:kRXLoggingAudio encoding:NSASCIIStringEncoding]];
@@ -109,7 +123,8 @@
     return self;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     [self tearDown];
     
     [_logsBase release];
@@ -120,7 +135,8 @@
     [super dealloc];
 }
 
-- (void)tearDown {
+- (void)tearDown
+{
     if (_toreDown)
         return;
     _toreDown = YES;
@@ -129,11 +145,13 @@
     close(_genericLogFD);
 }
 
-- (void)_openLogFileForFacility:(NSString*)facility {
+- (void)_openLogFileForFacility:(NSString*)facility
+{
     
 }
 
-- (void)log:(NSString*)message facility:(NSString*)facility level:(int)level {
+- (void)log:(NSString*)message facility:(NSString*)facility level:(int)level
+{
     if (_toreDown)
         return;
     

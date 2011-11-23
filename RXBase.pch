@@ -13,19 +13,11 @@
 // include GLee first and everywhere in order for CGLMacro to work correctly
 #include "Rendering/Graphics/GL/glew.h"
 
-#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uintptr_t)(buffer) + (bytes))
-#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uintptr_t)(buffer) - (bytes))
-
-#include "RXLogging.h"
+#include "Base/RXBase.h"
+#include "Base/RXBufferMacros.h"
+#include "Base/RXLogging.h"
+#include "Base/RXErrors.h"
 
 #if defined(__OBJC__)
-#import <Cocoa/Cocoa.h>
-
-#import "Base/RXErrors.h"
 #import "Utilities/InterThreadMessaging.h"
-
-#if defined(DEBUG)
-#import <Foundation/NSDebug.h>
-#endif // DEBUG
-
 #endif // __OBJC__

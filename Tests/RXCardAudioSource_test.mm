@@ -11,7 +11,7 @@
 #import <fcntl.h>
 #import <unistd.h>
 
-#import <Foundation/Foundation.h>
+#import "Base/RXBase.h"
 #import <AudioToolbox/ExtendedAudioFile.h>
 
 #import <MHKKit/MHKAudioDecompression.h>

@@ -7,14 +7,16 @@
 //
 
 #import <stdlib.h>
-
 #import <dlfcn.h>
 #import <pthread.h>
-
 #import <libavcodec/avcodec.h>
+#import <Foundation/NSBundle.h>
+#import <Foundation/NSPathUtilities.h>
+#import <CoreServices/CoreServices.h>
 
 #import "MHKMP2Decompressor.h"
 #import "MHKErrors.h"
+#import "Base/RXErrorMacros.h"
 
 
 #define READ_BUFFER_SIZE 0x2000
@@ -222,7 +224,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     }
 }
 
-- (BOOL)_build_packet_description_table_and_count_frames:(NSError**)error {
+- (BOOL)_build_packet_description_table_and_count_frames:(NSError**)error
+{
     NSError* local_error = nil;
     
     uint8_t* read_buffer = malloc(READ_BUFFER_SIZE);
@@ -238,17 +241,21 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     // start with say 1000 packets
     ssize_t packet_table_length = 1000;
     _packet_table = calloc(packet_table_length, sizeof(AudioStreamPacketDescription));
-    if (!_packet_table) {
+    if (!_packet_table)
+    {
         free(read_buffer);
         ReturnValueWithPOSIXError(NO, nil, error);
     }
     
     // loop while we still have data left to process
-    while (source_position < source_length) {
+    while (source_position < source_length)
+    {
         // is the read buffer empty?
-        if (size_left_in_buffer == 0) {
+        if (size_left_in_buffer == 0)
+        {
             size_left_in_buffer = [_data_source readDataOfLength:READ_BUFFER_SIZE inBuffer:read_buffer error:&local_error];
-            if (size_left_in_buffer == -1) {
+            if (size_left_in_buffer == -1)
+            {
                 free(read_buffer);
                 ReturnValueWithError(NO, [local_error domain], [local_error code], [local_error userInfo], error);
             }
@@ -261,11 +268,13 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         }
         
         // find the next frame sync
-        while (size_left_in_buffer >= 4) {
+        while (size_left_in_buffer >= 4)
+        {
             uint32_t mpeg_header;
             memcpy(&mpeg_header, read_buffer, sizeof(uint32_t));
             mpeg_header = CFSwapInt32BigToHost(mpeg_header);
-            if (!_valid_mpeg_audio_frame_header_predicate(mpeg_header)) {
+            if (!_valid_mpeg_audio_frame_header_predicate(mpeg_header))
+            {
                 buffer_position++;
                 size_left_in_buffer--;
                 continue;
@@ -287,21 +296,25 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
                 _max_packet_size = frame_length;
             
             // do we need a bigger packet table?
-            if (packet_table_length == _packet_count) {
+            if (packet_table_length == _packet_count)
+            {
                 packet_table_length *= 2;
                 _packet_table = realloc(_packet_table, packet_table_length * sizeof(AudioStreamPacketDescription));
-                if (!_packet_table) {
+                if (!_packet_table)
+                {
                     free(read_buffer);
                     ReturnValueWithPOSIXError(NO, nil, error);
                 }
             }
             
             // if the whole frame isn't in the buffer, fill it up
-            if ((size_t)size_left_in_buffer < frame_length) {
+            if ((size_t)size_left_in_buffer < frame_length)
+            {
                 memmove(read_buffer, read_buffer + buffer_position, size_left_in_buffer);
                 
                 size_left_in_buffer += [_data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:&local_error];
-                if (size_left_in_buffer == -1) {
+                if (size_left_in_buffer == -1)
+                {
                     free(read_buffer);
                     ReturnValueWithError(NO, [local_error domain], [local_error code], [local_error userInfo], error);
                 }
@@ -319,11 +332,13 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         }
         
         // if we have 3 or less but not 0 bytes left in the buffer, move them up front and read some more bytes
-        if (size_left_in_buffer < 4 && size_left_in_buffer > 0) {
+        if (size_left_in_buffer < 4 && size_left_in_buffer > 0)
+        {
             memmove(read_buffer, read_buffer + buffer_position, size_left_in_buffer);
             
             size_left_in_buffer += [_data_source readDataOfLength:(READ_BUFFER_SIZE - size_left_in_buffer) inBuffer:(read_buffer + size_left_in_buffer) error:&local_error];
-            if (size_left_in_buffer == -1) {
+            if (size_left_in_buffer == -1)
+            {
                 free(read_buffer);
                 ReturnValueWithError(NO, [local_error domain], [local_error code], [local_error userInfo], error);
             }
@@ -346,18 +361,25 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     return nil;
 }
 
-- (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle*)fh error:(NSError **)errorPtr {
+- (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle*)fh error:(NSError **)errorPtr
+{
     self = [super init];
     if (!self)
         return nil;
     
     // we can't do anything without ffmpeg
     if (!MHKMP2Decompressor_libav_available)
-        ReturnFromInitWithError(MHKErrorDomain, errFFMPEGNotAvailable, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, MHKErrorDomain, errFFMPEGNotAvailable, nil, errorPtr);
+    }
     
     // layer II audio can only store 1 or 2 channels
     if (channels != 1 && channels != 2)
-        ReturnFromInitWithError(MHKErrorDomain, errInvalidChannelCount, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, MHKErrorDomain, errInvalidChannelCount, nil, errorPtr);
+    }
     
     _channel_count = channels;
     _frame_count = frames;
@@ -413,7 +435,10 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     
     // if we're told we have more frames than we can have, bail
     if (_frame_count > integer_frame_count)
-        ReturnFromInitWithError(MHKErrorDomain, errInvalidFrameCount, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, MHKErrorDomain, errInvalidFrameCount, nil, errorPtr);
+    }
     
     // compute how many bytes we should drop from the first packet (where extra silence will be)
     _bytes_to_drop = FRAME_SKIP_FUDGE * _decomp_absd.mBytesPerFrame;
@@ -422,13 +447,19 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     _decompression_buffer_length = MAX(MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET * sizeof(SInt16) * _channel_count, AVCODEC_MAX_AUDIO_FRAME_SIZE);
     _decompression_buffer = malloc(_decompression_buffer_length + FF_INPUT_BUFFER_PADDING_SIZE);
     if (!_decompression_buffer)
-        ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, NSPOSIXErrorDomain, errno, nil, errorPtr);
+    }
     memset(BUFFER_OFFSET(_decompression_buffer, _decompression_buffer_length), 0, FF_INPUT_BUFFER_PADDING_SIZE);
     
     // allocate the packet buffer
     _packet_buffer = malloc(_max_packet_size * 50);
     if (!_packet_buffer)
-        ReturnFromInitWithError(NSPOSIXErrorDomain, errno, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, NSPOSIXErrorDomain, errno, nil, errorPtr);
+    }
     
     // create the decompressor lock
     pthread_mutex_init(&_decompressor_lock, NULL);
@@ -439,7 +470,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     return self;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     // close the decoder
     pthread_mutex_lock(&ffmpeg_mutex);
     if (_mp2_codec_context) {

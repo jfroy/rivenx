@@ -16,7 +16,7 @@
 //  the License.
 //
 
-#import <Foundation/Foundation.h>
+#import "Base/RXBase.h"
 #import "GTMDefines.h"
 
 // A class for getting information about what system we are running on

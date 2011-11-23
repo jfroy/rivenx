@@ -35,7 +35,7 @@
     OF SUCH DAMAGE.
 */
 
-#import <Foundation/Foundation.h>
+#import "Base/RXBase.h"
 #import <CoreServices/CoreServices.h>
 
 @interface BDAlias : NSObject

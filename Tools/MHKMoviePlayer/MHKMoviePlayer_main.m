@@ -6,7 +6,7 @@
 //  Copyright MacStorm 2005. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import "Base/RXBase.h"
 
 int main(int argc, char *argv[])
 {

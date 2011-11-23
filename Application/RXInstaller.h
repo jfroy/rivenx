@@ -6,14 +6,16 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import "Base/RXBase.h"
+#import <AppKit/NSApplication.h>
 
 
 @protocol RXInstallerMediaProviderProtocol <NSObject>
 - (BOOL)waitForDisc:(NSString*)disc_name ejectingDisc:(NSString*)path error:(NSError**)error;
 @end
 
-@interface RXInstaller : NSObject {
+@interface RXInstaller : NSObject
+{
     double progress;
     CFTimeInterval remainingTime;
     NSString* item;

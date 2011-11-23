@@ -7,6 +7,16 @@
 //
 
 #import <ExceptionHandling/NSExceptionHandler.h>
+
+#import <Foundation/NSBundle.h>
+#import <Foundation/NSTimer.h>
+
+#import <AppKit/NSAlert.h>
+#import <AppKit/NSDocumentController.h>
+#import <AppKit/NSMenu.h>
+#import <AppKit/NSOpenPanel.h>
+#import <AppKit/NSWindow.h>
+
 #import <Sparkle/SUUpdater.h>
 
 #import "Application/RXVersionComparator.h"
@@ -32,7 +42,8 @@
 
 @implementation RXApplicationDelegate
 
-+ (void)initialize {
++ (void)initialize
+{
     [super initialize];
     
     [[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:
@@ -42,7 +53,8 @@
     ]];
 }
 
-- (void)awakeFromNib {
+- (void)awakeFromNib
+{
     // setup the about box
     NSBundle* bundle = [NSBundle mainBundle];
     NSString* version_format = NSLocalizedStringFromTable(@"VERSION_FORMAT", @"About", nil);
@@ -57,11 +69,13 @@
 #pragma mark debug UI
 
 #if defined(DEBUG)
-- (void)_showDebugConsole:(id)sender {
+- (void)_showDebugConsole:(id)sender
+{
     [debugConsoleWC showWindow:sender];
 }
 
-- (void)_initDebugUI {
+- (void)_initDebugUI
+{
     debugConsoleWC = [[RXDebugWindowController alloc] initWithWindowNibName:@"DebugConsole"];
     
     NSMenu* debugMenu = [[NSMenu alloc] initWithTitle:@"Debug"];
@@ -79,7 +93,8 @@
 #pragma mark -
 #pragma mark error handling
 
-- (BOOL)attemptRecoveryFromError:(NSError*)error optionIndex:(NSUInteger)recoveryOptionIndex {
+- (BOOL)attemptRecoveryFromError:(NSError*)error optionIndex:(NSUInteger)recoveryOptionIndex
+{
     if ([error domain] == RXErrorDomain)
     {
         switch ([error code])
@@ -97,7 +112,8 @@
                 break;
             
             case kRXErrFailedToInitializeStack:
-                if (recoveryOptionIndex == 1) {
+                if (recoveryOptionIndex == 1)
+                {
                     [[RXWorld sharedWorld] setIsInstalled:NO];
                     
                     // delete the shared base directory's content
@@ -128,7 +144,8 @@
     return NO;
 }
 
-- (void)notifyUserOfFatalException:(NSException*)e {
+- (void)notifyUserOfFatalException:(NSException*)e
+{
     NSError* error = [[e userInfo] objectForKey:NSUnderlyingErrorKey];
     
     [[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:0];
@@ -145,12 +162,14 @@
     [failureAlert addButtonWithTitle:NSLocalizedString(@"Quit", @"quit button")];
     
     NSDictionary* userInfo = [e userInfo];
-    if (userInfo) {
+    if (userInfo)
+    {
         if (error)
             [failureAlert setInformativeText:[error localizedDescription]];
         else
             [failureAlert setInformativeText:[e name]];
-    } else
+    }
+    else
         [failureAlert setInformativeText:[e name]];
     
     [failureAlert runModal];
@@ -159,7 +178,8 @@
     [NSApp terminate:nil];
 }
 
-- (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException*)e mask:(NSUInteger)aMask {
+- (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException*)e mask:(NSUInteger)aMask
+{
     if ([[e name] isEqualToString:@"RXCommandArgumentsException"] || [[e name] isEqualToString:@"RXUnknownCommandException"] || [[e name] isEqualToString:@"RXCommandError"])
         return NO;
     
@@ -193,11 +213,13 @@
     return NO;
 }
 
-- (void)_deleteOldDataStore:(id)context {
+- (void)_deleteOldDataStore:(id)context
+{
     NSAutoreleasePool* pool = [NSAutoreleasePool new];
     
     NSArray* dirs = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
-    if (![dirs count]) {
+    if (![dirs count])
+    {
         [pool drain];
         return;
     }
@@ -259,7 +281,8 @@
         if ([recentGames count] > 0)
             didLoadRecent = [self _openGameWithURL:[recentGames objectAtIndex:0]];
         
-        if (!didLoadRecent) {
+        if (!didLoadRecent)
+        {
             RXGameState* gs = [[RXGameState alloc] init];
             [[RXWorld sharedWorld] loadGameState:gs];
             [gs release];
@@ -275,10 +298,12 @@
     [NSTimer scheduledTimerWithTimeInterval:30.0 target:self selector:@selector(_autosave:) userInfo:nil repeats:YES];
 }
 
-- (void)applicationWillTerminate:(NSNotification*)notification {
+- (void)applicationWillTerminate:(NSNotification*)notification
+{
     // autosave and save (if the game has been saved once) before quitting
     RXGameState* gameState = [g_world gameState];
-    if (gameState) {
+    if (gameState)
+    {
         [self _autosave:nil];
         
         if ([gameState URL])
@@ -287,7 +312,8 @@
     
 }
 
-- (void)applicationWillResignActive:(NSNotification*)notification {
+- (void)applicationWillResignActive:(NSNotification*)notification
+{
     if (!g_world)
         return;
     
@@ -296,7 +322,8 @@
         [g_world toggleFullscreen];
 }
 
-- (void)applicationWillBecomeActive:(NSNotification*)notification {
+- (void)applicationWillBecomeActive:(NSNotification*)notification
+{
     if (!g_world)
         return;
     
@@ -304,20 +331,24 @@
         [g_world toggleFullscreen];
 }
 
-- (BOOL)application:(NSApplication*)application openFile:(NSString*)filename {
+- (BOOL)application:(NSApplication*)application openFile:(NSString*)filename
+{
     return [self _openGameWithURL:[NSURL fileURLWithPath:filename]];
 }
 
-- (IBAction)orderFrontAboutWindow:(id)sender {
+- (IBAction)orderFrontAboutWindow:(id)sender
+{
     [aboutBox makeKeyAndOrderFront:sender];
 }
 
-- (IBAction)showAcknowledgments:(id)sender {
+- (IBAction)showAcknowledgments:(id)sender
+{
     NSString* ackPath = [[NSBundle mainBundle] pathForResource:@"Riven X Acknowledgments" ofType:@"pdf"];
     [[NSWorkspace sharedWorkspace] openFile:ackPath];
 }
 
-- (IBAction)toggleFullscreen:(id)sender {
+- (IBAction)toggleFullscreen:(id)sender
+{
     if (g_world)
         [g_world toggleFullscreen];
 }
@@ -352,7 +383,8 @@
 #pragma mark -
 #pragma mark game opening and saving
 
-- (IBAction)newDocument:(id)sender {
+- (IBAction)newDocument:(id)sender
+{
     if ([self isGameLoadingAndSavingDisabled])
         return;
     
@@ -391,7 +423,8 @@
         [self _openGameWithURL:[panel URL]];
 }
 
-- (IBAction)saveGame:(id)sender {
+- (IBAction)saveGame:(id)sender
+{
     if ([self isGameLoadingAndSavingDisabled])
         return;
     
@@ -401,7 +434,8 @@
     
     if (![gameState URL])
         [self saveGameAs:sender];
-    else {
+    else
+    {
         NSError* error;
         if (![gameState writeToURL:[gameState URL] error:&error])
             [NSApp presentError:error];
@@ -443,7 +477,8 @@
     }];
 }
 
-- (BOOL)_openGameWithURL:(NSURL*)url {
+- (BOOL)_openGameWithURL:(NSURL*)url
+{
     NSError* error;
     
     // lie if loading and saving is disabled by returning YES to avoid the error dialog
@@ -452,7 +487,8 @@
     
     // load the save file, and present any error to the user if one occurs
     RXGameState* gameState = [RXGameState gameStateWithURL:url error:&error];
-    if (!gameState) {
+    if (!gameState)
+    {
         [NSApp presentError:error];
         return NO;
     }
@@ -466,8 +502,10 @@
     return YES;
 }
 
-- (void)_autosave:(NSTimer*)timer {
-    if ([self isGameLoadingAndSavingDisabled]) {
+- (void)_autosave:(NSTimer*)timer
+{
+    if ([self isGameLoadingAndSavingDisabled])
+    {
         missedAutosave = YES;
         return;
     }
@@ -489,15 +527,18 @@
         [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:autosaveURL];
 }
 
-- (BOOL)isGameLoaded {
+- (BOOL)isGameLoaded
+{
     return (g_world) ? [[RXWorld sharedWorld] isInstalled] : NO;
 }
 
-- (BOOL)isGameLoadingAndSavingDisabled {
+- (BOOL)isGameLoadingAndSavingDisabled
+{
     return disableGameSavingAndLoading || ![self isGameLoaded];
 }
 
-- (void)setDisableGameLoadingAndSaving:(BOOL)disable {
+- (void)setDisableGameLoadingAndSaving:(BOOL)disable
+{
     disableGameSavingAndLoading = disable;
     if (missedAutosave)
         [self _autosave:nil];

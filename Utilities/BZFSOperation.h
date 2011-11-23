@@ -6,7 +6,11 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "Base/RXBase.h"
+#import <CoreServices/CoreServices.h>
+
+
+@class NSRunLoop;
 
 enum {
     BZFSOperationCopyOperation = 1,
@@ -15,7 +19,8 @@ enum {
 typedef uint32_t BZFSOperationType;
 
 
-@interface BZFSOperation : NSObject {
+@interface BZFSOperation : NSObject
+{
     FSFileOperationRef _op;
     OptionBits _options;
     
@@ -37,7 +42,7 @@ typedef uint32_t BZFSOperationType;
 - (BOOL)allowOverwriting;
 - (void)setAllowOverwriting:(BOOL)allow;
 
-- (BOOL)scheduleInRunLoop:(NSRunLoop *)aRunLoop forMode:(NSString *)mode error:(NSError**)error;
+- (BOOL)scheduleInRunLoop:(NSRunLoop*)aRunLoop forMode:(NSString*)mode error:(NSError**)error;
 - (BOOL)start:(NSError**)error;
 - (BOOL)cancel:(NSError**)error;
 

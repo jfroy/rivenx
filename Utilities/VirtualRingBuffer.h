@@ -50,7 +50,7 @@
 // It will also work in one thread, of course (although I don't know why you'd bother).
 // However, if you have multiple reader or writer threads, all bets are off!
 
-#import <Foundation/Foundation.h>
+#import "Base/RXBase.h"
 
 
 @interface VirtualRingBuffer : NSObject

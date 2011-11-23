@@ -8,6 +8,7 @@
 
 #import "Engine/RXGameState.h"
 #import "Engine/RXWorldProtocol.h"
+#import "Base/RXErrorMacros.h"
 
 
 static const int RX_GAME_STATE_CURRENT_VERSION = 4;
@@ -23,29 +24,35 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     return NO;
 }
 
-+ (RXGameState*)gameStateWithURL:(NSURL*)url error:(NSError**)error {
++ (RXGameState*)gameStateWithURL:(NSURL*)url error:(NSError**)error
+{
     // read the data in
     NSData* archive = [NSData dataWithContentsOfURL:url options:(NSMappedRead | NSUncachedRead) error:error];
-    if (!archive) {
+    if (!archive)
+    {
         [self release];
         return nil;
     }
     
     // use a keyed unarchiver to unfreeze a new game state object
     RXGameState* gameState = nil;
-    @try {
+    @try
+    {
         gameState = [NSKeyedUnarchiver unarchiveObjectWithData:archive];
         if (!gameState)
-            ReturnNILWithError(RXErrorDomain,
-                               0,
-                               ([NSDictionary dictionaryWithObject:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
-                                                            forKey:NSLocalizedDescriptionKey]),
-                               error);
+        {
+            NSDictionary* attributes = [NSDictionary dictionaryWithObject:@"Riven X does not understand the save file. It may be corrupted or may not be a Riven X save file at all."
+                forKey:NSLocalizedDescriptionKey];
+            ReturnValueWithError(nil, RXErrorDomain, 0, attributes, error);
+        }
         
         // set the write URL on the game state to indicate it has an existing location on the file system
         gameState->_URL = [url retain];
-    } @catch (NSException* e) {
-        if (error) {
+    }
+    @catch (NSException* e)
+    {
+        if (error)
+        {
             if ([[e userInfo] objectForKey:NSUnderlyingErrorKey])
                 *error = [[[[e userInfo] objectForKey:NSUnderlyingErrorKey] retain] autorelease];
             else if ([[e userInfo] objectForKey:@"RXErrorString"])

@@ -6,7 +6,8 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/NSString.h>
+#import <Foundation/NSArray.h>
 
 #import "Rendering/RXRendering.h"
 

@@ -6,11 +6,10 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import "Base/RXBase.h"
 
 
-@class RXVersionComparator;
-@class RXWelcomeWindowController;
+@class RXVersionComparator, RXWelcomeWindowController, NSWindowController, NSWindow, NSTextField;
 
 @interface RXApplicationDelegate : NSObject
 {

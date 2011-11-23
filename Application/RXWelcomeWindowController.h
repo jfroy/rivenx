@@ -6,12 +6,16 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
-
+#import "Base/RXBase.h"
 #import "Application/RXInstaller.h"
 
+#import <AppKit/NSWindowController.h>
 
-@interface RXWelcomeWindowController : NSWindowController <RXInstallerMediaProviderProtocol> {
+
+@class NSPanel, NSTextField, NSProgressIndicator, NSButton, NSAlert;
+
+@interface RXWelcomeWindowController : NSWindowController <RXInstallerMediaProviderProtocol>
+{
     IBOutlet NSPanel* _installingSheet;
     IBOutlet NSTextField* _installingTitleField;
     IBOutlet NSTextField* _installingStatusField;

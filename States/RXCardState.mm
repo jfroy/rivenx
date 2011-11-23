@@ -197,8 +197,7 @@ static void rx_release_owner_applier(const void* value, void* context) {
     _render_states_buffer = malloc(states_buffer_size);
     
     // point each render state pointer at the beginning of a cache line
-    _front_render_state = (struct rx_card_state_render_state*)BUFFER_OFFSET((uintptr_t)_render_states_buffer & ~(cache_line_size - 1),
-                                                                            cache_line_size);
+    _front_render_state = (struct rx_card_state_render_state*)BUFFER_OFFSET((uintptr_t)_render_states_buffer & ~(cache_line_size - 1), cache_line_size);
     _back_render_state = BUFFER_OFFSET(_front_render_state, render_state_cache_line_count* cache_line_size);
     
     // zero-fill the render states to be extra-safe

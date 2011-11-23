@@ -35,8 +35,7 @@
     OF SUCH DAMAGE.
 */
 
-#include <assert.h>
-
+#import <Foundation/NSPathUtilities.h>
 #import "BDAlias.h"
 
 

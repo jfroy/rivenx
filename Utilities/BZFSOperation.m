@@ -7,25 +7,33 @@
 //
 
 #import "Utilities/BZFSOperation.h"
+#import "Base/RXErrorMacros.h"
+
+#import <Foundation/NSKeyValueObserving.h>
+#import <Foundation/NSRunLoop.h>
 
 
 @interface BZFSOperation(BZFSOperationPrivate)
 - (void)_updateStatus:(NSString*)item stage:(FSFileOperationStage)stage error:(NSError*)error status:(NSDictionary*)status;
 @end
 
-static const void* _BZFSOperationRetainObjCObject(const void* info) {
+static const void* _BZFSOperationRetainObjCObject(const void* info)
+{
     return [(id)info retain];
 }
 
-static void _BZFSOperationReleaseObjCObject(const void* info) {
+static void _BZFSOperationReleaseObjCObject(const void* info)
+{
     [(id)info release];
 }
 
-static CFStringRef _BZFSOperationDescribeObjCObject(const void* info) {
+static CFStringRef _BZFSOperationDescribeObjCObject(const void* info)
+{
     return CFStringCreateCopy(NULL, (CFStringRef)[(id)info description]);
 }
 
-static void _BZFSOperationStatusCallback(FSFileOperationRef fileOp, const char* currentItem, FSFileOperationStage stage, OSStatus error, CFDictionaryRef statusDictionary, void* info) {
+static void _BZFSOperationStatusCallback(FSFileOperationRef fileOp, const char* currentItem, FSFileOperationStage stage, OSStatus error, CFDictionaryRef statusDictionary, void* info)
+{
     CFStringRef path = CFStringCreateWithFileSystemRepresentation(kCFAllocatorDefault, currentItem);
     [(BZFSOperation*)info _updateStatus:(NSString*)path
                                   stage:stage
@@ -36,11 +44,13 @@ static void _BZFSOperationStatusCallback(FSFileOperationRef fileOp, const char* 
 
 @implementation BZFSOperation
 
-+ (BOOL)accessInstanceVariablesDirectly {
++ (BOOL)accessInstanceVariablesDirectly
+{
     return NO;
 }
 
-- (id)initCopyOperationWithSource:(NSString*)source destination:(NSString*)destination {
+- (id)initCopyOperationWithSource:(NSString*)source destination:(NSString*)destination
+{
     self = [super init];
     if (!self)
         return nil;
@@ -69,7 +79,8 @@ BailOut:
     return nil;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     CFRelease(_op);
     
     [_source release];
@@ -82,7 +93,8 @@ BailOut:
     [super dealloc];
 }
 
-- (void)_updateStatus:(NSString*)item stage:(FSFileOperationStage)stage error:(NSError*)error status:(NSDictionary*)status {
+- (void)_updateStatus:(NSString*)item stage:(FSFileOperationStage)stage error:(NSError*)error status:(NSDictionary*)status
+{
     id old;
     
     [self willChangeValueForKey:@"item"];
@@ -110,11 +122,13 @@ BailOut:
     [self didChangeValueForKey:@"item"];
 }
 
-- (BOOL)allowOverwriting {
+- (BOOL)allowOverwriting
+{
     return (_options & kFSFileOperationOverwrite) ? YES : NO;
 }
 
-- (void)setAllowOverwriting:(BOOL)allow {
+- (void)setAllowOverwriting:(BOOL)allow
+{
     [self willChangeValueForKey:@"allowOverwriting"];
     if (allow)
         _options |= kFSFileOperationOverwrite;
@@ -123,14 +137,16 @@ BailOut:
     [self didChangeValueForKey:@"allowOverwriting"];
 }
 
-- (BOOL)scheduleInRunLoop:(NSRunLoop *)aRunLoop forMode:(NSString *)mode error:(NSError**)error {
+- (BOOL)scheduleInRunLoop:(NSRunLoop *)aRunLoop forMode:(NSString *)mode error:(NSError**)error
+{
     OSStatus err = FSFileOperationScheduleWithRunLoop(_op, [aRunLoop getCFRunLoop], (CFStringRef)mode);
     if (err != noErr)
         ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, error);
     return YES;
 }
 
-- (BOOL)start:(NSError**)error {
+- (BOOL)start:(NSError**)error
+{
     FSFileOperationClientContext cc = {0, self, _BZFSOperationRetainObjCObject, _BZFSOperationReleaseObjCObject, _BZFSOperationDescribeObjCObject};
     OSStatus err = paramErr;
     if (_type == BZFSOperationCopyOperation)
@@ -140,7 +156,8 @@ BailOut:
     return YES;
 }
 
-- (BOOL)cancel:(NSError**)error {
+- (BOOL)cancel:(NSError**)error
+{
     OSStatus err = FSFileOperationCancel(_op);
     if (err != noErr)
         ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, error);
@@ -148,23 +165,28 @@ BailOut:
     return YES;
 }
 
-- (NSString*)item {
+- (NSString*)item
+{
     return _item;
 }
 
-- (FSFileOperationStage)stage {
+- (FSFileOperationStage)stage
+{
     return _stage;
 }
 
-- (NSDictionary*)status {
+- (NSDictionary*)status
+{
     return _status;
 }
 
-- (NSError*)error {
+- (NSError*)error
+{
     return _error;
 }
 
-- (BOOL)cancelled {
+- (BOOL)cancelled
+{
     return _cancelled;
 }
 

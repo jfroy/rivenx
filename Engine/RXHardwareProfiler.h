@@ -6,7 +6,7 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
+#import "Base/RXBase.h"
 
 
 @interface RXHardwareProfiler : NSObject

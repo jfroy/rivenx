@@ -5,7 +5,7 @@
 //  Copyright MacStorm 2005. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import <AppKit/NSApplication.h>
 
 
 int main(int argc, char* argv[]) {

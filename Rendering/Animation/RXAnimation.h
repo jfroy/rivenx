@@ -6,8 +6,7 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
-
+#import "Base/RXBase.h"
 #import "Base/RXTiming.h"
 
 

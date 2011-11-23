@@ -6,7 +6,7 @@
 //  Copyright 2005-2010 MacStorm All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import "Base/RXBase.h"
 
 #import "Rendering/RXRendering.h"
 #import "Rendering/Graphics/RXTexture.h"

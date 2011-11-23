@@ -18,6 +18,8 @@
 #import "Graphics/GL/GL_debug.h"
 
 #import <QuartzCore/CoreVideo.h>
+#import <AppKit/NSCursor.h>
+#import <AppKit/NSView.h>
 
 #import "Engine/RXCoreStructures.h"
 

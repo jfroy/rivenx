@@ -9,6 +9,7 @@
 #import "MHKFileHandle.h"
 #import "MHKArchive.h"
 #import "MHKErrors.h"
+#import "Base/RXErrorMacros.h"
 
 
 @implementation MHKFileHandle

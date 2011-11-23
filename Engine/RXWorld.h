@@ -6,17 +6,18 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import <mach/semaphore.h>
-#import <libkern/OSAtomic.h>
-#import <Cocoa/Cocoa.h>
+#import "Base/RXBase.h"
 
 #import "Engine/RXWorldProtocol.h"
 #import "Engine/RXGameState.h"
 #import "Rendering/RXRendering.h"
 #import "States/RXRenderState.h"
 
+#import <AppKit/NSApplication.h>
 
-@interface RXWorld : NSObject <RXWorldProtocol> {
+
+@interface RXWorld : NSObject <RXWorldProtocol>
+{
     NSURL* _worldBase;
     NSURL* _worldSharedBase;
     

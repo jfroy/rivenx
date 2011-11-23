@@ -8,6 +8,8 @@
 
 #import "Application/RXInstaller.h"
 
+#import "Base/RXErrorMacros.h"
+
 #import "Engine/RXWorld.h"
 #import "Engine/RXArchiveManager.h"
 #import "Engine/RXCard.h"
@@ -31,13 +33,15 @@ static NSString* gStacks[] = {
     @"tspit"
 };
 
-static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) {
+static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
+{
     return [(NSString*)lhs compare:rhs options:NSCaseInsensitiveSearch | NSNumericSearch];
 }
 
 @implementation RXInstaller
 
-- (id)initWithMountPaths:(NSDictionary*)mount_paths mediaProvider:(id <RXInstallerMediaProviderProtocol>)mp {
+- (id)initWithMountPaths:(NSDictionary*)mount_paths mediaProvider:(id <RXInstallerMediaProviderProtocol>)mp
+{
     self = [super init];
     if (!self)
         return nil;
@@ -56,7 +60,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return self;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     [item release];
     [stage release];
     
@@ -75,13 +80,15 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [super dealloc];
 }
 
-- (BOOL)_mediaHasDataArchiveForStackKey:(NSString*)stack_key {
+- (BOOL)_mediaHasDataArchiveForStackKey:(NSString*)stack_key
+{
     NSString* regex = [NSString stringWithFormat:@"^%C_Data[0-9]?\\.MHK$", [stack_key characterAtIndex:0]];
     NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", regex];
     
     NSArray* content = [dataArchives filteredArrayUsingPredicate:predicate];
     if ([content count])
         return YES;
+    
     content = [allArchives filteredArrayUsingPredicate:predicate];
     if ([content count])
         return YES;
@@ -89,14 +96,16 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return NO;
 }
 
-- (BOOL)_mediaHasSoundArchiveForStackKey:(NSString*)stack_key {
+- (BOOL)_mediaHasSoundArchiveForStackKey:(NSString*)stack_key
+{
     NSString* regex = [NSString stringWithFormat:@"^%C_Sounds[0-9]?\\.MHK$", [stack_key characterAtIndex:0]];
     NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", regex];
     
     NSArray* content = [dataArchives filteredArrayUsingPredicate:predicate];
     if ([content count])
         return YES;
-    else {
+    else
+    {
         content = [assetsArchives filteredArrayUsingPredicate:predicate];
         if ([content count])
             return YES;
@@ -105,7 +114,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return NO;
 }
 
-- (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context {
+- (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context
+{
     if (![object isKindOfClass:[BZFSOperation class]])
         return;
     
@@ -119,25 +129,29 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [self didChangeValueForKey:@"progress"];
 }
 
-- (BOOL)_copyFileAtPath:(NSString*)path error:(NSError**)error {
+- (BOOL)_copyFileAtPath:(NSString*)path error:(NSError**)error
+{
     [self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_FILE_COPY", @"Installer", NULL), [path lastPathComponent]] forKey:@"stage"];
     
     BZFSOperation* copy_op = [[BZFSOperation alloc] initCopyOperationWithSource:path destination:destination];
     [copy_op setAllowOverwriting:YES];
-    if (![copy_op scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode error:error]) {
+    if (![copy_op scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode error:error])
+    {
         [copy_op release];
         return NO;
     }
     
     [copy_op addObserver:self forKeyPath:@"status" options:0 context:NULL];
     
-    if (![copy_op start:error]) {
+    if (![copy_op start:error])
+    {
         [copy_op removeObserver:self forKeyPath:@"status"];
         [copy_op release];
         return NO;
     }
     
-    while ([copy_op stage] != kFSOperationStageComplete) {
+    while ([copy_op stage] != kFSOperationStageComplete)
+    {
         if (modalSession && [NSApp runModalSession:modalSession] != NSRunContinuesResponse)
             [copy_op cancel:error];
         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
@@ -155,7 +169,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     if (error)
         *error = [copy_error retain];
-    if (copy_error) {
+    if (copy_error)
+    {
         [copy_error release];
         return NO;
     }
@@ -167,38 +182,47 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return YES;
 }
 
-- (BOOL)_runSingleDiscInstall:(NSError**)error {    
+- (BOOL)_runSingleDiscInstall:(NSError**)error
+{
     // build a mega-array of all the archives we need to copy
     NSMutableArray* archive_paths = [NSMutableArray array];
     NSMutableSet* archive_names = [NSMutableSet set];
     
     NSEnumerator* e = [dataArchives objectEnumerator];
     NSString* archive;
-    while ((archive = [e nextObject])) {
-        if (![archive_names containsObject:archive]) {
+    while ((archive = [e nextObject]))
+    {
+        if (![archive_names containsObject:archive])
+        {
             [archive_paths addObject:[dataPath stringByAppendingPathComponent:archive]];
             [archive_names addObject:archive];
         }
     }
     
     e = [assetsArchives objectEnumerator];
-    while ((archive = [e nextObject])) {
-        if (![archive_names containsObject:archive]) {
+    while ((archive = [e nextObject]))
+    {
+        if (![archive_names containsObject:archive])
+        {
             [archive_paths addObject:[assetsPath stringByAppendingPathComponent:archive]];
             [archive_names addObject:archive];
         }
     }
     
     e = [allArchives objectEnumerator];
-    while ((archive = [e nextObject])) {
-        if (![archive_names containsObject:archive]) {
+    while ((archive = [e nextObject]))
+    {
+        if (![archive_names containsObject:archive])
+        {
             [archive_paths addObject:[allPath stringByAppendingPathComponent:archive]];
             [archive_names addObject:archive];
         }
     }
     
-    if (extrasPath) {
-        if (![archive_names containsObject:[extrasPath lastPathComponent]]) {
+    if (extrasPath)
+    {
+        if (![archive_names containsObject:[extrasPath lastPathComponent]])
+        {
             [archive_paths addObject:extrasPath];
             [archive_names addObject:[extrasPath lastPathComponent]];
         }
@@ -212,7 +236,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // compute how many bytes we have to copy in total
     e = [archive_paths objectEnumerator];
     NSString* archive_path;
-    while ((archive_path = [e nextObject])) {
+    while ((archive_path = [e nextObject]))
+    {
         NSDictionary* attributes = BZFSAttributesOfItemAtPath(archive_path, error);
         if (!attributes)
             return NO;
@@ -222,7 +247,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     // and copy the archives
     e = [archive_paths objectEnumerator];
-    while ((archive_path = [e nextObject])) {
+    while ((archive_path = [e nextObject]))
+    {
         if (![self _copyFileAtPath:archive_path error:error])
             return NO;
     }
@@ -233,7 +259,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return YES;
 }
 
-- (BOOL)_runMultiDiscInstall:(NSError**)error {
+- (BOOL)_runMultiDiscInstall:(NSError**)error
+{
     // a multi-disc install is essentially a series of "single-disc" installs, followed by a check to make
     // sure we have a data and sound archive for every stack
     
@@ -242,7 +269,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
         return NO;
     
     // iterate over the discs we have left    
-    while ([discsToProcess count]) {
+    while ([discsToProcess count])
+    {
         NSString* disc_name = [discsToProcess objectAtIndex:0];
         [discsToProcess removeObjectAtIndex:0];
         
@@ -266,7 +294,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // check that we have a data and sound archive for every stack
     RXArchiveManager* am = [RXArchiveManager sharedArchiveManager];
     size_t n_stacks = sizeof(gStacks) / sizeof(NSString*);
-    for (size_t i = 0; i < n_stacks; ++i) {
+    for (size_t i = 0; i < n_stacks; ++i)
+    {
         NSArray* archives = [am dataArchivesForStackKey:gStacks[i] error:error];
         if ([archives count] == 0)
             ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesAfterInstall, nil, error);
@@ -278,13 +307,15 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return YES;
 }
 
-- (BOOL)_conditionallyInstallPatchArchives:(NSError**)error {
+- (BOOL)_conditionallyInstallPatchArchives:(NSError**)error
+{
     RXStack* bspit = [[RXStack alloc] initWithKey:@"bspit" error:error];
     if (!bspit)
         return NO;
     
     RXCardDescriptor* cdesc = [RXCardDescriptor descriptorWithStack:bspit ID:284];
-    if (!cdesc) {
+    if (!cdesc)
+    {
         [bspit release];
         return YES;
     }
@@ -298,13 +329,15 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     uintptr_t hotspot_id = 9;
     RXHotspot* hotspot = (RXHotspot*)NSMapGet([bspit_284 hotspotsIDMap], (void*)hotspot_id);
-    if (!hotspot) {
+    if (!hotspot)
+    {
         [bspit_284 release];
         return YES;
     }
     
     NSArray* md_programs = [[[[hotspot scripts] objectForKey:RXMouseDownScriptKey] retain] autorelease];
-    if (!md_programs || [md_programs count] == 0) {
+    if (!md_programs || [md_programs count] == 0)
+    {
         [bspit_284 release];
         return YES;
     }
@@ -320,7 +353,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     NSDictionary* opcode = [dp objectAtIndex:4];
     BOOL need_patch = RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_ACTIVATE_SLST) && RX_OPCODE_ARG(opcode, 0) == 3;
     
-    if (need_patch) {
+    if (need_patch)
+    {
         NSBundle* bundle = [NSBundle mainBundle];
         if (![self _copyFileAtPath:[bundle pathForResource:@"b_Data1" ofType:@"MHK" inDirectory:@"patches"] error:error])
             return NO;
@@ -331,7 +365,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return YES;
 }
 
-- (BOOL)runWithModalSession:(NSModalSession)session error:(NSError**)error {
+- (BOOL)runWithModalSession:(NSModalSession)session error:(NSError**)error
+{
     // we're one-shot
     if (didRun)
         ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerAlreadyRan, nil, error);
@@ -351,15 +386,18 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     BOOL cd_install = NO;
     size_t n_stacks = sizeof(gStacks) / sizeof(NSString*);
-    for (size_t i = 0; i < n_stacks; ++i) {
-        if (![self _mediaHasDataArchiveForStackKey:gStacks[i]]) {
+    for (size_t i = 0; i < n_stacks; ++i)
+    {
+        if (![self _mediaHasDataArchiveForStackKey:gStacks[i]])
+        {
             cd_install = YES;
             break;
         }
     }
     
     discsToProcess = [NSMutableArray new];
-    if (cd_install) {
+    if (cd_install)
+    {
         [discsToProcess addObjectsFromArray:[NSArray arrayWithObjects:
             @"Riven1",
             @"Riven2",
@@ -369,10 +407,13 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
             nil]];
         
         [discsToProcess removeObject:[currentDisc lastPathComponent]];
-    } else {
+    }
+    else
+    {
         // we need to have a sound archive for every stack
         // NOTE: it is implied if we are here that we have a data archive for every stack
-        for (size_t i = 0; i < n_stacks; ++i) {
+        for (size_t i = 0; i < n_stacks; ++i)
+        {
             if (![self _mediaHasSoundArchiveForStackKey:gStacks[i]])
                 ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesOnMedia, nil, error);
         }
@@ -391,7 +432,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return [self _conditionallyInstallPatchArchives:error];
 }
 
-- (void)updatePathsWithMountPaths:(NSDictionary*)mount_paths {
+- (void)updatePathsWithMountPaths:(NSDictionary*)mount_paths
+{
     [dataPath release];
     [dataArchives release];
     [assetsPath release];
@@ -410,10 +452,13 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     assert(dataArchives);
     
     assetsPath = [mount_paths objectForKey:@"assets path"];
-    if ((id)assetsPath == (id)[NSNull null]) {
+    if ((id)assetsPath == (id)[NSNull null])
+    {
         assetsPath = nil;
         assetsArchives = nil;
-    } else {    
+    }
+    else
+    {
         assetsArchives = [mount_paths objectForKey:@"assets archives"];
         assert((id)assetsArchives != (id)[NSNull null]);
     }
@@ -421,10 +466,13 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [assetsArchives retain];
     
     allPath = [mount_paths objectForKey:@"all path"];
-    if ((id)allPath == (id)[NSNull null]) {
+    if ((id)allPath == (id)[NSNull null])
+    {
         allPath = nil;
         allArchives = nil;
-    } else {    
+    }
+    else
+    {
         allArchives = [mount_paths objectForKey:@"all archives"];
         assert((id)allArchives != (id)[NSNull null]);
     }

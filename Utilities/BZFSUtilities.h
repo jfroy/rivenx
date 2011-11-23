@@ -6,14 +6,12 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
-#import <sys/cdefs.h>
+#import "Base/RXBase.h"
+
+
+@class NSFileHandle;
 
 __BEGIN_DECLS
-
-enum {
-    kBZFSErrUnknownError = 1,
-};
 
 extern NSString* const BZFSErrorDomain;
 

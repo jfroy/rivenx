@@ -10,8 +10,11 @@
 #import "Rendering/Graphics/RXOpenGLState.h"
 #import "Rendering/Animation/RXInterpolator.h"
 
+#import <AppKit/NSOpenGLView.h>
 
-@interface RXWorldView : NSOpenGLView <RXWorldViewProtocol> {
+
+@interface RXWorldView : NSOpenGLView <RXWorldViewProtocol>
+{
     CGLPixelFormatObj _cglPixelFormat;
     
     NSOpenGLContext* _renderContext;

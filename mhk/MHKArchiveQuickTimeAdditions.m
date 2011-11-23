@@ -8,17 +8,19 @@
 
 #import "MHKArchive.h"
 #import "MHKErrors.h"
+#import "Base/RXErrorMacros.h"
 
 
 @implementation MHKArchive (MHKArchiveQuickTimeAdditions)
 
-- (Movie)movieWithID:(uint16_t)movieID error:(NSError **)errorPtr {
+- (Movie)movieWithID:(uint16_t)movieID error:(NSError **)errorPtr
+{
     OSStatus err = noErr;
     
     // get the movie resource descriptor
     NSDictionary *descriptor = [self resourceDescriptorWithResourceType:@"tMOV" ID:movieID];
     if (!descriptor)
-        ReturnNULLWithError(MHKErrorDomain, errResourceNotFound, nil, errorPtr);
+        ReturnValueWithError(NULL, MHKErrorDomain, errResourceNotFound, nil, errorPtr);
         
     // store the movie offset in a variable
     SInt64 qt_offset = [[descriptor objectForKey:@"Offset"] longLongValue];
@@ -47,7 +49,8 @@
     Movie aMovie = NULL;
     err = NewMovieFromProperties(sizeof(newMovieProperties) / sizeof(newMovieProperties[0]), newMovieProperties, 0, NULL, &aMovie);
     if (err != noErr)
-        ReturnNULLWithError(NSOSStatusErrorDomain, err, nil, errorPtr);
+        ReturnValueWithError(NULL, NSOSStatusErrorDomain, err, nil, errorPtr);
+    
     return aMovie;
 }
 

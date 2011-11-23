@@ -9,6 +9,7 @@
 #import "mohawk_core.h"
 #import "MHKADPCMDecompressor.h"
 #import "MHKErrors.h"
+#import "Base/RXErrorMacros.h"
 
 
 #define READ_BUFFER_SIZE 0x8000
@@ -67,13 +68,17 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
     return nil;
 }
 
-- (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle*)fh error:(NSError**)errorPtr {
+- (id)initWithChannelCount:(UInt32)channels frameCount:(SInt64)frames samplingRate:(double)sps fileHandle:(MHKFileHandle*)fh error:(NSError**)errorPtr
+{
     self = [super init];
     if (!self) return nil;
     
     // ADPCM only works for 1 or 2 channels
     if (channels != 1 && channels != 2)
-        ReturnFromInitWithError(MHKErrorDomain, errInvalidChannelCount, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, MHKErrorDomain, errInvalidChannelCount, nil, errorPtr);
+    }
         
     channel_count = channels;
     data_source = [fh retain];

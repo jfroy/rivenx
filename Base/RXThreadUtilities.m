@@ -6,7 +6,7 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import <Cocoa/Cocoa.h>
+#import "Base/RXBase.h"
 #import <QuickTime/QuickTime.h>
 
 #import "Debug/RXDebug.h"
@@ -14,6 +14,8 @@
 #import "Base/RXLogging.h"
 #import "Utilities/InterThreadMessaging.h"
 #import "Utilities/GTMSystemVersion.h"
+
+#import <AppKit/NSApplication.h>
 
 
 char* RXCopyThreadName(void)
@@ -29,11 +31,10 @@ void RXSetThreadName(char const* name)
     pthread_setname_np(name);
 }
 
-void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name) {
+void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name)
+{
     NSAutoreleasePool* p = [NSAutoreleasePool new];
     
-    // inter-thread messaging
-    [NSThread prepareForInterThreadMessages];
     semaphore_signal(ready_semaphore);
     
     // set the thread name

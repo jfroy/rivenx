@@ -13,7 +13,7 @@
 
 #import <sys/cdefs.h>
 
-#import <Cocoa/Cocoa.h>
+#import "Base/RXBase.h"
 #import <MHKKit/MHKKit.h>
 
 #import "Engine/RXGameState.h"

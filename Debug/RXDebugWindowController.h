@@ -7,10 +7,14 @@
 //
 
 
-#import <Cocoa/Cocoa.h>
+#import "Base/RXBase.h"
+#import <AppKit/NSWindowController.h>
 
 
-@interface RXDebugWindowController : NSWindowController {
+@class NSTextView, NSFont;
+
+@interface RXDebugWindowController : NSWindowController
+{
     IBOutlet NSTextView* consoleView;
     NSFont* _consoleFont;
     

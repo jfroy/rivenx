@@ -8,13 +8,25 @@
 
 #import "Application/RXWelcomeWindowController.h"
 
+#import "Base/RXErrorMacros.h"
+
 #import "Engine/RXArchiveManager.h"
 #import "Engine/RXWorld.h"
 
 #import "Utilities/BZFSUtilities.h"
 
+#import <AppKit/NSAlert.h>
+#import <AppKit/NSApplication.h>
+#import <AppKit/NSDocumentController.h>
+#import <AppKit/NSKeyValueBinding.h>
+#import <AppKit/NSOpenPanel.h>
+#import <AppKit/NSProgressIndicator.h>
+#import <AppKit/NSTextField.h>
+#import <AppKit/NSWindow.h>
 
-static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) {
+
+static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
+{
     return [(NSString*)lhs compare:rhs options:NSCaseInsensitiveSearch | NSNumericSearch];
 }
 
@@ -26,17 +38,20 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 
 @implementation RXWelcomeWindowController
 
-- (void)dealloc {
+- (void)dealloc
+{
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
     
     [super dealloc];
 }
 
-- (void)windowWillLoad {
+- (void)windowWillLoad
+{
     [self setShouldCascadeWindows:NO];
 }
 
-- (void)windowDidLoad {
+- (void)windowDidLoad
+{
     // configure the welcome window
     [[self window] center];
     
@@ -48,16 +63,19 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [ws_notification_center addObserver:self selector:@selector(_removableMediaMounted:) name:NSWorkspaceDidMountNotification object:nil];
 }
 
-- (void)windowWillClose:(NSNotification*)notification {
+- (void)windowWillClose:(NSNotification*)notification
+{
     if (![[RXWorld sharedWorld] isInstalled])
         [NSApp terminate:nil];
 }
 
-- (IBAction)buyRiven:(id)sender {
+- (IBAction)buyRiven:(id)sender
+{
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.google.com/products/catalog?hl=en&cid=11798540492054256128&sa=title"]];
 }
 
-- (IBAction)installFromFolder:(id)sender {
+- (IBAction)installFromFolder:(id)sender
+{
     NSOpenPanel* panel = [NSOpenPanel openPanel];
     [panel setCanChooseFiles:NO];
     [panel setCanChooseDirectories:YES];
@@ -144,22 +162,28 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     alertOrPanelCurrentlyActive = YES;
 }
 
-- (IBAction)cancelInstallation:(id)sender {
+- (IBAction)cancelInstallation:(id)sender
+{
     [NSApp abortModal];
 }
 
 #pragma mark installation
 
-- (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context {
-    if ([keyPath isEqualToString:@"progress"]) {
+- (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context
+{
+    if ([keyPath isEqualToString:@"progress"])
+    {
         double oldp = [[change objectForKey:NSKeyValueChangeOldKey] doubleValue];
         double newp = [[change objectForKey:NSKeyValueChangeNewKey] doubleValue];
         
         // do we need to switch the indeterminate state?
-        if (oldp < 0.0 && newp >= 0.0) {
+        if (oldp < 0.0 && newp >= 0.0)
+        {
             [_installingProgress setIndeterminate:NO];
             [_installingProgress startAnimation:self];
-        } else if (oldp >= 0.0 && newp < 0.0) {
+        }
+        else if (oldp >= 0.0 && newp < 0.0)
+        {
             [_installingProgress setIndeterminate:YES];
             [_installingProgress startAnimation:self];
         }
@@ -170,7 +194,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     }
 }
 
-- (void)_initializeInstallationUI {
+- (void)_initializeInstallationUI
+{
     [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Installer", NULL)];
     [_installingStatusField setStringValue:@""];
     [_installingProgress setMinValue:0.0];
@@ -181,7 +206,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [_cancelInstallButton setHidden:NO];
 }
 
-- (void)_showInstallationUI {
+- (void)_showInstallationUI
+{
     [_installingProgress startAnimation:self];
     
     // show the installation panel
@@ -189,7 +215,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     installerSession = [NSApp beginModalSessionForWindow:_installingSheet];
 }
 
-- (void)_dismissInstallationUI {
+- (void)_dismissInstallationUI
+{
     if (!installerSession)
         return;
     
@@ -202,8 +229,9 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [_installingProgress stopAnimation:self];
 }
 
-- (void)_beginNewGame {
-    [[NSApp delegate] newDocument:nil];
+- (void)_beginNewGame
+{
+    [NSApp sendAction:@selector(newDocument:) to:nil from:self];
 }
 
 - (void)_runInstallerWithMountPaths:(NSDictionary*)mount_paths {
@@ -235,11 +263,14 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // if the installation was successful, set a flag in our defaults informing us
     // that we are installed and kick up the game; otherwise, let the application
     // handle the error
-    if (did_install) {
+    if (did_install)
+    {
         [[RXWorld sharedWorld] setIsInstalled:YES];
         [self close];
         [self performSelector:@selector(_beginNewGame) withObject:nil afterDelay:0.0];
-    } else {
+    }
+    else
+    {
         // delete the shared base directory's content
         NSString* shared_base = [[(RXWorld*)g_world worldSharedBase] path];
         NSArray* content = BZFSContentsOfDirectory(shared_base, NULL);
@@ -253,12 +284,14 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     }
 }
 
-- (BOOL)waitForDisc:(NSString*)disc_name ejectingDisc:(NSString*)path error:(NSError**)error {
+- (BOOL)waitForDisc:(NSString*)disc_name ejectingDisc:(NSString*)path error:(NSError**)error
+{
     waitedOnDisc = disc_name;
     
     [[NSWorkspace sharedWorkspace] performSelector:@selector(unmountAndEjectDeviceAtPath:) withObject:path inThread:scanningThread];
     
-    while (waitedOnDisc) {
+    while (waitedOnDisc)
+    {
         if ([NSApp runModalSession:installerSession] != NSRunContinuesResponse)
             ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerCancelled, nil, error);
         [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
@@ -267,7 +300,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return YES;
 }
 
-- (void)_stopWaitingForDisc:(NSDictionary*)mount_paths {
+- (void)_stopWaitingForDisc:(NSDictionary*)mount_paths
+{
     if (!waitedOnDisc)
         return;
     
@@ -275,7 +309,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     waitedOnDisc = nil;
 }
 
-- (void)_offerToInstallFromDiscAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context {
+- (void)_offerToInstallFromDiscAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context
+{
     alertOrPanelCurrentlyActive = NO;
     NSDictionary* mount_paths = [(NSDictionary*)context autorelease];
     
@@ -290,7 +325,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [self _runInstallerWithMountPaths:mount_paths];
 }
 
-- (void)_offerToInstallFromDisc:(NSDictionary*)mount_paths {
+- (void)_offerToInstallFromDisc:(NSDictionary*)mount_paths
+{
     // do nothing if there is already an active installer or we're already installed (e.g. an installer finsihed)
     // or there is some panel or alert already being displayed
     if (installer || [[RXWorld sharedWorld] isInstalled] || alertOrPanelCurrentlyActive)
@@ -316,7 +352,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     alertOrPanelCurrentlyActive = YES;
 }
 
-- (void)_offerToInstallFromFolderAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context {
+- (void)_offerToInstallFromFolderAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context
+{
     alertOrPanelCurrentlyActive = NO;
     NSDictionary* mount_paths = [(NSDictionary*)context autorelease];
     
@@ -328,18 +365,22 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [[alert window] orderOut:nil];
     
     // if the user chose to to a direct install, set the world user base override and go
-    if (return_code == NSAlertFirstButtonReturn) {
+    if (return_code == NSAlertFirstButtonReturn)
+    {
         [[RXWorld sharedWorld] setIsInstalled:YES];
         [[RXWorld sharedWorld] setWorldBaseOverride:[mount_paths objectForKey:@"path"]];
         [self close];
         [self performSelector:@selector(_beginNewGame) withObject:nil afterDelay:0.0];
-    } else {
+    }
+    else
+    {
         // otherwise, the user chose to to a copy install,and so run an installer
         [self _runInstallerWithMountPaths:mount_paths];
     }
 }
 
-- (void)_offerToInstallFromFolder:(NSDictionary*)mount_paths {
+- (void)_offerToInstallFromFolder:(NSDictionary*)mount_paths
+{
     // do nothing if there is already an active installer or we're already installed (e.g. an installer finsihed)
     // or there is some panel or alert already being displayed
     if (installer || [[RXWorld sharedWorld] isInstalled] || alertOrPanelCurrentlyActive)
@@ -368,7 +409,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
 
 #pragma mark removable media
 
-- (BOOL)_checkPathContent:(NSString*)path removable:(BOOL)removable {    
+- (BOOL)_checkPathContent:(NSString*)path removable:(BOOL)removable
+{
     // basically look for a Data directory with a bunch of .MHK files, possibly an Assets1 directory and an Extras.MHK file
     NSError* error;
     NSArray* content = BZFSContentsOfDirectory(path, &error);
@@ -383,7 +425,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     NSEnumerator* enumerator = [content objectEnumerator];
     NSString* item;
-    while ((item = [enumerator nextObject])) {
+    while ((item = [enumerator nextObject]))
+    {
         NSString* item_path = [path stringByAppendingPathComponent:item];
         if ([item caseInsensitiveCompare:@"Data"] == NSOrderedSame)
             data_path = item_path;
@@ -409,7 +452,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     // if there is an Assets1 directory, it must contain sound archives
     NSArray* assets_archives = nil;
-    if (assets_path) {
+    if (assets_path)
+    {
         assets_archives = [[BZFSContentsOfDirectory(assets_path, &error) filteredArrayUsingPredicate:[RXArchiveManager soundsArchiveFilenamePredicate]]
                            sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
         if ([assets_archives count] == 0)
@@ -418,7 +462,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     
     // if there is an All directory, it will contain archives for aspit
     NSArray* all_archives = nil;
-    if (all_path) {
+    if (all_path)
+    {
         all_archives = [[BZFSContentsOfDirectory(all_path, &error) filteredArrayUsingPredicate:[RXArchiveManager anyArchiveFilenamePredicate]]
                         sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
         if ([all_archives count] == 0)
@@ -426,24 +471,30 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     }
     
     // if we didn't find an Extras archive at the top level, look in the Data directory
-    if (!extras_path) {
+    if (!extras_path)
+    {
         content = BZFSContentsOfDirectory(data_path, &error);
         enumerator = [content objectEnumerator];
-        while ((item = [enumerator nextObject])) {
+        while ((item = [enumerator nextObject]))
+        {
             NSString* item_path = [data_path stringByAppendingPathComponent:item];
-            if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame) {
+            if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame)
+            {
                 extras_path = item_path;
                 break;
             }
         }
         
         // also check in 'Myst2' (Exile edition)
-        if (!extras_path && myst2_path) {
+        if (!extras_path && myst2_path)
+        {
             content = BZFSContentsOfDirectory(myst2_path, &error);
             enumerator = [content objectEnumerator];
-            while ((item = [enumerator nextObject])) {
+            while ((item = [enumerator nextObject]))
+            {
                 NSString* item_path = [data_path stringByAppendingPathComponent:item];
-                if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame) {
+                if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame)
+                {
                     extras_path = item_path;
                     break;
                 }
@@ -472,7 +523,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     SEL action;
     if (installer && waitedOnDisc)
         action = @selector(_stopWaitingForDisc:);
-    else {
+    else
+    {
         if (removable)
             action = @selector(_offerToInstallFromDisc:);
         else
@@ -484,39 +536,41 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return YES;
 }
 
-- (void)_performMountScan:(NSString*)path {
+- (void)_performMountScan:(NSString*)path
+{
     BOOL usable_mount = [self _checkPathContent:path removable:YES];
     if (!usable_mount && installer && waitedOnDisc)
         [[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:path];
 }
 
-- (void)_presentErrorSheet:(NSError*)error {
+- (void)_presentErrorSheet:(NSError*)error
+{
     // dismiss the installation UI to close the "scanning media" panel
     [self _dismissInstallationUI];
     
     [NSApp presentError:error modalForWindow:[self window] delegate:nil didPresentSelector:nil contextInfo:nil];
 }
 
-- (void)_performMountScanWithFeedback:(NSString*)path {
+- (void)_performMountScanWithFeedback:(NSString*)path
+{
     BOOL usable_mount = [self _checkPathContent:path removable:YES];
     if (!usable_mount)
         [self performSelectorOnMainThread:@selector(_presentErrorSheet:) withObject:[RXError errorWithDomain:RXErrorDomain code:kRXErrUnusableInstallMedia userInfo:nil] waitUntilDone:NO];
 }
 
-- (void)_performFolderScanWithFeedback:(NSString*)path {
+- (void)_performFolderScanWithFeedback:(NSString*)path
+{
     BOOL usable_mount = [self _checkPathContent:path removable:NO];
     if (!usable_mount)
         [self performSelectorOnMainThread:@selector(_presentErrorSheet:) withObject:[RXError errorWithDomain:RXErrorDomain code:kRXErrUnusableInstallFolder userInfo:nil] waitUntilDone:NO];
 }
 
-- (void)_scanningThread:(id)context {
+- (void)_scanningThread:(id)context
+{
     NSAutoreleasePool* pool = [NSAutoreleasePool new];
     
     // keep a reference to ourselves
     scanningThread = [NSThread currentThread];
-    
-    // inter-thread messaging
-    [NSThread prepareForInterThreadMessages];
     
     // scan currently mounted media
     [self performSelectorOnMainThread:@selector(_scanMountedMedia) withObject:nil waitUntilDone:NO];
@@ -528,7 +582,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [port scheduleInRunLoop:rl forMode:NSDefaultRunLoopMode];
     
     // and run our runloop
-    while ([rl runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:10.0]]) {
+    while ([rl runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:10.0]])
+    {
         [pool release];
         pool = [NSAutoreleasePool new];
     }
@@ -537,13 +592,15 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     [pool release];
 }
 
-- (void)_removableMediaMounted:(NSNotification*)notification {
+- (void)_removableMediaMounted:(NSNotification*)notification
+{
     NSString* path = [[notification userInfo] objectForKey:@"NSDevicePath"];
     
     // check if the name is interesting, and if it is check the content of the mount
     NSString* mount_name = [path lastPathComponent];
     
-    if (waitedOnDisc) {
+    if (waitedOnDisc)
+    {
         if ([mount_name compare:waitedOnDisc options:NSCaseInsensitiveSearch] == NSOrderedSame)
             [self performSelector:@selector(_performMountScan:) withObject:path inThread:scanningThread];
         else
@@ -552,22 +609,26 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     }
     
     NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^Riven[0-9]?$"];
-    if ([predicate evaluateWithObject:mount_name]) {
+    if ([predicate evaluateWithObject:mount_name])
+    {
         [self performSelector:@selector(_performMountScan:) withObject:path inThread:scanningThread];
         return;
     }
     
-    if ([mount_name caseInsensitiveCompare:@"Exile DVD"]) {
+    if ([mount_name caseInsensitiveCompare:@"Exile DVD"])
+    {
         [self performSelector:@selector(_performMountScan:) withObject:path inThread:scanningThread];
         return;
     }
 }
 
-- (void)_scanMountedMedia {
+- (void)_scanMountedMedia
+{
     // scan all existing mounts
     NSEnumerator* media_enum = [[[NSWorkspace sharedWorkspace] mountedRemovableMedia] objectEnumerator];
     NSString* mount_path;
-    while ((mount_path = [media_enum nextObject])) {
+    while ((mount_path = [media_enum nextObject]))
+    {
         NSNotification* notification = [NSNotification notificationWithName:NSWorkspaceDidMountNotification object:nil userInfo:[NSDictionary dictionaryWithObject:mount_path forKey:@"NSDevicePath"]];
         [self _removableMediaMounted:notification];
     }

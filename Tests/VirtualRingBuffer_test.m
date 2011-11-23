@@ -7,7 +7,7 @@
  *
  */
 
-#import <Foundation/Foundation.h>
+#import "Base/RXBase.h"
 
 #import "Utilities/VirtualRingBuffer.h"
 

@@ -13,8 +13,9 @@
 
 #import "MHKArchive.h"
 
-#import "MHKErrors.h"
 #import "MHKFileHandle.h"
+#import "MHKErrors.h"
+#import "Base/RXErrorMacros.h"
 
 
 struct descriptor_binary_tree {
@@ -527,7 +528,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     return archive;
 }
 
-- (id)initWithURL:(NSURL*)url error:(NSError**)errorPtr {
+- (id)initWithURL:(NSURL*)url error:(NSError**)errorPtr
+{
     self = [super init];
     if (!self)
         return nil;
@@ -549,33 +551,51 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     HFSUniStr255 dataForkName;
     err = FSGetDataForkName(&dataForkName);
     if (err)
-        ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, errorPtr);
+    }
     
     // get an FSRef for the Mohak archive
     FSRef archiveRef;
     if (!CFURLGetFSRef((CFURLRef)mhk_url, &archiveRef))
-        ReturnFromInitWithError(NSOSStatusErrorDomain, fnfErr, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, NSOSStatusErrorDomain, fnfErr, nil, errorPtr);
+    }
     
     // open the data fork in read-only mode
     forkRef = 0;
     err = FSOpenFork(&archiveRef, dataForkName.length, dataForkName.unicode, fsRdPerm, &forkRef);
     if (err)
-        ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, errorPtr);
+    }
     
     // get the file size
     SInt64 fork_size = 0;
     err = FSGetForkSize(forkRef, &fork_size);
     if (err)
-        ReturnFromInitWithError(NSOSStatusErrorDomain, err, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, errorPtr);
+    }
     
     // we only support 32 bits for archive sizes
     if (fork_size > UINT_MAX)
-        ReturnFromInitWithError(MHKErrorDomain, errFileTooLarge, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, MHKErrorDomain, errFileTooLarge, nil, errorPtr);
+    }
     archive_size = (uint32_t)fork_size;
     
     // process the archive
     if (![self load_mhk])
-        ReturnFromInitWithError(MHKErrorDomain, errBadArchive, nil, errorPtr);
+    {
+        [self release];
+        ReturnValueWithError(nil, MHKErrorDomain, errBadArchive, nil, errorPtr);
+    }
     
     // allocate the sound descriptor cache and its rw lock
     pthread_rwlock_init(&__cached_sound_descriptors_rwlock, NULL);
