@@ -43,10 +43,6 @@
     NSMutableDictionary* file_descriptor_trees;
     NSMutableDictionary* file_descriptor_name_maps;
     
-    // opened file count
-    uint32_t __open_files;
-    pthread_mutex_t __open_files_mutex;
-    
     // cached descriptors
     pthread_rwlock_t __cached_sound_descriptors_rwlock;
     NSMutableDictionary* __cached_sound_descriptors;

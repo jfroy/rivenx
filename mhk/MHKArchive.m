@@ -18,12 +18,14 @@
 #import "Base/RXErrorMacros.h"
 
 
-struct descriptor_binary_tree {
+struct descriptor_binary_tree
+{
     uint16_t resource_id;
     NSMutableDictionary* descriptor;
 };
 
-static int __descriptor_binary_tree_compare(const void* v1, const void* v2) {
+static int __descriptor_binary_tree_compare(const void* v1, const void* v2)
+{
     struct descriptor_binary_tree* descriptor_1 = (struct descriptor_binary_tree*)v1;
     struct descriptor_binary_tree* descriptor_2 = (struct descriptor_binary_tree*)v2;
     
@@ -34,7 +36,8 @@ static int __descriptor_binary_tree_compare(const void* v1, const void* v2) {
     return 1;
 }
 
-static int _MHK_file_table_entry_pointer_offset_compare(const void* v1, const void* v2) {
+static int _MHK_file_table_entry_pointer_offset_compare(const void* v1, const void* v2)
+{
     MHK_file_table_entry** entry1 = (MHK_file_table_entry**)v1;
     MHK_file_table_entry** entry2 = (MHK_file_table_entry**)v2;
     
@@ -60,15 +63,13 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
 
 @implementation MHKArchive
 
-+ (BOOL)accessInstanceVariablesDirectly {
++ (BOOL)accessInstanceVariablesDirectly
+{
     return NO;
 }
 
-- (id)autorelease {
-    return [super autorelease];
-}
-
-- (void)compute_file_lengths {
+- (void)compute_file_lengths
+{
     // if we've already been initialzed, return
     if (initialized)
         return;
@@ -90,7 +91,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     uint32_t file_length;
     uint32_t stored_file_length;
     
-    for (file_table_index = 1; file_table_index < file_table_count; file_table_index++) {
+    for (file_table_index = 1; file_table_index < file_table_count; file_table_index++)
+    {
         // compute the file length based on the space between the current file and the previous file
         file_length = file_table_entry_table[file_table_index]->absolute_offset - file_table_entry_table[file_table_index - 1]->absolute_offset;
         
@@ -98,19 +100,22 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
         stored_file_length = compute_file_table_entry_length(file_table_entry_table[file_table_index - 1]);
         
         // if the length don't match, set it to the packed file length (e.g. as determined by the offsets)
-        if (file_length != stored_file_length) {
+        if (file_length != stored_file_length)
+        {
 #if defined(DEBUG) && DEBUG > 2
             fprintf(stderr, "file entry %03d -> packed file size: %u, stored file size: %u, delta: %d\n",
                     file_table_index - 1, file_length, stored_file_length, (int32_t)file_length - stored_file_length);
             
             NSEnumerator* types_enum = [file_descriptor_arrays keyEnumerator];
             NSString* type;
-            while ((type = [types_enum nextObject])) {
+            while ((type = [types_enum nextObject]))
+            {
                 NSArray* type_descs = [file_descriptor_arrays objectForKey:type];
                 
                 NSEnumerator* files_enum = [type_descs objectEnumerator];
                 NSDictionary* file_desc;
-                while ((file_desc = [files_enum nextObject])) {
+                while ((file_desc = [files_enum nextObject]))
+                {
                     uint32_t file_index = [[file_desc objectForKey:@"Index"] unsignedIntValue] - 1;
                     if (file_index == file_table_index - 1)
                         fprintf(stderr, "    %s %d (%s)\n",
@@ -130,19 +135,22 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     stored_file_length = compute_file_table_entry_length(file_table_entry_table[file_table_count - 1]);
     
     // if the length don't match, set it to the packed file length (e.g. as determined by the offsets)
-    if (file_length != stored_file_length) {
+    if (file_length != stored_file_length)
+    {
 #if defined(DEBUG) && DEBUG > 2
         fprintf(stderr, "file entry %03d -> packed file size: %u, stored file size: %u, delta: %d\n",
                 file_table_count - 1, file_length, stored_file_length, (int32_t)file_length - stored_file_length);
         
         NSEnumerator* types_enum = [file_descriptor_arrays keyEnumerator];
         NSString* type;
-        while ((type = [types_enum nextObject])) {
+        while ((type = [types_enum nextObject]))
+        {
             NSArray* type_descs = [file_descriptor_arrays objectForKey:type];
             
             NSEnumerator* files_enum = [type_descs objectEnumerator];
             NSDictionary* file_desc;
-            while ((file_desc = [files_enum nextObject])) {
+            while ((file_desc = [files_enum nextObject]))
+            {
                 uint32_t file_index = [[file_desc objectForKey:@"Index"] unsignedIntValue] - 1;
                 if (file_index == file_table_count - 1)
                     fprintf(stderr, "    %s %d (%s)\n",
@@ -160,7 +168,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     free(file_table_entry_table);
 }
 
-- (BOOL)load_mhk_type:(uint32_t)type_index {
+- (BOOL)load_mhk_type:(uint32_t)type_index
+{
     OSStatus err = noErr;
     
     // if we've already been initialzed, return
@@ -184,7 +193,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     MHK_rsrc_table_header_fton(&rsrc_table_header);
     
     // if there are no resources of this type, set an empty array of descriptors and exit
-    if (rsrc_table_header.count == 0) {
+    if (rsrc_table_header.count == 0)
+    {
         NSString* type_key = [[NSString alloc] initWithBytes:type_table_entry->name length:4 encoding:NSASCIIStringEncoding];
         NSArray* descriptors = [[NSArray alloc] init];
         [file_descriptor_arrays setObject:descriptors forKey:type_key];
@@ -202,14 +212,16 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     
     // read the resource table
     err = FSReadFork(forkRef, fsAtMark, 0, sizeof(MHK_rsrc_table_entry) * rsrc_table_header.count, rsrc_table, NULL);
-    if (err) {
+    if (err)
+    {
         free(rsrc_table);
         return NO;
     }
     
     // seek to the name table
     err = FSSetForkPosition(forkRef, fsFromStart, resource_directory_absolute_offset + type_table_entry->name_table_rsrc_dir_offset);
-    if (err) {
+    if (err)
+    {
         free(rsrc_table);
         return NO;
     }
@@ -217,7 +229,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     // read the name table header
     MHK_name_table_header name_table_header;
     err = FSReadFork(forkRef, fsAtMark, 0, sizeof(MHK_name_table_header), &name_table_header, NULL);
-    if (err) {
+    if (err)
+    {
         free(rsrc_table);
         return NO;
     }
@@ -225,17 +238,20 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     
     // read the name table if there are any entries
     MHK_name_table_entry* name_table = NULL;
-    if (name_table_header.count > 0 && name_list) {
+    if (name_table_header.count > 0 && name_list)
+    {
         // allocate the name table
         name_table = (MHK_name_table_entry*)calloc(name_table_header.count, sizeof(MHK_name_table_entry));
-        if (!name_table) {
+        if (!name_table)
+        {
             free(rsrc_table);
             return NO;
         }
         
         // read the name table
         err = FSReadFork(forkRef, fsAtMark, 0, sizeof(MHK_name_table_entry) * name_table_header.count, name_table, NULL);
-        if (err) {
+        if (err)
+        {
             free(name_table);
             free(rsrc_table);
             return NO;
@@ -263,7 +279,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     
     // iterate over the resources
     uint16_t resource_index = 0;
-    for (; resource_index < rsrc_table_header.count; resource_index++) {
+    for (; resource_index < rsrc_table_header.count; resource_index++)
+    {
         // get the resource table entry and swap it
         MHK_rsrc_table_entry* rsrc_entry = rsrc_table + resource_index;
         MHK_rsrc_table_entry_fton(rsrc_entry);
@@ -273,16 +290,21 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
         
         // attempt to find a resource name
         NSString* file_name = nil;
-        if (name_table) {
+        if (name_table)
+        {
             // attempt to do a quick "parallel array" lookup
             if (resource_index < name_table_header.count && name_table[resource_index].index == rsrc_entry->index) {
                 // we found a matching name table entry
                 char* c_name = name_list + name_table[resource_index].name_list_offset;
                 file_name = [[NSString alloc] initWithBytes:c_name length:strlen(c_name) encoding:NSASCIIStringEncoding];
-            } else {
+            }
+            else
+            {
                 uint16_t name_index = 0;
-                for (; name_index < name_table_header.count; name_index++) {
-                    if (name_table[name_index].index == rsrc_entry->index) {
+                for (; name_index < name_table_header.count; name_index++)
+                {
+                    if (name_table[name_index].index == rsrc_entry->index)
+                    {
                         // we found a matching name table entry
                         char* c_name = name_list + name_table[name_index].name_list_offset;
                         file_name = [[NSString alloc] initWithBytes:c_name length:strlen(c_name) encoding:NSASCIIStringEncoding];
@@ -427,7 +449,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
         return NO;
     
     // check if we have a resource name list
-    if (type_table_header.rsrc_name_list_rsrc_dir_offset < rsrc_header.file_table_rsrc_dir_offset) {
+    if (type_table_header.rsrc_name_list_rsrc_dir_offset < rsrc_header.file_table_rsrc_dir_offset)
+    {
         uint32_t name_list_length = rsrc_header.file_table_rsrc_dir_offset - type_table_header.rsrc_name_list_rsrc_dir_offset;
         
         name_list = (char*)malloc(name_list_length);
@@ -443,7 +466,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
         err = FSReadFork(forkRef, fsAtMark, 0, name_list_length, name_list, NULL);
         if (err)
             return NO;
-    } else
+    }
+    else
         name_list = NULL;
     
     // seek to the file table
@@ -493,7 +517,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
         return NO;
     
     // process each type in the archive
-    for (table_iterator = 0; table_iterator < type_table_count; table_iterator++) {
+    for (table_iterator = 0; table_iterator < type_table_count; table_iterator++)
+    {
         if (![self load_mhk_type:table_iterator])
             return NO;
     }
@@ -515,13 +540,15 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
 #pragma mark -
 #pragma mark Public methods
 
-- (id)init {
+- (id)init
+{
     [self doesNotRecognizeSelector:_cmd];
     [self release];
     return nil;
 }
 
-- (id)initWithPath:(NSString*)path error:(NSError**)errorPtr {
+- (id)initWithPath:(NSString*)path error:(NSError**)errorPtr
+{
     NSURL* url = [[NSURL alloc] initFileURLWithPath:path];
     id archive = [self initWithURL:url error:errorPtr];
     [url release];
@@ -539,7 +566,6 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     // secure clean up
     file_descriptor_arrays = nil;
     file_descriptor_trees = nil;
-    __open_files = 0;
     
     // when this is YES, the load methods will just exit
     initialized = NO;
@@ -601,18 +627,15 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     pthread_rwlock_init(&__cached_sound_descriptors_rwlock, NULL);
     __cached_sound_descriptors = [[NSMutableDictionary alloc] initWithCapacity:[[file_descriptor_arrays objectForKey:@"tWAV"] count]];
     
-    // prepare the open files mutex
-    pthread_mutex_init(&__open_files_mutex, NULL);
-    
     initialized = YES;
     return self;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     // free memory resources
     [__cached_sound_descriptors release];
     pthread_rwlock_destroy(&__cached_sound_descriptors_rwlock);
-    pthread_mutex_destroy(&__open_files_mutex);
     
     [file_descriptor_trees release];
     [file_descriptor_arrays release];
@@ -634,13 +657,15 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     [super dealloc];
 }
 
-- (NSString*)description {
+- (NSString*)description
+{
     return [NSString stringWithFormat:@"%@ %@", [super description], [mhk_url path]];
 }
 
 #pragma mark -
 
-- (NSDictionary*)resourceDescriptorWithResourceType:(NSString*)type ID:(uint16_t)resourceID {
+- (NSDictionary*)resourceDescriptorWithResourceType:(NSString*)type ID:(uint16_t)resourceID
+{
     NSMutableData* binary_tree_data = [file_descriptor_trees objectForKey:type];
     if (!binary_tree_data)
         return nil;
@@ -655,58 +680,63 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     uint16_t r = n - 1;
     
     // binary search for the requested ID
-    while (l <= r) {
+    while (l <= r)
+    {
         uint16_t m = l + (r - l) / 2;
-        if (resourceID == binary_tree[m].resource_id) {
+        if (resourceID == binary_tree[m].resource_id)
+        {
             NSMutableDictionary* descriptor = binary_tree[m].descriptor;
             
-            if (![descriptor objectForKey:@"Length"]) {
+            if (![descriptor objectForKey:@"Length"])
+            {
                 MHK_file_table_entry* file_entry = file_table + [[descriptor objectForKey:@"Index"] unsignedIntValue] - 1;
                 uint32_t file_size = compute_file_table_entry_length(file_entry);
                 [descriptor setObject:[NSNumber numberWithUnsignedInt:file_size] forKey:@"Length"];
             }
             
             return [[descriptor copy] autorelease];
-        } else if (resourceID < binary_tree[m].resource_id) {
+        }
+        else if (resourceID < binary_tree[m].resource_id)
+        {
             if (m == 0)
                 return nil;
             else r = m - 1;
-        } else
+        }
+        else
             l = m + 1;
     }
     
     return nil;
 }
 
-- (MHKFileHandle*)openResourceWithResourceType:(NSString*)type ID:(uint16_t)resourceID {
+- (MHKFileHandle*)openResourceWithResourceType:(NSString*)type ID:(uint16_t)resourceID
+{
     NSDictionary* descriptor = [self resourceDescriptorWithResourceType:type ID:resourceID];
     if (!descriptor)
         return nil;
     
-    MHKFileHandle* fh = [[MHKFileHandle alloc] _initWithArchive:self fork:forkRef descriptor:descriptor];
-    if (fh)
-        [self performSelector:@selector(_fileDidAlloc)];
-    return [fh autorelease];
+    return [[[MHKFileHandle alloc] _initWithArchive:self fork:forkRef descriptor:descriptor] autorelease];
 }
 
-- (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)resourceID {
+- (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)resourceID
+{
     NSDictionary *descriptor = [self resourceDescriptorWithResourceType:type ID:resourceID];
     if (!descriptor)
         return nil;
     
     MHKFileHandle* fh = [[MHKFileHandle alloc] _initWithArchive:self fork:forkRef descriptor:descriptor];
-    if (fh)
-        [self performSelector:@selector(_fileDidAlloc)];
-    else
+    if (!fh)
         return nil;
     
     void* buffer = malloc((size_t)[fh length]);
-    if (!buffer) {
+    if (!buffer)
+    {
         [fh release];
         return nil;
     }
     
-    if ([fh readDataToEndOfFileInBuffer:buffer error:NULL] == -1) {
+    if ([fh readDataToEndOfFileInBuffer:buffer error:NULL] == -1)
+    {
         free(buffer);
         [fh release];
         return nil;
@@ -718,22 +748,22 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     return [resourceData autorelease];
 }
 
-- (NSDictionary*)resourceDescriptorWithResourceType:(NSString*)type name:(NSString*)name {
+- (NSDictionary*)resourceDescriptorWithResourceType:(NSString*)type name:(NSString*)name
+{
     return [[file_descriptor_name_maps objectForKey:type] objectForKey:[name lowercaseString]];
 }
 
-- (MHKFileHandle*)openResourceWithResourceType:(NSString*)type name:(NSString*)name {
+- (MHKFileHandle*)openResourceWithResourceType:(NSString*)type name:(NSString*)name
+{
     NSDictionary* descriptor = [self resourceDescriptorWithResourceType:type name:name];
     if (!descriptor)
         return nil;
     
-    MHKFileHandle* fh = [[MHKFileHandle alloc] _initWithArchive:self fork:forkRef descriptor:descriptor];
-    if (fh)
-        [self performSelector:@selector(_fileDidAlloc)];
-    return [fh autorelease];
+    return [[[MHKFileHandle alloc] _initWithArchive:self fork:forkRef descriptor:descriptor] autorelease];
 }
 
-- (NSData*)dataWithResourceType:(NSString*)type name:(NSString*)name {
+- (NSData*)dataWithResourceType:(NSString*)type name:(NSString*)name
+{
     MHKFileHandle* fh = [self openResourceWithResourceType:type name:name];
     if (!fh)
         return nil;
@@ -750,34 +780,21 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     return [[[NSData alloc] initWithBytesNoCopy:buffer length:(NSUInteger)[fh length] freeWhenDone:YES] autorelease];
 }
 
-- (void)_fileDidAlloc {
-    pthread_mutex_lock(&__open_files_mutex);
-    __open_files++;
-    if (__open_files == 1)
-        [self retain];
-    pthread_mutex_unlock(&__open_files_mutex);
-}
-
-- (void)_fileDidDealloc {
-    pthread_mutex_lock(&__open_files_mutex);
-    __open_files--;
-    if (__open_files == 0)
-        [self autorelease];
-    pthread_mutex_unlock(&__open_files_mutex);
-}
-
 #pragma mark -
 #pragma mark KVC methods
 
-- (NSURL*)url {
+- (NSURL*)url
+{
     return mhk_url;
 }
 
-- (NSArray*)resourceTypes {
+- (NSArray*)resourceTypes
+{
     return [file_descriptor_arrays allKeys];
 }
 
-- (id)valueForUndefinedKey:(NSString*)key {
+- (id)valueForUndefinedKey:(NSString*)key
+{
     return [file_descriptor_arrays objectForKey:key];
 }
 

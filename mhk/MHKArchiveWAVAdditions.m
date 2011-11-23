@@ -32,7 +32,8 @@
     // check for a cached value
     pthread_rwlock_rdlock(&__cached_sound_descriptors_rwlock);
     NSDictionary* soundDescriptor = [__cached_sound_descriptors objectForKey:soundIDNumber];
-    if (soundDescriptor) {
+    if (soundDescriptor)
+    {
         pthread_rwlock_unlock(&__cached_sound_descriptors_rwlock);
         return soundDescriptor;
     }
@@ -68,7 +69,8 @@
     // since resource lengths are computed in the archive, we need to do some checking here
     UInt32 resource_length = chunk_header.content_length + sizeof(MHK_chunk_header);
     UInt32 resource_length_from_archive = [[descriptor objectForKey:@"Length"] unsignedIntValue];
-    if (resource_length != resource_length_from_archive) {
+    if (resource_length != resource_length_from_archive)
+    {
 #if defined(DEBUG) && DEBUG > 2
         fprintf(stderr, "read length: 0x%x, computed length: 0x%x, difference = 0x%x\n",
             (int)resource_length,
@@ -129,11 +131,13 @@
     uint32_t samples_length = resource_length - headers_length;
     
     // if the file is ADPCM, we can actually compute exactly how many bytes we need
-    if (data_header.compression_type == MHK_WAVE_ADPCM) {
+    if (data_header.compression_type == MHK_WAVE_ADPCM)
+    {
         uint32_t required_bytes_for_adpcm = data_header.frame_count * data_header.channel_count / 2;
         
         // from my observations, ADPCM files always need 0x18 more bytes :| but let's do the math anyways
-        if (required_bytes_for_adpcm > samples_length) {
+        if (required_bytes_for_adpcm > samples_length)
+        {
             uint32_t extra_bytes_required = required_bytes_for_adpcm - samples_length;
             uint32_t available_gap_bytes = (uint32_t)(resource_offset + resource_length_from_archive);
             available_gap_bytes = available_gap_bytes - (uint32_t)(file_offset + samples_length);
@@ -142,10 +146,13 @@
             if (available_gap_bytes > 0)
                 samples_length += (extra_bytes_required > available_gap_bytes) ? available_gap_bytes : extra_bytes_required;
         }
-    } else if (data_header.compression_type == MHK_WAVE_MP2) {
+    }
+    else if (data_header.compression_type == MHK_WAVE_MP2)
+    {
         // let's verify if it's a proper MP2 file by checking the first packet
         uint32_t mpeg_header = 0;
-        for (unsigned char packet_index = 0; packet_index < 3; packet_index++) {
+        for (unsigned char packet_index = 0; packet_index < 3; packet_index++)
+        {
             err = FSReadFork(forkRef, fsFromStart, file_offset, sizeof(uint32_t), &mpeg_header, NULL);
             if (err)
                 ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, error);
@@ -167,7 +174,9 @@
             if ((mpeg_header & 0x00060000) != 0x00040000)
                 ReturnValueWithError(nil, MHKErrorDomain, errDamagedResource, nil, error);
         }
-    } else {
+    }
+    else
+    {
         ReturnValueWithError(nil, MHKErrorDomain, errDamagedResource, nil, error);
     }
     
@@ -181,7 +190,8 @@
         data_header.compression_type);
     fprintf(stderr, "headers length: 0x%x\n", headers_length);
     fprintf(stderr, "computed resource length without headers: 0x%x\n", samples_length);
-    if (data_header.compression_type == MHK_WAVE_ADPCM) {
+    if (data_header.compression_type == MHK_WAVE_ADPCM)
+    {
         uint32_t required_bytes_for_adpcm = data_header.frame_count * data_header.channel_count / 2;
         fprintf(stderr, "required bytes for compressed samples (using ADPCM): 0x%x\n", required_bytes_for_adpcm);
         fprintf(stderr, "difference: 0x%x\n", required_bytes_for_adpcm - samples_length);
@@ -206,19 +216,17 @@
     return soundDescriptor;
 }
 
-- (MHKFileHandle*)openSoundWithID:(uint16_t)soundID error:(NSError**)error {
+- (MHKFileHandle*)openSoundWithID:(uint16_t)soundID error:(NSError**)error
+{
     NSDictionary* soundDescriptor = [self soundDescriptorWithID:soundID error:error];
     if (!soundDescriptor)
         return nil;
     
-    MHKFileHandle* fh = [[MHKFileHandle alloc] _initWithArchive:self fork:forkRef soundDescriptor:soundDescriptor];
-    if (fh)
-        [self performSelector:@selector(_fileDidAlloc)];
-    
-    return [fh autorelease];
+    return [[[MHKFileHandle alloc] _initWithArchive:self fork:forkRef soundDescriptor:soundDescriptor] autorelease];
 }
 
-- (id <MHKAudioDecompression>)decompressorWithSoundID:(uint16_t)soundID error:(NSError**)error {
+- (id <MHKAudioDecompression>)decompressorWithSoundID:(uint16_t)soundID error:(NSError**)error
+{
     NSDictionary* soundDescriptor = [self soundDescriptorWithID:soundID error:error];
     if (!soundDescriptor)
         return nil;

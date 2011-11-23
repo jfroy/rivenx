@@ -8,10 +8,11 @@
 
 #import "Base/RXBase.h"
 
+
 @class MHKArchive;
 
-
-@interface MHKFileHandle : NSObject {
+@interface MHKFileHandle : NSObject
+{
     int16_t __forkRef;
     MHKArchive* __owner;
     
