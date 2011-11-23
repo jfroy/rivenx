@@ -48,7 +48,8 @@ static int _MHK_file_table_entry_pointer_offset_compare(const void* v1, const vo
     return 1;
 }
 
-MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
+MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s)
+{
     uint32_t length = s->size_high;
     length = length << 16;
     length += s->size_low;
@@ -265,7 +266,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     
     // we now have all the information we need to build the file descriptors
     id* file_descriptors = calloc(rsrc_table_header.count, sizeof(id));
-    if (!file_descriptors) {
+    if (!file_descriptors)
+    {
         free(name_table);
         free(rsrc_table);
         return NO;
@@ -293,7 +295,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
         if (name_table)
         {
             // attempt to do a quick "parallel array" lookup
-            if (resource_index < name_table_header.count && name_table[resource_index].index == rsrc_entry->index) {
+            if (resource_index < name_table_header.count && name_table[resource_index].index == rsrc_entry->index)
+            {
                 // we found a matching name table entry
                 char* c_name = name_list + name_table[resource_index].name_list_offset;
                 file_name = [[NSString alloc] initWithBytes:c_name length:strlen(c_name) encoding:NSASCIIStringEncoding];
@@ -383,7 +386,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     return YES;
 }
 
-- (BOOL)load_mhk {
+- (BOOL)load_mhk
+{
     OSStatus err = noErr;
     uint32_t table_iterator = 0;
     
@@ -772,7 +776,8 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s) {
     if (!buffer)
         return nil;
     
-    if ([fh readDataToEndOfFileInBuffer:buffer error:NULL] == -1) {
+    if ([fh readDataToEndOfFileInBuffer:buffer error:NULL] == -1)
+    {
         free(buffer);
         return nil;
     }
