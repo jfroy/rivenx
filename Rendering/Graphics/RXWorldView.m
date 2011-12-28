@@ -151,7 +151,7 @@ static NSString* required_extensions[] = {
         return nil;
     
     // initialize the global world view reference
-    assert(g_worldView == nil);
+    release_assert(g_worldView == nil);
     g_worldView = self;
     
     // prepare the generic "no supported GPU" error
@@ -299,7 +299,7 @@ static NSString* required_extensions[] = {
     
     // cache the underlying CGL context
     _renderContextCGL = [_renderContext CGLContextObj];
-    assert(_renderContextCGL);
+    release_assert(_renderContextCGL);
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"render context: %p", _renderContextCGL);
     
     // make the rendering context current
@@ -801,16 +801,16 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
                     epilogueIndex:0
                     context:cgl_ctx
                     error:NULL];
-    assert(_cardProgram);
+    release_assert(_cardProgram);
     
     glUseProgram(_cardProgram); glReportError();
     
     GLint uniform_loc = glGetUniformLocation(_cardProgram, "destination_card"); glReportError();
-    assert(uniform_loc != -1);
+    release_assert(uniform_loc != -1);
     glUniform1i(uniform_loc, 0); glReportError();
     
     uniform_loc = glGetUniformLocation(_cardProgram, "modulate_color"); glReportError();
-    assert(uniform_loc != -1);
+    release_assert(uniform_loc != -1);
     glUniform4f(uniform_loc, 1.f, 1.f, 1.f, 1.f); glReportError();
     
     // get the solid color program
@@ -818,12 +818,12 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
         [NSNumber numberWithInt:RX_ATTRIB_POSITION], @"position",
         nil];
     _solidColorProgram = [[GLShaderProgramManager sharedManager] programWithName:@"solidcolor" attributeBindings:bindings context:cgl_ctx error:NULL];
-    assert(_solidColorProgram);
+    release_assert(_solidColorProgram);
     
     glUseProgram(_solidColorProgram); glReportError();
     
     _solidColorLocation = glGetUniformLocation(_solidColorProgram, "color"); glReportError();
-    assert(_solidColorLocation != -1);
+    release_assert(_solidColorLocation != -1);
     
     // restore state
     glUseProgram(0);
@@ -845,9 +845,9 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
         GLfloat pos[2];
         GLfloat tex[2];
     };
-    assert(sizeof(struct _attribs) == 4 * sizeof(GLfloat));
+    release_assert(sizeof(struct _attribs) == 4 * sizeof(GLfloat));
     struct _attribs* attribs = (struct _attribs*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY); glReportError();
-    assert(attribs);
+    release_assert(attribs);
     
     // card
     rx_rect_t contentRect = RXEffectiveRendererFrame();

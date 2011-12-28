@@ -9,7 +9,8 @@
 #import "Rendering/Graphics/RXTextureBroker.h"
 
 
-@interface RXBrokeredTexture : RXTexture {
+@interface RXBrokeredTexture : RXTexture
+{
 @public
     struct _rx_texture_bucket* _bucket;
     uint32_t _bucket_index;
@@ -25,7 +26,8 @@
 
 @implementation RXBrokeredTexture
 
-- (void)dealloc {
+- (void)dealloc
+{
     [[RXTextureBroker sharedTextureBroker] _recycleTexture:self];
     [super dealloc];
 }
@@ -35,8 +37,9 @@
 
 @implementation RXTextureBroker
 
-static void allocate_texture_bucket(CGLContextObj cgl_ctx, struct _rx_texture_bucket* bucket, GLsizei width, GLsizei height) {
-    assert(bucket);
+static void allocate_texture_bucket(CGLContextObj cgl_ctx, struct _rx_texture_bucket* bucket, GLsizei width, GLsizei height)
+{
+    release_assert(bucket);
     
     // initial bucket state
     bucket->in_use = [RXDynamicBitfield new];
@@ -45,7 +48,10 @@ static void allocate_texture_bucket(CGLContextObj cgl_ctx, struct _rx_texture_bu
     bucket->height = height;
 }
 
-static void grow_texture_bucket(struct _rx_texture_bucket* bucket) {
+static void grow_texture_bucket(struct _rx_texture_bucket* bucket)
+{
+    release_assert(bucket);
+    
     size_t old_size = [bucket->in_use segmentCount] * [bucket->in_use segmentBits] * sizeof(GLuint);
     size_t new_size = ([bucket->in_use segmentCount] + 1) * [bucket->in_use segmentBits] * sizeof(GLuint);
     bucket->tex_ids = realloc(bucket->tex_ids, new_size);
@@ -56,12 +62,14 @@ static void grow_texture_bucket(struct _rx_texture_bucket* bucket) {
 #endif
 }
 
-static inline void free_texture_bucket(CGLContextObj cgl_ctx, struct _rx_texture_bucket* bucket) {
-    assert(bucket);
+static inline void free_texture_bucket(CGLContextObj cgl_ctx, struct _rx_texture_bucket* bucket)
+{
+    release_assert(bucket);
     
     CGLLockContext(cgl_ctx);
     size_t max_tex = [bucket->in_use segmentCount] * [bucket->in_use segmentBits];
-    for (uintptr_t tex_index = 0; tex_index < max_tex; tex_index++) {
+    for (uintptr_t tex_index = 0; tex_index < max_tex; ++tex_index)
+    {
         if (bucket->tex_ids[tex_index])
             glDeleteTextures(1, bucket->tex_ids + tex_index);
     }
@@ -71,8 +79,9 @@ static inline void free_texture_bucket(CGLContextObj cgl_ctx, struct _rx_texture
     [bucket->in_use release];
 }
 
-static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_bucket* bucket, uint32_t *out_index) {
-    assert(bucket);
+static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_bucket* bucket, uint32_t *out_index)
+{
+    release_assert(bucket);
     
     // if all the bits are set, we need to grow the bucket
     if ([bucket->in_use isAllSet])
@@ -81,17 +90,20 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     // find the first available texture
     size_t max_tex = [bucket->in_use segmentCount] * [bucket->in_use segmentBits];
     uint32_t tex_index = 0;
-    for (; tex_index < max_tex; tex_index++) {
+    for (; tex_index < max_tex; ++tex_index)
+    {
         if (![bucket->in_use isSet:tex_index])
             break;
     }
     
-    if (!bucket->tex_ids[tex_index]) {
+    if (!bucket->tex_ids[tex_index])
+    {
         CGLLockContext(cgl_ctx);
         
         // allocate the texture
         glGenTextures(1, bucket->tex_ids + tex_index); glReportError();
-        if (!bucket->tex_ids[tex_index]) {
+        if (!bucket->tex_ids[tex_index])
+        {
             CGLUnlockContext(cgl_ctx);
             return 0;
         }
@@ -145,8 +157,10 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     return broker;
 }
 
-- (void)_createBucketWithSize:(rx_size_t)size {
-    if (_bucket_count == _bucket_capacity) {
+- (void)_createBucketWithSize:(rx_size_t)size
+{
+    if (_bucket_count == _bucket_capacity)
+    {
         _bucket_capacity += 0x10;
         _buckets = realloc(_buckets, _bucket_capacity * sizeof(struct _rx_texture_bucket));
     }
@@ -155,14 +169,16 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     _bucket_count++;
 }
 
-- (void)_recycleTexture:(RXBrokeredTexture*)texture {
+- (void)_recycleTexture:(RXBrokeredTexture*)texture
+{
 #if defined(DEBUG)
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"recycled texture: %u", texture->texture);
 #endif
     [texture->_bucket->in_use clear:texture->_bucket_index];
 }
 
-- (id)init {
+- (id)init
+{
     self = [super init];
     if (!self)
         return nil;
@@ -173,16 +189,19 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     _bucket_capacity = 8;
     
     // create a few standard buckets
-    for (int i = 5; i < 10; i++)
-        for (int j = 5; j < 10; j++)
+    for (int i = 5; i < 10; ++i)
+    {
+        for (int j = 5; j < 10; ++j)
             [self _createBucketWithSize:RXSizeMake(1 << i, 1 << j)];
+    }
     
     [self _createBucketWithSize:kRXCardViewportSize];
     
     return self;
 }
 
-- (void)teardown {
+- (void)teardown
+{
     if (_toreDown)
         return;
     _toreDown = YES;
@@ -190,14 +209,15 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     RXOLog(@"tearing down");
 #endif
     
-    for (uint32_t bucket_i = 0; bucket_i < _bucket_count; bucket_i++)
+    for (uint32_t bucket_i = 0; bucket_i < _bucket_count; ++bucket_i)
         free_texture_bucket(cgl_ctx, _buckets + bucket_i);
     _bucket_count = 0;
     
     [self _printDebugStats];
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     [self teardown];
     
     free(_buckets);
@@ -208,19 +228,22 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     [super dealloc];
 }
 
-- (void)_printDebugStats {
+- (void)_printDebugStats
+{
 #if defined(DEBUG)
     NSMutableString* statsString = [NSMutableString new];
-    for (GLuint i = 0; i < _bucket_stat_count; i++)
+    for (GLuint i = 0; i < _bucket_stat_count; ++i)
         [statsString appendFormat:@"\t%dx%d: %u\n", (int)_bucket_stats[i].width, (int)_bucket_stats[i].height, (unsigned int)_bucket_stats[i].count];
     RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"texture bucket statistics\n%@", statsString);
     [statsString release];
 #endif
 }
 
-- (RXTexture*)newTextureWithSize:(rx_size_t)size {
-    assert(size.width > 0);
-    assert(size.height > 0);
+- (RXTexture*)newTextureWithSize:(rx_size_t)size
+{
+    release_assert(size.width > 0);
+    release_assert(size.height > 0);
+    
     if (_toreDown)
         return nil;
     
@@ -233,14 +256,16 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     int j = MAX(0, (int)ceilf(log2f(size.height)) - 5);
     int32_t bucket_i = MIN((i * 5) + j, 5 * 5);
     
-    for (; bucket_i < (int32_t)_bucket_count; bucket_i++) {
+    for (; bucket_i < (int32_t)_bucket_count; ++bucket_i)
+    {
         bucket = _buckets + bucket_i;
         if (bucket->width >= size.width && bucket->height >= size.height)
             break;
     }
     
     // if we don't have a bucket for that size, create a custom-fit one
-    if (bucket_i == (int32_t)_bucket_count) {
+    if (bucket_i == (int32_t)_bucket_count)
+    {
         [self _createBucketWithSize:size];
         bucket = &_buckets[_bucket_count - 1];
     }
@@ -252,7 +277,8 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     // try to allocate a texture out of the bucket
     uint32_t bucket_index;
     GLuint texid = find_texture(cgl_ctx, bucket, &bucket_index);
-    if (texid == 0) {
+    if (texid == 0)
+    {
         // texture allocation failed, return nil
         return nil;
     }
@@ -262,7 +288,8 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     texture->_bucket_index = bucket_index;
     
 #if defined(DEBUG)
-    if (_bucket_stat_count == 0) {
+    if (_bucket_stat_count == 0)
+    {
         _bucket_stats = malloc(sizeof(struct _bucket_stat));
         _bucket_stat_count = 1;
         _bucket_stats[0].width = bucket->width;
@@ -271,14 +298,16 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     }
     
     uint32_t stat_i = 0;
-    for (; stat_i < _bucket_stat_count; stat_i++) {
+    for (; stat_i < _bucket_stat_count; ++stat_i)
+    {
         if (_bucket_stats[stat_i].width == bucket->width && _bucket_stats[stat_i].height == bucket->height) {
             _bucket_stats[stat_i].count++;
             break;
         }
     }
     
-    if (stat_i == _bucket_stat_count) {
+    if (stat_i == _bucket_stat_count)
+    {
         _bucket_stat_count++;
         _bucket_stats = realloc(_bucket_stats, _bucket_stat_count * sizeof(struct _bucket_stat));
         _bucket_stats[stat_i].width = bucket->width;
@@ -294,7 +323,8 @@ static inline GLuint find_texture(CGLContextObj cgl_ctx, struct _rx_texture_buck
     return texture;
 }
 
-- (RXTexture*)newTextureWithWidth:(GLsizei)width height:(GLsizei)height {
+- (RXTexture*)newTextureWithWidth:(GLsizei)width height:(GLsizei)height
+{
     return [self newTextureWithSize:RXSizeMake(width, height)];
 }
 

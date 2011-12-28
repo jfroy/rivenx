@@ -46,8 +46,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     if (!self)
         return nil;
     
-    assert(mount_paths);
-    assert([mp conformsToProtocol:@protocol(RXInstallerMediaProviderProtocol)]);
+    release_assert(mount_paths);
+    release_assert([mp conformsToProtocol:@protocol(RXInstallerMediaProviderProtocol)]);
     
     mediaProvider = mp;
     [self updatePathsWithMountPaths:mount_paths];
@@ -444,12 +444,12 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     [currentDisc release];
     
     currentDisc = [[mount_paths objectForKey:@"path"] retain];
-    assert(currentDisc);
+    release_assert(currentDisc);
     
     dataPath = [[mount_paths objectForKey:@"data path"] retain];
-    assert(dataPath);
+    release_assert(dataPath);
     dataArchives = [[mount_paths objectForKey:@"data archives"] retain];
-    assert(dataArchives);
+    release_assert(dataArchives);
     
     assetsPath = [mount_paths objectForKey:@"assets path"];
     if ((id)assetsPath == (id)[NSNull null])
@@ -460,7 +460,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     else
     {
         assetsArchives = [mount_paths objectForKey:@"assets archives"];
-        assert((id)assetsArchives != (id)[NSNull null]);
+        release_assert((id)assetsArchives != (id)[NSNull null]);
     }
     [assetsPath retain];
     [assetsArchives retain];
@@ -474,7 +474,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     else
     {
         allArchives = [mount_paths objectForKey:@"all archives"];
-        assert((id)allArchives != (id)[NSNull null]);
+        release_assert((id)allArchives != (id)[NSNull null]);
     }
     [allPath retain];
     [allArchives retain];

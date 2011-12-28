@@ -16,7 +16,7 @@ void RXTimingUpdateTimebase(void)
 {
     mach_timebase_info_data_t info;
     kern_return_t err = mach_timebase_info(&info);
-    assert(err == KERN_SUCCESS);
+    debug_assert(err == KERN_SUCCESS);
 
     // compute the timebase to seconds scale factor
     g_RXTimebase = 1e-9 * (double)info.numer / (double)info.denom;

@@ -154,9 +154,11 @@ static void rx_release_owner_applier(const void* value, void* context) {
 
 @implementation RXCardState
 
-+ (void)initialize {
++ (void)initialize
+{
     static BOOL initialized = NO;
-    if (!initialized) {
+    if (!initialized)
+    {
         initialized = YES;
         
         render_card_imp = (RenderCardImp_t)[self instanceMethodForSelector:render_card_sel];
@@ -170,11 +172,13 @@ static void rx_release_owner_applier(const void* value, void* context) {
     }
 }
 
-+ (BOOL)accessInstanceVariablesDirectly {
++ (BOOL)accessInstanceVariablesDirectly
+{
     return NO;
 }
 
-- (id)init {
+- (id)init
+{
     self = [super init];
     if (!self)
         return nil;
@@ -193,7 +197,7 @@ static void rx_release_owner_applier(const void* value, void* context) {
     
     // allocate the cache lines
     size_t states_buffer_size = (render_state_cache_line_count * 2 + 1) * cache_line_size;
-    assert(states_buffer_size > sizeof(struct rx_card_state_render_state) * 2);
+    release_assert(states_buffer_size > sizeof(struct rx_card_state_render_state) * 2);
     _render_states_buffer = malloc(states_buffer_size);
     
     // point each render state pointer at the beginning of a cache line
@@ -230,7 +234,8 @@ static void rx_release_owner_applier(const void* value, void* context) {
     
     // initialize all the rendering stuff (shaders, textures, buffers, VAOs)
     [self _initializeRendering];
-    if (!_initialized) {
+    if (!_initialized)
+    {
         [self release];
         return nil;
     }
@@ -667,45 +672,54 @@ init_failure:
 #pragma mark -
 #pragma mark audio rendering
 
-- (CFMutableArrayRef)_newSourceArrayFromSoundSets:(NSArray*)sets callbacks:(CFArrayCallBacks*)callbacks {
+- (CFMutableArrayRef)_newSourceArrayFromSoundSets:(NSArray*)sets callbacks:(CFArrayCallBacks*)callbacks
+{
     // create an array of sources that need to be deactivated
     CFMutableArrayRef sources = CFArrayCreateMutable(NULL, 0, callbacks);
     
     NSEnumerator* setEnum = [sets objectEnumerator];
     NSSet* s;
-    while ((s = [setEnum nextObject])) {    
+    while ((s = [setEnum nextObject]))
+    {
         NSEnumerator* soundEnum = [s objectEnumerator];
         RXSound* sound;
-        while ((sound = [soundEnum nextObject])) {
-            assert(sound->source);
+        while ((sound = [soundEnum nextObject]))
+        {
+            release_assert(sound->source);
             CFArrayAppendValue(sources, sound->source);
         }
     }
     return sources;
 }
 
-- (CFMutableArrayRef)_newSourceArrayFromSoundSet:(NSSet*)s callbacks:(CFArrayCallBacks*)callbacks {
+- (CFMutableArrayRef)_newSourceArrayFromSoundSet:(NSSet*)s callbacks:(CFArrayCallBacks*)callbacks
+{
     return [self _newSourceArrayFromSoundSets:[NSArray arrayWithObject:s] callbacks:callbacks];
 }
 
-- (void)_appendToSourceArray:(CFMutableArrayRef)sources soundSets:(NSArray*)sets {  
+- (void)_appendToSourceArray:(CFMutableArrayRef)sources soundSets:(NSArray*)sets
+{
     NSEnumerator* setEnum = [sets objectEnumerator];
     NSSet* s;
-    while ((s = [setEnum nextObject])) {    
+    while ((s = [setEnum nextObject]))
+    {
         NSEnumerator* soundEnum = [s objectEnumerator];
         RXSound* sound;
-        while ((sound = [soundEnum nextObject])) {
-            assert(sound->source);
+        while ((sound = [soundEnum nextObject]))
+        {
+            release_assert(sound->source);
             CFArrayAppendValue(sources, sound->source);
         }
     }
 }
 
-- (void)_appendToSourceArray:(CFMutableArrayRef)sources soundSet:(NSSet*)s {
+- (void)_appendToSourceArray:(CFMutableArrayRef)sources soundSet:(NSSet*)s
+{
     return [self _appendToSourceArray:sources soundSets:[NSArray arrayWithObject:s]];
 }
 
-- (void)_updateActiveSources {
+- (void)_updateActiveSources
+{
     // WARNING: WILL BE RUNNING ON THE SCRIPT THREAD
     NSMutableSet* soundsToRemove = [NSMutableSet new];
     uint64_t now = RXTimingNow();
@@ -823,7 +837,7 @@ init_failure:
             
             // create an audio source with the decompressor
             sound->source = new RX::CardAudioSource(decompressor, sound->gain * soundGroup->gain, sound->pan, soundGroup->loop);
-            assert(sound->source);
+            release_assert(sound->source);
             
             // make sure the sound doesn't have a valid detach timestamp
             sound->detach_timestamp = 0;
@@ -839,7 +853,7 @@ init_failure:
 #endif
         } else {
             // UPDATE SOUND
-            assert(active_sound->source);
+            release_assert(active_sound->source);
             
             // update the sound's gain and pan (this does not affect the source)
             active_sound->gain = sound->gain;
@@ -885,7 +899,7 @@ init_failure:
     
     // FIXME: handle situation where there are not enough busses (in which case
     // we would probably have to do a graph update to really release the busses)
-    assert(renderer->AvailableMixerBusCount() >= (uint32_t)CFArrayGetCount(sourcesToAdd));
+    release_assert(renderer->AvailableMixerBusCount() >= (uint32_t)CFArrayGetCount(sourcesToAdd));
     
     // update active sources immediately
     [self _updateActiveSources];
@@ -972,7 +986,7 @@ init_failure:
         
         // create an audio source with the decompressor
         sound->source = new RX::CardAudioSource(decompressor, sound->gain, sound->pan, false);
-        assert(sound->source);
+        release_assert(sound->source);
         
         // make sure the sound doesn't have a valid detach timestamp
         sound->detach_timestamp = 0;
@@ -1002,7 +1016,7 @@ init_failure:
         }
     } else {
         // UPDATE SOUND
-        assert(active_sound->source);
+        release_assert(active_sound->source);
         
         // update the sound's gain and pan (this does not affect the source)
         active_sound->gain = sound->gain;
@@ -1377,7 +1391,8 @@ init_failure:
     OSSpinLockUnlock(&_state_swap_lock);
 }
 
-- (void)_switchCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)scd {
+- (void)_switchCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)scd
+{
     // WARNING: MUST RUN ON THE SCRIPT THREAD
     if ([NSThread currentThread] != [g_world scriptThread])
         @throw [NSException exceptionWithName:NSInternalInconsistencyException
@@ -1390,11 +1405,13 @@ init_failure:
     RXCard* front_card = _front_render_state->card;
     
     // if we're switching to the same card, don't allocate another copy of it
-    if (front_card) {
+    if (front_card)
+    {
         RXCardDescriptor* activeDescriptor = [front_card descriptor];
         RXStack* activeStack = [activeDescriptor valueForKey:@"parent"];
         NSNumber* activeID = [activeDescriptor valueForKey:@"ID"];
-        if ([[activeStack key] isEqualToString:scd->stackKey] && scd->cardID == [activeID unsignedShortValue]) {
+        if ([[activeStack key] isEqualToString:scd->stackKey] && scd->cardID == [activeID unsignedShortValue])
+        {
             new_card = [front_card retain];
 #if (DEBUG)
             RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"reloading front card: %@", front_card);
@@ -1403,7 +1420,8 @@ init_failure:
     }
     
     // if we're switching to a different card, create it
-    if (new_card == nil) {
+    if (new_card == nil)
+    {
         // if we don't have the stack, bail
         RXStack* stack = [g_world loadStackWithKey:scd->stackKey];
         if (!stack) {
@@ -2798,7 +2816,7 @@ exit_flush_tasks:
     [self enableHotspotHandling];
     
     int32_t updated_counter = OSAtomicDecrement32Barrier(&_cursor_hide_counter);
-    assert(updated_counter >= 0);
+    release_assert(updated_counter >= 0);
 #if defined(DEBUG) && DEBUG > 1
     RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"showMouseCursor; counter=%d", updated_counter);
 #endif
@@ -2817,7 +2835,7 @@ exit_flush_tasks:
     [self disableHotspotHandling];
     
     int32_t updated_counter = OSAtomicIncrement32Barrier(&_cursor_hide_counter);
-    assert(updated_counter >= 0);
+    release_assert(updated_counter >= 0);
 #if defined(DEBUG) && DEBUG > 1
     RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"hideMouseCursor; counter=%d", updated_counter);
 #endif
@@ -2840,7 +2858,7 @@ exit_flush_tasks:
 
 - (void)enableHotspotHandling {
     int32_t updated_counter = OSAtomicDecrement32Barrier(&_hotspot_handling_disable_counter);
-    assert(updated_counter >= 0);
+    release_assert(updated_counter >= 0);
     
     if (updated_counter == 0)
         [self updateHotspotState];
@@ -2848,7 +2866,7 @@ exit_flush_tasks:
 
 - (void)disableHotspotHandling {
     int32_t updated_counter = OSAtomicIncrement32Barrier(&_hotspot_handling_disable_counter);
-    assert(updated_counter >= 0);
+    release_assert(updated_counter >= 0);
     
     if (updated_counter == 1)
         [self updateHotspotState];
@@ -2982,7 +3000,8 @@ exit_flush_tasks:
     [self _updateHotspotState_nolock];
 }
 
-- (void)_handleInventoryMouseDownWithItemIndex:(uint32_t)index {
+- (void)_handleInventoryMouseDownWithItemIndex:(uint32_t)index
+{
     // WARNING: this method assumes the state swap lock has been taken by the caller
     
     if (index >= RX_MAX_INVENTORY_ITEMS)

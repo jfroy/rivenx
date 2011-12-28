@@ -22,23 +22,27 @@
 
 @implementation RXCard
 
-+ (BOOL)accessInstanceVariablesDirectly {
++ (BOOL)accessInstanceVariablesDirectly
+{
     return NO;
 }
 
-- (id)init {
+- (id)init
+{
     [self doesNotRecognizeSelector:_cmd];
     [self release];
     return nil;
 }
 
-- (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor {
+- (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor
+{
     self = [super init];
     if (!self)
         return nil;
     
     // check that the descriptor is "valid"
-    if (!cardDescriptor || ![cardDescriptor isKindOfClass:[RXCardDescriptor class]]) { 
+    if (!cardDescriptor || ![cardDescriptor isKindOfClass:[RXCardDescriptor class]])
+    {
         [self release];
         @throw [NSException exceptionWithName:NSInvalidArgumentException
                                        reason:@"Card descriptor object is nil or of the wrong type."
@@ -62,7 +66,8 @@
     return self;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
 #if defined(DEBUG) && DEBUG > 1
     RXOLog(@"deallocating");
 #endif
@@ -108,11 +113,13 @@
     [super dealloc];
 }
 
-- (NSString*)name {
+- (NSString*)name
+{
     return [_descriptor name];
 }
 
-- (NSString*)description {
+- (NSString*)description
+{
     return [NSString stringWithFormat: @"%@ {%@}", [super description], [_descriptor description]];
 }
 
@@ -208,7 +215,8 @@
     }
 }
 
-- (void)_loadPictures {
+- (void)_loadPictures
+{
     NSError* error;
     MHKFileHandle* fh;
     size_t list_data_size;
@@ -221,6 +229,7 @@
                                      userInfo:nil];
     
     list_data_size = (size_t)[fh length];
+    release_assert([fh length] >= sizeof(uint16_t));
     _plst_data = malloc(list_data_size);
     
     // read the data from the archive
@@ -231,10 +240,12 @@
     
     // how many pictures do we have?
     _picture_count = CFSwapInt16BigToHost(*(uint16_t*)_plst_data);
+    release_assert([fh length] >= sizeof(uint16_t) + (_picture_count * sizeof(struct rx_plst_record)));
     struct rx_plst_record* picture_records = (struct rx_plst_record*)BUFFER_OFFSET(_plst_data, sizeof(uint16_t));
     
     // process the picture records
-    for (list_index = 0; list_index < _picture_count; list_index++) {
+    for (list_index = 0; list_index < _picture_count; ++list_index)
+    {
         struct rx_plst_record* picture_record = picture_records + list_index;
         
 #if defined(__LITTLE_ENDIAN__)
@@ -276,7 +287,8 @@
     }
 }
 
-- (void)_loadMovies {
+- (void)_loadMovies
+{
     NSError* error;
     MHKFileHandle* fh;
     void* list_data;
@@ -290,6 +302,7 @@
                                      userInfo:nil];
     
     list_data_size = (size_t)[fh length];
+    release_assert([fh length] >= sizeof(uint16_t));
     list_data = malloc(list_data_size);
     
     // read the data from the archive
@@ -300,6 +313,7 @@
     
     // how many movies do we have?
     uint16_t movieCount = CFSwapInt16BigToHost(*(uint16_t*)list_data);
+    release_assert([fh length] >= sizeof(uint16_t) + (movieCount * sizeof(struct rx_mlst_record)));
     struct rx_mlst_record* mlstRecords = (struct rx_mlst_record*)BUFFER_OFFSET(list_data, sizeof(uint16_t));
     
     // allocate movie management objects
@@ -311,7 +325,8 @@
     
     // swap the records if needed
 #if defined(__LITTLE_ENDIAN__)
-    for (list_index = 0; list_index < movieCount; list_index++) {
+    for (list_index = 0; list_index < movieCount; ++list_index)
+    {
         mlstRecords[list_index].index = CFSwapInt16(mlstRecords[list_index].index);
         mlstRecords[list_index].movie_id = CFSwapInt16(mlstRecords[list_index].movie_id);
         mlstRecords[list_index].code = CFSwapInt16(mlstRecords[list_index].code);
@@ -326,7 +341,8 @@
     }
 #endif
     
-    for (list_index = 0; list_index < movieCount; list_index++) {
+    for (list_index = 0; list_index < movieCount; ++list_index)
+    {
 #if defined(DEBUG) && DEBUG > 1
         RXOLog(@"loading mlst entry: {movie ID: %hu, code: %hu, left: %hu, top: %hu, loop: %hu, volume: %hu}",
             mlstRecords[list_index].movie_id,
@@ -368,7 +384,8 @@
     free(list_data);
 }
 
-- (void)_loadHotspots {
+- (void)_loadHotspots
+{
     NSError* error;
     MHKFileHandle* fh;
     void* list_data;
@@ -382,6 +399,7 @@
                                      userInfo:nil];
     
     list_data_size = (size_t)[fh length];
+    release_assert([fh length] >= sizeof(uint16_t));
     list_data = malloc(list_data_size);
     
     // read the data from the archive
@@ -392,11 +410,12 @@
     
     // how many hotspots do we have?
     uint16_t hotspotCount = CFSwapInt16BigToHost(*(uint16_t*)list_data);
+    release_assert([fh length] >= sizeof(uint16_t) + (hotspotCount * sizeof(struct rx_hspt_record)));
     uint8_t* hsptRecordPointer = (uint8_t*)BUFFER_OFFSET(list_data, sizeof(uint16_t));
+    
     if (_hotspots)
         [_hotspots release];
     _hotspots = [[NSMutableArray alloc] initWithCapacity:hotspotCount];
-    
     if (_hotspotsIDMap)
         NSFreeMapTable(_hotspotsIDMap);
     _hotspotsIDMap = NSCreateMapTable(NSIntegerMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
@@ -405,7 +424,8 @@
     _hotspots_name_map = NSCreateMapTable(NSObjectMapKeyCallBacks, NSNonRetainedObjectMapValueCallBacks, hotspotCount);
     
     // load the hotspots
-    for (list_index = 0; list_index < hotspotCount; list_index++) {
+    for (list_index = 0; list_index < hotspotCount; ++list_index)
+    {
         struct rx_hspt_record* hspt_record = (struct rx_hspt_record*)hsptRecordPointer;
         hsptRecordPointer += sizeof(struct rx_hspt_record);
         
@@ -442,14 +462,16 @@
         
         // WORKAROUND: there is a legitimate bug in aspit's "start new game" hotspot; it executes a command 12 at the very end,
         // which kills ambient sound after the introduction sequence; we remove that command here
-        if ([_descriptor ID] == 1 && [[[_descriptor parent] key] isEqualToString:@"aspit"] && hspt_record->blst_id == 16) {
+        if ([_descriptor ID] == 1 && [[[_descriptor parent] key] isEqualToString:@"aspit"] && hspt_record->blst_id == 16)
+        {
             NSDictionary* program = [[hotspot_scripts objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
             
             uint16_t opcode_count = [[program objectForKey:RXScriptOpcodeCountKey] unsignedShortValue];
             if (opcode_count > 0 && rx_get_riven_script_opcode([[program objectForKey:RXScriptProgramKey] bytes],
                                                                opcode_count,
                                                                opcode_count - 1,
-                                                               NULL) == RX_COMMAND_CLEAR_SLST) {
+                                                               NULL) == RX_COMMAND_CLEAR_SLST)
+            {
                 program = [[NSDictionary alloc] initWithObjectsAndKeys:
                     [program objectForKey:RXScriptProgramKey], RXScriptProgramKey,
                     [NSNumber numberWithUnsignedShort:opcode_count - 1], RXScriptOpcodeCountKey,
@@ -463,16 +485,20 @@
                 hotspot_scripts = mutable_script;
             }
         }
+        
         // WORKAROUND: patch hotspot 16 on pspit 31 to reset pelevcombo to 0 when the combination is wrong
-        else if ([_descriptor isCardWithRMAP:15632 stackName:@"pspit"] && hspt_record->blst_id == 16) {
+        else if ([_descriptor isCardWithRMAP:15632 stackName:@"pspit"] && hspt_record->blst_id == 16)
+        {
             NSDictionary* program = [[hotspot_scripts objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
             RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:program];
             NSMutableArray* dp = [comp decompiledScript];
             
             NSDictionary* opcode = [dp lastObject];
-            if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_BRANCH)) {
+            if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_BRANCH))
+            {
                 NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndex:0];
-                if (RX_BRANCH_VAR_NAME_EQ(opcode, @"pelevcombo") && RX_CASE_VAL_EQ(case0, 5)) {
+                if (RX_BRANCH_VAR_NAME_EQ(opcode, @"pelevcombo") && RX_CASE_VAL_EQ(case0, 5))
+                {
                     // insert a default case to the branch that will set pelevcombo to 0
                     NSArray* block = [NSArray arrayWithObject:[NSDictionary dictionaryWithObjectsAndKeys:
                             [NSNumber numberWithUnsignedShort:RX_COMMAND_SET_VARIABLE], @"command",
@@ -500,16 +526,22 @@
             
             [comp release];
         }
+        
         // WORKAROUND: tweak hotspot "raisehandle" on tspit 138 (29539) to have the open-hand cursor
-        else if ([_descriptor isCardWithRMAP:29539 stackName:@"tspit"] && hotspotName && [hotspotName isEqualToString:@"raisehandle"]) {
+        else if ([_descriptor isCardWithRMAP:29539 stackName:@"tspit"] && hotspotName && [hotspotName isEqualToString:@"raisehandle"])
+        {
             hspt_record->mouse_cursor = RX_CURSOR_OPEN_HAND;
         }
+        
         // WORKAROUND: tweak hotspot "forward" on jspit 609 (167117) to have the open-hand cursor
-        else if ([_descriptor isCardWithRMAP:167117 stackName:@"jspit"] && hotspotName && [hotspotName isEqualToString:@"forward"]) {
+        else if ([_descriptor isCardWithRMAP:167117 stackName:@"jspit"] && hotspotName && [hotspotName isEqualToString:@"forward"])
+        {
             hspt_record->mouse_cursor = RX_CURSOR_OPEN_HAND;
         }
+        
         // WORKAROUND: tweak hotspot "open" on bspit 163 (85071) to have the open-hand cursor
-        else if ([_descriptor isCardWithRMAP:85071 stackName:@"bspit"] && hotspotName && [hotspotName isEqualToString:@"open"]) {
+        else if ([_descriptor isCardWithRMAP:85071 stackName:@"bspit"] && hotspotName && [hotspotName isEqualToString:@"open"])
+        {
             hspt_record->mouse_cursor = RX_CURSOR_OPEN_HAND;
         }
         
@@ -519,7 +551,8 @@
                                                     rect:hspt_record->rect
                                                 cursorID:hspt_record->mouse_cursor
                                                   script:hotspot_scripts];
-        if (hotspotName) {
+        if (hotspotName)
+        {
             [hs setName:hotspotName];
             NSMapInsert(_hotspots_name_map, [hs name], hs);
         }
@@ -557,7 +590,8 @@
     // byte order (and debug)
 #if defined(__LITTLE_ENDIAN__) || (defined(DEBUG) && DEBUG > 1)
     uint16_t blstCount = CFSwapInt16BigToHost(*(uint16_t*)_blstData);
-    for (list_index = 0; list_index < blstCount; list_index++) {
+    for (list_index = 0; list_index < blstCount; ++list_index)
+    {
         struct rx_blst_record* record = _hotspotControlRecords + list_index;
         
 #if defined(__LITTLE_ENDIAN__)
@@ -573,7 +607,8 @@
 #endif // defined(__LITTLE_ENDIAN__) || (defined(DEBUG) && DEBUG > 1)
 }
 
-- (void)_loadSpecialEffects {
+- (void)_loadSpecialEffects
+{
     NSError* error;
     MHKFileHandle* fh;
     void* list_data;
@@ -587,6 +622,7 @@
                                      userInfo:nil];
     
     list_data_size = (size_t)[fh length];
+    release_assert([fh length] >= sizeof(uint16_t));
     list_data = malloc(list_data_size);
     
     // read the data from the archive
@@ -596,10 +632,12 @@
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     
     _flstCount = CFSwapInt16BigToHost(*(uint16_t*)list_data);
+    release_assert([fh length] >= sizeof(uint16_t) + (_flstCount * sizeof(struct rx_flst_record)));
     _sfxes = (rx_card_sfxe*)malloc(sizeof(rx_card_sfxe) * _flstCount);
     
     struct rx_flst_record* flstRecordPointer = (struct rx_flst_record*)BUFFER_OFFSET(list_data, sizeof(uint16_t));
-    for (list_index = 0; list_index < _flstCount; list_index++) {
+    for (list_index = 0; list_index < _flstCount; ++list_index)
+    {
         struct rx_flst_record* record = flstRecordPointer + list_index;
         
 #if defined(__LITTLE_ENDIAN__)
@@ -617,7 +655,7 @@
         
         // get the size of the SFXE resource and allocate the sfxe's record buffer
         size_t sfxe_size = (size_t)[sfxeHandle length];
-        assert(sfxe_size >= sizeof(struct rx_sfxe_record*));
+        release_assert(sfxe_size >= sizeof(struct rx_sfxe_record));
         
         rx_card_sfxe* sfxe = _sfxes + list_index;
         sfxe->record = (struct rx_sfxe_record*)malloc(sfxe_size);
@@ -656,7 +694,8 @@
 
 #if defined(__LITTLE_ENDIAN__)
         // byte swap the offsets and the program
-        for (uint16_t fi = 0; fi < sfxe->record->frame_count; fi++) {
+        for (uint16_t fi = 0; fi < sfxe->record->frame_count; ++fi)
+        {
             sfxe->offsets[fi] = CFSwapInt32(sfxe->offsets[fi]);
             
             union {
@@ -667,8 +706,10 @@
             mp.p_int16 = BUFFER_OFFSET(mp.p_int16, sfxe->offsets[fi]);
             
             *mp.p_int16 = CFSwapInt16(*mp.p_int16);
-            while (*mp.p_int16 != 4) {
-                if (*mp.p_int16 == 3) {
+            while (*mp.p_int16 != 4)
+            {
+                if (*mp.p_int16 == 3)
+                {
                     mp.p_int16[1] = CFSwapInt16(mp.p_int16[1]);
                     mp.p_int16[2] = CFSwapInt16(mp.p_int16[2]);
                     mp.p_int16[3] = CFSwapInt16(mp.p_int16[3]);
@@ -676,13 +717,13 @@
                     mp.p_int16 += 4;
                 }
                 else if (*mp.p_int16 != 1)
-                    abort();
+                    rx_abort("invalid sfxe record: %s %d", [[_descriptor description] UTF8String], record->sfxe_id);
                 
                 mp.p_int16++;
                 *mp.p_int16 = CFSwapInt16(*mp.p_int16);
             }
             
-            assert(mp.p_void <= (void*)BUFFER_OFFSET(sfxe->record, sfxe_size));
+            release_assert(mp.p_void <= (void*)BUFFER_OFFSET(sfxe->record, sfxe_size));
         }
 #endif
     }
@@ -691,7 +732,8 @@
     free(list_data);
 }
 
-- (void)_loadSounds {
+- (void)_loadSounds
+{
     NSError* error;
     MHKFileHandle* fh;
     void* list_data;
@@ -705,6 +747,7 @@
                                      userInfo:nil];
     
     list_data_size = (size_t)[fh length];
+    release_assert([fh length] >= sizeof(uint16_t));
     list_data = malloc(list_data_size);
     
     // read the data from the archive
@@ -715,14 +758,17 @@
     
     // how many sound groups do we have?
     uint16_t soundGroupCount = CFSwapInt16BigToHost(*(uint16_t*)list_data);
+    release_assert([fh length] >= sizeof(uint16_t) + (soundGroupCount * sizeof(uint16_t)));
     uint16_t* slstRecordPointer = (uint16_t*)BUFFER_OFFSET(list_data, sizeof(uint16_t));
+    
     _soundGroups = [[NSMutableArray alloc] initWithCapacity:soundGroupCount];
     
     // skip over index of first record (for loop takes care of skipping it afterwards)
     slstRecordPointer++;
     
     // load the sound groups
-    for (list_index = 0; list_index < soundGroupCount; list_index++) {
+    for (list_index = 0; list_index < soundGroupCount; ++list_index)
+    {
         uint16_t soundCount = CFSwapInt16BigToHost(*slstRecordPointer);
         slstRecordPointer++;
         
@@ -741,7 +787,8 @@
     
     // WORKAROUND: bspit 445 (dome linking book card) has no SLST record, which means when you link back to it from the
     // office age, the dome ambience won't kick in; we copy the sound group from that stack's dome card to fix the problem
-    if ([_descriptor isCardWithRMAP:10439 stackName:@"bspit"] && soundGroupCount == 0) {
+    if ([_descriptor isCardWithRMAP:10439 stackName:@"bspit"] && soundGroupCount == 0)
+    {
         // 110077 is the bspit dome card (which has the ambience sound)
         RXCardDescriptor* domeCardDesc = [[RXCardDescriptor alloc] initWithStack:_parent ID:[_parent cardIDFromRMAPCode:110077]];
         RXCard* domeCard = [[RXCard alloc] initWithCardDescriptor:domeCardDesc];
@@ -756,7 +803,8 @@
     
 }
 
-- (void)load {
+- (void)load
+{
     if (_loaded)
         return;
 #if defined(DEBUG)
@@ -776,7 +824,8 @@
 #pragma mark -
 #pragma mark dynamic loading
 
-- (RXSoundGroup*)newSoundGroupWithSLSTRecord:(const uint16_t*)slst_record soundCount:(uint16_t)sound_count swapBytes:(BOOL)swap {
+- (RXSoundGroup*)newSoundGroupWithSLSTRecord:(const uint16_t*)slst_record soundCount:(uint16_t)sound_count swapBytes:(BOOL)swap
+{
     RXSoundGroup* group = [RXSoundGroup new];
     
     // some useful pointers
@@ -805,7 +854,8 @@
     group->gain = gain;
     
     uint16_t sound_index = 0;
-    for (; sound_index < sound_count; sound_index++) {
+    for (; sound_index < sound_count; ++sound_index)
+    {
         uint16_t sound_id = *(slst_record + sound_index);
         if (swap)
             sound_id = CFSwapInt16BigToHost(sound_id);
@@ -829,7 +879,8 @@
     return group;
 }
 
-- (RXMovie*)loadMovieWithMLSTRecord:(struct rx_mlst_record*)mlst {
+- (RXMovie*)loadMovieWithMLSTRecord:(struct rx_mlst_record*)mlst
+{
     // sometimes volume > 255, so fix it up here
     if (mlst->volume > 255)
         mlst->volume = 255;
@@ -851,66 +902,81 @@
     return [[(RXMovie*)movie_proxy retain] autorelease];
 }
 
-- (uint16_t)soundIDWithName:(NSString*)name {
+- (uint16_t)soundIDWithName:(NSString*)name
+{
     return [_parent soundIDForName:[NSString stringWithFormat:@"%hu_%@_1", [_descriptor ID], name]];
 }
 
-- (uint16_t)dataSoundIDWithName:(NSString*)name {
+- (uint16_t)dataSoundIDWithName:(NSString*)name
+{
     return [_parent dataSoundIDForName:[NSString stringWithFormat:@"%hu_%@_1", [_descriptor ID], name]];
 }
 
 #pragma mark -
 #pragma mark accessors
 
-- (RXCardDescriptor*)descriptor {
+- (RXCardDescriptor*)descriptor
+{
     return [[_descriptor retain] autorelease];
 }
 
-- (RXStack*)parent {
+- (RXStack*)parent
+{
     return [[[_descriptor parent] retain] autorelease];
 }
 
-- (GLuint)pictureCount {
+- (GLuint)pictureCount
+{
     return _picture_count;
 }
 
-- (struct rx_plst_record*)pictureRecords {
+- (struct rx_plst_record*)pictureRecords
+{
     return (struct rx_plst_record*)BUFFER_OFFSET(_plst_data, sizeof(uint16_t));
 }
 
-- (NSDictionary*)scripts {
+- (NSDictionary*)scripts
+{
     return [[_card_scripts retain] autorelease];
 }
 
-- (NSArray*)hotspots {
+- (NSArray*)hotspots
+{
     return [[_hotspots retain] autorelease];
 }
 
-- (NSMapTable*)hotspotsIDMap {
+- (NSMapTable*)hotspotsIDMap
+{
     return _hotspotsIDMap;
 }
 
-- (NSMapTable*)hotspotsNameMap {
+- (NSMapTable*)hotspotsNameMap
+{
     return _hotspots_name_map;
 }
 
-- (struct rx_blst_record*)hotspotControlRecords {
+- (struct rx_blst_record*)hotspotControlRecords
+{
     return _hotspotControlRecords;
 }
 
-- (NSArray*)movies {
+- (NSArray*)movies
+{
     return [[_movies retain] autorelease];
 }
 
-- (uint16_t*)movieCodes {
+- (uint16_t*)movieCodes
+{
     return _mlstCodes;
 }
 
-- (NSArray*)soundGroups {
+- (NSArray*)soundGroups
+{
     return [[_soundGroups retain] autorelease];
 }
 
-- (rx_card_sfxe*)sfxes {
+- (rx_card_sfxe*)sfxes
+{
     return _sfxes;
 }
 

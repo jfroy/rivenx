@@ -383,17 +383,17 @@ enum {
         // find the movie's last sample time
         GetMovieNextInterestingTime([_movie quickTimeMovie], nextTimeStep | nextTimeEdgeOK,
                                     0, NULL, (TimeValue)duration.timeValue, -1, &tv, NULL);
-        assert(GetMoviesError() == noErr);
+        debug_assert(GetMoviesError() == noErr);
         
         // find the beginning time of the video track's last sample
         QTTimeRange track_range = [[video_track attributeForKey:QTTrackRangeAttribute] QTTimeRangeValue];
         GetTrackNextInterestingTime([video_track quickTimeTrack], nextTimeStep | nextTimeEdgeOK,
                                     (TimeValue)track_range.duration.timeValue, -1, &tv, NULL);
-        assert(GetMoviesError() == noErr);
+        debug_assert(GetMoviesError() == noErr);
         QTTime video_last_sample_time = QTMakeTime(tv, duration.timeScale);
         
         GetTrackNextInterestingTime([video_track quickTimeTrack], nextTimeStep, tv, -1, &tv, NULL);
-        assert(GetMoviesError() == noErr);
+        debug_assert(GetMoviesError() == noErr);
         QTTime video_second_last_sample_time = QTMakeTime(tv, duration.timeScale);
         
         // make the movie editable
@@ -710,7 +710,7 @@ enum {
     } else if (_image_buffer) {
         // bind the correct texture object
         if (CFGetTypeID(_image_buffer) == CVOpenGLTextureGetTypeID()) {
-            assert(CVOpenGLTextureGetTarget(_image_buffer) == GL_TEXTURE_RECTANGLE_ARB);
+            debug_assert(CVOpenGLTextureGetTarget(_image_buffer) == GL_TEXTURE_RECTANGLE_ARB);
             glBindTexture(CVOpenGLTextureGetTarget(_image_buffer), CVOpenGLTextureGetName(_image_buffer));
         } else
             glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _texture);

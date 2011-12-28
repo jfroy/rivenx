@@ -14,7 +14,11 @@
 #import "RXWorldProtocol.h"
 #import "RXArchiveManager.h"
 
-static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID) {
+#import "NSArray+RXArrayAdditions.h"
+
+
+static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID)
+{
     NSData* nameData = [archive dataWithResourceType:@"NAME" ID:resourceID];
     if (!nameData)
         return nil;
@@ -25,13 +29,15 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     const uint16_t* offsetBase = (uint16_t*)BUFFER_OFFSET([nameData bytes], sizeof(uint16_t));
     const uint8_t* stringBase = (uint8_t*)BUFFER_OFFSET([nameData bytes], sizeof(uint16_t) + (sizeof(uint16_t) * 2 * recordCount));
     
-    for (uint16_t currentRecordIndex = 0; currentRecordIndex < recordCount; currentRecordIndex++) {
+    for (uint16_t currentRecordIndex = 0; currentRecordIndex < recordCount; ++currentRecordIndex)
+    {
         uint16_t recordOffset = CFSwapInt16BigToHost(offsetBase[currentRecordIndex]);
         const unsigned char* entryBase = (const unsigned char*)stringBase + recordOffset;
         size_t recordLength = strlen((const char*)entryBase);
         
         // check for leading and closing 0xbd
-        if (*entryBase == 0xbd) {
+        if (*entryBase == 0xbd)
+        {
             entryBase++;
             recordLength--;
         }
@@ -56,17 +62,20 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 @implementation RXStack
 
 // disable automatic KVC
-+ (BOOL)accessInstanceVariablesDirectly {
++ (BOOL)accessInstanceVariablesDirectly
+{
     return NO;
 }
 
-- (id)init {
+- (id)init
+{
     [self doesNotRecognizeSelector:_cmd];
     [self release];
     return nil;
 }
 
-- (id)initWithKey:(NSString*)key error:(NSError**)error {
+- (id)initWithKey:(NSString*)key error:(NSError**)error
+{
     if (!key)
         @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"Key string cannot be nil." userInfo:nil];
     
@@ -146,7 +155,8 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return self;
 }
 
-- (void)_tearDown {
+- (void)_tearDown
+{
 #if defined(DEBUG)
     RXOLog(@"tearing down");
 #endif
@@ -163,7 +173,8 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     [_dataArchives release]; _dataArchives = nil;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
 #if defined(DEBUG)
     RXOLog(@"deallocating");
 #endif
@@ -176,21 +187,25 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     [super dealloc];
 }
 
-- (NSString*)description {
+- (NSString*)description
+{
     return [NSString stringWithFormat: @"%@{%@}", [super description], _key];
 }
 
-- (NSString*)debugName {
+- (NSString*)debugName
+{
     return _key;
 }
 
 #pragma mark -
 
-- (NSString*)key {
+- (NSString*)key
+{
     return _key;
 }
 
-- (uint16_t)entryCardID {
+- (uint16_t)entryCardID
+{
     return _entryCardID;
 }
 
@@ -205,35 +220,44 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 
 #pragma mark -
 
-- (NSString*)cardNameAtIndex:(uint32_t)index {
+- (NSString*)cardNameAtIndex:(uint32_t)index
+{
     return (_cardNames) ? [_cardNames objectAtIndex:index] : nil;
 }
 
-- (NSString*)hotspotNameAtIndex:(uint32_t)index {
+- (NSString*)hotspotNameAtIndex:(uint32_t)index
+{
     return (_hotspotNames) ? [_hotspotNames objectAtIndex:index] : nil;
 }
 
-- (NSString*)externalNameAtIndex:(uint32_t)index {
+- (NSString*)externalNameAtIndex:(uint32_t)index
+{
     return (_externalNames) ? [_externalNames objectAtIndex:index] : nil;
 }
 
-- (NSString*)varNameAtIndex:(uint32_t)index {
+- (NSString*)varNameAtIndex:(uint32_t)index
+{
     return (_varNames) ? [_varNames objectAtIndex:index] : nil;
 }
 
-- (uint32_t)varIndexForName:(NSString*)name {
+- (uint32_t)varIndexForName:(NSString*)name
+{
     uint32_t n = (uint32_t)[_varNames count];
     for (uint32_t i = 0; i < n; i++)
+    {
         if ([name isEqualToString:[_varNames objectAtIndex:i]])
             return i;
+    }
     return UINT32_MAX;
 }
 
-- (NSString*)stackNameAtIndex:(uint32_t)index {
+- (NSString*)stackNameAtIndex:(uint32_t)index
+{
     return (_stackNames) ? [_stackNames objectAtIndex:index] : nil;
 }
 
-- (uint16_t)cardIDFromRMAPCode:(uint32_t)code {
+- (uint16_t)cardIDFromRMAPCode:(uint32_t)code
+{
     uint32_t* rmap_data = (uint32_t*)[_rmapData bytes];
     uint32_t* rmap_end = (uint32_t*)BUFFER_OFFSET([_rmapData bytes], [_rmapData length]);
     uint16_t card_id = 0;
@@ -247,7 +271,8 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return card_id;
 }
 
-- (uint32_t)cardRMAPCodeFromID:(uint16_t)card_id {
+- (uint32_t)cardRMAPCodeFromID:(uint16_t)card_id
+{
     uint32_t* rmap_data = (uint32_t*)[_rmapData bytes];
     return CFSwapInt32BigToHost(rmap_data[card_id]);
 }
@@ -323,7 +348,8 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return nil;
 }
 
-- (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)ID {
+- (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)ID
+{
     MHKFileHandle* file = [self fileWithResourceType:type ID:ID];
     if (file)
         return [file readDataToEndOfFile:NULL];

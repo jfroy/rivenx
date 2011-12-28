@@ -26,7 +26,7 @@ CardAudioSource::CardAudioSource(id <MHKAudioDecompression> decompressor, float 
     format = CAStreamBasicDescription([_decompressor outputFormat]);
     
     // CardAudioSource only handles interleaved formats
-    assert(format.IsInterleaved());
+    debug_assert(format.IsInterleaved());
     
     // 2 seconds per tasking round
     size_t framesPerTask = static_cast<size_t>(2.0 * format.mSampleRate);
@@ -85,7 +85,7 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
     
     // buffer housekeeping
     UInt32 optimalBytesToRead = inNumberFrames * format.mBytesPerFrame;
-    assert(ioData->mBuffers[0].mDataByteSize == optimalBytesToRead);
+    debug_assert(ioData->mBuffers[0].mDataByteSize == optimalBytesToRead);
     
     void* readBuffer = 0;
     UInt32 availableBytes = [render_buffer lengthAvailableToReadReturningPointer:&readBuffer];
@@ -155,7 +155,7 @@ void CardAudioSource::task(uint32_t byte_limit) throw() {
     }
         
     // assert that we cannot have more buffered frames than the total number of frames in our decompressor
-    assert(_bufferedFrames <= [_decompressor frameCount]);
+    debug_assert(_bufferedFrames <= [_decompressor frameCount]);
     
     // derive how many frames we ideally want to fill from the number of bytes to fill
     uint32_t frames_to_fill = format.BytesToFrames(bytes_to_fill);

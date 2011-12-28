@@ -492,9 +492,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     }
     
     // bump down the execution depth
-#if defined(DEBUG)
-    assert(_programExecutionDepth > 0);
-#endif
+    release_assert(_programExecutionDepth > 0);
     _programExecutionDepth--;
     if (_programExecutionDepth == 0)
         _abortProgramExecution = NO;
@@ -623,8 +621,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // execute card open programs
     NSArray* programs = [[_card scripts] objectForKey:RXCardOpenScriptKey];
-    assert(programs);
-    
     uint32_t programCount = [programs count];
     uint32_t programIndex = 0;
     for(; programIndex < programCount; programIndex++) {
@@ -697,8 +693,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // execute rendering programs (index 9)
     NSArray* programs = [[_card scripts] objectForKey:RXStartRenderingScriptKey];
-    assert(programs);
-    
     uint32_t programCount = [programs count];
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
@@ -839,8 +833,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // execute leaving programs (index 7)
     NSArray* programs = [[_card scripts] objectForKey:RXCardCloseScriptKey];
-    assert(programs);
-    
     uint32_t programCount = [programs count];
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
@@ -911,8 +903,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // execute mouse moved programs (index 4)
     NSArray* programs = [[hotspot scripts] objectForKey:RXMouseInsideScriptKey];
-    assert(programs);
-    
     uint32_t programCount = [programs count];
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
@@ -958,8 +948,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // execute mouse leave programs (index 5)
     NSArray* programs = [[hotspot scripts] objectForKey:RXMouseExitedScriptKey];
-    assert(programs);
-    
     uint32_t programCount = [programs count];
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
@@ -1002,8 +990,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // execute mouse down programs (index 0)
     NSArray* programs = [[hotspot scripts] objectForKey:RXMouseDownScriptKey];
-    assert(programs);
-    
     uint32_t programCount = [programs count];
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
@@ -1049,8 +1035,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // execute mouse up programs (index 2)
     NSArray* programs = [[hotspot scripts] objectForKey:RXMouseUpScriptKey];
-    assert(programs);
-    
     uint32_t programCount = [programs count];
     uint32_t programIndex = 0;
     for (; programIndex < programCount; programIndex++) {
@@ -1110,7 +1094,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 
 - (void)_playMovie:(RXMovie*)movie {
     // WARNING: MUST RUN ON MAIN THREAD
-    assert([movie isKindOfClass:[RXMovieProxy class]]);
+    debug_assert([movie isKindOfClass:[RXMovieProxy class]]);
     
     // if the movie is scheduled for reset, do the reset now
     if ([_movies_to_reset containsObject:movie]) {
@@ -1148,7 +1132,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 
 - (void)_unmuteMovie:(RXMovie*)movie {
     // WARNING: MUST RUN ON MAIN THREAD
-    assert([movie isKindOfClass:[RXMovieProxy class]]);
+    debug_assert([movie isKindOfClass:[RXMovieProxy class]]);
     [(RXMovieProxy*)movie restoreMovieVolume];
 }
 
@@ -1470,7 +1454,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     uintptr_t k = argv[0];
     RXHotspot* hotspot = (RXHotspot*)NSMapGet([_card hotspotsIDMap], (void*)k);
-    assert(hotspot);
+    release_assert(hotspot);
     
     if (!hotspot->enabled) {
         hotspot->enabled = YES;
@@ -1496,7 +1480,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     uintptr_t k = argv[0];
     RXHotspot* hotspot = (RXHotspot*)NSMapGet([_card hotspotsIDMap], (void*)k);
-    assert(hotspot);
+    release_assert(hotspot);
     
     if (hotspot->enabled) {
         hotspot->enabled = NO;
@@ -1972,7 +1956,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         
         // get a texture from the texture broker
         MHKArchive* archive = [[[_card parent] fileWithResourceType:@"tBMP" ID:picture_record->bitmap_id] archive];
-        assert(archive);
+        release_assert(archive);
         
         NSError* error;
         NSDictionary* picture_descriptor = [archive bitmapDescriptorWithID:picture_record->bitmap_id error:&error];
@@ -2061,7 +2045,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     struct rx_blst_record* record = [_card hotspotControlRecords] + (argv[0] - 1);
     uintptr_t k =  record->hotspot_id;
     RXHotspot* hotspot = (RXHotspot*)NSMapGet([_card hotspotsIDMap], (void*)k);
-    assert(hotspot);
+    release_assert(hotspot);
     
     OSSpinLockLock(&_active_hotspots_lock);
     if (record->enabled == 1 && !hotspot->enabled)
@@ -2210,7 +2194,7 @@ DEFINE_COMMAND(xthideinventory) {
 
 - (void)_updateAtrusJournal {
     uint16_t page = [[g_world gameState] unsignedShortForKey:@"aatruspage"];
-    assert(page > 0);
+    release_assert(page > 0);
     
     if (page == 1) {
         // disable hotspots 7 and 9
@@ -2241,7 +2225,7 @@ DEFINE_COMMAND(xaatrusbookback) {
 
 DEFINE_COMMAND(xaatrusbookprevpage) {
     uint16_t page = [[g_world gameState] unsignedShortForKey:@"aatruspage"];
-    assert(page > 1);
+    release_assert(page > 1);
     
     [[g_world gameState] setUnsignedShort:page - 1 forKey:@"aatruspage"];
     [self _flipPageWithTransitionDirection:RXTransitionRight];
@@ -2260,7 +2244,7 @@ DEFINE_COMMAND(xaatrusbooknextpage) {
 
 - (void)_updateCatherineJournal {
     uint16_t page = [[g_world gameState] unsignedShortForKey:@"acathpage"];
-    assert(page > 0);
+    release_assert(page > 0);
     
     if (page == 1) {
         // disable hotspots 7 and 9
@@ -2323,7 +2307,7 @@ DEFINE_COMMAND(xacathbookback) {
 
 DEFINE_COMMAND(xacathbookprevpage) {
     uint16_t page = [[g_world gameState] unsignedShortForKey:@"acathpage"];
-    assert(page > 1);
+    release_assert(page > 1);
     
     [[g_world gameState] setUnsignedShort:page - 1 forKey:@"acathpage"];
     [self _flipPageWithTransitionDirection:RXTransitionBottom];
@@ -2461,7 +2445,7 @@ DEFINE_COMMAND(xtchotakesbook) {
 
 - (void)_updateLabJournal {
     uint16_t page = [[g_world gameState] unsignedShortForKey:@"blabpage"];
-    assert(page > 0);
+    release_assert(page > 0);
     
     if (page == 1) {
         // disable hotspot 16
@@ -2539,7 +2523,7 @@ DEFINE_COMMAND(xblabopenbook) {
 
 DEFINE_COMMAND(xblabbookprevpage) {
     uint16_t page = [[g_world gameState] unsignedShortForKey:@"blabpage"];
-    assert(page > 1);
+    release_assert(page > 1);
     
     [[g_world gameState] setUnsignedShort:page - 1 forKey:@"blabpage"];
     [self _flipPageWithTransitionDirection:RXTransitionRight];
@@ -2558,7 +2542,7 @@ DEFINE_COMMAND(xblabbooknextpage) {
 
 - (void)_updateGehnJournal {
     uint16_t page = [[g_world gameState] unsignedShortForKey:@"ogehnpage"];
-    assert(page > 0);
+    release_assert(page > 0);
         
     DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_PLST, page);
 }
@@ -3347,7 +3331,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     // cache the minimum slider hotspot ID
     RXHotspot* min_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], @"s1");
-    assert(min_hotspot);
+    release_assert(min_hotspot);
     uintptr_t min_hotspot_id = [min_hotspot ID];
     
     uint32_t first_bit = 0x0;
@@ -3472,7 +3456,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 - (void)handleSliderDragForDome:(NSString*)dome {    
     // cache the minimum slider hotspot ID
     RXHotspot* min_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], @"s1");
-    assert(min_hotspot);
+    release_assert(min_hotspot);
     uintptr_t min_hotspot_id = [min_hotspot ID];
     
     // determine if the mouse was on one of the active slider hotspots when it was pressed; if not, we're done
@@ -3537,7 +3521,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
 
 - (void)handleMouseOverSliderForDome:(NSString*)dome {
     RXHotspot* min_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], @"s1");
-    assert(min_hotspot);
+    release_assert(min_hotspot);
     uintptr_t min_hotspot_id = [min_hotspot ID];
     
     RXHotspot* active_hotspot = [self domeSliderHotspotForDome:dome
@@ -4882,7 +4866,7 @@ DEFINE_COMMAND(xbait) {
     
     // did we drop the bait over the bait plate?
     RXHotspot* plate_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], @"baitplate");
-    assert(plate_hotspot);
+    release_assert(plate_hotspot);
     if (!NSMouseInRect(mouse_vector.origin, [plate_hotspot worldFrame], NO))
         return;
     
@@ -4915,7 +4899,7 @@ DEFINE_COMMAND(xbaitplate) {
     
     // did we drop the bait over the bait plate?
     RXHotspot* plate_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], @"baitplate");
-    assert(plate_hotspot);
+    release_assert(plate_hotspot);
     if (NSMouseInRect(mouse_vector.origin, [plate_hotspot worldFrame], NO)) {
         // set bbait to 1
         [[g_world gameState] setUnsigned32:1 forKey:@"bbait"];
@@ -5332,13 +5316,13 @@ DEFINE_COMMAND(xbookclick) {
     // get the specified touchbook hotspot
     NSString* touchbook_hotspot_name = [NSString stringWithFormat:@"touchbook%hu", touchbook_index];
     RXHotspot* touchbook_hotspot = (RXHotspot*)NSMapGet([_card hotspotsNameMap], touchbook_hotspot_name);
-    assert(touchbook_hotspot);
+    release_assert(touchbook_hotspot);
     
     // ogr_b.mov is different from the other trap book movies because it leads
     // to end credits if you don't link; we need to handle it differently
     RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)movie_code);
     NSString* movie_name = [[[[(RXMovieProxy*)movie archive] valueForKey:@"tMOV"] objectAtIndex:[(RXMovieProxy*)movie ID]] objectForKey:@"Name"];
-    assert(movie_name);
+    release_assert(movie_name);
     
     BOOL endgame_movie = [movie_name hasSuffix:@"ogr_b.mov"];
     

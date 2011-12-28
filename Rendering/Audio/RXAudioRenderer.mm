@@ -271,7 +271,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
             XThrowIfError(converter.SetFormat(kAudioUnitScope_Output, 0, mixer_format), "converter->SetFormat kAudioUnitScope_Output");
             
             // set the channel map of the converter if the source format is mono (we need to replicate the mono channel)
-            assert(mixer_format.NumberChannels() == 2);
+            debug_assert(mixer_format.NumberChannels() == 2);
             if (source_format.NumberChannels() == 1) {
                 SInt32 channel_map[2] = {0, 0};
                 XThrowIfError(converter.SetProperty(kAudioOutputUnitProperty_ChannelMap, kAudioUnitScope_Global, 0, channel_map, sizeof(SInt32) * 2), "converter.SetProperty kAudioOutputUnitProperty_ChannelMap");

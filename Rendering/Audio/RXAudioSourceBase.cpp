@@ -24,7 +24,7 @@ AudioSourceBase::AudioSourceBase() throw(CAXException) : enabled(true), renderer
 }
 
 AudioSourceBase::~AudioSourceBase() throw (CAXException) {
-    assert(!rendererPtr);
+    debug_assert(!rendererPtr);
     pthread_mutex_destroy(&transitionMutex);
 }
 

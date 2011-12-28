@@ -13,19 +13,22 @@
 
 @implementation RXScriptCompiler
 
-- (id)init {
+- (id)init
+{
     [self doesNotRecognizeSelector:_cmd];
     [self release];
     return nil;
 }
 
-- (id)initWithCompiledScript:(NSDictionary*)script {
+- (id)initWithCompiledScript:(NSDictionary*)script
+{
     self = [super init];
     if (!self)
         return nil;
     
     [self setCompiledScript:script];
-    if (!_ops) {
+    if (!_ops)
+    {
         [self release];
         return  nil;
     }
@@ -33,13 +36,15 @@
     return self;
 }
 
-- (id)initWithDecompiledScript:(NSArray*)script {
+- (id)initWithDecompiledScript:(NSArray*)script
+{
     self = [super init];
     if (!self)
         return nil;
     
     [self setDecompiledScript:script];
-    if (!_decompiled_script) {
+    if (!_decompiled_script)
+    {
         [self release];
         return  nil;
     }
@@ -47,60 +52,68 @@
     return self;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     [_ops release];
     [_decompiled_script release];
     [super dealloc];
 }
 
-- (void)_compileBlock:(NSArray*)block inBuffer:(NSMutableData*)pbuf {
+- (void)_compileBlock:(NSArray*)block inBuffer:(NSMutableData*)pbuf
+{
     NSEnumerator* iter_opcode = [block objectEnumerator];
     NSDictionary* opcode = nil;
-    while ((opcode = [iter_opcode nextObject])) {
-        assert([opcode objectForKey:@"command"]);
+    while ((opcode = [iter_opcode nextObject]))
+    {
+        release_assert([opcode objectForKey:@"command"]);
         uint16_t temp = [[opcode objectForKey:@"command"] unsignedShortValue];
         
-        if (temp == RX_COMMAND_BRANCH) {
+        if (temp == RX_COMMAND_BRANCH)
+        {
             [pbuf appendBytes:&temp length:sizeof(uint16_t)];
             
             temp = 2;
             [pbuf appendBytes:&temp length:sizeof(uint16_t)];
             
-            assert([opcode objectForKey:@"variable"]);
+            release_assert([opcode objectForKey:@"variable"]);
             temp = [[opcode objectForKey:@"variable"] unsignedShortValue];
             [pbuf appendBytes:&temp length:sizeof(uint16_t)];
             
             NSArray* cases = [opcode objectForKey:@"cases"];
-            assert(cases);
+            release_assert(cases);
             
             temp = [cases count];
             [pbuf appendBytes:&temp length:sizeof(uint16_t)];
             
             NSEnumerator* iter_cases = [cases objectEnumerator];
             NSDictionary* c = nil;
-            while ((c = [iter_cases nextObject])) {
-                assert([c objectForKey:@"value"]);
+            while ((c = [iter_cases nextObject]))
+            {
+                release_assert([c objectForKey:@"value"]);
                 temp = [[c objectForKey:@"value"] unsignedShortValue];
                 [pbuf appendBytes:&temp length:sizeof(uint16_t)];
                 
                 NSArray* block = [c objectForKey:@"block"];
-                assert(block);
+                release_assert(block);
                 
                 temp = [block count];
                 [pbuf appendBytes:&temp length:sizeof(uint16_t)];
                 
                 [self _compileBlock:block inBuffer:pbuf];
             }
-        } else {
+        }
+        else
+        {
             NSArray* args = [opcode objectForKey:@"args"];
-            assert(args);
+            release_assert(args);
             
             [pbuf appendBytes:&temp length:sizeof(uint16_t)];
             
             uint16_t argc = [args count];
             [pbuf appendBytes:&argc length:sizeof(uint16_t)];
             
-            for (uint16_t argi = 0; argi < argc; argi++) {
+            for (uint16_t argi = 0; argi < argc; ++argi)
+            {
                 temp = [[args objectAtIndex:argi] unsignedShortValue];
                 [pbuf appendBytes:&temp length:sizeof(uint16_t)];
             }
@@ -108,7 +121,8 @@
     }
 }
 
-- (NSDictionary*)compiledScript {
+- (NSDictionary*)compiledScript
+{
     if (_ops)
         return [_ops script];
     
@@ -126,7 +140,8 @@
     return [_ops script];
 }
 
-- (void)setCompiledScript:(NSDictionary*)script {
+- (void)setCompiledScript:(NSDictionary*)script
+{
     [script retain];
     
     [_ops release];
@@ -139,7 +154,8 @@
     _decompiled_script = nil;
 }
 
-- (NSMutableArray*)decompiledScript {
+- (NSMutableArray*)decompiledScript
+{
     if (_decompiled_script)
         return [[_decompiled_script mutableCopy] autorelease];
     
@@ -155,12 +171,13 @@
     [_ops reset];
     
     rx_opcode_t* op = NULL;
-    while ((op = [_ops nextOpcode])) {
+    while ((op = [_ops nextOpcode]))
+    {
         NSMutableArray* args = [NSMutableArray array];
-        for (uint16_t i = 0; i < op->argc; i++)
+        for (uint16_t i = 0; i < op->argc; ++i)
             [args addObject:[NSNumber numberWithUnsignedShort:op->arguments[i]]];
         
-        assert(_current_block);
+        release_assert(_current_block);
         [_current_block addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:
                                    [NSNumber numberWithUnsignedShort:op->command], @"command",
                                    args, @"args",
@@ -174,7 +191,8 @@
     return [[_decompiled_script mutableCopy] autorelease];
 }
 
-- (void)setDecompiledScript:(NSArray*)script {
+- (void)setDecompiledScript:(NSArray*)script
+{
     [_ops release];
     _ops = nil;
     
@@ -182,7 +200,8 @@
     _decompiled_script = [script copy];
 }
 
-- (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchForVariable:(uint16_t)var {
+- (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchForVariable:(uint16_t)var
+{
     NSMutableArray* cases = [NSMutableArray array];
     
     [_current_block addObject:[NSMutableDictionary dictionaryWithObjectsAndKeys:
@@ -197,19 +216,21 @@
     _current_block = nil;
 }
 
-- (void)opcodeStreamWillExitBranch:(RXScriptOpcodeStream*)stream {
+- (void)opcodeStreamWillExitBranch:(RXScriptOpcodeStream*)stream
+{
     // pop the cases dictionary off the cases stack
-    assert([_cases_stack count] > 0);
+    release_assert([_cases_stack count] > 0);
     [_cases_stack removeLastObject];
     
     // pop to current block off the block stack and set _current_block to the top of the stack
-    assert([_block_stack count] > 1);
+    release_assert([_block_stack count] > 1);
     [_block_stack removeLastObject];
     
     _current_block = [_block_stack lastObject];
 }
 
-- (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchCaseForValue:(uint16_t)value {
+- (void)opcodeStream:(RXScriptOpcodeStream*)stream willEnterBranchCaseForValue:(uint16_t)value
+{
     // create a new block array for the branch case
     _current_block = [NSMutableArray array];
     

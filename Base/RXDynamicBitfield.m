@@ -29,7 +29,7 @@
 }
 
 - (void)_growTo:(uintptr_t)new_count {
-    assert(new_count > _segment_count);
+    debug_assert(new_count > _segment_count);
     
     register size_t new_size = new_count * sizeof(uintptr_t);
     register size_t old_size = _segment_count * sizeof(uintptr_t);

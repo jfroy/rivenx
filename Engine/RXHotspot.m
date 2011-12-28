@@ -14,19 +14,22 @@
 
 @implementation RXHotspot
 
-- (id)init {
+- (id)init
+{
     [self doesNotRecognizeSelector:_cmd];
     [self release];
     return nil;
 }
 
-- (void)_updateWorldFrame:(NSNotification*)notification {
+- (void)_updateWorldFrame:(NSNotification*)notification
+{
     _world_frame = RXTransformRectCoreToWorld(_rect);
 }
 
-- (void)_scanMouseInsidePrograms {
+- (void)_scanMouseInsidePrograms
+{
     NSArray* programs = [_script objectForKey:RXMouseInsideScriptKey];
-    assert(programs);
+    release_assert(programs);
     
     uint32_t p_count = [programs count];
     if (p_count == 0 || p_count > 1)
@@ -53,7 +56,8 @@
     _script = mut_script;
 }
 
-- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID rect:(rx_core_rect_t)rect cursorID:(uint16_t)cursorID script:(NSDictionary*)script {
+- (id)initWithIndex:(uint16_t)index ID:(uint16_t)ID rect:(rx_core_rect_t)rect cursorID:(uint16_t)cursorID script:(NSDictionary*)script
+{
     self = [super init];
     if (!self)
         return nil;
@@ -85,7 +89,8 @@
     return self;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     
     [_name release];
@@ -95,21 +100,24 @@
     [super dealloc];
 }
 
-- (NSComparisonResult)compareByIndex:(RXHotspot*)other {
+- (NSComparisonResult)compareByIndex:(RXHotspot*)other
+{
     if (other->_index < _index)
         return NSOrderedAscending;
     else
         return NSOrderedDescending;
 }
 
-- (NSComparisonResult)compareByID:(RXHotspot*)other {
+- (NSComparisonResult)compareByID:(RXHotspot*)other
+{
     if (other->_ID < _ID)
         return NSOrderedAscending;
     else
         return NSOrderedDescending;
 }
 
-- (void)_updateDescription {
+- (void)_updateDescription
+{
     [_description release];
     
     if (_name)
@@ -124,17 +132,20 @@
             (int)_world_frame.origin.x, (int)_world_frame.origin.y, (int)_world_frame.size.width, (int)_world_frame.size.height];
 }
 
-- (NSString*)description {
+- (NSString*)description
+{
     if (!_description)
         [self _updateDescription];
     return [[_description retain] autorelease];
 }
 
-- (NSString*)name {
+- (NSString*)name
+{
     return [[_name retain] autorelease];
 }
 
-- (void)setName:(NSString*)name {
+- (void)setName:(NSString*)name
+{
     if (_name == name)
         return;
     
@@ -144,41 +155,50 @@
     [self _updateDescription];
 }
 
-- (uint16_t)ID {
+- (uint16_t)ID
+{
     return _ID;
 }
 
-- (rx_core_rect_t)coreFrame {
+- (rx_core_rect_t)coreFrame
+{
     return _rect;
 }
 
-- (void)setCoreFrame:(rx_core_rect_t)frame {
+- (void)setCoreFrame:(rx_core_rect_t)frame
+{
     _rect = frame;
     [self _updateWorldFrame:nil];
     [self _updateDescription];
 }
 
-- (uint16_t)cursorID {
+- (uint16_t)cursorID
+{
     return _cursor_id;
 }
 
-- (NSDictionary*)scripts {
+- (NSDictionary*)scripts
+{
     return _script;
 }
 
-- (NSRect)worldFrame {
+- (NSRect)worldFrame
+{
     return _world_frame;
 }
 
-- (rx_event_t)event {
+- (rx_event_t)event
+{
     return _event;
 }
 
-- (void)setEvent:(rx_event_t)event {
+- (void)setEvent:(rx_event_t)event
+{
     _event = event;
 }
 
-- (void)enable {
+- (void)enable
+{
     enabled = YES;
 }
 

@@ -14,7 +14,8 @@
 #import "Utilities/integer_pair_hash.h"
 
 
-struct _RXCardDescriptorPrimer {
+struct _RXCardDescriptorPrimer
+{
     MHKArchive* archive;
     NSData* data;
 };
@@ -22,14 +23,16 @@ struct _RXCardDescriptorPrimer {
 
 @implementation RXSimpleCardDescriptor
 
-+ (RXSimpleCardDescriptor*)descriptorWithStackName:(NSString*)name rmap:(uint32_t)rmap {
++ (RXSimpleCardDescriptor*)descriptorWithStackName:(NSString*)name rmap:(uint32_t)rmap
+{
     RXStack* stack = [g_world loadStackWithKey:name];
     if (!stack)
         return nil;
     return [[[[self class] alloc] initWithStackKey:[stack key] ID:[stack cardIDFromRMAPCode:rmap]] autorelease];
 }
 
-- (id)initWithStackKey:(NSString*)name ID:(uint16_t)ID {
+- (id)initWithStackKey:(NSString*)name ID:(uint16_t)ID
+{
     self = [super init];
     if (!self)
         return nil;
@@ -40,7 +43,8 @@ struct _RXCardDescriptorPrimer {
     return self;
 }
 
-- (id)initWithString:(NSString*)stringRepresentation {
+- (id)initWithString:(NSString*)stringRepresentation
+{
     self = [super init];
     if (!self)
         return nil;
@@ -52,16 +56,19 @@ struct _RXCardDescriptorPrimer {
     return self;
 }
 
-- (id)initWithCoder:(NSCoder*)decoder {
+- (id)initWithCoder:(NSCoder*)decoder
+{
     stackKey = [[decoder decodeObjectForKey:@"stack"] retain];
     if (!stackKey)
         stackKey = [[decoder decodeObjectForKey:@"parent"] retain];
-    if (!stackKey) {
+    if (!stackKey)
+    {
         [self release];
         return nil;
     }
 
-    if (![decoder containsValueForKey:@"ID"]) {
+    if (![decoder containsValueForKey:@"ID"])
+    {
         [self release];
         return nil;
     }
@@ -70,7 +77,8 @@ struct _RXCardDescriptorPrimer {
     return self;
 }
 
-- (void)encodeWithCoder:(NSCoder*)encoder {
+- (void)encodeWithCoder:(NSCoder*)encoder
+{
     if (![encoder allowsKeyedCoding])
         @throw [NSException exceptionWithName:NSInvalidArgumentException reason:@"RXCardDescriptor only supports keyed archiving." userInfo:nil];
     
@@ -78,32 +86,38 @@ struct _RXCardDescriptorPrimer {
     [encoder encodeInt32:cardID forKey:@"ID"];
 }
 
-- (id)copyWithZone:(NSZone*)zone {
+- (id)copyWithZone:(NSZone*)zone
+{
     RXSimpleCardDescriptor* new = [[RXSimpleCardDescriptor allocWithZone:zone] initWithStackKey:stackKey ID:cardID];
     return new;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     [stackKey release];
     [super dealloc];
 }
 
-- (NSUInteger)hash {
+- (NSUInteger)hash
+{
     return hash_combine([stackKey hash], cardID);
 }
 
-- (BOOL)isEqual:(id)object {
+- (BOOL)isEqual:(id)object
+{
     if ([self class] != [object class])
         return NO;
     return ([stackKey isEqualToString:((RXSimpleCardDescriptor*)object)->stackKey] &&
             cardID == ((RXSimpleCardDescriptor*)object)->cardID) ? YES : NO;
 }
 
-- (NSString*)stackKey {
+- (NSString*)stackKey
+{
     return stackKey;
 }
 
-- (uint16_t)cardID {
+- (uint16_t)cardID
+{
     return cardID;
 }
 
@@ -112,17 +126,20 @@ struct _RXCardDescriptorPrimer {
 
 @implementation RXCardDescriptor
 
-+ (id)descriptorWithStack:(RXStack*)stack ID:(uint16_t)cardID {
++ (id)descriptorWithStack:(RXStack*)stack ID:(uint16_t)cardID
+{
     return [[[RXCardDescriptor alloc] initWithStack:stack ID:cardID] autorelease];
 }
 
-- (id)init {
+- (id)init
+{
     [self doesNotRecognizeSelector:_cmd];
     [self release];
     return nil;
 }
 
-- (id)initWithStack:(RXStack*)stack ID:(uint16_t)cardID {
+- (id)initWithStack:(RXStack*)stack ID:(uint16_t)cardID
+{
     self = [super init];
     if (!self)
         return nil;
@@ -138,7 +155,8 @@ struct _RXCardDescriptorPrimer {
     _rmap = UINT32_MAX;
     
     _data = [[_parent dataWithResourceType:@"CARD" ID:_ID] retain];
-    if (!_data) {
+    if (!_data)
+    {
         [self release];
         return nil;
     }
@@ -154,46 +172,55 @@ struct _RXCardDescriptorPrimer {
     return self;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     [_data release];
     [_name release];
     [_simpleDescriptor release];
     [super dealloc];
 }
 
-- (NSString*)description {
+- (NSString*)description
+{
     return [[_name retain] autorelease];
 }
 
-- (RXStack*)parent {
+- (RXStack*)parent
+{
     return [[_parent retain] autorelease];
 }
 
-- (uint16_t)ID {
+- (uint16_t)ID
+{
     return _ID;
 }
 
-- (NSString*)name {
+- (NSString*)name
+{
     return [[_name retain] autorelease];
 }
 
-- (uint32_t)rmap {
+- (uint32_t)rmap
+{
     if (_rmap == UINT32_MAX)
         _rmap = [_parent cardRMAPCodeFromID:_ID];
     return _rmap;
 }
 
-- (NSData*)data {
+- (NSData*)data
+{
     return [[_data retain] autorelease];
 }
 
-- (RXSimpleCardDescriptor*)simpleDescriptor {
+- (RXSimpleCardDescriptor*)simpleDescriptor
+{
     if (!_simpleDescriptor)
         _simpleDescriptor = [[RXSimpleCardDescriptor alloc] initWithStackKey:[_parent key] ID:_ID];
     return [[_simpleDescriptor retain] autorelease];
 }
 
-- (BOOL)isCardWithRMAP:(uint32_t)rmap stackName:(NSString*)stack_name {
+- (BOOL)isCardWithRMAP:(uint32_t)rmap stackName:(NSString*)stack_name
+{
     return ([self rmap] == rmap && [[_parent key] isEqualToString:stack_name]) ? YES : NO;
 }
 

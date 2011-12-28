@@ -97,7 +97,7 @@ NSObject <RXWorldProtocol>* g_world = nil;
     }
     
     NSURL* sharedFolderURL = [(NSURL*)CFURLCreateFromFSRef(kCFAllocatorDefault, &sharedFolderRef) autorelease];
-    assert(sharedFolderURL);
+    release_assert(sharedFolderURL);
     
     // the world shared base is a "Riven X" folder inside the /Users/Shared directory
     NSString* sharedBase = [[sharedFolderURL path] stringByAppendingPathComponent:@"Riven X"];
@@ -480,7 +480,8 @@ NSObject <RXWorldProtocol>* g_world = nil;
     [[NSNotificationCenter defaultCenter] postNotificationName:@"RXStackDidLoadNotification" object:stackKey userInfo:nil];
 }
 
-- (RXStack*)loadStackWithKey:(NSString*)stackKey {
+- (RXStack*)loadStackWithKey:(NSString*)stackKey
+{
     RXStack* stack = [self activeStackWithKey:stackKey];
     if (stack)
         return stack;
@@ -488,7 +489,8 @@ NSObject <RXWorldProtocol>* g_world = nil;
     // initialize the stack
     NSError* error;
     stack = [[RXStack alloc] initWithKey:stackKey error:&error];
-    if (!stack) {
+    if (!stack)
+    {
         error = [RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToInitializeStack userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
             [error localizedDescription], NSLocalizedDescriptionKey,
             NSLocalizedString(@"UNINSTALL_RECOVERY", nil), NSLocalizedRecoverySuggestionErrorKey,

@@ -59,7 +59,8 @@
     return predicate;
 }
 
-- (id)init  {
+- (id)init 
+{
     self = [super init];
     if (!self)
         return nil;
@@ -70,18 +71,21 @@
     return self;
 }
 
-- (void)dealloc {
+- (void)dealloc 
+{
     [patches_directory release];
     [extras_archive release];
     
     [super dealloc];
 }
 
-static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) {
+static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
+{
     return [(NSString*)rhs compare:lhs options:NSCaseInsensitiveSearch | NSNumericSearch];
 }
 
-- (NSArray*)_archivesForExpression:(NSString*)regex error:(NSError**)error {
+- (NSArray*)_archivesForExpression:(NSString*)regex error:(NSError**)error
+{
     // create a predicate to match filenames against the provided regular expression, case insensitive
     NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", regex];
     
@@ -93,7 +97,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // first look in the world base
     directory = [[[RXWorld sharedWorld] worldBase] path];
     content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-    if (content) {
+    if (content)
+    {
         NSEnumerator* enumerator = [content objectEnumerator];
         NSString* filename;
         while ((filename = [enumerator nextObject]))
@@ -103,7 +108,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // then look in a Data subdirectory of the world base
     directory = [[[[RXWorld sharedWorld] worldBase] path] stringByAppendingPathComponent:@"Data"];
     content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-    if (content) {
+    if (content)
+    {
         NSEnumerator* enumerator = [content objectEnumerator];
         NSString* filename;
         while ((filename = [enumerator nextObject]))
@@ -113,7 +119,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // then look in the world shared base (e.g. /Users/Shared/Riven X, where the installer will put the archives)
     directory = [[(RXWorld*)g_world worldSharedBase] path];
     content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-    if (content) {
+    if (content)
+    {
         NSEnumerator* enumerator = [content objectEnumerator];
         NSString* filename;
         while ((filename = [enumerator nextObject]))
@@ -123,7 +130,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     // then look inside Riven X
     directory = [[NSBundle mainBundle] resourcePath];
     content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-    if (content) {
+    if (content)
+    {
         NSEnumerator* enumerator = [content objectEnumerator];
         NSString* filename;
         while ((filename = [enumerator nextObject]))
@@ -134,7 +142,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     NSMutableArray* archives = [NSMutableArray array];
     NSEnumerator* enumerator = [matching_paths objectEnumerator];
     NSString* archive_path;
-    while ((archive_path = [enumerator nextObject])) {
+    while ((archive_path = [enumerator nextObject]))
+    {
         MHKArchive* archive = [[MHKArchive alloc] initWithPath:archive_path error:error];
         if (!archive)
             return nil;
@@ -144,7 +153,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     }
     
     // emit an error and return nil if no archives was found or loaded
-    if ([archives count] == 0) {
+    if ([archives count] == 0)
+    {
         archives = nil;
         if (error)
             *error = [RXError errorWithDomain:RXErrorDomain code:kRXErrArchivesNotFound userInfo:nil];
@@ -153,18 +163,23 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) 
     return archives;
 }
 
-- (NSArray*)dataArchivesForStackKey:(NSString*)stack_key error:(NSError**)error {
+- (NSArray*)dataArchivesForStackKey:(NSString*)stack_key error:(NSError**)error
+{
     return [self _archivesForExpression:[NSString stringWithFormat:@"^%C_Data[0-9]?\\.MHK$", [stack_key characterAtIndex:0]] error:error];
 }
 
-- (NSArray*)soundArchivesForStackKey:(NSString*)stack_key error:(NSError**)error {
+- (NSArray*)soundArchivesForStackKey:(NSString*)stack_key error:(NSError**)error
+{
     return [self _archivesForExpression:[NSString stringWithFormat:@"^%C_Sounds[0-9]?\\.MHK$", [stack_key characterAtIndex:0]] error:error];
 }
 
-- (MHKArchive*)extrasArchive:(NSError**)error {
-    if (!extras_archive) {
+- (MHKArchive*)extrasArchive:(NSError**)error
+{
+    if (!extras_archive)
+    {
         NSArray* archives = [self _archivesForExpression:@"^Extras\\.MHK$" error:error];
-        if ([archives count]) {
+        if ([archives count])
+        {
             extras_archive = [[archives objectAtIndex:0] retain];
 #if defined(DEBUG)
             RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"loaded Extras archive from %@", [[extras_archive url] path]);

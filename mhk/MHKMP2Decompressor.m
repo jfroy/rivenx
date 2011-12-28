@@ -547,7 +547,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 
 - (void)fillAudioBufferList:(AudioBufferList*)abl {
     // we can't handle de-interleaved ABLs
-    assert(abl->mNumberBuffers == 1);
+    debug_assert(abl->mNumberBuffers == 1);
     
     // take the decompressor lock
     pthread_mutex_lock(&_decompressor_lock);
@@ -555,7 +555,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     // bytes_to_decompress is a fixed quantity which is set to the total number
     // of bytes to copy into the ABL
     size_t bytes_to_decompress = abl->mBuffers[0].mDataByteSize;
-    assert(bytes_to_decompress % _decomp_absd.mBytesPerFrame == 0);
+    debug_assert(bytes_to_decompress % _decomp_absd.mBytesPerFrame == 0);
     
     // decompressed_bytes tracks the number of bytes that have been copied into
     // the ABL, and is essentially the ABL buffer offset
@@ -586,7 +586,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     }
     
     // at this point the decompression buffer must be empty
-    assert(_decompression_buffer_available == 0);
+    debug_assert(_decompression_buffer_available == 0);
     
     // did we already process every available packet?
     if (_packet_index == _packet_count)
@@ -641,7 +641,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
             _current_packet,
             _packet_table[_packet_index].mDataByteSize);
         pthread_mutex_unlock(&ffmpeg_mutex);
-        assert(used_bytes > 0);
+        debug_assert(used_bytes > 0);
         
         // the output buffer size is the initial number of bytes to copy
         bytes_to_copy = _decompression_buffer_available;

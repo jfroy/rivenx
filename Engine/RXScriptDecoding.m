@@ -38,9 +38,11 @@ static NSString* script_keys_array[11] = {
     @"screen update"
 };
 
-size_t rx_compute_riven_script_length(const void* script, uint16_t command_count, bool byte_swap) {
+size_t rx_compute_riven_script_length(const void* script, uint16_t command_count, bool byte_swap)
+{
     size_t scriptOffset = 0;
-    for (uint16_t currentCommandIndex = 0; currentCommandIndex < command_count; currentCommandIndex++) {
+    for (uint16_t currentCommandIndex = 0; currentCommandIndex < command_count; currentCommandIndex++)
+    {
         // command, argument count, arguments (all shorts)
         uint16_t commandNumber = *(const uint16_t*)BUFFER_OFFSET(script, scriptOffset);
         if (byte_swap)
@@ -54,14 +56,16 @@ size_t rx_compute_riven_script_length(const void* script, uint16_t command_count
         scriptOffset += argumentsOffset;
         
         // need to do extra processing for command 8
-        if (commandNumber == 8) {
+        if (commandNumber == 8)
+        {
             // arg 0 is the variable, arg 1 is the number of cases
             uint16_t caseCount = *(const uint16_t*)BUFFER_OFFSET(script, scriptOffset - argumentsOffset + 4);
             if (byte_swap)
                 caseCount = CFSwapInt16BigToHost(caseCount);
             
             uint16_t currentCaseIndex = 0;
-            for (; currentCaseIndex < caseCount; currentCaseIndex++) {
+            for (; currentCaseIndex < caseCount; ++currentCaseIndex)
+            {
                 // case variable value
                 scriptOffset += 2;
                 
@@ -80,7 +84,8 @@ size_t rx_compute_riven_script_length(const void* script, uint16_t command_count
     return scriptOffset;
 }
 
-NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length) {
+NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length)
+{
     // WARNING: THIS METHOD ASSUMES THE INPUT SCRIPT IS IN BIG ENDIAN
     
     // a script is composed of several events
@@ -95,7 +100,8 @@ NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length
         eventProgramsPerType[currentEventIndex] = [[NSMutableArray alloc] initWithCapacity:eventCount];
     
     // process the programs
-    for (currentEventIndex = 0; currentEventIndex < eventCount; currentEventIndex++) {
+    for (currentEventIndex = 0; currentEventIndex < eventCount; ++currentEventIndex)
+    {
         // event type, command count
         uint16_t eventCode = CFSwapInt16BigToHost(*(const uint16_t*)BUFFER_OFFSET(script, scriptOffset));
         scriptOffset += 2;
@@ -110,7 +116,8 @@ NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length
         memcpy(programStore, BUFFER_OFFSET(script, scriptOffset), programLength);
 #if defined(__LITTLE_ENDIAN__)
         uint32_t shortCount = programLength / 2;
-        while (shortCount > 0) {
+        while (shortCount > 0)
+        {
             programStore[shortCount - 1] = CFSwapInt16BigToHost(programStore[shortCount - 1]);
             shortCount--;
         }
@@ -124,7 +131,7 @@ NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length
         NSDictionary* programDescriptor = [[NSDictionary alloc] initWithObjectsAndKeys:program, RXScriptProgramKey,
             [NSNumber numberWithUnsignedShort:commandCount], RXScriptOpcodeCountKey,
             nil];
-        assert(eventCode < eventTypeCount);
+        release_assert(eventCode < eventTypeCount);
         [eventProgramsPerType[eventCode] addObject:programDescriptor];
         
         [program release];
@@ -136,7 +143,7 @@ NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length
                                                                    forKeys:script_keys_array count:eventTypeCount];
     
     // release the program arrays now that they're in the dictionary
-    for (currentEventIndex = 0; currentEventIndex < eventTypeCount; currentEventIndex++)
+    for (currentEventIndex = 0; currentEventIndex < eventTypeCount; ++currentEventIndex)
         [eventProgramsPerType[currentEventIndex] release];
     
     // release the program array array.
@@ -148,17 +155,20 @@ NSDictionary* rx_decode_riven_script(const void* script, uint32_t* script_length
     return scriptDictionary;
 }
 
-uint16_t rx_get_riven_script_opcode(const void* script, uint16_t command_count, uint16_t opcode_index, uint32_t* opcode_offset) {
-    assert(opcode_index < command_count);
+uint16_t rx_get_riven_script_opcode(const void* script, uint16_t command_count, uint16_t opcode_index, uint32_t* opcode_offset)
+{
+    release_assert(opcode_index < command_count);
     
     size_t offset = 0;
-    for (uint16_t index = 0; index < command_count; index++) {
+    for (uint16_t index = 0; index < command_count; ++index)
+    {
         // command, argument count, arguments (all shorts)
         uint16_t opcode = *(const uint16_t*)BUFFER_OFFSET(script, offset);
         offset += 2;
         
         // is this the one?
-        if (index == opcode_index) {
+        if (index == opcode_index)
+        {
             if (opcode_offset)
                 *opcode_offset = offset - 2;
             return opcode;
@@ -169,12 +179,14 @@ uint16_t rx_get_riven_script_opcode(const void* script, uint16_t command_count, 
         offset += arg_offset;
         
         // need to do extra processing for command 8
-        if (opcode == 8) {
+        if (opcode == 8)
+        {
             // arg 0 is the variable, arg 1 is the number of cases
             uint16_t case_count = *(const uint16_t*)BUFFER_OFFSET(script, offset - arg_offset + 4);
             
             uint16_t case_index = 0;
-            for (; case_index < case_count; case_index++) {
+            for (; case_index < case_count; ++case_index)
+            {
                 // case variable value
                 offset += 2;
                 
@@ -191,14 +203,16 @@ uint16_t rx_get_riven_script_opcode(const void* script, uint16_t command_count, 
     return 0;
 }
 
-uint16_t rx_get_riven_script_case_opcode_count(const void* switch_opcode, uint16_t case_index, uint32_t* case_program_offset) {
-    assert(*(uint16_t*)switch_opcode == 8);
+uint16_t rx_get_riven_script_case_opcode_count(const void* switch_opcode, uint16_t case_index, uint32_t* case_program_offset)
+{
+    release_assert(*(uint16_t*)switch_opcode == 8);
     
     uint16_t case_count = *(uint16_t*)BUFFER_OFFSET(switch_opcode, 6);
-    assert(case_index < case_count);
+    release_assert(case_index < case_count);
     
     size_t offset = 8;
-    for (uint16_t current_case = 0; current_case < case_count; current_case++) {
+    for (uint16_t current_case = 0; current_case < case_count; ++current_case)
+    {
         // case variable value
         offset += 2;
         
@@ -206,7 +220,8 @@ uint16_t rx_get_riven_script_case_opcode_count(const void* switch_opcode, uint16
         offset += 2;
         
         // is this the one?
-        if (current_case == case_index) {
+        if (current_case == case_index)
+        {
             if (case_program_offset)
                 *case_program_offset = offset;
             return case_command_count;
