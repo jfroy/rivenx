@@ -108,24 +108,25 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"sound archives: %@", _soundArchives);
 #endif
     
-    // load me up, baby
-    [self _load];
-    
-    return self;
-}
-
-- (void)_load {
     // the master archive is the one that contains the RMAP and NAME data
     NSDictionary* rmapDescriptor = nil;
-    NSUInteger masterArchiveIndex = [_dataArchives count];
-    MHKArchive* masterDataArchive;
-    while (rmapDescriptor == nil && masterArchiveIndex > 0) {
-        masterArchiveIndex--;
-        masterDataArchive = [_dataArchives objectAtIndex:masterArchiveIndex];
-        rmapDescriptor = [[masterDataArchive valueForKey:@"RMAP"] objectAtIndex:0];
+    MHKArchive* masterDataArchive = nil;
+    for (MHKArchive* archive in _dataArchives)
+    {
+        masterDataArchive = archive;
+        rmapDescriptor = [[masterDataArchive valueForKey:@"RMAP"] objectAtIndexIfAny:0];
+        if (rmapDescriptor)
+            break;
     }
     if (!rmapDescriptor)
-        @throw [NSException exceptionWithName:NSInvalidArgumentException reason:[NSString stringWithFormat:@"No RMAP data for stack %@.", _key] userInfo:nil];
+    {
+        RXOLog2(kRXLoggingEngine, kRXLoggingLevelError, @"no RMAP data for stack '%@'", _key);
+        RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"data archives: %@", _dataArchives);
+        RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"sound archives: %@", _soundArchives);
+        
+        [self release];
+        return nil;
+    }
     
     // global stack data
     _cardNames = _loadNAMEResourceWithID(masterDataArchive, 1);
@@ -141,6 +142,8 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
 #if defined(DEBUG)
     RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"stack entry card is %d", _entryCardID);
 #endif
+    
+    return self;
 }
 
 - (void)_tearDown {
