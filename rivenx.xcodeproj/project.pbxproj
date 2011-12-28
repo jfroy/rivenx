@@ -14,6 +14,7 @@
 		31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */; };
 		311400080D58F0230099AF69 /* GTMSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 311400070D58F0230099AF69 /* GTMSystemVersion.m */; };
 		3114FF3C0D58DF0A0099AF69 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
+		311AEBC414A91F6F002EFCDD /* NSArray+RXArrayAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 311AEBC314A91F6F002EFCDD /* NSArray+RXArrayAdditions.m */; };
 		311B7C840BCC4D0500653D2D /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
 		311EDC9A0EF59CCD002CAB47 /* RXDynamicPicture.m in Sources */ = {isa = PBXBuildFile; fileRef = 311EDC990EF59CCD002CAB47 /* RXDynamicPicture.m */; };
 		311FD39208C03AF20045BE11 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 311FD39108C03AF20045BE11 /* Cocoa.framework */; };
@@ -333,6 +334,8 @@
 		3114FF3A0D58DF0A0099AF69 /* BZFSUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BZFSUtilities.h; sourceTree = "<group>"; };
 		3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BZFSUtilities.m; sourceTree = "<group>"; };
 		31154B4D0B4990E9002FCEDD /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Shaders; sourceTree = "<group>"; };
+		311AEBC214A91F6F002EFCDD /* NSArray+RXArrayAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSArray+RXArrayAdditions.h"; sourceTree = "<group>"; };
+		311AEBC314A91F6F002EFCDD /* NSArray+RXArrayAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSArray+RXArrayAdditions.m"; sourceTree = "<group>"; };
 		311B7C810BCC4D0500653D2D /* RXDebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXDebug.h; sourceTree = "<group>"; };
 		311B7C820BCC4D0500653D2D /* RXDebug.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXDebug.m; sourceTree = "<group>"; };
 		311EDC980EF59CCD002CAB47 /* RXDynamicPicture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXDynamicPicture.h; sourceTree = "<group>"; };
@@ -786,6 +789,8 @@
 				31863C590991AA28001A4A42 /* InterThreadMessaging.m */,
 				319C457F09C1382F0031F95F /* VirtualRingBuffer.h */,
 				319C458009C1382F0031F95F /* VirtualRingBuffer.m */,
+				311AEBC214A91F6F002EFCDD /* NSArray+RXArrayAdditions.h */,
+				311AEBC314A91F6F002EFCDD /* NSArray+RXArrayAdditions.m */,
 			);
 			name = "Foundation Additions";
 			sourceTree = "<group>";
@@ -1660,6 +1665,7 @@
 				31E9334A1127B0CE00188488 /* RXWelcomeWindowController.m in Sources */,
 				318AFC2F13BFA4B5000402B7 /* CAStreamBasicDescription.cpp in Sources */,
 				318161B2147C69C700623EF2 /* rx_abort.c in Sources */,
+				311AEBC414A91F6F002EFCDD /* NSArray+RXArrayAdditions.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
