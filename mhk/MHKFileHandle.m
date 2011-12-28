@@ -66,15 +66,17 @@
 
 - (NSData*)readDataOfLength:(size_t)length error:(NSError**)error
 {
-    NSMutableData* buffer = [[NSMutableData alloc] initWithCapacity:length];
-    ssize_t bytes_read = [self readDataOfLength:length inBuffer:[buffer mutableBytes] error:error];
+    void* buffer = malloc(length);
+    release_assert(buffer);
+    
+    ssize_t bytes_read = [self readDataOfLength:length inBuffer:buffer error:error];
     if (bytes_read == -1)
     {
-        [buffer release];
+        free(buffer);
         return nil;
     }
     
-    return [buffer autorelease];
+    return [NSData dataWithBytesNoCopy:buffer length:bytes_read freeWhenDone:YES];
 }
 
 - (NSData*)readDataToEndOfFile:(NSError**)error
