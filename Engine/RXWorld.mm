@@ -355,12 +355,14 @@ NSObject <RXWorldProtocol>* g_world = nil;
     return _worldSharedBase;
 }
 
-- (BOOL)isInstalled {
-    return [[_sharedPreferences objectForKey:@"IsInstalled"] boolValue];
+- (BOOL)isInstalled
+{
+    return [[_sharedPreferences objectForKey:@"IsInstalled2"] boolValue];
 }
 
-- (void)setIsInstalled:(BOOL)flag {
-    [_sharedPreferences setObject:[NSNumber numberWithBool:flag] forKey:@"IsInstalled"];
+- (void)setIsInstalled:(BOOL)flag
+{
+    [_sharedPreferences setObject:[NSNumber numberWithBool:flag] forKey:@"IsInstalled2"];
     [_sharedPreferences writeToFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"] atomically:NO];
 }
 
