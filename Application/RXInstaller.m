@@ -311,6 +311,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 
 - (BOOL)_conditionallyInstallPatchArchives:(NSError**)error
 {
+    // FIXME: verify that this does work if the install source is the patched CD edition (i.e. GOG, Steam)
+    
     RXStack* bspit = [[RXStack alloc] initWithKey:@"bspit" error:error];
     if (!bspit)
         return NO;
