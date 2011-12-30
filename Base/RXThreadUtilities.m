@@ -13,7 +13,6 @@
 #import "Base/RXThreadUtilities.h"
 #import "Base/RXLogging.h"
 #import "Utilities/InterThreadMessaging.h"
-#import "Utilities/GTMSystemVersion.h"
 
 #import <AppKit/NSApplication.h>
 

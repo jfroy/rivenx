@@ -32,7 +32,6 @@
 #import "Debug/RXDebugWindowController.h"
 
 #import "Utilities/BZFSUtilities.h"
-#import "Utilities/GTMSystemVersion.h"
 
 
 @interface RXApplicationDelegate (RXApplicationDelegate_Private)

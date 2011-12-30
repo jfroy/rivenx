@@ -17,8 +17,6 @@
 
 #import "States/RXCardState.h"
 
-#import "Utilities/GTMSystemVersion.h"
-
 
 PyAPI_FUNC(void) Py_InitializeEx(int) __attribute__((weak_import));
 
@@ -71,19 +69,14 @@ static PyMethodDef rivenx_methods[] = {
     return rx_debug_window_controller;
 }
 
-- (void)awakeFromNib {
+- (void)awakeFromNib
+{
     [consoleView setRichText: NO];
     _consoleFont = [NSFont fontWithName:@"Menlo" size:11];
     if (!_consoleFont)
         _consoleFont = [NSFont fontWithName:@"Monaco" size:11];
     [consoleView setFont:_consoleFont];
     [_consoleFont retain];
-    
-    // Python is weakly linked because Tiger only has 2.3 and we don't support that version
-    if (!&Py_InitializeEx || [GTMSystemVersion isTiger]) {
-        [self pythonOut:@"Debug shell not supported in Mac OS X 10.4."];
-        return;
-    }
     
     // set ourselves as the global debug window controller
     rx_debug_window_controller = self;

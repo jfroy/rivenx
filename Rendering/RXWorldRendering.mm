@@ -16,8 +16,6 @@
 
 #import "States/RXCardState.h"
 
-#import "Utilities/GTMSystemVersion.h"
-
 
 @implementation RXWorld (RXWorldRendering)
 

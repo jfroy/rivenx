@@ -15,13 +15,13 @@
 #import "Base/RXThreadUtilities.h"
 #import "Application/RXApplicationDelegate.h"
 #import "Engine/RXWorldProtocol.h"
-#import "Utilities/GTMSystemVersion.h"
 
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
 
 #import <AppKit/NSApplication.h>
 #import <AppKit/NSOpenGL.h>
 #import <AppKit/NSWindow.h>
+
 
 #ifndef kCGLRendererIDMatchingMask
 #define kCGLRendererIDMatchingMask   0x00FE7F00
@@ -594,17 +594,14 @@ static NSString* required_extensions[] = {
     [self _handleColorProfileChange:nil];
 }
 
-- (void)prepareOpenGL {
+- (void)prepareOpenGL
+{
     if (_glInitialized)
         return;
     _glInitialized = YES;
     
     // generate an update so we look at the OpenGL capabilities
     [self update];
-    
-    // on Tiger, we need to manually send a reshape notification now
-    if ([GTMSystemVersion isTiger])
-        [self reshape];
     
     // start the CV display link
     CVDisplayLinkStart(_displayLink);

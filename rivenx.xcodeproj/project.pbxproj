@@ -12,7 +12,6 @@
 		3105EC330D74844900609273 /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
 		3105EC610D74922500609273 /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
 		31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */; };
-		311400080D58F0230099AF69 /* GTMSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 311400070D58F0230099AF69 /* GTMSystemVersion.m */; };
 		3114FF3C0D58DF0A0099AF69 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		311AEBC414A91F6F002EFCDD /* NSArray+RXArrayAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 311AEBC314A91F6F002EFCDD /* NSArray+RXArrayAdditions.m */; };
 		311B7C840BCC4D0500653D2D /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
@@ -45,7 +44,6 @@
 		312F4DBF0DC263F600B3AF0D /* RXTransition.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DAD0DC263F400B3AF0D /* RXTransition.m */; };
 		312F4DC20DC263F600B3AF0D /* RXWorldView.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DB30DC263F400B3AF0D /* RXWorldView.m */; };
 		3131F1DB11CD9104007C30EC /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
-		3131F1EF11CD95BD007C30EC /* GTMSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 311400070D58F0230099AF69 /* GTMSystemVersion.m */; };
 		31333F5A09B01A3700DB6FC7 /* rxaudio_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */; };
 		31333F6709B01A7D00DB6FC7 /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
 		31333F6809B01A7D00DB6FC7 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
@@ -159,7 +157,6 @@
 		318CB4640E04917A00BD2C38 /* RXGameState_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 318CB4630E04917A00BD2C38 /* RXGameState_test.m */; };
 		318CB4FD0E05C60C00BD2C38 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		3196B9360D945CC100BC818E /* RXTiming.c in Sources */ = {isa = PBXBuildFile; fileRef = 3196B9350D945CC100BC818E /* RXTiming.c */; };
-		319926FA0D96AA6700ED1B47 /* GTMSystemVersion.m in Sources */ = {isa = PBXBuildFile; fileRef = 311400070D58F0230099AF69 /* GTMSystemVersion.m */; };
 		3199273A0D96ADB600ED1B47 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB779EFE84155DC02AAC07 /* Foundation.framework */; };
 		3199275A0D96AE3E00ED1B47 /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
 		3199275B0D96AE4D00ED1B47 /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
@@ -330,8 +327,6 @@
 		3105EC5A0D748F2100609273 /* RXLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXLogging.h; sourceTree = "<group>"; };
 		3105EC600D74922500609273 /* RXLogging.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXLogging.m; sourceTree = "<group>"; };
 		311138A60F23FB000009C6C1 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = /System/Library/Frameworks/GLUT.framework; sourceTree = "<absolute>"; };
-		311400060D58F0230099AF69 /* GTMSystemVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMSystemVersion.h; sourceTree = "<group>"; };
-		311400070D58F0230099AF69 /* GTMSystemVersion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GTMSystemVersion.m; sourceTree = "<group>"; };
 		3114FF3A0D58DF0A0099AF69 /* BZFSUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BZFSUtilities.h; sourceTree = "<group>"; };
 		3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BZFSUtilities.m; sourceTree = "<group>"; };
 		31154B4D0B4990E9002FCEDD /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Shaders; sourceTree = "<group>"; };
@@ -783,15 +778,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		311400050D58F0030099AF69 /* Google */ = {
-			isa = PBXGroup;
-			children = (
-				311400060D58F0230099AF69 /* GTMSystemVersion.h */,
-				311400070D58F0230099AF69 /* GTMSystemVersion.m */,
-			);
-			name = Google;
-			sourceTree = "<group>";
-		};
 		311FD39C08C03D420045BE11 /* Foundation Additions */ = {
 			isa = PBXGroup;
 			children = (
@@ -983,7 +969,6 @@
 			children = (
 				313C7DE108CCF9FD00950A70 /* AppKit Additions */,
 				311FD39C08C03D420045BE11 /* Foundation Additions */,
-				311400050D58F0030099AF69 /* Google */,
 				3114FF3A0D58DF0A0099AF69 /* BZFSUtilities.h */,
 				3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */,
 				3133D9AD0D5CDDC1004DAD5E /* BZFSOperation.h */,
@@ -1515,7 +1500,6 @@
 				31333F5A09B01A3700DB6FC7 /* rxaudio_test.mm in Sources */,
 				31333F6709B01A7D00DB6FC7 /* RXAudioRenderer.mm in Sources */,
 				31333F6809B01A7D00DB6FC7 /* RXAudioSourceBase.cpp in Sources */,
-				319926FA0D96AA6700ED1B47 /* GTMSystemVersion.m in Sources */,
 				3199275A0D96AE3E00ED1B47 /* RXLogging.m in Sources */,
 				3199275B0D96AE4D00ED1B47 /* RXLogCenter.m in Sources */,
 				3199276D0D96AFCE00ED1B47 /* BZFSUtilities.m in Sources */,
@@ -1622,7 +1606,6 @@
 				316C38B10F469FDE00EFB7FB /* CAPThread.cpp in Sources */,
 				316C38B30F469FE800EFB7FB /* CADebugger.cpp in Sources */,
 				316C38DE0F46B53900EFB7FB /* CAAUParameter.cpp in Sources */,
-				3131F1EF11CD95BD007C30EC /* GTMSystemVersion.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1667,7 +1650,6 @@
 				316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */,
 				312A89660D57B25600FCDF91 /* RXArchiveManager.m in Sources */,
 				3114FF3C0D58DF0A0099AF69 /* BZFSUtilities.m in Sources */,
-				311400080D58F0230099AF69 /* GTMSystemVersion.m in Sources */,
 				3133D9AF0D5CDDC1004DAD5E /* BZFSOperation.m in Sources */,
 				31C545530D5D50620024B486 /* RXInstaller.m in Sources */,
 				3105EC330D74844900609273 /* RXLogCenter.m in Sources */,
