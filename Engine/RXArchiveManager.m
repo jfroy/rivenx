@@ -18,16 +18,21 @@
 
 + (RXArchiveManager*)sharedArchiveManager
 {
-    // WARNING: the first call to this method is not thread safe
+    static dispatch_once_t once;
     static RXArchiveManager* shared = nil;
-    if (shared == nil)
+    dispatch_once(&once, ^(void)
+    {
         shared = [RXArchiveManager new];
+    });
     return shared;
 }
 
-+ (NSPredicate*)anyArchiveFilenamePredicate {
++ (NSPredicate*)anyArchiveFilenamePredicate
+{
+    static dispatch_once_t once;
     static NSPredicate* predicate = nil;
-    if (!predicate)
+    dispatch_once(&once, ^(void)
+    {
         predicate = [[NSCompoundPredicate orPredicateWithSubpredicates:
                       [NSArray arrayWithObjects:
                        [self dataArchiveFilenamePredicate],
@@ -35,27 +40,40 @@
                        [self extrasArchiveFilenamePredicate],
                        nil]]
                      retain];
+    });
     return predicate;
 }
 
-+ (NSPredicate*)dataArchiveFilenamePredicate {
++ (NSPredicate*)dataArchiveFilenamePredicate
+{
+    static dispatch_once_t once;
     static NSPredicate* predicate = nil;
-    if (!predicate)
+    dispatch_once(&once, ^(void)
+    {
         predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^[abgjoprt]_Data[0-9]?\\.MHK$"] retain];
+    });
     return predicate;
 }
 
-+ (NSPredicate*)soundsArchiveFilenamePredicate {
++ (NSPredicate*)soundsArchiveFilenamePredicate
+{
+    static dispatch_once_t once;
     static NSPredicate* predicate = nil;
-    if (!predicate)
+    dispatch_once(&once, ^(void)
+    {
         predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^[abgjoprt]_Sounds[0-9]?\\.MHK$"] retain];
+    });
     return predicate;
 }
 
-+ (NSPredicate*)extrasArchiveFilenamePredicate {
++ (NSPredicate*)extrasArchiveFilenamePredicate
+{
+    static dispatch_once_t once;
     static NSPredicate* predicate = nil;
-    if (!predicate)
+    dispatch_once(&once, ^(void)
+    {
         predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^Extras\\.MHK$"] retain];
+    });
     return predicate;
 }
 
