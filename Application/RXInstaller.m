@@ -21,6 +21,8 @@
 #import "Utilities/BZFSOperation.h"
 #import "Utilities/BZFSUtilities.h"
 
+#import "NSArray+RXArrayAdditions.h"
+
 
 static NSString* gStacks[] = {
     @"aspit",
@@ -321,9 +323,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     }
     
     RXCard* bspit_284 = [[RXCard alloc] initWithCardDescriptor:cdesc];
+    release_assert(bspit_284);
     [bspit release];
-    if (!bspit_284)
-        return YES;
     
     [bspit_284 load];
     
@@ -335,22 +336,22 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
         return YES;
     }
     
-    NSArray* md_programs = [[[[hotspot scripts] objectForKey:RXMouseDownScriptKey] retain] autorelease];
-    if (!md_programs || [md_programs count] == 0)
+    NSDictionary* md_program = [[[hotspot scripts] objectForKey:RXMouseDownScriptKey] objectAtIndexIfAny:0];
+    if (!md_program)
     {
         [bspit_284 release];
         return YES;
     }
     
-    RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:[md_programs objectAtIndex:0]];
+    RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:md_program];
+    release_assert(comp);
+    NSMutableArray* dp = [comp decompiledScript];
+    release_assert(dp);
+    
+    [comp release];
     [bspit_284 release];
     
-    NSMutableArray* dp = [comp decompiledScript];
-    [comp release];
-    if (!dp)
-        return YES;
-    
-    NSDictionary* opcode = [dp objectAtIndex:4];
+    NSDictionary* opcode = [dp objectAtIndexIfAny:4];
     BOOL need_patch = RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_ACTIVATE_SLST) && RX_OPCODE_ARG(opcode, 0) == 3;
     
     if (need_patch)
