@@ -19,6 +19,8 @@
 
 #import "Rendering/Graphics/RXMovieProxy.h"
 
+#import "NSArray+RXArrayAdditions.h"
+
 
 @implementation RXCard
 
@@ -126,92 +128,112 @@
 #pragma mark -
 #pragma mark loading
 
-- (void)_loadScripts {
+- (void)_loadScripts
+{
     NSData* card_data = [_descriptor data];
+    release_assert([card_data length] >= 6);
     
     // card events
     _card_scripts = rx_decode_riven_script(BUFFER_OFFSET([card_data bytes], 4), NULL);
     
-    // get the current edition
-//    RXEdition* ce = [[RXEditionManager sharedEditionManager] currentEdition];
-    
-    // WORKAROUND: there is a legitimate bug in the CD edition's tspit 155 open card program;
-    // FIXME: need a new "is CD edition" check
+    // WORKAROUND: there is a legitimate bug in the CD edition's tspit RMAP 28314 start rendering program;
     // it executes activate SLST record 2 command after the introduction sequence, which is the mute SLST; patch it up to activate SLST 1
-//    if ([_descriptor isCardWithRMAP:28314 stackName:@"tspit"] && [[ce valueForKey:@"key"] isEqualToString:@"CD_EDITION"]) {
-    if ([_descriptor isCardWithRMAP:28314 stackName:@"tspit"]) {
-        NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndex:0];
-        RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:start_rendering_program];
-        NSMutableArray* dp = [comp decompiledScript];
-        
-        NSDictionary* opcode = [dp objectAtIndex:0];
-        if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_BRANCH)) {
-            NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndex:0];
-            if (RX_CASE_VAL_EQ(case0, 0)) {
-                opcode = [[case0 objectForKey:@"block"] objectAtIndex:26];
-                if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_ACTIVATE_SLST) && RX_OPCODE_ARG(opcode, 0) == 2)
-                    RX_OPCODE_SET_ARG(opcode, 0, 1);
+    if ([_descriptor isCardWithRMAP:28314 stackName:@"tspit"])
+    {
+        NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndexIfAny:0];
+        if (start_rendering_program)
+        {
+            RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:start_rendering_program];
+            NSMutableArray* dp = [comp decompiledScript];
+            
+            NSDictionary* opcode = [dp objectAtIndexIfAny:0];
+            if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_BRANCH))
+            {
+                NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndexIfAny:0];
+                if (RX_CASE_VAL_EQ(case0, 0))
+                {
+                    [[case0 objectForKey:@"block"] enumerateObjectsWithOptions:NSEnumerationReverse usingBlock:^(NSDictionary* opcode, NSUInteger idx, BOOL* stop)
+                    {
+                        if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_ACTIVATE_SLST) && RX_OPCODE_ARG(opcode, 0) == 2 && idx > 20u)
+                        {
+                            RX_OPCODE_SET_ARG(opcode, 0, 1);
+                            *stop = YES;
+                        }   
+                    }];
+                        
+                }
             }
+            
+            [comp setDecompiledScript:dp];
+            
+            NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
+            [mutable_script setObject:[NSArray arrayWithObject:[comp compiledScript]] forKey:RXStartRenderingScriptKey];
+            
+            [_card_scripts release];
+            _card_scripts = mutable_script;
+            
+            [comp release];
         }
-        
-        [comp setDecompiledScript:dp];
-        
-        NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
-        [mutable_script setObject:[NSArray arrayWithObject:[comp compiledScript]] forKey:RXStartRenderingScriptKey];
-        
-        [_card_scripts release];
-        _card_scripts = mutable_script;
-        
-        [comp release];
     }
+    
     // WORKAROUND: patch pspit 29's start rendering script to remove the instruction that sets atrapbook to 0
-    else if ([_descriptor isCardWithRMAP:2526 stackName:@"pspit"]) {
-        NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndex:0];
-        RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:start_rendering_program];
-        NSMutableArray* dp = [comp decompiledScript];
-        
-        NSDictionary* opcode = [dp lastObject];
-        if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_BRANCH)) {
-            NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndex:0];
-            if (RX_BRANCH_VAR_NAME_EQ(opcode, @"pcage") && RX_CASE_VAL_EQ(case0, 1)) {
-                NSMutableArray* block = [case0 objectForKey:@"block"];
-                uint32_t n = (uint32_t)[block count];
-                for (uint32_t i = 0; i < n; i++) {
-                    opcode = [block objectAtIndex:i];
-                    if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_SET_VARIABLE) && RX_VAR_NAME_EQ(RX_OPCODE_ARG(opcode, 0), @"atrapbook")) {
-                        [block removeObjectAtIndex:i];
-                        n--;
-                        i--;
-                    } else if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_START_MOVIE_BLOCKING) && RX_OPCODE_ARG(opcode, 0) == 3) {
-                        uint32_t movie_time = 41000; // ms
-                        opcode = [NSDictionary dictionaryWithObjectsAndKeys:
-                            [NSNumber numberWithUnsignedShort:RX_COMMAND_SCHEDULE_MOVIE_COMMAND], @"command",
-                            [NSArray arrayWithObjects:
-                                [NSNumber numberWithUnsignedShort:3], // movie code
-                                [NSNumber numberWithUnsignedShort:movie_time >> 16], // movie time
-                                [NSNumber numberWithUnsignedShort:movie_time & 0xFFFF],
-                                [NSNumber numberWithUnsignedShort:RX_COMMAND_SET_VARIABLE], // scheduled command
-                                [NSNumber numberWithUnsignedShort:[_parent varIndexForName:@"atrapbook"]], // scheduled command args
-                                [NSNumber numberWithUnsignedShort:0],
-                                nil], @"args",
-                            nil];
-                        [block insertObject:opcode atIndex:i];
-                        i++;
-                        n++;
+    else if ([_descriptor isCardWithRMAP:2526 stackName:@"pspit"])
+    {
+        NSDictionary* start_rendering_program = [[_card_scripts objectForKey:RXStartRenderingScriptKey] objectAtIndexIfAny:0];
+        if (start_rendering_program)
+        {
+            RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:start_rendering_program];
+            NSMutableArray* dp = [comp decompiledScript];
+            
+            NSDictionary* opcode = [dp lastObject];
+            if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_BRANCH))
+            {
+                NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndexIfAny:0];
+                if (RX_BRANCH_VAR_NAME_EQ(opcode, @"pcage") && RX_CASE_VAL_EQ(case0, 1))
+                {
+                    NSMutableArray* block = [case0 objectForKey:@"block"];
+                    uint32_t n = (uint32_t)[block count];
+                    for (uint32_t i = 0; i < n; i++)
+                    {
+                        opcode = [block objectAtIndexIfAny:i];
+                        if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_SET_VARIABLE) && RX_VAR_NAME_EQ(RX_OPCODE_ARG(opcode, 0), @"atrapbook"))
+                        {
+                            [block removeObjectAtIndex:i];
+                            n--;
+                            i--;
+                        }
+                        else if (RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_START_MOVIE_BLOCKING) && RX_OPCODE_ARG(opcode, 0) == 3)
+                        {
+                            uint32_t movie_time = 41000; // ms
+                            opcode = [NSDictionary dictionaryWithObjectsAndKeys:
+                                [NSNumber numberWithUnsignedShort:RX_COMMAND_SCHEDULE_MOVIE_COMMAND], @"command",
+                                [NSArray arrayWithObjects:
+                                    [NSNumber numberWithUnsignedShort:3], // movie code
+                                    [NSNumber numberWithUnsignedShort:movie_time >> 16], // movie time
+                                    [NSNumber numberWithUnsignedShort:movie_time & 0xFFFF],
+                                    [NSNumber numberWithUnsignedShort:RX_COMMAND_SET_VARIABLE], // scheduled command
+                                    [NSNumber numberWithUnsignedShort:[_parent varIndexForName:@"atrapbook"]], // scheduled command args
+                                    [NSNumber numberWithUnsignedShort:0],
+                                    nil], @"args",
+                                nil];
+                            [block insertObject:opcode atIndex:i];
+                            i++;
+                            n++;
+                        }
                     }
                 }
             }
+            
+            [comp setDecompiledScript:dp];
+            
+            NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
+            [mutable_script setObject:[NSArray arrayWithObject:[comp compiledScript]] forKey:RXStartRenderingScriptKey];
+            
+            [_card_scripts release];
+            _card_scripts = mutable_script;
+            
+            [comp release];
         }
-        
-        [comp setDecompiledScript:dp];
-        
-        NSMutableDictionary* mutable_script = [_card_scripts mutableCopy];
-        [mutable_script setObject:[NSArray arrayWithObject:[comp compiledScript]] forKey:RXStartRenderingScriptKey];
-        
-        [_card_scripts release];
-        _card_scripts = mutable_script;
-        
-        [comp release];
     }
 }
 
