@@ -19,8 +19,8 @@
 #define RX_BRANCH_VAR_NAME_EQ(branch, name) [[_parent varNameAtIndex:[[(branch) objectForKey:@"variable"] unsignedShortValue]] isEqualToString:(name)]
 #define RX_CASE_VAL_EQ(case, value) [[(case) objectForKey:@"value"] unsignedShortValue] == (value)
 
-
-@interface RXScriptCompiler : NSObject {
+@interface RXScriptCompiler : NSObject
+{
     RXScriptOpcodeStream* _ops;
     NSMutableArray* _decompiled_script;
     
