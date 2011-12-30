@@ -209,11 +209,10 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return _entryCardID;
 }
 
-- (NSUInteger)cardCount {
+- (NSUInteger)cardCount
+{
     NSUInteger count = 0;
-    NSEnumerator* enumerator = [_dataArchives objectEnumerator];
-    MHKArchive* archive;
-    while ((archive = [enumerator nextObject]))
+    for (MHKArchive* archive in _dataArchives)
         count += [[archive valueForKeyPath:@"CARD.@count"] intValue];
     return count;
 }
@@ -277,12 +276,11 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return CFSwapInt32BigToHost(rmap_data[card_id]);
 }
 
-- (id <MHKAudioDecompression>)audioDecompressorWithID:(uint16_t)soundID {
+- (id <MHKAudioDecompression>)audioDecompressorWithID:(uint16_t)soundID
+{
     id <MHKAudioDecompression> decompressor = nil;
-    
-    NSEnumerator* enumerator = [_soundArchives objectEnumerator];
-    MHKArchive* archive;
-    while ((archive = [enumerator nextObject])) {
+    for (MHKArchive* archive in _soundArchives)
+    {
         decompressor = [archive decompressorWithSoundID:soundID error:NULL];
         if (decompressor)
             break;
@@ -290,12 +288,11 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return decompressor;
 }
 
-- (id <MHKAudioDecompression>)audioDecompressorWithDataID:(uint16_t)soundID {
+- (id <MHKAudioDecompression>)audioDecompressorWithDataID:(uint16_t)soundID
+{
     id <MHKAudioDecompression> decompressor = nil;
-    
-    NSEnumerator* enumerator = [_dataArchives objectEnumerator];
-    MHKArchive* archive;
-    while ((archive = [enumerator nextObject])) {
+    for (MHKArchive* archive in _dataArchives)
+    {
         decompressor = [archive decompressorWithSoundID:soundID error:NULL];
         if (decompressor)
             break;
@@ -303,10 +300,10 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return decompressor;
 }
 
-- (uint16_t)soundIDForName:(NSString*)sound_name {
-    NSEnumerator* enumerator = [_soundArchives objectEnumerator];
-    MHKArchive* archive;
-    while ((archive = [enumerator nextObject])) {
+- (uint16_t)soundIDForName:(NSString*)sound_name
+{
+    for (MHKArchive* archive in _soundArchives)
+    {
         NSDictionary* desc = [archive resourceDescriptorWithResourceType:@"tWAV" name:sound_name];
         if (desc)
             return [[desc objectForKey:@"ID"] unsignedShortValue];
@@ -314,10 +311,10 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return 0;
 }
 
-- (uint16_t)dataSoundIDForName:(NSString*)sound_name {
-    NSEnumerator* enumerator = [_dataArchives objectEnumerator];
-    MHKArchive* archive;
-    while ((archive = [enumerator nextObject])) {
+- (uint16_t)dataSoundIDForName:(NSString*)sound_name
+{
+    for (MHKArchive* archive in _dataArchives)
+    {
         NSDictionary* desc = [archive resourceDescriptorWithResourceType:@"tWAV" name:sound_name];
         if (desc)
             return [[desc objectForKey:@"ID"] unsignedShortValue];
@@ -325,10 +322,10 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return 0;
 }
 
-- (uint16_t)bitmapIDForName:(NSString*)bitmap_name {
-    NSEnumerator* enumerator = [_dataArchives objectEnumerator];
-    MHKArchive* archive;
-    while ((archive = [enumerator nextObject])) {
+- (uint16_t)bitmapIDForName:(NSString*)bitmap_name
+{
+    for (MHKArchive* archive in _dataArchives)
+    {
         NSDictionary* desc = [archive resourceDescriptorWithResourceType:@"tBMP" name:bitmap_name];
         if (desc)
             return [[desc objectForKey:@"ID"] unsignedShortValue];
@@ -336,10 +333,10 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     return 0;
 }
 
-- (MHKFileHandle*)fileWithResourceType:(NSString*)type ID:(uint16_t)ID {
-    NSEnumerator* enumerator = [_dataArchives objectEnumerator];
-    MHKArchive* archive;
-    while ((archive = [enumerator nextObject])) {
+- (MHKFileHandle*)fileWithResourceType:(NSString*)type ID:(uint16_t)ID
+{
+    for (MHKArchive* archive in _dataArchives)
+    {
         MHKFileHandle* file = [archive openResourceWithResourceType:type ID:ID];
         if (file)
             return file;
