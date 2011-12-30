@@ -22,6 +22,8 @@
 + (NSPredicate*)soundsArchiveFilenamePredicate;
 + (NSPredicate*)extrasArchiveFilenamePredicate;
 
+// NOTE: these methods return the archives sorted in the order they should be searched; code should always forward-iterate the returned array
+
 - (NSArray*)dataArchivesForStackKey:(NSString*)stack_key error:(NSError**)error;
 - (NSArray*)soundArchivesForStackKey:(NSString*)stack_key error:(NSError**)error;
 - (MHKArchive*)extrasArchive:(NSError**)error;
