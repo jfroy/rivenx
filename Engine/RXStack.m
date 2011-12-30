@@ -97,7 +97,9 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     
     // load the data archives
     NSArray* archives = [sam dataArchivesForStackKey:_key error:error];
-    if (!archives || [archives count] == 0) {
+    if (!archives || [archives count] == 0)
+    {
+        RXOLog2(kRXLoggingEngine, kRXLoggingLevelError, @"archive manager provided no data archives for stack '%@'", _key);
         [self release];
         return nil;
     }
@@ -108,7 +110,9 @@ static NSArray* _loadNAMEResourceWithID(MHKArchive* archive, uint16_t resourceID
     
     // load the sound archives
     archives = [sam soundArchivesForStackKey:_key error:error];
-    if (!archives || [archives count] == 0) {
+    if (!archives || [archives count] == 0)
+    {
+        RXOLog2(kRXLoggingEngine, kRXLoggingLevelError, @"archive manager provided no sound archives for stack '%@'", _key);
         [self release];
         return nil;
     }
