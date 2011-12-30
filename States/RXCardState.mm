@@ -1424,11 +1424,10 @@ init_failure:
     {
         // if we don't have the stack, bail
         RXStack* stack = [g_world loadStackWithKey:scd->stackKey];
-        if (!stack) {
-#if defined(DEBUG)
-            RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug,
-                @"aborting _switchCardWithSimpleDescriptor because stack %@ could not be loaded", scd->stackKey);
-#endif
+        if (!stack)
+        {
+            RXOLog2(kRXLoggingEngine, kRXLoggingLevelError,
+                @"aborting _switchCardWithSimpleDescriptor because stack '%@' could not be loaded", scd->stackKey);
             return;
         }
         
@@ -3010,18 +3009,17 @@ exit_flush_tasks:
                                      userInfo:nil];
     
     RXStack* stack = [g_world loadStackWithKey:@"aspit"];
-    if (!stack) {
-#if defined(DEBUG)
-        RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"aborting _handleInventoryMouseDown because stack aspit could not be loaded");
-#endif
+    if (!stack)
+    {
+        RXOLog2(kRXLoggingEngine, kRXLoggingLevelError, @"aborting _handleInventoryMouseDown because stack aspit could not be loaded");
         return;
     }
     
     uint16_t journal_card_id = [stack cardIDFromRMAPCode:RX_INVENTORY_RMAPS[index]];
-    if (!journal_card_id) {
-#if defined(DEBUG)
-        RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"aborting _handleInventoryMouseDown because card rmap %u could not be resolved", RX_INVENTORY_RMAPS[index]);
-#endif
+    if (!journal_card_id)
+    {
+        RXOLog2(kRXLoggingEngine, kRXLoggingLevelError,
+            @"aborting _handleInventoryMouseDown because card rmap %u could not be resolved", RX_INVENTORY_RMAPS[index]);
         return;
     }
     

@@ -1712,14 +1712,20 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 }
 
 // 27
-- (void)_opcode_goToStack:(const uint16_t)argc arguments:(const uint16_t*)argv {
+- (void)_opcode_goToStack:(const uint16_t)argc arguments:(const uint16_t*)argv
+{
     if (argc < 3)
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"INVALID NUMBER OF ARGUMENTS" userInfo:nil];
     
     // get the stack for the given stack key
     NSString* k = [[[_card descriptor] parent] stackNameAtIndex:argv[0]];
     RXStack* stack = [g_world loadStackWithKey:k];
-    assert(stack);
+    if (!stack)
+    {
+        RXLog(kRXLoggingScript, kRXLoggingLevelError, @"aborting script execution: goToStack opcode failed to load stack '%@'", k);
+        _abortProgramExecution = YES;
+        return;
+    }
     
     uint32_t card_rmap = (argv[1] << 16) | argv[2];
     uint16_t card_id = [stack cardIDFromRMAPCode:card_rmap];
@@ -2346,25 +2352,36 @@ DEFINE_COMMAND(xatrapbookclose) {
     DISPATCH_COMMAND0(RX_COMMAND_REFRESH);
 }
 
-- (void)_handleTrapBookLink {
+- (void)_handleTrapBookLink
+{
     // get and reset the return card
     RXSimpleCardDescriptor* return_card = [[[g_world gameState] returnCard] retain];
     [[g_world gameState] setReturnCard:nil];
     
     // if the return stack is rspit, we go to a different card than otherwise
-    RXStack* stack;
     uint32_t card_rmap;
-    if ([return_card->stackKey isEqualToString:@"rspit"]) {
+    if ([return_card->stackKey isEqualToString:@"rspit"])
+    {
         card_rmap = 13112;
-        stack = [g_world loadStackWithKey:@"rspit"];
-    } else {
+    }
+    else if ([return_card->stackKey isEqualToString:@"ospit"])
+    {
         card_rmap = 17581;
-        stack = [g_world loadStackWithKey:@"ospit"];
+    }
+    else
+    {
+        rx_abort("_handleTrapBookLink got unknown return card stack key '%s'", [return_card->stackKey UTF8String]);
+    }
+    
+    RXStack* stack = [g_world loadStackWithKey:return_card->stackKey];
+    if (!stack)
+    {
+        RXLog(kRXLoggingScript, kRXLoggingLevelError, @"aborting script execution: _handleTrapBookLink failed to load stack '%@'", return_card->stackKey);
+        _abortProgramExecution = YES;
+        return;
     }
     
     [return_card release];
-    
-    assert(stack);
     [controller setActiveCardWithStack:[stack key] ID:[stack cardIDFromRMAPCode:card_rmap] waitUntilDone:YES];
 }
 
