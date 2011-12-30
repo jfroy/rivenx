@@ -178,6 +178,7 @@
 		31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C070F03F912006EFF93 /* CAComponentDescription.cpp */; };
 		31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */; };
 		31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A9F027094D2D0300C6A0AB /* RXRenderState.m */; };
+		31ADC95F14ADA17A004FB4AD /* unpackgogsetup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31ADC95E14ADA17A004FB4AD /* unpackgogsetup.cpp */; };
 		31AE54570DE0ADD6000E71CF /* ExceptionHandling.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31AE54560DE0ADD6000E71CF /* ExceptionHandling.framework */; };
 		31B644BF10033A15008AD8E0 /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */; };
 		31B644E610033B47008AD8E0 /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
@@ -500,6 +501,8 @@
 		31A9F027094D2D0300C6A0AB /* RXRenderState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXRenderState.m; path = States/RXRenderState.m; sourceTree = "<group>"; };
 		31A9F03A094D2E2600C6A0AB /* RXRenderState.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = RXRenderState.h; path = States/RXRenderState.h; sourceTree = "<group>"; };
 		31AA79800F75AACC006F06AC /* RXCursors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCursors.h; sourceTree = "<group>"; };
+		31ADC95214ADA128004FB4AD /* unpackgogsetup */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = unpackgogsetup; sourceTree = BUILT_PRODUCTS_DIR; };
+		31ADC95E14ADA17A004FB4AD /* unpackgogsetup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = unpackgogsetup.cpp; sourceTree = "<group>"; };
 		31AE54560DE0ADD6000E71CF /* ExceptionHandling.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExceptionHandling.framework; path = /System/Library/Frameworks/ExceptionHandling.framework; sourceTree = "<absolute>"; };
 		31B6549F1102B9EF004818AC /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		31B654A11102B9EF004818AC /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Rendering.strings; sourceTree = "<group>"; };
@@ -610,6 +613,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		31ADC94F14ADA128004FB4AD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		31C357190D92A6A700EDEF81 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -705,6 +715,7 @@
 				311FD3DA08C0426C0045BE11 /* cocoa_main.m */,
 				08FB7795FE84155DC02AAC07 /* Tools */,
 				31C357220D92A6C700EDEF81 /* Tests */,
+				31ADC95414ADA128004FB4AD /* unpackgogsetup */,
 				08FB779DFE84155DC02AAC07 /* Frameworks */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 			);
@@ -767,6 +778,7 @@
 				3149598F0E327B2D00E49C83 /* MHKKit.framework */,
 				316E1EE80E77803100F28E2A /* mhkdump */,
 				317ACC7C0F285B780040FFFD /* MHKMoviePlayer.app */,
+				31ADC95214ADA128004FB4AD /* unpackgogsetup */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -956,6 +968,14 @@
 				31A9F027094D2D0300C6A0AB /* RXRenderState.m */,
 			);
 			name = States;
+			sourceTree = "<group>";
+		};
+		31ADC95414ADA128004FB4AD /* unpackgogsetup */ = {
+			isa = PBXGroup;
+			children = (
+				31ADC95E14ADA17A004FB4AD /* unpackgogsetup.cpp */,
+			);
+			path = unpackgogsetup;
 			sourceTree = "<group>";
 		};
 		31BAE6250A98D3110079DD0F /* Utilities */ = {
@@ -1208,6 +1228,22 @@
 			productReference = 317ACC7C0F285B780040FFFD /* MHKMoviePlayer.app */;
 			productType = "com.apple.product-type.application";
 		};
+		31ADC95114ADA128004FB4AD /* unpackgogsetup */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 31ADC95C14ADA128004FB4AD /* Build configuration list for PBXNativeTarget "unpackgogsetup" */;
+			buildPhases = (
+				31ADC94E14ADA128004FB4AD /* Sources */,
+				31ADC94F14ADA128004FB4AD /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = unpackgogsetup;
+			productName = unpackgogsetup;
+			productReference = 31ADC95214ADA128004FB4AD /* unpackgogsetup */;
+			productType = "com.apple.product-type.tool";
+		};
 		31C3571B0D92A6A700EDEF81 /* UnitTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 31C357230D92A6C700EDEF81 /* Build configuration list for PBXNativeTarget "UnitTests" */;
@@ -1350,6 +1386,7 @@
 				31DC67FE09CB879B00BFF447 /* VirtualRingBuffer_test */,
 				31DAA0DE09D888E100F63F20 /* RXCardAudioSource_test */,
 				31333F4F09B019E300DB6FC7 /* rxaudio_test */,
+				31ADC95114ADA128004FB4AD /* unpackgogsetup */,
 			);
 		};
 /* End PBXProject section */
@@ -1530,6 +1567,14 @@
 			files = (
 				317ACC910F285BE10040FFFD /* MHKMoviePlayer_main.m in Sources */,
 				317ACC920F285BE10040FFFD /* MHKQTPlayerController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		31ADC94E14ADA128004FB4AD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				31ADC95F14ADA17A004FB4AD /* unpackgogsetup.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1917,6 +1962,72 @@
 				INSTALL_PATH = "$(USER_APPS_DIR)";
 				PRODUCT_NAME = MHKMoviePlayer;
 				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		31ADC95914ADA128004FB4AD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_DYNAMIC_NO_PIC = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/xz/lib";
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-llzma",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		31ADC95A14ADA128004FB4AD /* Beta Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_DYNAMIC_NO_PIC = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/xz/lib";
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-llzma",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = "Beta Release";
+		};
+		31ADC95B14ADA128004FB4AD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_DYNAMIC_NO_PIC = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/xz/lib";
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				OTHER_LDFLAGS = (
+					"-lz",
+					"-llzma",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
@@ -2429,6 +2540,16 @@
 				317ACC7F0F285B790040FFFD /* Debug */,
 				317ACC800F285B790040FFFD /* Beta Release */,
 				317ACC810F285B790040FFFD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		31ADC95C14ADA128004FB4AD /* Build configuration list for PBXNativeTarget "unpackgogsetup" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				31ADC95914ADA128004FB4AD /* Debug */,
+				31ADC95A14ADA128004FB4AD /* Beta Release */,
+				31ADC95B14ADA128004FB4AD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
