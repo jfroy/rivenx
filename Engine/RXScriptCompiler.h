@@ -7,12 +7,13 @@
 //
 
 #import "Engine/RXScriptOpcodeStream.h"
+#import "NSArray+RXArrayAdditions.h"
 
 
 #define RX_VAR_NAME_EQ(var, name) [[_parent varNameAtIndex:(var)] isEqualToString:(name)]
 
 #define RX_OPCODE_COMMAND_EQ(opcode, command) [[(opcode) objectForKey:@"command"] unsignedShortValue] == (command)
-#define RX_OPCODE_ARG(opcode, i) [[[(opcode) objectForKey:@"args"] objectAtIndex:(i)] unsignedShortValue]
+#define RX_OPCODE_ARG(opcode, i) [[[(opcode) objectForKey:@"args"] objectAtIndexIfAny:(i)] unsignedShortValue]
 #define RX_OPCODE_SET_ARG(opcode, i, value) [[(opcode) objectForKey:@"args"] replaceObjectAtIndex:(i) withObject:[NSNumber numberWithUnsignedShort:(value)]]
 
 #define RX_BRANCH_VAR_NAME_EQ(branch, name) [[_parent varNameAtIndex:[[(branch) objectForKey:@"variable"] unsignedShortValue]] isEqualToString:(name)]
