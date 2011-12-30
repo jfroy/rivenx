@@ -69,7 +69,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
         NSArray* contents = [fm contentsOfDirectoryAtURL:[[RXWorld sharedWorld] worldSharedBase] includingPropertiesForKeys:[NSArray array] options:0 error:NULL];
         for (NSURL* url in contents)
             BZFSRemoveItemAtURL(url, NULL);
-        
+        [fm release];
     });
 }
 
