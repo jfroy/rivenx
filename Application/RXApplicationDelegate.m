@@ -290,7 +290,6 @@
         
 #if defined(DEBUG)
         [self _initDebugUI];
-        [self _showDebugConsole:self];
 #endif
     }
     
