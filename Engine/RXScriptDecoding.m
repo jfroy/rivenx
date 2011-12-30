@@ -24,9 +24,9 @@ NSString* const RXScreenUpdateScriptKey = @"screen update";
 NSString* const RXScriptProgramKey = @"program";
 NSString* const RXScriptOpcodeCountKey = @"opcode count";
 
-static NSString* script_keys_array[11] = {
+static NSString* const script_keys_array[11] = {
     @"mouse down",
-    @"unknown 1",
+    @"mouse still down",
     @"mouse up",
     @"unknown 3",
     @"mouse inside",
