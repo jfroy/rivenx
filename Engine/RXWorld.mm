@@ -37,7 +37,8 @@ NSObject <RXWorldProtocol>* g_world = nil;
 @implementation RXWorld
 
 // disable automatic KVC
-+ (BOOL)accessInstanceVariablesDirectly {
++ (BOOL)accessInstanceVariablesDirectly
+{
     return NO;
 }
 
@@ -49,7 +50,8 @@ NSObject <RXWorldProtocol>* g_world = nil;
     return (RXWorld*)g_world;
 }
 
-- (void)_initEngineVariables {
+- (void)_initEngineVariables
+{
     NSError* error = nil;
     NSData* default_vars_data = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"EngineVariables" ofType:@"plist"] options:0 error:&error];
     if (!default_vars_data)
@@ -69,16 +71,19 @@ NSObject <RXWorldProtocol>* g_world = nil;
     [error_str release];
     
     NSDictionary* user_vars = [[NSUserDefaults standardUserDefaults] objectForKey:@"EngineVariables"];
-    if (user_vars) {
+    if (user_vars)
+    {
         NSEnumerator* keypaths = [user_vars keyEnumerator];
         NSString* keypath;
         while ((keypath = [keypaths nextObject]))
             [_engineVariables setValue:[user_vars objectForKey:keypath] forKeyPath:keypath];
-    } else
+    }
+    else
         [[NSUserDefaults standardUserDefaults] setValue:[NSMutableDictionary dictionary] forKey:@"EngineVariables"];
 }
 
-- (void)_initEngineLocations {
+- (void)_initEngineLocations
+{
     NSError* error;
     
     [_worldBase release];
@@ -89,7 +94,8 @@ NSObject <RXWorldProtocol>* g_world = nil;
     
     FSRef sharedFolderRef;
     OSErr os_err = FSFindFolder(kLocalDomain, kSharedUserDataFolderType, kDontCreateFolder, &sharedFolderRef);
-    if (os_err != noErr) {
+    if (os_err != noErr)
+    {
         error = [NSError errorWithDomain:NSOSStatusErrorDomain code:os_err userInfo:nil];
         @throw [NSException exceptionWithName:@"RXFilesystemException"
                                        reason:@"Riven X was unable to locate your Mac's Shared folder."
@@ -101,7 +107,8 @@ NSObject <RXWorldProtocol>* g_world = nil;
     
     // the world shared base is a "Riven X" folder inside the /Users/Shared directory
     NSString* sharedBase = [[sharedFolderURL path] stringByAppendingPathComponent:@"Riven X"];
-    if (!BZFSDirectoryExists(sharedBase)) {
+    if (!BZFSDirectoryExists(sharedBase))
+    {
         BOOL success = BZFSCreateDirectoryExtended(sharedBase, @"admin", 0775, &error);
         if (!success)
             @throw [NSException exceptionWithName:@"RXFilesystemException"
@@ -111,22 +118,27 @@ NSObject <RXWorldProtocol>* g_world = nil;
     _worldSharedBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)sharedBase, kCFURLPOSIXPathStyle, true);
 }
 
-- (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context {
-    if (context == [_engineVariables objectForKey:@"rendering"]) {
+- (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context
+{
+    if (context == [_engineVariables objectForKey:@"rendering"])
+    {
         if ([keyPath isEqualToString:@"volume"])
             reinterpret_cast<RX::AudioRenderer*>(_audioRenderer)->SetGain([[change objectForKey:NSKeyValueChangeNewKey] floatValue]);
     }
-    else {
+    else
+    {
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
     }
 }
 
-- (id)init {
+- (id)init
+{
     self = [super init];
     if (!self)
         return nil;
     
-    @try {
+    @try
+    {
         _tornDown = NO;
         
         // WARNING: the world has to run on the main thread
@@ -163,11 +175,15 @@ NSObject <RXWorldProtocol>* g_world = nil;
             _sharedPreferences = [NSMutableDictionary new];
         
         // apply the WorldBase override preference
-        if ([_sharedPreferences objectForKey:@"WorldBase"]) {
-            if (BZFSDirectoryExists([_sharedPreferences objectForKey:@"WorldBase"])) {
+        if ([_sharedPreferences objectForKey:@"WorldBase"])
+        {
+            if (BZFSDirectoryExists([_sharedPreferences objectForKey:@"WorldBase"]))
+            {
                 [_worldBase release];
                 _worldBase = [[NSURL fileURLWithPath:[_sharedPreferences objectForKey:@"WorldBase"]] retain];
-            } else {
+            }
+            else
+            {
                 [self setWorldBaseOverride:nil];
             }
         }
@@ -200,10 +216,9 @@ NSObject <RXWorldProtocol>* g_world = nil;
         // load cursors
         _cursors = NSCreateMapTable(NSIntegerMapKeyCallBacks, NSObjectMapValueCallBacks, 20);
         
-        NSEnumerator* cursorEnum = [cursorMetadata keyEnumerator];
-        NSString* cursorKey;
-        while ((cursorKey = [cursorEnum nextObject])) {
-            NSPoint cursorHotspot = NSPointFromString([cursorMetadata objectForKey:cursorKey]);
+        [cursorMetadata enumerateKeysAndObjectsUsingBlock:^(NSString* cursorKey, NSString* cursorHotspotPointString, BOOL* stop)
+        {
+            NSPoint cursorHotspot = NSPointFromString(cursorHotspotPointString);
             NSImage* cursorImage = [[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:cursorKey ofType:@"png" inDirectory:@"cursors"]];
             if (!cursorImage)
                 @throw [NSException exceptionWithName:@"RXMissingResourceException"
@@ -216,7 +231,7 @@ NSObject <RXWorldProtocol>* g_world = nil;
             
             [cursor release];
             [cursorImage release];
-        }
+        }];
                 
         // the semaphore will be signaled when a thread has setup inter-thread messaging
         kern_return_t kerr = semaphore_create(mach_task_self(), &_threadInitSemaphore, SYNC_POLICY_FIFO, 0);
@@ -231,7 +246,9 @@ NSObject <RXWorldProtocol>* g_world = nil;
         
         // register for card changed notifications
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
-    } @catch (NSException* e) {
+    }
+    @catch (NSException* e)
+    {
         [[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
         [self release];
         self = nil;
@@ -243,25 +260,26 @@ NSObject <RXWorldProtocol>* g_world = nil;
     return self;
 }
 
-- (void)initializeRendering {
+- (void)initializeRendering
+{
     if (_renderingInitialized)
         return;
     
-    @try {
+    @try
+    {
         // initialize rendering
         [self _initializeRendering];
         
         _renderingInitialized = YES;
-    } @catch (NSException* e) {
+    }
+    @catch (NSException* e)
+    {
         [[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
     }
 }
 
-- (void)dealloc {
-    [super dealloc];
-}
-
-- (void)tearDown {
+- (void)tearDown
+{
     // WARNING: this method can only run on the main thread
     if (!pthread_main_np())
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_tearDown: MAIN THREAD ONLY" userInfo:nil];
@@ -279,7 +297,8 @@ NSObject <RXWorldProtocol>* g_world = nil;
     [_cardRenderer release], _cardRenderer = nil;
     [g_worldView tearDown];
     
-    if (_audioRenderer) {
+    if (_audioRenderer)
+    {
         reinterpret_cast<RX::AudioRenderer*>(_audioRenderer)->Stop();
         delete reinterpret_cast<RX::AudioRenderer*>(_audioRenderer);
         _audioRenderer = 0;
@@ -305,7 +324,8 @@ NSObject <RXWorldProtocol>* g_world = nil;
 
 #pragma mark -
 
-- (void)_RXScriptThreadEntry:(id)object {
+- (void)_RXScriptThreadEntry:(id)object
+{
     // reference to the thread
     _scriptThread = [NSThread currentThread];
     
@@ -313,21 +333,25 @@ NSObject <RXWorldProtocol>* g_world = nil;
     RXThreadRunLoopRun(_threadInitSemaphore, "script");
 }
 
-- (void)_stopThreadRunloop {
+- (void)_stopThreadRunloop
+{
     CFRunLoopStop(CFRunLoopGetCurrent());
 }
 
-- (NSThread*)scriptThread {
+- (NSThread*)scriptThread
+{
     return _scriptThread;
 }
 
 #pragma mark -
 
-- (NSURL*)worldBase {
+- (NSURL*)worldBase
+{
     return _worldBase;
 }
 
-- (NSURL*)worldSharedBase {
+- (NSURL*)worldSharedBase
+{
     return _worldSharedBase;
 }
 
@@ -340,13 +364,17 @@ NSObject <RXWorldProtocol>* g_world = nil;
     [_sharedPreferences writeToFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"] atomically:NO];
 }
 
-- (void)setWorldBaseOverride:(NSString*)path {
-    if (path) {
+- (void)setWorldBaseOverride:(NSString*)path
+{
+    if (path)
+    {
         [_worldBase release];
         _worldBase = [[NSURL fileURLWithPath:path] retain];
         
         [_sharedPreferences setObject:path forKey:@"WorldBase"];
-    } else {
+    }
+    else
+    {
         [self _initEngineLocations];
         [_sharedPreferences removeObjectForKey:@"WorldBase"];
     }
@@ -356,46 +384,56 @@ NSObject <RXWorldProtocol>* g_world = nil;
 
 #pragma mark -
 
-- (NSDictionary*)extraBitmapsDescriptor {
+- (NSDictionary*)extraBitmapsDescriptor
+{
     return _extrasDescriptor;
 }
 
-- (NSCursor*)defaultCursor {
+- (NSCursor*)defaultCursor
+{
     return [self cursorForID:RX_CURSOR_FORWARD];
 }
 
-- (NSCursor*)openHandCursor {
+- (NSCursor*)openHandCursor
+{
     return [self cursorForID:RX_CURSOR_OPEN_HAND];
 }
 
-- (NSCursor*)invisibleCursor {
+- (NSCursor*)invisibleCursor
+{
     return [self cursorForID:RX_CURSOR_INVISIBLE];
 }
 
-- (NSCursor*)cursorForID:(uint16_t)ID {
+- (NSCursor*)cursorForID:(uint16_t)ID
+{
     uintptr_t key = ID;
     return (NSCursor*)NSMapGet(_cursors, (const void*)key);
 }
 
 #pragma mark -
 
-- (NSView <RXWorldViewProtocol> *)worldView {
+- (NSView <RXWorldViewProtocol> *)worldView
+{
     return _worldView;
 }
 
-- (void*)audioRenderer {
+- (void*)audioRenderer
+{
     return _audioRenderer;
 }
 
-- (RXRenderState*)cardRenderer {
+- (RXRenderState*)cardRenderer
+{
     return _cardRenderer;
 }
 
-- (BOOL)fullscreen {
+- (BOOL)fullscreen
+{
     return _fullscreen;
 }
 
-- (void)toggleFullscreen {
+- (void)toggleFullscreen
+{
     _fullscreen = !_fullscreen;
     [[NSUserDefaults standardUserDefaults] setBool:_fullscreen forKey:@"Fullscreen"];
     
@@ -405,15 +443,18 @@ NSObject <RXWorldProtocol>* g_world = nil;
 
 #pragma mark -
 
-- (RXGameState*)gameState {
+- (RXGameState*)gameState
+{
     return _gameState;
 }
 
-- (void)_activeCardDidChange:(NSNotification*)notification {
+- (void)_activeCardDidChange:(NSNotification*)notification
+{
     // NOTE: WILL RUN ON THE MAIN THREAD
     
     // if we have a new game state to load and we just cleared the active card, do the swap
-    if (![notification object] && _gameStateToLoad) {   
+    if (![notification object] && _gameStateToLoad)
+    {
         // swap the game state
         [_gameState release];
         _gameState = _gameStateToLoad;
@@ -435,16 +476,19 @@ NSObject <RXWorldProtocol>* g_world = nil;
     }
 }
 
-- (void)_loadGameFadeInFinished {
+- (void)_loadGameFadeInFinished
+{
     [(RXCardState*)_cardRenderer showMouseCursor];
 }
 
-- (void)_loadGameFadeOutFinished {
+- (void)_loadGameFadeOutFinished
+{
     [g_worldView fadeInWithDuration:0.5 completionDelegate:self selector:@selector(_loadGameFadeInFinished)];
     [(RXCardState*)_cardRenderer clearActiveCardWaitingUntilDone:NO];
 }
 
-- (void)loadGameState:(RXGameState*)gameState {
+- (void)loadGameState:(RXGameState*)gameState
+{
     _gameStateToLoad = [gameState retain];
     
     // load the stack of the game state's current card to make sure we can actually run and load that save
@@ -462,17 +506,21 @@ NSObject <RXWorldProtocol>* g_world = nil;
 #pragma mark -
 #pragma mark stack management
 
-- (NSDictionary*)stackDescriptorForKey:(NSString*)stackKey {
+- (NSDictionary*)stackDescriptorForKey:(NSString*)stackKey
+{
     return [_stackDescriptors objectForKey:stackKey];
 }
 
-- (RXStack*)activeStackWithKey:(NSString*)stackKey {
+- (RXStack*)activeStackWithKey:(NSString*)stackKey
+{
     return [_activeStacks objectForKey:stackKey];
 }
 
-- (void)_postStackLoadedNotification:(NSString*)stackKey {
+- (void)_postStackLoadedNotification:(NSString*)stackKey
+{
     // WARNING: MUST RUN ON THE MAIN THREAD
-    if (!pthread_main_np()) {
+    if (!pthread_main_np())
+    {
         [self performSelectorOnMainThread:@selector(_postStackLoadedNotification:) withObject:stackKey waitUntilDone:NO];
         return;
     }
@@ -517,20 +565,23 @@ NSObject <RXWorldProtocol>* g_world = nil;
 
 #pragma mark -
 
-- (void)_dumpEngineVariables {
+- (void)_dumpEngineVariables
+{
     OSSpinLockLock(&_engineVariablesLock);
     RXOLog(@"dumping engine variables\n%@", _engineVariables);
     OSSpinLockUnlock(&_engineVariablesLock);
 }
 
-- (id)valueForEngineVariable:(NSString*)path {
+- (id)valueForEngineVariable:(NSString*)path
+{
     OSSpinLockLock(&_engineVariablesLock);
     id value = [_engineVariables valueForKeyPath:path];
     OSSpinLockUnlock(&_engineVariablesLock);
     return value;
 }
 
-- (void)setValue:(id)value forEngineVariable:(NSString*)path {
+- (void)setValue:(id)value forEngineVariable:(NSString*)path
+{
     OSSpinLockLock(&_engineVariablesLock);
     [_engineVariables setValue:value forKeyPath:path];
     [[NSUserDefaults standardUserDefaults] setObject:_engineVariables forKey:@"EngineVariables"];
