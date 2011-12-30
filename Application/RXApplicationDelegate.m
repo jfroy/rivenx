@@ -212,23 +212,6 @@
     return NO;
 }
 
-- (void)_deleteOldDataStore:(id)context
-{
-    NSAutoreleasePool* pool = [NSAutoreleasePool new];
-    
-    NSArray* dirs = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
-    if (![dirs count])
-    {
-        [pool drain];
-        return;
-    }
-    
-    NSString* path = [[dirs objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
-    BZFSRemoveItemAtURL([NSURL fileURLWithPath:path], NULL);
-    
-    [pool drain];
-}
-
 #pragma mark -
 #pragma mark delegation and UI
 
@@ -250,7 +233,15 @@
 - (void)applicationDidFinishLaunching:(NSNotification*)notification
 {
     // delete old world data
-    [NSThread detachNewThreadSelector:@selector(_deleteOldDataStore:) toTarget:self withObject:nil];
+    dispatch_async(QUEUE_LOW, ^(void)
+    {
+        NSArray* dirs = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+        if (![dirs count])
+            return;
+        
+        NSString* path = [[dirs objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
+        BZFSRemoveItemAtURL([NSURL fileURLWithPath:path], NULL);
+    });
     
     // get the path to the saved games directory and create it if it doesn't exists
     NSArray* docsDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
