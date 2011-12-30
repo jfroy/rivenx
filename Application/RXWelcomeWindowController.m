@@ -61,6 +61,16 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     // register for removable media mount notifications
     NSNotificationCenter* ws_notification_center = [[NSWorkspace sharedWorkspace] notificationCenter];
     [ws_notification_center addObserver:self selector:@selector(_removableMediaMounted:) name:NSWorkspaceDidMountNotification object:nil];
+    
+    // nuke everything in the world shared base (i.e. old data)
+    dispatch_async(QUEUE_LOW, ^(void)
+    {
+        NSFileManager* fm = [NSFileManager new];
+        NSArray* contents = [fm contentsOfDirectoryAtURL:[[RXWorld sharedWorld] worldSharedBase] includingPropertiesForKeys:[NSArray array] options:0 error:NULL];
+        for (NSURL* url in contents)
+            BZFSRemoveItemAtURL(url, NULL);
+        
+    });
 }
 
 - (void)windowWillClose:(NSNotification*)notification
