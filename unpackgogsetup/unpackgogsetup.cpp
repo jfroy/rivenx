@@ -3,7 +3,7 @@
 //  unpackgogsetup
 //
 //  Created by Jean-François Roy on 28/12/2011.
-//  Copyright (c) 2011 Apple Inc. All rights reserved.
+//  Copyright (c) 2011. All rights reserved.
 //
 
 #include <array>

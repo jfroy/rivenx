@@ -3,7 +3,6 @@
 //  rivenx
 //
 //  Created by Jean-Francois Roy on 09/10/2010.
-//  Copyright (c) 2010 Apple Inc. All rights reserved.
 //
 
 #ifndef AUTO_SPINLOCK_H
