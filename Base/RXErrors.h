@@ -31,6 +31,7 @@ enum {
     kRXErrFailedToGetFilesystemInformation,
     kRXErrUnusableInstallMedia,
     kRXErrUnusableInstallFolder,
+    kRXErrInstallerGOGSetupUnpackFailed,
 };
 
 #if defined(__OBJC__)

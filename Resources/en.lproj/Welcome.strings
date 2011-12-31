@@ -6,7 +6,7 @@
    Copyright 2010 MacStorm. All rights reserved.
  */
 
-"FOLDER_INSTALL_PANEL_MESSAGE" = "Choose a folder or disc to install Riven from.";
+"INSTALL_FROM_PANEL_MESSAGE" = "Choose a folder or disc to install Riven from. You can select setup_riven.exe from GOG.com as well.";
 
 "INSTALL_FROM_DISC_MESSAGE" = "Do you wish to install Riven from the disc \"%@\"?";
 "INSTALL_FROM_DISC_INFO" = "Riven needs to be installed on your computer before you can play. You will not need to insert your disc afterwards.";
@@ -16,4 +16,10 @@
 "COPY_INSTALL" = "Copy and Install";
 "DIRECT_INSTALL" = "Install";
 
+"INSTALL_FROM_GOG_MESSAGE" = "Do you wish to install Riven from the GOG.com installer?";
+"INSTALL_FROM_GOG_INFO" = "Please note that Riven X is not affiliated with GOG.com. GOG.com may change their installer at any time which will likely break Riven X's ability to install from it.";
+
 "SCANNING_MEDIA" = "Scanning installation media...";
+
+"BUY_FROM_GOG_MESSAGE" = "Installing from the GOG.com edition.";
+"BUY_FROM_GOG_INFO" = "Riven X is able to install the GOG.com Riven for Windows edition. After your purchase and download, click \"Install From...\" and select \"setup_riven.exe\".\n\nRiven X is not affiliated with GOG.com in any way.";

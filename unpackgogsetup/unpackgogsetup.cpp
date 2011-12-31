@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <Block.h>
 
 #include <lzma.h>
 #include <zlib.h>
@@ -342,14 +343,23 @@ class CompressedFileDecompressorLzma
 {
 public:
 
-    CompressedFileDecompressorLzma(int intputFD, off_t offset, size_t compressedSize, int outputFD) :
+    typedef void (^ProgressBlock)(CompressedFileDecompressorLzma& decompressor);
+
+    CompressedFileDecompressorLzma(int intputFD, off_t offset, size_t compressedSize, int outputFD, ProgressBlock progressCallback) :
         _intputFD(intputFD), _storedOffset(offset),
         _ioOffset(offset), _ioBytesLeft(compressedSize + sizeof(StoredLzmaHeader)),
-        _outputFD(outputFD)
+        _outputFD(outputFD),
+        _progressCallback(Block_copy(progressCallback))
     {
     }
     
+    ~CompressedFileDecompressorLzma()
+    {
+        Block_release(_progressCallback);
+    }
+    
     size_t decompress();
+    lzma_stream& get_stream() { return _lzmaStream; }
 
 private:
 
@@ -373,6 +383,7 @@ private:
     size_t _ioBytesLeft;
 
     int _outputFD;
+    ProgressBlock _progressCallback;
 
     lzma_stream _lzmaStream;
 
@@ -438,6 +449,8 @@ void CompressedFileDecompressorLzma::_write_output_buffer()
 
     _lzmaStream.avail_out = OUTPUT_BUFFER_SIZE;
     _lzmaStream.next_out = _lzmaOutputBuffer;
+    
+    _progressCallback(*this);
 }
 
 size_t CompressedFileDecompressorLzma::decompress()
@@ -599,18 +612,14 @@ int main(int argc, const char * argv[])
     for (uint32_t i = 0; i != setupHeader.numFileLocationEntries; ++i)
         next = parse_setup_buffer(next, 70, 0, fileLocationEntries + i);
     
+    std::vector<uint32_t> fileEntryIndicesToUnpack;
     for (uint32_t i = 0; i != setupHeader.numFileEntries; ++i)
     {
         StoredInnoFileEntry& fe = fileEntries[i];
         std::string& filename = fileEntriesStrings[i][1];
         
+//        StoredInnoFileLocationEntry& fle = fileLocationEntries[fe.locationEntry];        
 //        std::cout << i << ": " << filename << "\n";
-        
-        if (fe.locationEntry == UINT32_MAX)
-            continue;
-        
-        StoredInnoFileLocationEntry& fle = fileLocationEntries[fe.locationEntry];
-        
 //        std::cout << "    " << "size=" << fle.originalSize << "\n";
 //        std::cout << "    " << "compressed size=" << fle.chunkCompressedSize << "\n";
 //        std::cout << "    " << "first slice=" << fle.firstSlice << " last slice=" << fle.lastSlice << "\n";
@@ -624,12 +633,26 @@ int main(int argc, const char * argv[])
 //            std::cout << "encrypted ";
 //        std::cout << "\n\n";
         
+        if (fe.locationEntry == UINT32_MAX)
+            continue;
+        
         // only decompress MHK files
         if (filename.size() < 4)
             continue;
         char* extension = &filename[filename.size() - 4];
         if (extension[0] != '.' || tolower(extension[1]) != 'm' || tolower(extension[2]) != 'h' || tolower(extension[3]) != 'k')
             continue;
+        
+        fileEntryIndicesToUnpack.push_back(i);
+    }
+    
+    std::cout << fileEntryIndicesToUnpack.size() << std::endl;
+    
+    for (auto i : fileEntryIndicesToUnpack)
+    {
+        StoredInnoFileEntry& fe = fileEntries[i];
+        std::string& filename = fileEntriesStrings[i][1];
+        StoredInnoFileLocationEntry& fle = fileLocationEntries[fe.locationEntry];
         
         // use the last component of the filename for the output
         const char* filename_c = filename.c_str();
@@ -644,10 +667,23 @@ int main(int argc, const char * argv[])
         
         std::cout << filenameLastComponent << std::endl;
         
-        int outputFD = open(filenameLastComponent, O_CREAT | O_WRONLY, 0600);
+        int outputFD = open(filenameLastComponent, O_CREAT | O_WRONLY, 0664);
         assert(outputFD != -1);
         
-        auto decompressor = std::unique_ptr<CompressedFileDecompressorLzma>(new CompressedFileDecompressorLzma(fd, INNO_SETUP_FILE_DATA_OFFSET + fle.startOffset, fle.chunkCompressedSize, outputFD));
+        __block float nextThreshold = 0.1f;
+        CompressedFileDecompressorLzma::ProgressBlock outputProgress = ^(CompressedFileDecompressorLzma& decompressor)
+        {
+            float progress = std::min(1.0f, (float)decompressor.get_stream().total_out / fle.originalSize);
+            if (progress >= nextThreshold)
+            {
+                std::cout << "<< " << progress << std::endl;
+                nextThreshold = std::min(1.0f, progress + 0.1f);
+            }
+        };
+        
+        auto decompressor = std::unique_ptr<CompressedFileDecompressorLzma>(new CompressedFileDecompressorLzma(
+            fd, INNO_SETUP_FILE_DATA_OFFSET + fle.startOffset, fle.chunkCompressedSize, outputFD, outputProgress));
+        
         ssize_t bytesWritten = decompressor->decompress();
         assert((uint64_t)bytesWritten == fle.originalSize);
         close(outputFD);

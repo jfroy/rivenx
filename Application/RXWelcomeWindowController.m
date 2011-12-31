@@ -6,14 +6,15 @@
 //  Copyright 2005-2010 MacStorm. All rights reserved.
 //
 
-#import "Application/RXWelcomeWindowController.h"
+#import "RXWelcomeWindowController.h"
 
-#import "Base/RXErrorMacros.h"
+#import "RXErrorMacros.h"
 
-#import "Engine/RXArchiveManager.h"
-#import "Engine/RXWorld.h"
+#import "RXArchiveManager.h"
+#import "RXGOGSetupInstaller.h"
+#import "RXWorld.h"
 
-#import "Utilities/BZFSUtilities.h"
+#import "BZFSUtilities.h"
 
 #import <AppKit/NSAlert.h>
 #import <AppKit/NSApplication.h>
@@ -30,19 +31,15 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     return [(NSString*)lhs compare:rhs options:NSCaseInsensitiveSearch | NSNumericSearch];
 }
 
-@interface RXWelcomeWindowController (RXWelcomeWindowControllerPrivate)
-- (void)_initializeInstallationUI;
-- (void)_showInstallationUI;
-- (void)_dismissInstallationUI;
-@end
-
 @implementation RXWelcomeWindowController
 
-- (void)dealloc
+- (void)_deleteSharedWorldContent
 {
-    [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
-    
-    [super dealloc];
+    NSFileManager* fm = [NSFileManager new];
+    NSArray* contents = [fm contentsOfDirectoryAtURL:[[RXWorld sharedWorld] worldSharedBase] includingPropertiesForKeys:[NSArray array] options:0 error:NULL];
+    for (NSURL* url in contents)
+        BZFSRemoveItemAtURL(url, NULL);
+    [fm release];
 }
 
 - (void)windowWillLoad
@@ -62,14 +59,13 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     NSNotificationCenter* ws_notification_center = [[NSWorkspace sharedWorkspace] notificationCenter];
     [ws_notification_center addObserver:self selector:@selector(_removableMediaMounted:) name:NSWorkspaceDidMountNotification object:nil];
     
+    // scan for the GOG.com installer in the user's Downloads directory
+    [self _scanDownloads];
+    
     // nuke everything in the world shared base (i.e. old data)
     dispatch_async(QUEUE_LOW, ^(void)
     {
-        NSFileManager* fm = [NSFileManager new];
-        NSArray* contents = [fm contentsOfDirectoryAtURL:[[RXWorld sharedWorld] worldSharedBase] includingPropertiesForKeys:[NSArray array] options:0 error:NULL];
-        for (NSURL* url in contents)
-            BZFSRemoveItemAtURL(url, NULL);
-        [fm release];
+        [self _deleteSharedWorldContent];
     });
 }
 
@@ -77,17 +73,62 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 {
     if (![[RXWorld sharedWorld] isInstalled])
         [NSApp terminate:nil];
+    
+    // stop watching removable media
+    [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
+    
+    // stop watching the downloads folder
+    if (_downloadsFSEventStream)
+    {
+        FSEventStreamStop(_downloadsFSEventStream);
+        FSEventStreamInvalidate(_downloadsFSEventStream);
+        FSEventStreamRelease(_downloadsFSEventStream);
+    }
+    [_downloadsFolderPath release];
+    
+    [self _dismissInstallationUI];
+    [self _dismissBuyFromGOGAlert];
 }
 
 - (IBAction)buyRiven:(id)sender
 {
-    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.google.com/products/catalog?hl=en&cid=11798540492054256128&sa=title"]];
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.gog.com/en/gamecard/riven_the_sequel_to_myst"]];
+    
+    [_gogBuyAlert release];
+    _gogBuyAlert = [NSAlert new];
+    
+    [_gogBuyAlert setMessageText:NSLocalizedStringFromTable(@"BUY_FROM_GOG_MESSAGE", @"Welcome", NULL)];
+    [_gogBuyAlert setInformativeText:NSLocalizedStringFromTable(@"BUY_FROM_GOG_INFO", @"Welcome", NULL)];
+    
+    [_gogBuyAlert addButtonWithTitle:@"OK"];
+    
+    [_gogBuyAlert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:nil contextInfo:NULL];
+}
+
+- (BOOL)panel:(id)sender shouldEnableURL:(NSURL*)url
+{
+    NSString* path = [[url filePathURL] path];
+    if (!path)
+        return NO;
+    
+    NSFileManager* fm = [NSFileManager defaultManager];
+    BOOL isDir;
+    [fm fileExistsAtPath:path isDirectory:&isDir];
+    
+    if (isDir)
+    {
+        return ![[NSWorkspace sharedWorkspace] isFilePackageAtPath:path];
+    }
+    else if ([[path lastPathComponent] isEqualToString:@"setup_riven.exe"])
+        return YES;
+    else
+        return NO;
 }
 
 - (IBAction)installFromFolder:(id)sender
 {
     NSOpenPanel* panel = [NSOpenPanel openPanel];
-    [panel setCanChooseFiles:NO];
+    [panel setCanChooseFiles:YES];
     [panel setCanChooseDirectories:YES];
     [panel setAllowsMultipleSelection:NO];
     
@@ -96,9 +137,11 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     [panel setCanSelectHiddenExtension:NO];
     [panel setTreatsFilePackagesAsDirectories:NO];
     
-    [panel setMessage:NSLocalizedStringFromTable(@"FOLDER_INSTALL_PANEL_MESSAGE", @"Welcome", NULL)];
+    [panel setMessage:NSLocalizedStringFromTable(@"INSTALL_FROM_PANEL_MESSAGE", @"Welcome", NULL)];
     [panel setPrompt:NSLocalizedString(@"CHOOSE", NULL)];
     [panel setTitle:NSLocalizedString(@"CHOOSE", NULL)];
+    
+    [panel setDelegate:self];
     
     [panel beginSheetModalForWindow:[self window] completionHandler:^(NSInteger result)
     {
@@ -108,6 +151,17 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
             return;
         
         NSString* path = [[panel URL] path];
+        
+        NSFileManager* fm = [NSFileManager defaultManager];
+        BOOL isDir;
+        [fm fileExistsAtPath:path isDirectory:&isDir];
+        
+        if (!isDir)
+        {
+            [panel orderOut:self];
+            [self _offerToInstallFromGOGInstaller:[NSDictionary dictionaryWithObject:[panel URL] forKey:@"gog_installer"]];
+            return;
+        }
         
         BOOL removable, writable, unmountable;
         NSString* description, *fsType;
@@ -244,9 +298,14 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     [NSApp sendAction:@selector(newDocument:) to:nil from:self];
 }
 
-- (void)_runInstallerWithMountPaths:(NSDictionary*)mount_paths {
+- (void)_runInstallerWithMountPaths:(NSDictionary*)mount_paths
+{
     // create an installer
-    installer = [[RXInstaller alloc] initWithMountPaths:mount_paths mediaProvider:self];
+    NSURL* gogSetupURL = [mount_paths objectForKey:@"gog_installer"];
+    if (gogSetupURL == nil)
+        installer = [[RXMediaInstaller alloc] initWithMountPaths:mount_paths mediaProvider:self];
+    else
+        installer = [[RXGOGSetupInstaller alloc] initWithGOGSetupURL:gogSetupURL];
     
     // setup the basic installation UI
     [self _initializeInstallationUI];
@@ -270,25 +329,26 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     [installer removeObserver:self forKeyPath:@"progress"];
     [installer release], installer = nil;
     
-    // if the installation was successful, set a flag in our defaults informing us
-    // that we are installed and kick up the game; otherwise, let the application
-    // handle the error
     if (did_install)
     {
+        // mark ourselves as installed
         [[RXWorld sharedWorld] setIsInstalled:YES];
+        
+        // close the welcome window
         [self close];
+        
+        // begin a new game on the next event cycle
         [self performSelector:@selector(_beginNewGame) withObject:nil afterDelay:0.0];
     }
     else
     {
-        // delete the shared base directory's content
-        NSString* shared_base = [[(RXWorld*)g_world worldSharedBase] path];
-        NSArray* content = BZFSContentsOfDirectory(shared_base, NULL);
-        NSEnumerator* content_e = [content objectEnumerator];
-        NSString* dir;
-        while ((dir = [content_e nextObject]))
-            BZFSRemoveItemAtURL([NSURL fileURLWithPath:[shared_base stringByAppendingPathComponent:dir]], NULL);
+        // nuke everything in the world shared base
+        dispatch_async(QUEUE_LOW, ^(void)
+        {
+            [self _deleteSharedWorldContent];
+        });
         
+        // if the installation failed because of an error (as opposed to cancellation), display the error to the user
         if (!([[error domain] isEqualToString:RXErrorDomain] && [error code] == kRXErrInstallerCancelled))
             [NSApp presentError:error];
     }
@@ -319,6 +379,18 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     waitedOnDisc = nil;
 }
 
+- (void)_dismissBuyFromGOGAlert
+{
+    // dismiss the GOG.com alert (if present)
+    if (_gogBuyAlert)
+    {
+        [NSApp endSheet:[_gogBuyAlert window] returnCode:0];
+        [[_gogBuyAlert window] orderOut:self];
+        [_gogBuyAlert release];
+        _gogBuyAlert = nil;
+    }
+}
+
 - (void)_offerToInstallFromDiscAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context
 {
     alertOrPanelCurrentlyActive = NO;
@@ -342,8 +414,9 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     if (installer || [[RXWorld sharedWorld] isInstalled] || alertOrPanelCurrentlyActive)
         return;
     
-    // dismiss the installation UI to close the "scanning media" panel
+    // dismiss the installation UI to close the "scanning media" alert and the buy from GOG alert
     [self _dismissInstallationUI];
+    [self _dismissBuyFromGOGAlert];
     
     NSString* path = [mount_paths objectForKey:@"path"];
     
@@ -351,7 +424,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     if (!localized_mount_name)
         localized_mount_name = [path lastPathComponent];
     
-    NSAlert* alert = [[[NSAlert alloc] init] autorelease];
+    NSAlert* alert = [[NSAlert new] autorelease];
     [alert setMessageText:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALL_FROM_DISC_MESSAGE", @"Welcome", NULL), localized_mount_name]];
     [alert setInformativeText:NSLocalizedStringFromTable(@"INSTALL_FROM_DISC_INFO", @"Welcome", NULL)];
     
@@ -396,8 +469,9 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     if (installer || [[RXWorld sharedWorld] isInstalled] || alertOrPanelCurrentlyActive)
         return;
     
-    // dismiss the installation UI to close the "scanning media" panel
+    // dismiss the installation UI to close the "scanning media" alert and the buy from GOG alert
     [self _dismissInstallationUI];
+    [self _dismissBuyFromGOGAlert];
     
     NSString* path = [mount_paths objectForKey:@"path"];
     
@@ -405,7 +479,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     if (!localized_mount_name)
         localized_mount_name = [path lastPathComponent];
     
-    NSAlert* alert = [[[NSAlert alloc] init] autorelease];
+    NSAlert* alert = [[NSAlert new] autorelease];
     [alert setMessageText:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALL_FROM_FOLDER_MESSAGE", @"Welcome", NULL), localized_mount_name]];
     [alert setInformativeText:NSLocalizedStringFromTable(@"INSTALL_FROM_FOLDER_INFO", @"Welcome", NULL)];
     
@@ -414,6 +488,28 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     [alert addButtonWithTitle:NSLocalizedString(@"CANCEL", NULL)];
     
     [alert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:@selector(_offerToInstallFromFolderAlertDidEnd:returnCode:contextInfo:) contextInfo:[mount_paths retain]];
+    alertOrPanelCurrentlyActive = YES;
+}
+
+- (void)_offerToInstallFromGOGInstaller:(NSDictionary*)mount_paths
+{
+    // do nothing if there is already an active installer or we're already installed (e.g. an installer finsihed)
+    // or there is some panel or alert already being displayed
+    if (installer || [[RXWorld sharedWorld] isInstalled] || alertOrPanelCurrentlyActive)
+        return;
+    
+    // dismiss the installation UI to close the "scanning media" alert and the buy from GOG alert
+    [self _dismissInstallationUI];
+    [self _dismissBuyFromGOGAlert];
+    
+    NSAlert* alert = [[NSAlert new] autorelease];
+    [alert setMessageText:NSLocalizedStringFromTable(@"INSTALL_FROM_GOG_MESSAGE", @"Welcome", NULL)];
+    [alert setInformativeText:NSLocalizedStringFromTable(@"INSTALL_FROM_GOG_INFO", @"Welcome", NULL)];
+    
+    [alert addButtonWithTitle:NSLocalizedString(@"INSTALL", NULL)];
+    [alert addButtonWithTitle:NSLocalizedString(@"CANCEL", NULL)];
+    
+    [alert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:@selector(_offerToInstallFromDiscAlertDidEnd:returnCode:contextInfo:) contextInfo:[mount_paths retain]];
     alertOrPanelCurrentlyActive = YES;
 }
 
@@ -642,6 +738,77 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
         NSNotification* notification = [NSNotification notificationWithName:NSWorkspaceDidMountNotification object:nil userInfo:[NSDictionary dictionaryWithObject:mount_path forKey:@"NSDevicePath"]];
         [self _removableMediaMounted:notification];
     }
+}
+
+#pragma mark GOG.com installer
+
+typedef void (^FSEventsBlock)(ConstFSEventStreamRef streamRef, size_t numEvents, void* eventPaths, const FSEventStreamEventFlags eventFlags[], const FSEventStreamEventId eventIds[]);
+
+static void SetupFSEventStreamCallbackWithBlock(FSEventStreamContext* context, FSEventsBlock block)
+{
+    memset(context, 0, sizeof(FSEventStreamContext));
+    context->info = [block copy];
+    context->retain = (CFAllocatorRetainCallBack)_Block_copy;
+    context->release = (CFAllocatorReleaseCallBack)_Block_release;
+}
+
+static void FSEventsBlockCallback(ConstFSEventStreamRef streamRef, void* clientCallBackInfo, size_t numEvents, void* eventPaths, const FSEventStreamEventFlags eventFlags[], const FSEventStreamEventId eventIds[])
+{
+    FSEventsBlock b = (FSEventsBlock)clientCallBackInfo;
+    b(streamRef, numEvents, eventPaths, eventFlags, eventIds);
+}
+
+- (void)_scanDownloadFolderForGOGInstaller
+{
+    NSFileManager* fm = [NSFileManager new];
+    NSArray* contents = [fm contentsOfDirectoryAtURL:[NSURL fileURLWithPath:_downloadsFolderPath isDirectory:YES] includingPropertiesForKeys:[NSArray array] options:0 error:NULL];
+    BOOL found = NO;
+    
+    for (NSURL* url in contents)
+    {
+        if ([[url lastPathComponent] isEqualToString:@"setup_riven.exe"])
+        {
+            if (_gogInstallerFoundInDownloadsFolder == NO)
+                [self _offerToInstallFromGOGInstaller:[NSDictionary dictionaryWithObject:url forKey:@"gog_installer"]];
+            
+            found = YES;
+            break;
+        }
+    }
+    
+    _gogInstallerFoundInDownloadsFolder = found;
+    [fm release];
+}
+
+- (void)_scanDownloads
+{
+    NSArray* dirs = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory, NSUserDomainMask, YES);
+    if (![dirs count])
+        return;
+    
+    _downloadsFolderPath = [dirs objectAtIndex:0];
+    NSString* resolved = [[[NSFileManager new] autorelease] destinationOfSymbolicLinkAtPath:_downloadsFolderPath error:NULL];
+    if (resolved)
+        _downloadsFolderPath = resolved;
+    [_downloadsFolderPath retain];
+    
+    
+    FSEventStreamContext context;
+    SetupFSEventStreamCallbackWithBlock(&context, ^(ConstFSEventStreamRef streamRef, size_t numEvents, void* eventPaths, const FSEventStreamEventFlags eventFlags[], const FSEventStreamEventId eventIds[])
+    {
+        [self _scanDownloadFolderForGOGInstaller];
+    });
+    
+    _downloadsFSEventStream = FSEventStreamCreate(
+        kCFAllocatorDefault,
+        FSEventsBlockCallback, &context,
+        (CFArrayRef)[NSArray arrayWithObject:_downloadsFolderPath],
+        kFSEventStreamEventIdSinceNow, 2.0, kFSEventStreamCreateFlagNoDefer | kFSEventStreamCreateFlagIgnoreSelf);
+    FSEventStreamScheduleWithRunLoop(_downloadsFSEventStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+    FSEventStreamStart(_downloadsFSEventStream);
+    
+    // do a scan on the next run loop cycle
+    [self performSelector:@selector(_scanDownloadFolderForGOGInstaller) withObject:nil afterDelay:1.0];
 }
 
 @end

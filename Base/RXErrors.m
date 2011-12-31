@@ -40,6 +40,7 @@ NSString* const RXErrorDomain = @"RXErrorDomain";
             case kRXErrFailedToGetFilesystemInformation: return @"Riven X failed to obtain filesystem information for the selected media.";
             case kRXErrUnusableInstallMedia: return @"Riven X cannot install from the selected disc because it does not appear to be a Riven disc.";
             case kRXErrUnusableInstallFolder: return @"Riven X cannot install from the selected folder because it does not appear to contain Riven.";
+            case kRXErrInstallerGOGSetupUnpackFailed: return @"Riven X failed to unpack the GOG.com Riven installer.";
             
             default: return [NSString stringWithFormat:@"Unknown error code (%lu).", code];
         }
