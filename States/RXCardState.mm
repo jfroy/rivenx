@@ -3170,9 +3170,9 @@ exit_flush_tasks:
     else if ([event deltaX] > 0.0)
         eligible_names = [NSArray arrayWithObjects:@"left", @"afl", nil];
     else if ([event deltaY] < 0.0)
-        eligible_names = [NSArray arrayWithObjects:@"up", nil];
-    else if ([event deltaY] > 0.0)
         eligible_names = [NSArray arrayWithObjects:@"down", nil];
+    else if ([event deltaY] > 0.0)
+        eligible_names = [NSArray arrayWithObjects:@"up", nil];
     else
         eligible_names = nil;
     
