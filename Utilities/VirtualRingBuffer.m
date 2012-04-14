@@ -74,7 +74,7 @@ static void* allocateVirtualBuffer(size_t bufferLength) {
     
     if (realAddress != originalAddress) {
 #if defined(DEBUG)
-        RXLog(kRXLoggingAudio, kRXLoggingLevelDebug, @"allocateVirtualBuffer: vm_allocate 2nd time didn't return same address (%p vs %p)", originalAddress, realAddress);
+        RXLog(kRXLoggingAudio, kRXLoggingLevelDebug, @"allocateVirtualBuffer: vm_allocate 2nd time didn't return same address (%u vs %u)", originalAddress, realAddress);
 #endif
         goto errorReturn;
     }
@@ -96,7 +96,7 @@ static void* allocateVirtualBuffer(size_t bufferLength) {
     }
     if (memoryEntryLength != bufferLength) {
 #if defined(DEBUG)
-        RXLog(kRXLoggingAudio, kRXLoggingLevelDebug, @"mach_make_memory_entry: size changed (from %0x to %0x)", bufferLength, memoryEntryLength);
+        RXLog(kRXLoggingAudio, kRXLoggingLevelDebug, @"mach_make_memory_entry: size changed (from %0zx to %0x)", bufferLength, memoryEntryLength);
 #endif
         goto errorReturn;
     }
@@ -115,7 +115,7 @@ static void* allocateVirtualBuffer(size_t bufferLength) {
     }
     if (virtualAddress != realAddress + bufferLength) {
 #if defined(DEBUG)
-        RXLog(kRXLoggingAudio, kRXLoggingLevelDebug, @"vm_map: didn't return correct address (%p vs %p)", realAddress + bufferLength, virtualAddress);
+        RXLog(kRXLoggingAudio, kRXLoggingLevelDebug, @"vm_map: didn't return correct address (%lu vs %u)", realAddress + bufferLength, virtualAddress);
 #endif
         goto errorReturn;
     }
@@ -175,7 +175,7 @@ static void deallocateVirtualBuffer(void* buffer, size_t bufferLength)
 }
 
 - (NSString*)description {
-    return [NSString stringWithFormat:@"%@ {length = %u}", [super description], bufferLength];
+    return [NSString stringWithFormat:@"%@ {length = %zu}", [super description], bufferLength];
 }
 
 - (void)empty {

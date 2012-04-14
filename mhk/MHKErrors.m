@@ -33,7 +33,7 @@ NSString *const MHKErrorDomain = @"MHKErrorDomain";
             case errInvalidBitmapCompression: return @"Invalid bitmap compression.";
             case errInvalidBitmapCompressorInstruction: return @"Invalid bitmap compression instruction.";
             
-            default: return [NSString stringWithFormat:@"Unknown error code (%lu).", code];
+            default: return [NSString stringWithFormat:@"Unknown error code (%u).", code];
         }
     }
     

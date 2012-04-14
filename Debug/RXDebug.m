@@ -49,7 +49,7 @@ void rx_print_exception_backtrace(NSException* e)
             if ([stack_p isKindOfClass:[NSString class]])
                 [args addObject:stack_p];
             else
-                [args addObject:[NSString stringWithFormat:@"0x%x", [stack_p unsignedLongValue]]];
+                [args addObject:[NSString stringWithFormat:@"0x%lx", [stack_p unsignedLongValue]]];
         }
         
         [ls setLaunchPath:@"/usr/bin/atos"];

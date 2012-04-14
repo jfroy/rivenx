@@ -1894,7 +1894,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 - (void)_opcode_fadeAmbientSounds:(const uint16_t)argc arguments:(const uint16_t*)argv {
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@fading out ambient sounds", logPrefix, argv[0]);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@fading out ambient sounds", logPrefix);
 #endif
     
     // synthesize and activate an empty sound group
@@ -2090,7 +2090,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 
 #if defined(DEBUG)
     if (!_disableScriptLogging)
-        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record %hu [code=%hu]", logPrefix, argv[0], k);
+        RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating mlst record %hu [code=%lu]", logPrefix, argv[0], k);
 #endif
     
     // update the code to movie map
@@ -5776,7 +5776,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
         return;
     
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing upper stairs sunners movie {", logPrefix, _card);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing upper stairs sunners movie {", logPrefix);
     [logPrefix appendString:@"    "];
 #endif
     
@@ -5819,7 +5819,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
         return;
     
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing mid stairs sunners movie {", logPrefix, _card);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing mid stairs sunners movie {", logPrefix);
     [logPrefix appendString:@"    "];
 #endif
     
@@ -5869,7 +5869,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
         return;
     
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing lower stairs sunners movie {", logPrefix, _card);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing lower stairs sunners movie {", logPrefix);
     [logPrefix appendString:@"    "];
 #endif
     
@@ -5912,7 +5912,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
         return;
     
 #if defined(DEBUG)
-    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing beach sunners movie {", logPrefix, _card);
+    RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@playing beach sunners movie {", logPrefix);
     [logPrefix appendString:@"    "];
 #endif
     

@@ -314,7 +314,7 @@ init_failure:
             [[error userInfo] objectForKey:@"GLCompileLog"],
             [[error userInfo] objectForKey:@"GLShaderSource"]);
     else if ([[error domain] isEqualToString:GLShaderLinkErrorDomain])
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"%@ shader program failed to link:\n%@",
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"program failed to link:\n%@",
             [[error userInfo] objectForKey:@"GLLinkLog"]);
     else
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"failed to create shader program: %@", error);
@@ -1220,7 +1220,7 @@ init_failure:
     // queue the transition
     [_transitionQueue addObject:transition];
 #if defined(DEBUG)
-    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"queued transition %@ [queue depth=%lu]", transition, [_transitionQueue count]);
+    RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"queued transition %@ [queue depth=%u]", transition, [_transitionQueue count]);
 #endif
 }
 
@@ -1253,7 +1253,7 @@ init_failure:
         [_transitionQueue removeAllObjects];
         
 #if defined(DEBUG)
-        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"dequeued transition %@ [queue depth=%lu]",
+        RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"dequeued transition %@ [queue depth=%u]",
             _back_render_state->transition, [_transitionQueue count]);
 #endif
     }
@@ -2283,7 +2283,7 @@ init_failure:
         if (t >= 1.0f) {
 #if defined(DEBUG)
             RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"transition %@ completed, queue depth=%lu",
-                _front_render_state->transition, [_transitionQueue count]);
+                _front_render_state->transition, (unsigned long)[_transitionQueue count]);
 #endif
             [_front_render_state->transition release];
             _front_render_state->transition = nil;
