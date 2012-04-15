@@ -219,7 +219,7 @@ void BlockReaderLzma::_read_header()
     assert(_ioBytesRead == sizeof(StoredBlockHeader));
     _ioOffset += _ioBytesRead;
     
-    uint32_t checksum = crc32(crc32(0L, Z_NULL, 0), (uint8_t*)&_header.innerHeader, sizeof(StoredBlockInnerHeader));
+    uint32_t checksum = static_cast<uint32_t>(crc32(crc32(0L, Z_NULL, 0), (uint8_t*)&_header.innerHeader, sizeof(StoredBlockInnerHeader)));
     assert(checksum == _header.innerHeaderCrc32);
     
     _ioBytesLeft = _header.innerHeader.blockPayloadStoreSize;
@@ -230,15 +230,15 @@ void BlockReaderLzma::_read_chunk()
     assert(_chunk.available() == 0u);
     
     _chunk._available = std::min((size_t)StoredChunk::MAX_CHUNK_PAYLOAD_SIZE, _ioBytesLeft - sizeof(uint32_t));
-    uint32_t bytesToRead = _chunk._available + sizeof(uint32_t);
+    size_t bytesToRead = _chunk._available + sizeof(uint32_t);
     assert(bytesToRead >= sizeof(uint32_t));
     
     _ioBytesRead = pread(_fd, &_chunk._chunk, bytesToRead, _ioOffset);
-    assert(_ioBytesRead == bytesToRead);
+    assert(_ioBytesRead == static_cast<ssize_t>(bytesToRead));
     _ioOffset += _ioBytesRead;
     _ioBytesLeft -= _ioBytesRead;
     
-    uint32_t checksum = crc32(crc32(0L, Z_NULL, 0), (uint8_t*)_chunk._chunk.payload, _chunk._available);
+    uint32_t checksum = static_cast<uint32_t>(crc32(crc32(0L, Z_NULL, 0), (uint8_t*)_chunk._chunk.payload, static_cast<uint32_t>(_chunk._available)));
     assert(checksum == _chunk._chunk.payloadCrc32);
     
     _chunk._offset = 0;
