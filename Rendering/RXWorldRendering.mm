@@ -82,11 +82,19 @@
     NSWindow* window = [self _renderingWindow];
     NSWindow* oldWindow = [_worldView window];
     
+    CGLContextObj renderContext = [_worldView renderContext];
+    CGLContextObj loadContext = [_worldView loadContext];
+    CGLLockContext(renderContext);
+    CGLLockContext(loadContext);
+    
     [oldWindow orderOut:self];
     [_worldView removeFromSuperviewWithoutNeedingDisplay];
     
     [window setContentView:_worldView];
     [window makeKeyAndOrderFront:self];
+    
+    CGLUnlockContext(renderContext);
+    CGLUnlockContext(loadContext);
 }
 
 - (void)windowWillClose:(NSNotification*)notification
