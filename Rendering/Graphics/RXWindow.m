@@ -11,11 +11,25 @@
 
 @implementation RXWindow
 
-- (BOOL)canBecomeKeyWindow {
+@synthesize
+    constrainingToScreenSuspended;
+
+
+- (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen*)screen
+{
+    if (constrainingToScreenSuspended)
+        return frameRect;
+    else
+        return [super constrainFrameRect:frameRect toScreen:screen];
+}
+
+- (BOOL)canBecomeKeyWindow
+{
     return YES;
 }
 
-- (BOOL)canBecomeMainWindow {
+- (BOOL)canBecomeMainWindow
+{
     return YES;
 }
 

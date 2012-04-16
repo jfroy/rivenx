@@ -1155,7 +1155,8 @@ major_number.minor_number major_number.minor_number.release_number
         [completionDelegate performSelector:completionSel];
 }
 
-- (void)_render:(const CVTimeStamp*)outputTime {
+- (void)_render:(const CVTimeStamp*)outputTime
+{
     if (_tornDown)
         return;
     
@@ -1168,7 +1169,8 @@ major_number.minor_number major_number.minor_number.release_number
     // clear to black
     glClear(GL_COLOR_BUFFER_BIT);
     
-    if (_cardRenderer.target) {
+    if (_cardRenderer.target)
+    {
         // bind the card FBO, clear the color buffer and call down to the card renderer
         glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _cardFBO);
         glClear(GL_COLOR_BUFFER_BIT); glReportError();
@@ -1192,7 +1194,8 @@ major_number.minor_number major_number.minor_number.release_number
         _cardRenderer.renderInMainRT.imp(_cardRenderer.target, _cardRenderer.render.sel, cgl_ctx);
         
         // if we're running a fade animation, draw a suitably opaque black quad on top of everything
-        if (_fadeInterpolator || _fadeValue < 1.0f) {
+        if (_fadeInterpolator || _fadeValue < 1.0f)
+        {
             if (_fadeInterpolator)
                 _fadeValue = [_fadeInterpolator value];
             
@@ -1211,7 +1214,8 @@ major_number.minor_number major_number.minor_number.release_number
             glUseProgram(0);
             [gl_state bindVertexArrayObject:0];
             
-            if ([_fadeInterpolator isDone]) {
+            if ([_fadeInterpolator isDone])
+            {
                 id<RXInterpolator> interpolator = _fadeInterpolator;
                 _fadeInterpolator = nil;
                 [self performSelectorOnMainThread:@selector(_handleFadeCompletion:) withObject:interpolator waitUntilDone:NO];
@@ -1229,8 +1233,12 @@ major_number.minor_number major_number.minor_number.release_number
     CGLUnlockContext(cgl_ctx);
 }
 
-- (void)drawRect:(NSRect)rect {
-
+- (void)drawRect:(NSRect)rect
+{
+    CVTimeStamp ts;
+    CVDisplayLinkGetCurrentTime(_displayLink, &ts);
+    
+    [self _render:&ts];
 }
 
 @end

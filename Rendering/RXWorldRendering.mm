@@ -16,6 +16,9 @@
 
 #import "States/RXCardState.h"
 
+#import "Utilities/platform_info.h"
+#import "Utilities/NSString+RXStringAdditions.h"
+
 
 @implementation RXWorld (RXWorldRendering)
 
@@ -55,6 +58,14 @@
         styleMask:NSTitledWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask backing:NSBackingStoreBuffered defer:YES screen:screen];
     
     [_window setLevel:NSNormalWindowLevel];
+    [_window setCanHide:YES];
+
+    bool preLion = [[copy_system_version() autorelease] rx_versionIsOlderThan:@"10.7"];
+    NSWindowCollectionBehavior behavior = NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
+    if (!preLion)
+        behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
+    [_window setCollectionBehavior:behavior];
+    
     NSString* encoded_frame = [[NSUserDefaults standardUserDefaults] objectForKey:@"WindowFrame"];
     if (encoded_frame)
     {
@@ -67,7 +78,7 @@
         [_window setFrameOrigin:NSMakePoint(screen_frame.origin.x + (screen_frame.size.width / 2) - ([_window frame].size.width / 2),
                                             screen_frame.origin.y + (screen_frame.size.height / 2) - ([_window frame].size.height / 2))];
     }
-    [_window setCanHide:YES];
+    
     [self _initializeRenderingWindow:_window];
 }
 
@@ -76,25 +87,165 @@
     return (_fullscreen) ? _fullscreenWindow : _window;
 }
 
-- (void)_toggleFullscreen
+- (void)_handleFullscreeenModeChange
 {
+    [[NSUserDefaults standardUserDefaults] setBool:_fullscreen forKey:@"Fullscreen"];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"RXFullscreenModeChangeNotification" object:nil userInfo:nil];
+}
+
+- (void)_toggleFullscreenLegacyPath
+{
+    _fullscreen = !_fullscreen;
+
     // the _fullscreen attribute has been updated when this is called
     NSWindow* window = [self _renderingWindow];
     NSWindow* oldWindow = [_worldView window];
-    
+
+    [oldWindow orderOut:self];
+
     CGLContextObj renderContext = [_worldView renderContext];
     CGLContextObj loadContext = [_worldView loadContext];
     CGLLockContext(renderContext);
     CGLLockContext(loadContext);
-    
-    [oldWindow orderOut:self];
+
+    CVDisplayLinkStop([_worldView displayLink]);
+
     [_worldView removeFromSuperviewWithoutNeedingDisplay];
-    
     [window setContentView:_worldView];
-    [window makeKeyAndOrderFront:self];
-    
+
     CGLUnlockContext(renderContext);
     CGLUnlockContext(loadContext);
+
+    [window makeKeyAndOrderFront:self];
+
+    if (_fullscreen)
+        [self windowDidEnterFullScreen:nil];
+    else
+        [self windowDidExitFullScreen:nil];
+
+    CVDisplayLinkStart([_worldView displayLink]);
+}
+
+- (NSSize)window:(NSWindow*)window willUseFullScreenContentSize:(NSSize)proposedSize
+{
+    return proposedSize;
+}
+
+- (NSApplicationPresentationOptions)window:(NSWindow*)window willUseFullScreenPresentationOptions:(NSApplicationPresentationOptions)proposedOptions
+{
+    return NSApplicationPresentationFullScreen | NSApplicationPresentationHideDock | NSApplicationPresentationAutoHideMenuBar |
+        NSApplicationPresentationDisableAppleMenu | NSApplicationPresentationDisableSessionTermination | NSApplicationPresentationDisableHideApplication;
+}
+
+- (NSArray*)customWindowsToEnterFullScreenForWindow:(NSWindow*)window
+{
+    return [NSArray arrayWithObject:window];
+}
+
+- (void)window:(NSWindow*)window startCustomAnimationToEnterFullScreenWithDuration:(NSTimeInterval)duration
+{
+    CVDisplayLinkStop([_worldView displayLink]);
+
+    NSInteger previousWindowLevel = [window level];
+    [window setLevel:(NSMainMenuWindowLevel + 1)];
+
+    NSString* encoded_frame = NSStringFromRect([window frame]);
+    [[NSUserDefaults standardUserDefaults] setObject:encoded_frame forKey:@"WindowFrame"];
+
+    [window setStyleMask:([window styleMask] | NSFullScreenWindowMask)];
+
+    NSScreen* screen = [window screen];
+    NSRect screenFrame = [screen frame];
+    
+    NSRect fullscreenFrame;
+    fullscreenFrame.size = [self window:window willUseFullScreenContentSize:screenFrame.size];
+    fullscreenFrame.origin.x = (screenFrame.size.width - fullscreenFrame.size.width) * 0.5;
+    fullscreenFrame.origin.y = (screenFrame.size.height - fullscreenFrame.size.height) * 0.5;
+    
+    NSRect centerScreenWindowFrame;
+    centerScreenWindowFrame.origin.x = (screenFrame.size.width - window.frame.size.width) * 0.5;
+    centerScreenWindowFrame.origin.y = (screenFrame.size.height - window.frame.size.height) * 0.5;
+    centerScreenWindowFrame.size = window.frame.size;
+
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context)
+    {
+        [context setDuration:duration/2];
+        [[window animator] setFrame:centerScreenWindowFrame display:YES];
+    }
+    completionHandler:^(void)
+    {
+        [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context)
+        {
+            [context setDuration:duration/2];
+            [[window animator] setFrame:fullscreenFrame display:YES];
+            
+        }
+        completionHandler:^(void)
+        {
+            [window setLevel:previousWindowLevel];
+
+            CVDisplayLinkStart([_worldView displayLink]);
+        }];
+    }];
+}
+
+- (NSArray*)customWindowsToExitFullScreenForWindow:(NSWindow*)window
+{
+    return [NSArray arrayWithObject:window];
+}
+
+- (void)window:(NSWindow*)window startCustomAnimationToExitFullScreenWithDuration:(NSTimeInterval)duration
+{
+    CVDisplayLinkStop([_worldView displayLink]);
+
+    reinterpret_cast<RXWindow*>(window).constrainingToScreenSuspended = YES;
+
+    NSString* encoded_frame = [[NSUserDefaults standardUserDefaults] objectForKey:@"WindowFrame"];
+    NSRect frame = NSRectFromString(encoded_frame);
+    
+    NSRect centerScreenWindowFrame;
+    centerScreenWindowFrame.origin.x = (window.frame.size.width - frame.size.width) * 0.5;
+    centerScreenWindowFrame.origin.y = (window.frame.size.height - frame.size.height) * 0.5;
+    centerScreenWindowFrame.size = frame.size;
+
+    NSInteger previousWindowLevel = [window level];
+    [window setLevel:(NSMainMenuWindowLevel + 1)];
+
+    [window setStyleMask:([window styleMask] & ~NSFullScreenWindowMask)];
+
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context)
+    {
+        [context setDuration:duration/2];
+        [[window animator] setFrame:centerScreenWindowFrame display:YES];
+    }
+    completionHandler:^(void)
+    {
+        [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context)
+        {
+            [context setDuration:duration/2];
+            [[window animator] setFrame:frame display:YES];
+        }
+        completionHandler:^(void)
+        {
+            reinterpret_cast<RXWindow*>(window).constrainingToScreenSuspended = NO;
+            [window setLevel:previousWindowLevel];
+
+            CVDisplayLinkStart([_worldView displayLink]);
+        }];
+
+    }];
+}
+
+- (void)windowDidEnterFullScreen:(NSNotification*)notification
+{
+    _fullscreen = YES;
+    [self _handleFullscreeenModeChange];
+}
+
+- (void)windowDidExitFullScreen:(NSNotification*)notification
+{
+    _fullscreen = NO;
+    [self _handleFullscreeenModeChange];
 }
 
 - (void)windowWillClose:(NSNotification*)notification
@@ -118,23 +269,32 @@
     // save the frame of the window-mode window so that we can place the window at the same location
     // on a subsequent launch (or put the fullscreen window on the right screen)
     NSWindow* window = [notification object];
-    if (window == _fullscreenWindow)
+    if (window == _fullscreenWindow || _fullscreen)
         return;
     
     NSString* encoded_frame = NSStringFromRect([window frame]);
     [[NSUserDefaults standardUserDefaults] setObject:encoded_frame forKey:@"WindowFrame"];
 }
 
+#pragma mark -
+
 - (void)_initializeRendering
 {
     // WARNING: the world has to run on the main thread
     if (!pthread_main_np())
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_initializeRenderer: MAIN THREAD ONLY" userInfo:nil];
-    
+
+    bool preLion = [[copy_system_version() autorelease] rx_versionIsOlderThan:@"10.7"];
+
     // initialize the audio renderer
     RX::AudioRenderer* audioRenderer = new RX::AudioRenderer();
     _audioRenderer = reinterpret_cast<void *>(audioRenderer);
     audioRenderer->Initialize();
+
+    // initialize QuickTime
+#if !__LP64__
+    EnterMovies();
+#endif
     
     // we can now observe the volume key path rendering setting
     [[_engineVariables objectForKey:@"rendering"] addObserver:self forKeyPath:@"volume" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionInitial
@@ -142,7 +302,7 @@
     
     // set the initial fullscreen state
     _fullscreen = [[NSUserDefaults standardUserDefaults] boolForKey:@"Fullscreen"];
-    
+
     // get the saved window frame and determine the best screen to use if we're going to start fullscreen
     NSString* encoded_frame = [[NSUserDefaults standardUserDefaults] objectForKey:@"WindowFrame"];
     NSScreen* best_screen = [NSScreen mainScreen];
@@ -163,17 +323,25 @@
                 best_screen = screen;
             }
         }
-        
+
         // if max_area is 0, the saved frame is not on any active screen; simpy clear out the saved frame
         if (max_area == 0.0)
             [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"WindowFrame"];
     }
     
     // create our windows
+    NSWindow* window;
+
     [self _initializeWindow:best_screen];
-    [self _initializeFullscreenWindow:best_screen];
-    
-    NSWindow* window = [self _renderingWindow];
+    if (preLion)
+    {
+        [self _initializeFullscreenWindow:best_screen];
+        window = [self _renderingWindow];
+    }
+    else
+    {
+        window = _window;
+    }
     
     // allocate the world view (which will create the GL contexts)
     NSRect contentViewRect = [window contentRectForFrameRect:[window frame]];
@@ -191,17 +359,17 @@
     
     // set the world view as the content view
     [window setContentView:_worldView];
-    
+
     // show the window
     [window makeKeyAndOrderFront:self];
-    
+
+    if (!preLion && _fullscreen)
+    {
+        [window toggleFullScreen:self];
+    }
+
     // start the audio renderer
     audioRenderer->Start();
-    
-    // initialize QuickTime
-#if !__LP64__
-    EnterMovies();
-#endif
 }
 
 @end

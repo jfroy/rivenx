@@ -32,7 +32,7 @@
 - (RXRenderState*)cardRenderer;
 
 - (BOOL)fullscreen;
-- (void)toggleFullscreen;
+- (void)toggleFullscreenLegacyPath;
 
 - (RXGameState*)gameState;
 - (void)loadGameState:(RXGameState*)gameState;

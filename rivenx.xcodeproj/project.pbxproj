@@ -147,6 +147,8 @@
 		317ACCCB0F285CDD0040FFFD /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31DCF73008CB855C00E351D9 /* QTKit.framework */; };
 		317ACCCC0F285CE00040FFFD /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31DCF73208CB855C00E351D9 /* QuickTime.framework */; };
 		318161B2147C69C700623EF2 /* rx_abort.c in Sources */ = {isa = PBXBuildFile; fileRef = 318161AE147C69C600623EF2 /* rx_abort.c */; };
+		318384EF153BD91D008CC9DC /* platform_info.mm in Sources */ = {isa = PBXBuildFile; fileRef = 318384ED153BD91D008CC9DC /* platform_info.mm */; };
+		318384F3153BD9EE008CC9DC /* NSString+RXStringAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 318384F2153BD9EE008CC9DC /* NSString+RXStringAdditions.m */; };
 		3185C43B0E06027800528220 /* sparkle.pem in Resources */ = {isa = PBXBuildFile; fileRef = 3185C43A0E06027800528220 /* sparkle.pem */; };
 		3185C4730E06046D00528220 /* RXVersionComparator.m in Sources */ = {isa = PBXBuildFile; fileRef = 3185C4720E06046D00528220 /* RXVersionComparator.m */; };
 		31863C5B0991AA28001A4A42 /* InterThreadMessaging.m in Sources */ = {isa = PBXBuildFile; fileRef = 31863C590991AA28001A4A42 /* InterThreadMessaging.m */; };
@@ -471,6 +473,10 @@
 		318161AF147C69C600623EF2 /* RXBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXBase.h; sourceTree = "<group>"; };
 		318161B0147C69C600623EF2 /* RXBufferMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXBufferMacros.h; sourceTree = "<group>"; };
 		318161B1147C69C600623EF2 /* RXErrorMacros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXErrorMacros.h; sourceTree = "<group>"; };
+		318384ED153BD91D008CC9DC /* platform_info.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = platform_info.mm; sourceTree = "<group>"; };
+		318384EE153BD91D008CC9DC /* platform_info.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform_info.h; sourceTree = "<group>"; };
+		318384F1153BD9EE008CC9DC /* NSString+RXStringAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+RXStringAdditions.h"; sourceTree = "<group>"; };
+		318384F2153BD9EE008CC9DC /* NSString+RXStringAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+RXStringAdditions.m"; sourceTree = "<group>"; };
 		3185C43A0E06027800528220 /* sparkle.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sparkle.pem; sourceTree = "<group>"; };
 		3185C4710E06046D00528220 /* RXVersionComparator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVersionComparator.h; sourceTree = "<group>"; };
 		3185C4720E06046D00528220 /* RXVersionComparator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVersionComparator.m; sourceTree = "<group>"; };
@@ -799,10 +805,12 @@
 				93FDAD39098A789100D94CD0 /* BDAlias.m */,
 				31863C580991AA28001A4A42 /* InterThreadMessaging.h */,
 				31863C590991AA28001A4A42 /* InterThreadMessaging.m */,
-				319C457F09C1382F0031F95F /* VirtualRingBuffer.h */,
-				319C458009C1382F0031F95F /* VirtualRingBuffer.m */,
 				311AEBC214A91F6F002EFCDD /* NSArray+RXArrayAdditions.h */,
 				311AEBC314A91F6F002EFCDD /* NSArray+RXArrayAdditions.m */,
+				318384F1153BD9EE008CC9DC /* NSString+RXStringAdditions.h */,
+				318384F2153BD9EE008CC9DC /* NSString+RXStringAdditions.m */,
+				319C457F09C1382F0031F95F /* VirtualRingBuffer.h */,
+				319C458009C1382F0031F95F /* VirtualRingBuffer.m */,
 			);
 			name = "Foundation Additions";
 			sourceTree = "<group>";
@@ -980,15 +988,17 @@
 		31BAE6250A98D3110079DD0F /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
-				313C7DE108CCF9FD00950A70 /* AppKit Additions */,
 				311FD39C08C03D420045BE11 /* Foundation Additions */,
-				3114FF3A0D58DF0A0099AF69 /* BZFSUtilities.h */,
-				3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */,
+				313C7DE108CCF9FD00950A70 /* AppKit Additions */,
+				31FCC1A11261160600EFEAA9 /* auto_spinlock.h */,
 				3133D9AD0D5CDDC1004DAD5E /* BZFSOperation.h */,
 				3133D9AE0D5CDDC1004DAD5E /* BZFSOperation.m */,
+				3114FF3A0D58DF0A0099AF69 /* BZFSUtilities.h */,
+				3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */,
 				316721D90D27FB3200FB2C0E /* integer_pair_hash.c */,
 				316721D80D27FB3200FB2C0E /* integer_pair_hash.h */,
-				31FCC1A11261160600EFEAA9 /* auto_spinlock.h */,
+				318384ED153BD91D008CC9DC /* platform_info.mm */,
+				318384EE153BD91D008CC9DC /* platform_info.h */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -1723,6 +1733,8 @@
 				311AEBC414A91F6F002EFCDD /* NSArray+RXArrayAdditions.m in Sources */,
 				31F32F5A14AE6C7E00E53DF3 /* RXInstaller.m in Sources */,
 				31F32F5D14AE6DBF00E53DF3 /* RXGOGSetupInstaller.m in Sources */,
+				318384EF153BD91D008CC9DC /* platform_info.mm in Sources */,
+				318384F3153BD9EE008CC9DC /* NSString+RXStringAdditions.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

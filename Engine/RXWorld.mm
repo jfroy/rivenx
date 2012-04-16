@@ -31,7 +31,7 @@ NSObject <RXWorldProtocol>* g_world = nil;
 
 @interface RXWorld (RXWorldRendering)
 - (void)_initializeRendering;
-- (void)_toggleFullscreen;
+- (void)_toggleFullscreenLegacyPath;
 @end
 
 @implementation RXWorld
@@ -434,13 +434,9 @@ NSObject <RXWorldProtocol>* g_world = nil;
     return _fullscreen;
 }
 
-- (void)toggleFullscreen
+- (void)toggleFullscreenLegacyPath
 {
-    _fullscreen = !_fullscreen;
-    [[NSUserDefaults standardUserDefaults] setBool:_fullscreen forKey:@"Fullscreen"];
-    
-    [self _toggleFullscreen];
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"RXFullscreenModeChangeNotification" object:nil userInfo:nil];
+    [self _toggleFullscreenLegacyPath];
 }
 
 #pragma mark -

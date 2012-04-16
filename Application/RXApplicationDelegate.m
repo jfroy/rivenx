@@ -308,7 +308,7 @@
     
     wasFullscreen = [g_world fullscreen];
     if (wasFullscreen)
-        [g_world toggleFullscreen];
+        [g_world toggleFullscreenLegacyPath];
 }
 
 - (void)applicationWillBecomeActive:(NSNotification*)notification
@@ -317,7 +317,7 @@
         return;
     
     if (wasFullscreen)
-        [g_world toggleFullscreen];
+        [g_world toggleFullscreenLegacyPath];
 }
 
 - (BOOL)application:(NSApplication*)application openFile:(NSString*)filename
@@ -338,8 +338,8 @@
 
 - (IBAction)toggleFullscreen:(id)sender
 {
-    if (g_world)
-        [g_world toggleFullscreen];
+    // legacy fullscreen path
+    [g_world toggleFullscreenLegacyPath];
 }
 
 #pragma mark -
@@ -401,13 +401,13 @@
     
     wasFullscreen = [g_world fullscreen];
     if (wasFullscreen)
-        [g_world toggleFullscreen];
-    
+        [g_world toggleFullscreenLegacyPath];
+
     NSInteger result = [panel runModal];
     
     if (wasFullscreen)
-        [g_world toggleFullscreen];
-    
+        [g_world toggleFullscreenLegacyPath];
+
     if (result == NSOKButton)
         [self _openGameWithURL:[panel URL]];
 }

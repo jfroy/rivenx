@@ -41,8 +41,6 @@
 - (IBAction)saveGame:(id)sender;
 - (IBAction)saveGameAs:(id)sender;
 
-- (IBAction)toggleFullscreen:(id)sender;
-
 - (BOOL)isGameLoaded;
 
 - (BOOL)isGameLoadingAndSavingDisabled;

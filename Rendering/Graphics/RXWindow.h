@@ -10,4 +10,10 @@
 
 
 @interface RXWindow : NSWindow
+{
+    BOOL constrainingToScreenSuspended;
+}
+
+@property BOOL constrainingToScreenSuspended;
+
 @end
