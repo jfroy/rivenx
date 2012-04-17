@@ -95,7 +95,10 @@
 
 - (void)_toggleFullscreenLegacyPath
 {
-    _fullscreen = !_fullscreen;
+    bool fullscreen = _fullscreen;
+
+    if (!fullscreen)
+        [self windowWillEnterFullScreen:nil];
 
     // the _fullscreen attribute has been updated when this is called
     NSWindow* window = [self _renderingWindow];
@@ -118,12 +121,10 @@
 
     [window makeKeyAndOrderFront:self];
 
-    if (_fullscreen)
-        [self windowDidEnterFullScreen:nil];
-    else
-        [self windowDidExitFullScreen:nil];
-
     CVDisplayLinkStart([_worldView displayLink]);
+
+    if (fullscreen)
+        [self windowDidExitFullScreen:nil];
 }
 
 - (NSSize)window:(NSWindow*)window willUseFullScreenContentSize:(NSSize)proposedSize
@@ -236,7 +237,7 @@
     }];
 }
 
-- (void)windowDidEnterFullScreen:(NSNotification*)notification
+- (void)windowWillEnterFullScreen:(NSNotification*)notification
 {
     _fullscreen = YES;
     [self _handleFullscreeenModeChange];
