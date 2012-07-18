@@ -1240,7 +1240,7 @@ init_failure:
         [self hideMouseCursor];
     
     // if a transition is ongoing, wait until its done
-    mach_timespec_t wait_time = {0, kRXTransitionDuration * 1e9};
+    mach_timespec_t wait_time = {0, static_cast<clock_res_t>(kRXTransitionDuration * 1e9)};
     while (_front_render_state->transition != nil)
         semaphore_timedwait(_transitionSemaphore, wait_time);
     
