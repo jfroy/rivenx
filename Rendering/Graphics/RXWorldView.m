@@ -114,6 +114,10 @@ static NSString* required_extensions[] = {
         case kCGLRendererATIRadeonX2000ID:
             renderer_name = @"ATI Radeon X2000";
             break;
+        case kCGLRendererATIRadeonX3000ID:
+            renderer_name = @"ATI Radeon X3000";
+            break;
+
         case kCGLRendererGeForce2MXID:
             renderer_name = @"NVIDIA GeForce 2MX";
             break;
@@ -126,15 +130,24 @@ static NSString* required_extensions[] = {
         case kCGLRendererGeForce8xxxID:
             renderer_name = @"NVIDIA GeForce 8000";
             break;
+
         case kCGLRendererVTBladeXP2ID:
             renderer_name = @"VT Blade XP2";
             break;
+
         case kCGLRendererIntel900ID:
             renderer_name = @"Intel 900";
             break;
         case kCGLRendererIntelX3100ID:
             renderer_name = @"Intel X3100";
             break;
+        case kCGLRendererIntelHDID:
+            renderer_name = @"Intel HD 3000";
+            break;
+        case kCGLRendererIntelHD4000ID:
+            renderer_name = @"Intel HD 4000";
+            break;
+
         case kCGLRendererMesa3DFXID:
             renderer_name = @"Mesa 3DFX";
             break;
