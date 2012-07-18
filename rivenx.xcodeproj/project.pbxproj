@@ -1862,6 +1862,7 @@
 		314959910E327B2E00E49C83 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				EXCLUDED_SOURCE_FILE_NAMES = "";
@@ -1887,6 +1888,7 @@
 		314959920E327B2E00E49C83 /* Beta Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				EXCLUDED_SOURCE_FILE_NAMES = "";
@@ -1912,6 +1914,7 @@
 		314959930E327B2E00E49C83 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				EXCLUDED_SOURCE_FILE_NAMES = "";
@@ -1964,6 +1967,7 @@
 		317ACC7F0F285B790040FFFD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = "$(GCC_PREPROCESSOR_DEFINITIONS)";
 				INFOPLIST_FILE = "Tools/MHKMoviePlayer/MHKMoviePlayer-Info.plist";
 				INSTALL_PATH = "$(USER_APPS_DIR)";
@@ -1975,6 +1979,7 @@
 		317ACC800F285B790040FFFD /* Beta Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = "$(GCC_PREPROCESSOR_DEFINITIONS)";
 				INFOPLIST_FILE = "Tools/MHKMoviePlayer/MHKMoviePlayer-Info.plist";
 				INSTALL_PATH = "$(USER_APPS_DIR)";
@@ -1986,6 +1991,7 @@
 		317ACC810F285B790040FFFD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = "$(GCC_PREPROCESSOR_DEFINITIONS)";
 				INFOPLIST_FILE = "Tools/MHKMoviePlayer/MHKMoviePlayer-Info.plist";
 				INSTALL_PATH = "$(USER_APPS_DIR)";
@@ -2064,6 +2070,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Riven X.app/Contents/MacOS/Riven X";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -2085,6 +2092,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Riven X.app/Contents/MacOS/Riven X";
+				COMBINE_HIDPI_IMAGES = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
 				GCC_DYNAMIC_NO_PIC = NO;
 				INFOPLIST_FILE = "Tests/UnitTests-Info.plist";
@@ -2105,6 +2113,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Riven X.app/Contents/MacOS/Riven X";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -2418,6 +2427,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -2496,6 +2506,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -2515,6 +2526,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
+				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
