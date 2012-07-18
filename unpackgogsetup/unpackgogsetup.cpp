@@ -6,7 +6,6 @@
 //  Copyright (c) 2011. All rights reserved.
 //
 
-#include <array>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -334,7 +333,7 @@ BlockBuffer BlockReaderLzma::read()
     BlockBuffer buffer(_lzmaStream.next_out - _lzmaStream.total_out, _lzmaStream.total_out);
     lzma_end(&_lzmaStream);
     
-    return std::move(buffer);
+    return buffer;
 }
 
 // --
@@ -557,7 +556,7 @@ int main(int argc, const char * argv[])
     assert(strcmp(banner, INNO_SETUP_SETUP_DATA_BANNER) == 0);
     
     // read the setup header
-    auto br = std::unique_ptr<BlockReaderLzma>(new BlockReaderLzma(fd, INNO_SETUP_SETUP_DATA_BANNER_OFFSET + sizeof(banner)));
+    auto br = std::auto_ptr<BlockReaderLzma>(new BlockReaderLzma(fd, INNO_SETUP_SETUP_DATA_BANNER_OFFSET + sizeof(banner)));
     auto setupBlockBuffer = br->read();
     StoredBlockHeader setupBlockHeader = br->header();
     
@@ -566,7 +565,9 @@ int main(int argc, const char * argv[])
     
     void* next = parse_setup_buffer(setupBlockBuffer.data(), 302, 29, &setupHeader);
     StoredInnoFileEntry* fileEntries = new StoredInnoFileEntry[setupHeader.numFileEntries];
-    auto fileEntriesStrings = new std::array<std::string, StoredInnoFileEntry::STRING_COUNT>[setupHeader.numFileEntries];
+    auto fileEntriesStrings = new std::vector<std::string>[setupHeader.numFileEntries];
+    for (size_t i = 0, end = setupHeader.numFileEntries; i != end; ++i)
+        fileEntriesStrings[i].resize(StoredInnoFileEntry::STRING_COUNT);
     
     for (uint32_t i = 0; i != setupHeader.numLanguageEntries; ++i)
         next = parse_setup_buffer(next, 65, 10);
@@ -602,7 +603,7 @@ int main(int argc, const char * argv[])
     
     // read the file location block
     off_t fileLocationBlockOffset = INNO_SETUP_SETUP_DATA_BANNER_OFFSET + sizeof(banner) + sizeof(StoredBlockHeader) + setupBlockHeader.innerHeader.blockPayloadStoreSize;
-    br = std::unique_ptr<BlockReaderLzma>(new BlockReaderLzma(fd, fileLocationBlockOffset));
+    br = std::auto_ptr<BlockReaderLzma>(new BlockReaderLzma(fd, fileLocationBlockOffset));
     auto fileLocationBlockBuffer = br->read();
     br.reset();
     
@@ -681,7 +682,7 @@ int main(int argc, const char * argv[])
             }
         };
         
-        auto decompressor = std::unique_ptr<CompressedFileDecompressorLzma>(new CompressedFileDecompressorLzma(
+        auto decompressor = std::auto_ptr<CompressedFileDecompressorLzma>(new CompressedFileDecompressorLzma(
             fd, INNO_SETUP_FILE_DATA_OFFSET + fle.startOffset, fle.chunkCompressedSize, outputFD, outputProgress));
         
         ssize_t bytesWritten = decompressor->decompress();
