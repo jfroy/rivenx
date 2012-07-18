@@ -698,7 +698,6 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     if (!_glInitialized || _tornDown)
         return;
     
-    float uiScale = ([self window]) ? [[self window] userSpaceScaleFactor] : 1.0F;
     GLint viewportLeft, viewportBottom;
     NSRect glRect;
     
@@ -708,8 +707,8 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     glRect.origin.y = ([self bounds].size.height - glRect.size.height) / 2.0;
     
     // compute the viewport origin
-    viewportLeft = glRect.origin.x > 0 ? -glRect.origin.x * uiScale : 0;
-    viewportBottom = glRect.origin.y > 0 ? -glRect.origin.y * uiScale : 0;
+    viewportLeft = glRect.origin.x > 0 ? -glRect.origin.x : 0;
+    viewportBottom = glRect.origin.y > 0 ? -glRect.origin.y : 0;
     
     _glWidth = glRect.size.width;
     _glHeight = glRect.size.height;
