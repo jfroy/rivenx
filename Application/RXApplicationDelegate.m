@@ -52,18 +52,6 @@
     ]];
 }
 
-- (void)awakeFromNib
-{
-    // setup the about box
-    NSBundle* bundle = [NSBundle mainBundle];
-    NSString* version_format = NSLocalizedStringFromTable(@"VERSION_FORMAT", @"About", nil);
-    NSString* version = [NSString stringWithFormat:@"branch '%@' %@", NSLocalizedStringFromTable(@"BUILD_BRANCH", @"build", nil), NSLocalizedStringFromTable(@"BUILD_VERSION", @"build", nil)];
-    
-    [aboutBox center];
-    [versionField setStringValue:[NSString stringWithFormat:version_format, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], version]];
-    [copyrightField setStringValue:NSLocalizedStringFromTable(@"LONG_COPYRIGHT", @"About", nil)];
-}
-
 #pragma mark -
 #pragma mark debug UI
 
@@ -327,6 +315,21 @@
 
 - (IBAction)orderFrontAboutWindow:(id)sender
 {
+    static bool setup = false;
+    if (!setup)
+    {
+        // setup the about box
+        NSBundle* bundle = [NSBundle mainBundle];
+        NSString* version_format = NSLocalizedStringFromTable(@"VERSION_FORMAT", @"About", nil);
+        NSString* version = [NSString stringWithFormat:@"branch '%@' %@", NSLocalizedStringFromTable(@"BUILD_BRANCH", @"build", nil), NSLocalizedStringFromTable(@"BUILD_VERSION", @"build", nil)];
+        
+        [aboutBox center];
+        [versionField setStringValue:[NSString stringWithFormat:version_format, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], version]];
+        [copyrightField setStringValue:NSLocalizedStringFromTable(@"LONG_COPYRIGHT", @"About", nil)];
+
+        setup = true;
+    }
+
     [aboutBox makeKeyAndOrderFront:sender];
 }
 
