@@ -663,6 +663,9 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     
     CGLLockContext(_renderContextCGL);
     CGLLockContext(_loadContextCGL);
+
+    CGLUpdateContext(_renderContextCGL);
+    CGLUpdateContext(_loadContextCGL);
     
     if (_displayLink)
         CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(_displayLink, _renderContextCGL, _cglPixelFormat);
