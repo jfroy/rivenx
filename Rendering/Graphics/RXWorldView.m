@@ -26,6 +26,9 @@
 #ifndef kCGLRendererIDMatchingMask
 #define kCGLRendererIDMatchingMask   0x00FE7F00
 #endif
+#ifndef kCGLRendererIntelHD4000ID
+#define kCGLRendererIntelHD4000ID    0x00024400
+#endif
 
 
 @interface RXWorldView (RXWorldView_Private)
