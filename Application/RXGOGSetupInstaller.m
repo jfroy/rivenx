@@ -44,7 +44,7 @@
     didRun = YES;
     
     modalSession = session;
-    destination = [[[(RXWorld*)g_world worldSharedBase] path] retain];
+    destination = [[[(RXWorld*)g_world worldCacheBase] path] retain];
     
     if ([NSApp runModalSession:modalSession] != NSRunContinuesResponse)
         ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerCancelled, nil, error);

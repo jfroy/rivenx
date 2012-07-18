@@ -19,7 +19,7 @@
 @interface RXWorld : NSObject <RXWorldProtocol>
 {
     NSURL* _worldBase;
-    NSURL* _worldSharedBase;
+    NSURL* _worldCacheBase;
     
     NSDictionary* _extrasDescriptor;
     
@@ -45,7 +45,7 @@
     
     NSApplicationPresentationOptions _defaultPresentationOptions;
     
-    NSMutableDictionary* _sharedPreferences;
+    NSMutableDictionary* _cachePreferences;
     
     BOOL _tornDown;
     BOOL _renderingInitialized;
@@ -57,7 +57,7 @@
 - (void)tearDown;
 
 - (NSURL*)worldBase;
-- (NSURL*)worldSharedBase;
+- (NSURL*)worldCacheBase;
 
 - (BOOL)isInstalled;
 - (void)setIsInstalled:(BOOL)flag;

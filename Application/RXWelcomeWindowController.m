@@ -33,10 +33,10 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 
 @implementation RXWelcomeWindowController
 
-- (void)_deleteSharedWorldContent
+- (void)_deleteCacheBaseContent
 {
     NSFileManager* fm = [NSFileManager new];
-    NSArray* contents = [fm contentsOfDirectoryAtURL:[[RXWorld sharedWorld] worldSharedBase] includingPropertiesForKeys:[NSArray array] options:0 error:NULL];
+    NSArray* contents = [fm contentsOfDirectoryAtURL:[[RXWorld sharedWorld] worldCacheBase] includingPropertiesForKeys:[NSArray array] options:0 error:NULL];
     for (NSURL* url in contents)
         BZFSRemoveItemAtURL(url, NULL);
     [fm release];
@@ -62,10 +62,10 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     // scan for the GOG.com installer in the user's Downloads directory
     [self _scanDownloads];
     
-    // nuke everything in the world shared base (i.e. old data)
+    // nuke everything in the cache base (i.e. old data)
     dispatch_async(QUEUE_LOW, ^(void)
     {
-        [self _deleteSharedWorldContent];
+        [self _deleteCacheBaseContent];
     });
 }
 
@@ -342,10 +342,10 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     }
     else
     {
-        // nuke everything in the world shared base
+        // nuke everything in the cache base
         dispatch_async(QUEUE_LOW, ^(void)
         {
-            [self _deleteSharedWorldContent];
+            [self _deleteCacheBaseContent];
         });
         
         // if the installation failed because of an error (as opposed to cancellation), display the error to the user

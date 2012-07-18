@@ -134,8 +134,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
             [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
     }
     
-    // then look in the world shared base (e.g. /Users/Shared/Riven X, where the installer will put the archives)
-    directory = [[(RXWorld*)g_world worldSharedBase] path];
+    // then look in the world cache base (e.g. where the installer will put the archives)
+    directory = [[(RXWorld*)g_world worldCacheBase] path];
     content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
     if (content)
     {

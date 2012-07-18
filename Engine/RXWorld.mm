@@ -87,35 +87,35 @@ NSObject <RXWorldProtocol>* g_world = nil;
     NSError* error;
     
     [_worldBase release];
-    [_worldSharedBase release];
+    [_worldCacheBase release];
     
     // world base is the parent directory of the application bundle
     _worldBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent], kCFURLPOSIXPathStyle, true);
     
-    FSRef sharedFolderRef;
-    OSErr os_err = FSFindFolder(kLocalDomain, kSharedUserDataFolderType, kDontCreateFolder, &sharedFolderRef);
+    FSRef cachesFolderRef;
+    OSErr os_err = FSFindFolder(kUserDomain, kCachedDataFolderType, kDontCreateFolder, &cachesFolderRef);
     if (os_err != noErr)
     {
         error = [NSError errorWithDomain:NSOSStatusErrorDomain code:os_err userInfo:nil];
         @throw [NSException exceptionWithName:@"RXFilesystemException"
-                                       reason:@"Riven X was unable to locate your Mac's Shared folder."
+                                       reason:@"Riven X was unable to locate your user's caches folder."
                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
     
-    NSURL* sharedFolderURL = [(NSURL*)CFURLCreateFromFSRef(kCFAllocatorDefault, &sharedFolderRef) autorelease];
-    release_assert(sharedFolderURL);
+    NSURL* cachesFolderURL = [(NSURL*)CFURLCreateFromFSRef(kCFAllocatorDefault, &cachesFolderRef) autorelease];
+    release_assert(cachesFolderURL);
     
-    // the world shared base is a "Riven X" folder inside the /Users/Shared directory
-    NSString* sharedBase = [[sharedFolderURL path] stringByAppendingPathComponent:@"Riven X"];
-    if (!BZFSDirectoryExists(sharedBase))
+    // the world shared base is a bundle-identifier folder inside the ~/Library/Caches
+    NSString* cachesDirPath = [[cachesFolderURL path] stringByAppendingPathComponent:[[NSBundle mainBundle] bundleIdentifier]];
+    if (!BZFSDirectoryExists(cachesDirPath))
     {
-        BOOL success = BZFSCreateDirectoryExtended(sharedBase, @"admin", 0775, &error);
+        BOOL success = BZFSCreateDirectoryExtended(cachesDirPath, @"admin", 0775, &error);
         if (!success)
             @throw [NSException exceptionWithName:@"RXFilesystemException"
-                                           reason:@"Riven X was unable to create its shared support folder in your Mac's Shared folder."
+                                           reason:@"Riven X was unable to create its caches folder."
                                          userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
-    _worldSharedBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)sharedBase, kCFURLPOSIXPathStyle, true);
+    _worldCacheBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)cachesDirPath, kCFURLPOSIXPathStyle, true);
 }
 
 - (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context
@@ -170,17 +170,17 @@ NSObject <RXWorldProtocol>* g_world = nil;
         [self _initEngineLocations];
         
         // load the shared preferences
-        _sharedPreferences = [[NSMutableDictionary alloc] initWithContentsOfFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"]];
-        if (!_sharedPreferences)
-            _sharedPreferences = [NSMutableDictionary new];
+        _cachePreferences = [[NSMutableDictionary alloc] initWithContentsOfFile:[[[self worldCacheBase] path] stringByAppendingPathComponent:@"RivenX.plist"]];
+        if (!_cachePreferences)
+            _cachePreferences = [NSMutableDictionary new];
         
         // apply the WorldBase override preference
-        if ([_sharedPreferences objectForKey:@"WorldBase"])
+        if ([_cachePreferences objectForKey:@"WorldBase"])
         {
-            if (BZFSDirectoryExists([_sharedPreferences objectForKey:@"WorldBase"]))
+            if (BZFSDirectoryExists([_cachePreferences objectForKey:@"WorldBase"]))
             {
                 [_worldBase release];
-                _worldBase = [[NSURL fileURLWithPath:[_sharedPreferences objectForKey:@"WorldBase"]] retain];
+                _worldBase = [[NSURL fileURLWithPath:[_cachePreferences objectForKey:@"WorldBase"]] retain];
             }
             else
             {
@@ -316,10 +316,10 @@ NSObject <RXWorldProtocol>* g_world = nil;
     [_extrasDescriptor release], _extrasDescriptor = nil;
     [_gameState release], _gameState = nil;
     [_worldBase release], _worldBase = nil;
-    [_worldSharedBase release], _worldSharedBase = nil;
+    [_worldCacheBase release], _worldCacheBase = nil;
     [_engineVariables release], _engineVariables = nil;
     [_activeStacks release], _activeStacks = nil;
-    [_sharedPreferences release], _sharedPreferences = nil;
+    [_cachePreferences release], _cachePreferences = nil;
 }
 
 #pragma mark -
@@ -350,20 +350,25 @@ NSObject <RXWorldProtocol>* g_world = nil;
     return _worldBase;
 }
 
-- (NSURL*)worldSharedBase
+- (NSURL*)worldCacheBase
 {
-    return _worldSharedBase;
+    return _worldCacheBase;
+}
+
+- (void)_writeCachePreferences
+{
+    [_cachePreferences writeToFile:[[[self worldCacheBase] path] stringByAppendingPathComponent:@"RivenX.plist"] atomically:NO];
 }
 
 - (BOOL)isInstalled
 {
-    return [[_sharedPreferences objectForKey:@"IsInstalled2"] boolValue];
+    return [[_cachePreferences objectForKey:@"IsInstalled2"] boolValue];
 }
 
 - (void)setIsInstalled:(BOOL)flag
 {
-    [_sharedPreferences setObject:[NSNumber numberWithBool:flag] forKey:@"IsInstalled2"];
-    [_sharedPreferences writeToFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"] atomically:NO];
+    [_cachePreferences setObject:[NSNumber numberWithBool:flag] forKey:@"IsInstalled2"];
+    [self _writeCachePreferences];
 }
 
 - (void)setWorldBaseOverride:(NSString*)path
@@ -373,15 +378,15 @@ NSObject <RXWorldProtocol>* g_world = nil;
         [_worldBase release];
         _worldBase = [[NSURL fileURLWithPath:path] retain];
         
-        [_sharedPreferences setObject:path forKey:@"WorldBase"];
+        [_cachePreferences setObject:path forKey:@"WorldBase"];
     }
     else
     {
         [self _initEngineLocations];
-        [_sharedPreferences removeObjectForKey:@"WorldBase"];
+        [_cachePreferences removeObjectForKey:@"WorldBase"];
     }
     
-    [_sharedPreferences writeToFile:[[[self worldSharedBase] path] stringByAppendingPathComponent:@"RivenX.plist"] atomically:NO];
+    [self _writeCachePreferences];
 }
 
 #pragma mark -

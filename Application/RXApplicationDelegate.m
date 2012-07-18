@@ -103,13 +103,13 @@
                 {
                     [[RXWorld sharedWorld] setIsInstalled:NO];
                     
-                    // delete the shared base directory's content
-                    NSString* shared_base = [[(RXWorld*)g_world worldSharedBase] path];
-                    NSArray* content = BZFSContentsOfDirectory(shared_base, NULL);
+                    // delete the cache base directory's content
+                    NSString* cache_base = [[(RXWorld*)g_world worldCacheBase] path];
+                    NSArray* content = BZFSContentsOfDirectory(cache_base, NULL);
                     NSEnumerator* content_e = [content objectEnumerator];
                     NSString* dir;
                     while ((dir = [content_e nextObject]))
-                        BZFSRemoveItemAtURL([NSURL fileURLWithPath:[shared_base stringByAppendingPathComponent:dir]], NULL);
+                        BZFSRemoveItemAtURL([NSURL fileURLWithPath:[cache_base stringByAppendingPathComponent:dir]], NULL);
                 }
                 [NSApp terminate:self];
                 break;

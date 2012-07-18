@@ -6004,4 +6004,9 @@ DEFINE_COMMAND(xjlagoon1500_alert) {
     }
 }
 
+DEFINE_COMMAND(xflies)
+{
+
+}
+
 @end

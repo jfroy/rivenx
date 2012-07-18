@@ -367,7 +367,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     didRun = YES;
     
     modalSession = session;
-    destination = [[[(RXWorld*)g_world worldSharedBase] path] retain];
+    destination = [[[(RXWorld*)g_world worldCacheBase] path] retain];
     totalBytesCopied = 0.0;
     totalBytesToCopy = 0.0;
     
