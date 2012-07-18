@@ -98,6 +98,7 @@ static PyMethodDef rivenx_methods[] = {
     // get the main module
     PyObject* main_mod = PyImport_AddModule("__main__");
     debug_assert(main_mod);
+    (void)main_mod;
 }
 
 - (NSString*)windowFrameAutosaveName {

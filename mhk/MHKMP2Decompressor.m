@@ -642,6 +642,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
             _packet_table[_packet_index].mDataByteSize);
         pthread_mutex_unlock(&ffmpeg_mutex);
         debug_assert(used_bytes > 0);
+        (void)used_bytes;
         
         // the output buffer size is the initial number of bytes to copy
         bytes_to_copy = _decompression_buffer_available;
