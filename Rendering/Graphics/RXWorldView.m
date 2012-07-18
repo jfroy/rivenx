@@ -78,9 +78,11 @@ static NSString* required_extensions[] = {
     return NO;
 }
 
-+ (NSString*)rendererNameForID:(GLint)renderer {
++ (NSString*)rendererNameForID:(GLint)renderer
+{
     NSString* renderer_name;
-    switch (renderer & kCGLRendererIDMatchingMask) {
+    switch (renderer & kCGLRendererIDMatchingMask)
+    {
         case kCGLRendererGenericID:
             renderer_name = @"Generic";
             break;
@@ -90,6 +92,7 @@ static NSString* required_extensions[] = {
         case kCGLRendererAppleSWID:
             renderer_name = @"Apple Software";
             break;
+
         case kCGLRendererATIRage128ID:
             renderer_name = @"ATI Rage 128";
             break;
@@ -1057,40 +1060,42 @@ major_number.minor_number major_number.minor_number.release_number
     _totalVRAM = total_vram;
 }
 
-- (ssize_t)currentFreeVRAM {        
+- (ssize_t)currentFreeVRAM
+{
     if (!_acceleratorService)
-        return -1;
+        return 0;
     
     // get the performance statistics ditionary out of the accelerator service
     CFDictionaryRef perf_stats = IORegistryEntryCreateCFProperty(_acceleratorService, CFSTR("PerformanceStatistics"), kCFAllocatorDefault, 0);
     if (!perf_stats)
-        return -1;
+        return 0;
     
     // look for a number of keys (this is mostly reverse engineering and best-guess effort)
     CFNumberRef free_vram_number = NULL;
     ssize_t free_vram;
     BOOL free_number = NO;
-    
-//    free_vram_number = CFDictionaryGetValue(perf_stats, CFSTR("vramLargestFreeBytes"));
-//    if (!free_vram_number) {
-        free_vram_number = CFDictionaryGetValue(perf_stats, CFSTR("vramFreeBytes"));
-        if (!free_vram_number) {
-            free_vram_number = CFDictionaryGetValue(perf_stats, CFSTR("vramUsedBytes"));
-            if (free_vram_number) {
-                CFNumberGetValue(free_vram_number, kCFNumberLongType, &free_vram);
-                free_vram_number = NULL;
-                
-                if (_totalVRAM != -1) {
-                    free_vram = _totalVRAM - free_vram;
-                    free_vram_number = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &free_vram);
-                    free_number = YES;
-                }
+
+    free_vram_number = CFDictionaryGetValue(perf_stats, CFSTR("vramFreeBytes"));
+    if (!free_vram_number)
+    {
+        free_vram_number = CFDictionaryGetValue(perf_stats, CFSTR("vramUsedBytes"));
+        if (free_vram_number)
+        {
+            CFNumberGetValue(free_vram_number, kCFNumberLongType, &free_vram);
+            free_vram_number = NULL;
+            
+            if (_totalVRAM != -1)
+            {
+                free_vram = _totalVRAM - free_vram;
+                free_vram_number = CFNumberCreate(kCFAllocatorDefault, kCFNumberSInt32Type, &free_vram);
+                free_number = YES;
             }
         }
-//    }
-    
+    }
+
     // if we did not find or compute a free VRAM number, return an error
-    if (!free_vram_number) {
+    if (!free_vram_number)
+    {
         CFRelease(perf_stats);
         return -1;
     }

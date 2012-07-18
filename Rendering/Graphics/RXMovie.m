@@ -127,7 +127,7 @@ enum {
 #endif
 
     CFMutableDictionaryRef visualContextOptions = CFDictionaryCreateMutable(kCFAllocatorDefault, 0,
-                                                                            &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
     CFDictionarySetValue(visualContextOptions, kQTVisualContextPixelBufferAttributesKey, pixelBufferAttributes);
     [pixelBufferAttributes release];
     
@@ -142,21 +142,19 @@ enum {
     NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
     // if the movie is smaller than 128 bytes in width, using a main-memory pixel buffer visual context and override the width to 128 bytes
-    if (_current_size.width < 32) {
+    if (_current_size.width < 32)
+    {
 #if defined(DEBUG)
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"using main memory pixel buffer path");
 #endif
         
         err = QTPixelBufferContextCreate(NULL, visualContextOptions, &_vc);
         CFRelease(visualContextOptions);
-        if (err != noErr) {
+        if (err != noErr)
+        {
             [self release];
-            @throw [NSException exceptionWithName:@"RXMovieException"
-                                           reason:@"QTPixelBufferContextCreate failed."
-                                         userInfo:[NSDictionary dictionaryWithObject:[RXError errorWithDomain:NSOSStatusErrorDomain
-                                                                                                         code:err
-                                                                                                     userInfo:nil]
-                                                                              forKey:NSUnderlyingErrorKey]];
+            @throw [NSException exceptionWithName:@"RXMovieException" reason:@"QTPixelBufferContextCreate failed."
+                userInfo:[NSDictionary dictionaryWithObject:[RXError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
         }
         
         // allocate a texture storage buffer and setup a texture object
@@ -172,31 +170,25 @@ enum {
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_STORAGE_HINT_APPLE, GL_STORAGE_SHARED_APPLE);
         glReportError();
-        
-        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB,
-                     0,
-                     GL_RGBA8,
-                     MAX(_current_size.width, 128),
-                     _current_size.height,
-                     0,
-                     GL_BGRA,
+
+        GLenum type;
 #if defined(__LITTLE_ENDIAN__)
-                     GL_UNSIGNED_INT_8_8_8_8_REV,
+        type = GL_UNSIGNED_INT_8_8_8_8_REV,
 #else
-                     GL_UNSIGNED_INT_8_8_8_8_REV,
+        type = GL_UNSIGNED_INT_8_8_8_8_REV,
 #endif
-                     _texture_storage); glReportError();
-    } else {
+        glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, MAX(_current_size.width, 128), _current_size.height, 0, GL_BGRA, type, _texture_storage);
+        glReportError();
+    }
+    else
+    {
         err = QTOpenGLTextureContextCreate(NULL, cgl_ctx, pixel_format, visualContextOptions, &_vc);
         CFRelease(visualContextOptions);
-        if (err != noErr) {
+        if (err != noErr)
+        {
             [self release];
-            @throw [NSException exceptionWithName:@"RXMovieException"
-                                           reason:@"QTOpenGLTextureContextCreate failed."
-                                         userInfo:[NSDictionary dictionaryWithObject:[RXError errorWithDomain:NSOSStatusErrorDomain
-                                                                                                         code:err
-                                                                                                     userInfo:nil]
-                                                                              forKey:NSUnderlyingErrorKey]];
+            @throw [NSException exceptionWithName:@"RXMovieException" reason:@"QTOpenGLTextureContextCreate failed."
+                userInfo:[NSDictionary dictionaryWithObject:[RXError errorWithDomain:NSOSStatusErrorDomain code:err userInfo:nil] forKey:NSUnderlyingErrorKey]];
         }
     }
     
@@ -224,7 +216,8 @@ enum {
     
     // set the movie's visual context
     err = SetMovieVisualContext(movie, _vc);
-    if (err != noErr) {
+    if (err != noErr)
+    {
         [self release];
         @throw [NSException exceptionWithName:@"RXMovieException"
                                        reason:@"SetMovieVisualContext failed."
