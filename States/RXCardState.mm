@@ -653,7 +653,7 @@ init_failure:
     
     // restore client storage
     [gl_state setUnpackClientStorage:client_storage];
-    
+
     // we're done with the inventory unpack buffer
     glDeleteBuffers(1, &inventory_unpack_buffer);
     
@@ -662,9 +662,6 @@ init_failure:
     
     // done with OpenGL
     CGLUnlockContext(cgl_ctx);
-    
-    // register for reshape notifications
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_reshape:) name:@"RXOpenGLDidReshapeNotification" object:nil];
     
     _initialized = YES;
 }
@@ -1540,12 +1537,6 @@ init_failure:
 
 #pragma mark -
 #pragma mark graphics rendering
-
-- (void)_reshape:(NSNotification*)notification {
-#if defined(DEBUG) && DEBUG > 1
-    RXOLog2(kRXLoggingRendering, kRXLoggingLevelDebug, @"reshaping");
-#endif
-}
 
 - (void)_renderCardWithTimestamp:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx {
     // WARNING: MUST RUN IN THE CORE VIDEO RENDER THREAD
