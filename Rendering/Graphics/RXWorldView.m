@@ -652,10 +652,11 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
         return;
 }
 
-- (void)update {    
+- (void)update
+{
     [super update];
     
-    // the virtual screen has changed, reconfigure the contexes and the display link
+    // the virtual screen has changed, reconfigure the contexts and the display link
     
     CGLLockContext(_renderContextCGL);
     CGLLockContext(_loadContextCGL);
@@ -686,7 +687,8 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     CGLUnlockContext(_renderContextCGL);
 }
 
-- (void)reshape {
+- (void)reshape
+{
     if (!_glInitialized || _tornDown)
         return;
     
@@ -1011,22 +1013,25 @@ major_number.minor_number major_number.minor_number.release_number
     [features_message release];
 }
 
-- (void)_updateTotalVRAM {
+- (void)_updateTotalVRAM
+{
     CGLError cglerr;
     
     // get the display mask for the current virtual screen
     CGOpenGLDisplayMask display_mask;
     cglerr = CGLDescribePixelFormat(_cglPixelFormat, [_renderContext currentVirtualScreen], kCGLPFADisplayMask, (GLint*)&display_mask);
-    if (cglerr != kCGLNoError) {
-        _totalVRAM = -1;
+    if (cglerr != kCGLNoError)
+    {
+        _totalVRAM = 0;
         return;
     }
     
     // get the renderer ID for the current virtual screen
     GLint renderer;
     cglerr = CGLDescribePixelFormat(_cglPixelFormat, [_renderContext currentVirtualScreen], kCGLPFARendererID, &renderer);
-    if (cglerr != kCGLNoError) {
-        _totalVRAM = -1;
+    if (cglerr != kCGLNoError)
+    {
+        _totalVRAM = 0;
         return;
     }
     
@@ -1034,20 +1039,24 @@ major_number.minor_number major_number.minor_number.release_number
     CGLRendererInfoObj renderer_info;
     GLint renderer_count;
     cglerr = CGLQueryRendererInfo(display_mask, &renderer_info, &renderer_count);
-    if (cglerr != kCGLNoError) {
-        _totalVRAM = -1;
+    if (cglerr != kCGLNoError)
+    {
+        _totalVRAM = 0;
         return;
     }
     
     // find the renderer index for the current renderer
     GLint renderer_index = 0;
-    if (renderer_count > 1) {
-        for (; renderer_index < renderer_count; renderer_index++) {
+    if (renderer_count > 1)
+    {
+        for (; renderer_index < renderer_count; renderer_index++)
+        {
             GLint renderer_id;
             cglerr = CGLDescribeRenderer(renderer_info, 0, kCGLRPRendererID, &renderer_id);
-            if (cglerr != kCGLNoError) {
+            if (cglerr != kCGLNoError)
+            {
                 CGLDestroyRendererInfo(renderer_info);
-                _totalVRAM = -1;
+                _totalVRAM = 0;
                 return;
             }
             
@@ -1056,16 +1065,18 @@ major_number.minor_number major_number.minor_number.release_number
         }
     }
     
-    if (renderer_index == renderer_count) {
+    if (renderer_index == renderer_count)
+    {
         CGLDestroyRendererInfo(renderer_info);
-        _totalVRAM = -1;
+        _totalVRAM = 0;
         return;
     }
-    
-    GLint total_vram = -1;
+
+    GLint total_vram;
     cglerr = CGLDescribeRenderer(renderer_info, renderer_index, kCGLRPVideoMemory, &total_vram);
-    if (cglerr != kCGLNoError) {
-        _totalVRAM = -1;
+    if (cglerr != kCGLNoError)
+    {
+        _totalVRAM = 0;
         return;
     }
     CGLDestroyRendererInfo(renderer_info);
