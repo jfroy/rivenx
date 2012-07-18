@@ -146,6 +146,7 @@
 - (void)window:(NSWindow*)window startCustomAnimationToEnterFullScreenWithDuration:(NSTimeInterval)duration
 {
     CVDisplayLinkStop([_worldView displayLink]);
+    [_worldView removeFromSuperviewWithoutNeedingDisplay];
 
     NSInteger previousWindowLevel = [window level];
     [window setLevel:(NSMainMenuWindowLevel + 1)];
@@ -185,6 +186,7 @@
         {
             [window setLevel:previousWindowLevel];
 
+            [window setContentView:_worldView];
             CVDisplayLinkStart([_worldView displayLink]);
         }];
     }];
@@ -198,6 +200,7 @@
 - (void)window:(NSWindow*)window startCustomAnimationToExitFullScreenWithDuration:(NSTimeInterval)duration
 {
     CVDisplayLinkStop([_worldView displayLink]);
+    [_worldView removeFromSuperviewWithoutNeedingDisplay];
 
     reinterpret_cast<RXWindow*>(window).constrainingToScreenSuspended = YES;
 
@@ -231,6 +234,7 @@
             reinterpret_cast<RXWindow*>(window).constrainingToScreenSuspended = NO;
             [window setLevel:previousWindowLevel];
 
+            [window setContentView:_worldView];
             CVDisplayLinkStart([_worldView displayLink]);
         }];
 
