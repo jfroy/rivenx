@@ -3,7 +3,7 @@
 //  rivenx
 //
 //  Created by Jean-Francois Roy on 20/03/08.
-//  Copyright 2005-2010 MacStorm. All rights reserved.
+//  Copyright 2005-2012 MacStorm. All rights reserved.
 //
 
 #import "RXSound_test.h"

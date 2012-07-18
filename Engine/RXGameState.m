@@ -3,7 +3,7 @@
 //  rivenx
 //
 //  Created by Jean-Francois Roy on 02/11/2007.
-//  Copyright 2005-2010 MacStorm. All rights reserved.
+//  Copyright 2005-2012 MacStorm. All rights reserved.
 //
 
 #import "Engine/RXGameState.h"

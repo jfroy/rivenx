@@ -3,7 +3,7 @@
 //  rivenx
 //
 //  Created by Jean-François Roy on 30/12/2011.
-//  Copyright (c) 2011 MacStorm. All rights reserved.
+//  Copyright (c) 2012 MacStorm. All rights reserved.
 //
 
 #import "RXInstaller.h"

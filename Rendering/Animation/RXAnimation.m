@@ -3,7 +3,7 @@
 //  rivenx
 //
 //  Created by Jean-François Roy on 11/04/2007.
-//  Copyright 2005-2010 MacStorm. All rights reserved.
+//  Copyright 2005-2012 MacStorm. All rights reserved.
 //
 
 #import "Rendering/Animation/RXAnimation.h"

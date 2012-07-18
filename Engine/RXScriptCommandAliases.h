@@ -3,7 +3,7 @@
 //  rivenx
 //
 //  Created by Jean-Francois Roy on 07/12/2008.
-//  Copyright 2005-2010 MacStorm. All rights reserved.
+//  Copyright 2005-2012 MacStorm. All rights reserved.
 //
 
 #define RX_COMMAND_GOTO_CARD 2
