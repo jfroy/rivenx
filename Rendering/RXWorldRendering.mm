@@ -31,7 +31,6 @@
     [window setReleasedWhenClosed:YES];
     [window setShowsResizeIndicator:NO];
     [window setPreservesContentDuringLiveResize:NO];
-    [window useOptimizedDrawing:YES];
     
     [window orderOut:self];
 }
