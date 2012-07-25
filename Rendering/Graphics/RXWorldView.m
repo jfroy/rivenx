@@ -31,7 +31,7 @@
 #endif
 
 
-@interface RXWorldView (RXWorldView_Private)
+@interface RXWorldView ()
 + (NSString*)rendererNameForID:(GLint)renderer;
 
 - (void)_handleColorProfileChange:(NSNotification*)notification;
@@ -50,12 +50,8 @@
 
 @implementation RXWorldView
 
-static CVReturn rx_render_output_callback(CVDisplayLinkRef displayLink,
-                                          const CVTimeStamp* inNow,
-                                          const CVTimeStamp* inOutputTime,
-                                          CVOptionFlags flagsIn,
-                                          CVOptionFlags* flagsOut,
-                                          void* ctx)
+static CVReturn rx_render_output_callback(CVDisplayLinkRef displayLink, const CVTimeStamp* inNow, const CVTimeStamp* inOutputTime, CVOptionFlags flagsIn,
+    CVOptionFlags* flagsOut, void* ctx)
 {
     NSAutoreleasePool* p = [[NSAutoreleasePool alloc] init];
     [(RXWorldView*)ctx _render:inOutputTime];
@@ -77,7 +73,8 @@ static NSString* required_extensions[] = {
     @"GL_EXT_framebuffer_object",
 };
 
-+ (BOOL)accessInstanceVariablesDirectly {
++ (BOOL)accessInstanceVariablesDirectly
+{
     return NO;
 }
 
@@ -162,7 +159,8 @@ static NSString* required_extensions[] = {
     return renderer_name;
 }
 
-- (id)initWithFrame:(NSRect)frame {
+- (id)initWithFrame:(NSRect)frame
+{
     CGLError cgl_err;
     
     self = [super initWithFrame:frame];
@@ -211,7 +209,8 @@ static NSString* required_extensions[] = {
     
     // create an NSGL pixel format
     NSOpenGLPixelFormat* format = [[NSOpenGLPixelFormat alloc] initWithAttributes:final_attribs];
-    if (!format) {
+    if (!format)
+    {
         // remove the multisampling buffer attributes
         pfa_index = sizeof(base_window_attribs) / sizeof(NSOpenGLPixelFormatAttribute);
         
@@ -223,7 +222,8 @@ static NSString* required_extensions[] = {
         final_attribs[++pfa_index] = 0;
         
         format = [[NSOpenGLPixelFormat alloc] initWithAttributes:final_attribs];
-        if (!format) {
+        if (!format)
+        {
             [NSApp presentError:no_supported_gpu_error];
             [self release];
             return nil;
@@ -236,7 +236,8 @@ static NSString* required_extensions[] = {
     NSSet* required_extensions_set = [NSSet setWithObjects:required_extensions count:sizeof(required_extensions) / sizeof(NSString*)];
     NSOpenGLContext* probing_context = [[NSOpenGLContext alloc] initWithFormat:format shareContext:nil];
     GLint npix = [format numberOfVirtualScreens];
-    for (GLint ipix = 0; ipix < npix; ipix++) {
+    for (GLint ipix = 0; ipix < npix; ipix++)
+    {
         GLint renderer;
         [format getValues:&renderer forAttribute:NSOpenGLPFARendererID forVirtualScreen:ipix];
         
@@ -247,13 +248,13 @@ static NSString* required_extensions[] = {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"virtual screen %d is driven by the \"%@\" renderer",
             ipix, [RXWorldView rendererNameForID:renderer]);
 #endif
-        
-        [self _determineGLVersion:[probing_context CGLContextObj]];
+
         [self _determineGLFeatures:[probing_context CGLContextObj]];
         
         NSMutableSet* missing_extensions = [[required_extensions_set mutableCopy] autorelease];
         [missing_extensions minusSet:_gl_extensions];
-        if ([missing_extensions count] == 0) {
+        if ([missing_extensions count] == 0)
+        {
 //#define FORCE_GENERIC_FLOAT_RENDERER 1
 #if FORCE_GENERIC_FLOAT_RENDERER
             if ((renderer & kCGLRendererIDMatchingMask) == kCGLRendererGenericFloatID)
@@ -270,7 +271,8 @@ static NSString* required_extensions[] = {
 #endif
     
     // if there are no viable renderers, bail out
-    if ([viable_renderers count] == 0) {
+    if ([viable_renderers count] == 0)
+    {
         [format release];
         
         [NSApp presentError:no_supported_gpu_error];
@@ -279,7 +281,8 @@ static NSString* required_extensions[] = {
     }
     
     // if there is only one viable renderer, we'll force it in the final pixel format
-    else if ([viable_renderers count] == 1) {
+    else if ([viable_renderers count] == 1)
+    {
         final_attribs[pfa_index] = NSOpenGLPFARendererID;
         final_attribs[++pfa_index] = [[viable_renderers anyObject] intValue];
         
@@ -287,7 +290,8 @@ static NSString* required_extensions[] = {
         
         [format release];
         format = [[NSOpenGLPixelFormat alloc] initWithAttributes:final_attribs];
-        if (!format) {
+        if (!format)
+        {
             [NSApp presentError:no_supported_gpu_error];
             [self release];
             return nil;
@@ -301,9 +305,8 @@ static NSString* required_extensions[] = {
     
     // create the render context
     _renderContext = [[NSOpenGLContext alloc] initWithFormat:format shareContext:nil];
-    if (!_renderContext) {
-        // NSOpenGLPFARendererID, kCGLRendererGenericFloatID,
-        
+    if (!_renderContext)
+    {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"could not create the render OpenGL context");
         [self release];
         return nil;
@@ -330,7 +333,8 @@ static NSString* required_extensions[] = {
     // create the state object for the rendering context and store it in the context's client context slot
     NSObject<RXOpenGLStateProtocol>* state = [[RXOpenGLState alloc] initWithContext:_renderContextCGL];
     cgl_err = CGLSetParameter(_renderContextCGL, kCGLCPClientStorage, (const GLint*)&state);
-    if (cgl_err != kCGLNoError) {
+    if (cgl_err != kCGLNoError)
+    {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
         [self release];
@@ -339,7 +343,8 @@ static NSString* required_extensions[] = {
     
     // create a load context and pair it with the render context
     _loadContext = [[NSOpenGLContext alloc] initWithFormat:format shareContext:_renderContext];
-    if (!_loadContext) {
+    if (!_loadContext)
+    {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"could not create the resource load OpenGL context");
         [self release];
         return nil;
@@ -352,7 +357,8 @@ static NSString* required_extensions[] = {
     // create the state object for the loading context and store it in the context's client context slot
     state = [[RXOpenGLState alloc] initWithContext:_loadContextCGL];
     cgl_err = CGLSetParameter(_loadContextCGL, kCGLCPClientStorage, (const GLint*)&state);
-    if (cgl_err != kCGLNoError) {
+    if (cgl_err != kCGLNoError)
+    {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPClientStorage failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
         [self release];
@@ -365,7 +371,8 @@ static NSString* required_extensions[] = {
     // enable vsync on the render context
     param = 1;
     cgl_err = CGLSetParameter(_renderContextCGL, kCGLCPSwapInterval, &param);
-    if (cgl_err != kCGLNoError) {
+    if (cgl_err != kCGLNoError)
+    {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLSetParameter for kCGLCPSwapInterval failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
         [self release];
@@ -374,7 +381,8 @@ static NSString* required_extensions[] = {
     
     // disable the MT engine as it is a significant performance hit for Riven X; note that we ignore kCGLBadEnumeration errors because of Tiger
     cgl_err = CGLDisable(_renderContextCGL, kCGLCEMPEngine);
-    if (cgl_err != kCGLNoError && cgl_err != kCGLBadEnumeration) {
+    if (cgl_err != kCGLNoError && cgl_err != kCGLBadEnumeration)
+    {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLEnable for kCGLCEMPEngine failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
         [self release];
@@ -382,7 +390,8 @@ static NSString* required_extensions[] = {
     }
     
     cgl_err = CGLDisable(_loadContextCGL, kCGLCEMPEngine);
-    if (cgl_err != kCGLNoError && cgl_err != kCGLBadEnumeration) {
+    if (cgl_err != kCGLNoError && cgl_err != kCGLBadEnumeration)
+    {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"CGLEnable for kCGLCEMPEngine failed with error %d: %s",
             cgl_err, CGLErrorString(cgl_err));
         [self release];
@@ -461,49 +470,60 @@ static NSString* required_extensions[] = {
 #pragma mark -
 #pragma mark world view protocol
 
-- (CGLContextObj)renderContext {
+- (CGLContextObj)renderContext
+{
     return _renderContextCGL;
 }
 
-- (CGLContextObj)loadContext {
+- (CGLContextObj)loadContext
+{
     return _loadContextCGL;
 }
 
-- (CGLPixelFormatObj)cglPixelFormat {
+- (CGLPixelFormatObj)cglPixelFormat
+{
     return _cglPixelFormat;
 }
 
-- (CVDisplayLinkRef)displayLink {
+- (CVDisplayLinkRef)displayLink
+{
     return _displayLink;
 }
 
-- (CGColorSpaceRef)workingColorSpace {
+- (CGColorSpaceRef)workingColorSpace
+{
     return _workingColorSpace;
 }
 
-- (CGColorSpaceRef)displayColorSpace {
+- (CGColorSpaceRef)displayColorSpace
+{
     return _displayColorSpace;
 }
 
-- (rx_size_t)viewportSize {
+- (rx_size_t)viewportSize
+{
     return RXSizeMake(_glWidth, _glHeight);
 }
 
-- (void)setCardRenderer:(id)renderer {
+- (void)setCardRenderer:(id)renderer
+{
     _cardRenderer = RXGetRenderer(renderer);
 }
 
-- (NSCursor*)cursor {
+- (NSCursor*)cursor
+{
     return _cursor;
 }
 
-- (void)setCursor:(NSCursor*)cursor {
+- (void)setCursor:(NSCursor*)cursor
+{
     // NSCursor instances are immutable
     if (cursor == _cursor)
         return;
     
     // the rest of this method must run on the main thread
-    if (!pthread_main_np()) {
+    if (!pthread_main_np())
+    {
         [self performSelectorOnMainThread:@selector(setCursor:) withObject:cursor waitUntilDone:NO];
         return;
     }
@@ -529,39 +549,48 @@ static NSString* required_extensions[] = {
 
 // we need to forward events to the state compositor, which will forward them to the rendering states
 
-- (BOOL)acceptsFirstResponder {
+- (BOOL)acceptsFirstResponder
+{
     return YES;
 }
 
-- (BOOL)becomeFirstResponder {
+- (BOOL)becomeFirstResponder
+{
     return YES;
 }
 
-- (void)mouseDown:(NSEvent*)event {
+- (void)mouseDown:(NSEvent*)event
+{
     [[g_world cardRenderer] mouseDown:event];
 }
 
-- (void)mouseUp:(NSEvent*)event {
+- (void)mouseUp:(NSEvent*)event
+{
     [[g_world cardRenderer] mouseUp:event];
 }
 
-- (void)mouseMoved:(NSEvent*)event {
+- (void)mouseMoved:(NSEvent*)event
+{
     [[g_world cardRenderer] mouseMoved:event];
 }
 
-- (void)mouseDragged:(NSEvent*)event {
+- (void)mouseDragged:(NSEvent*)event
+{
     [[g_world cardRenderer] mouseDragged:event];
 }
 
-- (void)swipeWithEvent:(NSEvent*)event {
+- (void)swipeWithEvent:(NSEvent*)event
+{
     [[g_world cardRenderer] swipeWithEvent:event];
 }
 
-- (void)keyDown:(NSEvent*)event {
+- (void)keyDown:(NSEvent*)event
+{
     [[g_world cardRenderer] keyDown:event];
 }
 
-- (void)resetCursorRects {
+- (void)resetCursorRects
+{
     [self addCursorRect:[self bounds] cursor:_cursor];
     [_cursor setOnMouseEntered:YES];
 }
@@ -569,7 +598,8 @@ static NSString* required_extensions[] = {
 #pragma mark -
 #pragma mark view behavior
 
-- (BOOL)isOpaque {
+- (BOOL)isOpaque
+{
     return YES;
 }
 
@@ -591,7 +621,8 @@ static NSString* required_extensions[] = {
     CFRelease(displayProfile);
 }
 
-- (void)viewDidMoveToWindow {
+- (void)viewDidMoveToWindow
+{
     [super viewDidMoveToWindow];
     
     // remove ourselves from any previous screen or window related notifications
@@ -628,11 +659,13 @@ static NSString* required_extensions[] = {
 
 extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_service_t* accelerator, uint32_t* index);
 
-- (void)_updateAcceleratorService {
+- (void)_updateAcceleratorService
+{
     CGLError cglerr;
     CGError cgerr;
     
-    if (_acceleratorService) {
+    if (_acceleratorService)
+    {
         IOObjectRelease(_acceleratorService);
         _acceleratorService = 0;
     }
@@ -684,7 +717,6 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     _intelGraphics = (renderer == kCGLRendererIntel900ID || renderer == kCGLRendererIntelX3100ID) ? YES : NO;
     
     // determine OpenGL version and features
-    [self _determineGLVersion:_renderContextCGL];
     [self _determineGLFeatures:_renderContextCGL];
     
     // FIXME: determine if we need to fallback to software and do so here; this may not be required since we allow fallback in the pixel format
@@ -695,9 +727,11 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
 
 - (void)reshape
 {
+    [super reshape];
+
     if (!_glInitialized || _tornDown)
         return;
-    
+
     GLint viewportLeft, viewportBottom;
     NSRect glRect;
     
@@ -753,7 +787,8 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
 #pragma mark -
 #pragma mark OpenGL initialization
 
-- (void)_initializeCardRendering {
+- (void)_initializeCardRendering
+{
     CGLContextObj cgl_ctx = _renderContextCGL;
     NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
@@ -770,11 +805,12 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glReportError();
     
-    // disable client storage because it's incompatible with allocating texture space with NULL (which is what we want to do for FBO color attachement textures)
+    // disable client storage because it's incompatible with allocating texture space with NULL (which is what we want for FBO color attachement textures)
     GLenum client_storage = [gl_state setUnpackClientStorage:GL_FALSE];
     
     // allocate memory for the texture
-    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL); glReportError();
+    glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, kRXCardViewportSize.width, kRXCardViewportSize.height, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
+    glReportError();
     
     // color0 texture attach
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _cardFBO); glReportError();
@@ -782,9 +818,8 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
         
     // completeness check
     GLenum status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-    if (status != GL_FRAMEBUFFER_COMPLETE_EXT) {
+    if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelError, @"card FBO not complete, status 0x%04x\n", (unsigned int)status);
-    }
     
     // one VBO for all our vertex attribs
     glGenBuffers(1, &_attribsVBO);
@@ -853,7 +888,8 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     glReportError();
 }
 
-- (void)_updateCardCoordinates {
+- (void)_updateCardCoordinates
+{
     CGLContextObj cgl_ctx = _renderContextCGL;
     NSObject<RXOpenGLStateProtocol>* gl_state = RXGetContextState(cgl_ctx);
     
@@ -906,7 +942,8 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     [gl_state bindVertexArrayObject:0];
 }
 
-- (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx {
+- (void)_baseOpenGLStateSetup:(CGLContextObj)cgl_ctx
+{
     // set background color to black
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     
@@ -944,7 +981,8 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
 #pragma mark -
 #pragma mark capabilities
 
-- (void)_determineGLVersion:(CGLContextObj)cgl_ctx {
+- (void)_determineGLVersion:(CGLContextObj)cgl_ctx
+{
 /*
        The GL_VERSION string begins with a version number.  The version number uses one of these forms:
 
@@ -962,26 +1000,32 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
     _glMinorVersion = (GLuint)strtol((const char*)minorVersionString + 1, NULL, 10);
     
     // GLSL is somewhat more complicated than mere extensions
-    if (_glMajorVersion == 1) {
-        const GLubyte* extensions = glGetString(GL_EXTENSIONS); glReportError();
-        
-        if (gluCheckExtension((const GLubyte*) "GL_ARB_shader_objects", extensions) &&
-            gluCheckExtension((const GLubyte*) "GL_ARB_vertex_shader", extensions) &&
-            gluCheckExtension((const GLubyte*) "GL_ARB_fragment_shader", extensions))
+    if (_glMajorVersion == 1)
+    {
+        if ([_gl_extensions containsObject:@"GL_ARB_shader_objects"] &&
+            [_gl_extensions containsObject:@"GL_ARB_vertex_shader"] &&
+            [_gl_extensions containsObject:@"GL_ARB_fragment_shader"])
         {
-            if (gluCheckExtension((const GLubyte*) "GL_ARB_shading_language_110", extensions)) {
+            if ([_gl_extensions containsObject:@"GL_ARB_shading_language_110"])
+            {
                 _glslMajorVersion = 1;
                 _glslMinorVersion = 1;
-            } else if (gluCheckExtension((const GLubyte*) "GL_ARB_shading_language_100", extensions)) {
+            }
+            else if ([_gl_extensions containsObject:@"GL_ARB_shading_language_100"])
+            {
                 _glslMajorVersion = 1;
                 _glslMinorVersion = 0;
             }
-        } else {
+        }
+        else
+        {
             _glslMajorVersion = 0;
             _glslMinorVersion = 0;
         }
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelMessage, @"Computed GLSL version: %u.%u", _glslMajorVersion, _glslMinorVersion);
-    } else if (_glMajorVersion == 2) {
+    }
+    else if (_glMajorVersion == 2)
+    {
 /*
 The GL_VERSION and GL_SHADING_LANGUAGE_VERSION strings begin with a version number. The version number uses one of these forms:
 
@@ -993,16 +1037,22 @@ major_number.minor_number major_number.minor_number.release_number
         GLubyte* minorVersionString;
         _glslMajorVersion = (GLuint)strtol((const char*)glslVersionString, (char**)&minorVersionString, 10);
         _glslMinorVersion = (GLuint)strtol((const char*)minorVersionString + 1, NULL, 10);
-    } else
+    }
+    else
+    {
         RXOLog2(kRXLoggingGraphics, kRXLoggingLevelDebug, @"unsupported OpenGL major version");
+    }
 }
 
-- (void)_determineGLFeatures:(CGLContextObj)cgl_ctx {
+- (void)_determineGLFeatures:(CGLContextObj)cgl_ctx
+{
+    NSString* extensions = [[NSString alloc] initWithCString:(const char*)glGetString(GL_EXTENSIONS) encoding:NSASCIIStringEncoding];
     [_gl_extensions release];
-    _gl_extensions = [[NSSet alloc] initWithArray:
-                      [[NSString stringWithCString:(const char*)glGetString(GL_EXTENSIONS)
-                                          encoding:NSASCIIStringEncoding] componentsSeparatedByString:@" "]];
-    
+    _gl_extensions = [[NSSet alloc] initWithArray:[extensions componentsSeparatedByString:@" "]];
+    [extensions release];
+
+    [self _determineGLVersion:cgl_ctx];
+
     NSMutableString* features_message = [[NSMutableString alloc] initWithString:@"supported OpenGL features:\n"];
     if ([_gl_extensions containsObject:@"GL_ARB_texture_rectangle"])
         [features_message appendString:@"    texture rectangle (ARB)\n"];
@@ -1143,7 +1193,8 @@ major_number.minor_number major_number.minor_number.release_number
 #pragma mark -
 #pragma mark rendering
 
-- (void)fadeOutWithDuration:(NSTimeInterval)duration completionDelegate:(id)completionDelegate selector:(SEL)completionSel {
+- (void)fadeOutWithDuration:(NSTimeInterval)duration completionDelegate:(id)completionDelegate selector:(SEL)completionSel
+{
     float start = (_fadeInterpolator) ? [_fadeInterpolator value] : 0.0f;
     RXAnimation* animation = [[RXCannedAnimation alloc] initWithDuration:duration];
     
@@ -1160,7 +1211,8 @@ major_number.minor_number major_number.minor_number.release_number
     [animation startNow];
 }
 
-- (void)fadeInWithDuration:(NSTimeInterval)duration completionDelegate:(id)completionDelegate selector:(SEL)completionSel {
+- (void)fadeInWithDuration:(NSTimeInterval)duration completionDelegate:(id)completionDelegate selector:(SEL)completionSel
+{
     float start = (_fadeInterpolator) ? [_fadeInterpolator value] : 1.0f;
     RXAnimation* animation = [[RXCannedAnimation alloc] initWithDuration:duration];
     
@@ -1177,7 +1229,8 @@ major_number.minor_number major_number.minor_number.release_number
     [animation startNow];
 }
 
-- (void)_handleFadeCompletion:(id<RXInterpolator>)interpolator {
+- (void)_handleFadeCompletion:(id<RXInterpolator>)interpolator
+{
     id completionDelegate = _fadeCompletionDelegate;
     SEL completionSel = _fadeCompletionSel;
     
