@@ -61,10 +61,12 @@
     [_window setLevel:NSNormalWindowLevel];
     [_window setCanHide:YES];
 
-    bool preLion = [[copy_system_version() autorelease] rx_versionIsOlderThan:@"10.7"];
     NSWindowCollectionBehavior behavior = NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
-    if (!preLion)
-        behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
+
+// FIXME: figure out the issues with Lion-style fullscreen
+//    bool preLion = [[copy_system_version() autorelease] rx_versionIsOlderThan:@"10.7"];
+//    if (!preLion)
+//        behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
     [_window setCollectionBehavior:behavior];
     
     NSString* encoded_frame = [[NSUserDefaults standardUserDefaults] objectForKey:@"WindowFrame"];
@@ -102,8 +104,9 @@
         [self windowWillEnterFullScreen:nil];
 
     // the _fullscreen attribute has been updated when this is called
-    NSWindow* window = [self _renderingWindow];
+    NSWindow* window = (fullscreen) ? _window : _fullscreenWindow;
     NSWindow* oldWindow = [_worldView window];
+    assert(window != oldWindow);
 
     [oldWindow orderOut:self];
 
@@ -290,7 +293,9 @@
     if (!pthread_main_np())
         @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"_initializeRenderer: MAIN THREAD ONLY" userInfo:nil];
 
-    bool preLion = [[copy_system_version() autorelease] rx_versionIsOlderThan:@"10.7"];
+// FIXME: figure out the issues with Lion-style fullscreen
+//    bool preLion = [[copy_system_version() autorelease] rx_versionIsOlderThan:@"10.7"];
+    bool preLion = true;
 
     // initialize the audio renderer
     RX::AudioRenderer* audioRenderer = new RX::AudioRenderer();
