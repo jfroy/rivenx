@@ -431,7 +431,7 @@
 				<string key="NSWindowContentMaxSize">{580, 320}</string>
 				<string key="NSWindowContentMinSize">{580, 320}</string>
 				<object class="NSView" key="NSWindowView" id="790226516">
-					<nil key="NSNextResponder"/>
+					<reference key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<array class="NSMutableArray" key="NSSubviews">
 						<object class="NSImageView" id="109582763">
@@ -447,6 +447,8 @@
 							</set>
 							<string key="NSFrameSize">{580, 320}</string>
 							<reference key="NSSuperview" ref="790226516"/>
+							<reference key="NSWindow"/>
+							<reference key="NSNextKeyView" ref="968980602"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSImageCell" key="NSCell" id="828766038">
 								<int key="NSCellFlags">134217728</int>
@@ -466,21 +468,27 @@
 						<object class="NSButton" id="29420778">
 							<reference key="NSNextResponder" ref="790226516"/>
 							<int key="NSvFlags">268</int>
-							<string key="NSFrame">{{420, 14}, {140, 19}}</string>
+							<string key="NSFrame">{{435, 9}, {130, 28}}</string>
 							<reference key="NSSuperview" ref="790226516"/>
+							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="14879463">
 								<int key="NSCellFlags">67108864</int>
-								<int key="NSCellFlags2">134217728</int>
+								<int key="NSCellFlags2">134348800</int>
 								<string key="NSContents">Acknowledgments</string>
 								<object class="NSFont" key="NSSupport">
 									<string key="NSName">LucidaGrande</string>
-									<double key="NSSize">12</double>
-									<int key="NSfFlags">16</int>
+									<double key="NSSize">11</double>
+									<int key="NSfFlags">3100</int>
 								</object>
 								<reference key="NSControlView" ref="29420778"/>
 								<int key="NSButtonFlags">-2038284288</int>
-								<int key="NSButtonFlags2">36</int>
+								<int key="NSButtonFlags2">1</int>
+								<object class="NSFont" key="NSAlternateImage">
+									<string key="NSName">LucidaGrande</string>
+									<double key="NSSize">11</double>
+									<int key="NSfFlags">16</int>
+								</object>
 								<string key="NSAlternateContents"/>
 								<string key="NSKeyEquivalent"/>
 								<int key="NSPeriodicDelay">200</int>
@@ -493,6 +501,8 @@
 							<int key="NSvFlags">268</int>
 							<string key="NSFrame">{{256, 197}, {304, 14}}</string>
 							<reference key="NSSuperview" ref="790226516"/>
+							<reference key="NSWindow"/>
+							<reference key="NSNextKeyView" ref="620496051"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSTextFieldCell" key="NSCell" id="747923175">
 								<int key="NSCellFlags">67108864</int>
@@ -521,6 +531,8 @@
 							<int key="NSvFlags">268</int>
 							<string key="NSFrame">{{256, 60}, {304, 79}}</string>
 							<reference key="NSSuperview" ref="790226516"/>
+							<reference key="NSWindow"/>
+							<reference key="NSNextKeyView" ref="29420778"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSTextFieldCell" key="NSCell" id="1023059367">
 								<int key="NSCellFlags">67108864</int>
@@ -543,8 +555,11 @@
 						</object>
 					</array>
 					<string key="NSFrameSize">{580, 320}</string>
+					<reference key="NSSuperview"/>
+					<reference key="NSWindow"/>
+					<reference key="NSNextKeyView" ref="109582763"/>
 				</object>
-				<string key="NSScreenRect">{{0, 0}, {2560, 1578}}</string>
+				<string key="NSScreenRect">{{0, 0}, {1440, 878}}</string>
 				<string key="NSMinSize">{580, 342}</string>
 				<string key="NSMaxSize">{580, 342}</string>
 				<bool key="NSWindowIsRestorable">YES</bool>
