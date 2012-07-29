@@ -20,6 +20,7 @@
 {
     NSURL* _worldBase;
     NSURL* _worldCacheBase;
+    NSURL* _worldSupportBase;
     
     NSDictionary* _extrasDescriptor;
     
@@ -58,6 +59,7 @@
 
 - (NSURL*)worldBase;
 - (NSURL*)worldCacheBase;
+- (NSURL*)worldSupportBase;
 
 - (BOOL)isInstalled;
 - (void)setIsInstalled:(BOOL)flag;

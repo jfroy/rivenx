@@ -82,40 +82,55 @@ NSObject <RXWorldProtocol>* g_world = nil;
         [[NSUserDefaults standardUserDefaults] setValue:[NSMutableDictionary dictionary] forKey:@"EngineVariables"];
 }
 
-- (void)_initEngineLocations
+- (NSURL*)_urlForEngineLocation:(OSType)locationType name:(NSString*)name NS_RETURNS_RETAINED
 {
-    NSError* error;
-    
-    [_worldBase release];
-    [_worldCacheBase release];
-    
-    // world base is the parent directory of the application bundle
-    _worldBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)[[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent], kCFURLPOSIXPathStyle, true);
-    
-    FSRef cachesFolderRef;
-    OSErr os_err = FSFindFolder(kUserDomain, kCachedDataFolderType, kDontCreateFolder, &cachesFolderRef);
+    NSError* error = nil;
+
+    FSRef parentFolderRef;
+    OSErr os_err = FSFindFolder(kUserDomain, kCachedDataFolderType, kDontCreateFolder, &parentFolderRef);
     if (os_err != noErr)
     {
         error = [NSError errorWithDomain:NSOSStatusErrorDomain code:os_err userInfo:nil];
-        @throw [NSException exceptionWithName:@"RXFilesystemException"
-                                       reason:@"Riven X was unable to locate your user's caches folder."
-                                     userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        NSString* reason = [NSString stringWithFormat:@"Riven X was unable to locate your user's %@ folder.", name];
+        @throw [NSException exceptionWithName:@"RXFilesystemException" reason:reason
+            userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
     }
-    
-    NSURL* cachesFolderURL = [(NSURL*)CFURLCreateFromFSRef(kCFAllocatorDefault, &cachesFolderRef) autorelease];
-    release_assert(cachesFolderURL);
-    
-    // the world shared base is a bundle-identifier folder inside the ~/Library/Caches
-    NSString* cachesDirPath = [[cachesFolderURL path] stringByAppendingPathComponent:[[NSBundle mainBundle] bundleIdentifier]];
-    if (!BZFSDirectoryExists(cachesDirPath))
+
+    NSURL* parentFolderURL = (NSURL*)CFURLCreateFromFSRef(kCFAllocatorDefault, &parentFolderRef);
+    release_assert(parentFolderURL);
+
+    NSString* engineLocationPath = [[parentFolderURL path] stringByAppendingPathComponent:[[NSBundle mainBundle] bundleIdentifier]];
+    [parentFolderURL release];
+
+    if (!BZFSDirectoryExists(engineLocationPath))
     {
-        BOOL success = BZFSCreateDirectoryExtended(cachesDirPath, @"admin", 0775, &error);
+        BOOL success = BZFSCreateDirectory(engineLocationPath, &error);
         if (!success)
-            @throw [NSException exceptionWithName:@"RXFilesystemException"
-                                           reason:@"Riven X was unable to create its caches folder."
-                                         userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        {
+            NSString* reason = [NSString stringWithFormat:@"Riven X was unable to create its %@ folder.", name];
+            @throw [NSException exceptionWithName:@"RXFilesystemException" reason:reason
+                userInfo:[NSDictionary dictionaryWithObjectsAndKeys:error, NSUnderlyingErrorKey, nil]];
+        }
     }
-    _worldCacheBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)cachesDirPath, kCFURLPOSIXPathStyle, true);
+
+    return (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)engineLocationPath, kCFURLPOSIXPathStyle, true);
+}
+
+- (void)_initEngineLocations
+{
+    [_worldBase release];
+    [_worldCacheBase release];
+    [_worldSupportBase release];
+    
+    // world base is the parent directory of the application bundle
+    NSString* appParentDirPath = [[[NSBundle mainBundle] bundlePath] stringByDeletingLastPathComponent];
+    _worldBase = (NSURL*)CFURLCreateWithFileSystemPath(NULL, (CFStringRef)appParentDirPath, kCFURLPOSIXPathStyle, true);
+
+    // world cache base is a subdirectory of the user's caches folder
+    _worldCacheBase = [self _urlForEngineLocation:kCachedDataFolderType name:@"caches"];
+
+    // world app support base is a subdirectory of the user's app support folder
+    _worldSupportBase = [self _urlForEngineLocation:kApplicationSupportFolderType name:@"application support"];
 }
 
 - (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context
@@ -317,6 +332,7 @@ NSObject <RXWorldProtocol>* g_world = nil;
     [_gameState release], _gameState = nil;
     [_worldBase release], _worldBase = nil;
     [_worldCacheBase release], _worldCacheBase = nil;
+    [_worldSupportBase release], _worldSupportBase = nil;
     [_engineVariables release], _engineVariables = nil;
     [_activeStacks release], _activeStacks = nil;
     [_cachePreferences release], _cachePreferences = nil;
@@ -353,6 +369,11 @@ NSObject <RXWorldProtocol>* g_world = nil;
 - (NSURL*)worldCacheBase
 {
     return _worldCacheBase;
+}
+
+- (NSURL*)worldSupportBase
+{
+    return _worldSupportBase;
 }
 
 - (void)_writeCachePreferences

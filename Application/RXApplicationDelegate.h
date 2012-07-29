@@ -25,7 +25,6 @@
     
     RXWelcomeWindowController* welcomeController;
     
-    NSURL* savedGamesDirectory;
     NSURL* autosaveURL;
     
     BOOL disableGameSavingAndLoading;

@@ -1495,7 +1495,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "COPY_TOOL=\"ditto\"\n\n# libavutil\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n#$COPY_TOOL \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcore\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcore.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n#$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcore.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n\n# libavcodec\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n#$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}\"\n";
+			shellScript = "COPY_TOOL=\"ditto\"\n\n# libavutil\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n\n# libavcore\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcore.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n\n# libavcodec\n$COPY_TOOL \"${SRCROOT}/ffmpeg/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		314A02EE0B6E53D5003E92A1 /* Generate Build Strings */ = {
@@ -1862,6 +1862,7 @@
 		314959910E327B2E00E49C83 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -1881,6 +1882,7 @@
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				PRODUCT_NAME = MHKKit;
+				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -1888,6 +1890,7 @@
 		314959920E327B2E00E49C83 /* Beta Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -1907,6 +1910,7 @@
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				PRODUCT_NAME = MHKKit;
+				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = "Beta Release";
@@ -1914,6 +1918,7 @@
 		314959930E327B2E00E49C83 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -1933,6 +1938,7 @@
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				PRODUCT_NAME = MHKKit;
+				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -2007,17 +2013,18 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libstdc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/xz/lib";
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_LDFLAGS = (
 					"-lz",
 					"-llzma",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -2029,17 +2036,18 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libstdc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/xz/lib";
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_LDFLAGS = (
 					"-lz",
 					"-llzma",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = "Beta Release";
@@ -2051,17 +2059,18 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libstdc++";
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/xz/lib";
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_LDFLAGS = (
 					"-lz",
 					"-llzma",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -2173,9 +2182,9 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				COPY_PHASE_STRIP = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libstdc++";
+				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				FRAMEWORK_SEARCH_PATHS = "\"$(SRCROOT)/Frameworks\"";
@@ -2208,7 +2217,7 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = (
 					"-fstack-protector",
 					"-fblocks",
@@ -2236,9 +2245,9 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				COPY_PHASE_STRIP = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libstdc++";
+				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
@@ -2266,7 +2275,7 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = (
 					"-fstack-protector",
 					"-fblocks",
@@ -2431,6 +2440,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
+				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
+				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -2443,6 +2454,7 @@
 				INSTALL_PATH = "$(LOCAL_APPS_DIR)";
 				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PRODUCT_NAME = "Riven X";
+				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = "Beta Release";
@@ -2452,9 +2464,9 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
-				COPY_PHASE_STRIP = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libstdc++";
+				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEPLOYMENT_POSTPROCESSING = YES;
@@ -2485,7 +2497,7 @@
 				GCC_WARN_UNKNOWN_PRAGMAS = YES;
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				OTHER_CFLAGS = (
 					"-fstack-protector",
 					"-fblocks",
@@ -2512,6 +2524,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
+				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
+				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -2524,6 +2538,7 @@
 				INSTALL_PATH = "$(LOCAL_APPS_DIR)";
 				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PRODUCT_NAME = "Riven X";
+				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -2532,6 +2547,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
+				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
+				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -2544,6 +2561,7 @@
 				INSTALL_PATH = "$(LOCAL_APPS_DIR)";
 				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PRODUCT_NAME = "Riven X";
+				PROVISIONING_PROFILE = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

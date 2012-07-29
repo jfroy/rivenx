@@ -18,7 +18,6 @@
 
 #import <AppKit/NSAlert.h>
 #import <AppKit/NSApplication.h>
-#import <AppKit/NSDocumentController.h>
 #import <AppKit/NSKeyValueBinding.h>
 #import <AppKit/NSOpenPanel.h>
 #import <AppKit/NSProgressIndicator.h>

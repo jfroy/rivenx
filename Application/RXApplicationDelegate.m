@@ -35,7 +35,7 @@
 
 
 @interface RXApplicationDelegate (RXApplicationDelegate_Private)
-- (BOOL)_openGameWithURL:(NSURL*)url;
+- (BOOL)_openGameWithURL:(NSURL*)url addToRecents:(BOOL)addToRecents;
 - (void)_autosave:(NSTimer*)timer;
 @end
 
@@ -90,8 +90,10 @@
                 if (recoveryOptionIndex == 0)
                 {
                     // once to launch SU, and another time to make sure it becomes the active application
-                    [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:@"com.apple.SoftwareUpdate" options:0 additionalEventParamDescriptor:nil launchIdentifier:NULL];
-                    [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:@"com.apple.SoftwareUpdate" options:0 additionalEventParamDescriptor:nil launchIdentifier:NULL];
+                    [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:@"com.apple.SoftwareUpdate" options:0 additionalEventParamDescriptor:nil
+                        launchIdentifier:NULL];
+                    [[NSWorkspace sharedWorkspace] launchAppWithBundleIdentifier:@"com.apple.SoftwareUpdate" options:0 additionalEventParamDescriptor:nil
+                        launchIdentifier:NULL];
                 }
                 
                 // check for an app update before quitting
@@ -167,8 +169,11 @@
 
 - (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException*)e mask:(NSUInteger)aMask
 {
-    if ([[e name] isEqualToString:@"RXCommandArgumentsException"] || [[e name] isEqualToString:@"RXUnknownCommandException"] || [[e name] isEqualToString:@"RXCommandError"])
+    if ([[e name] isEqualToString:@"RXCommandArgumentsException"] || [[e name] isEqualToString:@"RXUnknownCommandException"] ||
+        [[e name] isEqualToString:@"RXCommandError"])
+    {
         return NO;
+    }
     
     [self notifyUserOfFatalException:e];
     return NO;
@@ -177,7 +182,10 @@
 - (BOOL)_checkQuickTime
 {
     // check that the user has QuickTime 7.6.2 or later
-    NSArray* qtkit_vers = [[[NSBundle bundleWithIdentifier:@"com.apple.QTKit"] objectForInfoDictionaryKey:@"CFBundleShortVersionString"] componentsSeparatedByString:@"."];
+    NSBundle* qtkit = [NSBundle bundleWithIdentifier:@"com.apple.QTKit"];
+    release_assert(qtkit);
+
+    NSArray* qtkit_vers = [[qtkit objectForInfoDictionaryKey:@"CFBundleShortVersionString"] componentsSeparatedByString:@"."];
     if (!qtkit_vers || [qtkit_vers count] == 0)
         qtkit_vers = [NSArray arrayWithObjects:@"0", nil];
     
@@ -189,13 +197,13 @@
         return YES;
     
     // if QuickTime is too old, tell the user about the Cinepak problem and offer them to launch SU
-    NSError* error = [RXError errorWithDomain:RXErrorDomain code:kRXErrQuickTimeTooOld userInfo:
-                      [NSDictionary dictionaryWithObjectsAndKeys:
-                       NSLocalizedString(@"QUICKTIME_REQUIRE_762", "require QuickTime 7.6.2"), NSLocalizedDescriptionKey,
-                       NSLocalizedString(@"QUICKTIME_SHOULD_UPGRADE", "should upgrade QuickTime"), NSLocalizedRecoverySuggestionErrorKey,
-                       [NSArray arrayWithObjects:NSLocalizedString(@"UPDATE_QUICKTIME", "update QuickTime"), NSLocalizedString(@"QUIT", "quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
-                       self, NSRecoveryAttempterErrorKey,
-                       nil]];
+    NSError* error = [RXError errorWithDomain:RXErrorDomain code:kRXErrQuickTimeTooOld userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+        NSLocalizedString(@"QUICKTIME_REQUIRE_762", "require QuickTime 7.6.2"), NSLocalizedDescriptionKey,
+        NSLocalizedString(@"QUICKTIME_SHOULD_UPGRADE", "should upgrade QuickTime"), NSLocalizedRecoverySuggestionErrorKey,
+        [NSArray arrayWithObjects:NSLocalizedString(@"UPDATE_QUICKTIME", "update QuickTime"),
+                                  NSLocalizedString(@"QUIT", "quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
+        self, NSRecoveryAttempterErrorKey,
+        nil]];
     [NSApp presentError:error];
     return NO;
 }
@@ -220,25 +228,10 @@
 
 - (void)applicationDidFinishLaunching:(NSNotification*)notification
 {
-    // delete old world data
-    dispatch_async(QUEUE_LOW, ^(void)
-    {
-        NSArray* dirs = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
-        if (![dirs count])
-            return;
-        
-        NSString* path = [[dirs objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"];
-        BZFSRemoveItemAtURL([NSURL fileURLWithPath:path], NULL);
-    });
-    
-    // get the path to the saved games directory and create it if it doesn't exists
-    NSArray* docsDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    savedGamesDirectory = [[NSURL alloc] initFileURLWithPath:[[docsDir objectAtIndex:0] stringByAppendingPathComponent:@"Riven X"] isDirectory:YES];
-    BZFSCreateDirectoryURLExtended(savedGamesDirectory, nil, 0700, NULL);
-    
-    // derive the autosave URL from the saved games directory
+    // derive the autosave URL
     NSString* extension = [(NSString*)UTTypeCopyPreferredTagWithClass(CFSTR("org.macstorm.rivenx.game"), kUTTagClassFilenameExtension) autorelease];
-    autosaveURL = [[savedGamesDirectory URLByAppendingPathComponent:[@"Autosave" stringByAppendingPathExtension:extension] isDirectory:NO] retain];
+    NSString* filename = [@"Autosave" stringByAppendingPathExtension:extension];
+    autosaveURL = [[[[RXWorld sharedWorld] worldSupportBase] URLByAppendingPathComponent:filename isDirectory:NO] retain];
     
     // proceed no further if the QuickTime version was not suitable
     if (!quicktimeGood)
@@ -257,8 +250,11 @@
         NSArray* recentGames = [[NSDocumentController sharedDocumentController] recentDocumentURLs];
         BOOL didLoadRecent = NO;
         if ([recentGames count] > 0)
-            didLoadRecent = [self _openGameWithURL:[recentGames objectAtIndex:0]];
-        
+            didLoadRecent = [self _openGameWithURL:[recentGames objectAtIndex:0] addToRecents:NO];
+
+        if (!didLoadRecent && BZFSFileURLExists(autosaveURL))
+            didLoadRecent = [self _openGameWithURL:autosaveURL addToRecents:NO];
+
         if (!didLoadRecent)
         {
             RXGameState* gs = [[RXGameState alloc] init];
@@ -281,12 +277,12 @@
     RXGameState* gameState = [g_world gameState];
     if (gameState)
     {
-        [self _autosave:nil];
-        
-        if ([gameState URL])
+        NSURL* url = [gameState URL];
+        if (url && ![url isEqual:autosaveURL])
             [self saveGame:nil];
+        else
+            [self _autosave:nil];
     }
-    
 }
 
 - (void)applicationWillResignActive:(NSNotification*)notification
@@ -310,7 +306,7 @@
 
 - (BOOL)application:(NSApplication*)application openFile:(NSString*)filename
 {
-    return [self _openGameWithURL:[NSURL fileURLWithPath:filename]];
+    return [self _openGameWithURL:[NSURL fileURLWithPath:filename] addToRecents:YES];
 }
 
 - (IBAction)orderFrontAboutWindow:(id)sender
@@ -321,7 +317,9 @@
         // setup the about box
         NSBundle* bundle = [NSBundle mainBundle];
         NSString* version_format = NSLocalizedStringFromTable(@"VERSION_FORMAT", @"About", nil);
-        NSString* version = [NSString stringWithFormat:@"branch '%@' %@", NSLocalizedStringFromTable(@"BUILD_BRANCH", @"build", nil), NSLocalizedStringFromTable(@"BUILD_VERSION", @"build", nil)];
+        NSString* version = [NSString stringWithFormat:@"branch '%@' %@",
+            NSLocalizedStringFromTable(@"BUILD_BRANCH", @"build", nil),
+            NSLocalizedStringFromTable(@"BUILD_VERSION", @"build", nil)];
         
         [aboutBox center];
         [versionField setStringValue:[NSString stringWithFormat:version_format, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], version]];
@@ -390,7 +388,9 @@
 {
     if ([self isGameLoadingAndSavingDisabled])
         return;
-    
+
+    NSArray* dirs = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+
     NSOpenPanel* panel = [NSOpenPanel openPanel];
     panel.canChooseFiles = YES;
     panel.canChooseDirectories = NO;
@@ -399,7 +399,7 @@
     panel.allowsOtherFileTypes = NO;
     panel.canSelectHiddenExtension = YES;
     panel.treatsFilePackagesAsDirectories = NO;
-    panel.directoryURL = savedGamesDirectory;
+    panel.directoryURL = [NSURL fileURLWithPath:[dirs objectAtIndex:0] isDirectory:YES];
     panel.allowedFileTypes = [NSArray arrayWithObject:@"org.macstorm.rivenx.game"];
     
     wasFullscreen = [g_world fullscreen];
@@ -412,7 +412,7 @@
         [g_world toggleFullscreenLegacyPath];
 
     if (result == NSOKButton)
-        [self _openGameWithURL:[panel URL]];
+        [self _openGameWithURL:[panel URL] addToRecents:YES];
 }
 
 - (IBAction)saveGame:(id)sender
@@ -469,7 +469,7 @@
     }];
 }
 
-- (BOOL)_openGameWithURL:(NSURL*)url
+- (BOOL)_openGameWithURL:(NSURL*)url addToRecents:(BOOL)addToRecents
 {
     NSError* error;
     
@@ -488,8 +488,9 @@
     // load the game
     [[RXWorld sharedWorld] loadGameState:gameState];
     
-    // add the save file to the recents
-    [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]];
+    // add the save file to the recents (if requested)
+    if (addToRecents)
+        [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[gameState URL]];
     
     return YES;
 }
@@ -514,9 +515,9 @@
     if ([scd->stackKey isEqualToString:@"aspit"] && (scd->cardID == 1 || scd->cardID == 3 || scd->cardID == 4))
         return;
     
-    // FIXME: the autosave should contain extra data to point to the actual saved game such that if we load the autosave, saving will continue to go in the actual saved game
-    if ([gameState writeToURL:autosaveURL updateURL:NO error:NULL])
-        [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:autosaveURL];
+    // FIXME: the autosave should contain extra data to point to the actual saved game such that if we load the autosave,
+    // saving will continue to go in the actual saved game
+    [gameState writeToURL:autosaveURL updateURL:NO error:NULL];
 }
 
 - (BOOL)isGameLoaded
