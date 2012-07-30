@@ -73,6 +73,7 @@ typedef struct rx_card_sfxe rx_card_sfxe;
 extern const rx_size_t kRXRendererViewportSize;
 extern const rx_size_t kRXCardViewportSize;
 extern const rx_size_t kRXInventorySize;
+extern const GLsizei kRXInventoryVerticalMargin;
 
 extern const double kRXTransitionDuration;
 

@@ -1731,7 +1731,7 @@ init_failure:
             continue;
 
         CGFloat ar = CGFloat(_inventory_sizes[inventory_i].width) / CGFloat(_inventory_sizes[inventory_i].height);
-        _inventory_frames[inventory_i].size.height = kRXInventorySize.height - 10;
+        _inventory_frames[inventory_i].size.height = kRXInventorySize.height - kRXInventoryVerticalMargin;
         _inventory_frames[inventory_i].size.width = ar * _inventory_frames[inventory_i].size.height;
 
         // compute the y position of the items
