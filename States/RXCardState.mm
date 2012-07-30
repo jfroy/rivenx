@@ -416,7 +416,6 @@ init_failure:
     
     // get the texture descriptors for the inventory textures and compute the total byte size of those textures (packed BGRA format)
     // also compute the maximum inventory width
-    // FIXME: we need actual error handling beyond just logging...
     NSDictionary* inventoryTextureDescriptors[3];
     uint32_t inventoryTotalTextureSize = 0;
     _inventory_max_width = 0.0f;
@@ -431,22 +430,18 @@ init_failure:
             continue;
         }
         
-        rx_size_t item_size = RXSizeMake([[inventoryTextureDescriptors[inventory_i] objectForKey:@"Width"] unsignedIntValue],
-                                         [[inventoryTextureDescriptors[inventory_i] objectForKey:@"Height"] unsignedIntValue]);
+        _inventory_sizes[inventory_i] = RXSizeMake([[inventoryTextureDescriptors[inventory_i] objectForKey:@"Width"] unsignedIntValue],
+            [[inventoryTextureDescriptors[inventory_i] objectForKey:@"Height"] unsignedIntValue]);
         
-        // cache the dimensions of the inventory item textures in the inventory regions
-        _inventory_frames[inventory_i].size.width = (float)item_size.width;
-        _inventory_frames[inventory_i].size.height = (float)item_size.height;
-        
-        _inventory_max_width += item_size.width;
-        inventoryTotalTextureSize += (item_size.width * item_size.height) << 2;
+        _inventory_max_width += _inventory_sizes[inventory_i].width;
+        inventoryTotalTextureSize += (_inventory_sizes[inventory_i].width * _inventory_sizes[inventory_i].height) << 2;
     }
     
     // load the journal inventory textures in an unpack buffer object
     GLuint inventory_unpack_buffer;
     glGenBuffers(1, &inventory_unpack_buffer); glReportError();
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, inventory_unpack_buffer); glReportError();
-    
+
     // allocate the texture buffer (aligned to 128 bytes)
     inventoryTotalTextureSize = (inventoryTotalTextureSize & ~0x7f) + 0x80;
     glBufferData(GL_PIXEL_UNPACK_BUFFER, inventoryTotalTextureSize, NULL, GL_STATIC_DRAW); glReportError();
@@ -455,7 +450,6 @@ init_failure:
     void* inventoryBuffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY); glReportError();
     
     // decompress the textures into the buffer
-    // FIXME: we need actual error handling beyond just logging...
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++)
     {
         uint16_t bitmapID = [[journal_descriptors objectForKey:RX_INVENTORY_KEYS[inventory_i]] unsignedShortValue];
@@ -465,7 +459,7 @@ init_failure:
             continue;
         }
         
-        inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventory_frames[inventory_i].size.width * _inventory_frames[inventory_i].size.height) << 2);
+        inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventory_sizes[inventory_i].width * _inventory_sizes[inventory_i].height) << 2);
     }
     
     // unmap the pixel unpack buffer to begin the DMA transfer
@@ -630,7 +624,6 @@ init_failure:
     inventoryBuffer = 0;
     
     // decompress the textures into the buffer
-    // FIXME: we need actual error handling beyond just logging...
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++)
     {
         glBindTexture(GL_TEXTURE_RECTANGLE_ARB, _inventory_textures[inventory_i]); glReportError();
@@ -642,10 +635,10 @@ init_failure:
         glReportError();
 
         glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8,
-            (GLsizei)_inventory_frames[inventory_i].size.width, (GLsizei)_inventory_frames[inventory_i].size.height,
+            _inventory_sizes[inventory_i].width, _inventory_sizes[inventory_i].height,
             0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, inventoryBuffer); glReportError();
         
-        inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventory_frames[inventory_i].size.width * _inventory_frames[inventory_i].size.height) << 2);
+        inventoryBuffer = BUFFER_OFFSET(inventoryBuffer, (uint32_t)(_inventory_sizes[inventory_i].width * _inventory_sizes[inventory_i].height) << 2);
     }
     
 // restore state to Riven X assumptions
@@ -1729,12 +1722,22 @@ init_failure:
     uint32_t old_flags = _inventory_flags;
     _inventory_flags = new_flags;
     
-    // compute the total inventory region width
+    // compute inventory item origin y, sizes and total width
     float total_inventory_width = 0.0f;
     for (GLuint inventory_i = 0; inventory_i < RX_MAX_INVENTORY_ITEMS; inventory_i++)
     {
-        if ((new_flags & (1 << inventory_i)))
-            total_inventory_width += _inventory_frames[inventory_i].size.width + RX_INVENTORY_MARGIN;
+        // only process enabled items
+        if (!(new_flags & (1 << inventory_i)))
+            continue;
+
+        CGFloat ar = CGFloat(_inventory_sizes[inventory_i].width) / CGFloat(_inventory_sizes[inventory_i].height);
+        _inventory_frames[inventory_i].size.height = kRXInventorySize.height - 10;
+        _inventory_frames[inventory_i].size.width = ar * _inventory_frames[inventory_i].size.height;
+
+        // compute the y position of the items
+        _inventory_frames[inventory_i].origin.y = (kRXInventorySize.height - _inventory_frames[inventory_i].size.height) * 0.5;
+
+        total_inventory_width += _inventory_frames[inventory_i].size.width + RX_INVENTORY_MARGIN;
     }
     
     // compute the initial inventory x offset
@@ -1759,10 +1762,7 @@ init_failure:
     {
         if (!(new_flags & (1 << inventory_i)))
             continue;
-    
-        // compute the y position of the items
-        _inventory_frames[inventory_i].origin.y = (kRXInventorySize.height / 2.0f) - (_inventory_frames[inventory_i].size.height / 2.0f);
-    
+
         // compute the hotspot frame
         _inventory_hotspot_frames[inventory_i].origin.x = _inventory_frames[inventory_i].origin.x + new_inventory_base_x_offset;
         _inventory_hotspot_frames[inventory_i].origin.y = _inventory_frames[inventory_i].origin.y;
@@ -1992,7 +1992,7 @@ init_failure:
         
         // get the base X position of the item
         float base_x = _inventory_base_x_offset + ((pos_interpolator) ? [pos_interpolator value] : _inventory_frames[inv_i].origin.x);
-        
+
         // update the current position of the item based on the base X position
         positions[0] = base_x;
         positions[1] = _inventory_frames[inv_i].origin.y;
@@ -2012,18 +2012,18 @@ init_failure:
         
         // tex coords are always the same
         tex_coords0[0] = 0.0f;
-        tex_coords0[1] = _inventory_frames[inv_i].size.height;
+        tex_coords0[1] = _inventory_sizes[inv_i].height;
         tex_coords0 += 4;
         
-        tex_coords0[0] = _inventory_frames[inv_i].size.width;
-        tex_coords0[1] = _inventory_frames[inv_i].size.height;
+        tex_coords0[0] = _inventory_sizes[inv_i].width;
+        tex_coords0[1] = _inventory_sizes[inv_i].height;
         tex_coords0 += 4;
         
         tex_coords0[0] = 0.0f;
         tex_coords0[1] = 0.0f;
         tex_coords0 += 4;
         
-        tex_coords0[0] = _inventory_frames[inv_i].size.width;
+        tex_coords0[0] = _inventory_sizes[inv_i].width;
         tex_coords0[1] = 0.0f;
         tex_coords0 += 4;
         

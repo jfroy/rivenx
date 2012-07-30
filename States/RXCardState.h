@@ -120,9 +120,10 @@ struct rx_transition_program {
     // inventory
     id<RXInterpolator> _inventory_position_interpolators[3];
     id<RXInterpolator> _inventory_alpha_interpolators[3];
+    GLuint _inventory_textures[3];
+    rx_size_t _inventory_sizes[3];
     CGRect _inventory_frames[3];
     NSRect _inventory_hotspot_frames[3];
-    GLuint _inventory_textures[3];
     float _inventory_alpha[3];
     float _inventory_base_x_offset;
     uint32_t _inventory_alpha_interpolator_uninterruptible_flags;
