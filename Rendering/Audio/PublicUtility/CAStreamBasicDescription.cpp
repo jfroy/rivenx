@@ -1,42 +1,48 @@
-/*	Copyright © 2007 Apple Inc. All Rights Reserved.
-	
-	Disclaimer: IMPORTANT:  This Apple software is supplied to you by 
-			Apple Inc. ("Apple") in consideration of your agreement to the
-			following terms, and your use, installation, modification or
-			redistribution of this Apple software constitutes acceptance of these
-			terms.  If you do not agree with these terms, please do not use,
-			install, modify or redistribute this Apple software.
-			
-			In consideration of your agreement to abide by the following terms, and
-			subject to these terms, Apple grants you a personal, non-exclusive
-			license, under Apple's copyrights in this original Apple software (the
-			"Apple Software"), to use, reproduce, modify and redistribute the Apple
-			Software, with or without modifications, in source and/or binary forms;
-			provided that if you redistribute the Apple Software in its entirety and
-			without modifications, you must retain this notice and the following
-			text and disclaimers in all such redistributions of the Apple Software. 
-			Neither the name, trademarks, service marks or logos of Apple Inc. 
-			may be used to endorse or promote products derived from the Apple
-			Software without specific prior written permission from Apple.  Except
-			as expressly stated in this notice, no other rights or licenses, express
-			or implied, are granted by Apple herein, including but not limited to
-			any patent rights that may be infringed by your derivative works or by
-			other works in which the Apple Software may be incorporated.
-			
-			The Apple Software is provided by Apple on an "AS IS" basis.  APPLE
-			MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
-			THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS
-			FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND
-			OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
-			
-			IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL
-			OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-			SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-			INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION,
-			MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED
-			AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE),
-			STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
-			POSSIBILITY OF SUCH DAMAGE.
+/*
+     File: CAStreamBasicDescription.cpp 
+ Abstract:  CAStreamBasicDescription.h  
+  Version: 1.0.3 
+  
+ Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
+ Inc. ("Apple") in consideration of your agreement to the following 
+ terms, and your use, installation, modification or redistribution of 
+ this Apple software constitutes acceptance of these terms.  If you do 
+ not agree with these terms, please do not use, install, modify or 
+ redistribute this Apple software. 
+  
+ In consideration of your agreement to abide by the following terms, and 
+ subject to these terms, Apple grants you a personal, non-exclusive 
+ license, under Apple's copyrights in this original Apple software (the 
+ "Apple Software"), to use, reproduce, modify and redistribute the Apple 
+ Software, with or without modifications, in source and/or binary forms; 
+ provided that if you redistribute the Apple Software in its entirety and 
+ without modifications, you must retain this notice and the following 
+ text and disclaimers in all such redistributions of the Apple Software. 
+ Neither the name, trademarks, service marks or logos of Apple Inc. may 
+ be used to endorse or promote products derived from the Apple Software 
+ without specific prior written permission from Apple.  Except as 
+ expressly stated in this notice, no other rights or licenses, express or 
+ implied, are granted by Apple herein, including but not limited to any 
+ patent rights that may be infringed by your derivative works or by other 
+ works in which the Apple Software may be incorporated. 
+  
+ The Apple Software is provided by Apple on an "AS IS" basis.  APPLE 
+ MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION 
+ THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS 
+ FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND 
+ OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS. 
+  
+ IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL 
+ OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+ INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION, 
+ MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED 
+ AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE), 
+ STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE 
+ POSSIBILITY OF SUCH DAMAGE. 
+  
+ Copyright (C) 2013 Apple Inc. All Rights Reserved. 
+  
 */
 #include "CAStreamBasicDescription.h"
 #include "CAMath.h"
@@ -52,8 +58,13 @@
 char *CAStringForOSType (OSType t, char *writeLocation)
 {
 	char *p = writeLocation;
-	unsigned char str[4], *q = str;
-	*(UInt32 *)str = CFSwapInt32HostToBig(t);
+    unsigned char str[4] = {0}, *q = str;
+    union {
+        uint8_t* ui8p;
+        uint32_t* ui32p;
+    } u;
+    u.ui8p = q;
+    *u.ui32p = CFSwapInt32HostToBig(t);
 
 	bool hasNonPrint = false;
 	for (int i = 0; i < 4; ++i) {
@@ -61,7 +72,9 @@ char *CAStringForOSType (OSType t, char *writeLocation)
 			hasNonPrint = true;
 			break;
 		}
+        q++;
 	}
+    q = str;
 	
 	if (hasNonPrint)
 		p += sprintf (p, "0x");
@@ -148,7 +161,7 @@ char *CAStreamBasicDescription::AsString(char *buf, size_t _bufsize) const
 		else
 			snprintf(bitdepth, sizeof(bitdepth), "%d", (int)mBitsPerChannel);
 		
-		nc = snprintf(buf, bufsize, "%s-bit%s%s %s%s%s%s%s",
+		/* nc =*/ snprintf(buf, bufsize, "%s-bit%s%s %s%s%s%s%s",
 			bitdepth, endian, sign, floatInt, 
 			commaSpace, packed, align, deinter);
 		// buf += nc; if ((bufsize -= nc) <= 0) goto exit;
@@ -174,11 +187,11 @@ char *CAStreamBasicDescription::AsString(char *buf, size_t _bufsize) const
 		else
 			nc = snprintf(buf, bufsize, "from UNKNOWN source bit depth, ");
 		buf += nc; if ((bufsize -= nc) <= 0) goto exit;
-		nc = snprintf(buf, bufsize, "%d frames/packet", (int)mFramesPerPacket);
+		/* nc =*/ snprintf(buf, bufsize, "%d frames/packet", (int)mFramesPerPacket);
 		//	buf += nc; if ((bufsize -= nc) <= 0) goto exit;
 	}
 	else
-		nc = snprintf(buf, bufsize, "%d bits/channel, %d bytes/packet, %d frames/packet, %d bytes/frame", 
+		/* nc =*/ snprintf(buf, bufsize, "%d bits/channel, %d bytes/packet, %d frames/packet, %d bytes/frame",
 			(int)mBitsPerChannel, (int)mBytesPerPacket, (int)mFramesPerPacket, (int)mBytesPerFrame);
 exit:
 	return theBuffer;
@@ -505,7 +518,7 @@ bool	operator<(const AudioStreamBasicDescription& x, const AudioStreamBasicDescr
 		{
 			//	more channels is higher quality
 			theAnswer = x.mChannelsPerFrame < y.mChannelsPerFrame;
-			isDone = true;
+			//isDone = true;
 		}
 	}
 	
@@ -679,8 +692,13 @@ bool CAStreamBasicDescription::FromText(const char *inTextDesc, AudioStreamBasic
 				buf[3] = ' ';
 				--p;
 			}
-			
-			fmt.mFormatID = CFSwapInt32BigToHost(*(UInt32 *)buf);
+
+            union {
+                char* i8p;
+                uint32_t* ui32p;
+            } u;
+            u.i8p = &buf[0];
+			fmt.mFormatID = CFSwapInt32BigToHost(*u.ui32p);
 		}
 	}
 	
