@@ -18,6 +18,7 @@
 #import "Engine/RXArchiveManager.h"
 
 #import "Rendering/Audio/RXCardAudioSource.h"
+#import "Rendering/Audio/PublicUtility/CAMath.h"
 #import "Rendering/Graphics/GL/GLShaderProgramManager.h"
 #import "Rendering/Graphics/RXMovieProxy.h"
 
@@ -93,7 +94,7 @@ static void RXCardAudioSourceArrayDeleteRelease(CFAllocatorRef allocator, const 
 
 static CFStringRef RXCardAudioSourceArrayDescription(const void* value)
 {
-    return CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: 0x%x>"), value);
+    return CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::CardAudioSource: %p>"), value);
 }
 
 static Boolean RXCardAudioSourceArrayEqual(const void* value1, const void* value2)
@@ -230,9 +231,6 @@ static void rx_release_owner_applier(const void* value, void* context)
     _transitionQueue = [NSMutableArray new];
     
     kern_return_t kerr;
-    kerr = semaphore_create(mach_task_self(), &_audioTaskThreadExitSemaphore, SYNC_POLICY_FIFO, 0);
-    if (kerr != 0)
-        goto init_failure;
     
     kerr = semaphore_create(mach_task_self(), &_transitionSemaphore, SYNC_POLICY_FIFO, 0);
     if (kerr != 0)
@@ -286,8 +284,6 @@ init_failure:
     
     if (_transitionSemaphore)
         semaphore_destroy(mach_task_self(), _transitionSemaphore);
-    if (_audioTaskThreadExitSemaphore)
-        semaphore_destroy(mach_task_self(), _audioTaskThreadExitSemaphore);
     
     [_transitionQueue release];
     
@@ -1069,7 +1065,7 @@ init_failure:
 #endif
 }
 
-- (void)_audioTaskThread:(id)object
+- (void)_audioTaskThread:(id)object __attribute__((noreturn))
 {
     // WARNING: WILL BE RUNNING ON A DEDICATED THREAD
     NSAutoreleasePool* p = [NSAutoreleasePool new];
@@ -1117,12 +1113,6 @@ init_failure:
         // sleep 1 second until the next cycle
         sleep(1);
     }
-    
-    // pop the autorelease pool
-    [p release];
-    
-    // signal anything that may be waiting on this thread to die
-    semaphore_signal_all(_audioTaskThreadExitSemaphore);
 }
 
 #pragma mark -
@@ -1822,7 +1812,7 @@ init_failure:
         
         // if the position has changed, setup a position interpolator
         float final_position = _inventory_frames[inv_i].origin.x;
-        if ((pos_interpolator && pos_interpolator->end != final_position) || (!pos_interpolator && pos_x != final_position))
+        if ((pos_interpolator && fnotequal(pos_interpolator->end, final_position)) || (!pos_interpolator && fnotequal(pos_x, final_position)))
         {
             duration = (pos_interpolator) ? [[pos_interpolator animation] progress] : 1.0;
             [pos_interpolator release];
@@ -1891,7 +1881,7 @@ init_failure:
         }
         
         // schedule an alpha animation if the new item alpha and the current item alpha differ
-        if (item_alpha != _inventory_alpha[inv_i])
+        if (fnotequal(item_alpha, _inventory_alpha[inv_i]))
         {
             // the start value of the alpha animation is either the current alpha value or the current value
             // of the alpha interpolator if there is one

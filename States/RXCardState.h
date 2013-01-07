@@ -82,7 +82,6 @@ struct rx_transition_program {
     
     NSTimer* _activeSourceUpdateTimer;
     OSSpinLock _audioTaskThreadStatusLock;
-    semaphore_t _audioTaskThreadExitSemaphore;
     
     BOOL _forceFadeInOnNextSoundGroup;
     

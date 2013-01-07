@@ -99,7 +99,7 @@
 
 static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 {
-    return [(NSString*)rhs compare:lhs options:NSCaseInsensitiveSearch | NSNumericSearch];
+    return [(NSString*)rhs compare:lhs options:(NSStringCompareOptions)(NSCaseInsensitiveSearch | NSNumericSearch)];
 }
 
 - (NSArray*)_archivesForExpression:(NSString*)regex error:(NSError**)error

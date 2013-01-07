@@ -1302,7 +1302,8 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #pragma mark -
 #pragma mark script opcodes
 
-- (void)_invalid_opcode:(const uint16_t)argc arguments:(const uint16_t*)argv {
+- (void)_invalid_opcode:(const uint16_t)argc arguments:(const uint16_t*)argv __attribute__((noreturn))
+{
     @throw [NSException exceptionWithName:NSInternalInconsistencyException
                                    reason:[NSString stringWithFormat:@"INVALID RIVEN SCRIPT OPCODE EXECUTED: %d", argv[-2]]
                                  userInfo:nil];
@@ -3268,7 +3269,6 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     NSTimeInterval movie_position;
     QTGetTimeInterval([movie _noLockCurrentTime], &movie_position);
-    __attribute__((unused)) double event_delay = RXTimingTimestampDelta(RXTimingNow(), RXTimingOffsetTimestamp(0, mouse_ts_s));
     
     NSTimeInterval duration;
     QTGetTimeInterval([movie duration], &duration);
@@ -3279,6 +3279,7 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     // did we hit the golden eye frame?
 #if defined(DEBUG)
+    double event_delay = RXTimingTimestampDelta(RXTimingNow(), RXTimingOffsetTimestamp(0, mouse_ts_s));
     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@movie_position=%f, event_delay=%f, position-delay=%f",
         logPrefix, movie_position, event_delay, movie_position - event_delay);
 #endif
@@ -5697,9 +5698,11 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
 #pragma mark -
 #pragma mark jungle lagoon
 
-- (void)_playSunnersMovieWaitingForMouseClick:(RXMovie*)movie setSunnersOnClick:(BOOL)set_sunners {
+- (void)_playSunnersMovieWaitingForMouseClick:(RXMovie*)movie setSunnersOnClick:(BOOL)set_sunners
+{
     // reset and start the movie if it is not currently playing
-    if ([movie rate] == 0.0f) {
+    if ([movie rate] == 0.0f)
+    {
         [_movies_to_reset addObject:movie];
         [self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
     }
@@ -5710,22 +5713,26 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
     // block until the movie ends or the player presses the mouse button
     rx_event_t mouse_down_event = [controller lastMouseDownEvent];
     BOOL mouse_was_pressed = NO;
-    RXHotspot* hotspot;
-    while (1) {
+    RXHotspot* hotspot = nil;
+    while (1)
+    {
         // if the movie is over, bail out of the loop
         if ([movie rate] == 0.0f)
             break;
         
         // if the mouse has been pressed, bail out of the loop if we hit a hotspot
         rx_event_t event = [controller lastMouseDownEvent];
-        if (event.timestamp > mouse_down_event.timestamp) {
+        if (event.timestamp > mouse_down_event.timestamp)
+        {
             NSEnumerator* hotspots_enum = [[self activeHotspots] objectEnumerator];
-            while ((hotspot = [hotspots_enum nextObject])) {
+            while ((hotspot = [hotspots_enum nextObject]))
+            {
                 if (NSMouseInRect(event.location, [hotspot worldFrame], NO))
                     break;
             }
             
-            if (hotspot) {
+            if (hotspot)
+            {
                 mouse_was_pressed = YES;
                 break;
             }
@@ -5735,10 +5742,12 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
     }
     
     // if the mouse was pressed, stop the movie and update jsunners if requested
-    if (mouse_was_pressed) {
+    if (mouse_was_pressed)
+    {
         [self performSelectorOnMainThread:@selector(_stopMovie:) withObject:movie waitUntilDone:YES];
         
-        if (set_sunners) {            
+        if (set_sunners)
+        {
             // only set jsunners if the hotspot was one of the "forward" hotspots
             if (hotspot && [[hotspot name] hasPrefix:@"forward"])
                 [[g_world gameState] setUnsigned32:1 forKey:@"jsunners"];
@@ -5746,7 +5755,9 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
     }
     // otherwise, disable the movie in the renderer
     else
+    {
         [controller disableMovie:movie];
+    }
 }
 
 - (void)_handleSunnersUpperStairsEvent {

@@ -27,7 +27,7 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
 + (RXGameState*)gameStateWithURL:(NSURL*)url error:(NSError**)error
 {
     // read the data in
-    NSData* archive = [NSData dataWithContentsOfURL:url options:0 error:error];
+    NSData* archive = [NSData dataWithContentsOfURL:url options:(NSDataReadingOptions)0 error:error];
     if (!archive)
     {
         [self release];
@@ -151,7 +151,8 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
     _accessLock = [NSRecursiveLock new];
     
     NSError* error = nil;
-    NSData* defaultVarData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"GameVariables" ofType:@"plist"] options:0 error:&error];
+    NSString* path = [[NSBundle mainBundle] pathForResource:@"GameVariables" ofType:@"plist"];
+    NSData* defaultVarData = [NSData dataWithContentsOfFile:path options:(NSDataReadingOptions)0 error:&error];
     if (!defaultVarData) {
         [self release];
         @throw [NSException exceptionWithName:@"RXMissingDefaultEngineVariablesException"

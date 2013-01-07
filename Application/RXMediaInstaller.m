@@ -37,7 +37,7 @@ static NSString* gStacks[] = {
 
 static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 {
-    return [(NSString*)lhs compare:rhs options:NSCaseInsensitiveSearch | NSNumericSearch];
+    return [(NSString*)lhs compare:rhs options:(NSStringCompareOptions)(NSCaseInsensitiveSearch | NSNumericSearch)];
 }
 
 @implementation RXMediaInstaller
@@ -134,7 +134,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
         return NO;
     }
     
-    [copy_op addObserver:self forKeyPath:@"status" options:0 context:NULL];
+    [copy_op addObserver:self forKeyPath:@"status" options:(NSKeyValueObservingOptions)0 context:NULL];
     
     if (![copy_op start:error])
     {

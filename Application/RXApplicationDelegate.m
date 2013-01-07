@@ -322,7 +322,10 @@
             NSLocalizedStringFromTable(@"BUILD_VERSION", @"build", nil)];
         
         [aboutBox center];
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wformat-nonliteral"
         [versionField setStringValue:[NSString stringWithFormat:version_format, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], version]];
+        #pragma clang diagnostic pop
         [copyrightField setStringValue:NSLocalizedStringFromTable(@"LONG_COPYRIGHT", @"About", nil)];
 
         setup = true;

@@ -208,7 +208,7 @@ static PyMethodDef rivenx_methods[] = {
     else {
         @try {
             [self print:[NSString stringWithFormat:@"%@", [[g_world valueForKeyPath:path] stringValue]]];
-        } @catch (NSException* e) {
+        } @catch (NSException*) {
             [self print:@"undefined variable"];
         }
     }

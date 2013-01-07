@@ -30,7 +30,7 @@ const int kRXLoggingLevelMessage = ASL_LEVEL_NOTICE;
 const int kRXLoggingLevelError = ASL_LEVEL_ERR;
 const int kRXLoggingLevelCritical = ASL_LEVEL_CRIT;
 
-static NSString* RX_log_format = @"%@ [%s] [%@] %@\n";
+static NSString* const RX_log_format = @"%@ [%s] [%@] %@\n";
 
 void RXCFLog(const char* facility, int level, CFStringRef format, ...) {
     va_list args;
@@ -81,10 +81,11 @@ void RXLogv(const char* facility, int level, NSString* format, va_list args) {
 void _RXOLog(id object, const char* facility, int level, NSString* format, ...) {
     va_list args;
     va_start(args, format);
+
+    NSString* userString = [[NSString alloc] initWithFormat:format arguments:args];
+
+    RXLog(facility, level, @"%@: %@", [object description], userString);
     
-    NSString* finalFormat = [[NSString alloc] initWithFormat:@"%@: %@", [object description], format];
-    RXLogv(facility, level, finalFormat, args);
-    
+    [userString release];
     va_end(args);
-    [finalFormat release];
 }

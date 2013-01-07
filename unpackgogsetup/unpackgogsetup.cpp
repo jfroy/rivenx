@@ -17,7 +17,10 @@
 #include <errno.h>
 #include <Block.h>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
 #include <lzma.h>
+#pragma clang diagnostic pop
 #include <zlib.h>
 
 
@@ -164,15 +167,15 @@ friend class BlockReaderLzma;
 
 public:
     void advance(size_t s) { _available -= s; _offset += s; }
-    size_t available() const { return _available; }
+    uint32_t available() const { return _available; }
 
     uint8_t* read_ptr() { return _chunk.payload + _offset; }
     uint8_t* read_advance(size_t s) { assert(available() >= s); uint8_t* p = _chunk.payload + _offset; advance(s); return p; }
 
 private:
+    uint32_t _available;
+    uint32_t _offset;
     StoredChunk _chunk;
-    size_t _available;
-    size_t _offset;
 };
 
 class BlockReaderLzma
@@ -180,9 +183,9 @@ class BlockReaderLzma
 public:
 
     BlockReaderLzma(int fd, off_t offset) :
-        _fd(fd), _storedOffset(offset),
-        _header(),
-        _ioOffset(offset), _ioBytesRead(0l), _ioBytesLeft(0ul), _chunk()
+        _fd(fd),
+        _ioOffset(offset), _ioBytesRead(0l), _ioBytesLeft(0ul), _chunk(),
+        _header()
     {
     }
     
@@ -200,16 +203,14 @@ private:
 // --
 
     int _fd;
-    off_t _storedOffset;
+    int32_t _ioOffset;
+    int32_t _ioBytesRead;
+    uint32_t _ioBytesLeft;
 
-    StoredBlockHeader _header;
-
-    off_t _ioOffset;
-    ssize_t _ioBytesRead;
-    size_t _ioBytesLeft;
+    lzma_stream _lzmaStream;
 
     Chunk _chunk;
-    lzma_stream _lzmaStream;
+    StoredBlockHeader _header;
 };
 
 void BlockReaderLzma::_read_header()
@@ -517,7 +518,12 @@ static void* parse_setup_buffer(void* buffer, size_t size, size_t nStrings, void
     
     for (size_t i = 0; i != nStrings; ++i)
     {
-        uint32_t l = *(uint32_t*)readBuffer;
+        union {
+            uint32_t* ui32;
+            uint8_t* ui8;
+        } u;
+        u.ui8 = readBuffer;
+        uint32_t l = *u.ui32;
         readBuffer += sizeof(uint32_t);
         if (l == 0)
             continue;

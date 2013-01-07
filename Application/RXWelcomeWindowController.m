@@ -18,6 +18,7 @@
 
 #import <AppKit/NSAlert.h>
 #import <AppKit/NSApplication.h>
+#import <AppKit/NSButton.h>
 #import <AppKit/NSKeyValueBinding.h>
 #import <AppKit/NSOpenPanel.h>
 #import <AppKit/NSProgressIndicator.h>
@@ -27,7 +28,7 @@
 
 static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 {
-    return [(NSString*)lhs compare:rhs options:NSCaseInsensitiveSearch | NSNumericSearch];
+    return [(NSString*)lhs compare:rhs options:(NSStringCompareOptions)(NSCaseInsensitiveSearch | NSNumericSearch)];
 }
 
 @implementation RXWelcomeWindowController
@@ -35,7 +36,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 - (void)_deleteCacheBaseContent
 {
     NSFileManager* fm = [NSFileManager new];
-    NSArray* contents = [fm contentsOfDirectoryAtURL:[[RXWorld sharedWorld] worldCacheBase] includingPropertiesForKeys:[NSArray array] options:0 error:NULL];
+    NSURL* url = [[RXWorld sharedWorld] worldCacheBase];
+    NSArray* contents = [fm contentsOfDirectoryAtURL:url includingPropertiesForKeys:[NSArray array] options:(NSDirectoryEnumerationOptions)0 error:NULL];
     for (NSURL* url in contents)
         BZFSRemoveItemAtURL(url, NULL);
     [fm release];
@@ -313,7 +315,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     [self _showInstallationUI];
     
     // observe the installer
-    [installer addObserver:self forKeyPath:@"progress" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:NULL];
+    [installer addObserver:self forKeyPath:@"progress" options:(NSKeyValueObservingOptions)(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld) context:NULL];
     [_installingTitleField bind:@"value" toObject:installer withKeyPath:@"stage" options:nil];
     
     // install away
@@ -760,7 +762,8 @@ static void FSEventsBlockCallback(ConstFSEventStreamRef streamRef, void* clientC
 - (void)_scanDownloadFolderForGOGInstaller
 {
     NSFileManager* fm = [NSFileManager new];
-    NSArray* contents = [fm contentsOfDirectoryAtURL:[NSURL fileURLWithPath:_downloadsFolderPath isDirectory:YES] includingPropertiesForKeys:[NSArray array] options:0 error:NULL];
+    NSURL* url = [NSURL fileURLWithPath:_downloadsFolderPath isDirectory:YES];
+    NSArray* contents = [fm contentsOfDirectoryAtURL:url includingPropertiesForKeys:[NSArray array] options:(NSDirectoryEnumerationOptions)0 error:NULL];
     BOOL found = NO;
     
     for (NSURL* url in contents)

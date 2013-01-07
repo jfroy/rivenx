@@ -9,10 +9,14 @@
 #import <stdlib.h>
 #import <dlfcn.h>
 #import <pthread.h>
-#import <libavcodec/avcodec.h>
 #import <Foundation/NSBundle.h>
 #import <Foundation/NSPathUtilities.h>
 #import <CoreServices/CoreServices.h>
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdocumentation"
+#import <libavcodec/avcodec.h>
+#pragma clang diagnostic pop
 
 #import "MHKMP2Decompressor.h"
 #import "MHKErrors.h"

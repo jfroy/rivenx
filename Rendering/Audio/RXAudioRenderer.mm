@@ -53,7 +53,7 @@ static void AudioSourceBaseArrayRelease(CFAllocatorRef allocator, const void* va
 }
 
 static CFStringRef AudioSourceBaseArrayDescription(const void* value) {
-    return CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioSourceBase: 0x%x>"), value);
+    return CFStringCreateWithFormat(NULL, NULL, CFSTR("<RX::AudioSourceBase: %p>"), value);
 }
 
 static Boolean AudioSourceBaseArrayEqual(const void* value1, const void* value2) {
@@ -93,7 +93,7 @@ busNodeVector(0),
 busAllocationVector(0)
 {
     CreateGraph();
-    RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("<RX::AudioRenderer: 0x%x> initialized with %u mixer inputs"), this, sourceLimit);
+    RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("<RX::AudioRenderer: %p> initialized with %u mixer inputs"), this, (uint32_t)sourceLimit);
 }
 
 AudioRenderer::AudioRenderer(const AudioRenderer &c) {
@@ -206,7 +206,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
         
         // if the mixer cannot accept more connections, bail
         if (sourceCount >= sourceLimit) {
-            RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("AudioRenderer::AttachSources: mixer has no available input busses left, dropping %d sources"), count - (sourceIndex + 1));
+            RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("AudioRenderer::AttachSources: mixer has no available input busses left, dropping %ld sources"), count - (sourceIndex + 1));
             break;
         }
         
@@ -214,7 +214,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
         std::vector<bool>::iterator busIterator;
         busIterator = find(busAllocationVector->begin(), busAllocationVector->end(), false);
         if (busIterator == busAllocationVector->end() && busAllocationVector->size() == sourceLimit) {
-            RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("AudioRenderer::AttachSources: mixer has no available input busses left, dropping %d sources"), count - (sourceIndex + 1));
+            RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("AudioRenderer::AttachSources: mixer has no available input busses left, dropping %ld sources"), count - (sourceIndex + 1));
             break;
         }
         
