@@ -78,9 +78,7 @@
 #if defined(DEBUG) && DEBUG > 1
     NSMutableString* hotspot_handlers = [NSMutableString new];
     NSArray* keys = [[_script allKeys] sortedArrayUsingSelector:@selector(compare:)];
-    NSEnumerator* handlers = [keys objectEnumerator];
-    NSString* key;
-    while((key = [handlers nextObject]))
+    for (NSString* key in keys)
         [hotspot_handlers appendFormat:@"     %@ = %d\n", key, [[_script objectForKey:key] count]];
     RXOLog(@"hotspot script:\n%@", hotspot_handlers);
     [hotspot_handlers release];

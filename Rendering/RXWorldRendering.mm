@@ -321,10 +321,8 @@
     {
         NSRect saved_frame = NSRectFromString(encoded_frame);
         CGFloat max_area = 0.0;
-        
-        NSEnumerator* screen_enum = [[NSScreen screens] objectEnumerator];
-        NSScreen* screen;
-        while ((screen = [screen_enum nextObject]))
+
+        for (NSScreen* screen in [NSScreen screens])
         {
             NSRect intersection = NSIntersectionRect([screen frame], saved_frame);
             CGFloat area = intersection.size.width * intersection.size.height;

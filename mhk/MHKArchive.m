@@ -106,16 +106,11 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s)
 #if defined(DEBUG) && DEBUG > 2
             fprintf(stderr, "file entry %03d -> packed file size: %u, stored file size: %u, delta: %d\n",
                     file_table_index - 1, file_length, stored_file_length, (int32_t)file_length - stored_file_length);
-            
-            NSEnumerator* types_enum = [file_descriptor_arrays keyEnumerator];
-            NSString* type;
-            while ((type = [types_enum nextObject]))
+
+            for (NSString* type in [file_descriptor_arrays allKeys])
             {
                 NSArray* type_descs = [file_descriptor_arrays objectForKey:type];
-                
-                NSEnumerator* files_enum = [type_descs objectEnumerator];
-                NSDictionary* file_desc;
-                while ((file_desc = [files_enum nextObject]))
+                for (NSDictionary* file_desc in type_descs)
                 {
                     uint32_t file_index = [[file_desc objectForKey:@"Index"] unsignedIntValue] - 1;
                     if (file_index == file_table_index - 1)
@@ -141,16 +136,11 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s)
 #if defined(DEBUG) && DEBUG > 2
         fprintf(stderr, "file entry %03d -> packed file size: %u, stored file size: %u, delta: %d\n",
                 file_table_count - 1, file_length, stored_file_length, (int32_t)file_length - stored_file_length);
-        
-        NSEnumerator* types_enum = [file_descriptor_arrays keyEnumerator];
-        NSString* type;
-        while ((type = [types_enum nextObject]))
+
+        for (NSString* type in [file_descriptor_arrays allKeys])
         {
             NSArray* type_descs = [file_descriptor_arrays objectForKey:type];
-            
-            NSEnumerator* files_enum = [type_descs objectEnumerator];
-            NSDictionary* file_desc;
-            while ((file_desc = [files_enum nextObject]))
+            for (NSDictionary* file_desc in type_descs)
             {
                 uint32_t file_index = [[file_desc objectForKey:@"Index"] unsignedIntValue] - 1;
                 if (file_index == file_table_count - 1)

@@ -31,9 +31,7 @@ static void dump_bitmaps(MHKArchive *archive) {
     [fm createDirectoryAtPath:dump_folder attributes:nil];
     
     NSArray* bmpResources = [archive valueForKey:@"tBMP"];
-    NSEnumerator* bmpEnumerator = [bmpResources objectEnumerator];
-    NSDictionary* resourceDescriptor = nil;
-    while ((resourceDescriptor = [bmpEnumerator nextObject])) {
+    for (NSDictionary* resourceDescriptor in bmpResources) {
         NSNumber* bmp_id = [resourceDescriptor objectForKey:@"ID"];
         uint16_t bmp_id_native = [bmp_id unsignedShortValue];
         
@@ -104,9 +102,7 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
     [fm createDirectoryAtPath:dump_folder attributes:nil];
     
     NSArray* wavResources = [archive valueForKey:@"tWAV"];
-    NSEnumerator* wavEnumerator = [wavResources objectEnumerator];
-    NSDictionary* resourceDescriptor = nil;
-    while ((resourceDescriptor = [wavEnumerator nextObject])) {
+    for (NSDictionary* resourceDescriptor in wavResources) {
         NSNumber *sound_id = [resourceDescriptor objectForKey:@"ID"];
         printf("    %03d (%s)\n", [sound_id intValue], [[resourceDescriptor objectForKey:@"Name"] UTF8String]);
         

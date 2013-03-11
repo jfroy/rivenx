@@ -211,9 +211,9 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
         }
         
         // find the next available bus, bail if there are no more busses
-        std::vector<bool>::iterator busIterator;
-        busIterator = find(busAllocationVector->begin(), busAllocationVector->end(), false);
-        if (busIterator == busAllocationVector->end() && busAllocationVector->size() == sourceLimit) {
+        auto busVectorEnd = std::end(*busAllocationVector);
+        auto busIterator = find(std::begin(*busAllocationVector), busVectorEnd, false);
+        if (busIterator == busVectorEnd && busAllocationVector->size() == sourceLimit) {
             RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage, CFSTR("AudioRenderer::AttachSources: mixer has no available input busses left, dropping %ld sources"), count - (sourceIndex + 1));
             break;
         }
@@ -509,20 +509,19 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
     pending_ramps.update();
     
     // now iterate over the pending descriptors and remove/add into the list of active descriptors
-    TThreadSafeList<ParameterRampDescriptor>::iterator pending;
-    for (pending = pending_ramps.begin(); pending != pending_ramps.end(); ++pending) {
-        ParameterRampDescriptor descriptor = *pending;
+    for (ParameterRampDescriptor& descriptor : pending_ramps)
+    {
+        // enqueue a remove from the pending list
         pending_ramps.deferred_remove(descriptor);
-        
+
         // set the descriptor's generation to 0 (there cannot be more than one descriptor for each element-parameter pair)
         descriptor.generation = 0;
         
         // if the descriptor has the parameter set to UINT32_MAX, it basically means to remove all ramps for the descriptor's element
         if (descriptor.event.parameter == UINT32_MAX) {
-            TThreadSafeList<ParameterRampDescriptor>::iterator active;
-            for (active = active_ramps.begin(); active != active_ramps.end(); ++active) {
-                if ((*active).event.element == descriptor.event.element)
-                    active_ramps.deferred_remove(*active);
+            for (ParameterRampDescriptor& active_descriptor : active_ramps) {
+                if (active_descriptor.event.element == descriptor.event.element)
+                    active_ramps.deferred_remove(active_descriptor);
             }
             
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
@@ -545,37 +544,34 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
             }
         }
     }
-    
+
     // update the active ramps list
     active_ramps.update();
     
     // finally iterate over the active ramps
-    TThreadSafeList<ParameterRampDescriptor>::iterator active;
-    for (active = active_ramps.begin(); active != active_ramps.end(); ++active) {
-        ParameterRampDescriptor& descriptor_ref = *active;
-        
+    for (ParameterRampDescriptor& descriptor : active_ramps) {
         // if the associated source is no longer attached to us, remove the descriptor and move on to the next
-        if (descriptor_ref.source->rendererPtr != this) {
-            active_ramps.deferred_remove(descriptor_ref);
+        if (descriptor.source->rendererPtr != this) {
+            active_ramps.deferred_remove(descriptor);
             continue;
         }
         
-        if (!(descriptor_ref.start.mFlags & kAudioTimeStampSampleTimeValid)) {
-            // if the source is disabled, just slip over the descriptor and leave it as-is
-            if (!descriptor_ref.source->enabled)
+        if (!(descriptor.start.mFlags & kAudioTimeStampSampleTimeValid)) {
+            // if the source is disabled, skip over the descriptor and leave it as-is
+            if (!descriptor.source->enabled)
                 continue;
             
             // this is a new ramp parameter descriptor
             
             // set the start and previous timestamps to the pre-render notification timestamp (e.g. now)
-            descriptor_ref.start = *inTimeStamp;
-            descriptor_ref.previous = *inTimeStamp;
+            descriptor.start = *inTimeStamp;
+            descriptor.previous = *inTimeStamp;
             
             // get the start value for the ramp's parameter
-            err = mixer->GetParameter(descriptor_ref.event.parameter, kAudioUnitScope_Input, descriptor_ref.event.element, descriptor_ref.event.eventValues.ramp.startValue);
+            err = mixer->GetParameter(descriptor.event.parameter, kAudioUnitScope_Input, descriptor.event.element, descriptor.event.eventValues.ramp.startValue);
             if (err != noErr) {
 #if defined(DEBUG_AUDIO)
-                RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("mixer->GetParameter for %ld, %d, %ld failed with error %ld"), descriptor_ref.event.parameter, kAudioUnitScope_Input, descriptor_ref.event.element, err);
+                RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("mixer->GetParameter for %ld, %d, %ld failed with error %ld"), descriptor.event.parameter, kAudioUnitScope_Input, descriptor.event.element, err);
 #endif
                 return err;
             }
@@ -583,46 +579,46 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
             RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("%f - new ramp: {element=%lu, parameter=%lu, start=%f, end=%f, duration=%lu}"), 
                 CFAbsoluteTimeGetCurrent(),
-                descriptor_ref.event.element,
-                descriptor_ref.event.parameter,
-                descriptor_ref.event.eventValues.ramp.startValue,
-                descriptor_ref.event.eventValues.ramp.endValue,
-                descriptor_ref.event.eventValues.ramp.durationInFrames);
+                descriptor.event.element,
+                descriptor.event.parameter,
+                descriptor.event.eventValues.ramp.startValue,
+                descriptor.event.eventValues.ramp.endValue,
+                descriptor.event.eventValues.ramp.durationInFrames);
 #endif
         } else {
-            if (!descriptor_ref.source->enabled) {
+            if (!descriptor.source->enabled) {
                 // if the source is disabled, bump the start time so that the ramp will resume when the source is enabled
-                descriptor_ref.start.mSampleTime += inTimeStamp->mSampleTime - descriptor_ref.previous.mSampleTime;
+                descriptor.start.mSampleTime += inTimeStamp->mSampleTime - descriptor.previous.mSampleTime;
                 
                  // update the previous timestamp
-                descriptor_ref.previous = *inTimeStamp;
+                descriptor.previous = *inTimeStamp;
                 
                 // move on to the next ramp
                 continue;
             }
             
             // update the start buffer offset
-            descriptor_ref.event.eventValues.ramp.startBufferOffset = static_cast<SInt32>(round(descriptor_ref.start.mSampleTime - inTimeStamp->mSampleTime));
-            if (static_cast<SInt32>(descriptor_ref.event.eventValues.ramp.durationInFrames) > abs(descriptor_ref.event.eventValues.ramp.startBufferOffset)) {
+            descriptor.event.eventValues.ramp.startBufferOffset = static_cast<SInt32>(round(descriptor.start.mSampleTime - inTimeStamp->mSampleTime));
+            if (static_cast<SInt32>(descriptor.event.eventValues.ramp.durationInFrames) > abs(descriptor.event.eventValues.ramp.startBufferOffset)) {
                 // this is an ongoing ramp
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 2
                   RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("       %f - ongoing ramp: {element=%lu, parameter=%lu, start=%f, end=%f, bufferOffset=%ld}"), 
                     CFAbsoluteTimeGetCurrent(),
-                    descriptor_ref.event.element,
-                    descriptor_ref.event.parameter,
-                    descriptor_ref.event.eventValues.ramp.startValue, 
-                    descriptor_ref.event.eventValues.ramp.endValue, 
-                    descriptor_ref.event.eventValues.ramp.startBufferOffset);
+                    descriptor.event.element,
+                    descriptor.event.parameter,
+                    descriptor.event.eventValues.ramp.startValue,
+                    descriptor.event.eventValues.ramp.endValue,
+                    descriptor.event.eventValues.ramp.startBufferOffset);
 #endif
                 
-                // apply the ramp (use use linear parameter value interpolation with time being the sole interpolation parameter)
-                float t = static_cast<float>(abs(descriptor_ref.event.eventValues.ramp.startBufferOffset)) / descriptor_ref.event.eventValues.ramp.durationInFrames;
-                float v = (t * descriptor_ref.event.eventValues.ramp.endValue) + ((1.0f - t) * descriptor_ref.event.eventValues.ramp.startValue);
+                // apply the ramp (use linear parameter value interpolation with time being the sole interpolation parameter)
+                float t = static_cast<float>(abs(descriptor.event.eventValues.ramp.startBufferOffset)) / descriptor.event.eventValues.ramp.durationInFrames;
+                float v = (t * descriptor.event.eventValues.ramp.endValue) + ((1.0f - t) * descriptor.event.eventValues.ramp.startValue);
                 if (isnan(v) || !isnormal(v))
                     v = 0.0f;
                 else if (isinf(v))
                     v = 1.0f;
-                err = mixer->SetParameter(descriptor_ref.event.parameter, descriptor_ref.event.scope, descriptor_ref.event.element, v);
+                err = mixer->SetParameter(descriptor.event.parameter, descriptor.event.scope, descriptor.event.element, v);
                 if (err != noErr) {
 #if defined(DEBUG_AUDIO)
                     RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("mixer->SetParameter failed with error %ld"), err);
@@ -631,24 +627,24 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
                 }
                 
                 // update the previous timestamp
-                descriptor_ref.previous = *inTimeStamp;
+                descriptor.previous = *inTimeStamp;
             } else {
                 // this ramp is over
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
                 RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("%f - completed ramp: {element=%lu, parameter=%lu, start=%f, end=%f, bufferOffset=%ld}"), 
                     CFAbsoluteTimeGetCurrent(),
-                    descriptor_ref.event.element,
-                    descriptor_ref.event.parameter,
-                    descriptor_ref.event.eventValues.ramp.startValue,
-                    descriptor_ref.event.eventValues.ramp.endValue,
-                    descriptor_ref.event.eventValues.ramp.startBufferOffset);
+                    descriptor.event.element,
+                    descriptor.event.parameter,
+                    descriptor.event.eventValues.ramp.startValue,
+                    descriptor.event.eventValues.ramp.endValue,
+                    descriptor.event.eventValues.ramp.startBufferOffset);
 #endif
 
                 // apply the final ramp parameter value (without interpolation)
-                err = mixer->SetParameter(descriptor_ref.event.parameter, descriptor_ref.event.scope, descriptor_ref.event.element, descriptor_ref.event.eventValues.ramp.endValue);
+                err = mixer->SetParameter(descriptor.event.parameter, descriptor.event.scope, descriptor.event.element, descriptor.event.eventValues.ramp.endValue);
 
                 // remove the ramp from the active list
-                active_ramps.deferred_remove(descriptor_ref);
+                active_ramps.deferred_remove(descriptor);
             }
         }
     }

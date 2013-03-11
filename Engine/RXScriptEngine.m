@@ -336,10 +336,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 
 - (void)_emptyPictureCaches {
     [_picture_cache removeAllObjects];
-    
-    NSEnumerator* archive_cache_enum = [_dynamic_texture_cache objectEnumerator];
-    NSMutableDictionary* archive_cache;
-    while ((archive_cache = [archive_cache_enum nextObject]))
+    for (NSMutableDictionary* archive_cache in _dynamic_texture_cache)
         [archive_cache removeAllObjects];
 }
 
@@ -5714,6 +5711,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
     rx_event_t mouse_down_event = [controller lastMouseDownEvent];
     BOOL mouse_was_pressed = NO;
     RXHotspot* hotspot = nil;
+    NSArray* hotspots = [self activeHotspots];
     while (1)
     {
         // if the movie is over, bail out of the loop
@@ -5724,8 +5722,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
         rx_event_t event = [controller lastMouseDownEvent];
         if (event.timestamp > mouse_down_event.timestamp)
         {
-            NSEnumerator* hotspots_enum = [[self activeHotspots] objectEnumerator];
-            while ((hotspot = [hotspots_enum nextObject]))
+            for (hotspot in hotspots)
             {
                 if (NSMouseInRect(event.location, [hotspot worldFrame], NO))
                     break;

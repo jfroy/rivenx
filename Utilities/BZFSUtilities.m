@@ -90,10 +90,8 @@ NSString* BZFSSearchDirectoryForItem(NSString* path, NSString* name, BOOL case_i
     NSArray* content = BZFSContentsOfDirectory(path, error);
     if (!content)
         return NO;
-    
-    NSEnumerator* enumerator = [content objectEnumerator];
-    NSString* item;
-    while ((item = [enumerator nextObject]))
+
+    for (NSString* item in content)
     {
         if (case_insensitive)
         {

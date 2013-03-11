@@ -41,10 +41,8 @@ void rx_print_exception_backtrace(NSException* e)
         
         [args addObject:@"-p"];
         [args addObject:pid];
-        
-        NSEnumerator* stack_enum = [stack objectEnumerator];
-        id stack_p;
-        while ((stack_p = [stack_enum nextObject]))
+
+        for (id stack_p in stack)
         {
             if ([stack_p isKindOfClass:[NSString class]])
                 [args addObject:stack_p];

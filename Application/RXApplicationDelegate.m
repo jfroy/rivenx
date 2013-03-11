@@ -108,9 +108,7 @@
                     // delete the cache base directory's content
                     NSString* cache_base = [[(RXWorld*)g_world worldCacheBase] path];
                     NSArray* content = BZFSContentsOfDirectory(cache_base, NULL);
-                    NSEnumerator* content_e = [content objectEnumerator];
-                    NSString* dir;
-                    while ((dir = [content_e nextObject]))
+                    for (NSString* dir in content)
                         BZFSRemoveItemAtURL([NSURL fileURLWithPath:[cache_base stringByAppendingPathComponent:dir]], NULL);
                 }
                 [NSApp terminate:self];

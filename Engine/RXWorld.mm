@@ -73,9 +73,7 @@ NSObject <RXWorldProtocol>* g_world = nil;
     NSDictionary* user_vars = [[NSUserDefaults standardUserDefaults] objectForKey:@"EngineVariables"];
     if (user_vars)
     {
-        NSEnumerator* keypaths = [user_vars keyEnumerator];
-        NSString* keypath;
-        while ((keypath = [keypaths nextObject]))
+        for (NSString* keypath in [user_vars allKeys])
             [_engineVariables setValue:[user_vars objectForKey:keypath] forKeyPath:keypath];
     }
     else

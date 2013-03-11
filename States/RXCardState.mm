@@ -668,16 +668,10 @@ init_failure:
 
 - (CFMutableArrayRef)_newSourceArrayFromSoundSets:(NSArray*)sets callbacks:(CFArrayCallBacks*)callbacks
 {
-    // create an array of sources that need to be deactivated
     CFMutableArrayRef sources = CFArrayCreateMutable(NULL, 0, callbacks);
-    
-    NSEnumerator* setEnum = [sets objectEnumerator];
-    NSSet* s;
-    while ((s = [setEnum nextObject]))
+    for (NSSet* s in sets)
     {
-        NSEnumerator* soundEnum = [s objectEnumerator];
-        RXSound* sound;
-        while ((sound = [soundEnum nextObject]))
+        for (RXSound* sound in s)
         {
             release_assert(sound->source);
             CFArrayAppendValue(sources, sound->source);
@@ -693,13 +687,9 @@ init_failure:
 
 - (void)_appendToSourceArray:(CFMutableArrayRef)sources soundSets:(NSArray*)sets
 {
-    NSEnumerator* setEnum = [sets objectEnumerator];
-    NSSet* s;
-    while ((s = [setEnum nextObject]))
+    for (NSSet* s in sets)
     {
-        NSEnumerator* soundEnum = [s objectEnumerator];
-        RXSound* sound;
-        while ((sound = [soundEnum nextObject]))
+        for (RXSound* sound in s)
         {
             release_assert(sound->source);
             CFArrayAppendValue(sources, sound->source);
@@ -719,17 +709,13 @@ init_failure:
     uint64_t now = RXTimingNow();
     
     // find expired sounds, removing associated decompressors and sources as we go
-    RXSound* sound;
-    
-    NSEnumerator* soundEnum = [_activeSounds objectEnumerator];
-    while ((sound = [soundEnum nextObject]))
+
+    for (RXSound* sound in _activeSounds)
     {
         if (sound->detach_timestamp && sound->detach_timestamp <= now)
             [soundsToRemove addObject:sound];
     }
-    
-    soundEnum = [_activeDataSounds objectEnumerator];
-    while ((sound = [soundEnum nextObject]))
+    for (RXSound* sound in _activeDataSounds)
     {
         if (sound->detach_timestamp && sound->detach_timestamp <= now)
             [soundsToRemove addObject:sound];
@@ -740,11 +726,9 @@ init_failure:
     [_activeDataSounds minusSet:soundsToRemove];
     
     // swap the active sources array
-    CFMutableArrayRef newActiveSources = [self _newSourceArrayFromSoundSets:[NSArray arrayWithObjects:_activeSounds, _activeDataSounds, nil]
-        callbacks:&g_weakAudioSourceArrayCallbacks];
+    CFMutableArrayRef newActiveSources = [self _newSourceArrayFromSoundSets:@[_activeSounds, _activeDataSounds] callbacks:&g_weakAudioSourceArrayCallbacks];
     CFMutableArrayRef oldActiveSources = _activeSources;
     
-    // swap _activeSources
     OSSpinLockLock(&_audioTaskThreadStatusLock);
     _activeSources = newActiveSources;
     OSSpinLockUnlock(&_audioTaskThreadStatusLock);
@@ -772,8 +756,7 @@ init_failure:
         [self _appendToSourceArray:_sourcesToDelete soundSet:soundsToRemove];
     
     // we can now set the source ivar of the sounds to remove to NULL
-    soundEnum = [soundsToRemove objectEnumerator];
-    while ((sound = [soundEnum nextObject]))
+    for (RXSound* sound in soundsToRemove)
         sound->source = NULL;
     
     // detach the sources
@@ -781,7 +764,7 @@ init_failure:
     renderer->DetachSources(_sourcesToDelete);
     
     // if automatic graph updates are enabled, we can safely delete the sources,
-    // otherwise the responsibility incurs to whatever will re-enabled automatic graph updates
+    // otherwise the responsibility falls on whatever will re-enabled automatic graph updates
     if (renderer->AutomaticGraphUpdates())
     {
         CFRelease(_sourcesToDelete);
@@ -822,9 +805,7 @@ init_failure:
     [soundsToRemove minusSet:soundGroupSounds];
     
     // process new and updated sounds
-    NSEnumerator* soundEnum = [soundGroupSounds objectEnumerator];
-    RXSound* sound;
-    while ((sound = [soundEnum nextObject]))
+    for (RXSound* sound in soundGroupSounds)
     {
         RXSound* active_sound = [_activeSounds member:sound];
 
@@ -889,8 +870,7 @@ init_failure:
     // if no fade out is requested, set the detach timestamp of sounds not already scheduled for detach to now
     if (!soundGroup->fadeOutRemovedSounds)
     {
-        soundEnum = [soundsToRemove objectEnumerator];
-        while ((sound = [soundEnum nextObject]))
+        for (RXSound* sound in soundsToRemove)
         {
             if (sound->detach_timestamp == 0)
                 sound->detach_timestamp = RXTimingNow();
@@ -955,10 +935,8 @@ init_failure:
         
         // the detach timestamp for those sources is now + the ramp duration + some comfort offset
         uint64_t detach_timestamp = RXTimingOffsetTimestamp(RXTimingNow(), RX_AUDIO_GAIN_RAMP_DURATION + 0.5);
-        
-        NSEnumerator* soundEnum = [soundsToRemove objectEnumerator];
-        RXSound* sound;
-        while ((sound = [soundEnum nextObject]))
+
+        for (RXSound* sound in soundsToRemove)
             sound->detach_timestamp = detach_timestamp;
     }
     
@@ -1586,10 +1564,6 @@ init_failure:
     // read the front render state pointer once and alias it for this method
     struct rx_card_state_render_state* r = _front_render_state;
     
-    // render object enumeration variables
-    NSEnumerator* renderListEnumerator;
-    id<RXRenderingProtocol> renderObject;
-    
     // draw in the dynamic RT
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]); glReportError();
     
@@ -1605,8 +1579,7 @@ init_failure:
     if (r->refresh_static)
     {
         // render each picture
-        renderListEnumerator = [r->pictures objectEnumerator];
-        while ((renderObject = [renderListEnumerator nextObject]))
+        for (id<RXRenderingProtocol> renderObject in r->pictures)
             [renderObject render:outputTime inContext:cgl_ctx framebuffer:_fbos[RX_CARD_DYNAMIC_RENDER_INDEX]];
     }
     
@@ -1671,8 +1644,7 @@ init_failure:
     }
     
     // render movies at the very end
-    renderListEnumerator = [_active_movies objectEnumerator];
-    while ((renderObject = [renderListEnumerator nextObject]))
+    for (id<RXRenderingProtocol> renderObject in _active_movies)
         _movieRenderDispatch.imp(renderObject, _movieRenderDispatch.sel, outputTime, cgl_ctx, _fbos[RX_CARD_DYNAMIC_RENDER_INDEX]);
     
     // un-flip the y axis
@@ -1684,9 +1656,7 @@ init_failure:
 
 - (void)_postFlushCard:(const CVTimeStamp*)outputTime
 {
-    NSEnumerator* e = [_active_movies objectEnumerator];
-    RXMovie* movie;
-    while ((movie = [e nextObject]))
+    for (RXMovie* movie in _active_movies)
         _movieFlushTasksDispatch.imp(movie, _movieFlushTasksDispatch.sel, outputTime);
 }
 
@@ -2487,11 +2457,9 @@ exit_render:
         
         glBindBuffer(GL_ARRAY_BUFFER, _hotspotDebugRenderVBO);
         GLfloat* attribs = (GLfloat*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-        
-        NSEnumerator* hotspots = [activeHotspots objectEnumerator];
-        RXHotspot* hotspot;
+
         GLint primitive_index = 0;
-        while ((hotspot = [hotspots nextObject]))
+        for (RXHotspot* hotspot in activeHotspots)
         {
             _hotspotDebugRenderFirstElementArray[primitive_index] = primitive_index * 4;
             _hotspotDebugRenderElementCountArray[primitive_index] = 4;
@@ -2977,9 +2945,8 @@ exit_flush_tasks:
         _inventory_has_focus = NO;
     
     // find over which hotspot the mouse is
-    NSEnumerator* hotspots_enum = [active_hotspots objectEnumerator];
-    RXHotspot* hotspot;
-    while ((hotspot = [hotspots_enum nextObject]))
+    RXHotspot* hotspot = nil;
+    for (hotspot in active_hotspots)
     {
         if (NSMouseInRect(mouse_vector.origin, [hotspot worldFrame], NO))
             break;

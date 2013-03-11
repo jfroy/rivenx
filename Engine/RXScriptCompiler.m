@@ -61,9 +61,7 @@
 
 - (void)_compileBlock:(NSArray*)block inBuffer:(NSMutableData*)pbuf
 {
-    NSEnumerator* iter_opcode = [block objectEnumerator];
-    NSDictionary* opcode = nil;
-    while ((opcode = [iter_opcode nextObject]))
+    for (NSDictionary* opcode in block)
     {
         release_assert([opcode objectForKey:@"command"]);
         uint16_t temp = [[opcode objectForKey:@"command"] unsignedShortValue];
@@ -84,10 +82,8 @@
             
             temp = [cases count];
             [pbuf appendBytes:&temp length:sizeof(uint16_t)];
-            
-            NSEnumerator* iter_cases = [cases objectEnumerator];
-            NSDictionary* c = nil;
-            while ((c = [iter_cases nextObject]))
+
+            for (NSDictionary* c in cases)
             {
                 release_assert([c objectForKey:@"value"]);
                 temp = [[c objectForKey:@"value"] unsignedShortValue];

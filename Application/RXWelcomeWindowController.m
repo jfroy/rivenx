@@ -529,10 +529,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     NSString* all_path = nil;
     NSString* extras_path = nil;
     NSString* myst2_path = nil;
-    
-    NSEnumerator* enumerator = [content objectEnumerator];
-    NSString* item;
-    while ((item = [enumerator nextObject]))
+
+    for (NSString* item in content)
     {
         NSString* item_path = [path stringByAppendingPathComponent:item];
         if ([item caseInsensitiveCompare:@"Data"] == NSOrderedSame)
@@ -581,8 +579,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     if (!extras_path)
     {
         content = BZFSContentsOfDirectory(data_path, &error);
-        enumerator = [content objectEnumerator];
-        while ((item = [enumerator nextObject]))
+        for (NSString* item in content)
         {
             NSString* item_path = [data_path stringByAppendingPathComponent:item];
             if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame)
@@ -596,8 +593,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
         if (!extras_path && myst2_path)
         {
             content = BZFSContentsOfDirectory(myst2_path, &error);
-            enumerator = [content objectEnumerator];
-            while ((item = [enumerator nextObject]))
+            for (NSString* item in content)
             {
                 NSString* item_path = [data_path stringByAppendingPathComponent:item];
                 if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame)
@@ -732,9 +728,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 - (void)_scanMountedMedia
 {
     // scan all existing mounts
-    NSEnumerator* media_enum = [[[NSWorkspace sharedWorkspace] mountedRemovableMedia] objectEnumerator];
-    NSString* mount_path;
-    while ((mount_path = [media_enum nextObject]))
+    for (NSString* mount_path in [[NSWorkspace sharedWorkspace] mountedRemovableMedia])
     {
         NSNotification* notification = [NSNotification notificationWithName:NSWorkspaceDidMountNotification object:nil userInfo:[NSDictionary dictionaryWithObject:mount_path forKey:@"NSDevicePath"]];
         [self _removableMediaMounted:notification];

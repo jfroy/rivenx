@@ -180,10 +180,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     // build a mega-array of all the archives we need to copy
     NSMutableArray* archive_paths = [NSMutableArray array];
     NSMutableSet* archive_names = [NSMutableSet set];
-    
-    NSEnumerator* e = [dataArchives objectEnumerator];
-    NSString* archive;
-    while ((archive = [e nextObject]))
+
+    for (NSString* archive in dataArchives)
     {
         if (![archive_names containsObject:archive])
         {
@@ -191,9 +189,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
             [archive_names addObject:archive];
         }
     }
-    
-    e = [assetsArchives objectEnumerator];
-    while ((archive = [e nextObject]))
+
+    for (NSString* archive in assetsArchives)
     {
         if (![archive_names containsObject:archive])
         {
@@ -201,9 +198,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
             [archive_names addObject:archive];
         }
     }
-    
-    e = [allArchives objectEnumerator];
-    while ((archive = [e nextObject]))
+
+    for (NSString* archive in allArchives)
     {
         if (![archive_names containsObject:archive])
         {
@@ -227,9 +223,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     [archive_paths sortUsingFunction:string_numeric_insensitive_sort context:NULL];
     
     // compute how many bytes we have to copy in total
-    e = [archive_paths objectEnumerator];
-    NSString* archive_path;
-    while ((archive_path = [e nextObject]))
+    for (NSString* archive_path in archive_paths)
     {
         NSDictionary* attributes = BZFSAttributesOfItemAtPath(archive_path, error);
         if (!attributes)
@@ -239,8 +233,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     }
     
     // and copy the archives
-    e = [archive_paths objectEnumerator];
-    while ((archive_path = [e nextObject]))
+    for (NSString* archive_path in archive_paths)
     {
         if (![self _copyFileAtPath:archive_path error:error])
             return NO;

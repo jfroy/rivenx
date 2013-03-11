@@ -295,10 +295,8 @@ static PyMethodDef rivenx_methods[] = {
 - (void)cmd_recompile:(NSArray*)args {
     RXCard* card = [[(RXCardState*)[g_world cardRenderer] scriptEngine] card];
     NSDictionary* scripts = [card scripts];
-    
-    NSEnumerator* iter_k = [scripts keyEnumerator];
-    NSString* k;
-    while ((k = [iter_k nextObject])) {
+
+    for (NSString* k in [scripts allKeys]) {
         if ([[scripts objectForKey:k] count] == 0)
             continue;
         

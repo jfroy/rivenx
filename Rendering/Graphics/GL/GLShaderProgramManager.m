@@ -141,10 +141,8 @@ NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
     size_t shaderSourceIndex = 0;
     if (shaderSourceIndex == epilogueIndex - 1)
         shaderSourceIndex++;
-    
-    NSEnumerator* sourceEnum = [extraSources objectEnumerator];
-    NSString* source;
-    while ((source = [sourceEnum nextObject])) {
+
+    for (NSString* source in extraSources) {
         *(shader_sources + shaderSourceIndex) = (GLchar*)[source cStringUsingEncoding:NSASCIIStringEncoding];
         if (*(shader_sources + shaderSourceIndex) == NULL)
             goto failure_delete_shader_sources;
@@ -352,9 +350,7 @@ failure_delete_shader_sources:
     glAttachShader(program, fs); glReportError();
     
     // bind the attribute positions
-    NSEnumerator* keyEnum = [bindings keyEnumerator];
-    NSString* key;
-    while ((key = [keyEnum nextObject])) {
+    for (NSString* key in [bindings allKeys]) {
         const char* attrib = [key cStringUsingEncoding:NSASCIIStringEncoding];
         GLint position = [[bindings objectForKey:key] intValue];
         glBindAttribLocation(program, position, attrib); glReportError();

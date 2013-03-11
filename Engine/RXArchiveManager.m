@@ -115,52 +115,30 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     // first look in the world base
     directory = [[[RXWorld sharedWorld] worldBase] path];
     content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-    if (content)
-    {
-        NSEnumerator* enumerator = [content objectEnumerator];
-        NSString* filename;
-        while ((filename = [enumerator nextObject]))
-            [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
-    }
+    for (NSString* filename in content)
+        [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
     
     // then look in a Data subdirectory of the world base
     directory = [[[[RXWorld sharedWorld] worldBase] path] stringByAppendingPathComponent:@"Data"];
     content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-    if (content)
-    {
-        NSEnumerator* enumerator = [content objectEnumerator];
-        NSString* filename;
-        while ((filename = [enumerator nextObject]))
-            [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
-    }
+    for (NSString* filename in content)
+        [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
     
     // then look in the world cache base (e.g. where the installer will put the archives)
     directory = [[(RXWorld*)g_world worldCacheBase] path];
     content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-    if (content)
-    {
-        NSEnumerator* enumerator = [content objectEnumerator];
-        NSString* filename;
-        while ((filename = [enumerator nextObject]))
-            [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
-    }
+    for (NSString* filename in content)
+        [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
     
     // then look inside Riven X
     directory = [[NSBundle mainBundle] resourcePath];
     content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-    if (content)
-    {
-        NSEnumerator* enumerator = [content objectEnumerator];
-        NSString* filename;
-        while ((filename = [enumerator nextObject]))
-            [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
-    }
+    for (NSString* filename in content)
+        [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
     
     // load every archive found
     NSMutableArray* archives = [NSMutableArray array];
-    NSEnumerator* enumerator = [matching_paths objectEnumerator];
-    NSString* archive_path;
-    while ((archive_path = [enumerator nextObject]))
+    for (NSString* archive_path in matching_paths)
     {
         MHKArchive* archive = [[MHKArchive alloc] initWithPath:archive_path error:error];
         if (!archive)
