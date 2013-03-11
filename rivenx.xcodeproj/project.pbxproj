@@ -1378,7 +1378,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0450;
+				LastUpgradeCheck = 0460;
 				ORGANIZATIONNAME = MacStorm;
 			};
 			buildConfigurationList = 31CB99BA08B29A4100609EB5 /* Build configuration list for PBXProject "rivenx" */;
