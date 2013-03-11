@@ -1754,7 +1754,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     if (!movie)
         return;
     
-    // disable the movie in the renderer
+    // disable the movie
     [controller disableMovie:movie];
 }
 
@@ -1768,7 +1768,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@disabling all movies", logPrefix);
 #endif
     
-    // disable all movies in the renderer
+    // disable all movies
     [controller disableAllMovies];
 }
 
@@ -1783,7 +1783,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     uintptr_t k = argv[0];
     RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
     
-    // it is legal to disable a code that has no movie associated with it
+    // it is legal to enable a code that has no movie associated with it
     if (!movie)
         return;
     
@@ -1793,7 +1793,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         [_movies_to_reset removeObject:movie];
     }
     
-    // enable the movie in the renderer
+    // enable the movie
     [controller enableMovie:movie];
 }
 
@@ -1823,7 +1823,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     [self performSelectorOnMainThread:@selector(_disableLoopingOnMovie:) withObject:movie waitUntilDone:NO];
     [self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
     
-    // enable the movie in the renderer
+    // enable the movie
     [controller enableMovie:movie];
     
     // wait until the movie is done playing
@@ -1863,7 +1863,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     // start the movie and block until done
     [self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
     
-    // enable the movie in the renderer
+    // enable the movie
     [controller enableMovie:movie];
 }
 
@@ -2007,8 +2007,10 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
         RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@activating slst record at index %hu", logPrefix, argv[0]);
 #endif
     
-    // the script handler is responsible for this
+    // activate the sound group
     [controller activateSoundGroup:[[_card soundGroups] objectAtIndex:argv[0] - 1]];
+
+    // indicate that an SLST record has been activated (to manage the automatic activation of SLST record 1 if none has been)
     _did_activate_slst = YES;
 }
 
@@ -2098,8 +2100,8 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     // schedule the movie for reset
     [_movies_to_reset addObject:movie];
     
-    // should re-apply the MLST settings to the movie here, but because of the way RX is setup, we don't need to do that
-    // in particular, movie reset will put the movie back to its beginning and invalidate any decoded frame it may have
+    // should re-apply the MLST settings to the movie here, but because of the way RX is setup, we don't need to do that;
+    // specifically, movie reset will put the movie back to its beginning and invalidate any decoded frame it may have
 }
 
 // 47
@@ -2123,6 +2125,8 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     
     // activate the sound group
     [controller activateSoundGroup:sg];
+
+    // indicate that an SLST record has been activated (to manage the automatic activation of SLST record 1 if none has been)
     _did_activate_slst = YES;
     
     // restore its original gain
@@ -4418,9 +4422,7 @@ DEFINE_COMMAND(xgrviewer) {
 DEFINE_COMMAND(xgwharksnd) {
     // cache an un-loaded copy of the whark solo card so we can load the solos later on other cards
     whark_solo_card = [[RXCard alloc] initWithCardDescriptor:[_card descriptor]];
-    
-    // cache the wh
-    
+
     // play a solo within the next 5 seconds if we've never played one before
     // otherwise within the next 5 minutes but no sooner than in 2 minutes;
     // only do the above if the event timer is nil, otherwise don't disturb it
@@ -4456,7 +4458,7 @@ DEFINE_COMMAND(xgplaywhark) {
     // don't trigger a Whark event unless the red light has been toggled off and back on by setting gWharkTime back to 0
     [gs setUnsigned32:0 forKey:@"gWharkTime"];
     
-    // count the number of times the red light has been light / the whark has come
+    // count the number of times the red light has been lit / the whark has come
     whark_visits++;
     if (whark_visits > 5)
         whark_visits = 5;
@@ -5704,7 +5706,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
         [self performSelectorOnMainThread:@selector(_playMovie:) withObject:movie waitUntilDone:YES];
     }
     
-    // enable the movie in the renderer
+    // enable the movie
     [controller enableMovie:movie];
     
     // block until the movie ends or the player presses the mouse button
@@ -5750,7 +5752,7 @@ DEFINE_COMMAND(xjplaybeetle_1450) {
                 [[g_world gameState] setUnsigned32:1 forKey:@"jsunners"];
         }
     }
-    // otherwise, disable the movie in the renderer
+    // otherwise, disable the movie
     else
     {
         [controller disableMovie:movie];

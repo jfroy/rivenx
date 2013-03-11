@@ -201,7 +201,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw (CAXException) {
             continue;
         }
         
-        // if the source is already attached to a different renderer, bail for this source
+        // if the source is already attached to a different renderer, throw
         XThrowIf(source->rendererPtr != 0 && source->rendererPtr != this, paramErr, "AudioRenderer::AttachSources (source->rendererPtr != 0 && source->rendererPtr != this)");
         
         // if the mixer cannot accept more connections, bail
@@ -496,7 +496,7 @@ void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID 
             descriptor.event.eventValues.immediate.value = value;
         }
         
-        // we first remove any existing ramp descriptor before adding the new descriptor in
+        // add the descriptor to the pending list
         pending_ramps.deferred_add(descriptor);
     }
 }
@@ -516,7 +516,7 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
         // set the descriptor's generation to 0 (there cannot be more than one descriptor for each element-parameter pair)
         descriptor.generation = 0;
         
-        // if the descriptor has the parameter set to UINT32_MAX, it basically means to remove all ramps for the descriptor's element
+        // if the descriptor has the parameter set to UINT32_MAX, it means to remove all ramps for the descriptor's element
         if (descriptor.event.parameter == UINT32_MAX) {
             for (ParameterRampDescriptor& active_descriptor : active_ramps) {
                 if (active_descriptor.event.element == descriptor.event.element)
