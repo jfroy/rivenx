@@ -441,15 +441,14 @@ void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID 
     
     bool ramps_are_enabled = true;
 #if defined(RIVENX)
-    if (RXEngineGetBool(@"rendering.audio_ramps") == NO)
-        ramps_are_enabled = false;
+    ramps_are_enabled = static_cast<bool>(RXEngineGetBool(@"rendering.audio_ramps"));
 #endif
     
     UInt32 count = CFArrayGetCount(sources);
     UInt32 sourceIndex = 0;
     
     for (; sourceIndex < count; sourceIndex++) {
-        AudioSourceBase* source = const_cast<AudioSourceBase *>(reinterpret_cast<const AudioSourceBase*>(CFArrayGetValueAtIndex(sources, sourceIndex)));
+        AudioSourceBase* source = const_cast<AudioSourceBase*>(reinterpret_cast<const AudioSourceBase*>(CFArrayGetValueAtIndex(sources, sourceIndex)));
         Float32 value = values[sourceIndex];
         Float64 duration = durations[sourceIndex];
         
@@ -461,7 +460,7 @@ void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID 
         AudioUnitParameterInfo parameter_info = parameter.ParamInfo();
         
         // clamp the value to the valid range for the parameter
-        value = MAX(MIN(value, parameter_info.maxValue), parameter_info.minValue);
+        value = std::max(std::min(value, parameter_info.maxValue), parameter_info.minValue);
         
         // prepare a new ramp descriptor
         ParameterRampDescriptor descriptor;
