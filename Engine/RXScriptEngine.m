@@ -2137,7 +2137,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #pragma mark main menu
 
 DEFINE_COMMAND(xarestoregame) {
-    [[NSApp delegate] performSelectorOnMainThread:@selector(openDocument:) withObject:self waitUntilDone:NO];
+    [(NSObject*)[NSApp delegate] performSelectorOnMainThread:@selector(openDocument:) withObject:self waitUntilDone:NO];
 }
 
 DEFINE_COMMAND(xasetupcomplete) {
@@ -3802,7 +3802,7 @@ DEFINE_COMMAND(xt7600_setupmarbles) {
         
         void* data = malloc(width * height * 4);
         CGColorSpaceRef color_space = CGColorSpaceCreateDeviceRGB();
-        CGContextRef context = CGBitmapContextCreate(data, width, height, 8, width * 4, color_space, kCGImageAlphaPremultipliedLast);
+        CGContextRef context = CGBitmapContextCreate(data, width, height, 8, width * 4, color_space, (CGBitmapInfo)kCGImageAlphaPremultipliedLast);
         
         CGContextDrawImage(context, CGRectMake(0, 0, width, height), image);        
         

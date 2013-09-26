@@ -83,9 +83,6 @@ static NSString* required_extensions[] = {
     NSString* renderer_name;
     switch (renderer & kCGLRendererIDMatchingMask)
     {
-        case kCGLRendererGenericID:
-            renderer_name = @"Generic";
-            break;
         case kCGLRendererGenericFloatID:
             renderer_name = @"Generic Float";
             break;
@@ -93,6 +90,42 @@ static NSString* required_extensions[] = {
             renderer_name = @"Apple Software";
             break;
 
+        case kCGLRendererATIRadeonX1000ID:
+            renderer_name = @"ATI Radeon X1000";
+            break;
+        case kCGLRendererATIRadeonX2000ID:
+            renderer_name = @"ATI Radeon X2000";
+            break;
+        case kCGLRendererATIRadeonX3000ID:
+            renderer_name = @"ATI Radeon X3000";
+            break;
+
+
+        case kCGLRendererGeForceFXID:
+            renderer_name = @"NVIDIA GeForce FX";
+            break;
+        case kCGLRendererGeForce8xxxID:
+            renderer_name = @"NVIDIA GeForce 8000";
+            break;
+
+
+        case kCGLRendererIntel900ID:
+            renderer_name = @"Intel 900";
+            break;
+        case kCGLRendererIntelX3100ID:
+            renderer_name = @"Intel X3100";
+            break;
+        case kCGLRendererIntelHDID:
+            renderer_name = @"Intel HD 3000";
+            break;
+        case kCGLRendererIntelHD4000ID:
+            renderer_name = @"Intel HD 4000";
+            break;
+
+#ifdef RECOGNIZE_LEGACY_RENDERERS
+        case kCGLRendererGenericID:
+            renderer_name = @"Generic";
+            break;
         case kCGLRendererATIRage128ID:
             renderer_name = @"ATI Rage 128";
             break;
@@ -108,49 +141,20 @@ static NSString* required_extensions[] = {
         case kCGLRendererATIRadeon9700ID:
             renderer_name = @"ATI Radeon 9700";
             break;
-        case kCGLRendererATIRadeonX1000ID:
-            renderer_name = @"ATI Radeon X1000";
-            break;
-        case kCGLRendererATIRadeonX2000ID:
-            renderer_name = @"ATI Radeon X2000";
-            break;
-        case kCGLRendererATIRadeonX3000ID:
-            renderer_name = @"ATI Radeon X3000";
-            break;
-
         case kCGLRendererGeForce2MXID:
             renderer_name = @"NVIDIA GeForce 2MX";
             break;
         case kCGLRendererGeForce3ID:
             renderer_name = @"NVIDIA GeForce 3";
             break;
-        case kCGLRendererGeForceFXID:
-            renderer_name = @"NVIDIA GeForce FX";
-            break;
-        case kCGLRendererGeForce8xxxID:
-            renderer_name = @"NVIDIA GeForce 8000";
-            break;
-
         case kCGLRendererVTBladeXP2ID:
             renderer_name = @"VT Blade XP2";
             break;
-
-        case kCGLRendererIntel900ID:
-            renderer_name = @"Intel 900";
-            break;
-        case kCGLRendererIntelX3100ID:
-            renderer_name = @"Intel X3100";
-            break;
-        case kCGLRendererIntelHDID:
-            renderer_name = @"Intel HD 3000";
-            break;
-        case kCGLRendererIntelHD4000ID:
-            renderer_name = @"Intel HD 4000";
-            break;
-
         case kCGLRendererMesa3DFXID:
             renderer_name = @"Mesa 3DFX";
             break;
+#endif // RECOGNIZE_LEGACY_RENDERERS
+
         default:
             renderer_name = [NSString stringWithFormat:@"Unknown <%08x>", renderer];
             break;
@@ -1128,7 +1132,7 @@ major_number.minor_number major_number.minor_number.release_number
     }
 
     GLint total_vram;
-    cglerr = CGLDescribeRenderer(renderer_info, renderer_index, kCGLRPVideoMemory, &total_vram);
+    cglerr = CGLDescribeRenderer(renderer_info, renderer_index, kCGLRPVideoMemoryMegabytes, &total_vram);
     if (cglerr != kCGLNoError)
     {
         _totalVRAM = 0;
@@ -1136,7 +1140,7 @@ major_number.minor_number major_number.minor_number.release_number
     }
     CGLDestroyRendererInfo(renderer_info);
     
-    _totalVRAM = total_vram;
+    _totalVRAM = total_vram * (1024 * 1024);
 }
 
 - (ssize_t)currentFreeVRAM

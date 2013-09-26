@@ -48,18 +48,18 @@ struct ffmpeg_state {
 
 static struct ffmpeg_state _ffmpeg_state;
 
-const uint32_t _mpeg_audio_nominal_sampling_rate_table[3] = {44100, 48000, 32000};
-const uint32_t _mpeg_audio_v1_bitrates[3][14] = {
+static const uint32_t _mpeg_audio_nominal_sampling_rate_table[3] = {44100, 48000, 32000};
+static const uint32_t _mpeg_audio_v1_bitrates[3][14] = {
     {32000, 64000, 96000, 128000, 160000, 192000, 224000, 256000, 288000, 320000, 352000, 384000, 416000, 448000}, 
     {32000, 48000, 56000,  64000,  80000,  96000, 112000, 128000, 160000, 192000, 224000, 256000, 320000, 384000}, 
     {32000, 40000, 48000,  56000,  64000,  80000,  96000, 112000, 128000, 160000, 192000, 224000, 256000, 320000}
 };
-const uint32_t _mpeg_audio_v2_bitrates[3][14] = {
+static const uint32_t _mpeg_audio_v2_bitrates[3][14] = {
     {32000, 48000, 56000,  64000,  80000,  96000, 112000, 128000, 144000, 160000, 176000, 192000, 224000, 256000}, 
     { 8000, 16000, 24000,  32000,  40000,  48000,  56000,  64000,  80000,  96000, 112000, 128000, 144000, 160000},
     { 8000, 16000, 24000,  32000,  40000,  48000,  56000,  64000,  80000,  96000, 112000, 128000, 144000, 160000}
 };
-const uint32_t* const _mpeg_audio_bitrate_tables[2] = { 
+static const uint32_t* const _mpeg_audio_bitrate_tables[2] = { 
     (const uint32_t *const)_mpeg_audio_v1_bitrates, 
     (const uint32_t *const)_mpeg_audio_v2_bitrates
 };

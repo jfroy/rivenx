@@ -9,6 +9,7 @@
 
 #include "mohawk_core.h"
 #include "mohawk_wave.h"
+#include "mohawk_bitmap.h"
 
 const char MHK_MHWK_signature[4] = {'M', 'H', 'W', 'K'};
 const char MHK_RSRC_signature[4] = {'R', 'S', 'R', 'C'};
