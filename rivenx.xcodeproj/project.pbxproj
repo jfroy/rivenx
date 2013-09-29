@@ -143,6 +143,9 @@
 		31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */; };
 		31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A9F027094D2D0300C6A0AB /* RXRenderState.m */; };
 		31ADC95F14ADA17A004FB4AD /* unpackgogsetup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31ADC95E14ADA17A004FB4AD /* unpackgogsetup.cpp */; };
+		31B1128B17F4AC00005ABDB8 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31B1128A17F4AC00005ABDB8 /* Sparkle.framework */; };
+		31B1128C17F4B16C005ABDB8 /* Sparkle.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 31B1128A17F4AC00005ABDB8 /* Sparkle.framework */; };
+		31B1128D17F4B18D005ABDB8 /* RXVersionComparator.m in Sources */ = {isa = PBXBuildFile; fileRef = 3185C4720E06046D00528220 /* RXVersionComparator.m */; };
 		31B644BF10033A15008AD8E0 /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */; };
 		31B644E610033B47008AD8E0 /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
 		31B644E710033B49008AD8E0 /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
@@ -256,6 +259,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				31B1128C17F4B16C005ABDB8 /* Sparkle.framework in Copy Frameworks */,
 				31495A4F0E327DA400E49C83 /* MHKKit.framework in Copy Frameworks */,
 			);
 			name = "Copy Frameworks";
@@ -455,6 +459,7 @@
 		31AA79800F75AACC006F06AC /* RXCursors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCursors.h; sourceTree = "<group>"; };
 		31ADC95214ADA128004FB4AD /* unpackgogsetup */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = unpackgogsetup; sourceTree = BUILT_PRODUCTS_DIR; };
 		31ADC95E14ADA17A004FB4AD /* unpackgogsetup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = unpackgogsetup.cpp; sourceTree = "<group>"; };
+		31B1128A17F4AC00005ABDB8 /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Sparkle.framework; path = Frameworks/Sparkle.framework; sourceTree = "<group>"; };
 		31B6549F1102B9EF004818AC /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		31B654A11102B9EF004818AC /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Rendering.strings; sourceTree = "<group>"; };
 		31BC739C09A57D4E001EC1E0 /* RXAudioSourceBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAudioSourceBase.h; sourceTree = "<group>"; };
@@ -607,6 +612,7 @@
 				6BE3ED581790846800B1732D /* Cocoa.framework in Frameworks */,
 				6BE3ED6D179085DB00B1732D /* ExceptionHandling.framework in Frameworks */,
 				6BE3ED5F1790849200B1732D /* QuartzCore.framework in Frameworks */,
+				31B1128B17F4AC00005ABDB8 /* Sparkle.framework in Frameworks */,
 				6BE3ED591790846800B1732D /* OpenGL.framework in Frameworks */,
 				6BE3ED61179084BF00B1732D /* GLUT.framework in Frameworks */,
 				6BE3ED5D1790849200B1732D /* CoreAudio.framework in Frameworks */,
@@ -1050,13 +1056,13 @@
 		6BE3ED4D179083F800B1732D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				6BE3ED6C179085DB00B1732D /* ExceptionHandling.framework */,
 				6BE3ED4E1790842600B1732D /* Accelerate.framework */,
 				6BE3ED541790844000B1732D /* ApplicationServices.framework */,
 				6BE3ED631790850200B1732D /* AudioToolbox.framework */,
 				6BE3ED671790852000B1732D /* AudioUnit.framework */,
 				6BE3ED561790846800B1732D /* Cocoa.framework */,
 				6BE3ED5A1790849200B1732D /* CoreAudio.framework */,
+				6BE3ED6C179085DB00B1732D /* ExceptionHandling.framework */,
 				6BE3ED4F1790842600B1732D /* Foundation.framework */,
 				6BE3ED60179084BF00B1732D /* GLUT.framework */,
 				6BE3ED691790857900B1732D /* IOKit.framework */,
@@ -1065,6 +1071,7 @@
 				6BE3ED641790850200B1732D /* QTKit.framework */,
 				6BE3ED5C1790849200B1732D /* QuartzCore.framework */,
 				6BE3ED501790842600B1732D /* QuickTime.framework */,
+				31B1128A17F4AC00005ABDB8 /* Sparkle.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -1620,6 +1627,7 @@
 				31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */,
 				31F4EFEA0F35312700A68652 /* RXScriptEngine.m in Sources */,
 				31F4F0020F3533EF00A68652 /* RXScriptDecoding.m in Sources */,
+				31B1128D17F4B18D005ABDB8 /* RXVersionComparator.m in Sources */,
 				31F4F03C0F35461C00A68652 /* RXMovieProxy.m in Sources */,
 				316C38D70F46B22300EFB7FB /* CAAUParameter.cpp in Sources */,
 				316038FA100EE54600052849 /* RXScriptOpcodeStream.m in Sources */,
