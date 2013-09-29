@@ -9,7 +9,7 @@
 #import "Base/RXBase.h"
 
 
-@class RXVersionComparator, RXWelcomeWindowController, NSWindowController, NSWindow, NSTextField;
+@class RXVersionComparator, RXWelcomeWindowController, NSButton, NSWindowController, NSWindow, NSTextField;
 
 @interface RXApplicationDelegate : NSObject
 {
@@ -20,6 +20,7 @@
     IBOutlet NSWindow* aboutBox;
     IBOutlet NSTextField* versionField;
     IBOutlet NSTextField* copyrightField;
+    IBOutlet NSButton* acknowledgmentsButton;
     
     IBOutlet RXVersionComparator* versionComparator;
     

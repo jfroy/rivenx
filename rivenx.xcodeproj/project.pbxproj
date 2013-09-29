@@ -315,7 +315,6 @@
 		31225AC308C421790055628F /* RXCard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCard.m; sourceTree = "<group>"; };
 		3124F2A509C36782009BA3CF /* RXSoundGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXSoundGroup.h; sourceTree = "<group>"; };
 		3124F2A609C36782009BA3CF /* RXSoundGroup.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXSoundGroup.mm; sourceTree = "<group>"; };
-		312876F80F2972E900A114FF /* CardInspector.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CardInspector.xib; sourceTree = "<group>"; };
 		312A89600D57B25600FCDF91 /* RXArchiveManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXArchiveManager.h; sourceTree = "<group>"; };
 		312A89610D57B25600FCDF91 /* RXArchiveManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXArchiveManager.m; sourceTree = "<group>"; };
 		312D9EC80D4D81A3006E384C /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -382,6 +381,7 @@
 		315547E108C4C44F00A2AA7A /* RXApplicationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXApplicationDelegate.m; sourceTree = "<group>"; };
 		3155480F08C52A1400A2AA7A /* Extras.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; path = Extras.plist; sourceTree = "<group>"; };
 		3155F1C617F884550064E4BD /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "Riven X/Images.xcassets"; sourceTree = SOURCE_ROOT; };
+		3155F1C817F885FB0064E4BD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		31588871098D7A120090A6B6 /* RXCardDescriptor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardDescriptor.h; sourceTree = "<group>"; };
 		31588872098D7A120090A6B6 /* RXCardDescriptor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardDescriptor.m; sourceTree = "<group>"; };
 		315DA3CB118FED0F003E21BC /* patches */ = {isa = PBXFileReference; lastKnownFileType = folder; path = patches; sourceTree = "<group>"; };
@@ -400,7 +400,6 @@
 		316C38AB0F469FC700EFB7FB /* CAHostTimeBase.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAHostTimeBase.cpp; sourceTree = "<group>"; };
 		316C38B00F469FDE00EFB7FB /* CAPThread.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAPThread.cpp; sourceTree = "<group>"; };
 		316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAAUParameter.cpp; sourceTree = "<group>"; };
-		316D273D10004B23003579F9 /* MainMenu.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = MainMenu.xib; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		316E1EE80E77803100F28E2A /* mhkdump */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mhkdump; sourceTree = BUILT_PRODUCTS_DIR; };
 		316E1F270E77806100F28E2A /* mhk_dump.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = mhk_dump.m; sourceTree = "<group>"; };
 		316E1F280E77806100F28E2A /* mhk_dump_cmd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mhk_dump_cmd.c; sourceTree = "<group>"; };
@@ -473,7 +472,6 @@
 		31C545520D5D50620024B486 /* RXMediaInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXMediaInstaller.m; sourceTree = "<group>"; };
 		31CE92941033D576008B7717 /* RXInterpolator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXInterpolator.h; sourceTree = "<group>"; };
 		31CE92951033D576008B7717 /* RXInterpolator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXInterpolator.m; sourceTree = "<group>"; };
-		31D21B980DBC078E00E970E1 /* VariableEditor.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = VariableEditor.xib; sourceTree = "<group>"; };
 		31D21B9A0DBC07A700E970E1 /* MainMenu.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainMenu.xib; sourceTree = "<group>"; };
 		31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = DebugConsole.xib; sourceTree = "<group>"; };
 		31D3D85E0EEE36FD00F2D1C4 /* RXOpenGLState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXOpenGLState.h; sourceTree = "<group>"; };
@@ -974,7 +972,6 @@
 				3155F1C617F884550064E4BD /* Images.xcassets */,
 				31F1BEA50D3B03D000CFE301 /* about.png */,
 				312D9ECB0D4D81A3006E384C /* About.strings */,
-				312876F80F2972E900A114FF /* CardInspector.xib */,
 				31DAAF0C0DDE21EF00D06D0C /* cursors */,
 				31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */,
 				312EBAC70FD202ED00D65E22 /* debug_init.py */,
@@ -996,7 +993,6 @@
 				3185C43A0E06027800528220 /* sparkle.pem */,
 				31D4E8CD1144635D00D70E28 /* Stacks.plist */,
 				3160E1810FD3075300F18E86 /* tiny_marbles.png */,
-				31D21B980DBC078E00E970E1 /* VariableEditor.xib */,
 				319C8C681155793D00DF3E7D /* Welcome.strings */,
 				31E933431127B02000188488 /* Welcome.xib */,
 			);
@@ -1319,6 +1315,7 @@
 				fr,
 				en,
 				de,
+				Base,
 			);
 			mainGroup = 08FB7794FE84155DC02AAC07 /* rivenx */;
 			projectDirPath = "";
@@ -1725,7 +1722,7 @@
 		316D273C10004B23003579F9 /* MainMenu.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
-				316D273D10004B23003579F9 /* MainMenu.xib */,
+				3155F1C817F885FB0064E4BD /* Base */,
 			);
 			name = MainMenu.xib;
 			sourceTree = "<group>";

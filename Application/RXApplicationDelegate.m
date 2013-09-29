@@ -330,6 +330,7 @@
         [versionField setStringValue:[NSString stringWithFormat:version_format, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], version]];
         #pragma clang diagnostic pop
         [copyrightField setStringValue:NSLocalizedStringFromTable(@"LONG_COPYRIGHT", @"About", nil)];
+        [acknowledgmentsButton setTitle:NSLocalizedStringFromTable(@"ACKNOWLEDGMENTS", @"About", nil)];
 
         setup = true;
     }
