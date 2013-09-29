@@ -28,7 +28,7 @@ NSString *const MHKErrorDomain = @"MHKErrorDomain";
             case errDamagedResource: return @"A required game resource is damaged.";
             case errInvalidChannelCount: return @"Invalid number of audio channels.";
             case errInvalidFrameCount: return @"Invalid number of audio frames.";
-            case errFFMPEGNotAvailable: return @"Failed to load the FFmpeg library. Music and other audio effects in the game may not play.";
+            case errLibavNotAvailable: return @"Failed to load the libav library. Music and other audio effects in the game may not play.";
             case errInvalidSoundDescriptor: return @"Invalid sound descriptor.";
             case errInvalidBitmapCompression: return @"Invalid bitmap compression.";
             case errInvalidBitmapCompressorInstruction: return @"Invalid bitmap compression instruction.";

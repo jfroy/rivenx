@@ -12,12 +12,14 @@
 #import <CoreAudio/CoreAudioTypes.h>
 #import <AudioToolbox/AudioConverter.h>
 
+struct AVCodecContext;
+struct AVFrame;
 
 @interface MHKMP2Decompressor : NSObject <MHKAudioDecompression> {
     MHKFileHandle* _data_source;
     
     UInt32 _channel_count;
-    AudioStreamBasicDescription _decomp_absd;
+    AudioStreamBasicDescription _decomp_asbd;
     
     SInt64 _audio_packets_start_offset;
     SInt64 _packet_count;
@@ -37,7 +39,8 @@
     UInt32 _decompression_buffer_length;
     void* _decompression_buffer;
     
-    void* _mp2_codec_context;
+    struct AVCodecContext* _mp2_codec_context;
+    struct AVFrame* _mp2_frame;
     
     pthread_mutex_t _decompressor_lock;
 }

@@ -23,7 +23,7 @@ enum {
     errDamagedResource, 
     errInvalidChannelCount, 
     errInvalidFrameCount, 
-    errFFMPEGNotAvailable, 
+    errLibavNotAvailable, 
     errInvalidSoundDescriptor, 
     errInvalidBitmapCompression, 
     errInvalidBitmapCompressorInstruction

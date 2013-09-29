@@ -15,6 +15,7 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdocumentation"
+#pragma clang diagnostic ignored "-Wduplicate-enum"
 #import <libavcodec/avcodec.h>
 #pragma clang diagnostic pop
 
@@ -29,24 +30,26 @@
 
 
 static BOOL MHKMP2Decompressor_libav_available = NO;
-static pthread_mutex_t ffmpeg_mutex;
+static pthread_mutex_t s_libav_mutex;
 
-struct ffmpeg_state {
+struct libav_state
+{
     void* avcodec_handle;
     
-    void (*avcodec_init)(void);
     void (*avcodec_register_all)(void);
     void (*av_freep)(void*);
-    AVCodec *(*avcodec_find_decoder)(enum CodecID);
-    AVCodecContext *(*avcodec_alloc_context)(void);
-    int (*avcodec_open)(AVCodecContext*, AVCodec*);
+    AVCodec* (*avcodec_find_decoder)(enum AVCodecID);
+    AVCodecContext* (*avcodec_alloc_context3)(const AVCodec*);
+    int (*avcodec_open2)(AVCodecContext*, const AVCodec*, AVDictionary**);
     int (*avcodec_close)(AVCodecContext*);
-    int (*avcodec_decode_audio2)(AVCodecContext*, int16_t*, int*, uint8_t*, int);
+    AVFrame* (*avcodec_alloc_frame)(void);
+    void (*avcodec_free_frame)(AVFrame**);
+    int (*avcodec_decode_audio4)(AVCodecContext*, AVFrame*, int*, AVPacket*);
     
     AVCodec* mp2_codec;
 };
 
-static struct ffmpeg_state _ffmpeg_state;
+static struct libav_state _libav_state;
 
 static const uint32_t _mpeg_audio_nominal_sampling_rate_table[3] = {44100, 48000, 32000};
 static const uint32_t _mpeg_audio_v1_bitrates[3][14] = {
@@ -64,7 +67,8 @@ static const uint32_t* const _mpeg_audio_bitrate_tables[2] = {
     (const uint32_t *const)_mpeg_audio_v2_bitrates
 };
 
-static uint32_t _compute_mpeg_audio_frame_length(uint32_t header) {
+static uint32_t _compute_mpeg_audio_frame_length(uint32_t header)
+{
     uint8_t bitrate_index = (header >> 12) & 0xf;
     if (bitrate_index == 0)
         return 0;
@@ -87,7 +91,8 @@ static uint32_t _compute_mpeg_audio_frame_length(uint32_t header) {
     
     // and finally, frame length
     uint32_t frame_length = 0;
-    switch (layer_index) {
+    switch (layer_index)
+    {
         case 0:
             frame_length = (((bitrate * 12) / sampling_rate) + padding_flag) * 4;
             break;
@@ -106,7 +111,8 @@ static uint32_t _compute_mpeg_audio_frame_length(uint32_t header) {
     return frame_length;
 }
 
-static inline int _valid_id3_buffer_predicate(const uint8_t *id3_buffer) {
+static inline int _valid_id3_buffer_predicate(const uint8_t *id3_buffer)
+{
     return (id3_buffer[0] == 'I' && id3_buffer[1] == 'D' && id3_buffer[2] == '3' &&
             id3_buffer[3] != 0xff && id3_buffer[4] != 0xff &&
             (id3_buffer[6] & 0x80) == 0 &&
@@ -115,7 +121,8 @@ static inline int _valid_id3_buffer_predicate(const uint8_t *id3_buffer) {
             (id3_buffer[9] & 0x80) == 0);
 }
 
-static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
+static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header)
+{
     // 11 sync bits
     if ((header & 0xffe00000) != 0xffe00000)
         return 0;
@@ -136,73 +143,107 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     return 1;
 }
 
-
 @implementation MHKMP2Decompressor
 
-+ (void)loadFFMPEG {
+static int MHKMP2Decompressor_get_buffer(struct AVCodecContext *c, AVFrame *pic)
+{
+    MHKMP2Decompressor* decompressor = c->opaque;
+    pic->data[0] = decompressor->_decompression_buffer;
+    pic->extended_data[0] = decompressor->_decompression_buffer;
+    pic->linesize[0] = pic->nb_samples * decompressor->_decomp_asbd.mBytesPerFrame;
+    debug_assert(pic->linesize[0] <= (int)decompressor->_decompression_buffer_length);
+    debug_assert(pic->nb_samples == MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET);
+    return 0;
+}
+
+static void MHKMP2Decompressor_release_buffer(struct AVCodecContext *c, AVFrame *pic)
+{
+    pic->data[0] = NULL;
+    pic->extended_data[0] = NULL;
+    pic->linesize[0] = 0;
+}
+
++ (void)loadLibav
+{
 #if defined(DEBUG) && DEBUG > 1
-    NSLog(@"initializing FFmpeg...");
+    NSLog(@"initializing libav...");
 #endif
     
     // load the function pointers we need
-    _ffmpeg_state.avcodec_init = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_init");
-    if (!_ffmpeg_state.avcodec_init) {
-        NSLog(@"unable to bind symbol \"avcodec_init\": %s", dlerror());
-        abort();
-    }
-    
-    _ffmpeg_state.avcodec_register_all = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_register_all");
-    if (!_ffmpeg_state.avcodec_init) {
+
+    _libav_state.avcodec_register_all = dlsym(_libav_state.avcodec_handle, "avcodec_register_all");
+    if (!_libav_state.avcodec_register_all)
+    {
         NSLog(@"unable to bind symbol \"avcodec_register_all\": %s", dlerror());
         abort();
     }
     
-    _ffmpeg_state.av_freep = dlsym(_ffmpeg_state.avcodec_handle, "av_freep");
-    if (!_ffmpeg_state.avcodec_init) {
+    _libav_state.av_freep = dlsym(_libav_state.avcodec_handle, "av_freep");
+    if (!_libav_state.av_freep)
+    {
         NSLog(@"unable to bind symbol \"av_freep\": %s", dlerror());
         abort();
     }
     
-    _ffmpeg_state.avcodec_find_decoder = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_find_decoder");
-    if (!_ffmpeg_state.avcodec_init) {
+    _libav_state.avcodec_find_decoder = dlsym(_libav_state.avcodec_handle, "avcodec_find_decoder");
+    if (!_libav_state.avcodec_find_decoder)
+    {
         NSLog(@"unable to bind symbol \"avcodec_find_decoder\": %s", dlerror());
         abort();
     }
     
-    _ffmpeg_state.avcodec_alloc_context = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_alloc_context");
-    if (!_ffmpeg_state.avcodec_init) {
-        NSLog(@"unable to bind symbol \"avcodec_alloc_context\": %s", dlerror());
+    _libav_state.avcodec_alloc_context3 = dlsym(_libav_state.avcodec_handle, "avcodec_alloc_context3");
+    if (!_libav_state.avcodec_alloc_context3)
+    {
+        NSLog(@"unable to bind symbol \"avcodec_alloc_context3\": %s", dlerror());
         abort();
     }
     
-    _ffmpeg_state.avcodec_open = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_open");
-    if (!_ffmpeg_state.avcodec_init) {
-        NSLog(@"unable to bind symbol \"avcodec_open\": %s", dlerror());
+    _libav_state.avcodec_open2 = dlsym(_libav_state.avcodec_handle, "avcodec_open2");
+    if (!_libav_state.avcodec_open2)
+    {
+        NSLog(@"unable to bind symbol \"avcodec_open2\": %s", dlerror());
         abort();
     }
     
-    _ffmpeg_state.avcodec_close = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_close");
-    if (!_ffmpeg_state.avcodec_init) {
+    _libav_state.avcodec_close = dlsym(_libav_state.avcodec_handle, "avcodec_close");
+    if (!_libav_state.avcodec_close)
+    {
         NSLog(@"unable to bind symbol \"avcodec_close\": %s", dlerror());
         abort();
     }
-    
-    _ffmpeg_state.avcodec_decode_audio2 = dlsym(_ffmpeg_state.avcodec_handle, "avcodec_decode_audio2");
-    if (!_ffmpeg_state.avcodec_init) {
-        NSLog(@"unable to bind symbol \"avcodec_decode_audio2\": %s", dlerror());
+
+    _libav_state.avcodec_alloc_frame = dlsym(_libav_state.avcodec_handle, "avcodec_alloc_frame");
+    if (!_libav_state.avcodec_alloc_frame)
+    {
+        NSLog(@"unable to bind symbol \"avcodec_alloc_frame\": %s", dlerror());
+        abort();
+    }
+
+    _libav_state.avcodec_free_frame = dlsym(_libav_state.avcodec_handle, "avcodec_free_frame");
+    if (!_libav_state.avcodec_free_frame)
+    {
+        NSLog(@"unable to bind symbol \"avcodec_free_frame\": %s", dlerror());
+        abort();
+    }
+
+    _libav_state.avcodec_decode_audio4 = dlsym(_libav_state.avcodec_handle, "avcodec_decode_audio4");
+    if (!_libav_state.avcodec_decode_audio4)
+    {
+        NSLog(@"unable to bind symbol \"avcodec_decode_audio4\": %s", dlerror());
         abort();
     }
     
     // initialize libavcodec and the MPEG 1/2 audio layer decoder
-    _ffmpeg_state.avcodec_init();
-    _ffmpeg_state.avcodec_register_all();
-    _ffmpeg_state.mp2_codec = _ffmpeg_state.avcodec_find_decoder(CODEC_ID_MP2);
-    
-    // FFmpeg mutex
-    pthread_mutex_init(&ffmpeg_mutex, NULL);
+    _libav_state.avcodec_register_all();
+    _libav_state.mp2_codec = _libav_state.avcodec_find_decoder(AV_CODEC_ID_MP2);
+
+    // libav mutex
+    pthread_mutex_init(&s_libav_mutex, NULL);
 }
 
-+ (void)initialize {
++ (void)initialize
+{
     static BOOL MHKMP2Decompressor_has_initialized = NO;
     if (!MHKMP2Decompressor_has_initialized) {
         MHKMP2Decompressor_has_initialized = YES;
@@ -213,17 +254,18 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         char* error_string = NULL;
         
         // load libavcodec
-        _ffmpeg_state.avcodec_handle = dlopen([[resource_path stringByAppendingPathComponent:@"libavcodec.dylib"] fileSystemRepresentation], RTLD_LAZY | RTLD_GLOBAL);
+        _libav_state.avcodec_handle = dlopen([[resource_path stringByAppendingPathComponent:@"libavcodec.dylib"] fileSystemRepresentation], RTLD_LAZY | RTLD_GLOBAL);
         error_string = dlerror();
         if (error_string)
             fprintf(stderr, "%s\n", error_string);
-        if (!_ffmpeg_state.avcodec_handle)
+        if (!_libav_state.avcodec_handle)
             return;
         
-        // load ffmpeg if we were able to link libavcodec
-        if (_ffmpeg_state.avcodec_handle) {
+        // load libav if we were able to link libavcodec
+        if (_libav_state.avcodec_handle)
+        {
             MHKMP2Decompressor_libav_available = YES;
-            [self loadFFMPEG];
+            [self loadLibav];
         }
     }
 }
@@ -359,7 +401,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     return YES;
 }
 
-- (id)init {
+- (id)init
+{
     [self doesNotRecognizeSelector:_cmd];
     [self release];
     return nil;
@@ -371,11 +414,11 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     if (!self)
         return nil;
     
-    // we can't do anything without ffmpeg
+    // we can't do anything without libav
     if (!MHKMP2Decompressor_libav_available)
     {
         [self release];
-        ReturnValueWithError(nil, MHKErrorDomain, errFFMPEGNotAvailable, nil, errorPtr);
+        ReturnValueWithError(nil, MHKErrorDomain, errLibavNotAvailable, nil, errorPtr);
     }
     
     // layer II audio can only store 1 or 2 channels
@@ -390,14 +433,14 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     _data_source = [fh retain];
     
     // setup the decompression ABSD
-    _decomp_absd.mFormatID = kAudioFormatLinearPCM;
-    _decomp_absd.mFormatFlags = kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
-    _decomp_absd.mSampleRate = sps;
-    _decomp_absd.mChannelsPerFrame = _channel_count;
-    _decomp_absd.mBitsPerChannel = 16;
-    _decomp_absd.mFramesPerPacket = 1;
-    _decomp_absd.mBytesPerFrame = _decomp_absd.mChannelsPerFrame * _decomp_absd.mBitsPerChannel / 8;
-    _decomp_absd.mBytesPerPacket = _decomp_absd.mFramesPerPacket * _decomp_absd.mBytesPerFrame;
+    _decomp_asbd.mFormatID = kAudioFormatLinearPCM;
+    _decomp_asbd.mFormatFlags = kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsSignedInteger | kAudioFormatFlagIsPacked;
+    _decomp_asbd.mSampleRate = sps;
+    _decomp_asbd.mChannelsPerFrame = _channel_count;
+    _decomp_asbd.mBitsPerChannel = 16;
+    _decomp_asbd.mFramesPerPacket = 1;
+    _decomp_asbd.mBytesPerFrame = _decomp_asbd.mChannelsPerFrame * _decomp_asbd.mBitsPerChannel / 8;
+    _decomp_asbd.mBytesPerPacket = _decomp_asbd.mFramesPerPacket * _decomp_asbd.mBytesPerFrame;
     
     NSError* local_error = nil;
     
@@ -405,7 +448,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     UInt8 id3_buffer[10];
     [_data_source seekToFileOffset:0];
     ssize_t bytes_read = [_data_source readDataOfLength:10 inBuffer:id3_buffer error:&local_error];
-    if (bytes_read != 10) {
+    if (bytes_read != 10)
+    {
         if (errorPtr)
             *errorPtr = local_error;
         [self release];
@@ -413,7 +457,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     }
     
     // if we have a valid ID3 chunk, determine its length
-    if (_valid_id3_buffer_predicate(id3_buffer)) {
+    if (_valid_id3_buffer_predicate(id3_buffer))
+    {
         SInt64 id3_length = ((id3_buffer[6] & 0x7f) << 21) | ((id3_buffer[7] & 0x7f) << 14) | ((id3_buffer[8] & 0x7f) << 7) | (id3_buffer[9] & 0x7f);
         if (id3_buffer[5] & 0x10)
             id3_length += 10;
@@ -427,7 +472,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     
     // build the packet description table
     _max_packet_size = 0;
-    if (![self _build_packet_description_table_and_count_frames:&local_error]) {
+    if (![self _build_packet_description_table_and_count_frames:&local_error])
+    {
         if (errorPtr)
             *errorPtr = local_error;
         [self release];
@@ -445,7 +491,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     }
     
     // compute how many bytes we should drop from the first packet (where extra silence will be)
-    _bytes_to_drop = FRAME_SKIP_FUDGE * _decomp_absd.mBytesPerFrame;
+    _bytes_to_drop = FRAME_SKIP_FUDGE * _decomp_asbd.mBytesPerFrame;
     
     // allocate the decompression buffer
     _decompression_buffer_length = MAX(MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET * sizeof(SInt16) * _channel_count, AVCODEC_MAX_AUDIO_FRAME_SIZE);
@@ -468,7 +514,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     // create the decompressor lock
     pthread_mutex_init(&_decompressor_lock, NULL);
     
-    // finish initialization by resetting the decompressor (which will create the FFMPEG context and open the FFMPEG codec)
+    // finish initialization by resetting the decompressor (which will create the libav context and open the libav codec)
     [self reset];
     
     return self;
@@ -477,12 +523,14 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
 - (void)dealloc
 {
     // close the decoder
-    pthread_mutex_lock(&ffmpeg_mutex);
-    if (_mp2_codec_context) {
-        _ffmpeg_state.avcodec_close((AVCodecContext*)_mp2_codec_context);
-        _ffmpeg_state.av_freep(&_mp2_codec_context);
+    pthread_mutex_lock(&s_libav_mutex);
+    if (_mp2_codec_context)
+    {
+        _libav_state.avcodec_close(_mp2_codec_context);
+        _libav_state.av_freep(&_mp2_codec_context);
+        _libav_state.avcodec_free_frame(&_mp2_frame);
     }
-    pthread_mutex_unlock(&ffmpeg_mutex);
+    pthread_mutex_unlock(&s_libav_mutex);
     
     // free memory resources
     if (_packet_buffer)
@@ -491,7 +539,7 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         free(_decompression_buffer);
     if (_packet_table)
         free(_packet_table);
-    
+
     [_data_source release];
     
     pthread_mutex_destroy(&_decompressor_lock);
@@ -499,15 +547,18 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     [super dealloc];
 }
 
-- (AudioStreamBasicDescription)outputFormat {
-    return _decomp_absd;
+- (AudioStreamBasicDescription)outputFormat
+{
+    return _decomp_asbd;
 }
 
-- (SInt64)frameCount {
+- (SInt64)frameCount
+{
     return _frame_count;
 }
 
-- (void)reset {
+- (void)reset
+{
     pthread_mutex_lock(&_decompressor_lock);
     
 #if defined(DEBUG) && DEBUG > 1
@@ -527,29 +578,44 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     _current_packet = _packet_buffer;
     
     // close and re-open the codec context
-    pthread_mutex_lock(&ffmpeg_mutex);
+    pthread_mutex_lock(&s_libav_mutex);
     
-    if (_mp2_codec_context) {
-        _ffmpeg_state.avcodec_close((AVCodecContext*)_mp2_codec_context);
-        _ffmpeg_state.av_freep(&_mp2_codec_context);
+    if (_mp2_codec_context)
+    {
+        _libav_state.avcodec_close(_mp2_codec_context);
+        _libav_state.av_freep(&_mp2_codec_context);
+        _libav_state.avcodec_free_frame(&_mp2_frame);
     }
     
     // allocate the codec context
-    _mp2_codec_context = _ffmpeg_state.avcodec_alloc_context();
+    _mp2_codec_context = _libav_state.avcodec_alloc_context3(_libav_state.mp2_codec);
     if (!_mp2_codec_context)
-        fprintf(stderr, "<MHKMP2Decompressor %p>: avcodec_alloc_context failed\n", self);
-    else {  
+    {
+        fprintf(stderr, "<MHKMP2Decompressor %p>: avcodec_alloc_context3 failed\n", self);
+    }
+    else
+    {
+        // configure the context
+        _mp2_codec_context->opaque = self;
+        _mp2_codec_context->get_buffer = MHKMP2Decompressor_get_buffer;
+        _mp2_codec_context->release_buffer = MHKMP2Decompressor_release_buffer;
+        _mp2_codec_context->request_sample_fmt = AV_SAMPLE_FMT_S16;
+
         // open the codec
-        int result = _ffmpeg_state.avcodec_open((AVCodecContext*)_mp2_codec_context, _ffmpeg_state.mp2_codec);
+        int result = _libav_state.avcodec_open2(_mp2_codec_context, _libav_state.mp2_codec, NULL);
         if (result < 0)
-            fprintf(stderr, "<MHKMP2Decompressor %p>: avcodec_open failed: %d\n", self, result);
+            fprintf(stderr, "<MHKMP2Decompressor %p>: avcodec_open2 failed: %d\n", self, result);
+
+        // allocate decompression frame
+        _mp2_frame = _libav_state.avcodec_alloc_frame();
     }
     
-    pthread_mutex_unlock(&ffmpeg_mutex);
+    pthread_mutex_unlock(&s_libav_mutex);
     pthread_mutex_unlock(&_decompressor_lock);
 }
 
-- (void)fillAudioBufferList:(AudioBufferList*)abl {
+- (void)fillAudioBufferList:(AudioBufferList*)abl
+{
     // we can't handle de-interleaved ABLs
     debug_assert(abl->mNumberBuffers == 1);
     
@@ -558,19 +624,20 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     
     // bytes_to_decompress is a fixed quantity which is set to the total number
     // of bytes to copy into the ABL
-    size_t bytes_to_decompress = abl->mBuffers[0].mDataByteSize;
-    debug_assert(bytes_to_decompress % _decomp_absd.mBytesPerFrame == 0);
+    size_t const bytes_to_decompress = abl->mBuffers[0].mDataByteSize;
+    debug_assert(bytes_to_decompress % _decomp_asbd.mBytesPerFrame == 0);
     
     // decompressed_bytes tracks the number of bytes that have been copied into
     // the ABL, and is essentially the ABL buffer offset
     size_t decompressed_bytes = 0;
     
-    // available_bytes is a volatile quatity used to track available bytes to
+    // available_bytes is a volatile quantity used to track available bytes to
     // copy into the ABL buffer
     size_t bytes_to_copy = 0;
     
     // if we have frames left from the last fill, copy them in
-    if (_decompression_buffer_available > 0) {
+    if (_decompression_buffer_available > 0)
+    {
         // compute how many bytes we can copy
         bytes_to_copy = _decompression_buffer_available;
         if (bytes_to_copy > bytes_to_decompress - decompressed_bytes)
@@ -592,16 +659,13 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
     // at this point the decompression buffer must be empty
     debug_assert(_decompression_buffer_available == 0);
     
-    // did we already process every available packet?
-    if (_packet_index == _packet_count)
-        goto AbortFill;
-    
-    // if we don't have a valid FFMPEG context, abort out
+    // if we don't have a valid libav context, abort out
     if (!_mp2_codec_context)
         goto AbortFill;
     
     // decompress until we have filled the ABL or ran out of packets
-    while (bytes_to_decompress > decompressed_bytes && _packet_index < _packet_count) {
+    while (bytes_to_decompress > decompressed_bytes && _packet_index < _packet_count)
+    {
         // at this point, we've exhausted the decompression buffer and we have
         // to decompress a new packet; hence, this loop body never offsets the
         // decompression buffer by its position
@@ -613,14 +677,12 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         _decompression_buffer_position = 0;
     
         // if we ran out of packets in memory, read some more
-        if (_available_packets == 0) {
-            // did we process every available packet?
-            if (_packet_index == _packet_count)
-                goto AbortFill;
-            
+        if (_available_packets == 0)
+        {
             // compute the length of an integral number of packets that we can read, up to 50 packets
             uint32_t bytes_to_read = _max_packet_size * 50;
-            if (bytes_to_read > [_data_source length] - [_data_source offsetInFile]) {
+            if (bytes_to_read > [_data_source length] - [_data_source offsetInFile])
+            {
                 // explicit cast OK here, API limited to 32-bit read sizes
                 bytes_to_read = (UInt32)((([_data_source length] - [_data_source offsetInFile]) / _max_packet_size) * _max_packet_size);
             }
@@ -636,23 +698,39 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         }
         
         // decompress a packet
-        _decompression_buffer_available = _decompression_buffer_length;
-        pthread_mutex_lock(&ffmpeg_mutex);
-        int used_bytes = _ffmpeg_state.avcodec_decode_audio2(
-            (AVCodecContext*)_mp2_codec_context,
-            _decompression_buffer,
-            (int*)&_decompression_buffer_available,
-            _current_packet,
-            _packet_table[_packet_index].mDataByteSize);
-        pthread_mutex_unlock(&ffmpeg_mutex);
-        debug_assert(used_bytes > 0);
-        (void)used_bytes;
-        
+
+        struct AVPacket packet;
+        packet.pts = AV_NOPTS_VALUE;
+        packet.dts = AV_NOPTS_VALUE;
+        packet.data = _current_packet;
+        packet.size = _packet_table[_packet_index].mDataByteSize;
+        packet.stream_index = 0;
+        packet.flags = 0;
+        packet.side_data = NULL;
+        packet.side_data_elems = 0;
+        packet.duration = 0;
+        packet.destruct = NULL;
+        packet.priv = NULL;
+        packet.pos = -1;
+        packet.convergence_duration = AV_NOPTS_VALUE;
+
+        int got_frame_ptr;
+        int used_bytes = _libav_state.avcodec_decode_audio4(
+            _mp2_codec_context,
+            _mp2_frame,
+            &got_frame_ptr,
+            &packet);
+        if (used_bytes <= 0)
+            goto AbortFill;
+
+        _decompression_buffer_available = _mp2_frame->linesize[0];
+
         // the output buffer size is the initial number of bytes to copy
         bytes_to_copy = _decompression_buffer_available;
         
         // apply the frame skip hack on the first packet
-        if (_packet_index == 0) {
+        if (_packet_index == 0)
+        {
             // temporarily advance the decompression buffer and reduce the number of bytes to copy
             _decompression_buffer = BUFFER_OFFSET(_decompression_buffer, _bytes_to_drop);
             bytes_to_copy -= _bytes_to_drop;
@@ -669,7 +747,8 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         _decompression_buffer_available -= bytes_to_copy;
         
         // compensate and undo for the first packet frame skip hack
-        if (_packet_index == 0) {
+        if (_packet_index == 0)
+        {
             _decompression_buffer = BUFFER_NOFFSET(_decompression_buffer, _bytes_to_drop);
             _decompression_buffer_position += _bytes_to_drop;
             _decompression_buffer_available -= _bytes_to_drop;
@@ -677,13 +756,14 @@ static inline int _valid_mpeg_audio_frame_header_predicate(uint32_t header) {
         
         // move on to the next packet
         _current_packet = BUFFER_OFFSET(_current_packet, _packet_table[_packet_index].mDataByteSize);
-        _available_packets--;
-        _packet_index++;
+        --_available_packets;
+        ++_packet_index;
     }
         
 AbortFill:
     // zero left-over frames
-    if (bytes_to_decompress > decompressed_bytes) {
+    if (bytes_to_decompress > decompressed_bytes)
+    {
 #if defined(DEBUG) && DEBUG > 1
         NSLog(@"%@: zero filling tail of ABL buffer on packet %lld/%lld", self, _packet_index, _packet_count);
 #endif
