@@ -80,6 +80,7 @@
 		3153ED6409A3ED12002E1149 /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
 		315547E208C4C44F00A2AA7A /* RXApplicationDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 315547E108C4C44F00A2AA7A /* RXApplicationDelegate.m */; };
 		3155481008C52A1400A2AA7A /* Extras.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3155480F08C52A1400A2AA7A /* Extras.plist */; };
+		3155F1C717F884550064E4BD /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3155F1C617F884550064E4BD /* Images.xcassets */; };
 		31588874098D7A120090A6B6 /* RXCardDescriptor.m in Sources */ = {isa = PBXBuildFile; fileRef = 31588872098D7A120090A6B6 /* RXCardDescriptor.m */; };
 		315BD3CE0D85AF94007A3BFA /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
 		315BD3CF0D85AF95007A3BFA /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
@@ -170,7 +171,6 @@
 		31DC684209CB8E6B00BFF447 /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
 		31E933441127B02000188488 /* Welcome.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31E933431127B02000188488 /* Welcome.xib */; };
 		31E9334A1127B0CE00188488 /* RXWelcomeWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 31E933491127B0CE00188488 /* RXWelcomeWindowController.m */; };
-		31EAC32B08FF38940018D8DA /* rivenx.icns in Resources */ = {isa = PBXBuildFile; fileRef = 31EAC32A08FF38940018D8DA /* rivenx.icns */; };
 		31EE15E010745FA3006E196D /* RXScriptCompiler.m in Sources */ = {isa = PBXBuildFile; fileRef = 31EE15DF10745FA3006E196D /* RXScriptCompiler.m */; };
 		31F0DD4B0D3A7682000FBB5F /* EngineVariables.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31F0DD4A0D3A7682000FBB5F /* EngineVariables.plist */; };
 		31F1BEA60D3B03D000CFE301 /* about.png in Resources */ = {isa = PBXBuildFile; fileRef = 31F1BEA50D3B03D000CFE301 /* about.png */; };
@@ -381,6 +381,7 @@
 		315547E008C4C44F00A2AA7A /* RXApplicationDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXApplicationDelegate.h; sourceTree = "<group>"; };
 		315547E108C4C44F00A2AA7A /* RXApplicationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXApplicationDelegate.m; sourceTree = "<group>"; };
 		3155480F08C52A1400A2AA7A /* Extras.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; path = Extras.plist; sourceTree = "<group>"; };
+		3155F1C617F884550064E4BD /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "Riven X/Images.xcassets"; sourceTree = SOURCE_ROOT; };
 		31588871098D7A120090A6B6 /* RXCardDescriptor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardDescriptor.h; sourceTree = "<group>"; };
 		31588872098D7A120090A6B6 /* RXCardDescriptor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardDescriptor.m; sourceTree = "<group>"; };
 		315DA3CB118FED0F003E21BC /* patches */ = {isa = PBXFileReference; lastKnownFileType = folder; path = patches; sourceTree = "<group>"; };
@@ -489,7 +490,6 @@
 		31E933431127B02000188488 /* Welcome.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = Welcome.xib; sourceTree = "<group>"; };
 		31E933481127B0CE00188488 /* RXWelcomeWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWelcomeWindowController.h; sourceTree = "<group>"; };
 		31E933491127B0CE00188488 /* RXWelcomeWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXWelcomeWindowController.m; sourceTree = "<group>"; };
-		31EAC32A08FF38940018D8DA /* rivenx.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = rivenx.icns; sourceTree = "<group>"; };
 		31EE15DE10745FA3006E196D /* RXScriptCompiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptCompiler.h; sourceTree = "<group>"; };
 		31EE15DF10745FA3006E196D /* RXScriptCompiler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptCompiler.m; sourceTree = "<group>"; };
 		31F0DD4A0D3A7682000FBB5F /* EngineVariables.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = EngineVariables.plist; sourceTree = "<group>"; };
@@ -971,6 +971,7 @@
 		31F3093C08BE43D500417394 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				3155F1C617F884550064E4BD /* Images.xcassets */,
 				31F1BEA50D3B03D000CFE301 /* about.png */,
 				312D9ECB0D4D81A3006E384C /* About.strings */,
 				312876F80F2972E900A114FF /* CardInspector.xib */,
@@ -991,7 +992,6 @@
 				31B654A01102B9EF004818AC /* Rendering.strings */,
 				31F1BED50D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf */,
 				313C7EFB08CD057500950A70 /* Riven301.ttf */,
-				31EAC32A08FF38940018D8DA /* rivenx.icns */,
 				31DAAF210DDE21EF00D06D0C /* sounds */,
 				3185C43A0E06027800528220 /* sparkle.pem */,
 				31D4E8CD1144635D00D70E28 /* Stacks.plist */,
@@ -1364,12 +1364,12 @@
 				319AC56914AE438500FFB28A /* unpackgogsetup in Resources */,
 				3155481008C52A1400A2AA7A /* Extras.plist in Resources */,
 				313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */,
-				31EAC32B08FF38940018D8DA /* rivenx.icns in Resources */,
 				31F0DD4B0D3A7682000FBB5F /* EngineVariables.plist in Resources */,
 				31F1BEA60D3B03D000CFE301 /* about.png in Resources */,
 				31F1BED60D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf in Resources */,
 				31FF29D50D425BFE00E3B5FF /* GameVariables.plist in Resources */,
 				312D9ECD0D4D81A3006E384C /* InfoPlist.strings in Resources */,
+				3155F1C717F884550064E4BD /* Images.xcassets in Resources */,
 				312D9ECF0D4D81A3006E384C /* About.strings in Resources */,
 				31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */,
 				31D21B9F0DBC07C300E970E1 /* DebugConsole.xib in Resources */,
@@ -2367,6 +2367,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
 				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				COMBINE_HIDPI_IMAGES = YES;
@@ -2459,6 +2460,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
 				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				COMBINE_HIDPI_IMAGES = YES;
@@ -2482,6 +2484,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
 				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
 				COMBINE_HIDPI_IMAGES = YES;
