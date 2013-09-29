@@ -30,6 +30,8 @@
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXDynamicPicture.h"
 
+#import "Application/RXApplicationDelegate.h"
+
 
 static NSTimeInterval const kRunloopPeriod = 0.001;
 static useconds_t const kRunloopPeriodMicroseconds = 1000;
@@ -120,10 +122,6 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
     return ((double)r / RAND_MAX) * (upper - lower) + lower;
 }
 
-
-@interface RXScriptEngine (RXScriptOpcodes)
-- (void)_opcode_activateSLST:(const uint16_t)argc arguments:(const uint16_t*)argv;
-@end
 
 @implementation RXScriptEngine
 
@@ -2137,7 +2135,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper) {
 #pragma mark main menu
 
 DEFINE_COMMAND(xarestoregame) {
-    [(NSObject*)[NSApp delegate] performSelectorOnMainThread:@selector(openDocument:) withObject:self waitUntilDone:NO];
+    [[RXApplicationDelegate sharedApplicationDelegate] performSelectorOnMainThread:@selector(openDocument:) withObject:self waitUntilDone:NO];
 }
 
 DEFINE_COMMAND(xasetupcomplete) {

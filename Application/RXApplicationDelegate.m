@@ -52,6 +52,11 @@
     ]];
 }
 
++ (RXApplicationDelegate *)sharedApplicationDelegate
+{
+    return [NSApp delegate];
+}
+
 #pragma mark -
 #pragma mark debug UI
 

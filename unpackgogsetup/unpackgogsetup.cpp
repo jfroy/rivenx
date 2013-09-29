@@ -203,9 +203,9 @@ private:
 // --
 
     int _fd;
-    int32_t _ioOffset;
-    int32_t _ioBytesRead;
-    uint32_t _ioBytesLeft;
+    off_t _ioOffset;
+    ssize_t _ioBytesRead;
+    ssize_t _ioBytesLeft;
 
     lzma_stream _lzmaStream;
 
@@ -229,7 +229,7 @@ void BlockReaderLzma::_read_chunk()
 {
     assert(_chunk.available() == 0u);
     
-    _chunk._available = std::min((size_t)StoredChunk::MAX_CHUNK_PAYLOAD_SIZE, _ioBytesLeft - sizeof(uint32_t));
+    _chunk._available = static_cast<uint32_t>(std::min<ssize_t>(StoredChunk::MAX_CHUNK_PAYLOAD_SIZE, _ioBytesLeft - sizeof(uint32_t)));
     size_t bytesToRead = _chunk._available + sizeof(uint32_t);
     assert(bytesToRead >= sizeof(uint32_t));
     

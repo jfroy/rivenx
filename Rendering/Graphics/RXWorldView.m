@@ -180,7 +180,7 @@ static NSString* required_extensions[] = {
         NSLocalizedStringFromTable(@"NO_SUPPORTED_GPU", @"Rendering", @"no supported gpu"), NSLocalizedDescriptionKey,
         NSLocalizedStringFromTable(@"UPGRADE_OS_OR_HARDWARE", @"Rendering", @"upgrade Mac OS X or computer or gpu"), NSLocalizedRecoverySuggestionErrorKey,
         [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
-        [NSApp delegate], NSRecoveryAttempterErrorKey,
+        [RXApplicationDelegate sharedApplicationDelegate], NSRecoveryAttempterErrorKey,
         nil];
     NSError* no_supported_gpu_error = [RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToCreatePixelFormat userInfo:error_info];
     

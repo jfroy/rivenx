@@ -20,6 +20,10 @@
 
 PyAPI_FUNC(void) Py_InitializeEx(int) __attribute__((weak_import));
 
+@interface RXScriptEngine (RXScriptOpcodes)
+- (void)_opcode_activateSLST:(const uint16_t)argc arguments:(const uint16_t*)argv;
+@end
+
 @interface RXDebugWindowController (RXDebugConsolePythonIO)
 - (IBAction)runPythonCmd:(id)sender;
 - (void)pythonOut:(NSString*)string;

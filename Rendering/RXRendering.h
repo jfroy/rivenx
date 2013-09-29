@@ -230,6 +230,9 @@ __END_DECLS
 @protocol RXRenderingProtocol
 - (void)render:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx framebuffer:(GLuint)fbo;
 - (void)performPostFlushTasks:(const CVTimeStamp*)outputTime;
+@optional
+- (void)renderInMainRT:(CGLContextObj)cgl_ctx;
+- (void)exportCompositeFramebuffer;
 @end
 
 __BEGIN_DECLS

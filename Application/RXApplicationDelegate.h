@@ -33,6 +33,8 @@
     BOOL quicktimeGood;
 }
 
++ (RXApplicationDelegate *)sharedApplicationDelegate;
+
 - (IBAction)orderFrontAboutWindow:(id)sender;
 - (IBAction)showAcknowledgments:(id)sender;
 
@@ -44,5 +46,7 @@
 
 - (BOOL)isGameLoadingAndSavingDisabled;
 - (void)setDisableGameLoadingAndSaving:(BOOL)disable;
+
+- (void)notifyUserOfFatalException:(NSException*)e;
 
 @end

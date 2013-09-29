@@ -26,6 +26,8 @@
 
 #import "States/RXCardState.h"
 
+#import "Application/RXApplicationDelegate.h"
+
 
 NSObject <RXWorldProtocol>* g_world = nil;
 
@@ -262,7 +264,7 @@ NSObject <RXWorldProtocol>* g_world = nil;
     }
     @catch (NSException* e)
     {
-        [[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
+        [[RXApplicationDelegate sharedApplicationDelegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
         [self release];
         self = nil;
     }
@@ -287,7 +289,7 @@ NSObject <RXWorldProtocol>* g_world = nil;
     }
     @catch (NSException* e)
     {
-        [[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
+        [[RXApplicationDelegate sharedApplicationDelegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
     }
 }
 
@@ -565,7 +567,7 @@ NSObject <RXWorldProtocol>* g_world = nil;
             [error localizedDescription], NSLocalizedDescriptionKey,
             NSLocalizedString(@"UNINSTALL_RECOVERY", nil), NSLocalizedRecoverySuggestionErrorKey,
             [NSArray arrayWithObjects:NSLocalizedString(@"QUIT", @"quit"), NSLocalizedString(@"UNINSTALL", @"quit"), nil], NSLocalizedRecoveryOptionsErrorKey,
-            [NSApp delegate], NSRecoveryAttempterErrorKey,
+            [RXApplicationDelegate sharedApplicationDelegate], NSRecoveryAttempterErrorKey,
             error, NSUnderlyingErrorKey,
             nil]];
         [NSApp performSelectorOnMainThread:@selector(presentError:) withObject:error waitUntilDone:NO];

@@ -13,8 +13,7 @@
 #import "Base/RXThreadUtilities.h"
 #import "Base/RXLogging.h"
 #import "Utilities/InterThreadMessaging.h"
-
-#import <AppKit/NSApplication.h>
+#import "Application/RXApplicationDelegate.h"
 
 
 char* RXCopyThreadName(void)
@@ -51,7 +50,7 @@ void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name)
     @try {
         [[NSRunLoop currentRunLoop] run];
     } @catch (NSException* e) {
-        [[NSApp delegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
+        [[RXApplicationDelegate sharedApplicationDelegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
     }
     
 #if defined(DEBUG)

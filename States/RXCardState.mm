@@ -31,14 +31,6 @@
 #endif
 
 
-typedef void (*RenderCardImp_t)(id, SEL, const CVTimeStamp*, CGLContextObj);
-static RenderCardImp_t render_card_imp;
-static SEL render_card_sel = @selector(_renderCardWithTimestamp:inContext:);
-
-typedef void (*PostFlushCardImp_t)(id, SEL, const CVTimeStamp*);
-static PostFlushCardImp_t post_flush_card_imp;
-static SEL post_flush_card_sel = @selector(_postFlushCard:);
-
 static rx_render_dispatch_t picture_render_dispatch;
 static rx_post_flush_tasks_dispatch_t picture_flush_task_dispatch;
 
@@ -161,7 +153,17 @@ static void rx_release_owner_applier(const void* value, void* context)
 - (void)_initializeRendering;
 - (void)_updateActiveSources;
 - (void)_clearActiveCard;
+- (void)_renderCardWithTimestamp:(const CVTimeStamp*)outputTime inContext:(CGLContextObj)cgl_ctx;
+- (void)_postFlushCard:(const CVTimeStamp*)outputTime;
 @end
+
+typedef void (*RenderCardImp_t)(id, SEL, const CVTimeStamp*, CGLContextObj);
+static RenderCardImp_t render_card_imp;
+static SEL render_card_sel = @selector(_renderCardWithTimestamp:inContext:);
+
+typedef void (*PostFlushCardImp_t)(id, SEL, const CVTimeStamp*);
+static PostFlushCardImp_t post_flush_card_imp;
+static SEL post_flush_card_sel = @selector(_postFlushCard:);
 
 @implementation RXCardState
 
@@ -3049,9 +3051,9 @@ exit_flush_tasks:
     // when we're on edge values of the hotspot handling disable counter, we need to update the load / save UI
     // (because it basically means we're starting to execute some script as a response of user action)
     if (_hotspot_handling_disable_counter == 0)
-        [(RXApplicationDelegate*)[NSApp delegate] setDisableGameLoadingAndSaving:NO];
+        [[RXApplicationDelegate sharedApplicationDelegate] setDisableGameLoadingAndSaving:NO];
     else if (_hotspot_handling_disable_counter == 1)
-        [(RXApplicationDelegate*)[NSApp delegate] setDisableGameLoadingAndSaving:YES];
+        [[RXApplicationDelegate sharedApplicationDelegate] setDisableGameLoadingAndSaving:YES];
     
     // if hotspot handling is disabled, simply return
     if (_hotspot_handling_disable_counter > 0)

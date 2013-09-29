@@ -48,4 +48,7 @@
 
 - (void)enable;
 
+- (NSComparisonResult)compareByIndex:(RXHotspot*)other;
+- (NSComparisonResult)compareByID:(RXHotspot*)other;
+
 @end
