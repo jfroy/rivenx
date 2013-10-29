@@ -3248,7 +3248,8 @@ DEFINE_COMMAND(xschool280_playwhark) {
 #pragma mark -
 #pragma mark common dome methods
 
-- (void)handleVisorButtonPressForDome:(NSString*)dome {
+- (void)handleVisorButtonPressForDome:(NSString*)dome
+{
     uint16_t dome_state = [[g_world gameState] unsignedShortForKey:dome];
     if (dome_state == 3) {
         uintptr_t k = 2;
@@ -3258,10 +3259,8 @@ DEFINE_COMMAND(xschool280_playwhark) {
     }
 }
 
-- (void)checkDome:(NSString*)dome mutingVisorButtonMovie:(BOOL)mute_visor {
-    // when was the mouse pressed?
-    double mouse_ts_s = [controller mouseTimestamp];
-    
+- (void)checkDome:(NSString*)dome mutingVisorButtonMovie:(BOOL)mute_visor
+{
     // when was the movie at the time?
     uintptr_t k = 1;
     RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)k);
@@ -3278,20 +3277,25 @@ DEFINE_COMMAND(xschool280_playwhark) {
     
     // did we hit the golden eye frame?
 #if defined(DEBUG)
+    double mouse_ts_s = [controller mouseTimestamp];
     double event_delay = RXTimingTimestampDelta(RXTimingNow(), RXTimingOffsetTimestamp(0, mouse_ts_s));
     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@movie_position=%f, event_delay=%f, position-delay=%f",
         logPrefix, movie_position, event_delay, movie_position - event_delay);
 #endif
     // if (time > 2780 || time < 200)
-    if (movie_position >= 4.58) {
+    if (movie_position >= 4.58)
+    {
         [[g_world gameState] setUnsignedShort:1 forKey:@"domecheck"];
         
         // mute button movie if requested and start asynchronous playback of the visor button movie
         if (mute_visor)
             [self performSelectorOnMainThread:@selector(_muteMovie:) withObject:button_movie waitUntilDone:NO];
         DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE, 2);
-    } else
+    }
+    else
+    {
         DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, 2);
+    }
 }
 
 - (void)drawSlidersForDome:(NSString*)dome minHotspotID:(uintptr_t)min_id {
