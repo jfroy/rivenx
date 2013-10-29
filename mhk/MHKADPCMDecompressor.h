@@ -15,7 +15,7 @@
     SInt64 data_source_init_offset;
     
     int32_t channel_count;
-    AudioStreamBasicDescription output_absd;
+    AudioStreamBasicDescription output_asbd;
     SInt64 frame_count;
     
     int32_t estimate_left; 

@@ -85,14 +85,14 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
     data_source_init_offset = [fh offsetInFile];
     
     // setup the output ABSD
-    output_absd.mFormatID = kAudioFormatLinearPCM;
-    output_absd.mFormatFlags = kAudioFormatFlagsNativeFloatPacked;
-    output_absd.mSampleRate = sps;
-    output_absd.mChannelsPerFrame = channel_count;
-    output_absd.mBitsPerChannel = 32;
-    output_absd.mFramesPerPacket = 1;
-    output_absd.mBytesPerFrame = output_absd.mChannelsPerFrame * output_absd.mBitsPerChannel / 8;
-    output_absd.mBytesPerPacket = output_absd.mFramesPerPacket * output_absd.mBytesPerFrame;
+    output_asbd.mFormatID = kAudioFormatLinearPCM;
+    output_asbd.mFormatFlags = kAudioFormatFlagsNativeFloatPacked;
+    output_asbd.mSampleRate = sps;
+    output_asbd.mChannelsPerFrame = channel_count;
+    output_asbd.mBitsPerChannel = 32;
+    output_asbd.mFramesPerPacket = 1;
+    output_asbd.mBytesPerFrame = output_asbd.mChannelsPerFrame * output_asbd.mBitsPerChannel / 8;
+    output_asbd.mBytesPerPacket = output_asbd.mFramesPerPacket * output_asbd.mBytesPerFrame;
     
     frame_count = frames;
     adpcm_buffer = malloc(READ_BUFFER_SIZE);
@@ -110,7 +110,7 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
 }
 
 - (AudioStreamBasicDescription)outputFormat {
-    return output_absd;
+    return output_asbd;
 }
 
 - (SInt64)frameCount {
@@ -135,7 +135,7 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
 
 - (void)fillAudioBufferList:(AudioBufferList*)abl { 
     // from the provided buffer length, compute how many bytes from the compressed bitsream we'll need
-    uint32_t frames_to_decompress = abl->mBuffers[0].mDataByteSize / output_absd.mBytesPerFrame;
+    uint32_t frames_to_decompress = abl->mBuffers[0].mDataByteSize / output_asbd.mBytesPerFrame;
     
     // compute the bitstream length (how much data we need to read)
     uint32_t bitstream_length = frames_to_decompress;
@@ -264,7 +264,7 @@ MHK_INLINE float _MHK_sample_convert_to_float(int32_t sample) {
     
     // zero un-decoded space
     if (decompressed_frames < frames_to_decompress)
-        bzero(output_buffer, (frames_to_decompress - decompressed_frames) * output_absd.mBytesPerFrame);
+        bzero(output_buffer, (frames_to_decompress - decompressed_frames) * output_asbd.mBytesPerFrame);
 }
 
 @end

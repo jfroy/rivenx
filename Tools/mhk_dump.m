@@ -130,21 +130,21 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
         
         // ask the decompressor for a frame count and its output ABSD
         SInt64 frame_count = [decomp frameCount];
-        AudioStreamBasicDescription absd = [decomp outputFormat];
+        AudioStreamBasicDescription asbd = [decomp outputFormat];
         
         // handle first packet option
         if (first_pkt_only && [decomp isMemberOfClass:NSClassFromString(@"MHKMP2Decompressor")])
             frame_count = 1152;
         
         // allocate samples buffer
-        size_t samples_size = frame_count * absd.mBytesPerFrame;
+        size_t samples_size = frame_count * asbd.mBytesPerFrame;
         UInt8* samples = (UInt8*)malloc(samples_size);
         
         // setup a buffer list structure
         AudioBufferList abl;
         abl.mNumberBuffers = 1;
         abl.mBuffers[0].mData = samples;
-        abl.mBuffers[0].mNumberChannels = absd.mChannelsPerFrame;
+        abl.mBuffers[0].mNumberChannels = asbd.mChannelsPerFrame;
         abl.mBuffers[0].mDataByteSize = samples_size;
         
         // decompress all the samples
@@ -170,21 +170,21 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
         
         // CAFAudioDescription
         CAFAudioDescription cad;
-        CFSwappedFloat64 swapped_sr = CFConvertFloat64HostToSwapped(absd.mSampleRate);
+        CFSwappedFloat64 swapped_sr = CFConvertFloat64HostToSwapped(asbd.mSampleRate);
         cad.mSampleRate = *((Float64 *)(&swapped_sr.v));
-        cad.mFormatID = CFSwapInt32HostToBig(absd.mFormatID);
+        cad.mFormatID = CFSwapInt32HostToBig(asbd.mFormatID);
         cad.mFormatFlags = 0;
-        if (absd.mFormatFlags & kAudioFormatFlagIsFloat)
+        if (asbd.mFormatFlags & kAudioFormatFlagIsFloat)
             cad.mFormatFlags |= kCAFLinearPCMFormatFlagIsFloat;
-        if (!(absd.mFormatFlags & kAudioFormatFlagIsBigEndian))
+        if (!(asbd.mFormatFlags & kAudioFormatFlagIsBigEndian))
             cad.mFormatFlags |= kCAFLinearPCMFormatFlagIsLittleEndian;
 #if defined(__LITTLE_ENDIAN__)
         cad.mFormatFlags = CFSwapInt32HostToBig(cad.mFormatFlags);
 #endif
-        cad.mBytesPerPacket = CFSwapInt32HostToBig(absd.mBytesPerPacket);
-        cad.mFramesPerPacket = CFSwapInt32HostToBig(absd.mFramesPerPacket);
-        cad.mChannelsPerFrame = CFSwapInt32HostToBig(absd.mChannelsPerFrame);
-        cad.mBitsPerChannel = CFSwapInt32HostToBig(absd.mBitsPerChannel);
+        cad.mBytesPerPacket = CFSwapInt32HostToBig(asbd.mBytesPerPacket);
+        cad.mFramesPerPacket = CFSwapInt32HostToBig(asbd.mFramesPerPacket);
+        cad.mChannelsPerFrame = CFSwapInt32HostToBig(asbd.mChannelsPerFrame);
+        cad.mBitsPerChannel = CFSwapInt32HostToBig(asbd.mBitsPerChannel);
         write(fd, &cad, sizeof(CAFAudioDescription));
         
         // audio data chunk
