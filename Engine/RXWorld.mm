@@ -151,123 +151,113 @@ NSObject <RXWorldProtocol>* g_world = nil;
     self = [super init];
     if (!self)
         return nil;
-    
-    @try
+
+    _tornDown = NO;
+
+    // WARNING: the world has to run on the main thread
+    if (!pthread_main_np())
+        @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"initSingleton: MAIN THREAD ONLY" userInfo:nil];
+
+    // initialize threading
+    RXSetThreadName("main");
+
+    // initialize timing
+    RXTimingUpdateTimebase();
+
+    // initialize logging
+    [RXLogCenter sharedLogCenter];
+
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"I am the first and the last, the alpha and the omega, the beginning and the end.");
+    RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"Riven X version %@ (%@)",
+        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
+        [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
+
+    // seed random
+    srandom((unsigned)time(NULL));
+
+    // initialize the engine variables
+    _engineVariablesLock = OS_SPINLOCK_INIT;
+    [self _initEngineVariables];
+
+    // initialize engine location URLs (the bases)
+    [self _initEngineLocations];
+
+    // load the shared preferences
+    _cachePreferences = [[NSMutableDictionary alloc] initWithContentsOfFile:[[[self worldCacheBase] path] stringByAppendingPathComponent:@"RivenX.plist"]];
+    if (!_cachePreferences)
+        _cachePreferences = [NSMutableDictionary new];
+
+    // apply the WorldBase override preference
+    if ([_cachePreferences objectForKey:@"WorldBase"])
     {
-        _tornDown = NO;
-        
-        // WARNING: the world has to run on the main thread
-        if (!pthread_main_np())
-            @throw [NSException exceptionWithName:NSInternalInconsistencyException reason:@"initSingleton: MAIN THREAD ONLY" userInfo:nil];
-        
-        // initialize threading
-        RXSetThreadName("main");
-        
-        // initialize timing
-        RXTimingUpdateTimebase();
-        
-        // initialize logging
-        [RXLogCenter sharedLogCenter];
-        
-        RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"I am the first and the last, the alpha and the omega, the beginning and the end.");
-        RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"Riven X version %@ (%@)",
-            [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
-            [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
-        
-        // seed random
-        srandom((unsigned)time(NULL));
-        
-        // initialize the engine variables
-        _engineVariablesLock = OS_SPINLOCK_INIT;
-        [self _initEngineVariables];
-        
-        // initialize engine location URLs (the bases)
-        [self _initEngineLocations];
-        
-        // load the shared preferences
-        _cachePreferences = [[NSMutableDictionary alloc] initWithContentsOfFile:[[[self worldCacheBase] path] stringByAppendingPathComponent:@"RivenX.plist"]];
-        if (!_cachePreferences)
-            _cachePreferences = [NSMutableDictionary new];
-        
-        // apply the WorldBase override preference
-        if ([_cachePreferences objectForKey:@"WorldBase"])
+        if (BZFSDirectoryExists([_cachePreferences objectForKey:@"WorldBase"]))
         {
-            if (BZFSDirectoryExists([_cachePreferences objectForKey:@"WorldBase"]))
-            {
-                [_worldBase release];
-                _worldBase = [[NSURL fileURLWithPath:[_cachePreferences objectForKey:@"WorldBase"]] retain];
-            }
-            else
-            {
-                [self setWorldBaseOverride:nil];
-            }
+            [_worldBase release];
+            _worldBase = [[NSURL fileURLWithPath:[_cachePreferences objectForKey:@"WorldBase"]] retain];
         }
-        
-        // the active stacks dictionary maps stack keys (e.g. aspit, etc.) to RXStack objects
-        _activeStacks = [NSMutableDictionary new];
-        
-        // load Extras.plist
-        _extrasDescriptor = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"plist"]];
-        if (!_extrasDescriptor)
-            @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Failed to load Extras.plist." userInfo:nil];
-        
-        /*  Notes on Extras.MHK
-            *
-            *  The marble and bottom book / journal icons are described in Extras.plist (Books and Marbles keys)
-            *
-            *  The credits are 302 and 303 for the standalones, then 304 to 320 for the scrolling composite
-        */
-        
-        // load Stacks.plist
-        _stackDescriptors = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Stacks" ofType:@"plist"]];
-        if (!_stackDescriptors)
-            @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Failed to load Stacks.plist." userInfo:nil];
-        
-        // load cursors metadata
-        NSDictionary* cursorMetadata = [NSDictionary dictionaryWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Cursors" ofType:@"plist"]];
-        if (!cursorMetadata)
-            @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Failed to load Cursors.plist." userInfo:nil];
-        
-        // load cursors
-        _cursors = NSCreateMapTable(NSIntegerMapKeyCallBacks, NSObjectMapValueCallBacks, 20);
-        
-        [cursorMetadata enumerateKeysAndObjectsUsingBlock:^(NSString* cursorKey, NSString* cursorHotspotPointString, BOOL* stop)
+        else
         {
-            NSPoint cursorHotspot = NSPointFromString(cursorHotspotPointString);
-            NSImage* cursorImage = [[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:cursorKey ofType:@"png" inDirectory:@"cursors"]];
-            if (!cursorImage)
-                @throw [NSException exceptionWithName:@"RXMissingResourceException"
-                                               reason:[NSString stringWithFormat:@"Unable to find cursor %@.", cursorKey]
-                                             userInfo:nil];
-            
-            NSCursor* cursor = [[NSCursor alloc] initWithImage:cursorImage hotSpot:cursorHotspot];
-            uintptr_t key = [cursorKey intValue];
-            NSMapInsert(_cursors, (const void*)key, (const void*)cursor);
-            
-            [cursor release];
-            [cursorImage release];
-        }];
-                
-        // the semaphore will be signaled when a thread has setup inter-thread messaging
-        kern_return_t kerr = semaphore_create(mach_task_self(), &_threadInitSemaphore, SYNC_POLICY_FIFO, 0);
-        if (kerr != 0)
-            @throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack thread init semaphore." userInfo:nil];
-        
-        // start threads
-        [NSThread detachNewThreadSelector:@selector(_RXScriptThreadEntry:) toTarget:self withObject:nil];
-        
-        // wait for each thread to be running (this needs to be called the same number of times as the number of threads)
-        semaphore_wait(_threadInitSemaphore);
-        
-        // register for card changed notifications
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
+            [self setWorldBaseOverride:nil];
+        }
     }
-    @catch (NSException* e)
+
+    // the active stacks dictionary maps stack keys (e.g. aspit, etc.) to RXStack objects
+    _activeStacks = [NSMutableDictionary new];
+
+    // load Extras.plist
+    _extrasDescriptor = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Extras" ofType:@"plist"]];
+    if (!_extrasDescriptor)
+        @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Failed to load Extras.plist." userInfo:nil];
+
+    /*  Notes on Extras.MHK
+     *
+     *  The marble and bottom book / journal icons are described in Extras.plist (Books and Marbles keys)
+     *
+     *  The credits are 302 and 303 for the standalones, then 304 to 320 for the scrolling composite
+     */
+
+    // load Stacks.plist
+    _stackDescriptors = [[NSDictionary alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Stacks" ofType:@"plist"]];
+    if (!_stackDescriptors)
+        @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Failed to load Stacks.plist." userInfo:nil];
+
+    // load cursors metadata
+    NSDictionary* cursorMetadata = [NSDictionary dictionaryWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"Cursors" ofType:@"plist"]];
+    if (!cursorMetadata)
+        @throw [NSException exceptionWithName:@"RXMissingResourceException" reason:@"Failed to load Cursors.plist." userInfo:nil];
+
+    // load cursors
+    _cursors = NSCreateMapTable(NSIntegerMapKeyCallBacks, NSObjectMapValueCallBacks, 20);
+
+    [cursorMetadata enumerateKeysAndObjectsUsingBlock:^(NSString* cursorKey, NSString* cursorHotspotPointString, BOOL* stop)
     {
-        [[RXApplicationDelegate sharedApplicationDelegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
-        [self release];
-        self = nil;
-    }
+        NSPoint cursorHotspot = NSPointFromString(cursorHotspotPointString);
+        NSImage* cursorImage = [[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:cursorKey ofType:@"png" inDirectory:@"cursors"]];
+        if (!cursorImage)
+            @throw [NSException exceptionWithName:@"RXMissingResourceException"
+                reason:[NSString stringWithFormat:@"Unable to find cursor %@.", cursorKey] userInfo:nil];
+
+        NSCursor* cursor = [[NSCursor alloc] initWithImage:cursorImage hotSpot:cursorHotspot];
+        uintptr_t key = [cursorKey intValue];
+        NSMapInsert(_cursors, (const void*)key, (const void*)cursor);
+        
+        [cursor release];
+        [cursorImage release];
+    }];
+
+    // the semaphore will be signaled when a thread has setup inter-thread messaging
+    kern_return_t kerr = semaphore_create(mach_task_self(), &_threadInitSemaphore, SYNC_POLICY_FIFO, 0);
+    if (kerr != 0)
+        @throw [NSException exceptionWithName:NSMachErrorDomain reason:@"Could not allocate stack thread init semaphore." userInfo:nil];
+
+    // start threads
+    [NSThread detachNewThreadSelector:@selector(_RXScriptThreadEntry:) toTarget:self withObject:nil];
+
+    // wait for each thread to be running (this needs to be called the same number of times as the number of threads)
+    semaphore_wait(_threadInitSemaphore);
+
+    // register for card changed notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_activeCardDidChange:) name:@"RXActiveCardDidChange" object:nil];
     
     // set the global to ourselves
     g_world = self;
@@ -279,18 +269,11 @@ NSObject <RXWorldProtocol>* g_world = nil;
 {
     if (_renderingInitialized)
         return;
-    
-    @try
-    {
-        // initialize rendering
-        [self _initializeRendering];
-        
-        _renderingInitialized = YES;
-    }
-    @catch (NSException* e)
-    {
-        [[RXApplicationDelegate sharedApplicationDelegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
-    }
+
+    // initialize rendering
+    [self _initializeRendering];
+
+    _renderingInitialized = YES;
 }
 
 - (void)tearDown
@@ -340,13 +323,13 @@ NSObject <RXWorldProtocol>* g_world = nil;
 
 #pragma mark -
 
-- (void)_RXScriptThreadEntry:(id)object
+- (void)_RXScriptThreadEntry:(id)object __attribute__((noreturn))
 {
     // reference to the thread
     _scriptThread = [NSThread currentThread];
     
     // run the thread
-    RXThreadRunLoopRun(_threadInitSemaphore, "script");
+    RXThreadRunLoopRun(_threadInitSemaphore, "org.macstorm.rivenx.script");
 }
 
 - (void)_stopThreadRunloop

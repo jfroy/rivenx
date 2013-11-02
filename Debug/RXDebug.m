@@ -11,12 +11,16 @@
 #import "Base/RXLogging.h"
 #import "Debug/RXDebug.h"
 
+#import <Foundation/NSBundle.h>
 #import <Foundation/NSException.h>
 #import <Foundation/NSScanner.h>
 #import <Foundation/NSTask.h>
 
+#import <AppKit/NSAlert.h>
 
-void rx_print_exception_backtrace(NSException* e)
+#import <ExceptionHandling/NSExceptionHandler.h>
+
+static void print_exception_backtrace(NSException* e)
 {
     NSArray* stack = [[[e userInfo] objectForKey:NSStackTraceKey] componentsSeparatedByString:@"  "];
     if (!stack && [e respondsToSelector:@selector(callStackReturnAddresses)])
@@ -65,5 +69,76 @@ void rx_print_exception_backtrace(NSException* e)
         [ls release];
     }
     else
+    {
         RXLog(kRXLoggingBase, kRXLoggingLevelCritical, @"NO BACKTRACE AVAILABLE");
+    }
+}
+
+@interface RXExceptionHandlerDelegate : NSObject
+@end
+
+@implementation RXExceptionHandlerDelegate
+
+- (void)notifyUserOfFatalException:(NSException*)e
+{
+    [[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:0];
+
+    print_exception_backtrace(e);
+
+    NSAlert* failureAlert = [NSAlert new];
+    [failureAlert setMessageText:[e reason]];
+    [failureAlert setAlertStyle:NSWarningAlertStyle];
+    [failureAlert addButtonWithTitle:NSLocalizedString(@"Quit", @"quit button")];
+
+    NSDictionary* userInfo = [e userInfo];
+    if (userInfo)
+    {
+        NSError* error = [[e userInfo] objectForKey:NSUnderlyingErrorKey];
+        if (error)
+            [failureAlert setInformativeText:[error localizedDescription]];
+        else
+            [failureAlert setInformativeText:[e name]];
+    }
+    else
+        [failureAlert setInformativeText:[e name]];
+
+    [failureAlert runModal];
+    [failureAlert release];
+
+    [NSApp terminate:nil];
+}
+
+- (BOOL)shouldIgnoreException:(NSException*)exception
+{
+    return [[exception name] isEqualToString:@"RXCommandArgumentsException"] ||
+        [[exception name] isEqualToString:@"RXUnknownCommandException"] ||
+        [[exception name] isEqualToString:@"RXCommandError"];
+}
+
+- (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldHandleException:(NSException *)exception mask:(NSUInteger)aMask
+{
+    if ([self shouldIgnoreException:exception])
+        return NO;
+    [self notifyUserOfFatalException:exception];
+    return YES;
+}
+
+- (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException *)exception mask:(NSUInteger)aMask
+{
+    return [self shouldIgnoreException:exception];
+}
+
+@end
+
+static RXExceptionHandlerDelegate* s_exceptionHandlerDelegate;
+
+void rx_install_exception_handler(void)
+{
+    s_exceptionHandlerDelegate = [RXExceptionHandlerDelegate new];
+    NSExceptionHandler *handler = [NSExceptionHandler defaultExceptionHandler];
+    [handler setDelegate:s_exceptionHandlerDelegate];
+    [handler setExceptionHandlingMask:
+        NSLogUncaughtExceptionMask | NSHandleUncaughtExceptionMask |
+        NSLogUncaughtSystemExceptionMask | NSHandleUncaughtSystemExceptionMask |
+        NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
 }

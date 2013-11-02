@@ -8,7 +8,4 @@
  */
 
 
-#import <ExceptionHandling/NSExceptionHandler.h>
-
-
-extern void rx_print_exception_backtrace(NSException* e);
+extern void rx_install_exception_handler(void);

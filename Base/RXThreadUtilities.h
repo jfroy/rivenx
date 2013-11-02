@@ -22,7 +22,7 @@ char* RXCopyThreadName(void);
 void RXSetThreadName(char const* name);
 
 #if defined(__OBJC__)
-extern void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name);
+extern void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name) __attribute__((noreturn));
 #endif
 
 __END_DECLS

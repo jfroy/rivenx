@@ -31,33 +31,30 @@ void RXSetThreadName(char const* name)
 
 void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name)
 {
-    NSAutoreleasePool* p = [NSAutoreleasePool new];
-    
-    semaphore_signal(ready_semaphore);
-    
+    if (ready_semaphore != SEMAPHORE_NULL)
+        semaphore_signal(ready_semaphore);
+
     // set the thread name
     RXSetThreadName(name);
-    
+
     // init QuickTime on this thread (as a precaution)
     EnterMoviesOnThread(kCSAcceptAllComponentsMode);
-    
-    // add a dummy port on the thread so the run loop doesn't exit
-    NSPort* dummy = [NSPort new];
-    [dummy scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    [dummy release];
-    
-    // run the runloop inside a try-catch context
-    @try {
-        [[NSRunLoop currentRunLoop] run];
-    } @catch (NSException* e) {
-        [[RXApplicationDelegate sharedApplicationDelegate] performSelectorOnMainThread:@selector(notifyUserOfFatalException:) withObject:e waitUntilDone:NO];
+
+    // get this thread's run loop
+    NSRunLoop* rl = [NSRunLoop currentRunLoop];
+
+    // create a AR pool (which will be recycled by the loop below)
+    NSAutoreleasePool* pool = [NSAutoreleasePool new];
+
+    // keep the run loop alive with a dummy port
+    NSPort* port = [NSPort port];
+    [port scheduleInRunLoop:rl forMode:NSDefaultRunLoopMode];
+
+    // run the loop, recycling the pool every iteration
+    while (true)
+    {
+        [rl runMode:NSDefaultRunLoopMode beforeDate:[NSDate distantFuture]];
+        [pool release];
+        pool = [NSAutoreleasePool new];
     }
-    
-#if defined(DEBUG)
-    RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"thread is terminating");
-#endif
-    
-    // clean up
-    ExitMoviesOnThread();
-    [p drain];
 }

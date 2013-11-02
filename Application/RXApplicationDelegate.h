@@ -48,6 +48,4 @@
 - (BOOL)isGameLoadingAndSavingDisabled;
 - (void)setDisableGameLoadingAndSaving:(BOOL)disable;
 
-- (void)notifyUserOfFatalException:(NSException*)e;
-
 @end

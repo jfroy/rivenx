@@ -6,8 +6,6 @@
 //  Copyright 2005-2012 MacStorm. All rights reserved.
 //
 
-#import <ExceptionHandling/NSExceptionHandler.h>
-
 #import <Foundation/NSBundle.h>
 #import <Foundation/NSTimer.h>
 
@@ -43,8 +41,8 @@
 
 + (void)initialize
 {
-    [super initialize];
-    
+    rx_install_exception_handler();
+
     [[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:
         [NSNumber numberWithBool:NO], @"Fullscreen",
         [NSDictionary dictionary], @"EngineVariables",
@@ -136,52 +134,6 @@
     return NO;
 }
 
-- (void)notifyUserOfFatalException:(NSException*)e
-{
-    NSError* error = [[e userInfo] objectForKey:NSUnderlyingErrorKey];
-    
-    [[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:0];
-    
-    rx_print_exception_backtrace(e);
-    
-    [[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:
-        NSLogUncaughtExceptionMask | NSHandleUncaughtExceptionMask |
-        NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
-
-    NSAlert* failureAlert = [NSAlert new];
-    [failureAlert setMessageText:[e reason]];
-    [failureAlert setAlertStyle:NSWarningAlertStyle];
-    [failureAlert addButtonWithTitle:NSLocalizedString(@"Quit", @"quit button")];
-    
-    NSDictionary* userInfo = [e userInfo];
-    if (userInfo)
-    {
-        if (error)
-            [failureAlert setInformativeText:[error localizedDescription]];
-        else
-            [failureAlert setInformativeText:[e name]];
-    }
-    else
-        [failureAlert setInformativeText:[e name]];
-    
-    [failureAlert runModal];
-    [failureAlert release];
-    
-    [NSApp terminate:nil];
-}
-
-- (BOOL)exceptionHandler:(NSExceptionHandler*)sender shouldLogException:(NSException*)e mask:(NSUInteger)aMask
-{
-    if ([[e name] isEqualToString:@"RXCommandArgumentsException"] || [[e name] isEqualToString:@"RXUnknownCommandException"] ||
-        [[e name] isEqualToString:@"RXCommandError"])
-    {
-        return NO;
-    }
-    
-    [self notifyUserOfFatalException:e];
-    return NO;
-}
-
 - (BOOL)_checkQuickTime
 {
     // check that the user has QuickTime 7.6.2 or later
@@ -216,11 +168,6 @@
 
 - (void)applicationWillFinishLaunching:(NSNotification*)notification
 {
-    [[NSExceptionHandler defaultExceptionHandler] setDelegate:self];
-    [[NSExceptionHandler defaultExceptionHandler] setExceptionHandlingMask:
-        NSLogUncaughtExceptionMask | NSHandleUncaughtExceptionMask |
-        NSLogUncaughtRuntimeErrorMask | NSHandleUncaughtRuntimeErrorMask];
-    
     // check if the system's QuickTime version is compatible and return if it is not
     quicktimeGood = [self _checkQuickTime];
     
