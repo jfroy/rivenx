@@ -9,6 +9,10 @@
 #import "BZFSUtilities.h"
 #import "Base/RXErrorMacros.h"
 
+#import <string.h>
+
+#import <CoreFoundation/CFURL.h>
+
 #import <Foundation/NSBundle.h>
 #import <Foundation/NSFileManager.h>
 #import <Foundation/NSFileHandle.h>
