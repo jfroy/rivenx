@@ -6,15 +6,17 @@
 //  Copyright 2005-2012 MacStorm. All rights reserved.
 //
 
-#import "RXWelcomeWindowController.h"
+#import "Application/RXWelcomeWindowController.h"
 
-#import "RXErrorMacros.h"
+#import "Base/RXErrorMacros.h"
+#import "Base/RXThreadUtilities.h"
 
-#import "RXArchiveManager.h"
-#import "RXGOGSetupInstaller.h"
-#import "RXWorld.h"
+#import "Engine/RXArchiveManager.h"
+#import "Engine/RXWorld.h"
 
-#import "BZFSUtilities.h"
+#import "Utilities/BZFSUtilities.h"
+
+#import "Application/RXGOGSetupInstaller.h"
 
 #import <AppKit/NSAlert.h>
 #import <AppKit/NSApplication.h>
@@ -669,7 +671,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
         [self performSelectorOnMainThread:@selector(_presentErrorSheet:) withObject:[RXError errorWithDomain:RXErrorDomain code:kRXErrUnusableInstallFolder userInfo:nil] waitUntilDone:NO];
 }
 
-- (void)_scanningThread:(id)context
+- (void)_scanningThread:(id)context __attribute__((noreturn))
 {
     NSAutoreleasePool* pool = [NSAutoreleasePool new];
     
@@ -678,22 +680,10 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     
     // scan currently mounted media
     [self performSelectorOnMainThread:@selector(_scanMountedMedia) withObject:nil waitUntilDone:NO];
-    
-    NSRunLoop* rl = [NSRunLoop currentRunLoop];
-    
-    // keep the run loop alive with a dummy port
-    NSPort* port = [NSPort port];
-    [port scheduleInRunLoop:rl forMode:NSDefaultRunLoopMode];
-    
-    // and run our runloop
-    while ([rl runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:10.0]])
-    {
-        [pool release];
-        pool = [NSAutoreleasePool new];
-    }
-    
-    scanningThread = nil;
+
     [pool release];
+
+    RXThreadRunLoopRun(SEMAPHORE_NULL, "org.macstorm.rivenx.media-scan");
 }
 
 - (void)_removableMediaMounted:(NSNotification*)notification
