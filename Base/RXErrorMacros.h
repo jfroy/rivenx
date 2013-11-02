@@ -7,6 +7,7 @@
 #define RX_ERROR_MACROS_H
 
 #import <errno.h>
+#import <Foundation/NSError.h>
 
 
 #ifndef ERROR_CLASS
