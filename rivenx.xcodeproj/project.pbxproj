@@ -91,7 +91,6 @@
 		316038FA100EE54600052849 /* RXScriptOpcodeStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 316038F9100EE54600052849 /* RXScriptOpcodeStream.m */; };
 		3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */ = {isa = PBXBuildFile; fileRef = 3160E1810FD3075300F18E86 /* tiny_marbles.png */; };
 		3165A576110BB13B004E71F1 /* glew.c in Sources */ = {isa = PBXBuildFile; fileRef = 3165A574110BB13B004E71F1 /* glew.c */; };
-		316721AB0D27F5F700FB2C0E /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
 		316721AD0D27F60A00FB2C0E /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		316721AF0D27F63000FB2C0E /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 316721D90D27FB3200FB2C0E /* integer_pair_hash.c */; };
@@ -108,6 +107,29 @@
 		316C38D70F46B22300EFB7FB /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */; };
 		316C38DE0F46B53900EFB7FB /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */; };
 		316D273E10004B23003579F9 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 316D273C10004B23003579F9 /* MainMenu.xib */; };
+		316D9A57181F70AB009CC115 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED561790846800B1732D /* Cocoa.framework */; };
+		316D9A58181F70B0009CC115 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED641790850200B1732D /* QTKit.framework */; };
+		316D9A5A181F70FF009CC115 /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED501790842600B1732D /* QuickTime.framework */; };
+		316D9A5B181F725B009CC115 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED5C1790849200B1732D /* QuartzCore.framework */; };
+		316D9A5C181F7280009CC115 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4F1790842600B1732D /* Foundation.framework */; };
+		316D9A5D181F729F009CC115 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED541790844000B1732D /* ApplicationServices.framework */; };
+		316D9A5E181F72A9009CC115 /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
+		316D9A5F181F7303009CC115 /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
+		316D9A62181F7315009CC115 /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
+		316D9A63181F7498009CC115 /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
+		316D9A64181F74C7009CC115 /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
+		316D9A65181F763A009CC115 /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
+		316D9A66181F7640009CC115 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4F1790842600B1732D /* Foundation.framework */; };
+		316D9A67181F764B009CC115 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED631790850200B1732D /* AudioToolbox.framework */; };
+		316D9A68181F764B009CC115 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED671790852000B1732D /* AudioUnit.framework */; };
+		316D9A69181F764B009CC115 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED5A1790849200B1732D /* CoreAudio.framework */; };
+		316D9A6C181F7678009CC115 /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31200FBF0F3F8495006E6EF7 /* CAStreamBasicDescription.cpp */; };
+		316D9A6D181F768C009CC115 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED541790844000B1732D /* ApplicationServices.framework */; };
+		316D9A70181F76D4009CC115 /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
+		316D9A71181F76DC009CC115 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED631790850200B1732D /* AudioToolbox.framework */; };
+		316D9A72181F76DC009CC115 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED671790852000B1732D /* AudioUnit.framework */; };
+		316D9A73181F76DC009CC115 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED5A1790849200B1732D /* CoreAudio.framework */; };
+		316D9A74181F76E6009CC115 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED541790844000B1732D /* ApplicationServices.framework */; };
 		316E1F2A0E77806100F28E2A /* mhk_dump.m in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F270E77806100F28E2A /* mhk_dump.m */; };
 		316E1F2B0E77806100F28E2A /* mhk_dump_cmd.c in Sources */ = {isa = PBXBuildFile; fileRef = 316E1F280E77806100F28E2A /* mhk_dump_cmd.c */; };
 		317403940CDC1A67006F3523 /* RXGameState.m in Sources */ = {isa = PBXBuildFile; fileRef = 317403930CDC1A67006F3523 /* RXGameState.m */; };
@@ -130,6 +152,10 @@
 		3199276D0D96AFCE00ED1B47 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		319927730D96B07200ED1B47 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		319AC56914AE438500FFB28A /* unpackgogsetup in Resources */ = {isa = PBXBuildFile; fileRef = 31ADC95214ADA128004FB4AD /* unpackgogsetup */; };
+		319BBA151825989B00C4F8F8 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
+		319BBA16182598A400C4F8F8 /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
+		319BBA17182598AF00C4F8F8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4F1790842600B1732D /* Foundation.framework */; };
+		319BBA18182598B700C4F8F8 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED541790844000B1732D /* ApplicationServices.framework */; };
 		319C458109C138380031F95F /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
 		319C8C691155793D00DF3E7D /* Welcome.strings in Resources */ = {isa = PBXBuildFile; fileRef = 319C8C681155793D00DF3E7D /* Welcome.strings */; };
 		31A14B860F03F495006EFF93 /* AUOutputBL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B810F03F495006EFF93 /* AUOutputBL.cpp */; };
@@ -148,10 +174,7 @@
 		31B1128C17F4B16C005ABDB8 /* Sparkle.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 31B1128A17F4AC00005ABDB8 /* Sparkle.framework */; };
 		31B1128D17F4B18D005ABDB8 /* RXVersionComparator.m in Sources */ = {isa = PBXBuildFile; fileRef = 3185C4720E06046D00528220 /* RXVersionComparator.m */; };
 		31B644BF10033A15008AD8E0 /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */; };
-		31B644E610033B47008AD8E0 /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
-		31B644E710033B49008AD8E0 /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
 		31B644EA10033B52008AD8E0 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
-		31B644ED10033B57008AD8E0 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		31B654A21102B9EF004818AC /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31B6549E1102B9EF004818AC /* Localizable.strings */; };
 		31B654A31102B9EF004818AC /* Rendering.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31B654A01102B9EF004818AC /* Rendering.strings */; };
 		31BC739F09A57D4E001EC1E0 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
@@ -166,7 +189,7 @@
 		31DAAF0B0DDE21BB00D06D0C /* Cursors.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */; };
 		31DAAF260DDE21EF00D06D0C /* cursors in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF0C0DDE21EF00D06D0C /* cursors */; };
 		31DAAF270DDE21EF00D06D0C /* sounds in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF210DDE21EF00D06D0C /* sounds */; };
-		31DBCAD40F2BEB6A004B9277 /* MHKKit.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
+		31DBCAD40F2BEB6A004B9277 /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
 		31DC682909CB880A00BFF447 /* VirtualRingBuffer_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */; };
 		31DC684209CB8E6B00BFF447 /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
 		31E933441127B02000188488 /* Welcome.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31E933431127B02000188488 /* Welcome.xib */; };
@@ -209,6 +232,27 @@
 
 /* Begin PBXContainerItemProxy section */
 		31495A4C0E327D7500E49C83 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3149598E0E327B2D00E49C83;
+			remoteInfo = MHKKit;
+		};
+		316D9A60181F7306009CC115 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3149598E0E327B2D00E49C83;
+			remoteInfo = MHKKit;
+		};
+		316D9A6A181F7653009CC115 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3149598E0E327B2D00E49C83;
+			remoteInfo = MHKKit;
+		};
+		316D9A6E181F76C8009CC115 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
@@ -282,7 +326,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				31DBCAD40F2BEB6A004B9277 /* MHKKit.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -540,6 +583,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				316D9A74181F76E6009CC115 /* ApplicationServices.framework in Frameworks */,
+				316D9A71181F76DC009CC115 /* AudioToolbox.framework in Frameworks */,
+				316D9A72181F76DC009CC115 /* AudioUnit.framework in Frameworks */,
+				316D9A73181F76DC009CC115 /* CoreAudio.framework in Frameworks */,
+				316D9A70181F76D4009CC115 /* MHKKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -558,6 +606,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				316D9A5C181F7280009CC115 /* Foundation.framework in Frameworks */,
+				316D9A5D181F729F009CC115 /* ApplicationServices.framework in Frameworks */,
+				316D9A5B181F725B009CC115 /* QuartzCore.framework in Frameworks */,
+				316D9A5E181F72A9009CC115 /* MHKKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -565,6 +617,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				316D9A57181F70AB009CC115 /* Cocoa.framework in Frameworks */,
+				316D9A58181F70B0009CC115 /* QTKit.framework in Frameworks */,
+				316D9A5A181F70FF009CC115 /* QuickTime.framework in Frameworks */,
+				31DBCAD40F2BEB6A004B9277 /* MHKKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -586,6 +642,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				316D9A62181F7315009CC115 /* MHKKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -593,6 +650,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				316D9A6D181F768C009CC115 /* ApplicationServices.framework in Frameworks */,
+				316D9A67181F764B009CC115 /* AudioToolbox.framework in Frameworks */,
+				316D9A68181F764B009CC115 /* AudioUnit.framework in Frameworks */,
+				316D9A69181F764B009CC115 /* CoreAudio.framework in Frameworks */,
+				316D9A66181F7640009CC115 /* Foundation.framework in Frameworks */,
+				316D9A65181F763A009CC115 /* MHKKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -600,6 +663,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				319BBA18182598B700C4F8F8 /* ApplicationServices.framework in Frameworks */,
+				319BBA17182598AF00C4F8F8 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -628,6 +693,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				316D9A5F181F7303009CC115 /* MHKKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1105,6 +1171,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				316D9A6F181F76C8009CC115 /* PBXTargetDependency */,
 			);
 			name = rxaudio_test;
 			productName = rxaudio_test;
@@ -1228,6 +1295,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				316D9A6B181F7653009CC115 /* PBXTargetDependency */,
 			);
 			name = RXCardAudioSource_test;
 			productName = RXCardAudioSource_test;
@@ -1282,6 +1350,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				316D9A61181F7306009CC115 /* PBXTargetDependency */,
 			);
 			name = plistize_stacks;
 			productInstallPath = "$(HOME)/bin";
@@ -1540,7 +1609,6 @@
 				31448F2709D9C799001B8A5F /* RXAudioRenderer.mm in Sources */,
 				31448F2809D9C79B001B8A5F /* RXAudioSourceBase.cpp in Sources */,
 				31448F4B09D9C959001B8A5F /* VirtualRingBuffer.m in Sources */,
-				316721AB0D27F5F700FB2C0E /* RXDebug.m in Sources */,
 				316721AD0D27F60A00FB2C0E /* RXCardAudioSource.mm in Sources */,
 				316721AF0D27F63000FB2C0E /* RXThreadUtilities.m in Sources */,
 				315BD3CE0D85AF94007A3BFA /* RXErrors.m in Sources */,
@@ -1555,6 +1623,7 @@
 				316C38AC0F469FC700EFB7FB /* CAHostTimeBase.cpp in Sources */,
 				316C38AE0F469FD100EFB7FB /* CAComponent.cpp in Sources */,
 				316C38B10F469FDE00EFB7FB /* CAPThread.cpp in Sources */,
+				316D9A6C181F7678009CC115 /* CAStreamBasicDescription.cpp in Sources */,
 				316C38B30F469FE800EFB7FB /* CADebugger.cpp in Sources */,
 				316C38DE0F46B53900EFB7FB /* CAAUParameter.cpp in Sources */,
 			);
@@ -1564,12 +1633,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				31DC682909CB880A00BFF447 /* VirtualRingBuffer_test.m in Sources */,
-				31DC684209CB8E6B00BFF447 /* VirtualRingBuffer.m in Sources */,
-				31B644E610033B47008AD8E0 /* RXLogging.m in Sources */,
-				31B644E710033B49008AD8E0 /* RXLogCenter.m in Sources */,
+				319BBA16182598A400C4F8F8 /* RXErrors.m in Sources */,
+				319BBA151825989B00C4F8F8 /* RXThreadUtilities.m in Sources */,
 				31B644EA10033B52008AD8E0 /* BZFSUtilities.m in Sources */,
-				31B644ED10033B57008AD8E0 /* RXThreadUtilities.m in Sources */,
+				316D9A64181F74C7009CC115 /* RXLogCenter.m in Sources */,
+				316D9A63181F7498009CC115 /* RXLogging.m in Sources */,
+				31DC684209CB8E6B00BFF447 /* VirtualRingBuffer.m in Sources */,
+				31DC682909CB880A00BFF447 /* VirtualRingBuffer_test.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1666,6 +1736,21 @@
 			isa = PBXTargetDependency;
 			target = 3149598E0E327B2D00E49C83 /* MHKKit */;
 			targetProxy = 31495A4C0E327D7500E49C83 /* PBXContainerItemProxy */;
+		};
+		316D9A61181F7306009CC115 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3149598E0E327B2D00E49C83 /* MHKKit */;
+			targetProxy = 316D9A60181F7306009CC115 /* PBXContainerItemProxy */;
+		};
+		316D9A6B181F7653009CC115 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3149598E0E327B2D00E49C83 /* MHKKit */;
+			targetProxy = 316D9A6A181F7653009CC115 /* PBXContainerItemProxy */;
+		};
+		316D9A6F181F76C8009CC115 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3149598E0E327B2D00E49C83 /* MHKKit */;
+			targetProxy = 316D9A6E181F76C8009CC115 /* PBXContainerItemProxy */;
 		};
 		316E1F320E7780A100F28E2A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1883,10 +1968,9 @@
 		317ACC7F0F285B790040FFFD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = "$(GCC_PREPROCESSOR_DEFINITIONS)";
 				INFOPLIST_FILE = "Tools/MHKMoviePlayer/MHKMoviePlayer-Info.plist";
-				INSTALL_PATH = "$(USER_APPS_DIR)";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = MHKMoviePlayer;
 				WRAPPER_EXTENSION = app;
 			};
@@ -1895,10 +1979,9 @@
 		317ACC800F285B790040FFFD /* Beta Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = "$(GCC_PREPROCESSOR_DEFINITIONS)";
 				INFOPLIST_FILE = "Tools/MHKMoviePlayer/MHKMoviePlayer-Info.plist";
-				INSTALL_PATH = "$(USER_APPS_DIR)";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = MHKMoviePlayer;
 				WRAPPER_EXTENSION = app;
 			};
@@ -1907,10 +1990,9 @@
 		317ACC810F285B790040FFFD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = "$(GCC_PREPROCESSOR_DEFINITIONS)";
 				INFOPLIST_FILE = "Tools/MHKMoviePlayer/MHKMoviePlayer-Info.plist";
-				INSTALL_PATH = "$(USER_APPS_DIR)";
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				PRODUCT_NAME = MHKMoviePlayer;
 				WRAPPER_EXTENSION = app;
 			};

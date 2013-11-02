@@ -11,10 +11,12 @@
 #import <fcntl.h>
 #import <unistd.h>
 
-#import "Base/RXBase.h"
 #import <AudioToolbox/ExtendedAudioFile.h>
+#import <Foundation/NSAutoreleasePool.h>
 
 #import <MHKKit/MHKAudioDecompression.h>
+
+#import "Base/RXBase.h"
 
 #import "Base/RXThreadUtilities.h"
 #import "Base/RXLogging.h"
@@ -66,7 +68,7 @@ using namespace RX;
     clientBytesPerFrame = [self outputFormat].mBytesPerFrame;
     assert(clientBytesPerFrame > 0);
     
-    RXOLog(@"%u bpf, %lld frames", clientBytesPerFrame, [self frameCount]);
+    RXOLog(@"%u bpf, %lld frames", (unsigned int)clientBytesPerFrame, [self frameCount]);
     return self;
 }
 
@@ -112,9 +114,6 @@ void* source_task_thread(void* context) {
         source->RenderTask();
         taskGuard.WaitFor(100000000ULL);
     }
-    taskGuard.Unlock();
-    
-    return NULL;
 }
 
 int main (int argc, char* const argv[]) {
@@ -127,8 +126,6 @@ int main (int argc, char* const argv[]) {
         [pool release];
         exit(EX_USAGE);
     }
-    
-    RXInitThreading();
     
     RXLog(kRXLoggingBase, kRXLoggingLevelDebug, @"Allocating decompressor");
     EAFDecompressor* decompressor = [[[EAFDecompressor alloc] initWithSystemPath:argv[1]] autorelease];

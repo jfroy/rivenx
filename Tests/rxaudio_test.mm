@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include <limits.h>
 
+#import <Foundation/NSAutoreleasePool.h>
+
 #include "Base/RXThreadUtilities.h"
 #include "Rendering/Audio/RXAudioRenderer.h"
 #include "Rendering/Audio/RXAudioSourceBase.h"
@@ -234,7 +236,7 @@ int main (int argc, char * const argv[]) {
         usleep(5 * 1000000);
         renderer.Stop();
     } catch (CAXException c) {
-    
+        (void)c;
     }
     
     printf("\n-->  testing no explicit source detach\n");

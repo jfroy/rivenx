@@ -7,12 +7,12 @@
  *
  */
 
-#import "Base/RXBase.h"
-
+#import "Base/RXBufferMacros.h"
 #import "Utilities/VirtualRingBuffer.h"
 
-#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) + (bytes))
-#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) - (bytes))
+#import <stdlib.h>
+#import <string.h>
+#import <Foundation/NSAutoreleasePool.h>
 
 
 static int test_normal_buffer() {
@@ -202,7 +202,7 @@ static int test_normal_buffer() {
     // buffer should have 0x800 bytes available for reading and writing
     available_read = [buffer lengthAvailableToReadReturningPointer:&read_pointer];
     if (available_read != 0x800) {
-        NSLog(@"Buffer reported an incorrect number of bytes available for reading after reading half the buffer fill bytes. 0x%x bytes", available_read);
+        NSLog(@"Buffer reported an incorrect number of bytes available for reading after reading half the buffer fill bytes. 0x%x bytes", (unsigned int)available_read);
         return 1;
     }
     

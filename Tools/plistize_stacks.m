@@ -196,7 +196,7 @@ int main(int argc, const char * argv[]) {
     }
     
     MHKArchive* masterArchive = nil;
-    for (archive_index = 0; archive_index < [archives count]; archive_index++) {
+    for (archive_index = 0; archive_index < (int)[archives count]; archive_index++) {
         if ([[[archives objectAtIndex:archive_index] valueForKey:@"NAME"] count] > 0) {
             masterArchive = [archives objectAtIndex:archive_index];
             break;
@@ -223,7 +223,7 @@ int main(int argc, const char * argv[]) {
     uint16_t remapID = [[rmapDescriptor valueForKey:@"ID"] unsignedShortValue];
     NSData* rmapData = [masterArchive dataWithResourceType:@"RMAP" ID:remapID];
     
-    for (archive_index = 0; archive_index < [archives count]; archive_index++) {
+    for (archive_index = 0; archive_index < (int)[archives count]; archive_index++) {
         MHKArchive* archive = [archives objectAtIndex:archive_index];
         printf("processing archive %d\n", archive_index + 1);
         

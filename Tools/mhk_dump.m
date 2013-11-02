@@ -25,10 +25,10 @@ static void dump_bitmaps(MHKArchive *archive) {
     
     NSFileManager* fm = [NSFileManager defaultManager];
     NSString* dump_folder = [NSHomeDirectory() stringByAppendingPathComponent:@"Temporary/mhk_bitmap_dump"];
-    [fm createDirectoryAtPath:dump_folder attributes:nil];
+    [fm createDirectoryAtPath:dump_folder withIntermediateDirectories:YES attributes:nil error:NULL];
     
     dump_folder = [dump_folder stringByAppendingPathComponent:[[[archive url] path] lastPathComponent]];
-    [fm createDirectoryAtPath:dump_folder attributes:nil];
+    [fm createDirectoryAtPath:dump_folder withIntermediateDirectories:YES attributes:nil error:NULL];
     
     NSArray* bmpResources = [archive valueForKey:@"tBMP"];
     for (NSDictionary* resourceDescriptor in bmpResources) {
@@ -75,7 +75,7 @@ static void dump_bitmaps(MHKArchive *archive) {
         
         CGDataProviderRef dataProviderRef = CGDataProviderCreateWithData(NULL, texture_buffer, texture_length, &texture_provider_data_release);
         CGColorSpaceRef genericRGBColorSpaceRef = CGColorSpaceCreateWithName(kCGColorSpaceGenericRGB);
-        CGImageRef textureImageRef = CGImageCreate(width, height, 8, 32, width * 4, genericRGBColorSpaceRef, kCGImageAlphaFirst, dataProviderRef, NULL, 0, kCGRenderingIntentDefault);
+        CGImageRef textureImageRef = CGImageCreate(width, height, 8, 32, width * 4, genericRGBColorSpaceRef, (CGBitmapInfo)kCGImageAlphaFirst, dataProviderRef, NULL, 0, kCGRenderingIntentDefault);
         
         CFRelease(genericRGBColorSpaceRef);
         CFRelease(dataProviderRef);
@@ -96,10 +96,10 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
     
     NSFileManager* fm = [NSFileManager defaultManager];
     NSString* dump_folder = [NSHomeDirectory() stringByAppendingPathComponent:@"Temporary/mhk_sound_dump"];
-    [fm createDirectoryAtPath:dump_folder attributes:nil];
+    [fm createDirectoryAtPath:dump_folder withIntermediateDirectories:YES attributes:nil error:NULL];
     
     dump_folder = [dump_folder stringByAppendingPathComponent:[[[archive url] path] lastPathComponent]];
-    [fm createDirectoryAtPath:dump_folder attributes:nil];
+    [fm createDirectoryAtPath:dump_folder withIntermediateDirectories:YES attributes:nil error:NULL];
     
     NSArray* wavResources = [archive valueForKey:@"tWAV"];
     for (NSDictionary* resourceDescriptor in wavResources) {
@@ -137,7 +137,7 @@ static void dump_sounds(MHKArchive *archive, int first_pkt_only) {
             frame_count = 1152;
         
         // allocate samples buffer
-        size_t samples_size = frame_count * asbd.mBytesPerFrame;
+        size_t samples_size = (size_t)frame_count * asbd.mBytesPerFrame;
         UInt8* samples = (UInt8*)malloc(samples_size);
         
         // setup a buffer list structure
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
     }
     
     NSError *error = nil;
-    int archive_index = 0;
+    unsigned archive_index = 0;
     for (; archive_index < arguments.inputs_num; archive_index++) {
         printf("processing %s\n", arguments.inputs[archive_index]);
         

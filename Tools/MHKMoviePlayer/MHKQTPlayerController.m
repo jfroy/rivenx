@@ -60,10 +60,11 @@
     [openPanel setCanChooseFiles:YES];
     [openPanel setCanChooseDirectories:NO];
     [openPanel setAllowsMultipleSelection:NO];
+    [openPanel setAllowedFileTypes:[NSArray arrayWithObject:@"mhk"]];
     
-    int returnCode = [openPanel runModalForTypes:[NSArray arrayWithObject:@"mhk"]];
-    if(returnCode == NSOKButton) {
-        [self application:NSApp openFile:[[openPanel filenames] objectAtIndex:0]];
+    int returnCode = [openPanel runModal];
+    if (returnCode == NSOKButton) {
+        [self application:NSApp openFile:[[openPanel URL] path]];
     }
 }
 
@@ -72,11 +73,12 @@
     [panel setAllowedFileTypes:[NSArray arrayWithObject:@"mov"]];
     [panel setAllowsOtherFileTypes:YES];
     [panel setCanSelectHiddenExtension:YES];
-    
-    int result = [panel runModalForDirectory:nil file:[[[archive valueForKey:@"tMOV"] objectAtIndex:[movieTableView selectedRow]] objectForKey:@"Name"]];
+    [panel setNameFieldStringValue:[[[archive valueForKey:@"tMOV"] objectAtIndex:[movieTableView selectedRow]] objectForKey:@"Name"]];
+
+    int result = [panel runModal];
     if (result == NSOKButton) {
         NSDictionary *dict = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:QTMovieFlatten];
-        [[qtView movie] writeToFile:[panel filename] withAttributes:dict];
+        [[qtView movie] writeToFile:[[panel URL] path] withAttributes:dict error:nil];
     }
 }
 
