@@ -28,11 +28,7 @@
 
 // Must include RXLogging and define BUFFER_OFFSET because this file is used by another target than Riven X
 #import "Base/RXLogging.h"
-
-#if !defined(BUFFER_OFFSET)
-#define BUFFER_OFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) + (bytes))
-#define BUFFER_NOFFSET(buffer, bytes) (__typeof__(buffer))((uint8_t*)(buffer) - (bytes))
-#endif
+#import "Base/RXBufferMacros.h"
 
 
 static void* allocateVirtualBuffer(size_t bufferLength) {
