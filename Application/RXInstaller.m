@@ -10,38 +10,34 @@
 
 #import <Foundation/NSBundle.h>
 
-
 @implementation RXInstaller
 
 - (id)init
 {
-    self = [super init];
-    if (!self)
-        return nil;
-    
-    progress = -1.0;
-    stage = [NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Installer", NULL) retain];
-    
-    return self;
+  self = [super init];
+  if (!self)
+    return nil;
+
+  progress = -1.0;
+  stage = [NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Installer", NULL) retain];
+
+  return self;
 }
 
 - (void)dealloc
 {
-    [stage release];
-    [destination release];
-    
-    [super dealloc];
+  [stage release];
+  [destination release];
+
+  [super dealloc];
 }
 
 - (BOOL)runWithModalSession:(NSModalSession)session error:(NSError**)error
 {
-    [self doesNotRecognizeSelector:_cmd];
-    return NO;
+  [self doesNotRecognizeSelector:_cmd];
+  return NO;
 }
 
-- (void)updatePathsWithMountPaths:(NSDictionary*)mount_paths
-{
-    [self doesNotRecognizeSelector:_cmd];
-}
+- (void)updatePathsWithMountPaths:(NSDictionary*)mount_paths { [self doesNotRecognizeSelector:_cmd]; }
 
 @end

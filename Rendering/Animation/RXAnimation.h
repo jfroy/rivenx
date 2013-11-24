@@ -9,13 +9,12 @@
 #import "Base/RXBase.h"
 #import "Base/RXTiming.h"
 
-
 @interface RXAnimation : NSObject {
-    uint64_t _start_time;
+  uint64_t _start_time;
 
 @public
-    double duration;
-    BOOL done;
+  double duration;
+  BOOL done;
 }
 
 - (id)initWithDuration:(double)d;
@@ -30,30 +29,27 @@
 
 @end
 
-
 enum {
-    RXAnimationCurveLinear = 1,
-    RXAnimationCurveSquareSine,
+  RXAnimationCurveLinear = 1,
+  RXAnimationCurveSquareSine,
 };
 typedef uint32_t RXAnimationCurve;
 
 @interface RXCannedAnimation : RXAnimation {
-    RXAnimationCurve _curve;
+  RXAnimationCurve _curve;
 }
 
 - (id)initWithDuration:(double)d curve:(RXAnimationCurve)c;
 
 @end
 
-
 @interface RXCosineCurveAnimation : RXAnimation {
-    float _omega;
+  float _omega;
 }
 
 - (id)initWithDuration:(double)d frequency:(float)f;
 
 @end
-
 
 @interface RXSineCurveAnimation : RXCosineCurveAnimation
 @end

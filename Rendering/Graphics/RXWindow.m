@@ -8,29 +8,20 @@
 
 #import "RXWindow.h"
 
-
 @implementation RXWindow
 
-@synthesize
-    constrainingToScreenSuspended;
-
+@synthesize constrainingToScreenSuspended;
 
 - (NSRect)constrainFrameRect:(NSRect)frameRect toScreen:(NSScreen*)screen
 {
-    if (constrainingToScreenSuspended)
-        return frameRect;
-    else
-        return [super constrainFrameRect:frameRect toScreen:screen];
+  if (constrainingToScreenSuspended)
+    return frameRect;
+  else
+    return [super constrainFrameRect:frameRect toScreen:screen];
 }
 
-- (BOOL)canBecomeKeyWindow
-{
-    return YES;
-}
+- (BOOL)canBecomeKeyWindow { return YES; }
 
-- (BOOL)canBecomeMainWindow
-{
-    return YES;
-}
+- (BOOL)canBecomeMainWindow { return YES; }
 
 @end

@@ -8,10 +8,9 @@
 
 #import "Base/RXBase.h"
 
-
 @interface RXDynamicBitfield : NSObject {
-    uintptr_t* _segments;
-    uintptr_t _segment_count;
+  uintptr_t* _segments;
+  uintptr_t _segment_count;
 }
 
 - (BOOL)isSet:(uintptr_t)index;

@@ -18,30 +18,31 @@ extern const int MHK_BITMAP_COMPRESSED;
 
 // Buffer format constants
 typedef enum {
-    MHK_RGBA_UNSIGNED_BYTE_PACKED, 
-    MHK_ARGB_UNSIGNED_BYTE_PACKED, 
-    MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
+  MHK_RGBA_UNSIGNED_BYTE_PACKED,
+  MHK_ARGB_UNSIGNED_BYTE_PACKED,
+  MHK_BGRA_UNSIGNED_INT_8_8_8_8_REV_PACKED
 } MHK_BITMAP_FORMAT;
 
 // File structures, turn on packing
 
 #pragma pack(push, 1)
 typedef struct {
-    uint16_t width;
-    uint16_t height;
-    uint16_t bytes_per_row;
-    unsigned char compression_flag;
-    unsigned char truecolor_flag;
+  uint16_t width;
+  uint16_t height;
+  uint16_t bytes_per_row;
+  unsigned char compression_flag;
+  unsigned char truecolor_flag;
 } MHK_BITMAP_header;
 #pragma pack(pop)
 
 // Byte order utilities
 // f == file, n == native
 
-MHK_INLINE void MHK_BITMAP_header_fton(MHK_BITMAP_header *s) {
-    s->width = CFSwapInt16BigToHost(s->width);
-    s->height = CFSwapInt16BigToHost(s->height);
-    s->bytes_per_row = CFSwapInt16BigToHost(s->bytes_per_row);
+MHK_INLINE void MHK_BITMAP_header_fton(MHK_BITMAP_header* s)
+{
+  s->width = CFSwapInt16BigToHost(s->width);
+  s->height = CFSwapInt16BigToHost(s->height);
+  s->bytes_per_row = CFSwapInt16BigToHost(s->bytes_per_row);
 }
 
 // decompression functions

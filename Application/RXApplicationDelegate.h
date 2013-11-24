@@ -8,33 +8,31 @@
 
 #import "Base/RXBase.h"
 
-
 @class RXVersionComparator, RXWelcomeWindowController, NSButton, NSWindowController, NSWindow, NSTextField;
 
-@interface RXApplicationDelegate : NSObject
-{
+@interface RXApplicationDelegate : NSObject {
 #if defined(DEBUG)
-    NSWindowController* debugConsoleWC;
+  NSWindowController* debugConsoleWC;
 #endif
-    
-    IBOutlet NSWindow* aboutBox;
-    IBOutlet NSTextField* versionField;
-    IBOutlet NSTextField* copyrightField;
-    IBOutlet NSButton* acknowledgmentsButton;
-    
-    IBOutlet RXVersionComparator* versionComparator;
-    
-    RXWelcomeWindowController* welcomeController;
-    
-    NSURL* autosaveURL;
-    
-    BOOL disableGameSavingAndLoading;
-    BOOL missedAutosave;
-    BOOL wasFullscreen;
-    BOOL quicktimeGood;
+
+  IBOutlet NSWindow* aboutBox;
+  IBOutlet NSTextField* versionField;
+  IBOutlet NSTextField* copyrightField;
+  IBOutlet NSButton* acknowledgmentsButton;
+
+  IBOutlet RXVersionComparator* versionComparator;
+
+  RXWelcomeWindowController* welcomeController;
+
+  NSURL* autosaveURL;
+
+  BOOL disableGameSavingAndLoading;
+  BOOL missedAutosave;
+  BOOL wasFullscreen;
+  BOOL quicktimeGood;
 }
 
-+ (RXApplicationDelegate *)sharedApplicationDelegate;
++ (RXApplicationDelegate*)sharedApplicationDelegate;
 
 - (IBAction)orderFrontAboutWindow:(id)sender;
 - (IBAction)showAcknowledgments:(id)sender;

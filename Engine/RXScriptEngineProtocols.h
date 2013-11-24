@@ -11,7 +11,6 @@
 #import "Engine/RXHotspot.h"
 #import "Engine/RXCardProtocols.h"
 
-
 @protocol RXScriptEngineProtocol <NSObject>
 - (RXCard*)card;
 - (void)setCard:(RXCard*)c;
@@ -29,7 +28,6 @@
 
 - (void)skipBlockingMovie;
 @end
-
 
 @protocol RXScriptEngineControllerProtocol <RXCardEventsHandlerProtocol, RXCardRendererProtocol>
 - (void)setActiveCardWithSimpleDescriptor:(RXSimpleCardDescriptor*)scd waitUntilDone:(BOOL)wait;

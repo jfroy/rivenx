@@ -7,7 +7,6 @@
 
 #import <Foundation/NSThread.h>
 
-
 @interface NSObject (InterThreadMessaging)
 - (void)performSelector:(SEL)selector inThread:(NSThread*)thread;
 - (void)performSelector:(SEL)selector inThread:(NSThread*)thread waitUntilDone:(BOOL)wait;

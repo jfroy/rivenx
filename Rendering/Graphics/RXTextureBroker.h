@@ -12,34 +12,32 @@
 #import "Rendering/Graphics/RXTexture.h"
 #import "Base/RXDynamicBitfield.h"
 
-
 struct _rx_texture_bucket {
-    GLsizei width;
-    GLsizei height;
-    GLuint* tex_ids;
-    RXDynamicBitfield* in_use;
+  GLsizei width;
+  GLsizei height;
+  GLuint* tex_ids;
+  RXDynamicBitfield* in_use;
 };
 
 #if defined(DEBUG)
 struct _bucket_stat {
-    GLsizei width;
-    GLsizei height;
-    GLuint count;
+  GLsizei width;
+  GLsizei height;
+  GLuint count;
 };
 #endif
 
-
 @interface RXTextureBroker : NSObject {
-    CGLContextObj cgl_ctx;
-    BOOL _toreDown;
-    
-    struct _rx_texture_bucket* _buckets;
-    uint32_t _bucket_capacity;
-    uint32_t _bucket_count;
-    
+  CGLContextObj cgl_ctx;
+  BOOL _toreDown;
+
+  struct _rx_texture_bucket* _buckets;
+  uint32_t _bucket_capacity;
+  uint32_t _bucket_count;
+
 #if defined(DEBUG)
-    struct _bucket_stat* _bucket_stats;
-    uint32_t _bucket_stat_count;
+  struct _bucket_stat* _bucket_stats;
+  uint32_t _bucket_stat_count;
 #endif
 }
 

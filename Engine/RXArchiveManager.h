@@ -9,10 +9,9 @@
 #import "Base/RXBase.h"
 #import <MHKKit/MHKKit.h>
 
-
 @interface RXArchiveManager : NSObject {
-    NSString* patches_directory;
-    MHKArchive* extras_archive;
+  NSString* patches_directory;
+  MHKArchive* extras_archive;
 }
 
 + (RXArchiveManager*)sharedArchiveManager;

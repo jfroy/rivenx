@@ -8,14 +8,13 @@
 
 #import "NSArray+RXArrayAdditions.h"
 
-
 @implementation NSArray (RXArrayAdditions)
 
 - (id)objectAtIndexIfAny:(NSUInteger)index
 {
-    if ([self count] <= index)
-        return nil;
-    return [self objectAtIndex:index];
+  if ([self count] <= index)
+    return nil;
+  return [self objectAtIndex:index];
 }
 
 @end

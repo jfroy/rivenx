@@ -32,22 +32,23 @@ extern const int MHK_WAVE_MP2;
 
 #pragma pack(push, 1)
 typedef struct {
-    uint16_t sampling_rate;
-    uint32_t frame_count;
-    unsigned char bit_depth;
-    unsigned char channel_count;
-    uint16_t compression_type;
-    unsigned char reserved[10];
+  uint16_t sampling_rate;
+  uint32_t frame_count;
+  unsigned char bit_depth;
+  unsigned char channel_count;
+  uint16_t compression_type;
+  unsigned char reserved[10];
 } MHK_WAVE_Data_chunk_header;
 #pragma pack(pop)
 
 // Byte order utilities
 // f == file, n == native
 
-MHK_INLINE void MHK_WAVE_Data_chunk_header_fton(MHK_WAVE_Data_chunk_header *s) {
-    s->sampling_rate = CFSwapInt16BigToHost(s->sampling_rate);
-    s->frame_count = CFSwapInt32BigToHost(s->frame_count);
-    s->compression_type = CFSwapInt16BigToHost(s->compression_type);
+MHK_INLINE void MHK_WAVE_Data_chunk_header_fton(MHK_WAVE_Data_chunk_header* s)
+{
+  s->sampling_rate = CFSwapInt16BigToHost(s->sampling_rate);
+  s->frame_count = CFSwapInt32BigToHost(s->frame_count);
+  s->compression_type = CFSwapInt16BigToHost(s->compression_type);
 }
 
 #endif // mohawk_wave_h

@@ -13,36 +13,35 @@
 
 #import "Rendering/RXRendering.h"
 
-
 extern NSString* const RXMoviePlaybackDidEndNotification;
 
 @interface RXMovie : NSObject <RXRenderingProtocol> {
-    id _owner;
-    
-    QTMovie* _movie;
-    QTVisualContextRef _vc;
-    
-    long _hints;
-    CGSize _current_size;
-    QTTime _original_duration;
-    
-    BOOL _looping;
-    BOOL _seamless_looping_hacked;
-    BOOL _playing_selection;
-    int32_t _goto_end_notification_state;
-    
-    GLuint _vao;
-    GLfloat _coordinates[16];
-    CGRect _render_rect;
-    
-    GLuint _texture;
-    void* _texture_storage;
-    CVImageBufferRef _image_buffer;
-    
-    QTTime _current_time;
-    OSSpinLock _current_time_lock;
-    
-    OSSpinLock _render_lock;
+  id _owner;
+
+  QTMovie* _movie;
+  QTVisualContextRef _vc;
+
+  long _hints;
+  CGSize _current_size;
+  QTTime _original_duration;
+
+  BOOL _looping;
+  BOOL _seamless_looping_hacked;
+  BOOL _playing_selection;
+  int32_t _goto_end_notification_state;
+
+  GLuint _vao;
+  GLfloat _coordinates[16];
+  CGRect _render_rect;
+
+  GLuint _texture;
+  void* _texture_storage;
+  CVImageBufferRef _image_buffer;
+
+  QTTime _current_time;
+  OSSpinLock _current_time_lock;
+
+  OSSpinLock _render_lock;
 }
 
 - (id)initWithMovie:(Movie)movie disposeWhenDone:(BOOL)disposeWhenDone owner:(id)owner;

@@ -10,13 +10,12 @@
 
 #import "Engine/RXCardDescriptor.h"
 
-
 @interface RXGameState : NSObject <NSCoding> {
-    NSMutableDictionary* _variables;
-    RXSimpleCardDescriptor* _currentCard;
-    RXSimpleCardDescriptor* _returnCard;
-    NSURL* _URL;
-    NSRecursiveLock* _accessLock;
+  NSMutableDictionary* _variables;
+  RXSimpleCardDescriptor* _currentCard;
+  RXSimpleCardDescriptor* _returnCard;
+  NSURL* _URL;
+  NSRecursiveLock* _accessLock;
 }
 
 + (RXGameState*)gameStateWithURL:(NSURL*)url error:(NSError**)error;

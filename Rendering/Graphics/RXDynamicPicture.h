@@ -10,9 +10,7 @@
 
 #import "Rendering/Graphics/RXPicture.h"
 
-
 @interface RXDynamicPicture : RXPicture {
-
 }
 
 + (GLuint)sharedDynamicPictureUnpackBuffer;

@@ -18,34 +18,33 @@
 #import <MHKKit/MHKFileHandle.h>
 #import <MHKKit/MHKAudioDecompression.h>
 
-
 @interface MHKArchive : NSObject {
-    NSURL* mhk_url;
-    
-    FSIORefNum forkRef;
-    uint32_t archive_size;
-    
-    BOOL initialized;
-    
-    // global MHK parameters
-    uint32_t resource_directory_absolute_offset;
-    
-    uint32_t type_table_count;
-    MHK_type_table_entry* type_table;
-    
-    char* name_list;
-    
-    uint32_t file_table_count;
-    MHK_file_table_entry* file_table;
-    
-    // processed information
-    NSMutableDictionary* file_descriptor_arrays;
-    NSMutableDictionary* file_descriptor_trees;
-    NSMutableDictionary* file_descriptor_name_maps;
-    
-    // cached descriptors
-    pthread_rwlock_t __cached_sound_descriptors_rwlock;
-    NSMutableDictionary* __cached_sound_descriptors;
+  NSURL* mhk_url;
+
+  FSIORefNum forkRef;
+  uint32_t archive_size;
+
+  BOOL initialized;
+
+  // global MHK parameters
+  uint32_t resource_directory_absolute_offset;
+
+  uint32_t type_table_count;
+  MHK_type_table_entry* type_table;
+
+  char* name_list;
+
+  uint32_t file_table_count;
+  MHK_file_table_entry* file_table;
+
+  // processed information
+  NSMutableDictionary* file_descriptor_arrays;
+  NSMutableDictionary* file_descriptor_trees;
+  NSMutableDictionary* file_descriptor_name_maps;
+
+  // cached descriptors
+  pthread_rwlock_t __cached_sound_descriptors_rwlock;
+  NSMutableDictionary* __cached_sound_descriptors;
 }
 
 // designated initializer
@@ -81,7 +80,7 @@
 @interface MHKArchive (MHKArchiveWAVAdditions)
 - (NSDictionary*)soundDescriptorWithID:(uint16_t)soundID error:(NSError**)error;
 - (MHKFileHandle*)openSoundWithID:(uint16_t)soundID error:(NSError**)error;
-- (id <MHKAudioDecompression>)decompressorWithSoundID:(uint16_t)soundID error:(NSError**)error;
+- (id<MHKAudioDecompression>)decompressorWithSoundID:(uint16_t)soundID error:(NSError**)error;
 @end
 
 @interface MHKArchive (MHKArchiveBitmapAdditions)

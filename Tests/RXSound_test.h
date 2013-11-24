@@ -8,9 +8,7 @@
 
 #import <SenTestingKit/SenTestingKit.h>
 
-
 @interface RXSound_test : SenTestCase {
-
 }
 
 @end

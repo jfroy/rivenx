@@ -11,13 +11,12 @@
 #import "Rendering/RXRendering.h"
 #import "Rendering/Graphics/RXTexture.h"
 
-
 @interface RXPicture : NSObject <RXRenderingProtocol> {
-    id _owner;
-    
-    RXTexture* _texture;
-    GLuint _vao;
-    GLuint _index;
+  id _owner;
+
+  RXTexture* _texture;
+  GLuint _vao;
+  GLuint _index;
 }
 
 - (id)initWithTexture:(RXTexture*)texture vao:(GLuint)vao index:(GLuint)index owner:(id)owner;

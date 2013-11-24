@@ -8,7 +8,6 @@
 
 #import "Base/RXBase.h"
 
-
 @interface RXHardwareProfiler : NSObject
 
 + (size_t)cacheLineSize;

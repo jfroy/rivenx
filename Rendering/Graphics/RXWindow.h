@@ -8,10 +8,8 @@
 
 #import <AppKit/NSWindow.h>
 
-
-@interface RXWindow : NSWindow
-{
-    BOOL constrainingToScreenSuspended;
+@interface RXWindow : NSWindow {
+  BOOL constrainingToScreenSuspended;
 }
 
 @property BOOL constrainingToScreenSuspended;

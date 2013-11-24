@@ -8,13 +8,11 @@
 
 #import "RXInstaller.h"
 
-
-@interface RXGOGSetupInstaller : RXInstaller
-{
+@interface RXGOGSetupInstaller : RXInstaller {
 @private
-    NSURL* _gogSetupURL;
-    uint32_t _filesUnpacked;
-    uint32_t _filesToUnpack;
+  NSURL* _gogSetupURL;
+  uint32_t _filesUnpacked;
+  uint32_t _filesToUnpack;
 }
 
 - (id)initWithGOGSetupURL:(NSURL*)url;

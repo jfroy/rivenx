@@ -10,16 +10,15 @@
 #import <QTKit/QTKit.h>
 #import <MHKKit/MHKKit.h>
 
-
 @interface MHKQTPlayerController : NSObject {
-    IBOutlet QTMovieView *qtView;
-    IBOutlet NSDrawer *mediaListDrawer;
-    IBOutlet NSTableView* movieTableView;
-    
-    IBOutlet NSTextField* timeValueField;
-    IBOutlet NSTextField* timeBaseField;
-    
-    MHKArchive *archive;
+  IBOutlet QTMovieView* qtView;
+  IBOutlet NSDrawer* mediaListDrawer;
+  IBOutlet NSTableView* movieTableView;
+
+  IBOutlet NSTextField* timeValueField;
+  IBOutlet NSTextField* timeBaseField;
+
+  MHKArchive* archive;
 }
 
 - (IBAction)setCurrentTime:(id)sender;

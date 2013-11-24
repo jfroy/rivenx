@@ -14,7 +14,6 @@
 #import "Rendering/Graphics/RXPicture.h"
 #import "Rendering/Graphics/RXMovie.h"
 
-
 @class RXCard;
 
 @protocol RXCardRendererProtocol <NSObject>
@@ -41,7 +40,6 @@
 
 - (void)beginEndCredits;
 @end
-
 
 @protocol RXCardEventsHandlerProtocol <NSObject>
 - (double)mouseTimestamp;

@@ -7,5 +7,4 @@
  *
  */
 
-
 extern void rx_install_exception_handler(void);

@@ -11,38 +11,37 @@
 #import "Rendering/Animation/RXAnimation.h"
 #import "Rendering/Graphics/RXTexture.h"
 
-
 enum {
-    RXTransitionSlide,
-    RXTransitionDissolve,
+  RXTransitionSlide,
+  RXTransitionDissolve,
 };
 typedef uint8_t RXTransitionType;
 
 enum {
-    RXTransitionLeft = 0,
-    RXTransitionRight,
-    RXTransitionTop,
-    RXTransitionBottom,
+  RXTransitionLeft = 0,
+  RXTransitionRight,
+  RXTransitionTop,
+  RXTransitionBottom,
 };
 typedef uint8_t RXTransitionDirection;
 
 enum {
-    RXTransitionPushNew = 0x1,
-    RXTransitionPushOld = 0x2,
+  RXTransitionPushNew = 0x1,
+  RXTransitionPushOld = 0x2,
 };
 typedef uint8_t RXTransitionOptions;
 
 @interface RXTransition : NSObject {
 @public
-    RXTransitionType type;
-    RXTransitionDirection direction;
-    BOOL pushNew;
-    BOOL pushOld;
-    
-    NSRect region;
-    
-    RXTexture* source_texture;
-    RXAnimation* animation;
+  RXTransitionType type;
+  RXTransitionDirection direction;
+  BOOL pushNew;
+  BOOL pushOld;
+
+  NSRect region;
+
+  RXTexture* source_texture;
+  RXAnimation* animation;
 }
 
 - (id)initWithCode:(uint16_t)code region:(NSRect)rect;

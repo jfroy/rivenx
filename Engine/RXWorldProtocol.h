@@ -22,7 +22,6 @@
 #import "Rendering/RXRendering.h"
 #import "States/RXRenderState.h"
 
-
 @protocol RXWorldProtocol <NSObject>
 - (NSThread*)scriptThread;
 
@@ -50,28 +49,27 @@
 - (NSCursor*)cursorForID:(uint16_t)ID;
 @end
 
-
 __BEGIN_DECLS
 
-extern NSObject <RXWorldProtocol>* g_world;
+extern NSObject<RXWorldProtocol>* g_world;
 
-CF_INLINE BOOL RXEngineGetBool(NSString* path) {
-    id value = [g_world valueForEngineVariable:path];
-    if (!value || ![value isKindOfClass:[NSNumber class]])
-        return NO;
-    return [value boolValue];
+CF_INLINE BOOL RXEngineGetBool(NSString* path)
+{
+  id value = [g_world valueForEngineVariable:path];
+  if (!value || ![value isKindOfClass:[NSNumber class]])
+    return NO;
+  return [value boolValue];
 }
 
-CF_INLINE uint32_t RXEngineGetUInt32(NSString* path) {
-    id value = [g_world valueForEngineVariable:path];
-    if (!value || ![value isKindOfClass:[NSNumber class]])
-        return NO;
-    return (uint32_t)[value unsignedIntValue];
+CF_INLINE uint32_t RXEngineGetUInt32(NSString* path)
+{
+  id value = [g_world valueForEngineVariable:path];
+  if (!value || ![value isKindOfClass:[NSNumber class]])
+    return NO;
+  return (uint32_t)[value unsignedIntValue];
 }
 
-CF_INLINE void RXEngineSetUInt32(NSString* path, uint32_t value) {
-    [g_world setValue:[NSNumber numberWithInt:value] forEngineVariable:path];
-}
+CF_INLINE void RXEngineSetUInt32(NSString* path, uint32_t value) { [g_world setValue:[NSNumber numberWithInt:value] forEngineVariable:path]; }
 
 __END_DECLS
 

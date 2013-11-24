@@ -9,13 +9,12 @@
 #import "Base/RXBase.h"
 #import <MHKKit/MHKKit.h>
 
-
 @class RXStack;
 
 @interface RXSimpleCardDescriptor : NSObject <NSCoding, NSCopying> {
 @public
-    NSString* stackKey;
-    uint16_t cardID;
+  NSString* stackKey;
+  uint16_t cardID;
 }
 
 + (RXSimpleCardDescriptor*)descriptorWithStackName:(NSString*)name rmap:(uint32_t)rmap;
@@ -29,14 +28,14 @@
 @end
 
 @interface RXCardDescriptor : NSObject {
-    __weak RXStack* _parent;
-    uint16_t _ID;
-    uint32_t _rmap;
-    
-    NSData* _data;
-    NSString* _name;
-    
-    RXSimpleCardDescriptor* _simpleDescriptor;
+  __weak RXStack* _parent;
+  uint16_t _ID;
+  uint32_t _rmap;
+
+  NSData* _data;
+  NSString* _name;
+
+  RXSimpleCardDescriptor* _simpleDescriptor;
 }
 
 + (id)descriptorWithStack:(RXStack*)stack ID:(uint16_t)ID;

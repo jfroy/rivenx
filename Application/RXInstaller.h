@@ -9,15 +9,13 @@
 #import "Base/RXBase.h"
 #import <AppKit/NSApplication.h>
 
+@interface RXInstaller : NSObject {
+  double progress;
+  NSString* stage;
 
-@interface RXInstaller : NSObject
-{
-    double progress;
-    NSString* stage;
-    
-    NSModalSession modalSession;
-    NSString* destination;
-    BOOL didRun;
+  NSModalSession modalSession;
+  NSString* destination;
+  BOOL didRun;
 }
 
 - (BOOL)runWithModalSession:(NSModalSession)session error:(NSError**)error;

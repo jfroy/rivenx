@@ -31,19 +31,19 @@ extern const int kRXLoggingLevelMessage;
 extern const int kRXLoggingLevelError;
 extern const int kRXLoggingLevelCritical;
 
-extern void RXCFLog(const char* facility, int level, CFStringRef format, ...) CF_FORMAT_FUNCTION(3,4);
+extern void RXCFLog(const char* facility, int level, CFStringRef format, ...) CF_FORMAT_FUNCTION(3, 4);
 
 #if defined(__OBJC__)
 
 #import <Foundation/NSString.h>
 
-extern void RXLog(const char* facility, int level, NSString* format, ...) NS_FORMAT_FUNCTION(3,4);
-extern void RXLogv(const char* facility, int level, NSString* format, va_list args) NS_FORMAT_FUNCTION(3,0);
+extern void RXLog(const char* facility, int level, NSString* format, ...) NS_FORMAT_FUNCTION(3, 4);
+extern void RXLogv(const char* facility, int level, NSString* format, va_list args) NS_FORMAT_FUNCTION(3, 0);
 
-extern void _RXOLog(id object, const char* facility, int level, NSString* format, ...) NS_FORMAT_FUNCTION(4,5);
+extern void _RXOLog(id object, const char* facility, int level, NSString* format, ...) NS_FORMAT_FUNCTION(4, 5);
 
-#define RXOLog(format, ...) _RXOLog(self, kRXLoggingBase, kRXLoggingLevelMessage, format , ##__VA_ARGS__)
-#define RXOLog2(facility, level, format, ...) _RXOLog(self, facility, level, format , ##__VA_ARGS__)
+#define RXOLog(format, ...) _RXOLog(self, kRXLoggingBase, kRXLoggingLevelMessage, format, ##__VA_ARGS__)
+#define RXOLog2(facility, level, format, ...) _RXOLog(self, facility, level, format, ##__VA_ARGS__)
 
 #endif // __OBJC__
 

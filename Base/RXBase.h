@@ -20,43 +20,42 @@
 #import <Block.h>
 #import <dispatch/dispatch.h>
 
-
 // built-in
 #ifndef __has_builtin
-	#define __has_builtin(x) 0
+#define __has_builtin(x) 0
 #endif
 
 #ifndef __has_feature
-	#define __has_feature(x) 0
+#define __has_feature(x) 0
 #endif
 
 #ifndef __has_extension
-	#define __has_extension __has_feature
+#define __has_extension __has_feature
 #endif
 
 #ifndef __has_attribute
-	#define __has_attribute(x) 0
+#define __has_attribute(x) 0
 #endif
 
 #ifndef __has_include
-	#define __has_include(x) 0
+#define __has_include(x) 0
 #endif
 
 // assertions
 #if !__has_extension(cxx_static_assert)
-	#define static_assert(e, m) enum { __STATIC_ASSERT_INTERNAL_VARNAME ## __LINE__ = 1/!!(e)}
+#define static_assert(e, m) enum {__STATIC_ASSERT_INTERNAL_VARNAME##__LINE__ = 1 / !!(e)}
 #endif
 
 __BEGIN_DECLS
-void __assert_rtn(const char *, const char *, int, const char *) __dead2;
+void __assert_rtn(const char*, const char*, int, const char*) __dead2;
 __END_DECLS
 
 #if defined(DEBUG)
-	#define release_assert(e) (__builtin_expect(!(e), 0) ? __assert_rtn(__PRETTY_FUNCTION__, __FILE__, __LINE__, #e) : (void)0)
-	#define debug_assert(e) release_assert(e)
+#define release_assert(e) (__builtin_expect(!(e), 0) ? __assert_rtn(__PRETTY_FUNCTION__, __FILE__, __LINE__, #e) : (void)0)
+#define debug_assert(e) release_assert(e)
 #else
-	#define release_assert(e) (__builtin_expect(!(e), 0) ? __assert_rtn(__PRETTY_FUNCTION__, "", 0, #e) : (void)0)
-	#define debug_assert(e) ((void)0)
+#define release_assert(e) (__builtin_expect(!(e), 0) ? __assert_rtn(__PRETTY_FUNCTION__, "", 0, #e) : (void)0)
+#define debug_assert(e) ((void)0)
 #endif
 
 // attributes
@@ -91,7 +90,12 @@ __END_DECLS
 #define QUEUE_LOW dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0)
 #define QUEUE_MAIN dispatch_get_main_queue()
 
-#define SAFE_DISPATCH_RELEASE(object) do { if (__builtin_expect((object) != NULL, 0)) { dispatch_release(object); } } while(0)
+#define SAFE_DISPATCH_RELEASE(object)                                                                                                                          \
+  do {                                                                                                                                                         \
+    if (__builtin_expect((object) != NULL, 0)) {                                                                                                               \
+      dispatch_release(object);                                                                                                                                \
+    }                                                                                                                                                          \
+  } while (0)
 
 // other
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
@@ -103,18 +107,17 @@ extern void rx_abort(const char* format, ...) __attribute__((noreturn)) __attrib
 
 __END_DECLS
 
-
 // Objective-C specific section
 #if defined(__OBJC__)
 
-	#import <Foundation/NSArray.h>
-	#import <Foundation/NSData.h>
-	#import <Foundation/NSDate.h>
-	#import <Foundation/NSDictionary.h>
-	#import <Foundation/NSSet.h>
-	#import <Foundation/NSString.h>
-	#import <Foundation/NSURL.h>
-	#import <Foundation/NSValue.h>
+#import <Foundation/NSArray.h>
+#import <Foundation/NSData.h>
+#import <Foundation/NSDate.h>
+#import <Foundation/NSDictionary.h>
+#import <Foundation/NSSet.h>
+#import <Foundation/NSString.h>
+#import <Foundation/NSURL.h>
+#import <Foundation/NSValue.h>
 
 #endif // defined(__OBJC__)
 

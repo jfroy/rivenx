@@ -711,10 +711,10 @@
 				6BE3ED4D179083F800B1732D /* Frameworks */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
 			);
-			indentWidth = 4;
+			indentWidth = 2;
 			name = rivenx;
 			sourceTree = "<group>";
-			tabWidth = 4;
+			tabWidth = 2;
 			usesTabs = 0;
 		};
 		08FB7795FE84155DC02AAC07 /* Tools */ = {

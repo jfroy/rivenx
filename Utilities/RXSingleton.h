@@ -7,9 +7,7 @@
 //  Copyright 2005 MacStorm. All rights reserved.
 //
 
-
 @interface RXSingleton : NSObject {
-
 }
 
 + (id)singleton;

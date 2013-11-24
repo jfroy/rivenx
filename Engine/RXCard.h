@@ -15,36 +15,35 @@
 #import "Engine/RXHotspot.h"
 #import "Engine/RXCardProtocols.h"
 
-
 @interface RXCard : NSObject {
-    RXCardDescriptor* _descriptor;
-    RXStack* _parent;
-    BOOL _loaded;
-    
-    // scripts
-    NSDictionary* _card_scripts;
-    
-    // hotspots
-    NSMutableArray* _hotspots;
-    NSMapTable* _hotspotsIDMap;
-    NSMapTable* _hotspots_name_map;
-    void* _blstData;
-    struct rx_blst_record* _hotspotControlRecords;
-    
-    // pictures
-    void* _plst_data;
-    uint32_t _picture_count;
-    
-    // movies
-    NSMutableArray* _movies;
-    uint16_t* _mlstCodes;
-    
-    // sound groups
-    NSMutableArray* _soundGroups;
-    
-    // special effects
-    uint16_t _flstCount;
-    rx_card_sfxe* _sfxes;
+  RXCardDescriptor* _descriptor;
+  RXStack* _parent;
+  BOOL _loaded;
+
+  // scripts
+  NSDictionary* _card_scripts;
+
+  // hotspots
+  NSMutableArray* _hotspots;
+  NSMapTable* _hotspotsIDMap;
+  NSMapTable* _hotspots_name_map;
+  void* _blstData;
+  struct rx_blst_record* _hotspotControlRecords;
+
+  // pictures
+  void* _plst_data;
+  uint32_t _picture_count;
+
+  // movies
+  NSMutableArray* _movies;
+  uint16_t* _mlstCodes;
+
+  // sound groups
+  NSMutableArray* _soundGroups;
+
+  // special effects
+  uint16_t _flstCount;
+  rx_card_sfxe* _sfxes;
 }
 
 - (id)initWithCardDescriptor:(RXCardDescriptor*)cardDescriptor;

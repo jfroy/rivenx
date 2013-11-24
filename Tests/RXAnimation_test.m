@@ -12,9 +12,6 @@
 #import "RXAnimation_test.h"
 #import "RXWorld.h"
 
-
 @implementation RXAnimation_test
-
-
 
 @end

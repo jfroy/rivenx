@@ -8,30 +8,26 @@
 
 #import "Base/RXBase.h"
 
-
 __BEGIN_DECLS
 
 enum {
-    kRXErrSavedGameCantBeLoaded,
-    kRXErrQuickTimeTooOld,
-    
-    kRXErrArchivesNotFound,
-    kRXErrFailedToInitializeStack,
-    
-    kRXErrFailedToGetDisplayID,
-    kRXErrNoAcceleratorService,
-    kRXErrFailedToGetAcceleratorPerfStats,
-    kRXErrFailedToFindFreeVRAMInformation,
-    kRXErrFailedToCreatePixelFormat,
-    
-    kRXErrInstallerAlreadyRan,
-    kRXErrInstallerMissingArchivesOnMedia,
-    kRXErrInstallerCancelled,
-    kRXErrInstallerMissingArchivesAfterInstall,
-    kRXErrFailedToGetFilesystemInformation,
-    kRXErrUnusableInstallMedia,
-    kRXErrUnusableInstallFolder,
-    kRXErrInstallerGOGSetupUnpackFailed,
+  kRXErrSavedGameCantBeLoaded,
+  kRXErrQuickTimeTooOld,
+  kRXErrArchivesNotFound,
+  kRXErrFailedToInitializeStack,
+  kRXErrFailedToGetDisplayID,
+  kRXErrNoAcceleratorService,
+  kRXErrFailedToGetAcceleratorPerfStats,
+  kRXErrFailedToFindFreeVRAMInformation,
+  kRXErrFailedToCreatePixelFormat,
+  kRXErrInstallerAlreadyRan,
+  kRXErrInstallerMissingArchivesOnMedia,
+  kRXErrInstallerCancelled,
+  kRXErrInstallerMissingArchivesAfterInstall,
+  kRXErrFailedToGetFilesystemInformation,
+  kRXErrUnusableInstallMedia,
+  kRXErrUnusableInstallFolder,
+  kRXErrInstallerGOGSetupUnpackFailed,
 };
 
 #if defined(__OBJC__)

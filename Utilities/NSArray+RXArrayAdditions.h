@@ -8,7 +8,6 @@
 
 #import <Foundation/NSArray.h>
 
-
 @interface NSArray (RXArrayAdditions)
 
 - (id)objectAtIndexIfAny:(NSUInteger)index;

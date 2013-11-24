@@ -36,7 +36,7 @@ extern void glReportErrorWithFileLineCGLMacro(CGLContextObj cgl_ctx, const char*
 #endif // __APPLE__
 
 #else
-#define glReportError() 
+#define glReportError()
 #endif // DEBUG_GL
 
 __END_DECLS

@@ -12,21 +12,20 @@
 
 #import <sys/cdefs.h>
 
-
 __BEGIN_DECLS
 
 // MHK errors
 enum {
-    errFileTooLarge = 1, 
-    errBadArchive, 
-    errResourceNotFound,
-    errDamagedResource, 
-    errInvalidChannelCount, 
-    errInvalidFrameCount, 
-    errLibavNotAvailable, 
-    errInvalidSoundDescriptor, 
-    errInvalidBitmapCompression, 
-    errInvalidBitmapCompressorInstruction
+  errFileTooLarge = 1,
+  errBadArchive,
+  errResourceNotFound,
+  errDamagedResource,
+  errInvalidChannelCount,
+  errInvalidFrameCount,
+  errLibavNotAvailable,
+  errInvalidSoundDescriptor,
+  errInvalidBitmapCompression,
+  errInvalidBitmapCompressorInstruction
 };
 
 #if defined(__OBJC__)

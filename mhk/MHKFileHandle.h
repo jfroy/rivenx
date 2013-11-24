@@ -8,17 +8,15 @@
 
 #import "Base/RXBase.h"
 
-
 @class MHKArchive;
 
-@interface MHKFileHandle : NSObject
-{
-    int16_t __forkRef;
-    MHKArchive* __owner;
-    
-    off_t __offset;
-    uint32_t __position;
-    uint32_t __length;
+@interface MHKFileHandle : NSObject {
+  int16_t __forkRef;
+  MHKArchive* __owner;
+
+  off_t __offset;
+  uint32_t __position;
+  uint32_t __length;
 }
 
 - (MHKArchive*)archive;

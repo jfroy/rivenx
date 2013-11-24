@@ -12,7 +12,7 @@
 
 #define BUFFER_DELTA(head_ptr, read_ptr) ((size_t)(((uintptr_t)(read_ptr)) - ((uintptr_t)(head_ptr))))
 
-#define BUFFER_ALIGN(buffer, a) (__typeof__(buffer))(((uintptr_t)(buffer) + (a-1ul)) & ~(a-1ul))
+#define BUFFER_ALIGN(buffer, a) (__typeof__(buffer))(((uintptr_t)(buffer) + (a - 1ul)) & ~(a - 1ul))
 #define BUFFER_ALIGN_SIZE(buffer, a) (size_t)((uintptr_t)BUFFER_ALIGN((buffer), (a)) - (uintptr_t)(buffer))
 
 #define BUFFER_ALIGN2(buffer) BUFFER_ALIGN(buffer, 2ul)

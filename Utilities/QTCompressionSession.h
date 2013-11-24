@@ -36,31 +36,30 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #import <QuartzCore/CoreVideo.h>
 #import <QuickTime/QuickTime.h>
 
-
 @interface QTCompressionSession : NSObject {
-    int                         width;                      // video width
-    int                         height;                     // video height
-    CodecType                   codecType;                  // video codec
-    SInt32                      averageDataRate;            // video data rate
-    TimeScale                   timeScale;                  // video time scale
-    int                         desiredFramesPerSecond;     // video frames per second
-    long                        frameCount;                 // video frame count
-    
-    Movie                       outputMovie;                // movie file for storing compressed frames
-    DataHandler                 outputMovieDataHandler;     // storage for movie header
-    
-    Media                       outputVideoMedia;           // media for the video track in the movie
-    BOOL                        didBeginVideoMediaEdits;
-    
-    ICMCompressionSessionRef    compressionSession;         // compresses video frames
-    BOOL                        sessionFinalized;
+  int width;                  // video width
+  int height;                 // video height
+  CodecType codecType;        // video codec
+  SInt32 averageDataRate;     // video data rate
+  TimeScale timeScale;        // video time scale
+  int desiredFramesPerSecond; // video frames per second
+  long frameCount;            // video frame count
+
+  Movie outputMovie;                  // movie file for storing compressed frames
+  DataHandler outputMovieDataHandler; // storage for movie header
+
+  Media outputVideoMedia; // media for the video track in the movie
+  BOOL didBeginVideoMediaEdits;
+
+  ICMCompressionSessionRef compressionSession; // compresses video frames
+  BOOL sessionFinalized;
 }
 
-+ (Movie)quicktimeMovieFromTempFile:(DataHandler *)outDataHandler error:(NSError **)error;
++ (Movie)quicktimeMovieFromTempFile:(DataHandler*)outDataHandler error:(NSError**)error;
 
-- (id)initToTempMovieWithWidth:(int)w height:(int)h timeScale:(TimeScale)ts error:(NSError **)error;
+- (id)initToTempMovieWithWidth:(int)w height:(int)h timeScale:(TimeScale)ts error:(NSError**)error;
 
 - (OSStatus)compressFrame:(CVPixelBufferRef)frame timeStamp:(NSTimeInterval)timestamp duration:(NSTimeInterval)duration;
-- (void)finishOutputMovieToPath:(NSString *)path;
+- (void)finishOutputMovieToPath:(NSString*)path;
 
 @end

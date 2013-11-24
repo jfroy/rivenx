@@ -8,19 +8,17 @@
 
 #import "Base/RXBase.h"
 
-
 #import "Rendering/RXRendering.h"
 #import "Engine/RXStack.h"
 
-
 @interface RXTexture : NSObject {
 @public
-    GLuint texture;
-    GLenum target;
-    rx_size_t size;
-    
+  GLuint texture;
+  GLenum target;
+  rx_size_t size;
+
 @protected
-    BOOL _delete_when_done;
+  BOOL _delete_when_done;
 }
 
 + (RXTexture*)newStandardTextureWithTarget:(GLenum)target size:(rx_size_t)s context:(CGLContextObj)cgl_ctx lock:(BOOL)lock;

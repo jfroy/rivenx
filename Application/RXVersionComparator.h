@@ -9,9 +9,7 @@
 #import "Base/RXBase.h"
 #import <Sparkle/SUVersionComparisonProtocol.h>
 
-
 @interface RXVersionComparator : NSObject <SUVersionComparison> {
-
 }
 
 @end

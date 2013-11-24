@@ -9,7 +9,6 @@
 #import <CoreAudio/CoreAudioTypes.h>
 #import <Foundation/NSObject.h>
 
-
 @protocol MHKAudioDecompression <NSObject>
 - (AudioStreamBasicDescription)outputFormat;
 - (SInt64)frameCount;

@@ -14,10 +14,9 @@
 extern NSString* const GLShaderCompileErrorDomain;
 extern NSString* const GLShaderLinkErrorDomain;
 
-
 @interface GLShaderProgramManager : NSObject {
-    NSURL* _shaders_root;
-    GLuint _1texcoord_vs;
+  NSURL* _shaders_root;
+  GLuint _1texcoord_vs;
 }
 
 + (GLShaderProgramManager*)sharedManager;
@@ -28,9 +27,6 @@ extern NSString* const GLShaderLinkErrorDomain;
                                         context:(CGLContextObj)cgl_ctx
                                           error:(NSError**)error;
 
-- (GLuint)programWithName:(NSString*)name
-        attributeBindings:(NSDictionary*)bindings
-                  context:(CGLContextObj)cgl_ctx
-                    error:(NSError**)error;
+- (GLuint)programWithName:(NSString*)name attributeBindings:(NSDictionary*)bindings context:(CGLContextObj)cgl_ctx error:(NSError**)error;
 
 @end

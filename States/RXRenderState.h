@@ -8,9 +8,7 @@
 
 #import "Rendering/RXRendering.h"
 
-
 @interface RXRenderState : NSResponder <RXRenderingProtocol> {
-
 }
 
 @end

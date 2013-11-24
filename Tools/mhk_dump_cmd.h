@@ -22,30 +22,28 @@ extern "C" {
 #define CMDLINE_PARSER_VERSION "1"
 #endif
 
-struct gengetopt_args_info
-{
+struct gengetopt_args_info {
   int first_mpeg_pkt_only_flag; /* Only output the first 1152 samples for MPEG 1/2 Layer II tWAV resources (default=off).  */
-  
-  int help_given ;  /* Whether help was given.  */
-  int version_given ;   /* Whether version was given.  */
-  int first_mpeg_pkt_only_given ;   /* Whether first-mpeg-pkt-only was given.  */
 
-  char **inputs ; /* unamed options */
-  unsigned inputs_num ; /* unamed options number */
-} ;
+  int help_given;                /* Whether help was given.  */
+  int version_given;             /* Whether version was given.  */
+  int first_mpeg_pkt_only_given; /* Whether first-mpeg-pkt-only was given.  */
 
-int cmdline_parser (int argc, char * const *argv, struct gengetopt_args_info *args_info);
-int cmdline_parser2 (int argc, char * const *argv, struct gengetopt_args_info *args_info, int override, int initialize, int check_required);
-int cmdline_parser_file_save(const char *filename, struct gengetopt_args_info *args_info);
+  char** inputs;       /* unamed options */
+  unsigned inputs_num; /* unamed options number */
+};
+
+int cmdline_parser(int argc, char* const* argv, struct gengetopt_args_info* args_info);
+int cmdline_parser2(int argc, char* const* argv, struct gengetopt_args_info* args_info, int override, int initialize, int check_required);
+int cmdline_parser_file_save(const char* filename, struct gengetopt_args_info* args_info);
 
 void cmdline_parser_print_help(void);
 void cmdline_parser_print_version(void);
 
-void cmdline_parser_init (struct gengetopt_args_info *args_info);
-void cmdline_parser_free (struct gengetopt_args_info *args_info);
+void cmdline_parser_init(struct gengetopt_args_info* args_info);
+void cmdline_parser_free(struct gengetopt_args_info* args_info);
 
-int cmdline_parser_required (struct gengetopt_args_info *args_info, const char *prog_name);
-
+int cmdline_parser_required(struct gengetopt_args_info* args_info, const char* prog_name);
 
 #ifdef __cplusplus
 }

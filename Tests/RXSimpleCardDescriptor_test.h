@@ -11,7 +11,7 @@
 #import "Engine/RXCardDescriptor.h"
 
 @interface RXSimpleCardDescriptor_test : SenTestCase {
-    RXSimpleCardDescriptor* _descriptor;
+  RXSimpleCardDescriptor* _descriptor;
 }
 
 @end

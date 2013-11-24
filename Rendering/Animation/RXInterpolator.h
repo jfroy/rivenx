@@ -10,7 +10,6 @@
 
 #import "Rendering/Animation/RXAnimation.h"
 
-
 @protocol RXInterpolator <NSObject>
 - (RXAnimation*)animation;
 - (float)value;
@@ -18,7 +17,7 @@
 @end
 
 @interface RXAnimationInterpolator : NSObject <RXInterpolator> {
-    RXAnimation* _animation;
+  RXAnimation* _animation;
 }
 
 - (id)initWithAnimation:(RXAnimation*)a;
@@ -27,8 +26,8 @@
 
 @interface RXLinearInterpolator : RXAnimationInterpolator {
 @public
-    float start;
-    float end;
+  float start;
+  float end;
 }
 
 - (id)initWithAnimation:(RXAnimation*)a start:(float)p0 end:(float)p1;
@@ -36,8 +35,8 @@
 @end
 
 @interface RXChainingInterpolator : NSObject <RXInterpolator> {
-    NSMutableArray* _interpolators;
-    id<RXInterpolator> _current;
+  NSMutableArray* _interpolators;
+  id<RXInterpolator> _current;
 }
 
 - (void)addInterpolator:(id<RXInterpolator>)interpolator;

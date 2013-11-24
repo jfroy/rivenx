@@ -10,12 +10,11 @@
 
 #import "Rendering/RXRendering.h"
 
-
 @interface RXOpenGLState : NSObject <RXOpenGLStateProtocol> {
-    CGLContextObj cgl_ctx;
-    
-    GLuint _vao_binding;
-    GLenum _unpack_client_storage;
+  CGLContextObj cgl_ctx;
+
+  GLuint _vao_binding;
+  GLenum _unpack_client_storage;
 }
 
 - (id)initWithContext:(CGLContextObj)context;

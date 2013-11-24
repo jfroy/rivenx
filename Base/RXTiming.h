@@ -19,9 +19,15 @@ __BEGIN_DECLS
 extern double g_RXTimebase;
 extern double g_RX1_Timebase;
 
-CF_INLINE uint64_t RXTimingNow() {return mach_absolute_time();}
-CF_INLINE double RXTimingTimestampDelta(uint64_t end, uint64_t start) {if (end >= start) return g_RXTimebase * (double)(end - start); else return g_RXTimebase * -1 * (double)(start - end);}
-CF_INLINE uint64_t RXTimingOffsetTimestamp(uint64_t timestamp, double offset) {return (uint64_t)(g_RX1_Timebase * offset) + timestamp;}
+CF_INLINE uint64_t RXTimingNow() { return mach_absolute_time(); }
+CF_INLINE double RXTimingTimestampDelta(uint64_t end, uint64_t start)
+{
+  if (end >= start)
+    return g_RXTimebase * (double)(end - start);
+  else
+    return g_RXTimebase * -1 * (double)(start - end);
+}
+CF_INLINE uint64_t RXTimingOffsetTimestamp(uint64_t timestamp, double offset) { return (uint64_t)(g_RX1_Timebase * offset) + timestamp; }
 
 extern void RXTimingUpdateTimebase(void);
 

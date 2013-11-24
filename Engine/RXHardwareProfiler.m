@@ -11,17 +11,16 @@
 
 #import "RXHardwareProfiler.h"
 
-
 @implementation RXHardwareProfiler
 
 + (size_t)cacheLineSize
 {
-    uint64_t cache_line_size = 0;
-    size_t len = sizeof(uint64_t);
-    int err = sysctlbyname("hw.cachelinesize", (void*)&cache_line_size, &len, NULL, 0);
-    if (err)
-        return 128;
-    return (size_t)cache_line_size;
+  uint64_t cache_line_size = 0;
+  size_t len = sizeof(uint64_t);
+  int err = sysctlbyname("hw.cachelinesize", (void*)&cache_line_size, &len, NULL, 0);
+  if (err)
+    return 128;
+  return (size_t)cache_line_size;
 }
 
 @end

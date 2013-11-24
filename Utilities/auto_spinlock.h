@@ -12,23 +12,15 @@
 
 class auto_spinlock {
 public:
-	
-	auto_spinlock(volatile OSSpinLock* lock)
-    : m_lock(lock)
-	{
-		OSSpinLockLock(m_lock);
-	}
-	
-	~auto_spinlock()
-	{
-		OSSpinLockUnlock(m_lock);
-	}
-    
+  auto_spinlock(volatile OSSpinLock* lock) : m_lock(lock) { OSSpinLockLock(m_lock); }
+
+  ~auto_spinlock() { OSSpinLockUnlock(m_lock); }
+
 private:
-	volatile OSSpinLock* m_lock;
-	
-	auto_spinlock(const auto_spinlock& rval) {}
-	auto_spinlock& operator=(const auto_spinlock& rval) {return *this;}
+  volatile OSSpinLock* m_lock;
+
+  auto_spinlock(const auto_spinlock& rval) {}
+  auto_spinlock& operator=(const auto_spinlock& rval) { return *this; }
 };
 
 #endif // AUTO_SPINLOCK_H

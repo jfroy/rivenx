@@ -14,44 +14,43 @@
 #import "Rendering/Audio/RXCardAudioSource.h"
 #endif
 
-
 @interface RXSound : NSObject {
-    id <MHKAudioDecompression> _decompressor;
+  id<MHKAudioDecompression> _decompressor;
 
 @public
-    RXStack* parent;
-    uint16_t twav_id;
-    
-    float gain;
-    float pan;
-    
-    uint64_t detach_timestamp;
-    
+  RXStack* parent;
+  uint16_t twav_id;
+
+  float gain;
+  float pan;
+
+  uint64_t detach_timestamp;
+
 #if defined(__cplusplus)
-    RX::CardAudioSource* source;
+  RX::CardAudioSource* source;
 #else
-    void* source;
+  void* source;
 #endif
 }
 
-- (id <MHKAudioDecompression>)audioDecompressor;
+- (id<MHKAudioDecompression>)audioDecompressor;
 - (double)duration;
 
 @end
 
-@interface RXDataSound : RXSound {}
+@interface RXDataSound : RXSound {
+}
 @end
-
 
 @interface RXSoundGroup : NSObject {
 @public
-    BOOL fadeOutRemovedSounds;
-    BOOL fadeInNewSounds;
-    BOOL loop;
-    float gain;
-    
+  BOOL fadeOutRemovedSounds;
+  BOOL fadeInNewSounds;
+  BOOL loop;
+  float gain;
+
 @private
-    NSMutableSet* _sounds;
+  NSMutableSet* _sounds;
 }
 
 - (void)addSoundWithStack:(RXStack*)parent ID:(uint16_t)twav_id gain:(float)g pan:(float)p;

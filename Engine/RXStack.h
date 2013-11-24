@@ -9,24 +9,23 @@
 #import "Base/RXBase.h"
 #import <MHKKit/MHKKit.h>
 
-
 @interface RXStack : NSObject {
 @private
-    NSString* _key;
-    
-    NSMutableArray* _dataArchives;
-    NSMutableArray* _soundArchives;
-    
-    // global stack data
-    NSArray* _cardNames;
-    NSArray* _hotspotNames;
-    NSArray* _externalNames;
-    NSArray* _varNames;
-    NSArray* _stackNames;
-    NSData* _rmapData;
-    
-    // card storage
-    uint16_t _entryCardID;
+  NSString* _key;
+
+  NSMutableArray* _dataArchives;
+  NSMutableArray* _soundArchives;
+
+  // global stack data
+  NSArray* _cardNames;
+  NSArray* _hotspotNames;
+  NSArray* _externalNames;
+  NSArray* _varNames;
+  NSArray* _stackNames;
+  NSData* _rmapData;
+
+  // card storage
+  uint16_t _entryCardID;
 }
 
 - (id)initWithKey:(NSString*)key error:(NSError**)error;
@@ -46,8 +45,8 @@
 - (uint16_t)cardIDFromRMAPCode:(uint32_t)code;
 - (uint32_t)cardRMAPCodeFromID:(uint16_t)card_id;
 
-- (id <MHKAudioDecompression>)audioDecompressorWithID:(uint16_t)soundID;
-- (id <MHKAudioDecompression>)audioDecompressorWithDataID:(uint16_t)soundID;
+- (id<MHKAudioDecompression>)audioDecompressorWithID:(uint16_t)soundID;
+- (id<MHKAudioDecompression>)audioDecompressorWithDataID:(uint16_t)soundID;
 
 - (uint16_t)soundIDForName:(NSString*)sound_name;
 - (uint16_t)dataSoundIDForName:(NSString*)sound_name;

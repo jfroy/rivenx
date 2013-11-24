@@ -6,7 +6,6 @@
 
 #import <Foundation/NSString.h>
 
-
 @interface NSString (RXNSStringAdditions)
 
 //! Calls NSString -compare:options: with NSNumericSearch.
@@ -22,11 +21,11 @@
 - (BOOL)rx_versionIsOlderThan:(NSString*)version;
 
 /*! Returns a copy of the receiver with \a components appended to the string using \a separator as the separator string. If \a unique is true,
-	components are tested for equality and duplicates are removed. */
+        components are tested for equality and duplicates are removed. */
 - (NSString*)rx_appendComponents:(NSArray*)components usingSeparator:(NSString*)separator unique:(BOOL)unique;
 
 /*! Returns a copy of the receiver with the components in \a componentString appended to the string using \a separator as the separator string.
-	If \a unique is true, components are tested for equality and duplicates are removed. */
+        If \a unique is true, components are tested for equality and duplicates are removed. */
 - (NSString*)rx_appendComponentsString:(NSString*)componentsString usingSeparator:(NSString*)separator unique:(BOOL)unique;
 
 @end
