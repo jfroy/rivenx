@@ -27,7 +27,6 @@
 #import "Rendering/Graphics/RXWorldView.h"
 
 #import "Debug/RXDebug.h"
-#import "Debug/RXDebugWindowController.h"
 
 #import "Utilities/BZFSUtilities.h"
 
@@ -54,31 +53,6 @@
 {
     return [NSApp delegate];
 }
-
-#pragma mark -
-#pragma mark debug UI
-
-#if defined(DEBUG)
-- (void)_showDebugConsole:(id)sender
-{
-    [debugConsoleWC showWindow:sender];
-}
-
-- (void)_initDebugUI
-{
-    debugConsoleWC = [[RXDebugWindowController alloc] initWithWindowNibName:@"DebugConsole"];
-    
-    NSMenu* debugMenu = [[NSMenu alloc] initWithTitle:@"Debug"];
-    [debugMenu addItemWithTitle:@"Console" action:@selector(_showDebugConsole:) keyEquivalent:@""];
-    
-    NSMenuItem* debugMenuItem = [[NSMenuItem alloc] initWithTitle:@"Debug" action:NULL keyEquivalent:@""];
-    [debugMenuItem setSubmenu:debugMenu];
-    [[NSApp mainMenu] addItem:debugMenuItem];
-    
-    [debugMenu release];
-    [debugMenuItem release];
-}
-#endif
 
 #pragma mark -
 #pragma mark error handling
@@ -211,10 +185,6 @@
             [[RXWorld sharedWorld] loadGameState:gs];
             [gs release];
         }
-        
-#if defined(DEBUG)
-        [self _initDebugUI];
-#endif
     }
     
     // start the autosave timer

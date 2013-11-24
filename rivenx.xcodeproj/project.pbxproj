@@ -33,7 +33,6 @@
 		312A89660D57B25600FCDF91 /* RXArchiveManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89610D57B25600FCDF91 /* RXArchiveManager.m */; };
 		312D9ECD0D4D81A3006E384C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9EC70D4D81A3006E384C /* InfoPlist.strings */; };
 		312D9ECF0D4D81A3006E384C /* About.strings in Resources */ = {isa = PBXBuildFile; fileRef = 312D9ECB0D4D81A3006E384C /* About.strings */; };
-		312EBAC80FD202ED00D65E22 /* debug_init.py in Resources */ = {isa = PBXBuildFile; fileRef = 312EBAC70FD202ED00D65E22 /* debug_init.py */; };
 		312EDC730A2E3B80005D26AF /* RXHotspot.m in Sources */ = {isa = PBXBuildFile; fileRef = 312EDC710A2E3B80005D26AF /* RXHotspot.m */; };
 		312F4D8F0DC2639C00B3AF0D /* RXRendering.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D8C0DC2639C00B3AF0D /* RXRendering.m */; };
 		312F4D900DC2639C00B3AF0D /* RXWorldRendering.mm in Sources */ = {isa = PBXBuildFile; fileRef = 312F4D8D0DC2639C00B3AF0D /* RXWorldRendering.mm */; };
@@ -182,7 +181,6 @@
 		31C545530D5D50620024B486 /* RXMediaInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 31C545520D5D50620024B486 /* RXMediaInstaller.m */; };
 		31CE92961033D576008B7717 /* RXInterpolator.m in Sources */ = {isa = PBXBuildFile; fileRef = 31CE92951033D576008B7717 /* RXInterpolator.m */; };
 		31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9A0DBC07A700E970E1 /* MainMenu.xib */; };
-		31D21B9F0DBC07C300E970E1 /* DebugConsole.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */; };
 		31D3D8600EEE36FD00F2D1C4 /* RXOpenGLState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31D3D85F0EEE36FD00F2D1C4 /* RXOpenGLState.m */; };
 		31D4E8CE1144635D00D70E28 /* Stacks.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31D4E8CD1144635D00D70E28 /* Stacks.plist */; };
 		31DAA10F09D8892000F63F20 /* RXCardAudioSource_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */; };
@@ -205,7 +203,6 @@
 		31F4F0020F3533EF00A68652 /* RXScriptDecoding.m in Sources */ = {isa = PBXBuildFile; fileRef = 31F4F0010F3533EF00A68652 /* RXScriptDecoding.m */; };
 		31F4F03C0F35461C00A68652 /* RXMovieProxy.m in Sources */ = {isa = PBXBuildFile; fileRef = 31F4F03B0F35461C00A68652 /* RXMovieProxy.m */; };
 		31FA569F0C5AD15D005DE22F /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
-		31FE33AC101BBC4100C30CD1 /* debug_notification.py in Resources */ = {isa = PBXBuildFile; fileRef = 31FE33AB101BBC4100C30CD1 /* debug_notification.py */; };
 		31FF29680D41996E00E3B5FF /* dump_save.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FF29670D41996E00E3B5FF /* dump_save.m */; };
 		31FF29D50D425BFE00E3B5FF /* GameVariables.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31FF29D40D425BFE00E3B5FF /* GameVariables.plist */; };
 		6BE3ED511790842600B1732D /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4E1790842600B1732D /* Accelerate.framework */; };
@@ -215,7 +212,6 @@
 		6BE3ED581790846800B1732D /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED561790846800B1732D /* Cocoa.framework */; };
 		6BE3ED591790846800B1732D /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED571790846800B1732D /* OpenGL.framework */; };
 		6BE3ED5D1790849200B1732D /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED5A1790849200B1732D /* CoreAudio.framework */; };
-		6BE3ED5E1790849200B1732D /* Python.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED5B1790849200B1732D /* Python.framework */; };
 		6BE3ED5F1790849200B1732D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED5C1790849200B1732D /* QuartzCore.framework */; };
 		6BE3ED61179084BF00B1732D /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED60179084BF00B1732D /* GLUT.framework */; };
 		6BE3ED62179084C300B1732D /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED501790842600B1732D /* QuickTime.framework */; };
@@ -227,7 +223,6 @@
 		6BE3ED6D179085DB00B1732D /* ExceptionHandling.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED6C179085DB00B1732D /* ExceptionHandling.framework */; };
 		8DD76F9A0486AA7600D96B5E /* plistize_stacks.m in Sources */ = {isa = PBXBuildFile; fileRef = 08FB7796FE84155DC02AAC07 /* plistize_stacks.m */; settings = {ATTRIBUTES = (); }; };
 		93FDAD3B098A789100D94CD0 /* BDAlias.m in Sources */ = {isa = PBXBuildFile; fileRef = 93FDAD39098A789100D94CD0 /* BDAlias.m */; };
-		93FDAD47098A78DE00D94CD0 /* RXDebugWindowController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 93FDAD45098A78DE00D94CD0 /* RXDebugWindowController.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -362,7 +357,6 @@
 		312A89610D57B25600FCDF91 /* RXArchiveManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXArchiveManager.m; sourceTree = "<group>"; };
 		312D9EC80D4D81A3006E384C /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		312D9ECC0D4D81A3006E384C /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/About.strings; sourceTree = "<group>"; };
-		312EBAC70FD202ED00D65E22 /* debug_init.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = debug_init.py; sourceTree = "<group>"; };
 		312EDC700A2E3B80005D26AF /* RXHotspot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXHotspot.h; sourceTree = "<group>"; };
 		312EDC710A2E3B80005D26AF /* RXHotspot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXHotspot.m; sourceTree = "<group>"; };
 		312F4D8B0DC2639C00B3AF0D /* RXRendering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXRendering.h; sourceTree = "<group>"; };
@@ -516,7 +510,6 @@
 		31CE92941033D576008B7717 /* RXInterpolator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXInterpolator.h; sourceTree = "<group>"; };
 		31CE92951033D576008B7717 /* RXInterpolator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXInterpolator.m; sourceTree = "<group>"; };
 		31D21B9A0DBC07A700E970E1 /* MainMenu.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainMenu.xib; sourceTree = "<group>"; };
-		31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = DebugConsole.xib; sourceTree = "<group>"; };
 		31D3D85E0EEE36FD00F2D1C4 /* RXOpenGLState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXOpenGLState.h; sourceTree = "<group>"; };
 		31D3D85F0EEE36FD00F2D1C4 /* RXOpenGLState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXOpenGLState.m; sourceTree = "<group>"; };
 		31D4E8CD1144635D00D70E28 /* Stacks.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Stacks.plist; sourceTree = "<group>"; };
@@ -553,7 +546,6 @@
 		31FA569D0C5AD15D005DE22F /* RXErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXErrors.h; sourceTree = "<group>"; };
 		31FA569E0C5AD15D005DE22F /* RXErrors.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXErrors.m; sourceTree = "<group>"; };
 		31FCC1A11261160600EFEAA9 /* auto_spinlock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = auto_spinlock.h; sourceTree = "<group>"; };
-		31FE33AB101BBC4100C30CD1 /* debug_notification.py */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.python; path = debug_notification.py; sourceTree = "<group>"; };
 		31FF29670D41996E00E3B5FF /* dump_save.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = dump_save.m; sourceTree = "<group>"; };
 		31FF29D40D425BFE00E3B5FF /* GameVariables.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = GameVariables.plist; sourceTree = "<group>"; };
 		6BE3ED4E1790842600B1732D /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -563,7 +555,6 @@
 		6BE3ED561790846800B1732D /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		6BE3ED571790846800B1732D /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		6BE3ED5A1790849200B1732D /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
-		6BE3ED5B1790849200B1732D /* Python.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Python.framework; path = System/Library/Frameworks/Python.framework; sourceTree = SDKROOT; };
 		6BE3ED5C1790849200B1732D /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		6BE3ED60179084BF00B1732D /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
 		6BE3ED631790850200B1732D /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -574,8 +565,6 @@
 		8DD76FA10486AA7600D96B5E /* plistize_stacks */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = plistize_stacks; sourceTree = BUILT_PRODUCTS_DIR; };
 		93FDAD39098A789100D94CD0 /* BDAlias.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = BDAlias.m; sourceTree = "<group>"; };
 		93FDAD3A098A789100D94CD0 /* BDAlias.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = BDAlias.h; sourceTree = "<group>"; };
-		93FDAD44098A78DE00D94CD0 /* RXDebugWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXDebugWindowController.h; sourceTree = "<group>"; };
-		93FDAD45098A78DE00D94CD0 /* RXDebugWindowController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXDebugWindowController.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -684,7 +673,6 @@
 				6BE3ED62179084C300B1732D /* QuickTime.framework in Frameworks */,
 				6BE3ED661790850200B1732D /* QTKit.framework in Frameworks */,
 				6BE3ED6A1790857900B1732D /* IOKit.framework in Frameworks */,
-				6BE3ED5E1790849200B1732D /* Python.framework in Frameworks */,
 				6BE3ED6B179085BF00B1732D /* MHKKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -968,8 +956,6 @@
 		31BC2E600D6DC3B6008FA476 /* Debug */ = {
 			isa = PBXGroup;
 			children = (
-				93FDAD44098A78DE00D94CD0 /* RXDebugWindowController.h */,
-				93FDAD45098A78DE00D94CD0 /* RXDebugWindowController.mm */,
 				311B7C810BCC4D0500653D2D /* RXDebug.h */,
 				311B7C820BCC4D0500653D2D /* RXDebug.m */,
 			);
@@ -1040,9 +1026,6 @@
 				312D9ECB0D4D81A3006E384C /* About.strings */,
 				31DAAF0C0DDE21EF00D06D0C /* cursors */,
 				31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */,
-				312EBAC70FD202ED00D65E22 /* debug_init.py */,
-				31FE33AB101BBC4100C30CD1 /* debug_notification.py */,
-				31D21B9E0DBC07C300E970E1 /* DebugConsole.xib */,
 				31F0DD4A0D3A7682000FBB5F /* EngineVariables.plist */,
 				31472CED114C2F66008B6CF7 /* Extras.MHK */,
 				3155480F08C52A1400A2AA7A /* Extras.plist */,
@@ -1129,7 +1112,6 @@
 				6BE3ED60179084BF00B1732D /* GLUT.framework */,
 				6BE3ED691790857900B1732D /* IOKit.framework */,
 				6BE3ED571790846800B1732D /* OpenGL.framework */,
-				6BE3ED5B1790849200B1732D /* Python.framework */,
 				6BE3ED641790850200B1732D /* QTKit.framework */,
 				6BE3ED5C1790849200B1732D /* QuartzCore.framework */,
 				6BE3ED501790842600B1732D /* QuickTime.framework */,
@@ -1443,14 +1425,11 @@
 				3155F1C717F884550064E4BD /* Images.xcassets in Resources */,
 				312D9ECF0D4D81A3006E384C /* About.strings in Resources */,
 				31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */,
-				31D21B9F0DBC07C300E970E1 /* DebugConsole.xib in Resources */,
 				31DAAF0B0DDE21BB00D06D0C /* Cursors.plist in Resources */,
 				31DAAF260DDE21EF00D06D0C /* cursors in Resources */,
 				31DAAF270DDE21EF00D06D0C /* sounds in Resources */,
 				3185C43B0E06027800528220 /* sparkle.pem in Resources */,
-				312EBAC80FD202ED00D65E22 /* debug_init.py in Resources */,
 				3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */,
-				31FE33AC101BBC4100C30CD1 /* debug_notification.py in Resources */,
 				31B654A21102B9EF004818AC /* Localizable.strings in Resources */,
 				31B654A31102B9EF004818AC /* Rendering.strings in Resources */,
 				31E933441127B02000188488 /* Welcome.xib in Resources */,
@@ -1655,7 +1634,6 @@
 				31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */,
 				316C37B40987227800AC2C8E /* RXCardState.mm in Sources */,
 				93FDAD3B098A789100D94CD0 /* BDAlias.m in Sources */,
-				93FDAD47098A78DE00D94CD0 /* RXDebugWindowController.mm in Sources */,
 				31588874098D7A120090A6B6 /* RXCardDescriptor.m in Sources */,
 				31863C5B0991AA28001A4A42 /* InterThreadMessaging.m in Sources */,
 				3153ED6409A3ED12002E1149 /* RXAudioRenderer.mm in Sources */,
