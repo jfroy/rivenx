@@ -39,8 +39,7 @@ static void initialize_dynamic_picture_system()
 
   glBindBuffer(GL_ARRAY_BUFFER, dynamic_picture_vertex_bo);
   glReportError();
-  if (GLEW_APPLE_flush_buffer_range)
-    glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+  glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
   glBufferData(GL_ARRAY_BUFFER, dynamic_picture_vertex_bo_picture_capacity * 16 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
   glReportError();
 
@@ -82,8 +81,7 @@ static void grow_dynamic_picture_vertex_bo()
   // bind the vertex buffer in the alternate slot and re-allocate it to the new capacity
   glBindBuffer(GL_ARRAY_BUFFER, alternate_bo);
   glReportError();
-  if (GLEW_APPLE_flush_buffer_range)
-    glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+  glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
   glBufferData(GL_ARRAY_BUFFER, dynamic_picture_vertex_bo_picture_capacity * 16 * sizeof(GLfloat), NULL, GL_DYNAMIC_DRAW);
   glReportError();
 
@@ -117,8 +115,7 @@ static void grow_dynamic_picture_vertex_bo()
   // bind the alternate buffer object again, then flush and unmap it
   glBindBuffer(GL_ARRAY_BUFFER, alternate_bo);
   glReportError();
-  if (GLEW_APPLE_flush_buffer_range)
-    glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, active_dynamic_pictures * 16 * sizeof(GLfloat));
+  glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, active_dynamic_pictures * 16 * sizeof(GLfloat));
   glUnmapBuffer(GL_ARRAY_BUFFER);
   glReportError();
 
@@ -178,8 +175,7 @@ static void free_dynamic_picture_index(GLuint index)
   glReportError();
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dynamic_picture_unpack_buffer);
   glReportError();
-  if (GLEW_APPLE_flush_buffer_range)
-    glBufferParameteriAPPLE(GL_PIXEL_UNPACK_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+  glBufferParameteriAPPLE(GL_PIXEL_UNPACK_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
   glBufferData(GL_PIXEL_UNPACK_BUFFER, 1024 * 1024 * 4, NULL, GL_DYNAMIC_DRAW);
   glReportError();
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -238,8 +234,7 @@ static void free_dynamic_picture_index(GLuint index)
   vertex_attributes[14] = sampling_rect.origin.x + sampling_rect.size.width;
   vertex_attributes[15] = sampling_rect.origin.y;
 
-  if (GLEW_APPLE_flush_buffer_range)
-    glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, index * 16 * sizeof(GLfloat), 16);
+  glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, index * 16 * sizeof(GLfloat), 16);
   glUnmapBuffer(GL_ARRAY_BUFFER);
   glReportError();
 

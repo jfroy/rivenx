@@ -89,7 +89,6 @@
 		315DA3CF118FED0F003E21BC /* patches in Resources */ = {isa = PBXBuildFile; fileRef = 315DA3CB118FED0F003E21BC /* patches */; };
 		316038FA100EE54600052849 /* RXScriptOpcodeStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 316038F9100EE54600052849 /* RXScriptOpcodeStream.m */; };
 		3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */ = {isa = PBXBuildFile; fileRef = 3160E1810FD3075300F18E86 /* tiny_marbles.png */; };
-		3165A576110BB13B004E71F1 /* glew.c in Sources */ = {isa = PBXBuildFile; fileRef = 3165A574110BB13B004E71F1 /* glew.c */; };
 		316721AD0D27F60A00FB2C0E /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		316721AF0D27F63000FB2C0E /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 316721D90D27FB3200FB2C0E /* integer_pair_hash.c */; };
@@ -425,8 +424,6 @@
 		316038F8100EE54600052849 /* RXScriptOpcodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptOpcodeStream.h; sourceTree = "<group>"; };
 		316038F9100EE54600052849 /* RXScriptOpcodeStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptOpcodeStream.m; sourceTree = "<group>"; };
 		3160E1810FD3075300F18E86 /* tiny_marbles.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = tiny_marbles.png; sourceTree = "<group>"; };
-		3165A574110BB13B004E71F1 /* glew.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = glew.c; sourceTree = "<group>"; };
-		3165A575110BB13B004E71F1 /* glew.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = glew.h; sourceTree = "<group>"; };
 		316721D80D27FB3200FB2C0E /* integer_pair_hash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = integer_pair_hash.h; sourceTree = "<group>"; };
 		316721D90D27FB3200FB2C0E /* integer_pair_hash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = integer_pair_hash.c; sourceTree = "<group>"; };
 		3167EF001115057C002DDE6D /* RXWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWindow.h; sourceTree = "<group>"; };
@@ -796,8 +793,6 @@
 		312F4D940DC263F400B3AF0D /* GL */ = {
 			isa = PBXGroup;
 			children = (
-				3165A574110BB13B004E71F1 /* glew.c */,
-				3165A575110BB13B004E71F1 /* glew.h */,
 				312F4D950DC263F400B3AF0D /* GL.h */,
 				312F4D960DC263F400B3AF0D /* GL_debug.c */,
 				312F4D970DC263F400B3AF0D /* GL_debug.h */,
@@ -1686,7 +1681,6 @@
 				31766E62102FAC02001762A9 /* RXDynamicBitfield.m in Sources */,
 				31CE92961033D576008B7717 /* RXInterpolator.m in Sources */,
 				31EE15E010745FA3006E196D /* RXScriptCompiler.m in Sources */,
-				3165A576110BB13B004E71F1 /* glew.c in Sources */,
 				3167EF021115057C002DDE6D /* RXWindow.m in Sources */,
 				31E9334A1127B0CE00188488 /* RXWelcomeWindowController.m in Sources */,
 				318AFC2F13BFA4B5000402B7 /* CAStreamBasicDescription.cpp in Sources */,

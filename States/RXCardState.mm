@@ -583,9 +583,8 @@ init_failure:
   glBindBuffer(GL_ARRAY_BUFFER, _hotspotDebugRenderVBO);
   glReportError();
 
-  // enable sub-range flushing if available
-  if (GLEW_APPLE_flush_buffer_range)
-    glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+  // enable sub-range flushing
+  glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
 
   // 4 lines per hotspot, 6 floats per line (coord[x, y] color[r, g, b, a])
   glBufferData(GL_ARRAY_BUFFER, (RX_MAX_RENDER_HOTSPOT + RX_MAX_INVENTORY_ITEMS) * 24 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
@@ -2425,8 +2424,7 @@ exit_render:
       }
     }
 
-    if (GLEW_APPLE_flush_buffer_range)
-      glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, [activeHotspots count] * 24 * sizeof(GLfloat));
+    glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, [activeHotspots count] * 24 * sizeof(GLfloat));
     glUnmapBuffer(GL_ARRAY_BUFFER);
     glReportError();
 

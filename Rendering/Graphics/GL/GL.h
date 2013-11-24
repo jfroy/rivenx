@@ -21,8 +21,6 @@ __BEGIN_DECLS
 #include <windows.h>
 #endif
 
-#include "glew.h"
-
 #if defined(__APPLE__)
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>

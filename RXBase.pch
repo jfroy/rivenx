@@ -7,9 +7,6 @@
  *
  */
 
-// include GLee first and everywhere in order for CGLMacro to work correctly
-#include "Rendering/Graphics/GL/glew.h"
-
 #include "Base/RXBase.h"
 #include "Base/RXBufferMacros.h"
 #include "Base/RXLogging.h"

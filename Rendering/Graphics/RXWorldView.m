@@ -57,7 +57,7 @@ static CVReturn rx_render_output_callback(CVDisplayLinkRef displayLink, const CV
 
 static NSOpenGLPixelFormatAttribute base_window_attribs[] = {NSOpenGLPFAWindow, NSOpenGLPFADoubleBuffer, NSOpenGLPFAColorSize, 24, NSOpenGLPFAAlphaSize, 8, };
 
-static NSString* required_extensions[] = {@"GL_APPLE_vertex_array_object", @"GL_ARB_texture_rectangle",
+static NSString* required_extensions[] = {@"GL_APPLE_vertex_array_object", @"GL_APPLE_flush_buffer_range", @"GL_ARB_texture_rectangle",
                                           @"GL_ARB_pixel_buffer_object",   @"GL_EXT_framebuffer_object", };
 
 + (BOOL)accessInstanceVariablesDirectly { return NO; }
@@ -301,9 +301,6 @@ static NSString* required_extensions[] = {@"GL_APPLE_vertex_array_object", @"GL_
 
   // make the rendering context current
   [_renderContext makeCurrentContext];
-
-  // initialize GLEW
-  glewInit();
 
   // create the state object for the rendering context and store it in the context's client context slot
   NSObject<RXOpenGLStateProtocol>* state = [[RXOpenGLState alloc] initWithContext:_renderContextCGL];
@@ -736,8 +733,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
   glGenBuffers(1, &_attribsVBO);
   glBindBuffer(GL_ARRAY_BUFFER, _attribsVBO);
   glReportError();
-  if (GLEW_APPLE_flush_buffer_range)
-    glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
+  glBufferParameteriAPPLE(GL_ARRAY_BUFFER, GL_BUFFER_FLUSHING_UNMAP_APPLE, GL_FALSE);
   glBufferData(GL_ARRAY_BUFFER, 32 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
   glReportError();
 
@@ -874,8 +870,7 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
   attribs[7].tex[0] = _glWidth;
   attribs[7].tex[1] = _glHeight;
 
-  if (GLEW_APPLE_flush_buffer_range)
-    glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 32 * sizeof(GLfloat));
+  glFlushMappedBufferRangeAPPLE(GL_ARRAY_BUFFER, 0, 32 * sizeof(GLfloat));
   glUnmapBuffer(GL_ARRAY_BUFFER);
   glReportError();
 
@@ -896,8 +891,6 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
   glDisable(GL_ALPHA_TEST);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_SCISSOR_TEST);
-  if (GLEW_ARB_multisample)
-    glDisable(GL_MULTISAMPLE_ARB);
 
   // pixel store state
   [RXGetContextState(cgl_ctx) setUnpackClientStorage:GL_TRUE];
@@ -912,9 +905,6 @@ extern CGError CGSAcceleratorForDisplayNumber(CGDirectDisplayID display, io_serv
   glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
   glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-  glHint(GL_FOG_HINT, GL_NICEST);
-  if (GLEW_APPLE_flush_buffer_range)
-    glHint(GL_TRANSFORM_HINT_APPLE, GL_NICEST);
 
   glReportError();
 }

@@ -12,6 +12,9 @@
 
 #import "GLShaderProgramManager.h"
 
+// ignore bad function cast errors in this file because of the shader API functions (which cast from handle to uint on OS X inside the CGL macros)
+#pragma clang diagnostic ignored "-Wbad-function-cast"
+
 NSString* const GLShaderCompileErrorDomain = @"GLShaderCompileErrorDomain";
 NSString* const GLShaderLinkErrorDomain = @"GLShaderLinkErrorDomain";
 
