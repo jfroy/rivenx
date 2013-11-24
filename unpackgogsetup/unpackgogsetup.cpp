@@ -9,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 #include <cassert>
 
@@ -517,7 +518,7 @@ int main(int argc, const char* argv[])
   assert(strcmp(banner, INNO_SETUP_SETUP_DATA_BANNER) == 0);
 
   // read the setup header
-  auto br = std::auto_ptr<BlockReaderLzma>(new BlockReaderLzma(fd, INNO_SETUP_SETUP_DATA_BANNER_OFFSET + sizeof(banner)));
+  auto br = std::unique_ptr<BlockReaderLzma>(new BlockReaderLzma(fd, INNO_SETUP_SETUP_DATA_BANNER_OFFSET + sizeof(banner)));
   auto setupBlockBuffer = br->read();
   StoredBlockHeader setupBlockHeader = br->header();
 
@@ -565,7 +566,7 @@ int main(int argc, const char* argv[])
   // read the file location block
   off_t fileLocationBlockOffset =
       INNO_SETUP_SETUP_DATA_BANNER_OFFSET + sizeof(banner) + sizeof(StoredBlockHeader) + setupBlockHeader.innerHeader.blockPayloadStoreSize;
-  br = std::auto_ptr<BlockReaderLzma>(new BlockReaderLzma(fd, fileLocationBlockOffset));
+  br = std::unique_ptr<BlockReaderLzma>(new BlockReaderLzma(fd, fileLocationBlockOffset));
   auto fileLocationBlockBuffer = br->read();
   br.reset();
 
@@ -641,7 +642,7 @@ int main(int argc, const char* argv[])
       }
     };
 
-    auto decompressor = std::auto_ptr<CompressedFileDecompressorLzma>(
+    auto decompressor = std::unique_ptr<CompressedFileDecompressorLzma>(
         new CompressedFileDecompressorLzma(fd, INNO_SETUP_FILE_DATA_OFFSET + fle.startOffset, fle.chunkCompressedSize, outputFD, outputProgress));
 
     ssize_t bytesWritten = decompressor->decompress();
