@@ -1849,7 +1849,7 @@
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
-					"ERROR_CLASS=MHKError",
+					"RX_ERROR_CLASS=MHKError",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1876,7 +1876,7 @@
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
-					"ERROR_CLASS=MHKError",
+					"RX_ERROR_CLASS=MHKError",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1903,7 +1903,7 @@
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
-					"ERROR_CLASS=MHKError",
+					"RX_ERROR_CLASS=MHKError",
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2433,7 +2433,7 @@
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
-					"ERROR_CLASS=RXError",
+					"RX_ERROR_CLASS=RXError",
 				);
 				INFOPLIST_FILE = "Riven X-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = binary;
@@ -2525,7 +2525,7 @@
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
-					"ERROR_CLASS=RXError",
+					"RX_ERROR_CLASS=RXError",
 				);
 				INFOPLIST_FILE = "Riven X-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = binary;
@@ -2548,7 +2548,7 @@
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
-					"ERROR_CLASS=RXError",
+					"RX_ERROR_CLASS=RXError",
 				);
 				INFOPLIST_FILE = "Riven X-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = binary;

@@ -10,19 +10,19 @@
 #import <Foundation/NSError.h>
 
 
-#ifndef ERROR_CLASS
-#define ERROR_CLASS NSError
+#ifndef RX_ERROR_CLASS
+#define RX_ERROR_CLASS NSError
 #endif
 
 #define ReturnWithError(errorDomain, errorCode, errorInfo, errorPtr)														\
 	do {																													\
-		if ((errorPtr)) *(errorPtr) = [ERROR_CLASS errorWithDomain:(errorDomain) code:(errorCode) userInfo:(errorInfo)];	\
+		if ((errorPtr)) *(errorPtr) = [RX_ERROR_CLASS errorWithDomain:(errorDomain) code:(errorCode) userInfo:(errorInfo)];	\
 		return;																												\
 	} while(0)
 
 #define ReturnValueWithError(value, errorDomain, errorCode, errorInfo, errorPtr)											\
 	do {																													\
-		if ((errorPtr)) *(errorPtr) = [ERROR_CLASS errorWithDomain:(errorDomain) code:(errorCode) userInfo:(errorInfo)];	\
+		if ((errorPtr)) *(errorPtr) = [RX_ERROR_CLASS errorWithDomain:(errorDomain) code:(errorCode) userInfo:(errorInfo)];	\
 		return (value);																										\
 	} while(0)
 
@@ -35,7 +35,7 @@
 
 #define SetErrorToPOSIXError(errorInfo, errorPtr)																			\
 	do {																													\
-		if ((errorPtr)) *(errorPtr) = [ERROR_CLASS errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:(errorInfo)];		\
+		if ((errorPtr)) *(errorPtr) = [RX_ERROR_CLASS errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:(errorInfo)];	\
 	} while(0)
 
 #define ReturnWithPOSIXError(errorInfo, errorPtr)                                                                           \
