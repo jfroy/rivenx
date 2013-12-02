@@ -1975,7 +1975,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
+				CODE_SIGN_IDENTITY = "Developer ID Application";
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
@@ -1995,7 +1995,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
+				CODE_SIGN_IDENTITY = "Developer ID Application";
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
@@ -2015,7 +2015,7 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application: Jean-Francois Roy";
+				CODE_SIGN_IDENTITY = "Developer ID Application";
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
