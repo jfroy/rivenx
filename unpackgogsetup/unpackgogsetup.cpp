@@ -617,19 +617,17 @@ int main(int argc, const char* argv[])
     StoredInnoFileLocationEntry& fle = fileLocationEntries[fe.locationEntry];
 
     // use the last component of the filename for the output
-    const char* filename_c = filename.c_str();
-    const char* filenameLastComponent = strrchr(filename_c, '\\');
-    if (filenameLastComponent)
-      filenameLastComponent += 1;
+    auto outputFilename = filename.substr(filename.find_last_of('\\'));
 
+    assert(outputFilename.size() > 0);
     assert(fle.chunkSubOffset == 0);
     assert(fle.flags & StoredInnoFileLocationEntry::Flags::chunkCompressed);
     assert((fle.flags & StoredInnoFileLocationEntry::Flags::callInstructionOptimized) == 0);
     assert((fle.flags & StoredInnoFileLocationEntry::Flags::chunkEncrypted) == 0);
 
-    std::cout << filenameLastComponent << std::endl;
+    std::cout << outputFilename << std::endl;
 
-    int outputFD = open(filenameLastComponent, O_CREAT | O_WRONLY, 0664);
+    int outputFD = open(outputFilename.c_str(), O_CREAT | O_WRONLY, 0664);
     assert(outputFD != -1);
 
     __block float nextThreshold = 0.1f;

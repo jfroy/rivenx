@@ -68,6 +68,10 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s)
   if (initialized)
     return;
 
+  // if there are no entries, return
+  if (file_table_count == 0)
+    return;
+
   // we'll sort an array of file table entry pointers
   MHK_file_table_entry** file_table_entry_table = (MHK_file_table_entry**)calloc(file_table_count, sizeof(MHK_file_table_entry*));
   if (!file_table_entry_table)
@@ -480,8 +484,7 @@ MHK_INLINE uint32_t compute_file_table_entry_length(MHK_file_table_entry* s)
   [self compute_file_lengths];
 
   // we don't need the global tables anymore
-  if (name_list)
-    free(name_list);
+  free(name_list);
   name_list = NULL;
 
   free(type_table);

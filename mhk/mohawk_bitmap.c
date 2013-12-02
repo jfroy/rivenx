@@ -96,12 +96,6 @@ static OSStatus _buffered_linear_read_fork(MHK_fork_io_buffer* io_buffer, const 
   return noErr;
 }
 
-static __inline__ void _free_vImage_Buffer(vImage_Buffer* buffer)
-{
-  if (buffer && buffer->data)
-    free(buffer->data);
-}
-
 OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* header, void* pixels, MHK_BITMAP_FORMAT format)
 {
   OSStatus err = noErr;
@@ -174,7 +168,7 @@ OSStatus read_raw_bgr_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_header* 
   err = noErr;
 
 AbortReadBGRPixels:
-  _free_vImage_Buffer(&file_buffer);
+  free(file_buffer.data);
   return err;
 }
 
@@ -194,6 +188,17 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
   fct_buffer.width = 256;
   fct_buffer.height = 1;
   fct_buffer.data = file_color_table_storage;
+
+  // storage for the indexed pixels
+  vImage_Buffer file_buffer;
+  file_buffer.rowBytes = header->bytes_per_row;
+  file_buffer.width = header->width;
+  file_buffer.height = header->height;
+  file_buffer.data = malloc(file_buffer.rowBytes * file_buffer.height);
+  if (file_buffer.data == NULL) {
+    err = kvImageMemoryAllocationError;
+    goto AbortReadIndexedPixels;
+  }
 
   // read the color table
   ByteCount bytes_read;
@@ -249,17 +254,6 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
   }
   }
 
-  // storage for the indexed pixels
-  vImage_Buffer file_buffer;
-  file_buffer.rowBytes = header->bytes_per_row;
-  file_buffer.width = header->width;
-  file_buffer.height = header->height;
-  file_buffer.data = malloc(file_buffer.rowBytes * file_buffer.height);
-  if (file_buffer.data == NULL) {
-    err = kvImageMemoryAllocationError;
-    goto AbortReadIndexedPixels;
-  }
-
   // advance the offset past the color table
   offset += bytes_read;
 
@@ -284,7 +278,7 @@ OSStatus read_raw_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITMAP_head
   err = noErr;
 
 AbortReadIndexedPixels:
-  _free_vImage_Buffer(&file_buffer);
+  free(file_buffer.data);
   return err;
 }
 
@@ -788,6 +782,6 @@ OSStatus read_compressed_indexed_pixels(SInt16 fork_ref, SInt64 offset, MHK_BITM
   err = noErr;
 
 AbortReadCompressedIndexedPixels:
-  _free_vImage_Buffer(&file_buffer);
+  free(file_buffer.data);
   return err;
 }
