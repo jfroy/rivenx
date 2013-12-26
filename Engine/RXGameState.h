@@ -8,7 +8,8 @@
 
 #import "Base/RXBase.h"
 
-#import "Engine/RXCardDescriptor.h"
+@class NSRecursiveLock;
+@class RXSimpleCardDescriptor;
 
 @interface RXGameState : NSObject <NSCoding> {
   NSMutableDictionary* _variables;

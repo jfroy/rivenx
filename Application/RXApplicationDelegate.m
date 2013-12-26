@@ -22,6 +22,7 @@
 
 #import "Application/RXApplicationDelegate.h"
 
+#import "Engine/RXCardDescriptor.h"
 #import "Engine/RXWorld.h"
 
 #import "Rendering/Graphics/RXWorldView.h"

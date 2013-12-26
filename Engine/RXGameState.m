@@ -7,8 +7,11 @@
 //
 
 #import "Engine/RXGameState.h"
-#import "Engine/RXWorldProtocol.h"
+
 #import "Base/RXErrorMacros.h"
+
+#import "Engine/RXWorldProtocol.h"
+#import "Engine/RXCardDescriptor.h"
 
 static const int RX_GAME_STATE_CURRENT_VERSION = 4;
 
