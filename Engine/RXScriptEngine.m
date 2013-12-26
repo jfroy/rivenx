@@ -32,7 +32,6 @@
 
 #import "Application/RXApplicationDelegate.h"
 
-static NSTimeInterval const kRunloopPeriod = 0.001;
 static useconds_t const kRunloopPeriodMicroseconds = 1000;
 
 static double const kRXLinkingBookDelay = 1.4;
@@ -83,38 +82,16 @@ CF_INLINE void rx_dispatch_command3(id target, rx_command_dispatch_entry_t* comm
   rx_dispatch_commandv(target, command, 3, args);
 }
 
-CF_INLINE void rx_dispatch_command4(id target, rx_command_dispatch_entry_t* command, uint16_t a1, uint16_t a2, uint16_t a3, uint16_t a4)
-{
-  uint16_t args[] = {a1, a2, a3, a4};
-  rx_dispatch_commandv(target, command, 4, args);
-}
-
-CF_INLINE void rx_dispatch_command5(id target, rx_command_dispatch_entry_t* command, uint16_t a1, uint16_t a2, uint16_t a3, uint16_t a4, uint16_t a5)
-{
-  uint16_t args[] = {a1, a2, a3, a4, a5};
-  rx_dispatch_commandv(target, command, 5, args);
-}
-
 #define DISPATCH_COMMANDV(COMMAND_INDEX, ARGC, ARGV) rx_dispatch_commandv(self, _riven_command_dispatch_table + COMMAND_INDEX, ARGC, ARGV)
 #define DISPATCH_COMMAND0(COMMAND_INDEX) rx_dispatch_command0(self, _riven_command_dispatch_table + COMMAND_INDEX)
 #define DISPATCH_COMMAND1(COMMAND_INDEX, ARG1) rx_dispatch_command1(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1)
 #define DISPATCH_COMMAND2(COMMAND_INDEX, ARG1, ARG2) rx_dispatch_command2(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2)
 #define DISPATCH_COMMAND3(COMMAND_INDEX, ARG1, ARG2, ARG3) rx_dispatch_command3(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3)
-#define DISPATCH_COMMAND4(COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4)                                                                                               \
-  rx_dispatch_command4(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4)
-#define DISPATCH_COMMAND5(COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4, ARG5)                                                                                         \
-  rx_dispatch_command5(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3, ARG4, ARG5)
 
 CF_INLINE void rx_dispatch_externalv(id target, NSString* external_name, uint16_t argc, uint16_t* argv)
 {
   rx_command_dispatch_entry_t* command = (rx_command_dispatch_entry_t*)NSMapGet(_riven_external_command_dispatch_map, [external_name lowercaseString]);
   command->imp(target, command->sel, argc, argv);
-}
-
-CF_INLINE void rx_dispatch_external0(id target, NSString* external_name)
-{
-  uint16_t args;
-  rx_dispatch_externalv(target, external_name, 0, &args);
 }
 
 CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_t a1)
