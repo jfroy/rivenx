@@ -55,28 +55,28 @@ static NSMapTable* _riven_external_command_dispatch_map;
 #define DEFINE_COMMAND(NAME) -(void)_external_##NAME : (const uint16_t)argc arguments : (const uint16_t*)argv
 #define COMMAND_SELECTOR(NAME) @selector(_external_##NAME:arguments:)
 
-CF_INLINE void rx_dispatch_commandv(id target, rx_command_dispatch_entry_t* command, uint16_t argc, uint16_t* argv)
+RX_INLINE void rx_dispatch_commandv(id target, rx_command_dispatch_entry_t* command, uint16_t argc, uint16_t* argv)
 { command->imp(target, command->sel, argc, argv); }
 
-CF_INLINE void rx_dispatch_command0(id target, rx_command_dispatch_entry_t* command)
+RX_INLINE void rx_dispatch_command0(id target, rx_command_dispatch_entry_t* command)
 {
   uint16_t args;
   rx_dispatch_commandv(target, command, 0, &args);
 }
 
-CF_INLINE void rx_dispatch_command1(id target, rx_command_dispatch_entry_t* command, uint16_t a1)
+RX_INLINE void rx_dispatch_command1(id target, rx_command_dispatch_entry_t* command, uint16_t a1)
 {
   uint16_t args[] = {a1};
   rx_dispatch_commandv(target, command, 1, args);
 }
 
-CF_INLINE void rx_dispatch_command2(id target, rx_command_dispatch_entry_t* command, uint16_t a1, uint16_t a2)
+RX_INLINE void rx_dispatch_command2(id target, rx_command_dispatch_entry_t* command, uint16_t a1, uint16_t a2)
 {
   uint16_t args[] = {a1, a2};
   rx_dispatch_commandv(target, command, 2, args);
 }
 
-CF_INLINE void rx_dispatch_command3(id target, rx_command_dispatch_entry_t* command, uint16_t a1, uint16_t a2, uint16_t a3)
+RX_INLINE void rx_dispatch_command3(id target, rx_command_dispatch_entry_t* command, uint16_t a1, uint16_t a2, uint16_t a3)
 {
   uint16_t args[] = {a1, a2, a3};
   rx_dispatch_commandv(target, command, 3, args);
@@ -88,13 +88,13 @@ CF_INLINE void rx_dispatch_command3(id target, rx_command_dispatch_entry_t* comm
 #define DISPATCH_COMMAND2(COMMAND_INDEX, ARG1, ARG2) rx_dispatch_command2(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2)
 #define DISPATCH_COMMAND3(COMMAND_INDEX, ARG1, ARG2, ARG3) rx_dispatch_command3(self, _riven_command_dispatch_table + COMMAND_INDEX, ARG1, ARG2, ARG3)
 
-CF_INLINE void rx_dispatch_externalv(id target, NSString* external_name, uint16_t argc, uint16_t* argv)
+RX_INLINE void rx_dispatch_externalv(id target, NSString* external_name, uint16_t argc, uint16_t* argv)
 {
   rx_command_dispatch_entry_t* command = (rx_command_dispatch_entry_t*)NSMapGet(_riven_external_command_dispatch_map, [external_name lowercaseString]);
   command->imp(target, command->sel, argc, argv);
 }
 
-CF_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_t a1)
+RX_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_t a1)
 {
   uint16_t args[] = {a1};
   rx_dispatch_externalv(target, external_name, 1, args);

@@ -96,7 +96,7 @@ struct rx_sfxe_record {
 
 #endif // RX_CORE_STRUCTURES_H
 
-CF_INLINE rx_core_rect_t rx_swap_core_rect(rx_core_rect_t r)
+RX_INLINE rx_core_rect_t rx_swap_core_rect(rx_core_rect_t r)
 {
   r.left = CFSwapInt16(r.left);
   r.top = CFSwapInt16(r.top);

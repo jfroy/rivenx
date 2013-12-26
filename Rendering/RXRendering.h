@@ -31,7 +31,7 @@ struct rx_point {
 };
 typedef struct rx_point rx_point_t;
 
-CF_INLINE rx_point_t RXPointMake(GLint x, GLint y)
+RX_INLINE rx_point_t RXPointMake(GLint x, GLint y)
 {
   rx_point_t point;
   point.x = x;
@@ -45,7 +45,7 @@ struct rx_size {
 };
 typedef struct rx_size rx_size_t;
 
-CF_INLINE rx_size_t RXSizeMake(GLsizei width, GLsizei height)
+RX_INLINE rx_size_t RXSizeMake(GLsizei width, GLsizei height)
 {
   rx_size_t size;
   size.width = width;
@@ -59,7 +59,7 @@ struct rx_rect {
 };
 typedef struct rx_rect rx_rect_t;
 
-CF_INLINE rx_rect_t RXRectMake(GLint x, GLint y, GLsizei width, GLsizei height)
+RX_INLINE rx_rect_t RXRectMake(GLint x, GLint y, GLsizei width, GLsizei height)
 {
   rx_rect_t rect;
   rect.origin = RXPointMake(x, y);
@@ -136,16 +136,16 @@ extern NSView<RXWorldViewProtocol>* g_worldView;
 
 #pragma mark -
 
-CF_INLINE NSObject<RXOpenGLStateProtocol>* RXGetContextState(CGLContextObj cgl_ctx)
+RX_INLINE NSObject<RXOpenGLStateProtocol>* RXGetContextState(CGLContextObj cgl_ctx)
 {
   NSObject<RXOpenGLStateProtocol>* state = nil;
   CGLGetParameter(cgl_ctx, kCGLCPClientStorage, (GLint*)&state);
   return state;
 }
 
-CF_INLINE rx_size_t RXGetGLViewportSize() { return [g_worldView viewportSize]; }
+RX_INLINE rx_size_t RXGetGLViewportSize() { return [g_worldView viewportSize]; }
 
-CF_INLINE rx_rect_t RXEffectiveRendererFrame()
+RX_INLINE rx_rect_t RXEffectiveRendererFrame()
 {
   // FIXME: need to cache the result of this function, since it should not change too often
   rx_size_t viewportSize = RXGetGLViewportSize();
@@ -175,7 +175,7 @@ CF_INLINE rx_rect_t RXEffectiveRendererFrame()
   return RXRectMake((viewportSize.width / 2) - (contentSize.width / 2), viewportSize.height - contentSize.height, contentSize.width, contentSize.height);
 }
 
-CF_INLINE NSRect RXRenderScaleRect()
+RX_INLINE NSRect RXRenderScaleRect()
 {
   rx_rect_t render_frame = RXEffectiveRendererFrame();
   float scale_x = (float)render_frame.size.width / (float)kRXCardViewportSize.width;
@@ -185,15 +185,15 @@ CF_INLINE NSRect RXRenderScaleRect()
 
 #pragma mark -
 
-CF_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) { return NSMakePoint((float)x, (float)y); }
+RX_INLINE NSPoint RXMakeNSPointFromPoint(uint16_t x, uint16_t y) { return NSMakePoint((float)x, (float)y); }
 
-CF_INLINE NSRect RXMakeCompositeDisplayRect(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
+RX_INLINE NSRect RXMakeCompositeDisplayRect(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom)
 { return NSMakeRect((float)left, (float)(kRXCardViewportSize.height - bottom), (float)(right - left), (float)(bottom - top)); }
 
-CF_INLINE NSRect RXMakeCompositeDisplayRectFromCoreRect(rx_core_rect_t rect)
+RX_INLINE NSRect RXMakeCompositeDisplayRectFromCoreRect(rx_core_rect_t rect)
 { return NSMakeRect((float)rect.left, (float)(kRXCardViewportSize.height - rect.bottom), (float)(rect.right - rect.left), (float)(rect.bottom - rect.top)); }
 
-CF_INLINE rx_core_rect_t RXMakeCoreRectFromCompositeDisplayRect(NSRect rect)
+RX_INLINE rx_core_rect_t RXMakeCoreRectFromCompositeDisplayRect(NSRect rect)
 {
   rx_core_rect_t r;
   r.left = rect.origin.x;
@@ -203,7 +203,7 @@ CF_INLINE rx_core_rect_t RXMakeCoreRectFromCompositeDisplayRect(NSRect rect)
   return r;
 }
 
-CF_INLINE NSRect RXTransformRectCoreToWorld(rx_core_rect_t rect)
+RX_INLINE NSRect RXTransformRectCoreToWorld(rx_core_rect_t rect)
 {
   NSRect scale_rect = RXRenderScaleRect();
   NSRect composite_rect = RXMakeCompositeDisplayRectFromCoreRect(rect);
@@ -216,7 +216,7 @@ CF_INLINE NSRect RXTransformRectCoreToWorld(rx_core_rect_t rect)
   return world_rect;
 }
 
-CF_INLINE rx_core_rect_t RXTransformRectWorldToCore(NSRect rect)
+RX_INLINE rx_core_rect_t RXTransformRectWorldToCore(NSRect rect)
 {
   NSRect scale_rect = RXRenderScaleRect();
 
@@ -257,7 +257,7 @@ struct _rx_render_dispatch {
   SEL sel;
 };
 typedef struct _rx_render_dispatch rx_render_dispatch_t;
-CF_INLINE rx_render_dispatch_t RXGetRenderImplementation(Class impClass, SEL sel)
+RX_INLINE rx_render_dispatch_t RXGetRenderImplementation(Class impClass, SEL sel)
 {
   rx_render_dispatch_t d;
   d.sel = sel;
@@ -273,7 +273,7 @@ struct _rx_renderinmainrt_dispatch {
   SEL sel;
 };
 typedef struct _rx_renderinmainrt_dispatch rx_renderinmainrt_dispatch_t;
-CF_INLINE rx_renderinmainrt_dispatch_t RXGetRenderInMainRTImplementation(Class impClass, SEL sel)
+RX_INLINE rx_renderinmainrt_dispatch_t RXGetRenderInMainRTImplementation(Class impClass, SEL sel)
 {
   rx_renderinmainrt_dispatch_t d;
   d.sel = sel;
@@ -289,7 +289,7 @@ struct _rx_post_flush_tasks_dispatch {
   SEL sel;
 };
 typedef struct _rx_post_flush_tasks_dispatch rx_post_flush_tasks_dispatch_t;
-CF_INLINE rx_post_flush_tasks_dispatch_t RXGetPostFlushTasksImplementation(Class impClass, SEL sel)
+RX_INLINE rx_post_flush_tasks_dispatch_t RXGetPostFlushTasksImplementation(Class impClass, SEL sel)
 {
   rx_post_flush_tasks_dispatch_t d;
   d.sel = sel;
@@ -306,7 +306,7 @@ struct _rx_renderer {
 };
 typedef struct _rx_renderer rx_renderer_t;
 
-CF_INLINE rx_renderer_t RXGetRenderer(id target)
+RX_INLINE rx_renderer_t RXGetRenderer(id target)
 {
   rx_renderer_t renderer;
   Class cls = [target class];
