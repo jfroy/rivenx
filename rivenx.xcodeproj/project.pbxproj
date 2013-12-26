@@ -153,6 +153,7 @@
 		319BBA18182598B700C4F8F8 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED541790844000B1732D /* ApplicationServices.framework */; };
 		319BDEFB186C8FF400C7B334 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 319BDEFA186C8FF400C7B334 /* libz.dylib */; };
 		319BDEFD186C900B00C7B334 /* liblzma.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 319BDEFC186C900B00C7B334 /* liblzma.a */; };
+		319BDF00186C92D000C7B334 /* random.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 319BDEFE186C92D000C7B334 /* random.cpp */; };
 		319C458109C138380031F95F /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
 		319C8C691155793D00DF3E7D /* Welcome.strings in Resources */ = {isa = PBXBuildFile; fileRef = 319C8C681155793D00DF3E7D /* Welcome.strings */; };
 		31A14B860F03F495006EFF93 /* AUOutputBL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B810F03F495006EFF93 /* AUOutputBL.cpp */; };
@@ -165,6 +166,7 @@
 		31A14C020F03F8EC006EFF93 /* CADebugger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C010F03F8EC006EFF93 /* CADebugger.cpp */; };
 		31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14C070F03F912006EFF93 /* CAComponentDescription.cpp */; };
 		31A1FA1D0E0B4AB800B2437A /* RXAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */; };
+		31A39A92186CDBA900A9E84D /* math.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A39A90186CDBA900A9E84D /* math.cpp */; };
 		31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A9F027094D2D0300C6A0AB /* RXRenderState.m */; };
 		31ADC95F14ADA17A004FB4AD /* unpackgogsetup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31ADC95E14ADA17A004FB4AD /* unpackgogsetup.cpp */; };
 		31B1128B17F4AC00005ABDB8 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 31B1128A17F4AC00005ABDB8 /* Sparkle.framework */; };
@@ -462,6 +464,8 @@
 		3196B9350D945CC100BC818E /* RXTiming.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = RXTiming.c; sourceTree = "<group>"; };
 		319BDEFA186C8FF400C7B334 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		319BDEFC186C900B00C7B334 /* liblzma.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblzma.a; path = xz/liblzma.a; sourceTree = "<group>"; };
+		319BDEFE186C92D000C7B334 /* random.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = random.cpp; sourceTree = "<group>"; };
+		319BDEFF186C92D000C7B334 /* random.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = random.h; sourceTree = "<group>"; };
 		319C457F09C1382F0031F95F /* VirtualRingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = VirtualRingBuffer.h; sourceTree = "<group>"; };
 		319C458009C1382F0031F95F /* VirtualRingBuffer.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = VirtualRingBuffer.m; sourceTree = "<group>"; };
 		319C8C591155787C00DF3E7D /* en */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Welcome.strings; sourceTree = "<group>"; };
@@ -476,6 +480,8 @@
 		31A14C070F03F912006EFF93 /* CAComponentDescription.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAComponentDescription.cpp; sourceTree = "<group>"; };
 		31A1FA1B0E0B4AB800B2437A /* RXAnimation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAnimation.h; sourceTree = "<group>"; };
 		31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXAnimation.m; sourceTree = "<group>"; };
+		31A39A90186CDBA900A9E84D /* math.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = math.cpp; sourceTree = "<group>"; };
+		31A39A91186CDBA900A9E84D /* math.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = math.h; sourceTree = "<group>"; };
 		31A9EF94094D285400C6A0AB /* RXBase.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXBase.pch; sourceTree = "<group>"; };
 		31A9F027094D2D0300C6A0AB /* RXRenderState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXRenderState.m; path = States/RXRenderState.m; sourceTree = "<group>"; };
 		31A9F03A094D2E2600C6A0AB /* RXRenderState.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = RXRenderState.h; path = States/RXRenderState.h; sourceTree = "<group>"; };
@@ -926,6 +932,10 @@
 				316721D80D27FB3200FB2C0E /* integer_pair_hash.h */,
 				318384ED153BD91D008CC9DC /* platform_info.mm */,
 				318384EE153BD91D008CC9DC /* platform_info.h */,
+				319BDEFF186C92D000C7B334 /* random.h */,
+				319BDEFE186C92D000C7B334 /* random.cpp */,
+				31A39A91186CDBA900A9E84D /* math.h */,
+				31A39A90186CDBA900A9E84D /* math.cpp */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -1592,6 +1602,7 @@
 				31A14B870F03F495006EFF93 /* CAAudioChannelLayout.cpp in Sources */,
 				31A14B880F03F495006EFF93 /* CAAudioChannelLayoutObject.cpp in Sources */,
 				31A14B940F03F51E006EFF93 /* CAXException.cpp in Sources */,
+				319BDF00186C92D000C7B334 /* random.cpp in Sources */,
 				31A14B970F03F527006EFF93 /* CAGuard.cpp in Sources */,
 				31A14BD80F03F568006EFF93 /* CAAudioUnit.cpp in Sources */,
 				31A14BF50F03F7D3006EFF93 /* CAComponent.cpp in Sources */,
@@ -1601,6 +1612,7 @@
 				31F4F0020F3533EF00A68652 /* RXScriptDecoding.m in Sources */,
 				31B1128D17F4B18D005ABDB8 /* RXVersionComparator.m in Sources */,
 				31F4F03C0F35461C00A68652 /* RXMovieProxy.m in Sources */,
+				31A39A92186CDBA900A9E84D /* math.cpp in Sources */,
 				316C38D70F46B22300EFB7FB /* CAAUParameter.cpp in Sources */,
 				316038FA100EE54600052849 /* RXScriptOpcodeStream.m in Sources */,
 				3186C9C3102E3CE0004E81D2 /* RXTextureBroker.m in Sources */,

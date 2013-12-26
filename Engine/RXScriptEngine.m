@@ -30,6 +30,8 @@
 #import "Rendering/Graphics/RXTransition.h"
 #import "Rendering/Graphics/RXDynamicPicture.h"
 
+#import "Utilities/random.h"
+
 #import "Application/RXApplicationDelegate.h"
 
 static useconds_t const kRunloopPeriodMicroseconds = 1000;
@@ -98,12 +100,6 @@ RX_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 {
   uint16_t args[] = {a1};
   rx_dispatch_externalv(target, external_name, 1, args);
-}
-
-CF_INLINE double rx_rnd_range(double lower, double upper)
-{
-  long r = random();
-  return ((double)r / RAND_MAX) * (upper - lower) + lower;
 }
 
 @implementation RXScriptEngine
@@ -705,7 +701,7 @@ CF_INLINE double rx_rnd_range(double lower, double upper)
 
     [event_timer invalidate];
     event_timer =
-        [NSTimer scheduledTimerWithTimeInterval:(random() % 33) + 1 target:self selector:@selector(_playCatherinePrisonMovie:) userInfo:nil repeats:NO];
+        [NSTimer scheduledTimerWithTimeInterval:rx_rnd_range(1, 33) target:self selector:@selector(_playCatherinePrisonMovie:) userInfo:nil repeats:NO];
   }
   // inside trap book card - schedule a deferred execution of _handleTrapBookLink on ourselves; also explicitly hide the mouse cursor for the sequence
   else if ([cdesc isCardWithRMAP:7940 stackName:@"aspit"]) {
@@ -2204,7 +2200,7 @@ DEFINE_COMMAND(xthideinventory)
 
 - (void)_flipPageWithTransitionDirection:(RXTransitionDirection)direction
 {
-  uint16_t page_sound = [_card dataSoundIDWithName:(random() % 2) ? @"aPage1" : @"aPage2"];
+  uint16_t page_sound = [_card dataSoundIDWithName:rx_rnd_bool() ? @"aPage1" : @"aPage2"];
   [self _playDataSoundWithID:page_sound gain:0.2f duration:NULL];
 
   RXTransition* transition =
@@ -3204,7 +3200,7 @@ DEFINE_COMMAND(xschool280_playwhark)
   RXGameState* state = [g_world gameState];
 
   // generate a random number between 1 and 10
-  uint16_t the_number = (random() % 10) + 1;
+  uint16_t the_number = rx_rnd_range(1, 10);
 #if defined(DEBUG)
   if (!_disableScriptLogging)
     RXLog(kRXLoggingScript, kRXLoggingLevelDebug, @"%@rolled a %hu", logPrefix, the_number);
@@ -4168,11 +4164,11 @@ static uint16_t const prison_activity_movies[3][8] = {{9, 10, 19, 19, 21, 21}, {
 
   uint16_t prison_mlst;
   if (cath_state == 1)
-    prison_mlst = prison_activity_movies[0][random() % 6];
+    prison_mlst = prison_activity_movies[0][rx_rnd_range(0, 5)];
   else if (cath_state == 2)
-    prison_mlst = prison_activity_movies[1][random() % 3];
+    prison_mlst = prison_activity_movies[1][rx_rnd_range(0, 2)];
   else if (cath_state == 3)
-    prison_mlst = prison_activity_movies[2][random() % 8];
+    prison_mlst = prison_activity_movies[2][rx_rnd_range(0, 7)];
   else
     abort();
 
@@ -4195,7 +4191,7 @@ static uint16_t const prison_activity_movies[3][8] = {{9, 10, 19, 19, 21, 21}, {
   NSTimeInterval delay;
   movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)(uintptr_t)30);
   QTGetTimeInterval([movie duration], &delay);
-  delay += (random() % 31) + (random() % 31);
+  delay += rx_rnd_range_normal_clamped(30, 15);
 
   [event_timer invalidate];
   event_timer = [NSTimer scheduledTimerWithTimeInterval:delay target:self selector:@selector(_playRandomPrisonActivityMovie:) userInfo:nil repeats:NO];
@@ -4209,7 +4205,7 @@ DEFINE_COMMAND(xglview_prisonon)
   [gs setUnsigned32:1 forKey:@"gLView"];
 
   // MLST 8 to 23 (16 movies) are the prison activity movies; pick one
-  uint16_t prison_mlst = (random() % 16) + 8;
+  uint16_t prison_mlst = rx_rnd_range(8, 23);
 
   // now need to select the correct viewer turn on movie and catherine state based on the selection above
   uintptr_t turnon_code;
@@ -4259,9 +4255,10 @@ DEFINE_COMMAND(xglview_prisonon)
   NSTimeInterval delay;
   if (movie) {
     QTGetTimeInterval([movie duration], &delay);
-    delay += (random() % 31) + (random() % 31);
-  } else
-    delay = 10.0 + (random() % 6) + (random() % 6);
+    delay += rx_rnd_range_normal_clamped(45, 15);
+  } else {
+    delay = rx_rnd_range_normal_clamped(13, 3);
+  }
 
   [event_timer invalidate];
   event_timer = [NSTimer scheduledTimerWithTimeInterval:delay target:self selector:@selector(_playRandomPrisonActivityMovie:) userInfo:nil repeats:NO];
@@ -4409,7 +4406,7 @@ DEFINE_COMMAND(xgrviewer)
   }
 
   // get a random solo index (there's 9 of them)
-  uint32_t whark_solo = (random() % 9) + 1;
+  uint32_t whark_solo = rx_rnd_range(1, 9);
 
   // play the solo
   uint16_t solo_sound = [whark_solo_card dataSoundIDWithName:[NSString stringWithFormat:@"gWharkSolo%d", whark_solo]];
@@ -4417,7 +4414,7 @@ DEFINE_COMMAND(xgrviewer)
 
   if (play_solo)
     // schedule the next one within the next 5 minutes but no sooner than in 2 minutes
-    event_timer = [NSTimer scheduledTimerWithTimeInterval:120 + (random() % 181)target:self selector:@selector(_playWharkSolo:) userInfo:nil repeats:NO];
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:120 + rx_rnd_range(0, 180) target:self selector:@selector(_playWharkSolo:) userInfo:nil repeats:NO];
   else {
     // we got here if played_whark_solo was NO (so we forced the solo to
     // play), but play_solo is NO, meaning we should not schedule another
@@ -4446,9 +4443,9 @@ DEFINE_COMMAND(xgwharksnd)
     return;
 
   if (!played_one_whark_solo)
-    event_timer = [NSTimer scheduledTimerWithTimeInterval:(random() % 6)target:self selector:@selector(_playWharkSolo:) userInfo:nil repeats:NO];
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:rx_rnd_range(0, 5) target:self selector:@selector(_playWharkSolo:) userInfo:nil repeats:NO];
   else
-    event_timer = [NSTimer scheduledTimerWithTimeInterval:120 + (random() % 181)target:self selector:@selector(_playWharkSolo:) userInfo:nil repeats:NO];
+    event_timer = [NSTimer scheduledTimerWithTimeInterval:120 + rx_rnd_range(0, 180) target:self selector:@selector(_playWharkSolo:) userInfo:nil repeats:NO];
 }
 
 DEFINE_COMMAND(xgplaywhark)
@@ -4476,9 +4473,9 @@ DEFINE_COMMAND(xgplaywhark)
   if (whark_visits == 1)
     mlst_index = 3; // first whark movie, where we get a good look at it
   else if (whark_visits == 2)
-    mlst_index = (random() % 2) + 4; // random 4 or 5
+    mlst_index = rx_rnd_range(4, 5); // random 4 or 5
   else if (whark_visits == 3)
-    mlst_index = (random() % 2) + 6; // random 6 or 7
+    mlst_index = rx_rnd_range(6, 7); // random 6 or 7
   else if (whark_visits == 4)
     mlst_index = 8; // he's pissed, hope that glass doesn't break
   else
@@ -4966,7 +4963,7 @@ DEFINE_COMMAND(xbaitplate)
 DEFINE_COMMAND(xbsettrap)
 {
   // compute a random catch delay - up to 1 minute, and no sooner than within 10 seconds
-  NSTimeInterval catch_delay = 10 + ((random() % 3001) / 60.0);
+  NSTimeInterval catch_delay = 10 + rx_rnd_range(0, 50);
 
   // remember the frog trap card, because we need to abort the catch frog event if we've switched to a different card
   frog_trap_scdesc = [[[_card descriptor] simpleDescriptor] retain];
@@ -5028,7 +5025,7 @@ DEFINE_COMMAND(xbfreeytram)
   else if (frog_movie == 2)
     mlst_index = 12;
   else
-    mlst_index = (random() % 3) + 13;
+    mlst_index = rx_rnd_range(13, 15);
 
   // activate the chosen MLST
   DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, mlst_index);
@@ -5252,7 +5249,7 @@ DEFINE_COMMAND(xtisland390_covercombo)
     return;
 
   // generate a random MLST index between 2 and 13 and activate it
-  uintptr_t mlst_index = (random() % 12) + 2;
+  uintptr_t mlst_index = rx_rnd_range(2, 13);
   DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST_AND_START, mlst_index);
 
   // get the movie's duration (the codes are the same as the MLST in that card)
@@ -5261,7 +5258,7 @@ DEFINE_COMMAND(xtisland390_covercombo)
   RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)mlst_index);
   if (movie)
     QTGetTimeInterval([movie duration], &delay);
-  delay += (random() % 21) + 38;
+  delay += 38 + rx_rnd_range(0, 20);
 
   // store the delay rvillagetime as µseconds
   [[g_world gameState] setUnsigned64:delay * 1E6 forKey:@"rvillagetime"];
@@ -5281,20 +5278,20 @@ DEFINE_COMMAND(xrwindowsetup)
   DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_SLST, 1);
 
   // 1/3 times we'll schedule a random prison window movie
-  uint32_t initial_guard_roll = random() % 3;
+  uint32_t initial_guard_roll = rx_rnd_range(0, 2);
   NSTimeInterval next_movie_delay;
   if (initial_guard_roll == 0 && ![gs unsigned32ForKey:@"rrichard"]) {
     // set rrebelview to 0 which will cause the card to paint the guard initially and play MLST 1
     [gs setUnsigned32:0 forKey:@"rrebelview"];
 
     // schedule the next movie in [0, 20] + 38 seconds
-    next_movie_delay = (random() % 21) + 38;
+    next_movie_delay = 38 + rx_rnd_range(0, 20);
   } else {
     // normal picture without a guard
     [gs setUnsigned32:1 forKey:@"rrebelview"];
 
     // schedule the next movie in [0, 20] seconds
-    next_movie_delay = random() % 21;
+    next_movie_delay = rx_rnd_range(0, 20);
   }
 
   // store the delay rvillagetime as µseconds
@@ -5644,11 +5641,12 @@ static const uint16_t cath_prison_movie_mlsts2[] = {9, 10, 12, 13};
   uint16_t movie_mlst;
   if ([gs unsignedShortForKey:@"pcathcheck"] == 0) {
     [gs setUnsigned32:1 forKey:@"pcathcheck"];
-    movie_mlst = cath_prison_movie_mlsts0[random() % 4];
-  } else if ([gs unsignedShortForKey:@"acathstate"] == 1)
-    movie_mlst = cath_prison_movie_mlsts1[random() % 2];
-  else
-    movie_mlst = cath_prison_movie_mlsts2[random() % 4];
+    movie_mlst = cath_prison_movie_mlsts0[rx_rnd_range(0, 3)];
+  } else if ([gs unsignedShortForKey:@"acathstate"] == 1) {
+    movie_mlst = cath_prison_movie_mlsts1[rx_rnd_range(0, 1)];
+  } else {
+    movie_mlst = cath_prison_movie_mlsts2[rx_rnd_range(0, 3)];
+  }
 
   // update catherine's state based on the selected movie (so that the
   // next selected movie is spacially coherent)
@@ -5667,7 +5665,7 @@ static const uint16_t cath_prison_movie_mlsts2[] = {9, 10, 12, 13};
   RXMovie* movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)movie_code);
   if (movie)
     QTGetTimeInterval([movie duration], &delay);
-  delay += random() % 121;
+  delay += rx_rnd_range(0, 120); // maybe make this a normal distribution
 
   // store the delay pcathtime as µseconds
   [[g_world gameState] setUnsigned64:delay * 1E6 forKey:@"pcathtime"];
@@ -5682,7 +5680,7 @@ static const uint16_t cath_prison_movie_mlsts2[] = {9, 10, 12, 13};
 - (void)_setPlayBeetleRandomly
 {
   // play a beetle movie 1 out of 4 times
-  [[g_world gameState] setUnsigned32:(random() % 4) ? 0 : 1 forKey:@"jplaybeetle"];
+  [[g_world gameState] setUnsigned32:(rx_rnd_range(0, 3) == 0) ? 1 : 0 forKey:@"jplaybeetle"];
 }
 
 DEFINE_COMMAND(xjplaybeetle_550) { [self _setPlayBeetleRandomly]; }
@@ -5791,7 +5789,7 @@ DEFINE_COMMAND(xjplaybeetle_1450)
 #endif
 
   // select a random movie code between 1 and 3 and get the corresponding movie object
-  uint16_t movie_code = (random() % 3) + 1;
+  uint16_t movie_code = rx_rnd_range(1, 3);
   movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)(uintptr_t)movie_code);
 
   // block on the movie or until the mouse is pressed
@@ -5834,8 +5832,8 @@ DEFINE_COMMAND(xjplaybeetle_1450)
   [logPrefix appendString:@"    "];
 #endif
 
-  // select a random movie code between 2 and 4 and get the corresponding movie object
-  long r = random() % 6;
+  // select a random movie code between 2 and 4 (with a bias toward 4) and get the corresponding movie object
+  long r = rx_rnd_range(0, 5);
   uint16_t movie_code;
   if (r == 4)
     movie_code = 2;
@@ -5886,7 +5884,7 @@ DEFINE_COMMAND(xjplaybeetle_1450)
 #endif
 
   // select a random movie code between 3 and 5 and get the corresponding movie object
-  uint16_t movie_code = (random() % 3) + 3;
+  uint16_t movie_code = rx_rnd_range(3, 5);
   movie = (RXMovie*)NSMapGet(code_movie_map, (const void*)(uintptr_t)movie_code);
 
   // block on the movie or until the mouse is pressed
@@ -5929,9 +5927,8 @@ DEFINE_COMMAND(xjplaybeetle_1450)
   [logPrefix appendString:@"    "];
 #endif
 
-  // select a random MLST between 3 and 8 and play the movie blocking (the movie
-  // codes match the MLST index)
-  uint16_t movie_mlst = (random() % 6) + 3;
+  // select a random MLST between 3 and 8 and play the movie blocking (the movie codes match the MLST index)
+  uint16_t movie_mlst = rx_rnd_range(3, 8);
   DISPATCH_COMMAND1(RX_COMMAND_ACTIVATE_MLST, movie_mlst);
   DISPATCH_COMMAND1(RX_COMMAND_START_MOVIE_BLOCKING, movie_mlst);
 

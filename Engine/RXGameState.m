@@ -13,6 +13,8 @@
 #import "Engine/RXWorldProtocol.h"
 #import "Engine/RXCardDescriptor.h"
 
+#import "Utilities/random.h"
+
 static const int RX_GAME_STATE_CURRENT_VERSION = 4;
 
 // 1-2-3-4-5
@@ -66,23 +68,23 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
 
 - (uint32_t)_generateDomeCombination
 {
-  uint8_t domecombo1 = random() % 25;
+  uint8_t domecombo1 = rx_rnd_range(0, 24);
 
-  uint8_t domecombo2 = random() % 25;
+  uint8_t domecombo2 = rx_rnd_range(0, 24);
   while (domecombo2 == domecombo1)
-    domecombo2 = random() % 25;
+    domecombo2 = rx_rnd_range(0, 24);
 
-  uint8_t domecombo3 = random() % 25;
+  uint8_t domecombo3 = rx_rnd_range(0, 24);
   while (domecombo3 == domecombo1 || domecombo3 == domecombo2)
-    domecombo3 = random() % 25;
+    domecombo3 = rx_rnd_range(0, 24);
 
-  uint8_t domecombo4 = random() % 25;
+  uint8_t domecombo4 = rx_rnd_range(0, 24);
   while (domecombo4 == domecombo1 || domecombo4 == domecombo2 || domecombo4 == domecombo3)
-    domecombo4 = random() % 25;
+    domecombo4 = rx_rnd_range(0, 24);
 
-  uint8_t domecombo5 = random() % 25;
+  uint8_t domecombo5 = rx_rnd_range(0, 24);
   while (domecombo5 == domecombo1 || domecombo5 == domecombo2 || domecombo5 == domecombo3 || domecombo5 == domecombo4)
-    domecombo5 = random() % 25;
+    domecombo5 = rx_rnd_range(0, 24);
 
   return (1 << (24 - domecombo1)) | (1 << (24 - domecombo2)) | (1 << (24 - domecombo3)) | (1 << (24 - domecombo4)) | (1 << (24 - domecombo5));
 }
@@ -90,22 +92,22 @@ static const uint32_t domecombo_bad1 = (1 << 24) | (1 << 23) | (1 << 22) | (1 <<
 - (uint32_t)_generateTelescopeCombination
 {
   // first digit of the combination is stored in the lsb (3 bits per number)
-  uint32_t combo = (random() % 5) + 1;
-  combo = (combo << 3) | ((random() % 5) + 1);
-  combo = (combo << 3) | ((random() % 5) + 1);
-  combo = (combo << 3) | ((random() % 5) + 1);
-  combo = (combo << 3) | ((random() % 5) + 1);
+  uint32_t combo = rx_rnd_range(1, 5);
+  combo = (combo << 3) | rx_rnd_range(1, 5);
+  combo = (combo << 3) | rx_rnd_range(1, 5);
+  combo = (combo << 3) | rx_rnd_range(1, 5);
+  combo = (combo << 3) | rx_rnd_range(1, 5);
   return combo;
 }
 
 - (uint32_t)_generatePrisonCombination
 {
   // first digit of the combination is stored in the lsb (2 bits per number)
-  uint32_t combo = (random() % 3) + 1;
-  combo = (combo << 2) | ((random() % 3) + 1);
-  combo = (combo << 2) | ((random() % 3) + 1);
-  combo = (combo << 2) | ((random() % 3) + 1);
-  combo = (combo << 2) | ((random() % 3) + 1);
+  uint32_t combo = rx_rnd_range(1, 3);
+  combo = (combo << 2) | rx_rnd_range(1, 3);
+  combo = (combo << 2) | rx_rnd_range(1, 3);
+  combo = (combo << 2) | rx_rnd_range(1, 3);
+  combo = (combo << 2) | rx_rnd_range(1, 3);
   return combo;
 }
 

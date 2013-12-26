@@ -162,9 +162,6 @@ NSObject<RXWorldProtocol>* g_world = nil;
           [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"],
           [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]);
 
-  // seed random
-  srandom((unsigned)time(NULL));
-
   // initialize the engine variables
   _engineVariablesLock = OS_SPINLOCK_INIT;
   [self _initEngineVariables];
