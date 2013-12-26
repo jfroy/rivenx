@@ -35,19 +35,19 @@ namespace RX {
 
 class AudioFileSource : public AudioSourceBase {
 public:
-  AudioFileSource(const char* path) throw(CAXException);
-  virtual ~AudioFileSource() throw(CAXException);
+  AudioFileSource(const char* path) noexcept(false);
+  virtual ~AudioFileSource() noexcept(false);
 
-  inline Float64 GetDuration() const throw() { return fileDuration; }
+  inline Float64 GetDuration() const noexcept { return fileDuration; }
 
 protected:
-  virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw();
+  virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) noexcept;
 
-  virtual void HandleAttach() throw(CAXException);
-  virtual void HandleDetach() throw(CAXException);
+  virtual void HandleAttach() noexcept(false);
+  virtual void HandleDetach() noexcept(false);
 
-  virtual bool Enable() throw(CAXException);
-  virtual bool Disable() throw(CAXException);
+  virtual bool Enable() noexcept(false);
+  virtual bool Disable() noexcept(false);
 
 private:
   AudioFileID audioFile;
@@ -56,7 +56,7 @@ private:
   CAAudioUnit file_player_au;
 };
 
-AudioFileSource::AudioFileSource(const char* path) throw(CAXException)
+AudioFileSource::AudioFileSource(const char* path) noexcept(false)
 {
   CFURLRef fileURL = CFURLCreateFromFileSystemRepresentation(NULL, (const UInt8*)path, strlen(path) + 1, false);
   XThrowIfError(AudioFileOpenURL(fileURL, kAudioFileReadPermission, 0, &audioFile), "AudioFileOpenURL");
@@ -83,14 +83,14 @@ AudioFileSource::AudioFileSource(const char* path) throw(CAXException)
   printf("\n");
 }
 
-AudioFileSource::~AudioFileSource() throw(CAXException)
+AudioFileSource::~AudioFileSource() noexcept(false)
 {
   printf("<AudioFileSource: 0x%p>: deallocating\n", this);
   Finalize();
 }
 
 OSStatus AudioFileSource::Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames,
-                                 AudioBufferList* ioData) throw()
+                                 AudioBufferList* ioData) noexcept
 {
   if (!Enabled()) {
     for (UInt32 bufferIndex = 0; bufferIndex < ioData->mNumberBuffers; bufferIndex++)
@@ -102,7 +102,7 @@ OSStatus AudioFileSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
   return file_player_au.Render(ioActionFlags, inTimeStamp, 0, inNumberFrames, ioData);
 }
 
-void AudioFileSource::HandleAttach() throw(CAXException)
+void AudioFileSource::HandleAttach() noexcept(false)
 {
   printf("<AudioFileSource: 0x%p>: HandleAttach()\n", this);
 
@@ -160,15 +160,15 @@ void AudioFileSource::HandleAttach() throw(CAXException)
                 "file_player_au.SetProperty for kAudioUnitProperty_ScheduleStartTimeStamp");
 }
 
-void AudioFileSource::HandleDetach() throw(CAXException)
+void AudioFileSource::HandleDetach() noexcept(false)
 {
   printf("<AudioFileSource: 0x%p>: HandleDetach()\n", this);
   file_player_au.Uninitialize();
 }
 
-bool AudioFileSource::Enable() throw(CAXException) { return true; }
+bool AudioFileSource::Enable() noexcept(false) { return true; }
 
-bool AudioFileSource::Disable() throw(CAXException) { return true; }
+bool AudioFileSource::Disable() noexcept(false) { return true; }
 }
 
 #if RAMP_TESTS

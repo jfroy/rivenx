@@ -67,7 +67,7 @@ OSStatus AudioRenderer::MixerRenderNotifyCallback(void* inRefCon, AudioUnitRende
 
 #pragma mark -
 
-AudioRenderer::AudioRenderer() throw(CAXException)
+AudioRenderer::AudioRenderer() noexcept(false)
     : graph(0), output(0), mixer(0), _automaticGraphUpdates(true), _graphUpdateNeeded(false), sourceLimit(0), sourceCount(0), busNodeVector(0),
       busAllocationVector(0)
 {
@@ -77,33 +77,33 @@ AudioRenderer::AudioRenderer() throw(CAXException)
 
 AudioRenderer::AudioRenderer(const AudioRenderer& c) {}
 
-AudioRenderer::~AudioRenderer() throw(CAXException)
+AudioRenderer::~AudioRenderer() noexcept(false)
 {
   // FIXME: explicitly detach any attached sources
   TeardownGraph();
 }
 
-void AudioRenderer::Initialize() throw(CAXException) { XThrowIfError(AUGraphInitialize(graph), "AUGraphInitialize"); }
+void AudioRenderer::Initialize() noexcept(false) { XThrowIfError(AUGraphInitialize(graph), "AUGraphInitialize"); }
 
-bool AudioRenderer::IsInitialized() const throw(CAXException)
+bool AudioRenderer::IsInitialized() const noexcept(false)
 {
   Boolean isInitialized = false;
   XThrowIfError(AUGraphIsInitialized(graph, &isInitialized), "AUGraphIsInitialized");
   return static_cast<bool>(isInitialized);
 }
 
-void AudioRenderer::Start() throw(CAXException) { XThrowIfError(AUGraphStart(graph), "AUGraphStart"); }
+void AudioRenderer::Start() noexcept(false) { XThrowIfError(AUGraphStart(graph), "AUGraphStart"); }
 
-void AudioRenderer::Stop() throw(CAXException) { XThrowIfError(AUGraphStop(graph), "AUGraphStop"); }
+void AudioRenderer::Stop() noexcept(false) { XThrowIfError(AUGraphStop(graph), "AUGraphStop"); }
 
-bool AudioRenderer::IsRunning() const throw(CAXException)
+bool AudioRenderer::IsRunning() const noexcept(false)
 {
   Boolean isRunning = false;
   XThrowIfError(AUGraphIsRunning(graph, &isRunning), "AUGraphIsRunning");
   return static_cast<bool>(isRunning);
 }
 
-bool AudioRenderer::_must_update_graph_predicate() throw(CAXException)
+bool AudioRenderer::_must_update_graph_predicate() noexcept(false)
 {
   if (_automaticGraphUpdates) {
     _graphUpdateNeeded = false;
@@ -114,17 +114,17 @@ bool AudioRenderer::_must_update_graph_predicate() throw(CAXException)
   }
 }
 
-Float32 AudioRenderer::Gain() const throw(CAXException)
+Float32 AudioRenderer::Gain() const noexcept(false)
 {
   Float32 volume;
   XThrowIfError(AudioUnitGetParameter(*mixer, kStereoMixerParam_Volume, kAudioUnitScope_Output, 0, &volume), "AudioUnitGetParameter");
   return volume;
 }
 
-void AudioRenderer::SetGain(Float32 gain) throw(CAXException)
+void AudioRenderer::SetGain(Float32 gain) noexcept(false)
 { XThrowIfError(AudioUnitSetParameter(*mixer, kStereoMixerParam_Volume, kAudioUnitScope_Output, 0, gain, 0), "AudioUnitSetParameter"); }
 
-void AudioRenderer::SetAutomaticGraphUpdates(bool b) throw()
+void AudioRenderer::SetAutomaticGraphUpdates(bool b) noexcept
 {
   // if we're enabling automatic updates and an update is required, do it now
   if (b && _graphUpdateNeeded) {
@@ -145,7 +145,7 @@ void AudioRenderer::SetAutomaticGraphUpdates(bool b) throw()
     _graphUpdateNeeded = false;
 }
 
-bool AudioRenderer::AttachSource(AudioSourceBase& source) throw(CAXException)
+bool AudioRenderer::AttachSource(AudioSourceBase& source) noexcept(false)
 {
   const AudioSourceBase* sourcePointer = &source;
   CFArrayRef temp = CFArrayCreate(NULL, reinterpret_cast<const void**>(&sourcePointer), 1, NULL);
@@ -154,7 +154,7 @@ bool AudioRenderer::AttachSource(AudioSourceBase& source) throw(CAXException)
   return attached > 0;
 }
 
-void AudioRenderer::DetachSource(AudioSourceBase& source) throw(CAXException)
+void AudioRenderer::DetachSource(AudioSourceBase& source) noexcept(false)
 {
   const AudioSourceBase* sourcePointer = &source;
   CFArrayRef temp = CFArrayCreate(NULL, reinterpret_cast<const void**>(&sourcePointer), 1, NULL);
@@ -162,7 +162,7 @@ void AudioRenderer::DetachSource(AudioSourceBase& source) throw(CAXException)
   CFRelease(temp);
 }
 
-UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw(CAXException)
+UInt32 AudioRenderer::AttachSources(CFArrayRef sources) noexcept(false)
 {
   XThrowIf(sources == NULL, paramErr, "AudioRenderer::AttachSources (sources == NULL)");
   UInt32 sourceIndex = 0;
@@ -299,7 +299,7 @@ UInt32 AudioRenderer::AttachSources(CFArrayRef sources) throw(CAXException)
   return sourceIndex;
 }
 
-void AudioRenderer::DetachSources(CFArrayRef sources) throw(CAXException)
+void AudioRenderer::DetachSources(CFArrayRef sources) noexcept(false)
 {
   XThrowIf(sources == 0, paramErr, "AudioRenderer::DetachSources");
   UInt32 count = CFArrayGetCount(sources);
@@ -364,14 +364,14 @@ void AudioRenderer::DetachSources(CFArrayRef sources) throw(CAXException)
   delete[] busToRecycle;
 }
 
-Float32 AudioRenderer::SourceGain(AudioSourceBase& source) const throw(CAXException)
+Float32 AudioRenderer::SourceGain(AudioSourceBase& source) const noexcept(false)
 {
   Float32 value;
   XThrowIfError(mixer->GetParameter(kStereoMixerParam_Volume, kAudioUnitScope_Input, source.bus, value), "mixer->GetParameter kStereoMixerParam_Volume");
   return powf(value, 3.0f);
 }
 
-Float32 AudioRenderer::SourcePan(AudioSourceBase& source) const throw(CAXException)
+Float32 AudioRenderer::SourcePan(AudioSourceBase& source) const noexcept(false)
 {
   // get the raw value
   Float32 value;
@@ -379,11 +379,11 @@ Float32 AudioRenderer::SourcePan(AudioSourceBase& source) const throw(CAXExcepti
   return value;
 }
 
-void AudioRenderer::SetSourceGain(AudioSourceBase& source, Float32 gain) throw(CAXException) { RampSourceGain(source, gain, 0.0); }
+void AudioRenderer::SetSourceGain(AudioSourceBase& source, Float32 gain) noexcept(false) { RampSourceGain(source, gain, 0.0); }
 
-void AudioRenderer::SetSourcePan(AudioSourceBase& source, Float32 pan) throw(CAXException) { RampSourcePan(source, pan, 0.0); }
+void AudioRenderer::SetSourcePan(AudioSourceBase& source, Float32 pan) noexcept(false) { RampSourcePan(source, pan, 0.0); }
 
-void AudioRenderer::RampSourceGain(AudioSourceBase& source, Float32 value, Float64 duration) throw(CAXException)
+void AudioRenderer::RampSourceGain(AudioSourceBase& source, Float32 value, Float64 duration) noexcept(false)
 {
   AudioSourceBase* source_ptr = &source;
   CFArrayRef sources = CFArrayCreate(NULL, (const void**)&source_ptr, 1, &g_weakAudioSourceBaseArrayCallbacks);
@@ -393,7 +393,7 @@ void AudioRenderer::RampSourceGain(AudioSourceBase& source, Float32 value, Float
   CFRelease(sources);
 }
 
-void AudioRenderer::RampSourcePan(AudioSourceBase& source, Float32 value, Float64 duration) throw(CAXException)
+void AudioRenderer::RampSourcePan(AudioSourceBase& source, Float32 value, Float64 duration) noexcept(false)
 {
   AudioSourceBase* source_ptr = &source;
   CFArrayRef sources = CFArrayCreate(NULL, (const void**)&source_ptr, 1, &g_weakAudioSourceBaseArrayCallbacks);
@@ -403,30 +403,30 @@ void AudioRenderer::RampSourcePan(AudioSourceBase& source, Float32 value, Float6
   CFRelease(sources);
 }
 
-void AudioRenderer::RampSourcesGain(CFArrayRef sources, Float32 value, Float64 duration) throw(CAXException)
+void AudioRenderer::RampSourcesGain(CFArrayRef sources, Float32 value, Float64 duration) noexcept(false)
 {
   std::vector<Float32> values = std::vector<Float32>(CFArrayGetCount(sources), value);
   std::vector<Float64> durations = std::vector<Float64>(CFArrayGetCount(sources), duration);
   RampMixerParameter(sources, kStereoMixerParam_Volume, values, durations);
 }
 
-void AudioRenderer::RampSourcesPan(CFArrayRef sources, Float32 value, Float64 duration) throw(CAXException)
+void AudioRenderer::RampSourcesPan(CFArrayRef sources, Float32 value, Float64 duration) noexcept(false)
 {
   std::vector<Float32> values = std::vector<Float32>(CFArrayGetCount(sources), value);
   std::vector<Float64> durations = std::vector<Float64>(CFArrayGetCount(sources), duration);
   RampMixerParameter(sources, kStereoMixerParam_Pan, values, durations);
 }
 
-void AudioRenderer::RampSourcesGain(CFArrayRef sources, std::vector<Float32> values, std::vector<Float64> durations) throw(CAXException)
+void AudioRenderer::RampSourcesGain(CFArrayRef sources, std::vector<Float32> values, std::vector<Float64> durations) noexcept(false)
 { RampMixerParameter(sources, kStereoMixerParam_Volume, values, durations); }
 
-void AudioRenderer::RampSourcesPan(CFArrayRef sources, std::vector<Float32> values, std::vector<Float64> durations) throw(CAXException)
+void AudioRenderer::RampSourcesPan(CFArrayRef sources, std::vector<Float32> values, std::vector<Float64> durations) noexcept(false)
 { RampMixerParameter(sources, kStereoMixerParam_Pan, values, durations); }
 
 #pragma mark -
 
 void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID parameter_id, std::vector<Float32>& values,
-                                       std::vector<Float64>& durations) throw(CAXException)
+                                       std::vector<Float64>& durations) noexcept(false)
 {
   XThrowIf(CFArrayGetCount(sources) != (CFIndex)values.size(), paramErr,
            "AudioRenderer::RampMixerParameter (CFArrayGetCount(sources) != (CFIndex)values.size())");
@@ -495,7 +495,7 @@ void AudioRenderer::RampMixerParameter(CFArrayRef sources, AudioUnitParameterID 
   }
 }
 
-OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) throw()
+OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) noexcept
 {
   OSStatus err = noErr;
 
@@ -634,7 +634,7 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
   return noErr;
 }
 
-OSStatus AudioRenderer::MixerPostRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) throw() { return noErr; }
+OSStatus AudioRenderer::MixerPostRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) noexcept { return noErr; }
 
 void AudioRenderer::CreateGraph()
 {

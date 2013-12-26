@@ -29,40 +29,40 @@ public:
   static OSStatus RXCardAudioSourceRenderCallback(void* inRefCon, AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp,
                                                   UInt32 inBusNumber, UInt32 inNumberFrames, AudioBufferList* ioData);
 
-  CardAudioSource(id<MHKAudioDecompression> decompressor, float gain, float pan, bool loop) throw(CAXException);
-  virtual ~CardAudioSource() throw(CAXException);
+  CardAudioSource(id<MHKAudioDecompression> decompressor, float gain, float pan, bool loop) noexcept(false);
+  virtual ~CardAudioSource() noexcept(false);
 
   // rendering
-  void RenderTask() throw();
-  void Reset() throw();
+  void RenderTask() noexcept;
+  void Reset() noexcept;
 
   // info
-  inline int64_t FrameCount() const throw() { return [_decompressor frameCount]; }
-  inline double Duration() const throw() { return [_decompressor frameCount] / format.mSampleRate; }
+  inline int64_t FrameCount() const noexcept { return [_decompressor frameCount]; }
+  inline double Duration() const noexcept { return [_decompressor frameCount] / format.mSampleRate; }
 
   // nominal gain
-  inline float NominalGain() const throw() { return _gain; }
-  inline void SetNominalGain(float g) throw() { _gain = g; }
+  inline float NominalGain() const noexcept { return _gain; }
+  inline void SetNominalGain(float g) noexcept { _gain = g; }
 
   // nominal pan
-  inline float NominalPan() const throw() { return _pan; }
-  inline void SetNominalPan(float p) throw() { _pan = p; }
+  inline float NominalPan() const noexcept { return _pan; }
+  inline void SetNominalPan(float p) noexcept { _pan = p; }
 
   // looping
-  inline bool Looping() const throw() { return _loop; }
-  inline void SetLooping(bool loop) throw() { _loop = loop; }
+  inline bool Looping() const noexcept { return _loop; }
+  inline void SetLooping(bool loop) noexcept { _loop = loop; }
 
 protected:
-  virtual void HandleAttach() throw(CAXException);
-  virtual void HandleDetach() throw(CAXException);
+  virtual void HandleAttach() noexcept(false);
+  virtual void HandleDetach() noexcept(false);
 
-  virtual bool Enable() throw(CAXException);
-  virtual bool Disable() throw(CAXException);
+  virtual bool Enable() noexcept(false);
+  virtual bool Disable() noexcept(false);
 
-  virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw();
+  virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) noexcept;
 
 private:
-  void task(uint32_t byte_limit) throw();
+  void task(uint32_t byte_limit) noexcept;
 
   id<MHKAudioDecompression> _decompressor;
   float _gain;

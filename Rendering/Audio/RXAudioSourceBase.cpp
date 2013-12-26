@@ -21,22 +21,22 @@ OSStatus AudioSourceBase::AudioSourceRenderCallback(void* inRefCon, AudioUnitRen
   return source->Render(ioActionFlags, inTimeStamp, inNumberFrames, ioData);
 }
 
-AudioSourceBase::AudioSourceBase() throw(CAXException) : enabled(true), rendererPtr(0) { pthread_mutex_init(&transitionMutex, NULL); }
+AudioSourceBase::AudioSourceBase() noexcept(false) : enabled(true), rendererPtr(0) { pthread_mutex_init(&transitionMutex, NULL); }
 
-AudioSourceBase::~AudioSourceBase() throw(CAXException)
+AudioSourceBase::~AudioSourceBase() noexcept(false)
 {
   debug_assert(!rendererPtr);
   pthread_mutex_destroy(&transitionMutex);
 }
 
-void AudioSourceBase::Finalize() throw(CAXException)
+void AudioSourceBase::Finalize() noexcept(false)
 {
   this->SetEnabled(false);
   if (rendererPtr)
     rendererPtr->DetachSource(*this);
 }
 
-void AudioSourceBase::SetEnabled(bool enable) throw(CAXException)
+void AudioSourceBase::SetEnabled(bool enable) noexcept(false)
 {
   if (enable == this->enabled)
     return;
@@ -55,7 +55,7 @@ void AudioSourceBase::SetEnabled(bool enable) throw(CAXException)
 }
 
 OSStatus AudioSourceBase::Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames,
-                                 AudioBufferList* ioData) throw()
+                                 AudioBufferList* ioData) noexcept
 {
   UInt32 buffer_index = 0;
   for (; buffer_index < ioData->mNumberBuffers; buffer_index++)

@@ -13,7 +13,7 @@
 
 namespace RX {
 
-CardAudioSource::CardAudioSource(id<MHKAudioDecompression> decompressor, float gain, float pan, bool loop) throw(CAXException)
+CardAudioSource::CardAudioSource(id<MHKAudioDecompression> decompressor, float gain, float pan, bool loop) noexcept(false)
     : _decompressor(decompressor), _gain(gain), _pan(pan), _loop(loop)
 {
   _task_lock = OS_SPINLOCK_INIT;
@@ -46,7 +46,7 @@ CardAudioSource::CardAudioSource(id<MHKAudioDecompression> decompressor, float g
 #endif
 }
 
-CardAudioSource::~CardAudioSource() throw(CAXException)
+CardAudioSource::~CardAudioSource() noexcept(false)
 {
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
   RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> deallocating"), this);
@@ -66,7 +66,7 @@ CardAudioSource::~CardAudioSource() throw(CAXException)
 }
 
 OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames,
-                                 AudioBufferList* ioData) throw()
+                                 AudioBufferList* ioData) noexcept
 {
   OSSpinLockLock(&_buffer_swap_lock);
   VirtualRingBuffer* volatile render_buffer = _render_buffer;
@@ -126,7 +126,7 @@ OSStatus CardAudioSource::Render(AudioUnitRenderActionFlags* ioActionFlags, cons
   return noErr;
 }
 
-void CardAudioSource::RenderTask() throw()
+void CardAudioSource::RenderTask() noexcept
 {
   if (!_decompressor || !_decompressionBuffer)
     return;
@@ -142,7 +142,7 @@ void CardAudioSource::RenderTask() throw()
   OSSpinLockUnlock(&_task_lock);
 }
 
-void CardAudioSource::task(uint32_t byte_limit) throw()
+void CardAudioSource::task(uint32_t byte_limit) noexcept
 {
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 2
   RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> tasking"), this);
@@ -225,7 +225,7 @@ void CardAudioSource::task(uint32_t byte_limit) throw()
 
 #pragma mark -
 
-void CardAudioSource::Reset() throw()
+void CardAudioSource::Reset() noexcept
 {
 #if defined(DEBUG_AUDIO) && DEBUG_AUDIO > 1
   RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("<RX::CardAudioSource: 0x%x> resetting self and decompressor %p"), this, _decompressor);
@@ -257,12 +257,12 @@ void CardAudioSource::Reset() throw()
   OSSpinLockUnlock(&_task_lock);
 }
 
-void CardAudioSource::HandleAttach() throw(CAXException) { Reset(); }
+void CardAudioSource::HandleAttach() noexcept(false) { Reset(); }
 
-void CardAudioSource::HandleDetach() throw(CAXException) {}
+void CardAudioSource::HandleDetach() noexcept(false) {}
 
-bool CardAudioSource::Enable() throw(CAXException) { return true; }
+bool CardAudioSource::Enable() noexcept(false) { return true; }
 
-bool CardAudioSource::Disable() throw(CAXException) { return true; }
+bool CardAudioSource::Disable() noexcept(false) { return true; }
 
 } // namespace RX

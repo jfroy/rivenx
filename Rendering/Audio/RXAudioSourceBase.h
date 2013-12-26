@@ -26,30 +26,30 @@ private:
   pthread_mutex_t transitionMutex;
 
 public:
-  virtual ~AudioSourceBase() throw(CAXException);
+  virtual ~AudioSourceBase() noexcept(false);
 
   // format
-  inline CAStreamBasicDescription Format() const throw() { return format; }
+  inline CAStreamBasicDescription Format() const noexcept { return format; }
 
   // enabling
-  inline bool Enabled() const throw() { return enabled; }
-  void SetEnabled(bool enable) throw(CAXException);
+  inline bool Enabled() const noexcept { return enabled; }
+  void SetEnabled(bool enable) noexcept(false);
 
 protected:
   static OSStatus AudioSourceRenderCallback(void* inRefCon, AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber,
                                             UInt32 inNumberFrames, AudioBufferList* ioData);
 
-  AudioSourceBase() throw(CAXException);
+  AudioSourceBase() noexcept(false);
 
-  void Finalize() throw(CAXException);
+  void Finalize() noexcept(false);
 
-  virtual void HandleAttach() throw(CAXException) = 0;
-  virtual void HandleDetach() throw(CAXException) = 0;
+  virtual void HandleAttach() noexcept(false) = 0;
+  virtual void HandleDetach() noexcept(false) = 0;
 
-  virtual bool Enable() throw(CAXException) = 0;
-  virtual bool Disable() throw(CAXException) = 0;
+  virtual bool Enable() noexcept(false) = 0;
+  virtual bool Disable() noexcept(false) = 0;
 
-  virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) throw();
+  virtual OSStatus Render(AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inNumberFrames, AudioBufferList* ioData) noexcept;
 
   CAStreamBasicDescription format;
   AudioUnitElement bus;

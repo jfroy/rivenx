@@ -28,55 +28,55 @@ class AudioSourceBase;
 
 class AudioRenderer {
 public:
-  AudioRenderer() throw(CAXException);
-  ~AudioRenderer() throw(CAXException);
+  AudioRenderer() noexcept(false);
+  ~AudioRenderer() noexcept(false);
 
   // accessors to underlying graph and mixer
-  inline AUGraph Graph() const throw() { return graph; }
-  inline const CAAudioUnit& Mixer() const throw() { return *mixer; }
+  inline AUGraph Graph() const noexcept { return graph; }
+  inline const CAAudioUnit& Mixer() const noexcept { return *mixer; }
 
   // costly operation to prime the graph for rendering
-  void Initialize() throw(CAXException);
-  bool IsInitialized() const throw(CAXException);
+  void Initialize() noexcept(false);
+  bool IsInitialized() const noexcept(false);
 
   // rendering control
-  void Start() throw(CAXException);
-  void Stop() throw(CAXException);
-  bool IsRunning() const throw(CAXException);
+  void Start() noexcept(false);
+  void Stop() noexcept(false);
+  bool IsRunning() const noexcept(false);
 
   // gain control on the final mix going to the output device
-  Float32 Gain() const throw(CAXException);
-  void SetGain(Float32 gain) throw(CAXException);
+  Float32 Gain() const noexcept(false);
+  void SetGain(Float32 gain) noexcept(false);
 
   // graph management
-  inline bool AutomaticGraphUpdates() const throw() { return _automaticGraphUpdates; }
-  void SetAutomaticGraphUpdates(bool b) throw();
+  inline bool AutomaticGraphUpdates() const noexcept { return _automaticGraphUpdates; }
+  void SetAutomaticGraphUpdates(bool b) noexcept;
 
-  inline uint32_t AvailableMixerBusCount() const throw() { return sourceLimit - sourceCount; }
+  inline uint32_t AvailableMixerBusCount() const noexcept { return sourceLimit - sourceCount; }
 
   // source management
-  bool AttachSource(AudioSourceBase& source) throw(CAXException);
-  void DetachSource(AudioSourceBase& source) throw(CAXException);
+  bool AttachSource(AudioSourceBase& source) noexcept(false);
+  void DetachSource(AudioSourceBase& source) noexcept(false);
 
-  UInt32 AttachSources(CFArrayRef sources) throw(CAXException);
-  void DetachSources(CFArrayRef sources) throw(CAXException);
+  UInt32 AttachSources(CFArrayRef sources) noexcept(false);
+  void DetachSources(CFArrayRef sources) noexcept(false);
 
   // source parameter
-  Float32 SourceGain(AudioSourceBase& source) const throw(CAXException);
-  Float32 SourcePan(AudioSourceBase& source) const throw(CAXException);
+  Float32 SourceGain(AudioSourceBase& source) const noexcept(false);
+  Float32 SourcePan(AudioSourceBase& source) const noexcept(false);
 
-  void SetSourceGain(AudioSourceBase& source, Float32 gain) throw(CAXException);
-  void SetSourcePan(AudioSourceBase& source, Float32 pan) throw(CAXException);
+  void SetSourceGain(AudioSourceBase& source, Float32 gain) noexcept(false);
+  void SetSourcePan(AudioSourceBase& source, Float32 pan) noexcept(false);
 
   // source parameter ramping
-  void RampSourceGain(AudioSourceBase& source, Float32 value, Float64 duration) throw(CAXException);
-  void RampSourcePan(AudioSourceBase& source, Float32 value, Float64 duration) throw(CAXException);
+  void RampSourceGain(AudioSourceBase& source, Float32 value, Float64 duration) noexcept(false);
+  void RampSourcePan(AudioSourceBase& source, Float32 value, Float64 duration) noexcept(false);
 
-  void RampSourcesGain(CFArrayRef sources, Float32 value, Float64 duration) throw(CAXException);
-  void RampSourcesPan(CFArrayRef sources, Float32 value, Float64 duration) throw(CAXException);
+  void RampSourcesGain(CFArrayRef sources, Float32 value, Float64 duration) noexcept(false);
+  void RampSourcesPan(CFArrayRef sources, Float32 value, Float64 duration) noexcept(false);
 
-  void RampSourcesGain(CFArrayRef sources, std::vector<Float32> values, std::vector<Float64> durations) throw(CAXException);
-  void RampSourcesPan(CFArrayRef sources, std::vector<Float32> values, std::vector<Float64> durations) throw(CAXException);
+  void RampSourcesGain(CFArrayRef sources, std::vector<Float32> values, std::vector<Float64> durations) noexcept(false);
+  void RampSourcesPan(CFArrayRef sources, std::vector<Float32> values, std::vector<Float64> durations) noexcept(false);
 
 private:
   static OSStatus MixerRenderNotifyCallback(void* inRefCon, AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber,
@@ -86,14 +86,14 @@ private:
   AudioRenderer& operator=(const AudioRenderer& c) { return *this; }
 
   void RampMixerParameter(CFArrayRef sources, AudioUnitParameterID parameter_id, std::vector<Float32>& values,
-                          std::vector<Float64>& durations) throw(CAXException);
+                          std::vector<Float64>& durations) noexcept(false);
 
-  OSStatus MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) throw();
-  OSStatus MixerPostRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) throw();
+  OSStatus MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) noexcept;
+  OSStatus MixerPostRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) noexcept;
 
   void CreateGraph();
   void TeardownGraph();
-  bool _must_update_graph_predicate() throw(CAXException);
+  bool _must_update_graph_predicate() noexcept(false);
 
   struct ParameterRampDescriptor {
     const AudioSourceBase* source;
