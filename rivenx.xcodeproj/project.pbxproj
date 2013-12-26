@@ -151,6 +151,8 @@
 		319BBA16182598A400C4F8F8 /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
 		319BBA17182598AF00C4F8F8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4F1790842600B1732D /* Foundation.framework */; };
 		319BBA18182598B700C4F8F8 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED541790844000B1732D /* ApplicationServices.framework */; };
+		319BDEFB186C8FF400C7B334 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 319BDEFA186C8FF400C7B334 /* libz.dylib */; };
+		319BDEFD186C900B00C7B334 /* liblzma.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 319BDEFC186C900B00C7B334 /* liblzma.a */; };
 		319C458109C138380031F95F /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
 		319C8C691155793D00DF3E7D /* Welcome.strings in Resources */ = {isa = PBXBuildFile; fileRef = 319C8C681155793D00DF3E7D /* Welcome.strings */; };
 		31A14B860F03F495006EFF93 /* AUOutputBL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B810F03F495006EFF93 /* AUOutputBL.cpp */; };
@@ -458,6 +460,8 @@
 		3195A6330EEC57860000CFB6 /* RXScriptCommandAliases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptCommandAliases.h; sourceTree = "<group>"; };
 		3196B9340D945CC100BC818E /* RXTiming.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXTiming.h; sourceTree = "<group>"; };
 		3196B9350D945CC100BC818E /* RXTiming.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = RXTiming.c; sourceTree = "<group>"; };
+		319BDEFA186C8FF400C7B334 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		319BDEFC186C900B00C7B334 /* liblzma.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblzma.a; path = xz/liblzma.a; sourceTree = "<group>"; };
 		319C457F09C1382F0031F95F /* VirtualRingBuffer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = VirtualRingBuffer.h; sourceTree = "<group>"; };
 		319C458009C1382F0031F95F /* VirtualRingBuffer.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = VirtualRingBuffer.m; sourceTree = "<group>"; };
 		319C8C591155787C00DF3E7D /* en */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Welcome.strings; sourceTree = "<group>"; };
@@ -598,6 +602,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				319BDEFD186C900B00C7B334 /* liblzma.a in Frameworks */,
+				319BDEFB186C8FF400C7B334 /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1068,6 +1074,8 @@
 		6BE3ED4D179083F800B1732D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				319BDEFC186C900B00C7B334 /* liblzma.a */,
+				319BDEFA186C8FF400C7B334 /* libz.dylib */,
 				6BE3ED4E1790842600B1732D /* Accelerate.framework */,
 				6BE3ED541790844000B1732D /* ApplicationServices.framework */,
 				6BE3ED631790850200B1732D /* AudioToolbox.framework */,
@@ -1892,11 +1900,10 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/xz/lib";
-				OTHER_LDFLAGS = (
-					"-lz",
-					"-llzma",
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/xz",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -1912,11 +1919,10 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/xz/lib";
-				OTHER_LDFLAGS = (
-					"-lz",
-					"-llzma",
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/xz",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
@@ -1932,11 +1938,10 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/include";
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/xz/lib";
-				OTHER_LDFLAGS = (
-					"-lz",
-					"-llzma",
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/xz",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
