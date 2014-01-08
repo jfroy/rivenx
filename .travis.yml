@@ -1,0 +1,4 @@
+language: objective-c
+xcode_project: rivenx.xcodeproj
+xcode_scheme: Riven X
+
