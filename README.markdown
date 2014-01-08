@@ -3,10 +3,7 @@ Summary
 
 Riven X is the rebirth of the best episode in the MYST™ saga for Mac OS X. The same content, the same wonder, a brand-new engine. Although Riven™ was released in 1997 for both Mac OS and Windows, it was never updated to be a native Mac OS X application. With Intel Macs becoming dominant meaning the loss of the Classic environment, something had to be done in order for future generations of Mac users to enjoy Riven™. Thanks to the work of dedicated individuals, in particular Tito Dal Canton, the Riven™ data files were reversed engineered, thus paving the way for a new engine.
 
-Bugs
-====
-
-Riven X uses Launchpad for bug management. [https://bugs.launchpad.net/rivenx](https://bugs.launchpad.net/rivenx)
+[![Build Status](https://travis-ci.org/jfroy/rivenx.png?branch=master)](https://travis-ci.org/jfroy/rivenx)
 
 Legal
 =====
