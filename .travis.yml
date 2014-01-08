@@ -1,4 +1,3 @@
 language: objective-c
-xcode_project: rivenx.xcodeproj
-xcode_scheme: Riven X
+script: xctool -project rivenx.xcodeproj -scheme Riven\ X CODE_SIGN_IDENTITY='' build
 
