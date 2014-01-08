@@ -75,7 +75,6 @@
 		315017990CC0533E001BA929 /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		315017FA0CC06872001BA929 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		31506B250F3E940800FAC3DB /* Shaders in Copy Shaders */ = {isa = PBXBuildFile; fileRef = 31154B4D0B4990E9002FCEDD /* Shaders */; };
-		315090200E035945004EE6F3 /* RXSimpleCardDescriptor_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 3150901F0E035945004EE6F3 /* RXSimpleCardDescriptor_test.m */; };
 		3153ED6409A3ED12002E1149 /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
 		315547E208C4C44F00A2AA7A /* RXApplicationDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 315547E108C4C44F00A2AA7A /* RXApplicationDelegate.m */; };
 		3155481008C52A1400A2AA7A /* Extras.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3155480F08C52A1400A2AA7A /* Extras.plist */; };
@@ -142,8 +141,6 @@
 		3186C9C3102E3CE0004E81D2 /* RXTextureBroker.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DAB0DC263F400B3AF0D /* RXTextureBroker.m */; };
 		3186C9E5102E47F4004E81D2 /* RXTexture.m in Sources */ = {isa = PBXBuildFile; fileRef = 3186C9E4102E47F4004E81D2 /* RXTexture.m */; };
 		318AFC2F13BFA4B5000402B7 /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31200FBF0F3F8495006E6EF7 /* CAStreamBasicDescription.cpp */; };
-		318CB4640E04917A00BD2C38 /* RXGameState_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 318CB4630E04917A00BD2C38 /* RXGameState_test.m */; };
-		318CB4FD0E05C60C00BD2C38 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		3196B9360D945CC100BC818E /* RXTiming.c in Sources */ = {isa = PBXBuildFile; fileRef = 3196B9350D945CC100BC818E /* RXTiming.c */; };
 		3199275A0D96AE3E00ED1B47 /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
 		3199275B0D96AE4D00ED1B47 /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
@@ -176,7 +173,6 @@
 		31B654A21102B9EF004818AC /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31B6549E1102B9EF004818AC /* Localizable.strings */; };
 		31B654A31102B9EF004818AC /* Rendering.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31B654A01102B9EF004818AC /* Rendering.strings */; };
 		31BC739F09A57D4E001EC1E0 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
-		31C3572A0D92A72400EDEF81 /* RXSound_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31C357290D92A72400EDEF81 /* RXSound_test.mm */; };
 		31C545530D5D50620024B486 /* RXMediaInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 31C545520D5D50620024B486 /* RXMediaInstaller.m */; };
 		31CE92961033D576008B7717 /* RXInterpolator.m in Sources */ = {isa = PBXBuildFile; fileRef = 31CE92951033D576008B7717 /* RXInterpolator.m */; };
 		31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9A0DBC07A700E970E1 /* MainMenu.xib */; };
@@ -280,13 +276,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = 3149598E0E327B2D00E49C83;
 			remoteInfo = MHKKit;
-		};
-		31C357330D92A78900EDEF81 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 31F3093208BE43C100417394;
-			remoteInfo = "Riven X";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -465,8 +454,6 @@
 		31863C590991AA28001A4A42 /* InterThreadMessaging.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = InterThreadMessaging.m; sourceTree = "<group>"; };
 		3186C9E3102E47F4004E81D2 /* RXTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXTexture.h; sourceTree = "<group>"; };
 		3186C9E4102E47F4004E81D2 /* RXTexture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXTexture.m; sourceTree = "<group>"; };
-		318CB4620E04917A00BD2C38 /* RXGameState_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXGameState_test.h; sourceTree = "<group>"; };
-		318CB4630E04917A00BD2C38 /* RXGameState_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXGameState_test.m; sourceTree = "<group>"; };
 		319288DB0EF43C630043B15A /* RXCoreStructures.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCoreStructures.h; sourceTree = "<group>"; };
 		3195A6330EEC57860000CFB6 /* RXScriptCommandAliases.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptCommandAliases.h; sourceTree = "<group>"; };
 		3196B9340D945CC100BC818E /* RXTiming.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXTiming.h; sourceTree = "<group>"; };
@@ -485,8 +472,6 @@
 		31A14C070F03F912006EFF93 /* CAComponentDescription.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAComponentDescription.cpp; sourceTree = "<group>"; };
 		31A1FA1B0E0B4AB800B2437A /* RXAnimation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAnimation.h; sourceTree = "<group>"; };
 		31A1FA1C0E0B4AB800B2437A /* RXAnimation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXAnimation.m; sourceTree = "<group>"; };
-		31A1FA260E0B761500B2437A /* RXAnimation_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAnimation_test.h; sourceTree = "<group>"; };
-		31A1FA270E0B761500B2437A /* RXAnimation_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXAnimation_test.m; sourceTree = "<group>"; };
 		31A9EF94094D285400C6A0AB /* RXBase.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXBase.pch; sourceTree = "<group>"; };
 		31A9F027094D2D0300C6A0AB /* RXRenderState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RXRenderState.m; path = States/RXRenderState.m; sourceTree = "<group>"; };
 		31A9F03A094D2E2600C6A0AB /* RXRenderState.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = RXRenderState.h; path = States/RXRenderState.h; sourceTree = "<group>"; };
@@ -499,7 +484,6 @@
 		31BC739C09A57D4E001EC1E0 /* RXAudioSourceBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAudioSourceBase.h; sourceTree = "<group>"; };
 		31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RXAudioSourceBase.cpp; sourceTree = "<group>"; };
 		31C356F80D92A38500EDEF81 /* UnitTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "UnitTests-Info.plist"; sourceTree = "<group>"; };
-		31C3571C0D92A6A700EDEF81 /* UnitTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnitTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
 		31C357280D92A72400EDEF81 /* RXSound_test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXSound_test.h; sourceTree = "<group>"; };
 		31C357290D92A72400EDEF81 /* RXSound_test.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXSound_test.mm; sourceTree = "<group>"; };
 		31C545510D5D50620024B486 /* RXMediaInstaller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXMediaInstaller.h; sourceTree = "<group>"; };
@@ -611,13 +595,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		31ADC94F14ADA128004FB4AD /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		31C357190D92A6A700EDEF81 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -736,7 +713,6 @@
 				31DC67FF09CB879B00BFF447 /* VirtualRingBuffer_test */,
 				31DAA0DF09D888E100F63F20 /* RXCardAudioSource_test */,
 				31D6AD8D0D4197E600629AEB /* dump_save */,
-				31C3571C0D92A6A700EDEF81 /* UnitTests.octest */,
 				3149598F0E327B2D00E49C83 /* MHKKit.framework */,
 				316E1EE80E77803100F28E2A /* mhkdump */,
 				317ACC7C0F285B780040FFFD /* MHKMoviePlayer.app */,
@@ -984,12 +960,8 @@
 		31C357220D92A6C700EDEF81 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				31A1FA260E0B761500B2437A /* RXAnimation_test.h */,
-				31A1FA270E0B761500B2437A /* RXAnimation_test.m */,
 				31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */,
 				31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */,
-				318CB4620E04917A00BD2C38 /* RXGameState_test.h */,
-				318CB4630E04917A00BD2C38 /* RXGameState_test.m */,
 				3150901E0E035945004EE6F3 /* RXSimpleCardDescriptor_test.h */,
 				3150901F0E035945004EE6F3 /* RXSimpleCardDescriptor_test.m */,
 				31C357280D92A72400EDEF81 /* RXSound_test.h */,
@@ -1226,25 +1198,6 @@
 			productReference = 31ADC95214ADA128004FB4AD /* unpackgogsetup */;
 			productType = "com.apple.product-type.tool";
 		};
-		31C3571B0D92A6A700EDEF81 /* UnitTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 31C357230D92A6C700EDEF81 /* Build configuration list for PBXNativeTarget "UnitTests" */;
-			buildPhases = (
-				31C357180D92A6A700EDEF81 /* Sources */,
-				31C357170D92A6A700EDEF81 /* Resources */,
-				31C357190D92A6A700EDEF81 /* Frameworks */,
-				31C3571A0D92A6A700EDEF81 /* RunUnitTests */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				31C357340D92A78900EDEF81 /* PBXTargetDependency */,
-			);
-			name = UnitTests;
-			productName = RXSound_test;
-			productReference = 31C3571C0D92A6A700EDEF81 /* UnitTests.octest */;
-			productType = "com.apple.product-type.bundle";
-		};
 		31D6AD8C0D4197E600629AEB /* dump_save */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 31D6AD920D41983B00629AEB /* Build configuration list for PBXNativeTarget "dump_save" */;
@@ -1369,7 +1322,6 @@
 			targets = (
 				3149598E0E327B2D00E49C83 /* MHKKit */,
 				31F3093208BE43C100417394 /* Riven X */,
-				31C3571B0D92A6A700EDEF81 /* UnitTests */,
 				317ACC7B0F285B780040FFFD /* MHKMoviePlayer */,
 				316E1EE70E77803100F28E2A /* mhkdump */,
 				8DD76F960486AA7600D96B5E /* plistize_stacks */,
@@ -1395,13 +1347,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				316D273E10004B23003579F9 /* MainMenu.xib in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		31C357170D92A6A700EDEF81 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1467,21 +1412,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/usr/bin/env python2.7";
 			shellScript = "import os\nimport subprocess\nimport sys\n\nif not \"BUILT_PRODUCTS_DIR\" in os.environ:\n    print \"Must be run by the Xcode build system\"\n    sys.exit(1)\n\n# MACOSX_DEPLOYMENT_TARGET plays badly with Python\nif \"MACOSX_DEPLOYMENT_TARGET\" in os.environ:\n    del os.environ[\"MACOSX_DEPLOYMENT_TARGET\"]\n\n# get build information\ncommit = subprocess.Popen('git rev-parse --short HEAD', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf8').strip()\nbranch = subprocess.Popen('git symbolic-ref -q HEAD', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf8').strip().replace('refs/heads/', '')\ndate = subprocess.Popen('date -u', shell=True, stdout=subprocess.PIPE).communicate()[0].decode('utf8').strip()\n\n# output build strings\nbuild_strings = '\"BUILD_VERSION\" = \"%s\";\\n\"BUILD_DATE\" = \"%s\";\\n\"BUILD_BRANCH\" = \"%s\";\\n' % (commit, date, branch)\nresources_path = os.path.join(os.environ['TARGET_BUILD_DIR'], os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH'])\nwith open(os.path.join(resources_path, u\"build.strings\"), 'w') as build_strings_file:\n    build_strings_file.write(build_strings.encode('utf16'))\n";
-			showEnvVarsInLog = 0;
-		};
-		31C3571A0D92A6A700EDEF81 /* RunUnitTests */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = RunUnitTests;
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Run the unit tests in this test bundle.\n\"${SYSTEM_DEVELOPER_DIR}/Tools/RunUnitTests\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -1553,17 +1483,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				31ADC95F14ADA17A004FB4AD /* unpackgogsetup.cpp in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		31C357180D92A6A700EDEF81 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				31C3572A0D92A72400EDEF81 /* RXSound_test.mm in Sources */,
-				315090200E035945004EE6F3 /* RXSimpleCardDescriptor_test.m in Sources */,
-				318CB4640E04917A00BD2C38 /* RXGameState_test.m in Sources */,
-				318CB4FD0E05C60C00BD2C38 /* BZFSUtilities.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1743,11 +1662,6 @@
 			isa = PBXTargetDependency;
 			target = 3149598E0E327B2D00E49C83 /* MHKKit */;
 			targetProxy = 31BA9E1E0EE65F28003C4457 /* PBXContainerItemProxy */;
-		};
-		31C357340D92A78900EDEF81 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 31F3093208BE43C100417394 /* Riven X */;
-			targetProxy = 31C357330D92A78900EDEF81 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -2027,71 +1941,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
-			};
-			name = Release;
-		};
-		31C3571D0D92A6AD00EDEF81 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Riven X.app/Contents/MacOS/Riven X";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = NO;
-				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
-				GCC_DYNAMIC_NO_PIC = NO;
-				INFOPLIST_FILE = "Tests/UnitTests-Info.plist";
-				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
-				OTHER_LDFLAGS = (
-					"-framework",
-					Cocoa,
-					"-framework",
-					SenTestingKit,
-				);
-				PRODUCT_NAME = UnitTests;
-				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = octest;
-			};
-			name = Debug;
-		};
-		31C3571E0D92A6AD00EDEF81 /* Beta Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Riven X.app/Contents/MacOS/Riven X";
-				COMBINE_HIDPI_IMAGES = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
-				GCC_DYNAMIC_NO_PIC = NO;
-				INFOPLIST_FILE = "Tests/UnitTests-Info.plist";
-				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
-				OTHER_LDFLAGS = (
-					"-framework",
-					Cocoa,
-					"-framework",
-					SenTestingKit,
-				);
-				PRODUCT_NAME = UnitTests;
-				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = octest;
-			};
-			name = "Beta Release";
-		};
-		31C3571F0D92A6AD00EDEF81 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Riven X.app/Contents/MacOS/Riven X";
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(DEVELOPER_LIBRARY_DIR)/Frameworks";
-				GCC_DYNAMIC_NO_PIC = NO;
-				INFOPLIST_FILE = "Tests/UnitTests-Info.plist";
-				INSTALL_PATH = "$(USER_LIBRARY_DIR)/Bundles";
-				OTHER_LDFLAGS = (
-					"-framework",
-					Cocoa,
-					"-framework",
-					SenTestingKit,
-				);
-				PRODUCT_NAME = UnitTests;
-				TEST_HOST = "$(BUNDLE_LOADER)";
-				WRAPPER_EXTENSION = octest;
 			};
 			name = Release;
 		};
@@ -2594,16 +2443,6 @@
 				31ADC95914ADA128004FB4AD /* Debug */,
 				31ADC95A14ADA128004FB4AD /* Beta Release */,
 				31ADC95B14ADA128004FB4AD /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		31C357230D92A6C700EDEF81 /* Build configuration list for PBXNativeTarget "UnitTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				31C3571D0D92A6AD00EDEF81 /* Debug */,
-				31C3571E0D92A6AD00EDEF81 /* Beta Release */,
-				31C3571F0D92A6AD00EDEF81 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
