@@ -617,7 +617,7 @@ int main(int argc, const char* argv[])
     StoredInnoFileLocationEntry& fle = fileLocationEntries[fe.locationEntry];
 
     // use the last component of the filename for the output
-    auto outputFilename = filename.substr(filename.find_last_of('\\'));
+    auto outputFilename = filename.substr(filename.find_last_of('\\') + 1);
 
     assert(outputFilename.size() > 0);
     assert(fle.chunkSubOffset == 0);
