@@ -87,6 +87,7 @@
 		315BD3D00D85AF97007A3BFA /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
 		315BD3F90D85B3FC007A3BFA /* InterThreadMessaging.m in Sources */ = {isa = PBXBuildFile; fileRef = 31863C590991AA28001A4A42 /* InterThreadMessaging.m */; };
 		315BD41C0D85B64D007A3BFA /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
+		315C76C618B5B0730066868D /* MHKArchiveMovieAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 315C76C418B5B0730066868D /* MHKArchiveMovieAdditions.m */; };
 		315DA3CF118FED0F003E21BC /* patches in Resources */ = {isa = PBXBuildFile; fileRef = 315DA3CB118FED0F003E21BC /* patches */; };
 		316038FA100EE54600052849 /* RXScriptOpcodeStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 316038F9100EE54600052849 /* RXScriptOpcodeStream.m */; };
 		3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */ = {isa = PBXBuildFile; fileRef = 3160E1810FD3075300F18E86 /* tiny_marbles.png */; };
@@ -417,6 +418,7 @@
 		3155F1C817F885FB0064E4BD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		31588871098D7A120090A6B6 /* RXCardDescriptor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardDescriptor.h; sourceTree = "<group>"; };
 		31588872098D7A120090A6B6 /* RXCardDescriptor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardDescriptor.m; sourceTree = "<group>"; };
+		315C76C418B5B0730066868D /* MHKArchiveMovieAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKArchiveMovieAdditions.m; path = mhk/MHKArchiveMovieAdditions.m; sourceTree = "<group>"; };
 		315DA3CB118FED0F003E21BC /* patches */ = {isa = PBXFileReference; lastKnownFileType = folder; path = patches; sourceTree = "<group>"; };
 		316038F8100EE54600052849 /* RXScriptOpcodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptOpcodeStream.h; sourceTree = "<group>"; };
 		316038F9100EE54600052849 /* RXScriptOpcodeStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptOpcodeStream.m; sourceTree = "<group>"; };
@@ -805,12 +807,12 @@
 			isa = PBXGroup;
 			children = (
 				314959900E327B2D00E49C83 /* MHKKit-Info.plist */,
-				3149599E0E327BA500E49C83 /* MHKKit.h */,
 				314959950E327BA500E49C83 /* MHKADPCMDecompressor.h */,
 				314959A60E327BA500E49C83 /* MHKADPCMDecompressor.m */,
 				314959A70E327BA500E49C83 /* MHKArchive.h */,
 				3149599B0E327BA500E49C83 /* MHKArchive.m */,
 				3149599A0E327BA500E49C83 /* MHKArchiveBitmapAdditions.m */,
+				315C76C418B5B0730066868D /* MHKArchiveMovieAdditions.m */,
 				314959A80E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m */,
 				314959960E327BA500E49C83 /* MHKArchiveWAVAdditions.m */,
 				314959A30E327BA500E49C83 /* MHKAudioDecompression.h */,
@@ -818,6 +820,7 @@
 				314959A20E327BA500E49C83 /* MHKErrors.m */,
 				314959A00E327BA500E49C83 /* MHKFileHandle.h */,
 				314959980E327BA500E49C83 /* MHKFileHandle.m */,
+				3149599E0E327BA500E49C83 /* MHKKit.h */,
 				314959A50E327BA500E49C83 /* MHKMP2Decompressor.h */,
 				314959990E327BA500E49C83 /* MHKMP2Decompressor.m */,
 				314959970E327BA500E49C83 /* mohawk_bitmap.c */,
@@ -1482,6 +1485,7 @@
 				314959B20E327BA500E49C83 /* mohawk_core.c in Sources */,
 				314959B80E327BA500E49C83 /* MHKErrors.m in Sources */,
 				314959BC0E327BA500E49C83 /* MHKADPCMDecompressor.m in Sources */,
+				315C76C618B5B0730066868D /* MHKArchiveMovieAdditions.m in Sources */,
 				314959BE0E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
