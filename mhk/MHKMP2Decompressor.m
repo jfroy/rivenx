@@ -399,10 +399,6 @@ static void MHKMP2Decompressor_release_buffer(struct AVCodecContext* c, AVFrame*
 {
   pthread_mutex_lock(&_decompressor_lock);
 
-#if defined(DEBUG) && DEBUG > 1
-  NSLog(@"%@: resetting", self);
-#endif
-
   // seek to the first audio data packet
   [_data_source seekToFileOffset:_audio_packets_start_offset];
 
@@ -581,9 +577,6 @@ static void MHKMP2Decompressor_release_buffer(struct AVCodecContext* c, AVFrame*
 AbortFill:
   // zero left-over frames
   if (bytes_to_decompress > decompressed_bytes) {
-#if defined(DEBUG) && DEBUG > 1
-    NSLog(@"%@: zero filling tail of ABL buffer on packet %lld/%lld", self, _packet_index, _packet_count);
-#endif
     bzero(BUFFER_OFFSET(abl->mBuffers[0].mData, decompressed_bytes), bytes_to_decompress - decompressed_bytes);
   }
 
