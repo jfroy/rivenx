@@ -45,6 +45,8 @@
 		31333F6709B01A7D00DB6FC7 /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
 		31333F6809B01A7D00DB6FC7 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
 		3133D9AF0D5CDDC1004DAD5E /* BZFSOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 3133D9AE0D5CDDC1004DAD5E /* BZFSOperation.m */; };
+		313A9D4E18B30A6000FEE683 /* mohawk_libav.h in Headers */ = {isa = PBXBuildFile; fileRef = 313A9D4C18B30A6000FEE683 /* mohawk_libav.h */; };
+		313A9D4F18B30A6000FEE683 /* mohawk_libav.m in Sources */ = {isa = PBXBuildFile; fileRef = 313A9D4D18B30A6000FEE683 /* mohawk_libav.m */; };
 		313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 313C7EFB08CD057500950A70 /* Riven301.ttf */; };
 		31448F2709D9C799001B8A5F /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
 		31448F2809D9C79B001B8A5F /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
@@ -372,6 +374,8 @@
 		31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = rxaudio_test.mm; sourceTree = "<group>"; };
 		3133D9AD0D5CDDC1004DAD5E /* BZFSOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BZFSOperation.h; sourceTree = "<group>"; };
 		3133D9AE0D5CDDC1004DAD5E /* BZFSOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BZFSOperation.m; sourceTree = "<group>"; };
+		313A9D4C18B30A6000FEE683 /* mohawk_libav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mohawk_libav.h; path = mhk/mohawk_libav.h; sourceTree = "<group>"; };
+		313A9D4D18B30A6000FEE683 /* mohawk_libav.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = mohawk_libav.m; path = mhk/mohawk_libav.m; sourceTree = "<group>"; };
 		313C7EFB08CD057500950A70 /* Riven301.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Riven301.ttf; sourceTree = "<group>"; };
 		31472CE6114C2E46008B6CF7 /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Installer.strings; sourceTree = "<group>"; };
 		31472CED114C2F66008B6CF7 /* Extras.MHK */ = {isa = PBXFileReference; lastKnownFileType = file; path = Extras.MHK; sourceTree = "<group>"; };
@@ -820,6 +824,8 @@
 				314959A10E327BA500E49C83 /* mohawk_bitmap.h */,
 				3149599C0E327BA500E49C83 /* mohawk_core.c */,
 				314959A90E327BA500E49C83 /* mohawk_core.h */,
+				313A9D4C18B30A6000FEE683 /* mohawk_libav.h */,
+				313A9D4D18B30A6000FEE683 /* mohawk_libav.m */,
 				314959A40E327BA500E49C83 /* mohawk_wave.h */,
 			);
 			name = MHKKit;
@@ -1117,6 +1123,7 @@
 				314959B40E327BA500E49C83 /* MHKKit.h in Headers */,
 				314959B60E327BA500E49C83 /* MHKFileHandle.h in Headers */,
 				314959B70E327BA500E49C83 /* mohawk_bitmap.h in Headers */,
+				313A9D4E18B30A6000FEE683 /* mohawk_libav.h in Headers */,
 				314959B90E327BA500E49C83 /* MHKAudioDecompression.h in Headers */,
 				314959BA0E327BA500E49C83 /* mohawk_wave.h in Headers */,
 				314959BB0E327BA500E49C83 /* MHKMP2Decompressor.h in Headers */,
@@ -1414,7 +1421,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "COPY_TOOL=\"ditto\"\n\n# libavutil\n$COPY_TOOL \"${SRCROOT}/libav/libavutil.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n\n# libavcodec\n$COPY_TOOL \"${SRCROOT}/libav/libavcodec.dylib\" \"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\n";
+			shellScript = "OUTDIR=\"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\nditto \"${SRCROOT}/libav/libavutil.dylib\" \"${OUTDIR}\"\nditto \"${SRCROOT}/libav/libavcodec.dylib\" \"${OUTDIR}\"\nditto \"${SRCROOT}/libav/libavformat.dylib\" \"${OUTDIR}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		314A02EE0B6E53D5003E92A1 /* Generate Build Strings */ = {
@@ -1465,6 +1472,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				313A9D4F18B30A6000FEE683 /* mohawk_libav.m in Sources */,
 				314959AC0E327BA500E49C83 /* MHKArchiveWAVAdditions.m in Sources */,
 				314959AD0E327BA500E49C83 /* mohawk_bitmap.c in Sources */,
 				314959AE0E327BA500E49C83 /* MHKFileHandle.m in Sources */,

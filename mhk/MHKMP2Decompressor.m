@@ -6,47 +6,21 @@
 //  Copyright 2005-2012 MacStorm. All rights reserved.
 //
 
-#import <stdlib.h>
-#import <dlfcn.h>
+#import "MHKMP2Decompressor.h"
+
 #import <pthread.h>
-#import <Foundation/NSBundle.h>
-#import <Foundation/NSPathUtilities.h>
 #import <CoreServices/CoreServices.h>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdocumentation"
-#pragma clang diagnostic ignored "-Wduplicate-enum"
-#import <libavcodec/avcodec.h>
-#pragma clang diagnostic pop
-
-#import "MHKMP2Decompressor.h"
-#import "MHKErrors.h"
 #import "Base/RXErrorMacros.h"
 
-#define READ_BUFFER_SIZE 0x2000
-#define MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET 1152
-#define FRAME_SKIP_FUDGE 481
+#import "MHKErrors.h"
+#import "mohawk_libav.h"
 
-static BOOL MHKMP2Decompressor_libav_available = NO;
-static pthread_mutex_t s_libav_mutex;
+static const size_t READ_BUFFER_SIZE = 0x2000;
+static const int MPEG_AUDIO_LAYER_2_FRAMES_PER_PACKET = 1152;
+static const int FRAME_SKIP_FUDGE = 481;
 
-struct libav_state {
-  void* avcodec_handle;
-
-  void (*avcodec_register_all)(void);
-  void (*av_freep)(void*);
-  AVCodec* (*avcodec_find_decoder)(enum AVCodecID);
-  AVCodecContext* (*avcodec_alloc_context3)(const AVCodec*);
-  int (*avcodec_open2)(AVCodecContext*, const AVCodec*, AVDictionary**);
-  int (*avcodec_close)(AVCodecContext*);
-  AVFrame* (*avcodec_alloc_frame)(void);
-  void (*avcodec_free_frame)(AVFrame**);
-  int (*avcodec_decode_audio4)(AVCodecContext*, AVFrame*, int*, AVPacket*);
-
-  AVCodec* mp2_codec;
-};
-
-static struct libav_state _libav_state;
+static AVCodec* mp2_codec;
 
 static const uint32_t _mpeg_audio_nominal_sampling_rate_table[3] = {44100, 48000, 32000};
 static const uint32_t _mpeg_audio_v1_bitrates[3][14] = {
@@ -155,102 +129,10 @@ static void MHKMP2Decompressor_release_buffer(struct AVCodecContext* c, AVFrame*
   pic->linesize[0] = 0;
 }
 
-+ (void)loadLibav
-{
-#if defined(DEBUG) && DEBUG > 1
-  NSLog(@"initializing libav...");
-#endif
-
-  // load the function pointers we need
-
-  _libav_state.avcodec_register_all = dlsym(_libav_state.avcodec_handle, "avcodec_register_all");
-  if (!_libav_state.avcodec_register_all) {
-    NSLog(@"unable to bind symbol \"avcodec_register_all\": %s", dlerror());
-    abort();
-  }
-
-  _libav_state.av_freep = dlsym(_libav_state.avcodec_handle, "av_freep");
-  if (!_libav_state.av_freep) {
-    NSLog(@"unable to bind symbol \"av_freep\": %s", dlerror());
-    abort();
-  }
-
-  _libav_state.avcodec_find_decoder = dlsym(_libav_state.avcodec_handle, "avcodec_find_decoder");
-  if (!_libav_state.avcodec_find_decoder) {
-    NSLog(@"unable to bind symbol \"avcodec_find_decoder\": %s", dlerror());
-    abort();
-  }
-
-  _libav_state.avcodec_alloc_context3 = dlsym(_libav_state.avcodec_handle, "avcodec_alloc_context3");
-  if (!_libav_state.avcodec_alloc_context3) {
-    NSLog(@"unable to bind symbol \"avcodec_alloc_context3\": %s", dlerror());
-    abort();
-  }
-
-  _libav_state.avcodec_open2 = dlsym(_libav_state.avcodec_handle, "avcodec_open2");
-  if (!_libav_state.avcodec_open2) {
-    NSLog(@"unable to bind symbol \"avcodec_open2\": %s", dlerror());
-    abort();
-  }
-
-  _libav_state.avcodec_close = dlsym(_libav_state.avcodec_handle, "avcodec_close");
-  if (!_libav_state.avcodec_close) {
-    NSLog(@"unable to bind symbol \"avcodec_close\": %s", dlerror());
-    abort();
-  }
-
-  _libav_state.avcodec_alloc_frame = dlsym(_libav_state.avcodec_handle, "avcodec_alloc_frame");
-  if (!_libav_state.avcodec_alloc_frame) {
-    NSLog(@"unable to bind symbol \"avcodec_alloc_frame\": %s", dlerror());
-    abort();
-  }
-
-  _libav_state.avcodec_free_frame = dlsym(_libav_state.avcodec_handle, "avcodec_free_frame");
-  if (!_libav_state.avcodec_free_frame) {
-    NSLog(@"unable to bind symbol \"avcodec_free_frame\": %s", dlerror());
-    abort();
-  }
-
-  _libav_state.avcodec_decode_audio4 = dlsym(_libav_state.avcodec_handle, "avcodec_decode_audio4");
-  if (!_libav_state.avcodec_decode_audio4) {
-    NSLog(@"unable to bind symbol \"avcodec_decode_audio4\": %s", dlerror());
-    abort();
-  }
-
-  // initialize libavcodec and the MPEG 1/2 audio layer decoder
-  _libav_state.avcodec_register_all();
-  _libav_state.mp2_codec = _libav_state.avcodec_find_decoder(AV_CODEC_ID_MP2);
-
-  // libav mutex
-  pthread_mutex_init(&s_libav_mutex, NULL);
-}
-
 + (void)initialize
 {
-  static BOOL MHKMP2Decompressor_has_initialized = NO;
-  if (!MHKMP2Decompressor_has_initialized) {
-    MHKMP2Decompressor_has_initialized = YES;
-
-    // get a bundle to MHKKit and the path to the Resources directory
-    NSBundle* mhk_bundle = [NSBundle bundleForClass:[self class]];
-    NSString* resource_path = [mhk_bundle resourcePath];
-    char* error_string = NULL;
-
-    // load libavcodec
-    _libav_state.avcodec_handle =
-        dlopen([[resource_path stringByAppendingPathComponent:@"libavcodec.dylib"] fileSystemRepresentation], RTLD_LAZY | RTLD_GLOBAL);
-    error_string = dlerror();
-    if (error_string)
-      fprintf(stderr, "%s\n", error_string);
-    if (!_libav_state.avcodec_handle)
-      return;
-
-    // load libav if we were able to link libavcodec
-    if (_libav_state.avcodec_handle) {
-      MHKMP2Decompressor_libav_available = YES;
-      [self loadLibav];
-    }
-  }
+  mhk_load_libav();
+  mp2_codec = g_libav.avcodec_find_decoder(AV_CODEC_ID_MP2);
 }
 
 - (BOOL)_build_packet_description_table_and_count_frames:(NSError**)error
@@ -388,7 +270,7 @@ static void MHKMP2Decompressor_release_buffer(struct AVCodecContext* c, AVFrame*
     return nil;
 
   // we can't do anything without libav
-  if (!MHKMP2Decompressor_libav_available) {
+  if (!g_libav.avc_handle) {
     [self release];
     ReturnValueWithError(nil, MHKErrorDomain, errLibavNotAvailable, nil, errorPtr);
   }
@@ -488,13 +370,11 @@ static void MHKMP2Decompressor_release_buffer(struct AVCodecContext* c, AVFrame*
 - (void)dealloc
 {
   // close the decoder
-  pthread_mutex_lock(&s_libav_mutex);
   if (_mp2_codec_context) {
-    _libav_state.avcodec_close(_mp2_codec_context);
-    _libav_state.av_freep(&_mp2_codec_context);
-    _libav_state.avcodec_free_frame(&_mp2_frame);
+    g_libav.avcodec_close(_mp2_codec_context);
+    g_libav.av_freep(&_mp2_codec_context);
+    g_libav.avcodec_free_frame(&_mp2_frame);
   }
-  pthread_mutex_unlock(&s_libav_mutex);
 
   // free memory resources
   if (_packet_buffer)
@@ -535,17 +415,14 @@ static void MHKMP2Decompressor_release_buffer(struct AVCodecContext* c, AVFrame*
   _available_packets = 0;
   _current_packet = _packet_buffer;
 
-  // close and re-open the codec context
-  pthread_mutex_lock(&s_libav_mutex);
-
   if (_mp2_codec_context) {
-    _libav_state.avcodec_close(_mp2_codec_context);
-    _libav_state.av_freep(&_mp2_codec_context);
-    _libav_state.avcodec_free_frame(&_mp2_frame);
+    g_libav.avcodec_close(_mp2_codec_context);
+    g_libav.av_freep(&_mp2_codec_context);
+    g_libav.avcodec_free_frame(&_mp2_frame);
   }
 
   // allocate the codec context
-  _mp2_codec_context = _libav_state.avcodec_alloc_context3(_libav_state.mp2_codec);
+  _mp2_codec_context = g_libav.avcodec_alloc_context3(mp2_codec);
   if (!_mp2_codec_context) {
     fprintf(stderr, "<MHKMP2Decompressor %p>: avcodec_alloc_context3 failed\n", self);
   } else {
@@ -556,15 +433,14 @@ static void MHKMP2Decompressor_release_buffer(struct AVCodecContext* c, AVFrame*
     _mp2_codec_context->request_sample_fmt = AV_SAMPLE_FMT_S16;
 
     // open the codec
-    int result = _libav_state.avcodec_open2(_mp2_codec_context, _libav_state.mp2_codec, NULL);
+    int result = g_libav.avcodec_open2(_mp2_codec_context, mp2_codec, NULL);
     if (result < 0)
       fprintf(stderr, "<MHKMP2Decompressor %p>: avcodec_open2 failed: %d\n", self, result);
 
     // allocate decompression frame
-    _mp2_frame = _libav_state.avcodec_alloc_frame();
+    _mp2_frame = g_libav.avcodec_alloc_frame();
   }
 
-  pthread_mutex_unlock(&s_libav_mutex);
   pthread_mutex_unlock(&_decompressor_lock);
 }
 
@@ -663,7 +539,7 @@ static void MHKMP2Decompressor_release_buffer(struct AVCodecContext* c, AVFrame*
     packet.convergence_duration = AV_NOPTS_VALUE;
 
     int got_frame_ptr;
-    int used_bytes = _libav_state.avcodec_decode_audio4(_mp2_codec_context, _mp2_frame, &got_frame_ptr, &packet);
+    int used_bytes = g_libav.avcodec_decode_audio4(_mp2_codec_context, _mp2_frame, &got_frame_ptr, &packet);
     if (used_bytes <= 0)
       goto AbortFill;
 
