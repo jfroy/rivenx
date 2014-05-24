@@ -40,6 +40,7 @@ static void init_libav()
   LOADFN(avc_handle, avcodec_close);
   LOADFN(avc_handle, avcodec_alloc_frame);
   LOADFN(avc_handle, avcodec_free_frame);
+  LOADFN(avc_handle, av_free_packet);
   LOADFN(avc_handle, avcodec_decode_audio4);
 
   LOADFN(avf_handle, av_register_all);

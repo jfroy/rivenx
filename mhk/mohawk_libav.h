@@ -37,6 +37,7 @@ struct mhk_libav {
   int (*avcodec_close)(AVCodecContext*);
   AVFrame* (*avcodec_alloc_frame)(void);
   void (*avcodec_free_frame)(AVFrame**);
+  void (*av_free_packet)(AVPacket*);
   int (*avcodec_decode_audio4)(AVCodecContext*, AVFrame*, int*, AVPacket*);
 
   void (*av_register_all)(void);
