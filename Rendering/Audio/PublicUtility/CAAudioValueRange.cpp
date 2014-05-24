@@ -1,7 +1,7 @@
 /*
      File: CAAudioValueRange.cpp 
  Abstract:  CAAudioValueRange.h  
-  Version: 1.0.3 
+  Version: 1.0.4 
   
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
  Inc. ("Apple") in consideration of your agreement to the following 

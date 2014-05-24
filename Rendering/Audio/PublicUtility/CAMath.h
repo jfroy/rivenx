@@ -1,7 +1,7 @@
 /*
      File: CAMath.h 
  Abstract:  Part of CoreAudio Utility Classes  
-  Version: 1.0.3 
+  Version: 1.0.4 
   
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
  Inc. ("Apple") in consideration of your agreement to the following 
@@ -61,13 +61,11 @@ inline bool fnonzero(Float32 f) { return !fiszero(f); }
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wfloat-equal"
-
 inline bool fequal(const Float64 &a, const Float64 &b) { return a == b; }
 inline bool fequal(const Float32 &a, const Float32 &b) { return a == b; }
+#pragma clang diagnostic pop
 
 inline bool fnotequal(const Float64 &a, const Float64 &b) { return !fequal(a, b); }
 inline bool fnotequal(const Float32 &a, const Float32 &b) { return !fequal(a, b); }
-
-#pragma clang diagnostic pop
 
 #endif // __CAMath_h__

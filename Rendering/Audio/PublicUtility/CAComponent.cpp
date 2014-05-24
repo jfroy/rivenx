@@ -1,7 +1,7 @@
 /*
      File: CAComponent.cpp 
  Abstract:  CAComponent.h  
-  Version: 1.0.3 
+  Version: 1.0.4 
   
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
  Inc. ("Apple") in consideration of your agreement to the following 
@@ -160,7 +160,7 @@ static void	_ShowCF (FILE* file, CFStringRef str)
 		return;
 	}
 
-	UInt32 len = CFStringGetLength(str);
+	CFIndex len = CFStringGetLength(str);
 	char* chars = (char*)CA_malloc (len * 2); // give us plenty of room for unichar chars
 	if (CFStringGetCString (str, chars, len * 2, kCFStringEncodingUTF8))
 		fprintf (file, "%s", chars);

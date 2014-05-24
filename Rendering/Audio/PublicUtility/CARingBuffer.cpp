@@ -1,7 +1,7 @@
 /*
      File: CARingBuffer.cpp 
  Abstract:  CARingBuffer.h  
-  Version: 1.0.3 
+  Version: 1.0.4 
   
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
  Inc. ("Apple") in consideration of your agreement to the following 
@@ -122,7 +122,8 @@ inline void StoreABL(Byte **buffers, int destOffset, const AudioBufferList *abl,
 	int nchannels = abl->mNumberBuffers;
 	const AudioBuffer *src = abl->mBuffers;
 	while (--nchannels >= 0) {
-		memcpy(*buffers + destOffset, (Byte *)src->mData + srcOffset, nbytes);
+		if (srcOffset > (int)src->mDataByteSize) continue;
+		memcpy(*buffers + destOffset, (Byte *)src->mData + srcOffset, std::min(nbytes, (int)src->mDataByteSize - srcOffset));
 		++buffers;
 		++src;
 	}
@@ -133,7 +134,8 @@ inline void FetchABL(AudioBufferList *abl, int destOffset, Byte **buffers, int s
 	int nchannels = abl->mNumberBuffers;
 	AudioBuffer *dest = abl->mBuffers;
 	while (--nchannels >= 0) {
-		memcpy((Byte *)dest->mData + destOffset, *buffers + srcOffset, nbytes);
+		if (destOffset > (int)dest->mDataByteSize) continue;
+		memcpy((Byte *)dest->mData + destOffset, *buffers + srcOffset, std::min(nbytes, (int)dest->mDataByteSize - destOffset));
 		++buffers;
 		++dest;
 	}
@@ -144,7 +146,8 @@ inline void ZeroABL(AudioBufferList *abl, int destOffset, int nbytes)
 	int nBuffers = abl->mNumberBuffers;
 	AudioBuffer *dest = abl->mBuffers;
 	while (--nBuffers >= 0) {
-		memset((Byte *)dest->mData + destOffset, 0, nbytes);
+		if (destOffset > (int)dest->mDataByteSize) continue;
+		memset((Byte *)dest->mData + destOffset, 0, std::min(nbytes, (int)dest->mDataByteSize - destOffset));
 		++dest;
 	}
 }
@@ -152,6 +155,9 @@ inline void ZeroABL(AudioBufferList *abl, int destOffset, int nbytes)
 
 CARingBufferError	CARingBuffer::Store(const AudioBufferList *abl, UInt32 framesToWrite, SampleTime startWrite)
 {
+	if (framesToWrite == 0)
+		return kCARingBufferError_OK;
+	
 	if (framesToWrite > mCapacityFrames)
 		return kCARingBufferError_TooMuch;		// too big!
 
@@ -241,33 +247,49 @@ CARingBufferError	CARingBuffer::ClipTimeBounds(SampleTime& startRead, SampleTime
 	CARingBufferError err = GetTimeBounds(startTime, endTime);
 	if (err) return err;
 	
+	if (startRead > endTime || endRead < startTime) {
+		endRead = startRead;
+		return kCARingBufferError_OK;
+	}
+	
 	startRead = std::max(startRead, startTime);
 	endRead = std::min(endRead, endTime);
 	endRead = std::max(endRead, startRead);
-	
+		
 	return kCARingBufferError_OK;	// success
 }
 
 CARingBufferError	CARingBuffer::Fetch(AudioBufferList *abl, UInt32 nFrames, SampleTime startRead)
 {
+	if (nFrames == 0)
+		return kCARingBufferError_OK;
+		
+	startRead = std::max(0LL, startRead);
+	
 	SampleTime endRead = startRead + nFrames;
 
 	SampleTime startRead0 = startRead;
 	SampleTime endRead0 = endRead;
-	SampleTime size;
-		
+
 	CARingBufferError err = ClipTimeBounds(startRead, endRead);
 	if (err) return err;
-	size = endRead - startRead;
+
+	if (startRead == endRead) {
+		ZeroABL(abl, 0, nFrames * mBytesPerFrame);
+		return kCARingBufferError_OK;
+	}
 	
-	SInt32 destStartOffset = startRead - startRead0; 
-	if (destStartOffset > 0) {
-		ZeroABL(abl, 0, destStartOffset * mBytesPerFrame);
+	SInt32 byteSize = (SInt32)((endRead - startRead) * mBytesPerFrame);
+	
+	SInt32 destStartByteOffset = std::max((SInt32)0, (SInt32)((startRead - startRead0) * mBytesPerFrame)); 
+		
+	if (destStartByteOffset > 0) {
+		ZeroABL(abl, 0, std::min((SInt32)(nFrames * mBytesPerFrame), destStartByteOffset));
 	}
 
-	SInt32 destEndSize = endRead0 - endRead; 
+	SInt32 destEndSize = std::max((SInt32)0, (SInt32)(endRead0 - endRead)); 
 	if (destEndSize > 0) {
-		ZeroABL(abl, destStartOffset + size, destEndSize * mBytesPerFrame);
+		ZeroABL(abl, destStartByteOffset + byteSize, destEndSize * mBytesPerFrame);
 	}
 	
 	Byte **buffers = mBuffers;
@@ -276,11 +298,12 @@ CARingBufferError	CARingBuffer::Fetch(AudioBufferList *abl, UInt32 nFrames, Samp
 	int nbytes;
 	
 	if (offset0 < offset1) {
-		FetchABL(abl, destStartOffset, buffers, offset0, nbytes = offset1 - offset0);
+		nbytes = offset1 - offset0;
+		FetchABL(abl, destStartByteOffset, buffers, offset0, nbytes);
 	} else {
 		nbytes = mCapacityBytes - offset0;
-		FetchABL(abl, destStartOffset, buffers, offset0, nbytes);
-		FetchABL(abl, destStartOffset + nbytes, buffers, 0, offset1);
+		FetchABL(abl, destStartByteOffset, buffers, offset0, nbytes);
+		FetchABL(abl, destStartByteOffset + nbytes, buffers, 0, offset1);
 		nbytes += offset1;
 	}
 

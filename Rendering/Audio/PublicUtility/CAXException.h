@@ -1,7 +1,7 @@
 /*
      File: CAXException.h 
  Abstract:  Part of CoreAudio Utility Classes  
-  Version: 1.0.3 
+  Version: 1.0.4 
   
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
  Inc. ("Apple") in consideration of your agreement to the following 
@@ -64,12 +64,10 @@ public:
 	CAX4CCString(OSStatus error) {
 		// see if it appears to be a 4-char-code
 		char *str = mStr;
-        union {
-            char* i8;
-            uint32_t* ui32;
-        } u;
-        u.i8  = str + 1;
-        *u.ui32 = CFSwapInt32HostToBig(error);
+		str[1] = (char)((uint8_t)error >> 24);
+		str[2] = (char)((uint8_t)error >> 16) & 0xff;
+		str[3] = (char)((uint8_t)error >>  8) & 0xff;
+		str[4] = (char)((uint8_t)error & 0xff);
 		if (isprint(str[1]) && isprint(str[2]) && isprint(str[3]) && isprint(str[4])) {
 			str[0] = str[5] = '\'';
 			str[6] = '\0';

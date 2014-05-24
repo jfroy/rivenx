@@ -1,7 +1,7 @@
 /*
      File: CAPThread.cpp 
  Abstract:  CAPThread.h  
-  Version: 1.0.3 
+  Version: 1.0.4 
   
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
  Inc. ("Apple") in consideration of your agreement to the following 
@@ -327,6 +327,7 @@ UInt32 CAPThread::getScheduledPriority(pthread_t inThread, int inPriorityKind)
                 return thePolicyInfo.ts.cur_priority;
             }
             return thePolicyInfo.ts.base_priority;
+            break;
             
         case POLICY_FIFO:
 			count = POLICY_FIFO_INFO_COUNT;
@@ -335,6 +336,7 @@ UInt32 CAPThread::getScheduledPriority(pthread_t inThread, int inPriorityKind)
                 return thePolicyInfo.fifo.depress_priority;
             }
             return thePolicyInfo.fifo.base_priority;
+            break;
             
 		case POLICY_RR:
 			count = POLICY_RR_INFO_COUNT;
@@ -343,6 +345,7 @@ UInt32 CAPThread::getScheduledPriority(pthread_t inThread, int inPriorityKind)
                 return thePolicyInfo.rr.depress_priority;
             }
             return thePolicyInfo.rr.base_priority;
+            break;
 	}
     
     return 0;

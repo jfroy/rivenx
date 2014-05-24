@@ -1,7 +1,7 @@
 /*
      File: CAAudioUnit.cpp 
  Abstract:  CAAudioUnit.h  
-  Version: 1.0.3 
+  Version: 1.0.4 
   
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
  Inc. ("Apple") in consideration of your agreement to the following 
@@ -341,10 +341,7 @@ OSStatus		CAAudioUnit::RemovePropertyListener (AudioUnitPropertyID		inID,
 	OSStatus result = AudioUnitRemovePropertyListenerWithUserData(AU(), inID, 
 									inProc, inProcUserData);
 	#if !__LP64__ && !TARGET_OS_IPHONE
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 		if (result) result = AudioUnitRemovePropertyListener (AU(), inID, inProc);
-    #pragma clang diagnostic pop
 	#endif									
 	return result;
 }	

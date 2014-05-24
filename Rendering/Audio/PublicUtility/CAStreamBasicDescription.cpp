@@ -1,7 +1,7 @@
 /*
      File: CAStreamBasicDescription.cpp 
  Abstract:  CAStreamBasicDescription.h  
-  Version: 1.0.3 
+  Version: 1.0.4 
   
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
  Inc. ("Apple") in consideration of your agreement to the following 
@@ -58,13 +58,11 @@
 char *CAStringForOSType (OSType t, char *writeLocation)
 {
 	char *p = writeLocation;
-    unsigned char str[4] = {0}, *q = str;
-    union {
-        uint8_t* ui8p;
-        uint32_t* ui32p;
-    } u;
-    u.ui8p = q;
-    *u.ui32p = CFSwapInt32HostToBig(t);
+	unsigned char str[4] = {0}, *q = str;
+	str[0] = (t >> 24);
+	str[1] = (t >> 16) & 0xff;
+	str[2] = (t >>  8) & 0xff;
+	str[3] = (t & 0xff);
 
 	bool hasNonPrint = false;
 	for (int i = 0; i < 4; ++i) {
@@ -692,13 +690,8 @@ bool CAStreamBasicDescription::FromText(const char *inTextDesc, AudioStreamBasic
 				buf[3] = ' ';
 				--p;
 			}
-
-            union {
-                char* i8p;
-                uint32_t* ui32p;
-            } u;
-            u.i8p = &buf[0];
-			fmt.mFormatID = CFSwapInt32BigToHost(*u.ui32p);
+			
+			fmt.mFormatID = (buf[0] << 24) | (buf[1] << 16) | (buf[3] << 8) | buf[3];
 		}
 	}
 	

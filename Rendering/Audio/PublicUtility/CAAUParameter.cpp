@@ -1,7 +1,7 @@
 /*
      File: CAAUParameter.cpp 
  Abstract:  CAAUParameter.h  
-  Version: 1.0.3 
+  Version: 1.0.4 
   
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
  Inc. ("Apple") in consideration of your agreement to the following 
@@ -389,7 +389,7 @@ void	CAAUParameter::Print() const
 	UInt32 clump = 0;
 	GetClumpID (clump);
 	
-	UInt32 len = CFStringGetLength(mParamName);
+	CFIndex len = CFStringGetLength(mParamName);
 	char* chars = (char*)malloc (len * 2); // give us plenty of room for unichar chars
 	if (!CFStringGetCString (mParamName, chars, len * 2, kCFStringEncodingUTF8))
 		chars[0] = 0;

@@ -1,7 +1,7 @@
 /*
      File: CAAudioChannelLayout.h 
  Abstract:  Part of CoreAudio Utility Classes  
-  Version: 1.0.3 
+  Version: 1.0.4 
   
  Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
  Inc. ("Apple") in consideration of your agreement to the following 
@@ -149,12 +149,12 @@ private:
 		
 	public:
 		static RefCountedLayout *CreateWithNumberChannelDescriptions(unsigned nChannels) {
-								size_t size = CAAudioChannelLayout::CalculateByteSize(nChannels);
+								UInt32 size = CAAudioChannelLayout::CalculateByteSize(nChannels);
 								return new(size) RefCountedLayout(size);
 							}
 
 		static RefCountedLayout *CreateWithLayout(const AudioChannelLayout *layout) {
-								size_t size = CAAudioChannelLayout::CalculateByteSize(layout->mNumberChannelDescriptions);
+								UInt32 size = CAAudioChannelLayout::CalculateByteSize(layout->mNumberChannelDescriptions);
 								RefCountedLayout *acl = new(size) RefCountedLayout(size);
 								memcpy(&acl->mACL, layout, size);
 								return acl;
