@@ -29,7 +29,7 @@ static int ArchiveAVIOContextRead(struct ArchiveAVIOContext* ioc, uint8_t *buf, 
   else if (err != noErr)
     return -1;
   ioc->position += bytes_read;
-  return bytes_read;
+  return (int)bytes_read;
 }
 
 static int64_t ArchiveAVIOContextSeek(struct ArchiveAVIOContext* ioc, int64_t offset, int whence)
@@ -58,7 +58,7 @@ static int64_t ArchiveAVIOContextSeek(struct ArchiveAVIOContext* ioc, int64_t of
   if (!descriptor)
     ReturnValueWithError(NULL, MHKErrorDomain, errResourceNotFound, nil, error);
 
-  size_t iobuf_size = 0x1000;
+  int iobuf_size = 0x1000;
   void* iobuf = g_libav.av_malloc(iobuf_size);
 
   struct ArchiveAVIOContext* mioc = malloc(sizeof(struct ArchiveAVIOContext));

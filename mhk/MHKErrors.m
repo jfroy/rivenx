@@ -44,7 +44,7 @@ NSString* const MHKErrorDomain = @"MHKErrorDomain";
       return @"Invalid bitmap compression instruction.";
 
     default:
-      return [NSString stringWithFormat:@"Unknown error code (%u).", code];
+      return [NSString stringWithFormat:@"Unknown error code (%lu).", (unsigned long)code];
     }
   }
 

@@ -186,7 +186,7 @@ static void MHKMP2Decompressor_release_buffer(struct AVCodecContext* c, AVFrame*
       }
 
       // compute the frame length to seek to the next frame
-      size_t frame_length = _compute_mpeg_audio_frame_length(mpeg_header);
+      uint32_t frame_length = _compute_mpeg_audio_frame_length(mpeg_header);
 
       // load up the packet description entry
       _packet_table[_packet_count].mStartOffset = source_position - size_left_in_buffer;
