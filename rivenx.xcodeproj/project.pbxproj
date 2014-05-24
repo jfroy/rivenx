@@ -224,7 +224,6 @@
 		6BE3ED6B179085BF00B1732D /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
 		6BE3ED6D179085DB00B1732D /* ExceptionHandling.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED6C179085DB00B1732D /* ExceptionHandling.framework */; };
 		8DD76F9A0486AA7600D96B5E /* plistize_stacks.m in Sources */ = {isa = PBXBuildFile; fileRef = 08FB7796FE84155DC02AAC07 /* plistize_stacks.m */; settings = {ATTRIBUTES = (); }; };
-		93FDAD3B098A789100D94CD0 /* BDAlias.m in Sources */ = {isa = PBXBuildFile; fileRef = 93FDAD39098A789100D94CD0 /* BDAlias.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -560,8 +559,6 @@
 		6BE3ED691790857900B1732D /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
 		6BE3ED6C179085DB00B1732D /* ExceptionHandling.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExceptionHandling.framework; path = System/Library/Frameworks/ExceptionHandling.framework; sourceTree = SDKROOT; };
 		8DD76FA10486AA7600D96B5E /* plistize_stacks */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = plistize_stacks; sourceTree = BUILT_PRODUCTS_DIR; };
-		93FDAD39098A789100D94CD0 /* BDAlias.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = BDAlias.m; sourceTree = "<group>"; };
-		93FDAD3A098A789100D94CD0 /* BDAlias.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = BDAlias.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -742,8 +739,6 @@
 		311FD39C08C03D420045BE11 /* Foundation Additions */ = {
 			isa = PBXGroup;
 			children = (
-				93FDAD3A098A789100D94CD0 /* BDAlias.h */,
-				93FDAD39098A789100D94CD0 /* BDAlias.m */,
 				31863C580991AA28001A4A42 /* InterThreadMessaging.h */,
 				31863C590991AA28001A4A42 /* InterThreadMessaging.m */,
 				311AEBC214A91F6F002EFCDD /* NSArray+RXArrayAdditions.h */,
@@ -1577,7 +1572,6 @@
 				315547E208C4C44F00A2AA7A /* RXApplicationDelegate.m in Sources */,
 				31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */,
 				316C37B40987227800AC2C8E /* RXCardState.mm in Sources */,
-				93FDAD3B098A789100D94CD0 /* BDAlias.m in Sources */,
 				31588874098D7A120090A6B6 /* RXCardDescriptor.m in Sources */,
 				31863C5B0991AA28001A4A42 /* InterThreadMessaging.m in Sources */,
 				3153ED6409A3ED12002E1149 /* RXAudioRenderer.mm in Sources */,
