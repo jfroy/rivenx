@@ -286,7 +286,7 @@ NSObject<RXWorldProtocol>* g_world = nil;
   }
 
   if (_scriptThread)
-    [self performSelector:@selector(_stopThreadRunloop) inThread:_scriptThread];
+    [self performSelector:@selector(_stopThreadRunloop) onThread:_scriptThread withObject:nil waitUntilDone:NO];
 
   semaphore_destroy(mach_task_self(), _threadInitSemaphore);
 
@@ -407,7 +407,7 @@ NSObject<RXWorldProtocol>* g_world = nil;
 
     [(RXCardState*)_cardRenderer disableHotspotHandling];
     [(RXCardState*)_cardRenderer setActiveCardWithStack:scd->stackKey ID:scd->cardID waitUntilDone:NO];
-    [(RXCardState*)_cardRenderer performSelector:@selector(enableHotspotHandling) withObject:nil inThread:_scriptThread waitUntilDone:NO];
+    [(RXCardState*)_cardRenderer performSelector:@selector(enableHotspotHandling) onThread:_scriptThread withObject:nil waitUntilDone:NO];
   }
 }
 

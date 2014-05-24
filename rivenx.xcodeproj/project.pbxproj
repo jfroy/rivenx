@@ -85,7 +85,6 @@
 		315BD3CE0D85AF94007A3BFA /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
 		315BD3CF0D85AF95007A3BFA /* RXLogCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC320D74844900609273 /* RXLogCenter.m */; };
 		315BD3D00D85AF97007A3BFA /* RXLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.m */; };
-		315BD3F90D85B3FC007A3BFA /* InterThreadMessaging.m in Sources */ = {isa = PBXBuildFile; fileRef = 31863C590991AA28001A4A42 /* InterThreadMessaging.m */; };
 		315BD41C0D85B64D007A3BFA /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		315C76C618B5B0730066868D /* MHKArchiveMovieAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 315C76C418B5B0730066868D /* MHKArchiveMovieAdditions.m */; };
 		315DA3CF118FED0F003E21BC /* patches in Resources */ = {isa = PBXBuildFile; fileRef = 315DA3CB118FED0F003E21BC /* patches */; };
@@ -140,7 +139,6 @@
 		318384EF153BD91D008CC9DC /* platform_info.mm in Sources */ = {isa = PBXBuildFile; fileRef = 318384ED153BD91D008CC9DC /* platform_info.mm */; };
 		318384F3153BD9EE008CC9DC /* NSString+RXStringAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 318384F2153BD9EE008CC9DC /* NSString+RXStringAdditions.m */; };
 		3185C43B0E06027800528220 /* sparkle.pem in Resources */ = {isa = PBXBuildFile; fileRef = 3185C43A0E06027800528220 /* sparkle.pem */; };
-		31863C5B0991AA28001A4A42 /* InterThreadMessaging.m in Sources */ = {isa = PBXBuildFile; fileRef = 31863C590991AA28001A4A42 /* InterThreadMessaging.m */; };
 		3186C9C3102E3CE0004E81D2 /* RXTextureBroker.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DAB0DC263F400B3AF0D /* RXTextureBroker.m */; };
 		3186C9E5102E47F4004E81D2 /* RXTexture.m in Sources */ = {isa = PBXBuildFile; fileRef = 3186C9E4102E47F4004E81D2 /* RXTexture.m */; };
 		318AFC2F13BFA4B5000402B7 /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31200FBF0F3F8495006E6EF7 /* CAStreamBasicDescription.cpp */; };
@@ -459,8 +457,6 @@
 		3185C4710E06046D00528220 /* RXVersionComparator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVersionComparator.h; sourceTree = "<group>"; };
 		3185C4720E06046D00528220 /* RXVersionComparator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVersionComparator.m; sourceTree = "<group>"; };
 		31863C0509919F87001A4A42 /* RXCardProtocols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardProtocols.h; sourceTree = "<group>"; };
-		31863C580991AA28001A4A42 /* InterThreadMessaging.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = InterThreadMessaging.h; sourceTree = "<group>"; };
-		31863C590991AA28001A4A42 /* InterThreadMessaging.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = InterThreadMessaging.m; sourceTree = "<group>"; };
 		3186C9E3102E47F4004E81D2 /* RXTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXTexture.h; sourceTree = "<group>"; };
 		3186C9E4102E47F4004E81D2 /* RXTexture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXTexture.m; sourceTree = "<group>"; };
 		319288DB0EF43C630043B15A /* RXCoreStructures.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCoreStructures.h; sourceTree = "<group>"; };
@@ -739,8 +735,6 @@
 		311FD39C08C03D420045BE11 /* Foundation Additions */ = {
 			isa = PBXGroup;
 			children = (
-				31863C580991AA28001A4A42 /* InterThreadMessaging.h */,
-				31863C590991AA28001A4A42 /* InterThreadMessaging.m */,
 				311AEBC214A91F6F002EFCDD /* NSArray+RXArrayAdditions.h */,
 				311AEBC314A91F6F002EFCDD /* NSArray+RXArrayAdditions.m */,
 				318384F1153BD9EE008CC9DC /* NSString+RXStringAdditions.h */,
@@ -1532,7 +1526,6 @@
 				315BD3CE0D85AF94007A3BFA /* RXErrors.m in Sources */,
 				315BD3CF0D85AF95007A3BFA /* RXLogCenter.m in Sources */,
 				315BD3D00D85AF97007A3BFA /* RXLogging.m in Sources */,
-				315BD3F90D85B3FC007A3BFA /* InterThreadMessaging.m in Sources */,
 				315BD41C0D85B64D007A3BFA /* BZFSUtilities.m in Sources */,
 				316C389E0F469F7200EFB7FB /* CAAudioUnit.cpp in Sources */,
 				316C38A00F469F8000EFB7FB /* CAGuard.cpp in Sources */,
@@ -1573,7 +1566,6 @@
 				31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */,
 				316C37B40987227800AC2C8E /* RXCardState.mm in Sources */,
 				31588874098D7A120090A6B6 /* RXCardDescriptor.m in Sources */,
-				31863C5B0991AA28001A4A42 /* InterThreadMessaging.m in Sources */,
 				3153ED6409A3ED12002E1149 /* RXAudioRenderer.mm in Sources */,
 				31BC739F09A57D4E001EC1E0 /* RXAudioSourceBase.cpp in Sources */,
 				319C458109C138380031F95F /* VirtualRingBuffer.m in Sources */,

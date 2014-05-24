@@ -11,7 +11,3 @@
 #include "Base/RXBufferMacros.h"
 #include "Base/RXLogging.h"
 #include "Base/RXErrors.h"
-
-#if defined(__OBJC__)
-#import "Utilities/InterThreadMessaging.h"
-#endif // __OBJC__

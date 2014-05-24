@@ -12,7 +12,6 @@
 #import "Debug/RXDebug.h"
 #import "Base/RXThreadUtilities.h"
 #import "Base/RXLogging.h"
-#import "Utilities/InterThreadMessaging.h"
 #import "Application/RXApplicationDelegate.h"
 
 char* RXCopyThreadName(void)

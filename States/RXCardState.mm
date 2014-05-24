@@ -1465,7 +1465,7 @@ init_failure:
 
   // hide the mouse cursor and switch card on the script thread
   [self hideMouseCursor];
-  [self performSelector:@selector(_switchCardWithSimpleDescriptor:) withObject:scd inThread:[g_world scriptThread] waitUntilDone:wait];
+  [self performSelector:@selector(_switchCardWithSimpleDescriptor:) onThread:[g_world scriptThread] withObject:scd waitUntilDone:wait];
 }
 
 - (void)setActiveCardWithStack:(NSString*)stackKey ID:(uint16_t)cardID waitUntilDone:(BOOL)wait
@@ -1480,7 +1480,9 @@ init_failure:
 }
 
 - (void)clearActiveCardWaitingUntilDone:(BOOL)wait
-{ [self performSelector:@selector(_clearActiveCard) withObject:nil inThread:[g_world scriptThread] waitUntilDone:wait]; }
+{
+  [self performSelector:@selector(_clearActiveCard) onThread:[g_world scriptThread] withObject:nil waitUntilDone:wait];
+}
 
 #pragma mark -
 #pragma mark graphics rendering
@@ -2846,14 +2848,14 @@ exit_flush_tasks:
     [hotspot setEvent:event];
 
     // let the script engine run mouse up scripts
-    [sengine performSelector:@selector(mouseUpInHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+    [sengine performSelector:@selector(mouseUpInHotspot:) onThread:[g_world scriptThread] withObject:hotspot waitUntilDone:NO];
   }
 
   // if the old current hotspot is valid, doesn't match the new current hotspot and is still active, we need to send the old
   // current hotspot a mouse exited message
   if (_current_hotspot >= (RXHotspot*)0x1000 && _current_hotspot != hotspot && [active_hotspots indexOfObjectIdenticalTo:_current_hotspot] != NSNotFound) {
     // note that we DO NOT disable hotspot handling for "exited hotspot" messages
-    [sengine performSelector:@selector(mouseExitedHotspot:) withObject:_current_hotspot inThread:[g_world scriptThread]];
+    [sengine performSelector:@selector(mouseExitedHotspot:) onThread:[g_world scriptThread] withObject:_current_hotspot waitUntilDone:NO];
   }
 
   // handle cursor changes here so we don't ping-pong across 2 threads (at least for a hotspot's cursor, the inventory item
@@ -2868,7 +2870,7 @@ exit_flush_tasks:
     // valid hotspots receive periodic "inside hotspot" messages when the mouse is not dragging; note that we do NOT disable
     // hotspot handling for "inside hotspot" messages
     if (isinf(mouse_vector.size.width))
-      [sengine performSelector:@selector(mouseInsideHotspot:) withObject:hotspot inThread:[g_world scriptThread]];
+      [sengine performSelector:@selector(mouseInsideHotspot:) onThread:[g_world scriptThread] withObject:hotspot waitUntilDone:NO];
   }
 
   // update the current hotspot to the new current hotspot
@@ -2953,7 +2955,7 @@ exit_flush_tasks:
   sgroup->loop = NO;
   sgroup->fadeOutRemovedSounds = YES;
   sgroup->fadeInNewSounds = NO;
-  [self performSelector:@selector(activateSoundGroup:) withObject:sgroup inThread:[g_world scriptThread] waitUntilDone:NO];
+  [self performSelector:@selector(activateSoundGroup:) onThread:[g_world scriptThread] withObject:sgroup waitUntilDone:NO];
   [sgroup release];
 
   // leave ourselves a note to force a fade in on the next activate sound group command
@@ -3006,7 +3008,7 @@ exit_flush_tasks:
     [self disableHotspotHandling];
 
     // let the script engine run mouse down scripts
-    [sengine performSelector:@selector(mouseDownInHotspot:) withObject:_current_hotspot inThread:[g_world scriptThread]];
+    [sengine performSelector:@selector(mouseDownInHotspot:) onThread:[g_world scriptThread] withObject:_current_hotspot waitUntilDone:NO];
   } else if (_current_hotspot) {
     [self _handleInventoryMouseDownWithItemIndex:(uintptr_t)_current_hotspot - 1];
   }

@@ -197,7 +197,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
         [panel orderOut:self];
         [self _showInstallationUI];
 
-        [self performSelector:@selector(_performMountScanWithFeedback:) withObject:path inThread:scanningThread];
+        [self performSelector:@selector(_performMountScanWithFeedback:) onThread:scanningThread withObject:path waitUntilDone:NO];
       }
 
       // non-removable
@@ -209,7 +209,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
         [panel orderOut:self];
         [self _showInstallationUI];
 
-        [self performSelector:@selector(_performFolderScanWithFeedback:) withObject:path inThread:scanningThread];
+        [self performSelector:@selector(_performFolderScanWithFeedback:) onThread:scanningThread withObject:path waitUntilDone:NO];
       }
     }];
 
@@ -335,7 +335,7 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 {
   waitedOnDisc = disc_name;
 
-  [[NSWorkspace sharedWorkspace] performSelector:@selector(unmountAndEjectDeviceAtPath:) withObject:path inThread:scanningThread];
+  [[NSWorkspace sharedWorkspace] performSelector:@selector(unmountAndEjectDeviceAtPath:) onThread:scanningThread withObject:path waitUntilDone:NO];
 
   while (waitedOnDisc) {
     if ([NSApp runModalSession:installerSession] != NSRunContinuesResponse)
@@ -498,6 +498,8 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 
 - (BOOL)_checkPathContent:(NSString*)path removable:(BOOL)removable
 {
+  release_assert(path);
+
   // basically look for a Data directory with a bunch of .MHK files, possibly an Assets1 directory and an Extras.MHK file
   NSError* error;
   NSArray* content = BZFSContentsOfDirectory(path, &error);
@@ -659,21 +661,22 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
   NSString* mount_name = [path lastPathComponent];
 
   if (waitedOnDisc) {
-    if ([mount_name compare:waitedOnDisc options:NSCaseInsensitiveSearch] == NSOrderedSame)
-      [self performSelector:@selector(_performMountScan:) withObject:path inThread:scanningThread];
-    else
-      [[NSWorkspace sharedWorkspace] performSelector:@selector(unmountAndEjectDeviceAtPath:) withObject:path inThread:scanningThread];
+    if ([mount_name compare:waitedOnDisc options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+      [self performSelector:@selector(_performMountScan:) onThread:scanningThread withObject:path waitUntilDone:NO];
+    } else {
+      [[NSWorkspace sharedWorkspace] performSelector:@selector(unmountAndEjectDeviceAtPath:) onThread:scanningThread withObject:path waitUntilDone:NO];
+    }
     return;
   }
 
   NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^Riven[0-9]?$"];
   if ([predicate evaluateWithObject:mount_name]) {
-    [self performSelector:@selector(_performMountScan:) withObject:path inThread:scanningThread];
+    [self performSelector:@selector(_performMountScan:) onThread:scanningThread withObject:path waitUntilDone:NO];
     return;
   }
 
   if ([mount_name caseInsensitiveCompare:@"Exile DVD"]) {
-    [self performSelector:@selector(_performMountScan:) withObject:path inThread:scanningThread];
+    [self performSelector:@selector(_performMountScan:) onThread:scanningThread withObject:path waitUntilDone:NO];
     return;
   }
 }
