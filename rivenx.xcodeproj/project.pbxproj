@@ -44,8 +44,8 @@
 		31333F5A09B01A3700DB6FC7 /* rxaudio_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */; };
 		31333F6709B01A7D00DB6FC7 /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
 		31333F6809B01A7D00DB6FC7 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
-		3133D9AF0D5CDDC1004DAD5E /* BZFSOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 3133D9AE0D5CDDC1004DAD5E /* BZFSOperation.m */; };
 		313A9D4E18B30A6000FEE683 /* mohawk_libav.h in Headers */ = {isa = PBXBuildFile; fileRef = 313A9D4C18B30A6000FEE683 /* mohawk_libav.h */; };
+		3133D9AF0D5CDDC1004DAD5E /* RXFSCopyOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 3133D9AE0D5CDDC1004DAD5E /* RXFSCopyOperation.m */; };
 		313A9D4F18B30A6000FEE683 /* mohawk_libav.m in Sources */ = {isa = PBXBuildFile; fileRef = 313A9D4D18B30A6000FEE683 /* mohawk_libav.m */; };
 		313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 313C7EFB08CD057500950A70 /* Riven301.ttf */; };
 		31448F2709D9C799001B8A5F /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
@@ -373,8 +373,8 @@
 		31327B640DCF509E00280D8F /* RXScriptEngineProtocols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptEngineProtocols.h; sourceTree = "<group>"; };
 		31333F5009B019E300DB6FC7 /* rxaudio_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = rxaudio_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = rxaudio_test.mm; sourceTree = "<group>"; };
-		3133D9AD0D5CDDC1004DAD5E /* BZFSOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BZFSOperation.h; sourceTree = "<group>"; };
-		3133D9AE0D5CDDC1004DAD5E /* BZFSOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BZFSOperation.m; sourceTree = "<group>"; };
+		3133D9AD0D5CDDC1004DAD5E /* RXFSCopyOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXFSCopyOperation.h; sourceTree = "<group>"; };
+		3133D9AE0D5CDDC1004DAD5E /* RXFSCopyOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXFSCopyOperation.m; sourceTree = "<group>"; };
 		313A9D4C18B30A6000FEE683 /* mohawk_libav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mohawk_libav.h; path = mhk/mohawk_libav.h; sourceTree = "<group>"; };
 		313A9D4D18B30A6000FEE683 /* mohawk_libav.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = mohawk_libav.m; path = mhk/mohawk_libav.m; sourceTree = "<group>"; };
 		313C7EFB08CD057500950A70 /* Riven301.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Riven301.ttf; sourceTree = "<group>"; };
@@ -933,8 +933,8 @@
 				311FD39C08C03D420045BE11 /* Foundation Additions */,
 				313C7DE108CCF9FD00950A70 /* AppKit Additions */,
 				31FCC1A11261160600EFEAA9 /* auto_spinlock.h */,
-				3133D9AD0D5CDDC1004DAD5E /* BZFSOperation.h */,
-				3133D9AE0D5CDDC1004DAD5E /* BZFSOperation.m */,
+				3133D9AD0D5CDDC1004DAD5E /* RXFSCopyOperation.h */,
+				3133D9AE0D5CDDC1004DAD5E /* RXFSCopyOperation.m */,
 				3114FF3A0D58DF0A0099AF69 /* BZFSUtilities.h */,
 				3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */,
 				316721D90D27FB3200FB2C0E /* integer_pair_hash.c */,
@@ -1593,7 +1593,7 @@
 				316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */,
 				312A89660D57B25600FCDF91 /* RXArchiveManager.m in Sources */,
 				3114FF3C0D58DF0A0099AF69 /* BZFSUtilities.m in Sources */,
-				3133D9AF0D5CDDC1004DAD5E /* BZFSOperation.m in Sources */,
+				3133D9AF0D5CDDC1004DAD5E /* RXFSCopyOperation.m in Sources */,
 				31C545530D5D50620024B486 /* RXMediaInstaller.m in Sources */,
 				3105EC330D74844900609273 /* RXLogCenter.m in Sources */,
 				3105EC610D74922500609273 /* RXLogging.m in Sources */,

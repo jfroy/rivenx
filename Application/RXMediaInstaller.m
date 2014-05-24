@@ -18,7 +18,7 @@
 #import "RXScriptCompiler.h"
 #import "RXScriptDecoding.h"
 
-#import "BZFSOperation.h"
+#import "RXFSCopyOperation.h"
 #import "BZFSUtilities.h"
 
 #import "NSArray+RXArrayAdditions.h"
@@ -94,51 +94,33 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
   return NO;
 }
 
-- (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context
-{
-  if (![object isKindOfClass:[BZFSOperation class]])
-    return;
-
-  if (![keyPath isEqualToString:@"status"] || [(BZFSOperation*)object stage] != kFSOperationStageRunning)
-    return;
-
-  uint64_t bytes_copied = [[[(BZFSOperation*)object status] objectForKey:(NSString*)kFSOperationBytesCompleteKey] unsignedLongLongValue];
-
-  [self willChangeValueForKey:@"progress"];
-  progress = MIN(1.0, (double)(totalBytesCopied + bytes_copied) / totalBytesToCopy);
-  [self didChangeValueForKey:@"progress"];
-}
-
 - (BOOL)_copyFileAtPath:(NSString*)path error:(NSError**)error
 {
   [self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_FILE_COPY", @"Installer", NULL), [path lastPathComponent]] forKey:@"stage"];
 
-  BZFSOperation* copy_op = [[BZFSOperation alloc] initCopyOperationWithSource:path destination:destination];
-  [copy_op setAllowOverwriting:YES];
-  if (![copy_op scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode error:error]) {
-    [copy_op release];
-    return NO;
-  }
+  RXFSCopyOperation* copy_op = [[RXFSCopyOperation alloc] initWithSource:path destination:destination];
 
-  [copy_op addObserver:self forKeyPath:@"status" options:(NSKeyValueObservingOptions)0 context:NULL];
+  [copy_op setStatusQueue:dispatch_get_main_queue() callback:^{
+    if (copy_op.state != RXFSOperationStateData)
+      return;
 
-  if (![copy_op start:error]) {
-    [copy_op removeObserver:self forKeyPath:@"status"];
-    [copy_op release];
-    return NO;
-  }
+    [self willChangeValueForKey:@"progress"];
+    progress = MIN(1.0, (double)(totalBytesCopied + copy_op.bytesCopied) / totalBytesToCopy);
+    [self didChangeValueForKey:@"progress"];
+  }];
 
-  while ([copy_op stage] != kFSOperationStageComplete) {
+  [copy_op start];
+
+  while (copy_op.state != RXFSOperationStateDone) {
     if (modalSession && [NSApp runModalSession:modalSession] != NSRunContinuesResponse)
-      [copy_op cancel:error];
+      [copy_op cancel];
     [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
   }
 
-  totalBytesCopied += [[[copy_op status] objectForKey:(NSString*)kFSOperationBytesCompleteKey] unsignedLongLongValue];
-  NSError* copy_error = [[copy_op error] retain];
-  BOOL cancelled = [copy_op cancelled];
+  totalBytesCopied += copy_op.totalBytesCopied;
+  NSError* copy_error = [copy_op.error retain];
+  BOOL cancelled = copy_op.cancelled;
 
-  [copy_op removeObserver:self forKeyPath:@"status"];
   [copy_op release];
 
   if (cancelled && !copy_error)
