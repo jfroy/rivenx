@@ -44,8 +44,8 @@
 		31333F5A09B01A3700DB6FC7 /* rxaudio_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31333F5909B01A3700DB6FC7 /* rxaudio_test.mm */; };
 		31333F6709B01A7D00DB6FC7 /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
 		31333F6809B01A7D00DB6FC7 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
-		313A9D4E18B30A6000FEE683 /* mohawk_libav.h in Headers */ = {isa = PBXBuildFile; fileRef = 313A9D4C18B30A6000FEE683 /* mohawk_libav.h */; };
 		3133D9AF0D5CDDC1004DAD5E /* RXFSCopyOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 3133D9AE0D5CDDC1004DAD5E /* RXFSCopyOperation.m */; };
+		313A9D4E18B30A6000FEE683 /* mohawk_libav.h in Headers */ = {isa = PBXBuildFile; fileRef = 313A9D4C18B30A6000FEE683 /* mohawk_libav.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		313A9D4F18B30A6000FEE683 /* mohawk_libav.m in Sources */ = {isa = PBXBuildFile; fileRef = 313A9D4D18B30A6000FEE683 /* mohawk_libav.m */; };
 		313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 313C7EFB08CD057500950A70 /* Riven301.ttf */; };
 		31448F2709D9C799001B8A5F /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
@@ -542,6 +542,7 @@
 		31FCC1A11261160600EFEAA9 /* osspinlock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = osspinlock.h; sourceTree = "<group>"; };
 		31FF29670D41996E00E3B5FF /* dump_save.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = dump_save.m; sourceTree = "<group>"; };
 		31FF29D40D425BFE00E3B5FF /* GameVariables.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = GameVariables.plist; sourceTree = "<group>"; };
+		6BE0E96E18B6F3BC008F3C48 /* MHKArchiveMediaInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKArchiveMediaInterface.h; path = mhk/MHKArchiveMediaInterface.h; sourceTree = "<group>"; };
 		6BE3ED4E1790842600B1732D /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		6BE3ED4F1790842600B1732D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		6BE3ED501790842600B1732D /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = System/Library/Frameworks/QuickTime.framework; sourceTree = SDKROOT; };
@@ -797,12 +798,12 @@
 		314959870E327AF900E49C83 /* MHKKit */ = {
 			isa = PBXGroup;
 			children = (
-				314959900E327B2D00E49C83 /* MHKKit-Info.plist */,
 				314959950E327BA500E49C83 /* MHKADPCMDecompressor.h */,
 				314959A60E327BA500E49C83 /* MHKADPCMDecompressor.m */,
 				314959A70E327BA500E49C83 /* MHKArchive.h */,
 				3149599B0E327BA500E49C83 /* MHKArchive.m */,
 				3149599A0E327BA500E49C83 /* MHKArchiveBitmapAdditions.m */,
+				6BE0E96E18B6F3BC008F3C48 /* MHKArchiveMediaInterface.h */,
 				315C76C418B5B0730066868D /* MHKArchiveMovieAdditions.m */,
 				314959A80E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m */,
 				314959960E327BA500E49C83 /* MHKArchiveWAVAdditions.m */,
@@ -811,6 +812,7 @@
 				314959A20E327BA500E49C83 /* MHKErrors.m */,
 				314959A00E327BA500E49C83 /* MHKFileHandle.h */,
 				314959980E327BA500E49C83 /* MHKFileHandle.m */,
+				314959900E327B2D00E49C83 /* MHKKit-Info.plist */,
 				3149599E0E327BA500E49C83 /* MHKKit.h */,
 				314959A50E327BA500E49C83 /* MHKMP2Decompressor.h */,
 				314959990E327BA500E49C83 /* MHKMP2Decompressor.m */,
@@ -1121,6 +1123,7 @@
 				314959B70E327BA500E49C83 /* mohawk_bitmap.h in Headers */,
 				313A9D4E18B30A6000FEE683 /* mohawk_libav.h in Headers */,
 				314959B90E327BA500E49C83 /* MHKAudioDecompression.h in Headers */,
+				6BE0E96F18B6F3BC008F3C48 /* MHKArchiveMediaInterface.h in Headers */,
 				314959BA0E327BA500E49C83 /* mohawk_wave.h in Headers */,
 				314959BB0E327BA500E49C83 /* MHKMP2Decompressor.h in Headers */,
 				314959BD0E327BA500E49C83 /* MHKArchive.h in Headers */,

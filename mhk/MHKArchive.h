@@ -7,16 +7,12 @@
  *
  */
 
-#import "Base/RXBase.h"
-#import <QuickTime/QuickTime.h>
-
 #import <pthread.h>
+#import <CoreServices/CoreServices.h>
 
 #import <MHKKit/mohawk_core.h>
-#import <MHKKit/mohawk_bitmap.h>
 
-#import <MHKKit/MHKFileHandle.h>
-#import <MHKKit/MHKAudioDecompression.h>
+@class MHKFileHandle;
 
 @interface MHKArchive : NSObject {
   NSURL* mhk_url;
@@ -69,21 +65,4 @@
 - (MHKFileHandle*)openResourceWithResourceType:(NSString*)type name:(NSString*)name;
 - (NSData*)dataWithResourceType:(NSString*)type name:(NSString*)name;
 
-@end
-
-#if !defined(__LP64__)
-@interface MHKArchive (MHKArchiveQuickTimeAdditions)
-- (Movie)movieWithID:(uint16_t)movieID error:(NSError**)errorPtr;
-@end
-#endif
-
-@interface MHKArchive (MHKArchiveWAVAdditions)
-- (NSDictionary*)soundDescriptorWithID:(uint16_t)soundID error:(NSError**)error;
-- (MHKFileHandle*)openSoundWithID:(uint16_t)soundID error:(NSError**)error;
-- (id<MHKAudioDecompression>)decompressorWithSoundID:(uint16_t)soundID error:(NSError**)error;
-@end
-
-@interface MHKArchive (MHKArchiveBitmapAdditions)
-- (NSDictionary*)bitmapDescriptorWithID:(uint16_t)bitmapID error:(NSError**)errorPtr;
-- (BOOL)loadBitmapWithID:(uint16_t)bitmapID buffer:(void*)pixels format:(MHK_BITMAP_FORMAT)format error:(NSError**)errorPtr;
 @end

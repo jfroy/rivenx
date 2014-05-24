@@ -6,9 +6,10 @@
 //  Copyright 2005-2012 MacStorm. All rights reserved.
 //
 
-#import "MHKArchive.h"
-#import "MHKErrors.h"
 #import "Base/RXErrorMacros.h"
+
+#import "MHKArchiveMediaInterface.h"
+#import "MHKErrors.h"
 
 @implementation MHKArchive (MHKArchiveQuickTimeAdditions)
 

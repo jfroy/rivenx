@@ -16,12 +16,12 @@
 
 @implementation MHKArchive (MHKArchiveBitmapAdditions)
 
-- (NSDictionary*)bitmapDescriptorWithID:(uint16_t)bitmapID error:(NSError**)errorPtr
+- (NSDictionary*)bitmapDescriptorWithID:(uint16_t)bitmapID error:(NSError**)error
 {
   // get a resource descriptor
   NSDictionary* descriptor = [self resourceDescriptorWithResourceType:@"tBMP" ID:bitmapID];
   if (!descriptor)
-    ReturnValueWithError(nil, MHKErrorDomain, errResourceNotFound, nil, errorPtr);
+    ReturnValueWithError(nil, MHKErrorDomain, errResourceNotFound, nil, error);
 
   // seek to the tBMP resource
   SInt64 resource_offset = [[descriptor objectForKey:@"Offset"] longLongValue];
@@ -31,7 +31,7 @@
   ByteCount bytes_read = 0;
   OSStatus err = FSReadFork(forkRef, fsFromStart, resource_offset, sizeof(MHK_BITMAP_header), &bitmap_header, &bytes_read);
   if (err)
-    ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, errorPtr);
+    ReturnValueWithError(nil, NSOSStatusErrorDomain, err, nil, error);
   MHK_BITMAP_header_fton(&bitmap_header);
 
   // make the bitmap descriptor
@@ -42,12 +42,12 @@
   return bitmapDescriptor;
 }
 
-- (BOOL)loadBitmapWithID:(uint16_t)bitmapID buffer:(void*)pixels format:(MHK_BITMAP_FORMAT)format error:(NSError**)errorPtr
+- (BOOL)loadBitmapWithID:(uint16_t)bitmapID buffer:(void*)pixels format:(MHK_BITMAP_FORMAT)format error:(NSError**)error
 {
   // get a resource descriptor
   NSDictionary* descriptor = [self resourceDescriptorWithResourceType:@"tBMP" ID:bitmapID];
   if (!descriptor)
-    ReturnValueWithError(NO, MHKErrorDomain, errResourceNotFound, nil, errorPtr);
+    ReturnValueWithError(NO, MHKErrorDomain, errResourceNotFound, nil, error);
 
   // seek to the tBMP resource
   SInt64 resource_offset = [[descriptor objectForKey:@"Offset"] longLongValue];
@@ -57,13 +57,13 @@
   ByteCount bytes_read = 0;
   OSStatus err = FSReadFork(forkRef, fsFromStart, resource_offset, sizeof(MHK_BITMAP_header), &bitmap_header, &bytes_read);
   if (err)
-    ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, errorPtr);
+    ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, error);
   MHK_BITMAP_header_fton(&bitmap_header);
 
   if (bitmap_header.truecolor_flag == 4) {
     err = read_raw_bgr_pixels(forkRef, resource_offset + bytes_read, &bitmap_header, pixels, format);
     if (err)
-      ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, errorPtr);
+      ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, error);
     return YES;
   }
 
@@ -76,9 +76,9 @@
   else if (bitmap_header.compression_flag == MHK_BITMAP_COMPRESSED)
     err = read_compressed_indexed_pixels(forkRef, resource_offset, &bitmap_header, pixels, format);
   else
-    ReturnValueWithError(NO, MHKErrorDomain, errInvalidBitmapCompression, nil, errorPtr);
+    ReturnValueWithError(NO, MHKErrorDomain, errInvalidBitmapCompression, nil, error);
   if (err)
-    ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, errorPtr);
+    ReturnValueWithError(NO, NSOSStatusErrorDomain, err, nil, error);
 
   // we're done
   return YES;
