@@ -529,6 +529,8 @@
 		31F32F5914AE6C7E00E53DF3 /* RXInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXInstaller.m; sourceTree = "<group>"; };
 		31F32F5B14AE6DBF00E53DF3 /* RXGOGSetupInstaller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXGOGSetupInstaller.h; sourceTree = "<group>"; };
 		31F32F5C14AE6DBF00E53DF3 /* RXGOGSetupInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXGOGSetupInstaller.m; sourceTree = "<group>"; };
+		31F4D2D218D4E42C00F77ACD /* cxx_policies.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cxx_policies.h; sourceTree = "<group>"; };
+		31F4D2D418D4E4F100F77ACD /* scoped_autoreleasepool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scoped_autoreleasepool.h; sourceTree = "<group>"; };
 		31F4EFE80F35312700A68652 /* RXScriptEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptEngine.h; sourceTree = "<group>"; };
 		31F4EFE90F35312700A68652 /* RXScriptEngine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptEngine.m; sourceTree = "<group>"; };
 		31F4F0000F3533EF00A68652 /* RXScriptDecoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptDecoding.h; sourceTree = "<group>"; };
@@ -537,7 +539,7 @@
 		31F4F03B0F35461C00A68652 /* RXMovieProxy.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXMovieProxy.m; sourceTree = "<group>"; };
 		31FA569D0C5AD15D005DE22F /* RXErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXErrors.h; sourceTree = "<group>"; };
 		31FA569E0C5AD15D005DE22F /* RXErrors.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXErrors.m; sourceTree = "<group>"; };
-		31FCC1A11261160600EFEAA9 /* auto_spinlock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = auto_spinlock.h; sourceTree = "<group>"; };
+		31FCC1A11261160600EFEAA9 /* osspinlock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = osspinlock.h; sourceTree = "<group>"; };
 		31FF29670D41996E00E3B5FF /* dump_save.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = dump_save.m; sourceTree = "<group>"; };
 		31FF29D40D425BFE00E3B5FF /* GameVariables.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = GameVariables.plist; sourceTree = "<group>"; };
 		6BE3ED4E1790842600B1732D /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
@@ -921,19 +923,20 @@
 			children = (
 				311FD39C08C03D420045BE11 /* Foundation Additions */,
 				313C7DE108CCF9FD00950A70 /* AppKit Additions */,
-				31FCC1A11261160600EFEAA9 /* auto_spinlock.h */,
 				3133D9AD0D5CDDC1004DAD5E /* RXFSCopyOperation.h */,
 				3133D9AE0D5CDDC1004DAD5E /* RXFSCopyOperation.m */,
 				3114FF3A0D58DF0A0099AF69 /* BZFSUtilities.h */,
 				3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */,
 				316721D90D27FB3200FB2C0E /* integer_pair_hash.c */,
 				316721D80D27FB3200FB2C0E /* integer_pair_hash.h */,
+				31A39A91186CDBA900A9E84D /* math.h */,
+				31A39A90186CDBA900A9E84D /* math.cpp */,
+				31FCC1A11261160600EFEAA9 /* osspinlock.h */,
 				318384ED153BD91D008CC9DC /* platform_info.mm */,
 				318384EE153BD91D008CC9DC /* platform_info.h */,
 				319BDEFF186C92D000C7B334 /* random.h */,
 				319BDEFE186C92D000C7B334 /* random.cpp */,
-				31A39A91186CDBA900A9E84D /* math.h */,
-				31A39A90186CDBA900A9E84D /* math.cpp */,
+				31F4D2D418D4E4F100F77ACD /* scoped_autoreleasepool.h */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -950,6 +953,7 @@
 		31BC2E610D6DC419008FA476 /* Base */ = {
 			isa = PBXGroup;
 			children = (
+				31F4D2D218D4E42C00F77ACD /* cxx_policies.h */,
 				318161AE147C69C600623EF2 /* rx_abort.c */,
 				318161AF147C69C600623EF2 /* RXBase.h */,
 				318161B0147C69C600623EF2 /* RXBufferMacros.h */,

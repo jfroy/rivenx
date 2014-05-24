@@ -24,11 +24,11 @@
 
 #import "Application/RXApplicationDelegate.h"
 
-#import "Utilities/auto_spinlock.h"
-
 #if defined(DEBUG)
 #import <GLUT/glut.h>
 #endif
+#import "Utilities/osspinlock.h"
+#import "Utilities/scoped_autoreleasepool.h"
 
 static rx_render_dispatch_t picture_render_dispatch;
 static rx_post_flush_tasks_dispatch_t picture_flush_task_dispatch;
@@ -2907,7 +2907,7 @@ exit_flush_tasks:
     return;
 
   // hotspot updates cannot occur during a card switch
-  auto_spinlock state_lock(&_state_swap_lock);
+  rx::OSSpinlockGuard lock_guard(&_state_swap_lock);
 
   // check if hotspot handling is disabled again (last time, this is only to handle the situation where we might have slept a little while on the spin lock
   if (_hotspot_handling_disable_counter > 0)
@@ -3036,7 +3036,7 @@ exit_flush_tasks:
     return;
 
   // cannot use the front card during state swaps
-  auto_spinlock state_lock(&_state_swap_lock);
+  rx::OSSpinlockGuard lock_guard(&_state_swap_lock);
 
   // perform the mouse down
   [self _performMouseDown];
@@ -3109,7 +3109,7 @@ exit_flush_tasks:
   // a hotspot
 
   // cannot use the front card during state swaps
-  auto_spinlock state_lock(&_state_swap_lock);
+  rx::OSSpinlockGuard lock_guard(&_state_swap_lock);
 
   // check if hotspot handling is disabled again (last time, this is only to handle the situation where we might have slept a little while on the spin lock
   if (_hotspot_handling_disable_counter > 0)
@@ -3172,7 +3172,7 @@ exit_flush_tasks:
 
   NSRect previous_mouse_vector;
   {
-    auto_spinlock mouse_lock(&_mouse_state_lock);
+    rx::OSSpinlockGuard lock_guard(&_mouse_state_lock);
 
     // we need to copy the current mouse vector to restore it after the swipe
     previous_mouse_vector = _mouse_vector;
@@ -3192,7 +3192,7 @@ exit_flush_tasks:
 
   // we can now finally generate a mouse down event; we do this by changing the mouse vector's size from INFINITY to zero
   {
-    auto_spinlock mouse_lock(&_mouse_state_lock);
+    rx::OSSpinlockGuard lock_guard(&_mouse_state_lock);
     _mouse_vector.size = NSZeroSize;
   }
 
@@ -3201,7 +3201,7 @@ exit_flush_tasks:
 
   // restore the mouse's position
   {
-    auto_spinlock mouse_lock(&_mouse_state_lock);
+    rx::OSSpinlockGuard lock_guard(&_mouse_state_lock);
     _mouse_vector = previous_mouse_vector;
   }
 
