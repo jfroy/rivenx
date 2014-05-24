@@ -10,20 +10,14 @@
 #if !defined(RXTHREADUTILITIES_H)
 #define RXTHREADUTILITIES_H
 
-#include <assert.h>
-#include <pthread.h>
-#include <CoreFoundation/CoreFoundation.h>
-
+#include <sys/cdefs.h>
 #include <mach/semaphore.h>
 
 __BEGIN_DECLS
 
 char* RXCopyThreadName(void);
 void RXSetThreadName(char const* name);
-
-#if defined(__OBJC__)
 extern void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name) __attribute__((noreturn));
-#endif
 
 __END_DECLS
 

@@ -7,12 +7,18 @@
 //
 
 #import "Base/RXBase.h"
-#import <QuickTime/QuickTime.h>
 
-#import "Debug/RXDebug.h"
+#import <pthread.h>
+
+#import <Foundation/NSAutoreleasePool.h>
+#import <Foundation/NSPort.h>
+#import <Foundation/NSRunLoop.h>
+
+#if !defined(__LP64__)
+#import <QuickTime/QuickTime.h>
+#endif
+
 #import "Base/RXThreadUtilities.h"
-#import "Base/RXLogging.h"
-#import "Application/RXApplicationDelegate.h"
 
 char* RXCopyThreadName(void)
 {
@@ -33,7 +39,9 @@ void RXThreadRunLoopRun(semaphore_t ready_semaphore, char const* name)
   RXSetThreadName(name);
 
   // init QuickTime on this thread (as a precaution)
+#if !defined(__LP64__)
   EnterMoviesOnThread(kCSAcceptAllComponentsMode);
+#endif
 
   // get this thread's run loop
   NSRunLoop* rl = [NSRunLoop currentRunLoop];
