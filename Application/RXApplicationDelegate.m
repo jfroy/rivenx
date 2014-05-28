@@ -40,10 +40,10 @@
 
 + (void)initialize
 {
-  rx_install_exception_handler();
-
-  [[NSUserDefaults standardUserDefaults] registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO], @"Fullscreen",
-                                                                                                     [NSDictionary dictionary], @"EngineVariables", nil]];
+  if (self == [RXApplicationDelegate class]) {
+    rx_install_exception_handler();
+    [[NSUserDefaults standardUserDefaults] registerDefaults:@{@"Fullscreen": @NO, @"EngineVariables": @{}}];
+  }
 }
 
 + (RXApplicationDelegate*)sharedApplicationDelegate { return [NSApp delegate]; }

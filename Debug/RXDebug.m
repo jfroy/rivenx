@@ -117,10 +117,11 @@ static void print_exception_backtrace(NSException* e)
 
 @end
 
-static RXExceptionHandlerDelegate* s_exceptionHandlerDelegate;
+static RXExceptionHandlerDelegate* s_exceptionHandlerDelegate = nil;
 
 void rx_install_exception_handler(void)
 {
+  release_assert(s_exceptionHandlerDelegate == nil);
   s_exceptionHandlerDelegate = [RXExceptionHandlerDelegate new];
   NSExceptionHandler* handler = [NSExceptionHandler defaultExceptionHandler];
   [handler setDelegate:s_exceptionHandlerDelegate];
