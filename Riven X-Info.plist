@@ -42,7 +42,7 @@
 	<key>CFBundleURLTypes</key>
 	<array/>
 	<key>CFBundleVersion</key>
-	<string>bzr 700</string>
+	<string>1</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.adventure-games</string>
 	<key>LSMinimumSystemVersion</key>
@@ -57,15 +57,7 @@
 	<array/>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
-	<key>SUEnableSystemProfiling</key>
-	<true/>
 	<key>SUExpectsDSASignature</key>
-	<true/>
-	<key>SUFeedURL</key>
-	<string>$APPCAST_URL</string>
-	<key>SUPublicDSAKeyFile</key>
-	<string>sparkle.pem</string>
-	<key>SUShowReleaseNotes</key>
 	<true/>
 	<key>UTExportedTypeDeclarations</key>
 	<array>

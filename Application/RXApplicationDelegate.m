@@ -6,21 +6,12 @@
 //  Copyright 2005-2012 MacStorm. All rights reserved.
 //
 
-#import <Foundation/NSBundle.h>
-#import <Foundation/NSTimer.h>
-
-#import <AppKit/NSAlert.h>
-#import <AppKit/NSDocumentController.h>
-#import <AppKit/NSMenu.h>
-#import <AppKit/NSOpenPanel.h>
-#import <AppKit/NSWindow.h>
-
-#import <Sparkle/SUUpdater.h>
-
-#import "Application/RXVersionComparator.h"
-#import "Application/RXWelcomeWindowController.h"
-
 #import "Application/RXApplicationDelegate.h"
+
+#import <Foundation/Foundation.h>
+#import <AppKit/AppKit.h>
+
+#import "Application/RXWelcomeWindowController.h"
 
 #import "Engine/RXCardDescriptor.h"
 #import "Engine/RXWorld.h"
@@ -67,9 +58,6 @@
                                       additionalEventParamDescriptor:nil
                                                     launchIdentifier:NULL];
       }
-
-      // check for an app update before quitting
-      [[SUUpdater sharedUpdater] checkForUpdatesInBackground];
       break;
 
     case kRXErrFailedToInitializeStack:
@@ -252,30 +240,6 @@
 {
   // legacy fullscreen path
   [g_world toggleFullscreenLegacyPath];
-}
-
-#pragma mark -
-#pragma mark SUUpdater delegate
-
-- (id<SUVersionComparison>)versionComparatorForUpdater:(SUUpdater*)updater { return versionComparator; }
-
-- (void)quitIfNoVisibleWindows:(NSTimer*)timer
-{
-  NSArray* windows = [NSWindow windowNumbersWithOptions:NSWindowNumberListAllSpaces];
-  if ([windows count] == 0)
-    [NSApp terminate:self];
-}
-
-- (void)updater:(SUUpdater*)updater didFindValidUpdate:(SUAppcastItem*)update
-{
-  if (!quicktimeGood)
-    [NSTimer scheduledTimerWithTimeInterval:5.0 target:self selector:@selector(quitIfNoVisibleWindows:) userInfo:nil repeats:YES];
-}
-
-- (void)updaterDidNotFindUpdate:(SUUpdater*)update
-{
-  if (!quicktimeGood)
-    [NSApp terminate:self];
 }
 
 #pragma mark -

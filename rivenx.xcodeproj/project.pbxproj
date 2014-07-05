@@ -138,7 +138,6 @@
 		318161B2147C69C700623EF2 /* rx_abort.c in Sources */ = {isa = PBXBuildFile; fileRef = 318161AE147C69C600623EF2 /* rx_abort.c */; };
 		318384EF153BD91D008CC9DC /* platform_info.mm in Sources */ = {isa = PBXBuildFile; fileRef = 318384ED153BD91D008CC9DC /* platform_info.mm */; };
 		318384F3153BD9EE008CC9DC /* NSString+RXStringAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 318384F2153BD9EE008CC9DC /* NSString+RXStringAdditions.m */; };
-		3185C43B0E06027800528220 /* sparkle.pem in Resources */ = {isa = PBXBuildFile; fileRef = 3185C43A0E06027800528220 /* sparkle.pem */; };
 		3186C9C3102E3CE0004E81D2 /* RXTextureBroker.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DAB0DC263F400B3AF0D /* RXTextureBroker.m */; };
 		3186C9E5102E47F4004E81D2 /* RXTexture.m in Sources */ = {isa = PBXBuildFile; fileRef = 3186C9E4102E47F4004E81D2 /* RXTexture.m */; };
 		318AFC2F13BFA4B5000402B7 /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31200FBF0F3F8495006E6EF7 /* CAStreamBasicDescription.cpp */; };
@@ -168,7 +167,6 @@
 		31A39A92186CDBA900A9E84D /* math.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A39A90186CDBA900A9E84D /* math.cpp */; };
 		31A9F028094D2D0300C6A0AB /* RXRenderState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31A9F027094D2D0300C6A0AB /* RXRenderState.m */; };
 		31ADC95F14ADA17A004FB4AD /* unpackgogsetup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31ADC95E14ADA17A004FB4AD /* unpackgogsetup.cpp */; };
-		31B1128D17F4B18D005ABDB8 /* RXVersionComparator.m in Sources */ = {isa = PBXBuildFile; fileRef = 3185C4720E06046D00528220 /* RXVersionComparator.m */; };
 		31B644BF10033A15008AD8E0 /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38D60F46B22300EFB7FB /* CAAUParameter.cpp */; };
 		31B644EA10033B52008AD8E0 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		31BC739F09A57D4E001EC1E0 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
@@ -427,9 +425,6 @@
 		318384EE153BD91D008CC9DC /* platform_info.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform_info.h; sourceTree = "<group>"; };
 		318384F1153BD9EE008CC9DC /* NSString+RXStringAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+RXStringAdditions.h"; sourceTree = "<group>"; };
 		318384F2153BD9EE008CC9DC /* NSString+RXStringAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+RXStringAdditions.m"; sourceTree = "<group>"; };
-		3185C43A0E06027800528220 /* sparkle.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = sparkle.pem; sourceTree = "<group>"; };
-		3185C4710E06046D00528220 /* RXVersionComparator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXVersionComparator.h; sourceTree = "<group>"; };
-		3185C4720E06046D00528220 /* RXVersionComparator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXVersionComparator.m; sourceTree = "<group>"; };
 		31863C0509919F87001A4A42 /* RXCardProtocols.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardProtocols.h; sourceTree = "<group>"; };
 		3186C9E3102E47F4004E81D2 /* RXTexture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXTexture.h; sourceTree = "<group>"; };
 		3186C9E4102E47F4004E81D2 /* RXTexture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXTexture.m; sourceTree = "<group>"; };
@@ -462,7 +457,6 @@
 		31AA79800F75AACC006F06AC /* RXCursors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCursors.h; sourceTree = "<group>"; };
 		31ADC95214ADA128004FB4AD /* unpackgogsetup */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = unpackgogsetup; sourceTree = BUILT_PRODUCTS_DIR; };
 		31ADC95E14ADA17A004FB4AD /* unpackgogsetup.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = unpackgogsetup.cpp; sourceTree = "<group>"; };
-		31B1128A17F4AC00005ABDB8 /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Sparkle.framework; path = Frameworks/Sparkle.framework; sourceTree = "<group>"; };
 		31BC739C09A57D4E001EC1E0 /* RXAudioSourceBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXAudioSourceBase.h; sourceTree = "<group>"; };
 		31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RXAudioSourceBase.cpp; sourceTree = "<group>"; };
 		31C356F80D92A38500EDEF81 /* UnitTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "UnitTests-Info.plist"; sourceTree = "<group>"; };
@@ -623,7 +617,6 @@
 				6BE3ED581790846800B1732D /* Cocoa.framework in Frameworks */,
 				6BE3ED6D179085DB00B1732D /* ExceptionHandling.framework in Frameworks */,
 				6BE3ED5F1790849200B1732D /* QuartzCore.framework in Frameworks */,
-				31B1128B17F4AC00005ABDB8 /* Sparkle.framework in Frameworks */,
 				6BE3ED591790846800B1732D /* OpenGL.framework in Frameworks */,
 				6BE3ED61179084BF00B1732D /* GLUT.framework in Frameworks */,
 				6BE3ED5D1790849200B1732D /* CoreAudio.framework in Frameworks */,
@@ -841,8 +834,6 @@
 				31F32F5714AE6C5A00E53DF3 /* Installers */,
 				315547E008C4C44F00A2AA7A /* RXApplicationDelegate.h */,
 				315547E108C4C44F00A2AA7A /* RXApplicationDelegate.m */,
-				3185C4710E06046D00528220 /* RXVersionComparator.h */,
-				3185C4720E06046D00528220 /* RXVersionComparator.m */,
 				31E933481127B0CE00188488 /* RXWelcomeWindowController.h */,
 				31E933491127B0CE00188488 /* RXWelcomeWindowController.m */,
 			);
@@ -995,7 +986,6 @@
 				31F1BED50D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf */,
 				313C7EFB08CD057500950A70 /* Riven301.ttf */,
 				31DAAF210DDE21EF00D06D0C /* sounds */,
-				3185C43A0E06027800528220 /* sparkle.pem */,
 				31D4E8CD1144635D00D70E28 /* Stacks.plist */,
 				3160E1810FD3075300F18E86 /* tiny_marbles.png */,
 				31334DA11968A624006470FC /* Welcome.strings */,
@@ -1073,7 +1063,6 @@
 				6BE3ED641790850200B1732D /* QTKit.framework */,
 				6BE3ED5C1790849200B1732D /* QuartzCore.framework */,
 				6BE3ED501790842600B1732D /* QuickTime.framework */,
-				31B1128A17F4AC00005ABDB8 /* Sparkle.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -1355,7 +1344,6 @@
 				31334DA41968A624006470FC /* InfoPlist.strings in Resources */,
 				313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */,
 				31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */,
-				3185C43B0E06027800528220 /* sparkle.pem in Resources */,
 				31E933441127B02000188488 /* Welcome.xib in Resources */,
 				31334DA61968A624006470FC /* Localizable.strings in Resources */,
 				3155F1C717F884550064E4BD /* Images.xcassets in Resources */,
@@ -1576,7 +1564,6 @@
 				31A14C080F03F912006EFF93 /* CAComponentDescription.cpp in Sources */,
 				31F4EFEA0F35312700A68652 /* RXScriptEngine.m in Sources */,
 				31F4F0020F3533EF00A68652 /* RXScriptDecoding.m in Sources */,
-				31B1128D17F4B18D005ABDB8 /* RXVersionComparator.m in Sources */,
 				31F4F03C0F35461C00A68652 /* RXMovieProxy.m in Sources */,
 				31A39A92186CDBA900A9E84D /* math.cpp in Sources */,
 				316C38D70F46B22300EFB7FB /* CAAUParameter.cpp in Sources */,
@@ -2251,7 +2238,6 @@
 		31EAEB3D0A92530E004CC449 /* Beta Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
 				CODE_SIGN_IDENTITY = "Mac Developer";
@@ -2346,7 +2332,6 @@
 		31F3093908BE43C200417394 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
 				CODE_SIGN_IDENTITY = "Mac Developer";
@@ -2366,7 +2351,6 @@
 		31F3093A08BE43C200417394 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
 				CODE_SIGN_IDENTITY = "Mac Developer";
