@@ -26,7 +26,7 @@
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>CFBundleGetInfoString</key>
-	<string>0.9.9, Copyright © 2005-2012 MacStorm.</string>
+	<string>0.10, Copyright © 2005-2014 MacStorm.</string>
 	<key>CFBundleIdentifier</key>
 	<string>org.macstorm.rivenx</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -36,7 +36,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.9.9</string>
+	<string>0.10</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -48,7 +48,7 @@
 	<key>LSMinimumSystemVersion</key>
 	<string>10.6.8</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2005-2012 MacStorm. All Rights Reserved. Riven is Copyright © 1997 Cyan Worlds, Inc. All rights reserved. Riven, MYST, and Cyan are trademarks of Cyan Worlds, Inc.</string>
+	<string>Copyright © 2005-2014 MacStorm. All Rights Reserved. Riven is Copyright © 1997 Cyan Worlds, Inc. All rights reserved. Riven, MYST, and Cyan are trademarks of Cyan Worlds, Inc.</string>
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
