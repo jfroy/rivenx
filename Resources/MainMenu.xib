@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4510" systemVersion="13A584" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6154.21" systemVersion="14A261i" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
-        <deployment version="1070" defaultVersion="1070" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4510"/>
+        <deployment version="1090" identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6154.21"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -21,11 +21,6 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="orderFrontAboutWindow:" target="248" id="283"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Check for Updates..." id="286">
-                                <connections>
-                                    <action selector="checkForUpdates:" target="303" id="304"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="236">
@@ -205,7 +200,6 @@
                 <outlet property="aboutBox" destination="256" id="458"/>
                 <outlet property="acknowledgmentsButton" destination="273" id="a2E-31-IIQ"/>
                 <outlet property="copyrightField" destination="278" id="460"/>
-                <outlet property="versionComparator" destination="306" id="307"/>
                 <outlet property="versionField" destination="276" id="459"/>
             </connections>
         </customObject>
@@ -213,7 +207,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" unifiedTitleAndToolbar="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="148" width="580" height="320"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="877"/>
             <value key="minSize" type="size" width="580" height="320"/>
             <value key="maxSize" type="size" width="580" height="320"/>
             <view key="contentView" id="257">
@@ -222,13 +216,11 @@
                 <subviews>
                     <imageView translatesAutoresizingMaskIntoConstraints="NO" id="265">
                         <rect key="frame" x="0.0" y="0.0" width="580" height="320"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" image="about" id="266"/>
                     </imageView>
-                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="273">
+                    <button verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="273">
                         <rect key="frame" x="402" y="9" width="163" height="28"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <buttonCell key="cell" type="push" title="&lt;&lt; DO NOT LOCALIZE>>" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" inset="2" id="274">
+                        <buttonCell key="cell" type="push" title="&lt;&lt; DO NOT LOCALIZE&gt;&gt;" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" inset="2" id="274">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="smallSystem"/>
                         </buttonCell>
@@ -238,12 +230,11 @@
                     </button>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="276">
                         <rect key="frame" x="256" y="197" width="304" height="14"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="14" id="28q-Ph-MX0"/>
                             <constraint firstAttribute="width" constant="304" id="5Pq-Qg-Ps1"/>
                         </constraints>
-                        <textFieldCell key="cell" allowsUndo="NO" sendsActionOnEndEditing="YES" alignment="left" title="&lt;&lt;DO NOT LOCALISE>>" drawsBackground="YES" id="277">
+                        <textFieldCell key="cell" allowsUndo="NO" sendsActionOnEndEditing="YES" alignment="left" title="&lt;&lt;DO NOT LOCALISE&gt;&gt;" drawsBackground="YES" id="277">
                             <font key="font" metaFont="smallSystemBold"/>
                             <color key="textColor" white="0.60000001999999997" alpha="1" colorSpace="calibratedWhite"/>
                             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -251,12 +242,11 @@
                     </textField>
                     <textField horizontalHuggingPriority="750" verticalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="278">
                         <rect key="frame" x="256" y="60" width="304" height="79"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <constraints>
                             <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="79" id="QU5-ej-pJ0"/>
                             <constraint firstAttribute="width" constant="304" id="Ydz-3v-Qeh"/>
                         </constraints>
-                        <textFieldCell key="cell" allowsUndo="NO" sendsActionOnEndEditing="YES" alignment="left" title="&lt;&lt;DO NOT LOCALISE>>" drawsBackground="YES" id="279">
+                        <textFieldCell key="cell" allowsUndo="NO" sendsActionOnEndEditing="YES" alignment="left" title="&lt;&lt;DO NOT LOCALISE&gt;&gt;" drawsBackground="YES" id="279">
                             <font key="font" metaFont="miniSystem"/>
                             <color key="textColor" red="0.60000001999999997" green="0.60000001999999997" blue="0.60000001999999997" alpha="1" colorSpace="calibratedRGB"/>
                             <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
@@ -278,12 +268,6 @@
                 </constraints>
             </view>
         </window>
-        <customObject id="303" customClass="SUUpdater">
-            <connections>
-                <outlet property="delegate" destination="248" id="305"/>
-            </connections>
-        </customObject>
-        <customObject id="306" customClass="RXVersionComparator"/>
         <userDefaultsController representsSharedInstance="YES" id="326"/>
     </objects>
     <resources>
