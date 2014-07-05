@@ -1,11 +1,3 @@
-/* 
-   Welcome.strings
-   rivenx
-
-   Created by Jean-Francois Roy on 20/03/2010.
-   Copyright 2010 MacStorm. All rights reserved.
- */
-
 "INSTALL_FROM_PANEL_MESSAGE" = "Choose a folder or disc to install Riven from. You can select setup_riven.exe from GOG.com as well.";
 
 "INSTALL_FROM_DISC_MESSAGE" = "Do you wish to install Riven from the disc \"%@\"?";
