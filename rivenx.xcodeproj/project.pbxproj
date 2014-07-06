@@ -76,7 +76,7 @@
 		314959BD0E327BA500E49C83 /* MHKArchive.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A70E327BA500E49C83 /* MHKArchive.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		314959BE0E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959A80E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m */; };
 		314959BF0E327BA500E49C83 /* mohawk_core.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A90E327BA500E49C83 /* mohawk_core.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		31495A4F0E327DA400E49C83 /* MHKKit.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
+		31495A4F0E327DA400E49C83 /* MHKKit.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		315017990CC0533E001BA929 /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		315017FA0CC06872001BA929 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		3153ED6409A3ED12002E1149 /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
@@ -145,7 +145,6 @@
 		3199275A0D96AE3E00ED1B47 /* RXLogging.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.mm */; };
 		3199276D0D96AFCE00ED1B47 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		319927730D96B07200ED1B47 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
-		319AC56914AE438500FFB28A /* unpackgogsetup in Resources */ = {isa = PBXBuildFile; fileRef = 31ADC95214ADA128004FB4AD /* unpackgogsetup */; };
 		319BBA151825989B00C4F8F8 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		319BBA16182598A400C4F8F8 /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
 		319BBA17182598AF00C4F8F8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4F1790842600B1732D /* Foundation.framework */; };
@@ -174,6 +173,7 @@
 		31CE92961033D576008B7717 /* RXInterpolator.m in Sources */ = {isa = PBXBuildFile; fileRef = 31CE92951033D576008B7717 /* RXInterpolator.m */; };
 		31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9A0DBC07A700E970E1 /* MainMenu.xib */; };
 		31D3D8600EEE36FD00F2D1C4 /* RXOpenGLState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31D3D85F0EEE36FD00F2D1C4 /* RXOpenGLState.m */; };
+		31D462641968C6A500A5C4B6 /* unpackgogsetup in Copy Binaries */ = {isa = PBXBuildFile; fileRef = 31ADC95214ADA128004FB4AD /* unpackgogsetup */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		31D4E8CE1144635D00D70E28 /* Stacks.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31D4E8CD1144635D00D70E28 /* Stacks.plist */; };
 		31DAA10F09D8892000F63F20 /* RXCardAudioSource_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31DAA10E09D8892000F63F20 /* RXCardAudioSource_test.mm */; };
 		31DAAF0B0DDE21BB00D06D0C /* Cursors.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF0A0DDE21BB00D06D0C /* Cursors.plist */; };
@@ -285,6 +285,17 @@
 				31495A4F0E327DA400E49C83 /* MHKKit.framework in Copy Frameworks */,
 			);
 			name = "Copy Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		31D462631968C67900A5C4B6 /* Copy Binaries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				31D462641968C6A500A5C4B6 /* unpackgogsetup in Copy Binaries */,
+			);
+			name = "Copy Binaries";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -1234,10 +1245,11 @@
 			buildConfigurationList = 31F3093808BE43C200417394 /* Build configuration list for PBXNativeTarget "Riven X" */;
 			buildPhases = (
 				31F3093008BE43C100417394 /* Sources */,
-				31F3093108BE43C100417394 /* Frameworks */,
 				31F3092F08BE43C100417394 /* Resources */,
 				314EF26409E45958002124D5 /* Copy Frameworks */,
+				31D462631968C67900A5C4B6 /* Copy Binaries */,
 				314A02EE0B6E53D5003E92A1 /* Generate Build Strings */,
+				31F3093108BE43C100417394 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -1331,26 +1343,25 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				319AC56914AE438500FFB28A /* unpackgogsetup in Resources */,
 				31DAAF0B0DDE21BB00D06D0C /* Cursors.plist in Resources */,
 				3155481008C52A1400A2AA7A /* Extras.plist in Resources */,
-				31334DA81968A624006470FC /* Welcome.strings in Resources */,
 				31F0DD4B0D3A7682000FBB5F /* EngineVariables.plist in Resources */,
 				31FF29D50D425BFE00E3B5FF /* GameVariables.plist in Resources */,
 				31D4E8CE1144635D00D70E28 /* Stacks.plist in Resources */,
 				31F1BEA60D3B03D000CFE301 /* about.png in Resources */,
 				3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */,
 				31F1BED60D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf in Resources */,
-				31334DA41968A624006470FC /* InfoPlist.strings in Resources */,
 				313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */,
 				31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */,
 				31E933441127B02000188488 /* Welcome.xib in Resources */,
-				31334DA61968A624006470FC /* Localizable.strings in Resources */,
 				3155F1C717F884550064E4BD /* Images.xcassets in Resources */,
-				31334DA51968A624006470FC /* Installer.strings in Resources */,
 				31472CEE114C2F66008B6CF7 /* Extras.MHK in Resources */,
 				31334DA31968A624006470FC /* About.strings in Resources */,
+				31334DA41968A624006470FC /* InfoPlist.strings in Resources */,
+				31334DA51968A624006470FC /* Installer.strings in Resources */,
+				31334DA61968A624006470FC /* Localizable.strings in Resources */,
 				31334DA71968A624006470FC /* Rendering.strings in Resources */,
+				31334DA81968A624006470FC /* Welcome.strings in Resources */,
 				31DAAF260DDE21EF00D06D0C /* cursors in Resources */,
 				315DA3CF118FED0F003E21BC /* patches in Resources */,
 				31334D951968A222006470FC /* Shaders in Resources */,
@@ -1720,7 +1731,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Mac Developer";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -1737,7 +1747,6 @@
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				PRODUCT_NAME = MHKKit;
-				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -1746,7 +1755,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Mac Developer";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -1763,7 +1771,6 @@
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				PRODUCT_NAME = MHKKit;
-				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = "Beta Release";
@@ -1772,7 +1779,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Mac Developer";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -1789,7 +1795,6 @@
 				INFOPLIST_FILE = "MHKKit-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
 				PRODUCT_NAME = MHKKit;
-				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -1861,7 +1866,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
 				LIBRARY_SEARCH_PATHS = (
@@ -1869,7 +1873,6 @@
 					"$(PROJECT_DIR)/xz",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -1878,7 +1881,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
 				LIBRARY_SEARCH_PATHS = (
@@ -1886,7 +1888,6 @@
 					"$(PROJECT_DIR)/xz",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = "Beta Release";
@@ -1895,7 +1896,6 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "Mac Developer";
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
 				LIBRARY_SEARCH_PATHS = (
@@ -1903,7 +1903,6 @@
 					"$(PROJECT_DIR)/xz",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
