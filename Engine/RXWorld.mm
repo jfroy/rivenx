@@ -15,7 +15,6 @@
 
 #import "Base/RXThreadUtilities.h"
 #import "Base/RXTiming.h"
-#import "Base/RXLogCenter.h"
 
 #import "Engine/RXWorld.h"
 #import "Engine/RXCursors.h"
@@ -153,9 +152,6 @@ NSObject<RXWorldProtocol>* g_world = nil;
 
   // initialize timing
   RXTimingUpdateTimebase();
-
-  // initialize logging
-  [RXLogCenter sharedLogCenter];
 
   RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"I am the first and the last, the alpha and the omega, the beginning and the end.");
   RXOLog2(kRXLoggingEngine, kRXLoggingLevelMessage, @"Riven X version %@ (%@)",
