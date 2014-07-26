@@ -61,6 +61,9 @@
 
 #pragma mark	This file needs to compile on more earlier versions of the OS, so please keep that in mind when editing it
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
+
 extern char *CAStringForOSType (OSType t, char *writeLocation);
 
 // define Leopard specific symbols for backward compatibility if applicable
@@ -405,5 +408,7 @@ inline bool	operator>(const AudioStreamBasicDescription& x, const AudioStreamBas
 
 bool SanityCheck(const AudioStreamBasicDescription& x);
 
+
+#pragma clang diagnostic pop
 
 #endif // __CAStreamBasicDescription_h__

@@ -55,6 +55,9 @@
 
 #pragma mark	This file needs to compile on earlier versions of the OS, so please keep that in mind when editing it
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
+
 char *CAStringForOSType (OSType t, char *writeLocation)
 {
 	char *p = writeLocation;
@@ -796,3 +799,5 @@ Bail:
 const char *CAStreamBasicDescription::sTextParsingUsageString = 
 	"format[@sample_rate_hz][/format_flags][#frames_per_packet][:LHbytesPerFrame][,channelsDI].\n"
 	"Format for PCM is [-][BE|LE]{F|I|UI}{bitdepth}; else a 4-char format code (e.g. aac, alac).\n";
+
+#pragma clang diagnostic pop
