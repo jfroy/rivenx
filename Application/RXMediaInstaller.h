@@ -1,39 +1,17 @@
-//
-//  RXMediaInstaller.h
-//  rivenx
-//
-//  Created by Jean-Francois Roy on 08/02/2008.
-//  Copyright 2005-2012 MacStorm. All rights reserved.
-//
+// Copyright 2014 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 #import "RXInstaller.h"
 
 @protocol RXMediaInstallerMediaProviderProtocol <NSObject>
-- (BOOL)waitForDisc:(NSString*)disc_name ejectingDisc:(NSString*)path error:(NSError**)error;
+- (void)waitForDisc:(NSString*)disc_name
+       ejectingDisc:(NSString*)path
+       continuation:(void (^)(NSDictionary* mount_paths))continuation;
 @end
 
-@interface RXMediaInstaller : RXInstaller {
-@private
-  uint64_t totalBytesToCopy;
-  uint64_t totalBytesCopied;
+@interface RXMediaInstaller : NSObject <RXInstaller>
 
-  NSMutableArray* discsToProcess;
-  NSString* currentDisc;
-
-  id<RXMediaInstallerMediaProviderProtocol> mediaProvider;
-
-  NSString* dataPath;
-  NSArray* dataArchives;
-
-  NSString* assetsPath;
-  NSArray* assetsArchives;
-
-  NSString* allPath;
-  NSArray* allArchives;
-
-  NSString* extrasPath;
-}
-
-- (id)initWithMountPaths:(NSDictionary*)mount_paths mediaProvider:(id<RXMediaInstallerMediaProviderProtocol>)mp;
+- (instancetype)initWithMountPaths:(NSDictionary*)mount_paths
+                     mediaProvider:(id<RXMediaInstallerMediaProviderProtocol>)mediaProvider;
 
 @end

@@ -1,258 +1,196 @@
-//
-//  RXMediaInstaller.m
-//  rivenx
-//
-//  Created by Jean-Francois Roy on 08/02/2008.
-//  Copyright 2005-2012 MacStorm. All rights reserved.
-//
+// Copyright 2014 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#import "RXMediaInstaller.h"
+#import "Application/RXMediaInstaller.h"
 
-#import "RXErrorMacros.h"
+#import <Foundation/NSKeyValueObserving.h>
 
-#import "RXWorld.h"
-#import "RXArchiveManager.h"
-#import "RXCard.h"
+#import "Base/RXErrors.h"
+#import "Base/RXErrorMacros.h"
 
-#import "RXScriptCommandAliases.h"
-#import "RXScriptCompiler.h"
-#import "RXScriptDecoding.h"
+#import "Engine/RXArchiveManager.h"
+#import "Engine/RXCard.h"
+#import "Engine/RXScriptCommandAliases.h"
+#import "Engine/RXScriptCompiler.h"
+#import "Engine/RXScriptDecoding.h"
+#import "Engine/RXWorld.h"
 
-#import "RXFSCopyOperation.h"
-#import "BZFSUtilities.h"
+#import "Utilities/BZFSUtilities.h"
+#import "Utilities/NSArray+RXArrayAdditions.h"
+#import "Utilities/RXFSCopyOperation.h"
 
-#import "NSArray+RXArrayAdditions.h"
+static NSString* const gStacks[] = {@"aspit", @"bspit", @"gspit", @"jspit", @"ospit", @"pspit", @"rspit", @"tspit"};
 
-static NSString* gStacks[] = {@"aspit", @"bspit", @"gspit", @"jspit", @"ospit", @"pspit", @"rspit", @"tspit"};
+@interface RXMediaInstaller ()
+@property (nonatomic, readwrite, copy) NSString* stage;
+@property (nonatomic, readwrite) double progress;
+@end
 
-static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
-{ return [(NSString*)lhs compare:rhs options:(NSStringCompareOptions)(NSCaseInsensitiveSearch | NSNumericSearch)]; }
+@implementation RXMediaInstaller {
+  __weak id<RXMediaInstallerMediaProviderProtocol> _mediaProvider;
+  NSString* _destination;
+  void (^_completionBlock)(BOOL success, NSError* error);
 
-@implementation RXMediaInstaller
+  uint64_t _totalBytesToCopy;
+  uint64_t _totalBytesCopied;
+  NSMutableArray* _archiveToCopyPaths;
 
-- (id)initWithMountPaths:(NSDictionary*)mount_paths mediaProvider:(id<RXMediaInstallerMediaProviderProtocol>)mp
-{
+  NSMutableArray* _discsToProcess;
+  NSString* _currentDisc;
+
+  NSString* _dataPath;
+  NSArray* _dataArchives;
+
+  NSString* _assetsPath;
+  NSArray* _assetsArchives;
+
+  NSString* _allPath;
+  NSArray* _allArchives;
+
+  NSString* _extrasPath;
+
+  BOOL _verified;
+  BOOL _patchesInstalled;
+  BOOL _cancelled;
+}
+
+- (instancetype)initWithMountPaths:(NSDictionary*)mount_paths
+                     mediaProvider:(id<RXMediaInstallerMediaProviderProtocol>)mediaProvider {
   self = [super init];
-  if (!self)
+  if (!self) {
     return nil;
+  }
 
-  release_assert(mount_paths);
-  release_assert([mp conformsToProtocol:@protocol(RXMediaInstallerMediaProviderProtocol)]);
+  debug_assert(mount_paths);
+  debug_assert([mediaProvider conformsToProtocol:@protocol(RXMediaInstallerMediaProviderProtocol)]);
 
-  mediaProvider = mp;
-  [self updatePathsWithMountPaths:mount_paths];
+  _mediaProvider = mediaProvider;
+  _destination = [[[(RXWorld*)g_world worldCacheBase] path] retain];
+
+  _progress = -1.0;
+  self.stage = NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Installer", NULL);
+
+  [self _updatePathsWithMountPaths:mount_paths];
 
   return self;
 }
 
-- (void)dealloc
-{
-  [dataPath release];
-  [dataArchives release];
-  [assetsPath release];
-  [assetsArchives release];
-  [allPath release];
-  [allArchives release];
-  [extrasPath release];
+- (void)dealloc {
+  debug_assert(_completionBlock == nil);
 
-  [discsToProcess release];
-  [currentDisc release];
-
+  [_stage release];
+  [_destination release];
+  [_archiveToCopyPaths release];
+  [_discsToProcess release];
+  [_currentDisc release];
+  [_dataPath release];
+  [_dataArchives release];
+  [_assetsPath release];
+  [_assetsArchives release];
+  [_allPath release];
+  [_allArchives release];
+  [_extrasPath release];
   [super dealloc];
 }
 
-- (BOOL)_mediaHasDataArchiveForStackKey:(NSString*)stack_key
-{
-  NSString* regex = [NSString stringWithFormat:@"^%C_Data[0-9]?\\.MHK$", [stack_key characterAtIndex:0]];
-  NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", regex];
+- (void)_updatePathsWithMountPaths:(NSDictionary*)mount_paths {
+  [_dataPath release];
+  [_dataArchives release];
+  [_assetsPath release];
+  [_assetsArchives release];
+  [_allPath release];
+  [_allArchives release];
+  [_extrasPath release];
+  [_currentDisc release];
 
-  NSArray* content = [dataArchives filteredArrayUsingPredicate:predicate];
-  if ([content count])
-    return YES;
+  _currentDisc = [[mount_paths objectForKey:@"path"] retain];
+  release_assert(_currentDisc);
 
-  content = [allArchives filteredArrayUsingPredicate:predicate];
-  if ([content count])
-    return YES;
+  _dataPath = [[mount_paths objectForKey:@"data path"] retain];
+  release_assert(_dataPath);
+  _dataArchives = [[mount_paths objectForKey:@"data archives"] retain];
+  release_assert(_dataArchives);
 
-  return NO;
+  _assetsPath = [mount_paths objectForKey:@"assets path"];
+  if ((id)_assetsPath == (id)[NSNull null]) {
+    _assetsPath = nil;
+    _assetsArchives = nil;
+  } else {
+    _assetsArchives = [mount_paths objectForKey:@"assets archives"];
+    release_assert((id)_assetsArchives != (id)[NSNull null]);
+  }
+  [_assetsPath retain];
+  [_assetsArchives retain];
+
+  _allPath = [mount_paths objectForKey:@"all path"];
+  if ((id)_allPath == (id)[NSNull null]) {
+    _allPath = nil;
+    _allArchives = nil;
+  } else {
+    _allArchives = [mount_paths objectForKey:@"all archives"];
+    release_assert((id)_allArchives != (id)[NSNull null]);
+  }
+  [_allPath retain];
+  [_allArchives retain];
+
+  _extrasPath = [mount_paths objectForKey:@"extras path"];
+  if ((id)_extrasPath == (id)[NSNull null]) {
+    _extrasPath = nil;
+  }
+  [_extrasPath retain];
 }
 
-- (BOOL)_mediaHasSoundArchiveForStackKey:(NSString*)stack_key
-{
-  NSString* regex = [NSString stringWithFormat:@"^%C_Sounds[0-9]?\\.MHK$", [stack_key characterAtIndex:0]];
-  NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", regex];
-
-  NSArray* content = [dataArchives filteredArrayUsingPredicate:predicate];
-  if ([content count])
-    return YES;
-  else {
-    content = [assetsArchives filteredArrayUsingPredicate:predicate];
-    if ([content count])
-      return YES;
-  }
-
-  return NO;
-}
-
-- (BOOL)_copyFileAtPath:(NSString*)path error:(NSError**)error
-{
-  [self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_FILE_COPY", @"Installer", NULL), [path lastPathComponent]] forKey:@"stage"];
-
-  RXFSCopyOperation* copy_op = [[RXFSCopyOperation alloc] initWithSource:path destination:destination];
-
-  [copy_op setStatusQueue:dispatch_get_main_queue() callback:^{
-    if (copy_op.state != RXFSOperationStateData)
-      return;
-
-    [self willChangeValueForKey:@"progress"];
-    progress = MIN(1.0, (double)(totalBytesCopied + copy_op.bytesCopied) / totalBytesToCopy);
-    [self didChangeValueForKey:@"progress"];
-  }];
-
-  [copy_op start];
-
-  while (copy_op.state != RXFSOperationStateDone) {
-    if (modalSession && [NSApp runModalSession:modalSession] != NSRunContinuesResponse)
-      [copy_op cancel];
-    [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
-  }
-
-  totalBytesCopied += copy_op.totalBytesCopied;
-  NSError* copy_error = [copy_op.error retain];
-  BOOL cancelled = copy_op.cancelled;
-
-  [copy_op release];
-
-  if (cancelled && !copy_error)
-    copy_error = [[RXError errorWithDomain:RXErrorDomain code:kRXErrInstallerCancelled userInfo:nil] retain];
-
-  if (error)
-    *error = [copy_error retain];
-  if (copy_error) {
-    [copy_error release];
-    return NO;
-  }
-
-  NSDictionary* permissions = [NSDictionary dictionaryWithObject:[NSNumber numberWithUnsignedInt:0664] forKey:NSFilePosixPermissions];
-  if (!BZFSSetAttributesOfItemAtPath([destination stringByAppendingPathComponent:[path lastPathComponent]], permissions, error))
-    return NO;
-
-  return YES;
-}
-
-- (BOOL)_runSingleDiscInstall:(NSError**)error
-{
+- (BOOL)_determineArchivesToCopyFromCurrentDisc:(NSError**)error {
   // build a mega-array of all the archives we need to copy
-  NSMutableArray* archive_paths = [NSMutableArray array];
+  [_archiveToCopyPaths release];
+  _archiveToCopyPaths = [NSMutableArray new];
+
   NSMutableSet* archive_names = [NSMutableSet set];
 
-  for (NSString* archive in dataArchives) {
+  for (NSString* archive in _dataArchives) {
     if (![archive_names containsObject:archive]) {
-      [archive_paths addObject:[dataPath stringByAppendingPathComponent:archive]];
+      [_archiveToCopyPaths addObject:[_dataPath stringByAppendingPathComponent:archive]];
       [archive_names addObject:archive];
     }
   }
 
-  for (NSString* archive in assetsArchives) {
+  for (NSString* archive in _assetsArchives) {
     if (![archive_names containsObject:archive]) {
-      [archive_paths addObject:[assetsPath stringByAppendingPathComponent:archive]];
+      [_archiveToCopyPaths addObject:[_assetsPath stringByAppendingPathComponent:archive]];
       [archive_names addObject:archive];
     }
   }
 
-  for (NSString* archive in allArchives) {
+  for (NSString* archive in _allArchives) {
     if (![archive_names containsObject:archive]) {
-      [archive_paths addObject:[allPath stringByAppendingPathComponent:archive]];
+      [_archiveToCopyPaths addObject:[_allPath stringByAppendingPathComponent:archive]];
       [archive_names addObject:archive];
     }
   }
 
-  if (extrasPath) {
-    if (![archive_names containsObject:[extrasPath lastPathComponent]]) {
-      [archive_paths addObject:extrasPath];
-      [archive_names addObject:[extrasPath lastPathComponent]];
+  if (_extrasPath) {
+    if (![archive_names containsObject:[_extrasPath lastPathComponent]]) {
+      [_archiveToCopyPaths addObject:_extrasPath];
+      [archive_names addObject:[_extrasPath lastPathComponent]];
     }
   }
 
-  if ([archive_paths count] == 0)
+  if ([_archiveToCopyPaths count] == 0) {
     ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesOnMedia, nil, error);
-
-  [archive_paths sortUsingFunction:string_numeric_insensitive_sort context:NULL];
-
-  // compute how many bytes we have to copy in total
-  for (NSString* archive_path in archive_paths) {
-    NSDictionary* attributes = BZFSAttributesOfItemAtPath(archive_path, error);
-    if (!attributes)
-      return NO;
-
-    totalBytesToCopy += [attributes fileSize];
   }
 
-  // and copy the archives
-  for (NSString* archive_path in archive_paths) {
-    if (![self _copyFileAtPath:archive_path error:error])
-      return NO;
-  }
-
-  if ([NSApp runModalSession:modalSession] != NSRunContinuesResponse)
-    ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerCancelled, nil, error);
-
-  return YES;
-}
-
-- (BOOL)_runMultiDiscInstall:(NSError**)error
-{
-  // a multi-disc install is essentially a series of "single-disc" installs, followed by a check to make
-  // sure we have a data and sound archive for every stack
-
-  // first, run the install for the current disc
-  if (![self _runSingleDiscInstall:error])
+  if (![self _updateCopyBytesStatistics:error]) {
     return NO;
-
-  // iterate over the discs we have left
-  while ([discsToProcess count]) {
-    NSString* disc_name = [discsToProcess objectAtIndex:0];
-    [discsToProcess removeObjectAtIndex:0];
-
-    [self willChangeValueForKey:@"progress"];
-    progress = -1.0;
-    [self didChangeValueForKey:@"progress"];
-    [self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_INSERT_DISC", @"Installer", NULL), disc_name] forKey:@"stage"];
-
-    // wait for the disc
-    if (![mediaProvider waitForDisc:disc_name ejectingDisc:currentDisc error:error])
-      return NO;
-
-    // run another single disc install with the new mount paths
-    totalBytesCopied = 0.0;
-    totalBytesToCopy = 0.0;
-
-    if (![self _runSingleDiscInstall:error])
-      return NO;
-  }
-
-  // check that we have a data and sound archive for every stack
-  RXArchiveManager* am = [RXArchiveManager sharedArchiveManager];
-  size_t n_stacks = sizeof(gStacks) / sizeof(NSString*);
-  for (size_t i = 0; i < n_stacks; ++i) {
-    NSArray* archives = [am dataArchivesForStackKey:gStacks[i] error:error];
-    if ([archives count] == 0)
-      ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesAfterInstall, nil, error);
-    archives = [am soundArchivesForStackKey:gStacks[i] error:error];
-    if ([archives count] == 0)
-      ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesAfterInstall, nil, error);
   }
 
   return YES;
 }
 
-- (BOOL)_conditionallyInstallPatchArchives:(NSError**)error
-{
-  // FIXME: verify that this does work if the install source is the patched CD edition (i.e. GOG, Steam)
-
+- (BOOL)_determinePatchArchivesToCopy:(NSError**)error {
   RXStack* bspit = [[RXStack alloc] initWithKey:@"bspit" error:error];
-  if (!bspit)
+  if (!bspit) {
     return NO;
+  }
 
   RXCardDescriptor* cdesc = [RXCardDescriptor descriptorWithStack:bspit ID:284];
   if (!cdesc) {
@@ -291,35 +229,224 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
   BOOL need_patch = RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_ACTIVATE_SLST) && RX_OPCODE_ARG(opcode, 0) == 3;
 
   if (need_patch) {
+    [_archiveToCopyPaths release];
+    _archiveToCopyPaths = [NSMutableArray new];
+
     NSBundle* bundle = [NSBundle mainBundle];
-    if (![self _copyFileAtPath:[bundle pathForResource:@"b_Data1" ofType:@"MHK" inDirectory:@"patches"] error:error])
+    [_archiveToCopyPaths addObject:[bundle pathForResource:@"b_Data1" ofType:@"MHK" inDirectory:@"patches"]];
+    [_archiveToCopyPaths addObject:[bundle pathForResource:@"j_Data3" ofType:@"MHK" inDirectory:@"patches"]];
+
+    if (![self _updateCopyBytesStatistics:error]) {
       return NO;
-    if (![self _copyFileAtPath:[bundle pathForResource:@"j_Data3" ofType:@"MHK" inDirectory:@"patches"] error:error])
-      return NO;
+    }
   }
 
   return YES;
 }
 
-- (BOOL)runWithModalSession:(NSModalSession)session error:(NSError**)error
-{
-  // we're one-shot
-  if (didRun)
-    ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerAlreadyRan, nil, error);
-  didRun = YES;
+- (BOOL)_updateCopyBytesStatistics:(NSError**)error {
+  _totalBytesCopied = 0;
+  _totalBytesToCopy = 0;
+  for (NSString* archive_path in _archiveToCopyPaths) {
+    NSDictionary* attributes = BZFSAttributesOfItemAtPath(archive_path, error);
+    if (!attributes) {
+      return NO;
+    }
+    _totalBytesToCopy += [attributes fileSize];
+  }
+  return YES;
+}
 
-  modalSession = session;
-  destination = [[[(RXWorld*)g_world worldCacheBase] path] retain];
-  totalBytesCopied = 0.0;
-  totalBytesToCopy = 0.0;
+- (BOOL)_mediaHasDataArchiveForStackKey:(NSString*)stack_key {
+  NSString* regex = [NSString stringWithFormat:@"^%C_Data[0-9]?\\.MHK$", [stack_key characterAtIndex:0]];
+  NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", regex];
 
-  if ([NSApp runModalSession:modalSession] != NSRunContinuesResponse)
-    ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerCancelled, nil, error);
+  NSArray* content = [_dataArchives filteredArrayUsingPredicate:predicate];
+  if ([content count]) {
+    return YES;
+  }
 
-  [self willChangeValueForKey:@"progress"];
-  progress = -1.0;
-  [self didChangeValueForKey:@"progress"];
+  content = [_allArchives filteredArrayUsingPredicate:predicate];
+  if ([content count]) {
+    return YES;
+  }
 
+  return NO;
+}
+
+- (BOOL)_mediaHasSoundArchiveForStackKey:(NSString*)stack_key {
+  NSString* regex = [NSString stringWithFormat:@"^%C_Sounds[0-9]?\\.MHK$", [stack_key characterAtIndex:0]];
+  NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", regex];
+
+  NSArray* content = [_dataArchives filteredArrayUsingPredicate:predicate];
+  if ([content count]) {
+    return YES;
+  }
+
+  content = [_assetsArchives filteredArrayUsingPredicate:predicate];
+  if ([content count]) {
+    return YES;
+  }
+
+  return NO;
+}
+
+- (void)_copyArchiveAndThenContinueInstall:(NSString*)archive_path {
+  NSString* destination = [_destination stringByAppendingPathComponent:[archive_path lastPathComponent]];
+  RXFSCopyOperation* copy_op = [[RXFSCopyOperation alloc] initWithSource:archive_path destination:destination];
+
+  dispatch_queue_t queue = dispatch_queue_create(NULL, DISPATCH_QUEUE_SERIAL);
+  __block CFAbsoluteTime progress_update_time = 0;
+
+  [copy_op setStatusQueue:queue callback:^{
+    if (_cancelled && !copy_op.cancelled) {
+      [copy_op cancel];
+    }
+
+    if (copy_op.state == RXFSOperationStateData) {
+      CFAbsoluteTime now = CFAbsoluteTimeGetCurrent();
+      if (now - progress_update_time >= 1) {
+        double new_progress =
+        MIN(1.0, (double)(_totalBytesCopied + copy_op.bytesCopied) / _totalBytesToCopy);
+        dispatch_async(QUEUE_MAIN, ^{ self.progress = new_progress; });
+        progress_update_time = now;
+      }
+    } else if (copy_op.state == RXFSOperationStateDone) {
+      _totalBytesCopied += copy_op.totalBytesCopied;
+
+      NSError* error = copy_op.error;
+      BOOL ok = (error == nil) && !_cancelled;
+      if (ok) {
+        NSDictionary* permissions = @{ NSFilePosixPermissions : @(0664) };
+        ok = BZFSSetAttributesOfItemAtPath(destination, permissions, &error);
+      }
+
+      dispatch_async(QUEUE_MAIN, ^{ [self _continueInstallIfOK:ok lastStageError:error]; });
+    }
+  }];
+
+  [copy_op start];
+  [copy_op release];
+  [queue release];
+}
+
+#pragma mark -
+
+- (void)_checkCurrentPathsAndThenContinueInstall {
+  NSError* error = nil;
+  BOOL ok = [self _determineArchivesToCopyFromCurrentDisc:&error];
+
+  if (ok) {
+    self.stage = [NSString
+        stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_DATA_COPY_DISC", @"Installer", NULL), _currentDisc];
+    self.progress = 0;
+  }
+
+  [self _continueInstallIfOK:ok lastStageError:error];
+}
+
+- (void)_verifyArchivesAndThenContinueInstall {
+  dispatch_async(QUEUE_DEFAULT, ^{
+    // check that we have a data and sound archive for every stack
+    NSError* error =
+    [RXError errorWithDomain:RXErrorDomain code:kRXErrInstallerMissingArchivesAfterInstall userInfo:nil];
+    RXArchiveManager* am = [RXArchiveManager sharedArchiveManager];
+    size_t n_stacks = sizeof(gStacks) / sizeof(NSString*);
+    for (size_t i = 0; i < n_stacks; ++i) {
+      NSArray* archives = [am dataArchivesForStackKey:gStacks[i] error:NULL];
+      if ([archives count] == 0) {
+        dispatch_async(QUEUE_MAIN, ^{ [self _continueInstallIfOK:NO lastStageError:error]; });
+        return;
+      }
+
+      archives = [am soundArchivesForStackKey:gStacks[i] error:NULL];
+      if ([archives count] == 0) {
+        dispatch_async(QUEUE_MAIN, ^{ [self _continueInstallIfOK:NO lastStageError:error]; });
+        return;
+      }
+    }
+
+    _verified = YES;
+    dispatch_async(QUEUE_MAIN, ^{ [self _continueInstallIfOK:YES lastStageError:nil]; });
+  });
+}
+
+- (void)_conditionallyInstallPatchArchivesAndThenContinueInstall {
+  // FIXME: verify that this does work if the install source is the patched CD edition (i.e. GOG, Steam)
+
+  dispatch_async(QUEUE_DEFAULT, ^{
+    NSError* error = nil;
+    BOOL ok = [self _determinePatchArchivesToCopy:&error];
+    _patchesInstalled = YES;
+    dispatch_async(QUEUE_MAIN, ^{ [self _continueInstallIfOK:ok lastStageError:error]; });
+  });
+}
+
+- (void)_continueInstallIfOK:(BOOL)ok lastStageError:(NSError*)error {
+  debug_assert(_completionBlock);
+
+  // if we're cancelled, call the completion block and bail out
+  if (_cancelled) {
+    _completionBlock(NO, [RXError errorWithDomain:RXErrorDomain code:kRXErrInstallerCancelled userInfo:nil]);
+    [_completionBlock release], _completionBlock = nil;
+    return;
+  }
+
+  // if the last stage failed, call the completion block and bail out
+  if (!ok) {
+    debug_assert(error);
+    _completionBlock(NO, error);
+    [_completionBlock release], _completionBlock = nil;
+    return;
+  }
+
+  // if we have archives to copy, go on to the next one; when the copy is done, this method will be called back
+  if ([_archiveToCopyPaths count]) {
+    NSString* next_archive = [_archiveToCopyPaths lastObject];
+    [_archiveToCopyPaths removeLastObject];
+    [self _copyArchiveAndThenContinueInstall:next_archive];
+    return;
+  }
+
+  // if we have discs left to copy, ask for the next disc; when we get it, update and check paths and then this method
+  // will be called back
+  if ([_discsToProcess count]) {
+    NSString* next_disc = [_discsToProcess lastObject];
+    [_discsToProcess removeLastObject];
+
+    self.progress = -1.0;
+    self.stage =
+        [NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_INSERT_DISC", @"Installer", NULL), next_disc];
+
+    [_mediaProvider waitForDisc:next_disc ejectingDisc:_currentDisc continuation:^(NSDictionary* mount_paths) {
+      debug_assert(mount_paths);
+      [self _updatePathsWithMountPaths:mount_paths];
+      [self _checkCurrentPathsAndThenContinueInstall];
+    }];
+    return;
+  }
+
+  self.progress = -1.0;
+  self.stage = NSLocalizedStringFromTable(@"INSTALLER_FINALIZER", @"Installer", NULL);
+
+  // verify that we have all the archives we need; when the check is done, this method will be called back
+  if (!_verified) {
+    [self _verifyArchivesAndThenContinueInstall];
+  }
+
+  // conditionally install the built-in patch archives
+  if (!_patchesInstalled) {
+    [self _conditionallyInstallPatchArchivesAndThenContinueInstall];
+  }
+
+  // we have gone through all our stages; call the completion block
+  _completionBlock(YES, nil);
+  [_completionBlock release], _completionBlock = nil;
+}
+
+#pragma mark -
+
+- (void)runWithCompletionBlock:(void (^)(BOOL success, NSError* error))block {
   BOOL cd_install = NO;
   size_t n_stacks = sizeof(gStacks) / sizeof(NSString*);
   for (size_t i = 0; i < n_stacks; ++i) {
@@ -329,78 +456,30 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     }
   }
 
-  discsToProcess = [NSMutableArray new];
+  _discsToProcess = [NSMutableArray new];
   if (cd_install) {
-    [discsToProcess addObjectsFromArray:[NSArray arrayWithObjects:@"Riven1", @"Riven2", @"Riven3", @"Riven4", @"Riven5", nil]];
-
-    [discsToProcess removeObject:[currentDisc lastPathComponent]];
+    [_discsToProcess addObjectsFromArray:@[ @"Riven5", @"Riven4", @"Riven3", @"Riven2", @"Riven1" ]];
+    [_discsToProcess removeObject:[_currentDisc lastPathComponent]];
   } else {
     // we need to have a sound archive for every stack
     // NOTE: it is implied if we are here that we have a data archive for every stack
     for (size_t i = 0; i < n_stacks; ++i) {
-      if (![self _mediaHasSoundArchiveForStackKey:gStacks[i]])
-        ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerMissingArchivesOnMedia, nil, error);
+      if (![self _mediaHasSoundArchiveForStackKey:gStacks[i]]) {
+        block(NO, [RXError errorWithDomain:RXErrorDomain code:kRXErrInstallerMissingArchivesOnMedia userInfo:nil]);
+        return;
+      }
     }
   }
 
-  // run a single disc or multi-disk install, as appropriate
-  BOOL success;
-  if (cd_install)
-    success = [self _runMultiDiscInstall:error];
-  else
-    success = [self _runSingleDiscInstall:error];
-  if (!success)
-    return NO;
+  // stash the completion block away
+  _completionBlock = [block copy];
 
-  // check if we have an edition that requires the 1.02 patch archives
-  return [self _conditionallyInstallPatchArchives:error];
+  // begin the install by checking the current paths (which were set in the initializer)
+  [self _checkCurrentPathsAndThenContinueInstall];
 }
 
-- (void)updatePathsWithMountPaths:(NSDictionary*)mount_paths
-{
-  [dataPath release];
-  [dataArchives release];
-  [assetsPath release];
-  [assetsArchives release];
-  [allPath release];
-  [allArchives release];
-  [extrasPath release];
-  [currentDisc release];
-
-  currentDisc = [[mount_paths objectForKey:@"path"] retain];
-  release_assert(currentDisc);
-
-  dataPath = [[mount_paths objectForKey:@"data path"] retain];
-  release_assert(dataPath);
-  dataArchives = [[mount_paths objectForKey:@"data archives"] retain];
-  release_assert(dataArchives);
-
-  assetsPath = [mount_paths objectForKey:@"assets path"];
-  if ((id)assetsPath == (id)[NSNull null]) {
-    assetsPath = nil;
-    assetsArchives = nil;
-  } else {
-    assetsArchives = [mount_paths objectForKey:@"assets archives"];
-    release_assert((id)assetsArchives != (id)[NSNull null]);
-  }
-  [assetsPath retain];
-  [assetsArchives retain];
-
-  allPath = [mount_paths objectForKey:@"all path"];
-  if ((id)allPath == (id)[NSNull null]) {
-    allPath = nil;
-    allArchives = nil;
-  } else {
-    allArchives = [mount_paths objectForKey:@"all archives"];
-    release_assert((id)allArchives != (id)[NSNull null]);
-  }
-  [allPath retain];
-  [allArchives retain];
-
-  extrasPath = [mount_paths objectForKey:@"extras path"];
-  if ((id)extrasPath == (id)[NSNull null])
-    extrasPath = nil;
-  [extrasPath retain];
+- (void)cancel {
+  _cancelled = YES;
 }
 
 @end

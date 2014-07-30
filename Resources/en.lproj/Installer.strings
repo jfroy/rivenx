@@ -1,3 +1,5 @@
 "INSTALLER_PREPARING" = "Preparing to install";
 "INSTALLER_INSERT_DISC" = "Please insert the disc labeled \"%@\"";
-"INSTALLER_FILE_COPY" = "Installing \"%@\"";
+"INSTALLER_DATA_COPY_DISC" = "Copying Riven data from disc \"%@\"";
+"INSTALLER_DATA_COPY" = "Copying Riven data";
+"INSTALLER_FINALIZER" = "Finishing the install";

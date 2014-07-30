@@ -1,13 +1,13 @@
-//
-//  RXWelcomeWindowController.m
-//  rivenx
-//
-//  Created by Jean-Francois Roy on 13/02/2010.
-//  Copyright 2005-2012 MacStorm. All rights reserved.
-//
+// Copyright 2014 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 #import "Application/RXWelcomeWindowController.h"
 
+#import <AppKit/AppKit.h>
+
+#import "Application/RXGOGSetupInstaller.h"
+
+#import "Base/RXErrors.h"
 #import "Base/RXErrorMacros.h"
 #import "Base/RXThreadUtilities.h"
 
@@ -16,46 +16,96 @@
 
 #import "Utilities/BZFSUtilities.h"
 
-#import "Application/RXGOGSetupInstaller.h"
+static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) {
+  return [(NSString*)lhs compare:rhs options:(NSStringCompareOptions)(NSCaseInsensitiveSearch | NSNumericSearch)];
+}
 
-#import <AppKit/NSAlert.h>
-#import <AppKit/NSApplication.h>
-#import <AppKit/NSButton.h>
-#import <AppKit/NSDocumentController.h>
-#import <AppKit/NSKeyValueBinding.h>
-#import <AppKit/NSOpenPanel.h>
-#import <AppKit/NSProgressIndicator.h>
-#import <AppKit/NSTextField.h>
-#import <AppKit/NSWindow.h>
+static BOOL filename_is_gog_installer(NSString* filename) {
+  NSString* extension = [filename pathExtension];
+  return [filename hasPrefix:@"setup_riven"] && [extension isEqualToString:@"exe"];
+}
 
-static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
-{ return [(NSString*)lhs compare:rhs options:(NSStringCompareOptions)(NSCaseInsensitiveSearch | NSNumericSearch)]; }
+@interface RXWelcomeWindowController ()
+@property (nonatomic, assign) IBOutlet NSImageView* backgroundImageView;
+@property (nonatomic, assign) IBOutlet NSStackView* welcomeStackView;
+@property (nonatomic, strong) IBOutlet NSTextField* welcomeLabel;
+@property (nonatomic, assign) IBOutlet NSTextField* installStatusLabel;
+@property (nonatomic, assign) IBOutlet NSStackView* installControlsStackView;
+@property (nonatomic, assign) IBOutlet NSProgressIndicator* installProgressIndicator;
+@property (nonatomic, assign) IBOutlet NSButton* installButton;
+@property (nonatomic, assign) IBOutlet NSButton* buyButton;
 
-@implementation RXWelcomeWindowController
+- (IBAction)buyRiven:(id)sender;
+- (IBAction)installFromFolder:(id)sender;
+- (IBAction)cancelInstallation:(id)sender;
+@end
 
-- (void)_deleteCacheBaseContent
-{
+@implementation RXWelcomeWindowController {
+  NSThread* _scanningThread;
+  FSEventStreamRef _downloadsFSEventStream;
+  NSString* _downloadsFolderPath;
+  BOOL _gogInstallerFoundInDownloadsFolder;
+
+  id<RXInstaller> _installer;
+  __weak NSString* _waitedOnDisc;
+  void (^_waitedOnDiscContinuation)(NSDictionary* mount_paths);
+
+  NSAlert* _gogBuyAlert;
+  BOOL _alertOrPanelCurrentlyActive;
+}
+
+- (void)_deleteCacheBaseContent {
   NSFileManager* fm = [NSFileManager new];
   NSURL* url = [[RXWorld sharedWorld] worldCacheBase];
-  NSArray* contents = [fm contentsOfDirectoryAtURL:url includingPropertiesForKeys:[NSArray array] options:(NSDirectoryEnumerationOptions)0 error:NULL];
-  for (NSURL* url in contents)
+  NSArray* contents = [fm contentsOfDirectoryAtURL:url
+                        includingPropertiesForKeys:[NSArray array]
+                                           options:(NSDirectoryEnumerationOptions)0
+                                             error:NULL];
+  for (NSURL* url in contents) {
     BZFSRemoveItemAtURL(url, NULL);
+  }
   [fm release];
 }
 
-- (void)windowWillLoad { [self setShouldCascadeWindows:NO]; }
+- (void)windowWillLoad {
+  [self setShouldCascadeWindows:NO];
+}
 
-- (void)windowDidLoad
-{
+- (void)windowDidLoad {
   // configure the welcome window
-  [[self window] center];
+  [self.window center];
+
+  // load the welcome message and set it on the welcome label with the first line in bold
+  NSURL* welcome_url = [[NSBundle mainBundle] URLForResource:@"Welcome" withExtension:@"txt"];
+  NSString* welcome_string = [NSString stringWithContentsOfURL:welcome_url encoding:NSUTF8StringEncoding error:NULL];
+  _welcomeLabel.stringValue = welcome_string;
+  NSMutableAttributedString* welcome_astring = [_welcomeLabel.attributedStringValue mutableCopy];
+  [welcome_astring.string
+      enumerateSubstringsInRange:NSMakeRange(0, welcome_astring.string.length)
+                         options:NSStringEnumerationByLines
+                      usingBlock:^(NSString* substring, NSRange substringRange, NSRange enclosingRange, BOOL* stop) {
+                          NSDictionary* attributes = @{
+                            NSFontAttributeName : [NSFont
+                                boldSystemFontOfSize:[NSFont systemFontSizeForControlSize:_welcomeLabel.controlSize]]
+                          };
+                          [welcome_astring addAttributes:attributes range:substringRange];
+                          *stop = YES;
+                      }];
+  _welcomeLabel.attributedStringValue = welcome_astring;
+  [welcome_astring release];
 
   // start the removable media scan thread
   [NSThread detachNewThreadSelector:@selector(_scanningThread:) toTarget:self withObject:nil];
 
   // register for removable media mount notifications
   NSNotificationCenter* ws_notification_center = [[NSWorkspace sharedWorkspace] notificationCenter];
-  [ws_notification_center addObserver:self selector:@selector(_removableMediaMounted:) name:NSWorkspaceDidMountNotification object:nil];
+  [ws_notification_center addObserver:self
+                             selector:@selector(_removableMediaMounted:)
+                                 name:NSWorkspaceDidMountNotification
+                               object:nil];
+
+  // scan for currently mounted media
+  [self _scanMountedMedia];
 
   // scan for the GOG.com installer in the user's Downloads directory
   [self _scanDownloads];
@@ -64,13 +114,16 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
   dispatch_async(QUEUE_LOW, ^(void) { [self _deleteCacheBaseContent]; });
 }
 
-- (void)windowWillClose:(NSNotification*)notification
-{
-  if (![[RXWorld sharedWorld] isInstalled])
+- (void)windowWillClose:(NSNotification*)notification {
+  if (![[RXWorld sharedWorld] isInstalled]) {
     [NSApp terminate:nil];
+  }
 
   // stop watching removable media
   [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
+
+  // dismiss sheets and panels
+  [self _dismissBuyFromGOGAlert];
 
   // stop watching the downloads folder
   if (_downloadsFSEventStream) {
@@ -78,15 +131,14 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
     FSEventStreamInvalidate(_downloadsFSEventStream);
     FSEventStreamRelease(_downloadsFSEventStream);
   }
-  [_downloadsFolderPath release];
 
-  [self _dismissInstallationUI];
-  [self _dismissBuyFromGOGAlert];
+  [_downloadsFolderPath release];
+  [_welcomeLabel release];
 }
 
-- (IBAction)buyRiven:(id)sender
-{
-  [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.gog.com/en/gamecard/riven_the_sequel_to_myst"]];
+- (IBAction)buyRiven:(id)sender {
+  [[NSWorkspace sharedWorkspace]
+      openURL:[NSURL URLWithString:@"http://www.gog.com/game/riven_the_sequel_to_myst"]];
 
   [_gogBuyAlert release];
   _gogBuyAlert = [NSAlert new];
@@ -99,26 +151,23 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
   [_gogBuyAlert beginSheetModalForWindow:[self window] modalDelegate:self didEndSelector:nil contextInfo:NULL];
 }
 
-- (BOOL)panel:(id)sender shouldEnableURL:(NSURL*)url
-{
+- (BOOL)panel:(id)sender shouldEnableURL:(NSURL*)url {
   NSString* path = [[url filePathURL] path];
-  if (!path)
+  if (!path) {
     return NO;
+  }
 
-  NSFileManager* fm = [NSFileManager defaultManager];
   BOOL isDir;
-  [fm fileExistsAtPath:path isDirectory:&isDir];
+  [[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDir];
 
   if (isDir) {
     return ![[NSWorkspace sharedWorkspace] isFilePackageAtPath:path];
-  } else if ([[path lastPathComponent] isEqualToString:@"setup_riven.exe"])
-    return YES;
-  else
-    return NO;
+  } else {
+    return filename_is_gog_installer([path lastPathComponent]);
+  }
 }
 
-- (IBAction)installFromFolder:(id)sender
-{
+- (IBAction)installFromFolder:(id)sender {
   NSOpenPanel* panel = [NSOpenPanel openPanel];
   [panel setCanChooseFiles:YES];
   [panel setCanChooseDirectories:YES];
@@ -135,183 +184,127 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 
   [panel setDelegate:self];
 
-    [panel beginSheetModalForWindow:[self window] completionHandler:^(NSInteger result)
-    {
-      alertOrPanelCurrentlyActive = NO;
+  [panel beginSheetModalForWindow:[self window] completionHandler:^(NSInteger result) {
+    _alertOrPanelCurrentlyActive = NO;
 
-      if (result == NSCancelButton)
-        return;
+    if (result == NSCancelButton)
+      return;
 
-      NSString* path = [[panel URL] path];
+    NSURL* url = [panel URL];
 
-      NSFileManager* fm = [NSFileManager defaultManager];
-      BOOL isDir;
-      [fm fileExistsAtPath:path isDirectory:&isDir];
+    NSError* error;
+    NSArray* resource_keys = @[ NSURLVolumeURLKey, NSURLVolumeIsEjectableKey, NSURLFileResourceTypeKey ];
+    NSDictionary* attributes = [url resourceValuesForKeys:resource_keys error:&error];
+    if (!attributes) {
+      [NSApp presentError:[RXError errorWithDomain:RXErrorDomain
+                                              code:kRXErrFailedToGetFilesystemInformation
+                                          userInfo:nil]];
+      return;
+    }
 
-      if (!isDir) {
-        [panel orderOut:self];
-        [self _offerToInstallFromGOGInstaller:[NSDictionary dictionaryWithObject:[panel URL] forKey:@"gog_installer"]];
-        return;
-      }
+    if ([attributes[NSURLFileResourceTypeKey] isEqualToString:NSURLFileResourceTypeRegular]) {
+      [panel orderOut:self];
+      [self _offerToInstallFromGOGInstaller:@{@"gog_installer": [panel URL]}];
+      return;
+    }
 
-      BOOL removable, writable, unmountable;
-      NSString* description, *fsType;
-      if (![[NSWorkspace sharedWorkspace] getFileSystemInfoForPath:path
-                                                       isRemovable:&removable
-                                                        isWritable:&writable
-                                                     isUnmountable:&unmountable
-                                                       description:&description
-                                                              type:&fsType]) {
-        [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
-        return;
-      }
+    BOOL removable = [attributes[NSURLVolumeIsEjectableKey] boolValue];
+    SEL scan_selector = (removable) ? @selector(_performMountScanWithFeedback:)
+                                    : @selector(_performFolderScanWithFeedback:);
+    if (removable) {
+      url = attributes[NSURLVolumeURLKey];
+    }
 
-      if (removable) {
-        NSError* error;
-        NSDictionary* attributes = BZFSAttributesOfItemAtPath(path, &error);
-        if (!attributes) {
-          [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
-          return;
-        }
-        NSUInteger fs_init = [attributes fileSystemNumber];
+    [_installStatusLabel setStringValue:NSLocalizedStringFromTable(@"SCANNING_MEDIA", @"Welcome", NULL)];
 
-        while (![path isEqualToString:@"/"]) {
-          NSString* parent = [path stringByDeletingLastPathComponent];
-          attributes = BZFSAttributesOfItemAtPath(parent, &error);
-          if (!attributes) {
-            [NSApp presentError:[RXError errorWithDomain:RXErrorDomain code:kRXErrFailedToGetFilesystemInformation userInfo:nil]];
-            return;
-          }
+    [self performSelector:scan_selector onThread:_scanningThread withObject:[url path] waitUntilDone:NO];
 
-          NSUInteger fs = [attributes fileSystemNumber];
-          if (fs != fs_init)
-            break;
+    [panel orderOut:self];
+  }];
 
-          path = parent;
-        }
-
-        [self _initializeInstallationUI];
-        [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"SCANNING_MEDIA", @"Welcome", NULL)];
-        [_cancelInstallButton setHidden:YES];
-
-        [panel orderOut:self];
-        [self _showInstallationUI];
-
-        [self performSelector:@selector(_performMountScanWithFeedback:) onThread:scanningThread withObject:path waitUntilDone:NO];
-      }
-
-      // non-removable
-      else {
-        [self _initializeInstallationUI];
-        [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"SCANNING_MEDIA", @"Welcome", NULL)];
-        [_cancelInstallButton setHidden:YES];
-
-        [panel orderOut:self];
-        [self _showInstallationUI];
-
-        [self performSelector:@selector(_performFolderScanWithFeedback:) onThread:scanningThread withObject:path waitUntilDone:NO];
-      }
-    }];
-
-    alertOrPanelCurrentlyActive = YES;
+  _alertOrPanelCurrentlyActive = YES;
 }
 
-- (IBAction)cancelInstallation:(id)sender { [NSApp abortModal]; }
+- (IBAction)cancelInstallation:(id)sender {
+  [_installer cancel];
+}
 
 #pragma mark installation
 
-- (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context
-{
-  if ([keyPath isEqualToString:@"progress"]) {
-    double oldp = [[change objectForKey:NSKeyValueChangeOldKey] doubleValue];
-    double newp = [[change objectForKey:NSKeyValueChangeNewKey] doubleValue];
-
-    // do we need to switch the indeterminate state?
-    if (oldp < 0.0 && newp >= 0.0) {
-      [_installingProgress setIndeterminate:NO];
-      [_installingProgress startAnimation:self];
-    } else if (oldp >= 0.0 && newp < 0.0) {
-      [_installingProgress setIndeterminate:YES];
-      [_installingProgress startAnimation:self];
-    }
-
-    // update the progress
-    if (newp >= 0.0)
-      [_installingProgress setDoubleValue:newp];
-  }
+- (void)_beginNewGame {
+  [NSApp sendAction:@selector(newDocument:) to:nil from:self];
 }
 
-- (void)_initializeInstallationUI
-{
-  [_installingTitleField setStringValue:NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Installer", NULL)];
-  [_installingStatusField setStringValue:@""];
-  [_installingProgress setMinValue:0.0];
-  [_installingProgress setMaxValue:1.0];
-  [_installingProgress setDoubleValue:0.0];
-  [_installingProgress setIndeterminate:YES];
-  [_installingProgress setUsesThreadedAnimation:YES];
-  [_cancelInstallButton setHidden:NO];
+- (void)_beginInstallationWithPaths:(NSDictionary*)paths {
+  // transition the UI
+  _buyButton.enabled = NO;
+  _installButton.enabled = NO;
+
+  _installStatusLabel.stringValue = NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Installer", NULL);
+  _installStatusLabel.alphaValue = 0;
+  _installStatusLabel.hidden = NO;
+
+  _installProgressIndicator.minValue = 0;
+  _installProgressIndicator.maxValue = 1;
+  _installProgressIndicator.doubleValue = 0;
+  _installProgressIndicator.indeterminate = YES;
+  _installControlsStackView.alphaValue = 0;
+  _installControlsStackView.hidden = NO;
+
+  _welcomeStackView.wantsLayer = YES;
+
+  [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context) {
+    context.duration = 0.5;
+    context.allowsImplicitAnimation = YES;
+    _welcomeLabel.alphaValue = 0;
+  } completionHandler:^{
+    [_welcomeStackView removeView:_welcomeLabel];
+    [_welcomeStackView layoutSubtreeIfNeeded];
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context) {
+      context.duration = 0.5;
+      context.allowsImplicitAnimation = YES;
+      _installStatusLabel.alphaValue = 1;
+      _installControlsStackView.alphaValue = 1;
+    } completionHandler:^{
+      _welcomeStackView.wantsLayer = NO;
+      [self _runInstallerWithPaths:paths];
+    }];
+  }];
 }
 
-- (void)_showInstallationUI
-{
-  [_installingProgress startAnimation:self];
-
-  // show the installation panel
-  [NSApp beginSheet:_installingSheet modalForWindow:[self window] modalDelegate:nil didEndSelector:NULL contextInfo:installer];
-  installerSession = [NSApp beginModalSessionForWindow:_installingSheet];
-}
-
-- (void)_dismissInstallationUI
-{
-  if (!installerSession)
-    return;
-
-  // dismiss the sheet
-  [NSApp endModalSession:installerSession];
-  installerSession = NULL;
-
-  [NSApp endSheet:_installingSheet returnCode:0];
-  [_installingSheet orderOut:self];
-  [_installingProgress stopAnimation:self];
-}
-
-- (void)_beginNewGame { [NSApp sendAction:@selector(newDocument:) to:nil from:self]; }
-
-- (void)_runInstallerWithMountPaths:(NSDictionary*)mount_paths
-{
+- (void)_runInstallerWithPaths:(NSDictionary*)paths {
   // create an installer
-  NSURL* gogSetupURL = [mount_paths objectForKey:@"gog_installer"];
-  if (gogSetupURL == nil)
-    installer = [[RXMediaInstaller alloc] initWithMountPaths:mount_paths mediaProvider:self];
-  else
-    installer = [[RXGOGSetupInstaller alloc] initWithGOGSetupURL:gogSetupURL];
+  NSURL* gogSetupURL = [paths objectForKey:@"gog_installer"];
+  if (gogSetupURL == nil) {
+    _installer = [[RXMediaInstaller alloc] initWithMountPaths:paths mediaProvider:self];
+  } else {
+    _installer = [[RXGOGSetupInstaller alloc] initWithGOGSetupURL:gogSetupURL];
+  }
+  [(NSObject*)_installer
+      addObserver:self
+       forKeyPath:@"progress"
+          options:(NSKeyValueObservingOptions)(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld)
+          context:NULL];
 
-  // setup the basic installation UI
-  [self _initializeInstallationUI];
-
-  // show the installation panel
-  [self _showInstallationUI];
-
-  // observe the installer
-  [installer addObserver:self
-              forKeyPath:@"progress"
-                 options:(NSKeyValueObservingOptions)(NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld)
-                 context:NULL];
-  [_installingTitleField bind:@"value" toObject:installer withKeyPath:@"stage" options:nil];
+  [_installStatusLabel bind:@"value" toObject:_installer withKeyPath:@"stage" options:nil];
+  [_installProgressIndicator startAnimation:self];
 
   // install away
-  NSError* error;
-  BOOL did_install = [installer runWithModalSession:installerSession error:&error];
+  [_installer runWithCompletionBlock:^(BOOL success, NSError* error) {
+    [_installStatusLabel unbind:@"value"];
+    [_installProgressIndicator stopAnimation:self];
 
-  // dismiss the installation panel
-  [self _dismissInstallationUI];
+    [(NSObject*)_installer removeObserver:self forKeyPath:@"progress"];
+    [_installer release], _installer = nil;
 
-  // we're done with the installer
-  [_installingTitleField unbind:@"value"];
-  [installer removeObserver:self forKeyPath:@"progress"];
-  [installer release], installer = nil;
+    [_waitedOnDiscContinuation release], _waitedOnDiscContinuation = nil;
+    _waitedOnDisc = nil;
 
+    [self _finishInstallaton:success error:error];
+  }];
+}
+
+- (void)_finishInstallaton:(BOOL)did_install error:(NSError*)error {
   if (did_install) {
     // mark ourselves as installed
     [[RXWorld sharedWorld] setIsInstalled:YES];
@@ -321,42 +314,88 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 
     // begin a new game on the next event cycle
     [self performSelector:@selector(_beginNewGame) withObject:nil afterDelay:0.0];
-  } else {
-    // nuke everything in the cache base
-    dispatch_async(QUEUE_LOW, ^(void) { [self _deleteCacheBaseContent]; });
 
-    // if the installation failed because of an error (as opposed to cancellation), display the error to the user
-    if (!([[error domain] isEqualToString:RXErrorDomain] && [error code] == kRXErrInstallerCancelled))
-      [NSApp presentError:error];
-  }
-}
-
-- (BOOL)waitForDisc:(NSString*)disc_name ejectingDisc:(NSString*)path error:(NSError**)error
-{
-  waitedOnDisc = disc_name;
-
-  [[NSWorkspace sharedWorkspace] performSelector:@selector(unmountAndEjectDeviceAtPath:) onThread:scanningThread withObject:path waitUntilDone:NO];
-
-  while (waitedOnDisc) {
-    if ([NSApp runModalSession:installerSession] != NSRunContinuesResponse)
-      ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerCancelled, nil, error);
-    [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
-  }
-
-  return YES;
-}
-
-- (void)_stopWaitingForDisc:(NSDictionary*)mount_paths
-{
-  if (!waitedOnDisc)
+    // all done
     return;
+  }
 
-  [installer updatePathsWithMountPaths:mount_paths];
-  waitedOnDisc = nil;
+  // nuke everything in the cache base
+  dispatch_async(QUEUE_LOW, ^(void) { [self _deleteCacheBaseContent]; });
+
+  // transition the UI
+  _welcomeStackView.wantsLayer = YES;
+
+  [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context) {
+    context.duration = 0.5;
+    context.allowsImplicitAnimation = YES;
+    _installStatusLabel.alphaValue = 0;
+    _installControlsStackView.alphaValue = 0;
+  } completionHandler:^{
+    _installStatusLabel.stringValue = @"";
+    _installStatusLabel.hidden = YES;
+    _installControlsStackView.hidden = YES;
+    [_welcomeStackView addView:_welcomeLabel inGravity:NSStackViewGravityTop];
+    [_welcomeStackView layoutSubtreeIfNeeded];
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context) {
+      context.duration = 0.5;
+      context.allowsImplicitAnimation = YES;
+      _welcomeLabel.alphaValue = 1;
+    } completionHandler:^{
+      _buyButton.enabled = YES;
+      _installButton.enabled = YES;
+      _welcomeStackView.wantsLayer = NO;
+    }];
+  }];
+
+  // if the installation failed because of an error (as opposed to cancellation), display the error to the user
+  if (!([[error domain] isEqualToString:RXErrorDomain] && [error code] == kRXErrInstallerCancelled)) {
+    [NSApp presentError:error];
+  }
 }
 
-- (void)_dismissBuyFromGOGAlert
-{
+- (void)observeValueForKeyPath:(NSString*)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary*)change
+                       context:(void*)context {
+  if ([keyPath isEqualToString:@"progress"]) {
+    double oldp = [[change objectForKey:NSKeyValueChangeOldKey] doubleValue];
+    double newp = [[change objectForKey:NSKeyValueChangeNewKey] doubleValue];
+
+    // do we need to switch the indeterminate state?
+    if (oldp < 0.0 && newp >= 0.0) {
+      _installProgressIndicator.indeterminate = NO;
+    } else if (oldp >= 0.0 && newp < 0.0) {
+      [_installProgressIndicator setIndeterminate:YES];
+    }
+
+    // update the progress
+    if (newp >= 0.0)
+      _installProgressIndicator.doubleValue = newp;
+  }
+}
+
+- (void)waitForDisc:(NSString*)disc_name
+       ejectingDisc:(NSString*)path
+       continuation:(void (^)(NSDictionary* mount_paths))continuation {
+  debug_assert(_waitedOnDisc == nil);
+  debug_assert(_waitedOnDiscContinuation == nil);
+  _waitedOnDisc = disc_name;
+  _waitedOnDiscContinuation = [continuation copy];
+  [[NSWorkspace sharedWorkspace] performSelector:@selector(unmountAndEjectDeviceAtPath:)
+                                        onThread:_scanningThread
+                                      withObject:path
+                                   waitUntilDone:NO];
+}
+
+- (void)_stopWaitingForDisc:(NSDictionary*)mount_paths {
+  debug_assert(_waitedOnDisc != nil);
+  debug_assert(_waitedOnDiscContinuation != nil);
+  _waitedOnDiscContinuation(mount_paths);
+  [_waitedOnDiscContinuation release], _waitedOnDiscContinuation = nil;
+  _waitedOnDisc = nil;
+}
+
+- (void)_dismissBuyFromGOGAlert {
   // dismiss the GOG.com alert (if present)
   if (_gogBuyAlert) {
     [NSApp endSheet:[_gogBuyAlert window] returnCode:0];
@@ -366,41 +405,27 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
   }
 }
 
-- (void)_offerToInstallFromDiscAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context
-{
-  alertOrPanelCurrentlyActive = NO;
-  NSDictionary* mount_paths = [(NSDictionary*)context autorelease];
-
-  // if the user did not choose to install, we're done
-  if (return_code != NSAlertFirstButtonReturn)
-    return;
-
-  // dismiss the alert's sheet window
-  [[alert window] orderOut:nil];
-
-  // start an installer
-  [self _runInstallerWithMountPaths:mount_paths];
-}
-
-- (void)_offerToInstallFromDisc:(NSDictionary*)mount_paths
-{
+- (void)_offerToInstallFromDisc:(NSDictionary*)mount_paths {
   // do nothing if there is already an active installer or we're already installed (e.g. an installer finsihed)
   // or there is some panel or alert already being displayed
-  if (installer || [[RXWorld sharedWorld] isInstalled] || alertOrPanelCurrentlyActive)
+  if (_installer || [[RXWorld sharedWorld] isInstalled] || _alertOrPanelCurrentlyActive) {
     return;
+  }
 
-  // dismiss the installation UI to close the "scanning media" alert and the buy from GOG alert
-  [self _dismissInstallationUI];
+  // dismiss sheets and panels
   [self _dismissBuyFromGOGAlert];
 
   NSString* path = [mount_paths objectForKey:@"path"];
 
   NSString* localized_mount_name = [[NSFileManager defaultManager] displayNameAtPath:path];
-  if (!localized_mount_name)
+  if (!localized_mount_name) {
     localized_mount_name = [path lastPathComponent];
+  }
 
   NSAlert* alert = [[NSAlert new] autorelease];
-  [alert setMessageText:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALL_FROM_DISC_MESSAGE", @"Welcome", NULL), localized_mount_name]];
+  [alert setMessageText:[NSString
+                            stringWithFormat:NSLocalizedStringFromTable(@"INSTALL_FROM_DISC_MESSAGE", @"Welcome", NULL),
+                                             localized_mount_name]];
   [alert setInformativeText:NSLocalizedStringFromTable(@"INSTALL_FROM_DISC_INFO", @"Welcome", NULL)];
 
   [alert addButtonWithTitle:NSLocalizedString(@"INSTALL", NULL)];
@@ -408,54 +433,32 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 
   [alert beginSheetModalForWindow:[self window]
                     modalDelegate:self
-                   didEndSelector:@selector(_offerToInstallFromDiscAlertDidEnd:returnCode:contextInfo:)
+                   didEndSelector:@selector(_offerToInstallFromDiscOrGogAlertDidEnd:returnCode:contextInfo:)
                       contextInfo:[mount_paths retain]];
-  alertOrPanelCurrentlyActive = YES;
+  _alertOrPanelCurrentlyActive = YES;
 }
 
-- (void)_offerToInstallFromFolderAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)return_code contextInfo:(void*)context
-{
-  alertOrPanelCurrentlyActive = NO;
-  NSDictionary* mount_paths = [(NSDictionary*)context autorelease];
-
-  // if the user did not choose one of the install actions, we're done
-  if (return_code == NSAlertThirdButtonReturn)
-    return;
-
-  // dismiss the alert's sheet window
-  [[alert window] orderOut:nil];
-
-  // if the user chose to to a direct install, set the world user base override and go
-  if (return_code == NSAlertFirstButtonReturn) {
-    [[RXWorld sharedWorld] setIsInstalled:YES];
-    [[RXWorld sharedWorld] setWorldBaseOverride:[mount_paths objectForKey:@"path"]];
-    [self close];
-    [self performSelector:@selector(_beginNewGame) withObject:nil afterDelay:0.0];
-  } else {
-    // otherwise, the user chose to to a copy install,and so run an installer
-    [self _runInstallerWithMountPaths:mount_paths];
-  }
-}
-
-- (void)_offerToInstallFromFolder:(NSDictionary*)mount_paths
-{
+- (void)_offerToInstallFromFolder:(NSDictionary*)mount_paths {
   // do nothing if there is already an active installer or we're already installed (e.g. an installer finsihed)
   // or there is some panel or alert already being displayed
-  if (installer || [[RXWorld sharedWorld] isInstalled] || alertOrPanelCurrentlyActive)
+  if (_installer || [[RXWorld sharedWorld] isInstalled] || _alertOrPanelCurrentlyActive) {
     return;
+  }
 
-  // dismiss the installation UI to close the "scanning media" alert and the buy from GOG alert
-  [self _dismissInstallationUI];
+  // dismiss sheets and panels
   [self _dismissBuyFromGOGAlert];
 
   NSString* path = [mount_paths objectForKey:@"path"];
 
   NSString* localized_mount_name = [[NSFileManager defaultManager] displayNameAtPath:path];
-  if (!localized_mount_name)
+  if (!localized_mount_name) {
     localized_mount_name = [path lastPathComponent];
+  }
 
   NSAlert* alert = [[NSAlert new] autorelease];
-  [alert setMessageText:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALL_FROM_FOLDER_MESSAGE", @"Welcome", NULL), localized_mount_name]];
+  [alert setMessageText:[NSString stringWithFormat:NSLocalizedStringFromTable(
+                                                       @"INSTALL_FROM_FOLDER_MESSAGE", @"Welcome", NULL),
+                                                   localized_mount_name]];
   [alert setInformativeText:NSLocalizedStringFromTable(@"INSTALL_FROM_FOLDER_INFO", @"Welcome", NULL)];
 
   [alert addButtonWithTitle:NSLocalizedStringFromTable(@"DIRECT_INSTALL", @"Welcome", NULL)];
@@ -466,18 +469,17 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
                     modalDelegate:self
                    didEndSelector:@selector(_offerToInstallFromFolderAlertDidEnd:returnCode:contextInfo:)
                       contextInfo:[mount_paths retain]];
-  alertOrPanelCurrentlyActive = YES;
+  _alertOrPanelCurrentlyActive = YES;
 }
 
-- (void)_offerToInstallFromGOGInstaller:(NSDictionary*)mount_paths
-{
+- (void)_offerToInstallFromGOGInstaller:(NSDictionary*)mount_paths {
   // do nothing if there is already an active installer or we're already installed (e.g. an installer finsihed)
   // or there is some panel or alert already being displayed
-  if (installer || [[RXWorld sharedWorld] isInstalled] || alertOrPanelCurrentlyActive)
+  if (_installer || [[RXWorld sharedWorld] isInstalled] || _alertOrPanelCurrentlyActive) {
     return;
+  }
 
-  // dismiss the installation UI to close the "scanning media" alert and the buy from GOG alert
-  [self _dismissInstallationUI];
+  // dismiss sheets and panels
   [self _dismissBuyFromGOGAlert];
 
   NSAlert* alert = [[NSAlert new] autorelease];
@@ -489,22 +491,67 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 
   [alert beginSheetModalForWindow:[self window]
                     modalDelegate:self
-                   didEndSelector:@selector(_offerToInstallFromDiscAlertDidEnd:returnCode:contextInfo:)
+                   didEndSelector:@selector(_offerToInstallFromDiscOrGogAlertDidEnd:returnCode:contextInfo:)
                       contextInfo:[mount_paths retain]];
-  alertOrPanelCurrentlyActive = YES;
+  _alertOrPanelCurrentlyActive = YES;
+}
+
+- (void)_offerToInstallFromDiscOrGogAlertDidEnd:(NSAlert*)alert
+                                     returnCode:(NSInteger)return_code
+                                    contextInfo:(void*)context {
+  _alertOrPanelCurrentlyActive = NO;
+  NSDictionary* mount_paths = [(NSDictionary*)context autorelease];
+
+  // if the user did not choose to install, we're done
+  if (return_code != NSAlertFirstButtonReturn) {
+    return;
+  }
+
+  // dismiss the alert's sheet window
+  [[alert window] orderOut:nil];
+
+  // start an installer
+  [self _beginInstallationWithPaths:mount_paths];
+}
+
+- (void)_offerToInstallFromFolderAlertDidEnd:(NSAlert*)alert
+                                  returnCode:(NSInteger)return_code
+                                 contextInfo:(void*)context {
+  _alertOrPanelCurrentlyActive = NO;
+  NSDictionary* mount_paths = [(NSDictionary*)context autorelease];
+
+  // if the user did not choose one of the install actions, we're done
+  if (return_code == NSAlertThirdButtonReturn) {
+    return;
+  }
+
+  // dismiss the alert's sheet window
+  [[alert window] orderOut:nil];
+
+  // if the user chose to to a direct install, set the world user base override and go
+  if (return_code == NSAlertFirstButtonReturn) {
+    [[RXWorld sharedWorld] setIsInstalled:YES];
+    [[RXWorld sharedWorld] setWorldBaseOverride:[mount_paths objectForKey:@"path"]];
+    [self close];
+    [self performSelector:@selector(_beginNewGame) withObject:nil afterDelay:0.0];
+  } else {
+    // otherwise, the user chose a copy install, and so run an installer
+    [self _beginInstallationWithPaths:mount_paths];
+  }
 }
 
 #pragma mark removable media
 
-- (BOOL)_checkPathContent:(NSString*)path removable:(BOOL)removable
-{
+- (BOOL)_checkPathContent:(NSString*)path removable:(BOOL)removable {
   release_assert(path);
 
-  // basically look for a Data directory with a bunch of .MHK files, possibly an Assets1 directory and an Extras.MHK file
+  // basically look for a Data directory with a bunch of .MHK files, possibly an Assets1 directory and an Extras.MHK
+  // file
   NSError* error;
   NSArray* content = BZFSContentsOfDirectory(path, &error);
-  if (!content)
+  if (!content) {
     return NO;
+  }
 
   NSString* data_path = nil;
   NSString* assets_path = nil;
@@ -514,47 +561,56 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 
   for (NSString* item in content) {
     NSString* item_path = [path stringByAppendingPathComponent:item];
-    if ([item caseInsensitiveCompare:@"Data"] == NSOrderedSame)
+    if ([item caseInsensitiveCompare:@"Data"] == NSOrderedSame) {
       data_path = item_path;
-    else if ([item caseInsensitiveCompare:@"Assets1"] == NSOrderedSame)
+    } else if ([item caseInsensitiveCompare:@"Assets1"] == NSOrderedSame) {
       assets_path = item_path;
-    else if ([item caseInsensitiveCompare:@"All"] == NSOrderedSame)
+    } else if ([item caseInsensitiveCompare:@"All"] == NSOrderedSame) {
       all_path = item_path;
-    else if ([item caseInsensitiveCompare:@"Myst2"] == NSOrderedSame)
+    } else if ([item caseInsensitiveCompare:@"Myst2"] == NSOrderedSame) {
       myst2_path = item_path;
-    else if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame)
+    } else if ([item caseInsensitiveCompare:@"Extras.MHK"] == NSOrderedSame) {
       extras_path = item_path;
+    }
   }
 
-  // if the Data directory is missing, try the path itself as a workaround for allowing to install from a folder containing all the archives
-  if (!data_path)
+  // if the Data directory is missing, try the path itself as a workaround for allowing to install from a folder
+  // containing all the archives
+  if (!data_path) {
     data_path = path;
+  }
 
   // check for the usual suspects
-  NSArray* data_archives = [[BZFSContentsOfDirectory(data_path, &error) filteredArrayUsingPredicate:[RXArchiveManager anyArchiveFilenamePredicate]]
+  NSArray* data_archives = [[BZFSContentsOfDirectory(data_path, &error)
+      filteredArrayUsingPredicate:[RXArchiveManager anyArchiveFilenamePredicate]]
       sortedArrayUsingFunction:string_numeric_insensitive_sort
                        context:NULL];
-  if ([data_archives count] == 0)
+  if ([data_archives count] == 0) {
     return NO;
+  }
 
   // if there is an Assets1 directory, it must contain sound archives
   NSArray* assets_archives = nil;
   if (assets_path) {
-    assets_archives = [[BZFSContentsOfDirectory(assets_path, &error) filteredArrayUsingPredicate:[RXArchiveManager soundsArchiveFilenamePredicate]]
+    assets_archives = [[BZFSContentsOfDirectory(assets_path, &error)
+        filteredArrayUsingPredicate:[RXArchiveManager soundsArchiveFilenamePredicate]]
         sortedArrayUsingFunction:string_numeric_insensitive_sort
                          context:NULL];
-    if ([assets_archives count] == 0)
+    if ([assets_archives count] == 0) {
       return NO;
+    }
   }
 
   // if there is an All directory, it will contain archives for aspit
   NSArray* all_archives = nil;
   if (all_path) {
-    all_archives = [[BZFSContentsOfDirectory(all_path, &error) filteredArrayUsingPredicate:[RXArchiveManager anyArchiveFilenamePredicate]]
+    all_archives = [[BZFSContentsOfDirectory(all_path, &error)
+        filteredArrayUsingPredicate:[RXArchiveManager anyArchiveFilenamePredicate]]
         sortedArrayUsingFunction:string_numeric_insensitive_sort
                          context:NULL];
-    if ([all_archives count] == 0)
+    if ([all_archives count] == 0) {
       return NO;
+    }
   }
 
   // if we didn't find an Extras archive at the top level, look in the Data directory
@@ -582,22 +638,24 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
   }
 
   // prepare a dictionary containing the relevant paths we've found
-  NSDictionary* mount_paths = [NSDictionary
-      dictionaryWithObjectsAndKeys:path, @"path", data_path, @"data path", data_archives, @"data archives", (assets_path) ? (id)assets_path : (id)[NSNull null],
-                                   @"assets path", (assets_archives) ? (id)assets_archives : (id)[NSNull null], @"assets archives",
-                                   (all_path) ? (id)all_path : (id)[NSNull null], @"all path", (all_archives) ? (id)all_archives : (id)[NSNull null],
-                                   @"all archives", (extras_path) ? (id)extras_path : (id)[NSNull null], @"extras path", nil];
+  NSDictionary* mount_paths = @{
+    @"path" : path,
+    @"data path" : data_path,
+    @"data archives" : data_archives,
+    @"assets path" : (assets_path) ? assets_path : [NSNull null],
+    @"assets archives" : (assets_archives) ? assets_archives : [NSNull null],
+    @"all path" : (all_path) ? all_path : [NSNull null],
+    @"all archives" : (all_archives) ? all_archives : [NSNull null],
+    @"extras path" : (extras_path) ? extras_path : [NSNull null],
+  };
 
   // everything checks out; if we're not installing, propose to install from this mount, otherwise inform
   // the installer about the new mount paths
   SEL action;
-  if (installer && waitedOnDisc)
+  if (_installer && _waitedOnDisc) {
     action = @selector(_stopWaitingForDisc:);
-  else {
-    if (removable)
-      action = @selector(_offerToInstallFromDisc:);
-    else
-      action = @selector(_offerToInstallFromFolder:);
+  } else {
+    action = (removable) ? @selector(_offerToInstallFromDisc:) : @selector(_offerToInstallFromFolder:);
   }
 
   [self performSelectorOnMainThread:action withObject:mount_paths waitUntilDone:NO];
@@ -605,125 +663,123 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
   return YES;
 }
 
-- (void)_performMountScan:(NSString*)path
-{
+- (void)_performMountScan:(NSString*)path {
   BOOL usable_mount = [self _checkPathContent:path removable:YES];
-  if (!usable_mount && installer && waitedOnDisc)
+  if (!usable_mount && _installer && _waitedOnDisc) {
     [[NSWorkspace sharedWorkspace] unmountAndEjectDeviceAtPath:path];
+  }
 }
 
-- (void)_presentErrorSheet:(NSError*)error
-{
-  // dismiss the installation UI to close the "scanning media" panel
-  [self _dismissInstallationUI];
+- (void)_presentErrorSheet:(NSError*)error {
+  // dismiss sheets and panels
+  [self _dismissBuyFromGOGAlert];
 
   [NSApp presentError:error modalForWindow:[self window] delegate:nil didPresentSelector:nil contextInfo:nil];
 }
 
-- (void)_performMountScanWithFeedback:(NSString*)path
-{
+- (void)_performMountScanWithFeedback:(NSString*)path {
   BOOL usable_mount = [self _checkPathContent:path removable:YES];
-  if (!usable_mount)
-    [self performSelectorOnMainThread:@selector(_presentErrorSheet:)
-                           withObject:[RXError errorWithDomain:RXErrorDomain code:kRXErrUnusableInstallMedia userInfo:nil]
-                        waitUntilDone:NO];
+  if (!usable_mount) {
+    dispatch_async(QUEUE_MAIN, ^{
+      [self _presentErrorSheet:[RXError errorWithDomain:RXErrorDomain code:kRXErrUnusableInstallMedia userInfo:nil]];
+    });
+  }
 }
 
-- (void)_performFolderScanWithFeedback:(NSString*)path
-{
+- (void)_performFolderScanWithFeedback:(NSString*)path {
   BOOL usable_mount = [self _checkPathContent:path removable:NO];
-  if (!usable_mount)
-    [self performSelectorOnMainThread:@selector(_presentErrorSheet:)
-                           withObject:[RXError errorWithDomain:RXErrorDomain code:kRXErrUnusableInstallFolder userInfo:nil]
-                        waitUntilDone:NO];
+  if (!usable_mount) {
+    dispatch_async(QUEUE_MAIN, ^{
+      [self _presentErrorSheet:[RXError errorWithDomain:RXErrorDomain code:kRXErrUnusableInstallFolder userInfo:nil]];
+    });
+  }
 }
 
-- (void)_scanningThread:(id)context __attribute__((noreturn))
-{
-  NSAutoreleasePool* pool = [NSAutoreleasePool new];
-
-  // keep a reference to ourselves
-  scanningThread = [NSThread currentThread];
-
-  // scan currently mounted media
-  [self performSelectorOnMainThread:@selector(_scanMountedMedia) withObject:nil waitUntilDone:NO];
-
-  [pool release];
-
+- (void)_scanningThread:(id)context __attribute__((noreturn)) {
+  _scanningThread = [NSThread currentThread];
   RXThreadRunLoopRun(SEMAPHORE_NULL, "org.macstorm.rivenx.media-scan");
 }
 
-- (void)_removableMediaMounted:(NSNotification*)notification
-{
+- (void)_removableMediaMounted:(NSNotification*)notification {
   NSString* path = [[notification userInfo] objectForKey:@"NSDevicePath"];
 
   // check if the name is interesting, and if it is check the content of the mount
   NSString* mount_name = [path lastPathComponent];
 
-  if (waitedOnDisc) {
-    if ([mount_name compare:waitedOnDisc options:NSCaseInsensitiveSearch] == NSOrderedSame) {
-      [self performSelector:@selector(_performMountScan:) onThread:scanningThread withObject:path waitUntilDone:NO];
+  if (_waitedOnDisc) {
+    if ([mount_name compare:_waitedOnDisc options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+      [self performSelector:@selector(_performMountScan:) onThread:_scanningThread withObject:path waitUntilDone:NO];
     } else {
-      [[NSWorkspace sharedWorkspace] performSelector:@selector(unmountAndEjectDeviceAtPath:) onThread:scanningThread withObject:path waitUntilDone:NO];
+      [[NSWorkspace sharedWorkspace] performSelector:@selector(unmountAndEjectDeviceAtPath:)
+                                            onThread:_scanningThread
+                                          withObject:path
+                                       waitUntilDone:NO];
     }
     return;
   }
 
   NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^Riven[0-9]?$"];
   if ([predicate evaluateWithObject:mount_name]) {
-    [self performSelector:@selector(_performMountScan:) onThread:scanningThread withObject:path waitUntilDone:NO];
+    [self performSelector:@selector(_performMountScan:) onThread:_scanningThread withObject:path waitUntilDone:NO];
     return;
   }
 
   if ([mount_name caseInsensitiveCompare:@"Exile DVD"]) {
-    [self performSelector:@selector(_performMountScan:) onThread:scanningThread withObject:path waitUntilDone:NO];
+    [self performSelector:@selector(_performMountScan:) onThread:_scanningThread withObject:path waitUntilDone:NO];
     return;
   }
 }
 
-- (void)_scanMountedMedia
-{
+- (void)_scanMountedMedia {
   // scan all existing mounts
   for (NSString* mount_path in [[NSWorkspace sharedWorkspace] mountedRemovableMedia]) {
-    NSNotification* notification = [NSNotification notificationWithName:NSWorkspaceDidMountNotification
-                                                                 object:nil
-                                                               userInfo:[NSDictionary dictionaryWithObject:mount_path forKey:@"NSDevicePath"]];
+    NSNotification* notification =
+        [NSNotification notificationWithName:NSWorkspaceDidMountNotification
+                                      object:nil
+                                    userInfo:[NSDictionary dictionaryWithObject:mount_path forKey:@"NSDevicePath"]];
     [self _removableMediaMounted:notification];
   }
 }
 
 #pragma mark GOG.com installer
 
-typedef void (^FSEventsBlock)(ConstFSEventStreamRef streamRef, size_t numEvents, void* eventPaths, const FSEventStreamEventFlags eventFlags[],
+typedef void (^FSEventsBlock)(ConstFSEventStreamRef streamRef,
+                              size_t numEvents,
+                              void* eventPaths,
+                              const FSEventStreamEventFlags eventFlags[],
                               const FSEventStreamEventId eventIds[]);
 
-static void SetupFSEventStreamCallbackWithBlock(FSEventStreamContext* context, FSEventsBlock block)
-{
+static void SetupFSEventStreamCallbackWithBlock(FSEventStreamContext* context, FSEventsBlock block) {
   memset(context, 0, sizeof(FSEventStreamContext));
   context->info = [block copy];
   context->retain = (CFAllocatorRetainCallBack)_Block_copy;
   context->release = (CFAllocatorReleaseCallBack)_Block_release;
 }
 
-static void FSEventsBlockCallback(ConstFSEventStreamRef streamRef, void* clientCallBackInfo, size_t numEvents, void* eventPaths,
-                                  const FSEventStreamEventFlags eventFlags[], const FSEventStreamEventId eventIds[])
-{
+static void FSEventsBlockCallback(ConstFSEventStreamRef streamRef,
+                                  void* clientCallBackInfo,
+                                  size_t numEvents,
+                                  void* eventPaths,
+                                  const FSEventStreamEventFlags eventFlags[],
+                                  const FSEventStreamEventId eventIds[]) {
   FSEventsBlock b = (FSEventsBlock)clientCallBackInfo;
   b(streamRef, numEvents, eventPaths, eventFlags, eventIds);
 }
 
-- (void)_scanDownloadFolderForGOGInstaller
-{
+- (void)_scanDownloadFolderForGOGInstaller {
   NSFileManager* fm = [NSFileManager new];
   NSURL* url = [NSURL fileURLWithPath:_downloadsFolderPath isDirectory:YES];
-  NSArray* contents = [fm contentsOfDirectoryAtURL:url includingPropertiesForKeys:[NSArray array] options:(NSDirectoryEnumerationOptions)0 error:NULL];
+  NSArray* contents = [fm contentsOfDirectoryAtURL:url
+                        includingPropertiesForKeys:[NSArray array]
+                                           options:(NSDirectoryEnumerationOptions)0
+                                             error:NULL];
   BOOL found = NO;
 
   for (NSURL* url in contents) {
-    if ([[url lastPathComponent] isEqualToString:@"setup_riven.exe"]) {
-      if (_gogInstallerFoundInDownloadsFolder == NO)
-        [self _offerToInstallFromGOGInstaller:[NSDictionary dictionaryWithObject:url forKey:@"gog_installer"]];
-
+    if (filename_is_gog_installer([url lastPathComponent])) {
+      if (_gogInstallerFoundInDownloadsFolder == NO) {
+        [self _offerToInstallFromGOGInstaller:@{@"gog_installer": url}];
+      }
       found = YES;
       break;
     }
@@ -733,26 +789,38 @@ static void FSEventsBlockCallback(ConstFSEventStreamRef streamRef, void* clientC
   [fm release];
 }
 
-- (void)_scanDownloads
-{
+- (void)_scanDownloads {
   NSArray* dirs = NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory, NSUserDomainMask, YES);
-  if (![dirs count])
+  if (![dirs count]) {
     return;
+  }
 
   _downloadsFolderPath = [dirs objectAtIndex:0];
-  NSString* resolved = [[[NSFileManager new] autorelease] destinationOfSymbolicLinkAtPath:_downloadsFolderPath error:NULL];
-  if (resolved)
+  NSString* resolved =
+      [[[NSFileManager new] autorelease] destinationOfSymbolicLinkAtPath:_downloadsFolderPath error:NULL];
+  if (resolved) {
     _downloadsFolderPath = resolved;
+  }
   [_downloadsFolderPath retain];
 
   FSEventStreamContext context;
-  SetupFSEventStreamCallbackWithBlock(&context,
-                                      ^(ConstFSEventStreamRef streamRef, size_t numEvents, void * eventPaths, const FSEventStreamEventFlags eventFlags[],
-                                        const FSEventStreamEventId eventIds[]) { [self _scanDownloadFolderForGOGInstaller]; });
+  SetupFSEventStreamCallbackWithBlock(
+      &context,
+      ^(ConstFSEventStreamRef streamRef,
+        size_t numEvents,
+        void* eventPaths,
+        const FSEventStreamEventFlags eventFlags[],
+        const FSEventStreamEventId eventIds[]) {
+          [self _scanDownloadFolderForGOGInstaller];
+      });
 
-  _downloadsFSEventStream =
-      FSEventStreamCreate(kCFAllocatorDefault, FSEventsBlockCallback, &context, (CFArrayRef)[NSArray arrayWithObject : _downloadsFolderPath],
-                          kFSEventStreamEventIdSinceNow, 2.0, kFSEventStreamCreateFlagNoDefer | kFSEventStreamCreateFlagIgnoreSelf);
+  _downloadsFSEventStream = FSEventStreamCreate(kCFAllocatorDefault,
+                                                FSEventsBlockCallback,
+                                                &context,
+                                                (CFArrayRef)[NSArray arrayWithObject : _downloadsFolderPath],
+                                                kFSEventStreamEventIdSinceNow,
+                                                2.0,
+                                                kFSEventStreamCreateFlagNoDefer | kFSEventStreamCreateFlagIgnoreSelf);
   FSEventStreamScheduleWithRunLoop(_downloadsFSEventStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
   FSEventStreamStart(_downloadsFSEventStream);
 

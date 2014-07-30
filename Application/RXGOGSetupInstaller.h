@@ -1,20 +1,10 @@
-//
-//  RXGOGSetupInstaller.h
-//  rivenx
-//
-//  Created by Jean-François Roy on 30/12/2011.
-//  Copyright (c) 2012 MacStorm. All rights reserved.
-//
+// Copyright 2014 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#import "RXInstaller.h"
+#import "Application/RXInstaller.h"
 
-@interface RXGOGSetupInstaller : RXInstaller {
-@private
-  NSURL* _gogSetupURL;
-  uint32_t _filesUnpacked;
-  uint32_t _filesToUnpack;
-}
+@interface RXGOGSetupInstaller : NSObject <RXInstaller>
 
-- (id)initWithGOGSetupURL:(NSURL*)url;
+- (instancetype)initWithGOGSetupURL:(NSURL*)url;
 
 @end

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="6185.11" systemVersion="14A298i" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="6185.11"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="RXWelcomeWindowController">
+            <connections>
+                <outlet property="backgroundImageView" destination="7" id="ccf-Oz-hWH"/>
+                <outlet property="buyButton" destination="46" id="L8P-23-wpi"/>
+                <outlet property="installButton" destination="48" id="7fz-VV-vyn"/>
+                <outlet property="installControlsStackView" destination="b27-Mr-Kbr" id="fxY-4v-kGm"/>
+                <outlet property="installProgressIndicator" destination="lBn-B9-0Mc" id="0lt-Zf-pi1"/>
+                <outlet property="installStatusLabel" destination="Ygy-u8-tfK" id="niJ-Tj-md1"/>
+                <outlet property="welcomeLabel" destination="EfZ-xq-CWW" id="QcC-Qg-4Hp"/>
+                <outlet property="welcomeStackView" destination="GJv-JT-brA" id="Y54-fw-4Zl"/>
+                <outlet property="window" destination="3" id="27"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="Welcome to Riven X" allowsToolTipsWhenApplicationIsInactive="NO" oneShot="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="3" userLabel="Welcome">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES" unifiedTitleAndToolbar="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="196" y="148" width="580" height="320"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="877"/>
+            <value key="minSize" type="size" width="580" height="320"/>
+            <value key="maxSize" type="size" width="580" height="320"/>
+            <view key="contentView" id="4">
+                <rect key="frame" x="0.0" y="0.0" width="580" height="320"/>
+                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                <subviews>
+                    <imageView translatesAutoresizingMaskIntoConstraints="NO" id="7">
+                        <rect key="frame" x="0.0" y="0.0" width="580" height="320"/>
+                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" image="about" id="14"/>
+                    </imageView>
+                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="46">
+                        <rect key="frame" x="302" y="8" width="132" height="32"/>
+                        <buttonCell key="cell" type="push" title="&lt;&lt;BUY&gt;&gt;" bezelStyle="rounded" alignment="center" state="on" borderStyle="border" inset="2" id="47">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="buyRiven:" target="-2" id="59"/>
+                        </connections>
+                    </button>
+                    <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="48">
+                        <rect key="frame" x="434" y="8" width="132" height="32"/>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="120" id="1DL-Rh-FRS"/>
+                        </constraints>
+                        <buttonCell key="cell" type="push" title="&lt;&lt;INSTALL&gt;&gt;" bezelStyle="rounded" alignment="center" state="on" borderStyle="border" inset="2" id="49">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <connections>
+                            <action selector="installFromFolder:" target="-2" id="68"/>
+                            <outlet property="nextKeyView" destination="46" id="60"/>
+                        </connections>
+                    </button>
+                    <stackView orientation="vertical" alignment="left" spacing="4" horizontalHuggingPriority="249" verticalHuggingPriority="249" translatesAutoresizingMaskIntoConstraints="NO" id="GJv-JT-brA" userLabel="top stack view">
+                        <rect key="frame" x="260" y="100" width="300" height="100"/>
+                        <beginningViews>
+                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="EfZ-xq-CWW" userLabel="&lt;&lt;WELCOME MAIN&gt;&gt;">
+                                <rect key="frame" x="6" y="230" width="304" height="34"/>
+                                <textFieldCell key="cell" controlSize="small" allowsUndo="NO" sendsActionOnEndEditing="YES" title="&lt;&lt;WELCOME&gt;&gt;" drawsBackground="YES" allowsEditingTextAttributes="YES" id="j19-Ni-SVj">
+                                    <font key="font" metaFont="smallSystem"/>
+                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                        </beginningViews>
+                        <middleViews>
+                            <textField hidden="YES" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Ygy-u8-tfK">
+                                <rect key="frame" x="6" y="15" width="38" height="17"/>
+                                <textFieldCell key="cell" controlSize="small" lineBreakMode="truncatingTail" allowsUndo="NO" sendsActionOnEndEditing="YES" title="&lt;&lt;INSTALLER STATUS&gt;&gt;" drawsBackground="YES" id="kaK-Nj-cHB">
+                                    <font key="font" metaFont="smallSystem"/>
+                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <stackView hidden="YES" orientation="horizontal" alignment="centerY" horizontalHuggingPriority="249" verticalHuggingPriority="249" translatesAutoresizingMaskIntoConstraints="NO" id="b27-Mr-Kbr" userLabel="install stack view">
+                                <rect key="frame" x="31" y="119" width="284" height="129"/>
+                                <beginningViews>
+                                    <progressIndicator maxValue="100" indeterminate="YES" style="bar" translatesAutoresizingMaskIntoConstraints="NO" id="lBn-B9-0Mc">
+                                        <rect key="frame" x="0.0" y="0.0" width="96" height="20"/>
+                                    </progressIndicator>
+                                    <button horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="LPL-nh-lsq">
+                                        <rect key="frame" x="0.0" y="0.0" width="82" height="32"/>
+                                        <buttonCell key="cell" type="bevel" bezelStyle="rounded" image="NSStopProgressFreestandingTemplate" imagePosition="only" alignment="center" controlSize="mini" imageScaling="proportionallyDown" inset="2" id="GAX-67-599">
+                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                            <font key="font" metaFont="miniSystem"/>
+                                            <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                                        </buttonCell>
+                                        <connections>
+                                            <action selector="cancelInstallation:" target="-2" id="69X-qv-hR9"/>
+                                        </connections>
+                                    </button>
+                                </beginningViews>
+                                <visibilityPriorities>
+                                    <integer value="1000"/>
+                                    <integer value="1000"/>
+                                </visibilityPriorities>
+                                <customSpacing>
+                                    <real value="3.4028234663852886e+38"/>
+                                    <real value="3.4028234663852886e+38"/>
+                                </customSpacing>
+                            </stackView>
+                        </middleViews>
+                        <visibilityPriorities>
+                            <integer value="1000"/>
+                            <integer value="1000"/>
+                            <integer value="1000"/>
+                        </visibilityPriorities>
+                        <customSpacing>
+                            <real value="3.4028234663852886e+38"/>
+                            <real value="3.4028234663852886e+38"/>
+                            <real value="3.4028234663852886e+38"/>
+                        </customSpacing>
+                    </stackView>
+                </subviews>
+                <constraints>
+                    <constraint firstAttribute="bottom" secondItem="46" secondAttribute="bottom" constant="15" id="0zE-a4-z63"/>
+                    <constraint firstItem="48" firstAttribute="leading" secondItem="46" secondAttribute="trailing" constant="12" symbolic="YES" id="43B-7W-7tI"/>
+                    <constraint firstAttribute="trailing" secondItem="GJv-JT-brA" secondAttribute="trailing" constant="20" symbolic="YES" id="7bh-Gg-haY"/>
+                    <constraint firstItem="7" firstAttribute="top" secondItem="4" secondAttribute="top" id="Ced-Ai-C1e"/>
+                    <constraint firstItem="GJv-JT-brA" firstAttribute="top" secondItem="4" secondAttribute="top" constant="120" id="H9r-oc-Gov"/>
+                    <constraint firstItem="48" firstAttribute="trailing" secondItem="GJv-JT-brA" secondAttribute="trailing" id="Tyt-Ft-IPj"/>
+                    <constraint firstAttribute="bottom" relation="lessThanOrEqual" secondItem="GJv-JT-brA" secondAttribute="bottom" constant="100" id="V1b-6k-9Nq"/>
+                    <constraint firstItem="GJv-JT-brA" firstAttribute="leading" secondItem="4" secondAttribute="leading" constant="260" id="WaU-sT-dFh"/>
+                    <constraint firstItem="46" firstAttribute="width" secondItem="48" secondAttribute="width" id="dgq-kE-ZGx"/>
+                    <constraint firstItem="48" firstAttribute="baseline" secondItem="46" secondAttribute="baseline" id="dz6-C9-gUY"/>
+                    <constraint firstItem="7" firstAttribute="leading" secondItem="4" secondAttribute="leading" id="jSU-4f-lla"/>
+                    <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="GJv-JT-brA" secondAttribute="bottom" constant="56" id="sXq-qa-ULN"/>
+                </constraints>
+            </view>
+            <connections>
+                <outlet property="delegate" destination="-2" id="45"/>
+                <outlet property="initialFirstResponder" destination="48" id="58"/>
+            </connections>
+            <point key="canvasLocation" x="-1545" y="-841"/>
+        </window>
+        <userDefaultsController representsSharedInstance="YES" id="35"/>
+    </objects>
+    <resources>
+        <image name="NSStopProgressFreestandingTemplate" width="14" height="14"/>
+        <image name="about" width="580" height="320"/>
+    </resources>
+</document>

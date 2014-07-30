@@ -11,6 +11,7 @@
 		3103D4F40EF0DAF30025170A /* RXHardwareProfiler.m in Sources */ = {isa = PBXBuildFile; fileRef = 3103D4F30EF0DAF30025170A /* RXHardwareProfiler.m */; };
 		3105EC610D74922500609273 /* RXLogging.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.mm */; };
 		31074C7A0DCCA63C004A5D7C /* GLShaderProgramManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312F4DA30DC263F400B3AF0D /* GLShaderProgramManager.m */; };
+		31091B8D1973052800B6A7A2 /* Welcome.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31091B8F1973052800B6A7A2 /* Welcome.xib */; };
 		3114FF3C0D58DF0A0099AF69 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		311AEBC414A91F6F002EFCDD /* NSArray+RXArrayAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 311AEBC314A91F6F002EFCDD /* NSArray+RXArrayAdditions.m */; };
 		311B7C840BCC4D0500653D2D /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
@@ -47,7 +48,6 @@
 		31334DA51968A624006470FC /* Installer.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31334D9B1968A624006470FC /* Installer.strings */; };
 		31334DA61968A624006470FC /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31334D9D1968A624006470FC /* Localizable.strings */; };
 		31334DA71968A624006470FC /* Rendering.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31334D9F1968A624006470FC /* Rendering.strings */; };
-		31334DA81968A624006470FC /* Welcome.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31334DA11968A624006470FC /* Welcome.strings */; };
 		3133D9AF0D5CDDC1004DAD5E /* RXFSCopyOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 3133D9AE0D5CDDC1004DAD5E /* RXFSCopyOperation.m */; };
 		313A9D4E18B30A6000FEE683 /* mohawk_libav.h in Headers */ = {isa = PBXBuildFile; fileRef = 313A9D4C18B30A6000FEE683 /* mohawk_libav.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		313A9D4F18B30A6000FEE683 /* mohawk_libav.m in Sources */ = {isa = PBXBuildFile; fileRef = 313A9D4D18B30A6000FEE683 /* mohawk_libav.m */; };
@@ -96,6 +96,7 @@
 		316721AF0D27F63000FB2C0E /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 316721D90D27FB3200FB2C0E /* integer_pair_hash.c */; };
 		3167EF021115057C002DDE6D /* RXWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 3167EF011115057C002DDE6D /* RXWindow.m */; };
+		316A363D197B5FC200984D19 /* Welcome.txt in Resources */ = {isa = PBXBuildFile; fileRef = 316A363B197B5FC200984D19 /* Welcome.txt */; };
 		316C37B40987227800AC2C8E /* RXCardState.mm in Sources */ = {isa = PBXBuildFile; fileRef = 316C37B20987227800AC2C8E /* RXCardState.mm */; };
 		316C389E0F469F7200EFB7FB /* CAAudioUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14BD60F03F568006EFF93 /* CAAudioUnit.cpp */; };
 		316C38A00F469F8000EFB7FB /* CAGuard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B960F03F527006EFF93 /* CAGuard.cpp */; };
@@ -181,14 +182,12 @@
 		31DAAF270DDE21EF00D06D0C /* sounds in Resources */ = {isa = PBXBuildFile; fileRef = 31DAAF210DDE21EF00D06D0C /* sounds */; };
 		31DC682909CB880A00BFF447 /* VirtualRingBuffer_test.m in Sources */ = {isa = PBXBuildFile; fileRef = 31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */; };
 		31DC684209CB8E6B00BFF447 /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
-		31E933441127B02000188488 /* Welcome.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31E933431127B02000188488 /* Welcome.xib */; };
 		31E9334A1127B0CE00188488 /* RXWelcomeWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 31E933491127B0CE00188488 /* RXWelcomeWindowController.m */; };
 		31EE15E010745FA3006E196D /* RXScriptCompiler.m in Sources */ = {isa = PBXBuildFile; fileRef = 31EE15DF10745FA3006E196D /* RXScriptCompiler.m */; };
 		31F0DD4B0D3A7682000FBB5F /* EngineVariables.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31F0DD4A0D3A7682000FBB5F /* EngineVariables.plist */; };
 		31F1BEA60D3B03D000CFE301 /* about.png in Resources */ = {isa = PBXBuildFile; fileRef = 31F1BEA50D3B03D000CFE301 /* about.png */; };
 		31F1BED60D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf in Resources */ = {isa = PBXBuildFile; fileRef = 31F1BED50D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf */; };
 		31F3095708BE5FA200417394 /* RXWorld.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31F3095608BE5FA200417394 /* RXWorld.mm */; };
-		31F32F5A14AE6C7E00E53DF3 /* RXInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 31F32F5914AE6C7E00E53DF3 /* RXInstaller.m */; };
 		31F32F5D14AE6DBF00E53DF3 /* RXGOGSetupInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 31F32F5C14AE6DBF00E53DF3 /* RXGOGSetupInstaller.m */; };
 		31F4EFEA0F35312700A68652 /* RXScriptEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = 31F4EFE90F35312700A68652 /* RXScriptEngine.m */; };
 		31F4F0020F3533EF00A68652 /* RXScriptDecoding.m in Sources */ = {isa = PBXBuildFile; fileRef = 31F4F0010F3533EF00A68652 /* RXScriptDecoding.m */; };
@@ -308,6 +307,8 @@
 		3103D4F30EF0DAF30025170A /* RXHardwareProfiler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXHardwareProfiler.m; sourceTree = "<group>"; };
 		3105EC5A0D748F2100609273 /* RXLogging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXLogging.h; sourceTree = "<group>"; };
 		3105EC600D74922500609273 /* RXLogging.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXLogging.mm; sourceTree = "<group>"; };
+		31091B8E1973052800B6A7A2 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Welcome.xib; sourceTree = "<group>"; };
+		31091B901973056100B6A7A2 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Welcome.strings; sourceTree = "<group>"; };
 		3114FF3A0D58DF0A0099AF69 /* BZFSUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BZFSUtilities.h; sourceTree = "<group>"; };
 		3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BZFSUtilities.m; sourceTree = "<group>"; };
 		31154B4D0B4990E9002FCEDD /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Shaders; sourceTree = "<group>"; };
@@ -353,7 +354,6 @@
 		31334D9C1968A624006470FC /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Installer.strings; sourceTree = "<group>"; };
 		31334D9E1968A624006470FC /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		31334DA01968A624006470FC /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Rendering.strings; sourceTree = "<group>"; };
-		31334DA21968A624006470FC /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Welcome.strings; sourceTree = "<group>"; };
 		3133D9AD0D5CDDC1004DAD5E /* RXFSCopyOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXFSCopyOperation.h; sourceTree = "<group>"; };
 		3133D9AE0D5CDDC1004DAD5E /* RXFSCopyOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXFSCopyOperation.m; sourceTree = "<group>"; };
 		313A9D4C18B30A6000FEE683 /* mohawk_libav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mohawk_libav.h; path = mhk/mohawk_libav.h; sourceTree = "<group>"; };
@@ -409,6 +409,7 @@
 		316721D90D27FB3200FB2C0E /* integer_pair_hash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = integer_pair_hash.c; sourceTree = "<group>"; };
 		3167EF001115057C002DDE6D /* RXWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWindow.h; sourceTree = "<group>"; };
 		3167EF011115057C002DDE6D /* RXWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXWindow.m; sourceTree = "<group>"; };
+		316A363C197B5FC200984D19 /* en */ = {isa = PBXFileReference; lastKnownFileType = text; name = en; path = en.lproj/Welcome.txt; sourceTree = "<group>"; };
 		316C37B10987227800AC2C8E /* RXCardState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RXCardState.h; path = States/RXCardState.h; sourceTree = "<group>"; };
 		316C37B20987227800AC2C8E /* RXCardState.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = RXCardState.mm; path = States/RXCardState.mm; sourceTree = "<group>"; };
 		316C38A60F469FA800EFB7FB /* CAMutex.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CAMutex.cpp; sourceTree = "<group>"; };
@@ -490,7 +491,6 @@
 		31DAAF210DDE21EF00D06D0C /* sounds */ = {isa = PBXFileReference; lastKnownFileType = folder; path = sounds; sourceTree = "<group>"; };
 		31DC67FF09CB879B00BFF447 /* VirtualRingBuffer_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = VirtualRingBuffer_test; sourceTree = BUILT_PRODUCTS_DIR; };
 		31DC682809CB880A00BFF447 /* VirtualRingBuffer_test.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VirtualRingBuffer_test.m; sourceTree = "<group>"; };
-		31E933431127B02000188488 /* Welcome.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = Welcome.xib; sourceTree = "<group>"; };
 		31E933481127B0CE00188488 /* RXWelcomeWindowController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWelcomeWindowController.h; sourceTree = "<group>"; };
 		31E933491127B0CE00188488 /* RXWelcomeWindowController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXWelcomeWindowController.m; sourceTree = "<group>"; };
 		31EE15DE10745FA3006E196D /* RXScriptCompiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptCompiler.h; sourceTree = "<group>"; };
@@ -503,7 +503,6 @@
 		31F3095508BE5FA200417394 /* RXWorld.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWorld.h; sourceTree = "<group>"; };
 		31F3095608BE5FA200417394 /* RXWorld.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXWorld.mm; sourceTree = "<group>"; };
 		31F32F5814AE6C7E00E53DF3 /* RXInstaller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXInstaller.h; sourceTree = "<group>"; };
-		31F32F5914AE6C7E00E53DF3 /* RXInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXInstaller.m; sourceTree = "<group>"; };
 		31F32F5B14AE6DBF00E53DF3 /* RXGOGSetupInstaller.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXGOGSetupInstaller.h; sourceTree = "<group>"; };
 		31F32F5C14AE6DBF00E53DF3 /* RXGOGSetupInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXGOGSetupInstaller.m; sourceTree = "<group>"; };
 		31F4D2D218D4E42C00F77ACD /* cxx_policies.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cxx_policies.h; sourceTree = "<group>"; };
@@ -1000,8 +999,8 @@
 				31DAAF210DDE21EF00D06D0C /* sounds */,
 				31D4E8CD1144635D00D70E28 /* Stacks.plist */,
 				3160E1810FD3075300F18E86 /* tiny_marbles.png */,
-				31334DA11968A624006470FC /* Welcome.strings */,
-				31E933431127B02000188488 /* Welcome.xib */,
+				316A363B197B5FC200984D19 /* Welcome.txt */,
+				31091B8F1973052800B6A7A2 /* Welcome.xib */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -1047,7 +1046,6 @@
 			isa = PBXGroup;
 			children = (
 				31F32F5814AE6C7E00E53DF3 /* RXInstaller.h */,
-				31F32F5914AE6C7E00E53DF3 /* RXInstaller.m */,
 				31C545510D5D50620024B486 /* RXMediaInstaller.h */,
 				31C545520D5D50620024B486 /* RXMediaInstaller.m */,
 				31F32F5B14AE6DBF00E53DF3 /* RXGOGSetupInstaller.h */,
@@ -1353,8 +1351,8 @@
 				3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */,
 				31F1BED60D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf in Resources */,
 				313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */,
-				31E933441127B02000188488 /* Welcome.xib in Resources */,
 				3167216D19887C87004F64E3 /* MainMenu.xib in Resources */,
+				31091B8D1973052800B6A7A2 /* Welcome.xib in Resources */,
 				3155F1C717F884550064E4BD /* Images.xcassets in Resources */,
 				31472CEE114C2F66008B6CF7 /* Extras.MHK in Resources */,
 				31334DA31968A624006470FC /* About.strings in Resources */,
@@ -1362,7 +1360,7 @@
 				31334DA51968A624006470FC /* Installer.strings in Resources */,
 				31334DA61968A624006470FC /* Localizable.strings in Resources */,
 				31334DA71968A624006470FC /* Rendering.strings in Resources */,
-				31334DA81968A624006470FC /* Welcome.strings in Resources */,
+				316A363D197B5FC200984D19 /* Welcome.txt in Resources */,
 				31DAAF260DDE21EF00D06D0C /* cursors in Resources */,
 				315DA3CF118FED0F003E21BC /* patches in Resources */,
 				31334D951968A222006470FC /* Shaders in Resources */,
@@ -1590,7 +1588,6 @@
 				318AFC2F13BFA4B5000402B7 /* CAStreamBasicDescription.cpp in Sources */,
 				318161B2147C69C700623EF2 /* rx_abort.c in Sources */,
 				311AEBC414A91F6F002EFCDD /* NSArray+RXArrayAdditions.m in Sources */,
-				31F32F5A14AE6C7E00E53DF3 /* RXInstaller.m in Sources */,
 				31F32F5D14AE6DBF00E53DF3 /* RXGOGSetupInstaller.m in Sources */,
 				318384EF153BD91D008CC9DC /* platform_info.mm in Sources */,
 				318384F3153BD9EE008CC9DC /* NSString+RXStringAdditions.m in Sources */,
@@ -1651,6 +1648,15 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		31091B8F1973052800B6A7A2 /* Welcome.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				31091B8E1973052800B6A7A2 /* Base */,
+				31091B901973056100B6A7A2 /* en */,
+			);
+			name = Welcome.xib;
+			sourceTree = "<group>";
+		};
 		31334D971968A624006470FC /* About.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1691,7 +1697,6 @@
 			name = Rendering.strings;
 			sourceTree = "<group>";
 		};
-		31334DA11968A624006470FC /* Welcome.strings */ = {
 		3167216F19887C87004F64E3 /* MainMenu.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1701,11 +1706,12 @@
 			name = MainMenu.xib;
 			sourceTree = "<group>";
 		};
+		316A363B197B5FC200984D19 /* Welcome.txt */ = {
 			isa = PBXVariantGroup;
 			children = (
-				31334DA21968A624006470FC /* en */,
+				316A363C197B5FC200984D19 /* en */,
 			);
-			name = Welcome.strings;
+			name = Welcome.txt;
 			sourceTree = "<group>";
 		};
 		316D273C10004B23003579F9 /* MainMenu.xib */ = {

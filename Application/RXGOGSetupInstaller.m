@@ -1,142 +1,135 @@
-//
-//  RXGOGSetupInstaller.m
-//  rivenx
-//
-//  Created by Jean-François Roy on 30/12/2011.
-//  Copyright (c) 2012 MacStorm. All rights reserved.
-//
+// Copyright 2014 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#import "RXGOGSetupInstaller.h"
+#import "Application/RXGOGSetupInstaller.h"
 
-#import "RXErrorMacros.h"
-
-#import "RXWorld.h"
-
+#import <Foundation/NSBundle.h>
 #import <Foundation/NSKeyValueObserving.h>
 #import <Foundation/NSTask.h>
 
-@implementation RXGOGSetupInstaller
+#import "Base/RXErrors.h"
+#import "Base/RXErrorMacros.h"
 
-- (id)initWithGOGSetupURL:(NSURL*)url
-{
+#import "Engine/RXWorld.h"
+
+@interface RXGOGSetupInstaller ()
+@property (nonatomic, readwrite, copy) NSString* stage;
+@property (nonatomic, readwrite) double progress;
+@end
+
+@implementation RXGOGSetupInstaller {
+  NSURL* _gogSetupURL;
+  NSTask* _unpackTask;
+  BOOL _cancelled;
+}
+
+- (instancetype)initWithGOGSetupURL:(NSURL*)url {
   self = [super init];
-  if (!self)
+  if (!self) {
     return nil;
+  }
 
   _gogSetupURL = [url retain];
+
+  _progress = -1.0;
+  self.stage = NSLocalizedStringFromTable(@"INSTALLER_PREPARING", @"Installer", NULL);
 
   return self;
 }
 
-- (void)dealloc
-{
+- (void)dealloc {
+  debug_assert(_unpackTask == nil);
   [_gogSetupURL release];
-
   [super dealloc];
 }
 
-- (BOOL)runWithModalSession:(NSModalSession)session error:(NSError**)error
-{
-  // we're one-shot
-  if (didRun)
-    ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerAlreadyRan, nil, error);
-  didRun = YES;
+- (void)runWithCompletionBlock:(void (^)(BOOL success, NSError* error))block {
+  NSString* unpackgogsetup_path = [[NSBundle mainBundle] pathForAuxiliaryExecutable:@"unpackgogsetup"];
+  release_assert(unpackgogsetup_path);
 
-  modalSession = session;
-  destination = [[[(RXWorld*)g_world worldCacheBase] path] retain];
+  _unpackTask = [NSTask new];
+  [_unpackTask setLaunchPath:unpackgogsetup_path];
+  [_unpackTask setCurrentDirectoryPath:[[[RXWorld sharedWorld] worldCacheBase] path]];
+  [_unpackTask setArguments:@[ [_gogSetupURL path] ]];
 
-  if ([NSApp runModalSession:modalSession] != NSRunContinuesResponse)
-    ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerCancelled, nil, error);
+  NSPipe* status_pipe = [NSPipe new];
+  [_unpackTask setStandardOutput:status_pipe];
 
-  [self willChangeValueForKey:@"progress"];
-  progress = -1.0;
-  [self didChangeValueForKey:@"progress"];
+  int status_fd = [[status_pipe fileHandleForReading] fileDescriptor];
+  dispatch_source_t status_source = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, status_fd, 0, QUEUE_MAIN);
+  release_assert(status_source);
 
-  NSString* unpackgogsetupPath = [[NSBundle mainBundle] pathForResource:@"unpackgogsetup" ofType:@""];
-  release_assert(unpackgogsetupPath);
+  NSMutableString* status_string_remainder = [NSMutableString string];
 
-  NSTask* unpackgogsetupTask = [NSTask new];
-  release_assert(unpackgogsetupTask);
-  [unpackgogsetupTask setLaunchPath:unpackgogsetupPath];
-  [unpackgogsetupTask setCurrentDirectoryPath:destination];
-  [unpackgogsetupTask setArguments:[NSArray arrayWithObject:[_gogSetupURL path]]];
-
-  NSPipe* pipe = [NSPipe new];
-  [unpackgogsetupTask setStandardOutput:pipe];
-
-  int inputFD = [[pipe fileHandleForReading] fileDescriptor];
-  dispatch_source_t inputSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_READ, inputFD, 0, QUEUE_MAIN);
-  release_assert(inputSource);
-
-  dispatch_source_set_event_handler(inputSource, ^(void) {
-    size_t bytesAvailable = dispatch_source_get_data(inputSource);
-    if (bytesAvailable == 0)
+  dispatch_source_set_event_handler(status_source, ^(void) {
+    size_t bytes_available = dispatch_source_get_data(status_source);
+    if (bytes_available == 0) {
       return;
+    }
 
-    char* input = malloc(bytesAvailable + 1);
-    ssize_t bytesRead = read(inputFD, input, bytesAvailable);
-    input[bytesRead] = 0;
+    char* status_data = malloc(bytes_available);
+    ssize_t bytes_read = read(status_fd, status_data, bytes_available);
+    NSString* status_string =
+        [[NSString alloc] initWithBytesNoCopy:status_data
+                                       length:bytes_read
+                                     encoding:NSUTF8StringEncoding
+                                 freeWhenDone:YES];
 
-    char* eol = strrchr(input, '\n');
-    NSString* lines = [[NSString alloc] initWithBytesNoCopy:input length:eol - input encoding:NSUTF8StringEncoding freeWhenDone:YES];
-    [lines enumerateLinesUsingBlock:^(NSString* line, BOOL* stop) {
-      if (_filesToUnpack == 0) {
-        _filesToUnpack = [line intValue];
-        return;
-      }
+    [status_string_remainder appendString:status_string];
+    [status_string release];
 
-      if ([line hasPrefix:@"<< "]) {
-        double progressFile = [[line substringFromIndex:3] doubleValue];
+    __block NSRange last_enclosing_range = NSMakeRange(0, 0);
+    __block double new_progress = self.progress;
+    [status_string_remainder
+        enumerateSubstringsInRange:NSMakeRange(0, [status_string_remainder length])
+                           options:NSStringEnumerationByLines
+                        usingBlock:^(NSString* substring, NSRange range, NSRange enclosing_range, BOOL* stop) {
+                            if (range.location + range.length == enclosing_range.location + enclosing_range.length) {
+                              return;
+                            }
+                            if ([substring hasPrefix:@"<< "]) {
+                              new_progress = [[substring substringFromIndex:3] doubleValue];
+                            }
+                            last_enclosing_range = enclosing_range;
+                        }];
+    [status_string_remainder
+        deleteCharactersInRange:NSMakeRange(0, last_enclosing_range.location + last_enclosing_range.length)];
 
-        [self willChangeValueForKey:@"progress"];
-        progress = ((_filesUnpacked - 1) + progressFile) / _filesToUnpack;
-        [self didChangeValueForKey:@"progress"];
-
-        return;
-      }
-
-      [self setValue:[NSString stringWithFormat:NSLocalizedStringFromTable(@"INSTALLER_FILE_COPY", @"Installer", NULL), line] forKey:@"stage"];
-
-      _filesUnpacked++;
-      [self willChangeValueForKey:@"progress"];
-      progress = (double)(_filesUnpacked - 1) / _filesToUnpack;
-      [self didChangeValueForKey:@"progress"];
-    }];
+    self.progress = new_progress;
   });
-  dispatch_resume(inputSource);
+  dispatch_resume(status_source);
 
-  [unpackgogsetupTask launch];
+  _unpackTask.terminationHandler = ^(NSTask* task) {
+    dispatch_source_cancel(status_source);
+    dispatch_release(status_source);
+    [[status_pipe fileHandleForReading] closeFile];
+    [status_pipe release];
 
-  while ([unpackgogsetupTask isRunning]) {
-    if (modalSession && [NSApp runModalSession:modalSession] != NSRunContinuesResponse)
-      [unpackgogsetupTask terminate];
-    [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.5]];
-  }
+    self.progress = 1.0;
 
-  dispatch_source_cancel(inputSource);
-  dispatch_release(inputSource);
-  [[pipe fileHandleForReading] closeFile];
-  [pipe release];
+    BOOL success = [_unpackTask terminationStatus] == 0;
+    NSError* error = nil;
+    if (_cancelled) {
+      error = [RXError errorWithDomain:RXErrorDomain code:kRXErrInstallerCancelled userInfo:nil];
+    } else if (!success) {
+      error = [RXError errorWithDomain:RXErrorDomain code:kRXErrInstallerGOGSetupUnpackFailed userInfo:nil];
+    }
 
-  BOOL success = [unpackgogsetupTask terminationStatus] == 0;
-  [unpackgogsetupTask release];
+    dispatch_async(QUEUE_MAIN, ^{ block(success, error); });
 
-  if ([NSApp runModalSession:modalSession] != NSRunContinuesResponse)
-    ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerCancelled, nil, error);
+    [_unpackTask release];
+    _unpackTask = nil;
+  };
 
-  if (!success)
-    ReturnValueWithError(NO, RXErrorDomain, kRXErrInstallerGOGSetupUnpackFailed, nil, error);
-
-  [self willChangeValueForKey:@"progress"];
-  progress = 1.0;
-  [self didChangeValueForKey:@"progress"];
-
-  return YES;
+  [_unpackTask launch];
+  self.stage = NSLocalizedStringFromTable(@"INSTALLER_DATA_COPY", @"Installer", NULL);
 }
 
-- (void)updatePathsWithMountPaths:(NSDictionary*)mount_paths
-{
-  // nothing to do
+- (void)cancel {
+  if (!_cancelled) {
+    _cancelled = YES;
+    [_unpackTask terminate];
+  }
 }
 
 @end

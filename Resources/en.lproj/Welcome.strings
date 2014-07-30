@@ -1,4 +1,4 @@
-"INSTALL_FROM_PANEL_MESSAGE" = "Choose a folder or disc to install Riven from. You can select setup_riven.exe from GOG.com as well.";
+"INSTALL_FROM_PANEL_MESSAGE" = "Choose a folder or disc to install Riven from. You can select setup_riven from GOG.com as well.";
 
 "INSTALL_FROM_DISC_MESSAGE" = "Do you wish to install Riven from the disc \"%@\"?";
 "INSTALL_FROM_DISC_INFO" = "Riven needs to be installed on your computer before you can play. You will not need to insert your disc afterwards.";
@@ -14,4 +14,13 @@
 "SCANNING_MEDIA" = "Scanning installation media...";
 
 "BUY_FROM_GOG_MESSAGE" = "Installing from the GOG.com edition.";
-"BUY_FROM_GOG_INFO" = "Riven X is able to install the GOG.com Riven for Windows edition. After your purchase and download, click \"Install From...\" and select \"setup_riven.exe\".\n\nRiven X is not affiliated with GOG.com in any way.";
+"BUY_FROM_GOG_INFO" = "Riven X is able to install the GOG.com Riven for Windows edition. After your purchase and download, click \"Install From...\" and select the \"setup_riven\" file.\n\nRiven X is not affiliated with GOG.com in any way.";
+
+/* Class = "NSWindow"; title = "Welcome to Riven X"; ObjectID = "3"; */
+"3.title" = "Welcome to Riven X";
+
+/* Class = "NSButtonCell"; title = "<<BUY>>"; ObjectID = "47"; */
+"47.title" = "Buy Riven...";
+
+/* Class = "NSButtonCell"; title = "<<INSTALL>>"; ObjectID = "49"; */
+"49.title" = "Install From...";

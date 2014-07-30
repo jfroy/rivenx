@@ -1,89 +1,65 @@
-//
-//  RXArchiveManager.m
-//  rivenx
-//
-//  Created by Jean-Francois Roy on 02/02/2008.
-//  Copyright 2005-2012 MacStorm. All rights reserved.
-//
-
-#import <Carbon/Carbon.h>
+// Copyright 2014 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 #import "Engine/RXArchiveManager.h"
-#import "Engine/RXWorld.h"
 
+#import "Engine/RXWorld.h"
 #import "Utilities/BZFSUtilities.h"
 
 @implementation RXArchiveManager
 
-+ (RXArchiveManager*)sharedArchiveManager
-{
++ (RXArchiveManager*)sharedArchiveManager {
   static dispatch_once_t once;
   static RXArchiveManager* shared = nil;
   dispatch_once(&once, ^(void) { shared = [RXArchiveManager new]; });
   return shared;
 }
 
-+ (NSPredicate*)anyArchiveFilenamePredicate
-{
++ (NSPredicate*)anyArchiveFilenamePredicate {
   static dispatch_once_t once;
   static NSPredicate* predicate = nil;
   dispatch_once(&once, ^(void) {
-    predicate =
-        [[NSCompoundPredicate orPredicateWithSubpredicates:[NSArray arrayWithObjects:[self dataArchiveFilenamePredicate], [self soundsArchiveFilenamePredicate],
-                                                                                     [self extrasArchiveFilenamePredicate], nil]] retain];
+      predicate = [[NSCompoundPredicate
+          orPredicateWithSubpredicates:[NSArray arrayWithObjects:[self dataArchiveFilenamePredicate],
+                                                                 [self soundsArchiveFilenamePredicate],
+                                                                 [self extrasArchiveFilenamePredicate],
+                                                                 nil]] retain];
   });
   return predicate;
 }
 
-+ (NSPredicate*)dataArchiveFilenamePredicate
-{
++ (NSPredicate*)dataArchiveFilenamePredicate {
   static dispatch_once_t once;
   static NSPredicate* predicate = nil;
-  dispatch_once(&once, ^(void) { predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^[abgjoprt]_Data[0-9]?\\.MHK$"] retain]; });
+  dispatch_once(&once, ^(void) {
+      predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^[abgjoprt]_Data[0-9]?\\.MHK$"] retain];
+  });
   return predicate;
 }
 
-+ (NSPredicate*)soundsArchiveFilenamePredicate
-{
++ (NSPredicate*)soundsArchiveFilenamePredicate {
   static dispatch_once_t once;
   static NSPredicate* predicate = nil;
-  dispatch_once(&once, ^(void) { predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^[abgjoprt]_Sounds[0-9]?\\.MHK$"] retain]; });
+  dispatch_once(&once, ^(void) {
+      predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^[abgjoprt]_Sounds[0-9]?\\.MHK$"] retain];
+  });
   return predicate;
 }
 
-+ (NSPredicate*)extrasArchiveFilenamePredicate
-{
++ (NSPredicate*)extrasArchiveFilenamePredicate {
   static dispatch_once_t once;
   static NSPredicate* predicate = nil;
-  dispatch_once(&once, ^(void) { predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^Extras\\.MHK$"] retain]; });
+  dispatch_once(&once, ^(void) {
+      predicate = [[NSPredicate predicateWithFormat:@"SELF matches[c] %@", @"^Extras\\.MHK$"] retain];
+  });
   return predicate;
 }
 
-- (id)init
-{
-  self = [super init];
-  if (!self)
-    return nil;
-
-  // cache the path to the Patches directory
-  patches_directory = nil;
-
-  return self;
+static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context) {
+  return [(NSString*)rhs compare:lhs options:(NSStringCompareOptions)(NSCaseInsensitiveSearch | NSNumericSearch)];
 }
 
-- (void)dealloc
-{
-  [patches_directory release];
-  [extras_archive release];
-
-  [super dealloc];
-}
-
-static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
-{ return [(NSString*)rhs compare:lhs options:(NSStringCompareOptions)(NSCaseInsensitiveSearch | NSNumericSearch)]; }
-
-- (NSArray*)_archivesForExpression:(NSString*)regex error:(NSError**)error
-{
+- (NSArray*)_archivesForExpression:(NSString*)regex error:(NSError**)error {
   // create a predicate to match filenames against the provided regular expression, case insensitive
   NSPredicate* predicate = [NSPredicate predicateWithFormat:@"SELF matches[c] %@", regex];
 
@@ -93,39 +69,47 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
 
   // first look in the world base
   directory = [[[RXWorld sharedWorld] worldBase] path];
-  content =
-      [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-  for (NSString* filename in content)
+  content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate]
+      sortedArrayUsingFunction:string_numeric_insensitive_sort
+                       context:NULL];
+  for (NSString* filename in content) {
     [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
+  }
 
   // then look in a Data subdirectory of the world base
   directory = [[[[RXWorld sharedWorld] worldBase] path] stringByAppendingPathComponent:@"Data"];
-  content =
-      [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-  for (NSString* filename in content)
+  content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate]
+      sortedArrayUsingFunction:string_numeric_insensitive_sort
+                       context:NULL];
+  for (NSString* filename in content) {
     [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
+  }
 
   // then look in the world cache base (e.g. where the installer will put the archives)
   directory = [[(RXWorld*)g_world worldCacheBase] path];
-  content =
-      [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-  for (NSString* filename in content)
+  content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate]
+      sortedArrayUsingFunction:string_numeric_insensitive_sort
+                       context:NULL];
+  for (NSString* filename in content) {
     [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
+  }
 
   // then look inside Riven X
   directory = [[NSBundle mainBundle] resourcePath];
-  content =
-      [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate] sortedArrayUsingFunction:string_numeric_insensitive_sort context:NULL];
-  for (NSString* filename in content)
+  content = [[BZFSContentsOfDirectory(directory, error) filteredArrayUsingPredicate:predicate]
+      sortedArrayUsingFunction:string_numeric_insensitive_sort
+                       context:NULL];
+  for (NSString* filename in content) {
     [matching_paths addObject:[directory stringByAppendingPathComponent:filename]];
+  }
 
   // load every archive found
   NSMutableArray* archives = [NSMutableArray array];
   for (NSString* archive_path in matching_paths) {
     MHKArchive* archive = [[MHKArchive alloc] initWithPath:archive_path error:error];
-    if (!archive)
+    if (!archive) {
       return nil;
-
+    }
     [archives addObject:archive];
     [archive release];
   }
@@ -133,31 +117,32 @@ static NSInteger string_numeric_insensitive_sort(id lhs, id rhs, void* context)
   // emit an error and return nil if no archives was found or loaded
   if ([archives count] == 0) {
     archives = nil;
-    if (error)
+    if (error) {
       *error = [RXError errorWithDomain:RXErrorDomain code:kRXErrArchivesNotFound userInfo:nil];
+    }
   }
 
   return archives;
 }
 
-- (NSArray*)dataArchivesForStackKey:(NSString*)stack_key error:(NSError**)error
-{ return [self _archivesForExpression:[NSString stringWithFormat:@"^%C_Data[0-9]?\\.MHK$", [stack_key characterAtIndex:0]] error:error]; }
+- (NSArray*)dataArchivesForStackKey:(NSString*)stack_key error:(NSError**)error {
+  return
+      [self _archivesForExpression:[NSString stringWithFormat:@"^%C_Data[0-9]?\\.MHK$", [stack_key characterAtIndex:0]]
+                             error:error];
+}
 
-- (NSArray*)soundArchivesForStackKey:(NSString*)stack_key error:(NSError**)error
-{ return [self _archivesForExpression:[NSString stringWithFormat:@"^%C_Sounds[0-9]?\\.MHK$", [stack_key characterAtIndex:0]] error:error]; }
+- (NSArray*)soundArchivesForStackKey:(NSString*)stack_key error:(NSError**)error {
+  return [self
+      _archivesForExpression:[NSString stringWithFormat:@"^%C_Sounds[0-9]?\\.MHK$", [stack_key characterAtIndex:0]]
+                       error:error];
+}
 
-- (MHKArchive*)extrasArchive:(NSError**)error
-{
-  if (!extras_archive) {
-    NSArray* archives = [self _archivesForExpression:@"^Extras\\.MHK$" error:error];
-    if ([archives count]) {
-      extras_archive = [[archives objectAtIndex:0] retain];
-#if defined(DEBUG)
-      RXOLog2(kRXLoggingEngine, kRXLoggingLevelDebug, @"loaded Extras archive from %@", [[extras_archive url] path]);
-#endif
-    }
+- (MHKArchive*)extrasArchive:(NSError**)error {
+  NSArray* archives = [self _archivesForExpression:@"^Extras\\.MHK$" error:error];
+  if ([archives count]) {
+    return [[archives[0] retain] autorelease];
   }
-  return [[extras_archive retain] autorelease];
+  return nil;
 }
 
 @end

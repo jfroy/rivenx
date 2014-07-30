@@ -1,24 +1,14 @@
-//
-//  RXInstaller.h
-//  rivenx
-//
-//  Created by Jean-François Roy on 30/12/2011.
-//  Copyright (c) 2012 MacStorm. All rights reserved.
-//
+// Copyright 2014 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 #import "Base/RXBase.h"
-#import <AppKit/NSApplication.h>
 
-@interface RXInstaller : NSObject {
-  double progress;
-  NSString* stage;
+@protocol RXInstaller <NSObject>
 
-  NSModalSession modalSession;
-  NSString* destination;
-  BOOL didRun;
-}
+@property (nonatomic, readonly) NSString* stage;
+@property (nonatomic, readonly) double progress;
 
-- (BOOL)runWithModalSession:(NSModalSession)session error:(NSError**)error;
-- (void)updatePathsWithMountPaths:(NSDictionary*)mount_paths;
+- (void)runWithCompletionBlock:(void(^)(BOOL success, NSError* error))block;
+- (void)cancel;
 
 @end

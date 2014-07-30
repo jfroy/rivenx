@@ -1,0 +1,5 @@
+Riven needs to be installed before you can play.
+
+You can install Riven from a CD or DVD edition, from an existing Riven installation or from the GOG.com installer.
+
+Click "Install From..." to choose your installation source.
