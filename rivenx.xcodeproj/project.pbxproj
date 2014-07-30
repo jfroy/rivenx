@@ -14,7 +14,6 @@
 		31091B8D1973052800B6A7A2 /* Welcome.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31091B8F1973052800B6A7A2 /* Welcome.xib */; };
 		3114FF3C0D58DF0A0099AF69 /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
 		311AEBC414A91F6F002EFCDD /* NSArray+RXArrayAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 311AEBC314A91F6F002EFCDD /* NSArray+RXArrayAdditions.m */; };
-		311B7C840BCC4D0500653D2D /* RXDebug.m in Sources */ = {isa = PBXBuildFile; fileRef = 311B7C820BCC4D0500653D2D /* RXDebug.m */; };
 		311EDC9A0EF59CCD002CAB47 /* RXDynamicPicture.m in Sources */ = {isa = PBXBuildFile; fileRef = 311EDC990EF59CCD002CAB47 /* RXDynamicPicture.m */; };
 		311FD3DB08C0426C0045BE11 /* cocoa_main.m in Sources */ = {isa = PBXBuildFile; fileRef = 311FD3DA08C0426C0045BE11 /* cocoa_main.m */; };
 		31200FB40F3F8443006E6EF7 /* AUOutputBL.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31A14B810F03F495006EFF93 /* AUOutputBL.cpp */; };
@@ -207,7 +206,6 @@
 		6BE3ED681790852000B1732D /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED671790852000B1732D /* AudioUnit.framework */; };
 		6BE3ED6A1790857900B1732D /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED691790857900B1732D /* IOKit.framework */; };
 		6BE3ED6B179085BF00B1732D /* MHKKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; };
-		6BE3ED6D179085DB00B1732D /* ExceptionHandling.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED6C179085DB00B1732D /* ExceptionHandling.framework */; };
 		8DD76F9A0486AA7600D96B5E /* plistize_stacks.m in Sources */ = {isa = PBXBuildFile; fileRef = 08FB7796FE84155DC02AAC07 /* plistize_stacks.m */; settings = {ATTRIBUTES = (); }; };
 /* End PBXBuildFile section */
 
@@ -303,8 +301,6 @@
 		31154B4D0B4990E9002FCEDD /* Shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Shaders; sourceTree = "<group>"; };
 		311AEBC214A91F6F002EFCDD /* NSArray+RXArrayAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSArray+RXArrayAdditions.h"; sourceTree = "<group>"; };
 		311AEBC314A91F6F002EFCDD /* NSArray+RXArrayAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSArray+RXArrayAdditions.m"; sourceTree = "<group>"; };
-		311B7C810BCC4D0500653D2D /* RXDebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXDebug.h; sourceTree = "<group>"; };
-		311B7C820BCC4D0500653D2D /* RXDebug.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXDebug.m; sourceTree = "<group>"; };
 		311EDC980EF59CCD002CAB47 /* RXDynamicPicture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXDynamicPicture.h; sourceTree = "<group>"; };
 		311EDC990EF59CCD002CAB47 /* RXDynamicPicture.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXDynamicPicture.m; sourceTree = "<group>"; };
 		311FD3DA08C0426C0045BE11 /* cocoa_main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = cocoa_main.m; sourceTree = "<group>"; };
@@ -515,7 +511,6 @@
 		6BE3ED641790850200B1732D /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = System/Library/Frameworks/QTKit.framework; sourceTree = SDKROOT; };
 		6BE3ED671790852000B1732D /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
 		6BE3ED691790857900B1732D /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
-		6BE3ED6C179085DB00B1732D /* ExceptionHandling.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExceptionHandling.framework; path = System/Library/Frameworks/ExceptionHandling.framework; sourceTree = SDKROOT; };
 		8DD76FA10486AA7600D96B5E /* plistize_stacks */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = plistize_stacks; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -598,7 +593,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				6BE3ED581790846800B1732D /* Cocoa.framework in Frameworks */,
-				6BE3ED6D179085DB00B1732D /* ExceptionHandling.framework in Frameworks */,
 				6BE3ED5F1790849200B1732D /* QuartzCore.framework in Frameworks */,
 				6BE3ED591790846800B1732D /* OpenGL.framework in Frameworks */,
 				6BE3ED61179084BF00B1732D /* GLUT.framework in Frameworks */,
@@ -630,7 +624,6 @@
 				31BC2E610D6DC419008FA476 /* Base */,
 				31BAE6250A98D3110079DD0F /* Utilities */,
 				314959870E327AF900E49C83 /* MHKKit */,
-				31BC2E600D6DC3B6008FA476 /* Debug */,
 				315547EB08C4C4CA00A2AA7A /* Application */,
 				31F3094108BE440E00417394 /* Engine */,
 				31DCF68F08CB6CFE00E351D9 /* Rendering */,
@@ -874,15 +867,6 @@
 			path = Utilities;
 			sourceTree = "<group>";
 		};
-		31BC2E600D6DC3B6008FA476 /* Debug */ = {
-			isa = PBXGroup;
-			children = (
-				311B7C810BCC4D0500653D2D /* RXDebug.h */,
-				311B7C820BCC4D0500653D2D /* RXDebug.m */,
-			);
-			path = Debug;
-			sourceTree = "<group>";
-		};
 		31BC2E610D6DC419008FA476 /* Base */ = {
 			isa = PBXGroup;
 			children = (
@@ -1023,7 +1007,6 @@
 				6BE3ED671790852000B1732D /* AudioUnit.framework */,
 				6BE3ED561790846800B1732D /* Cocoa.framework */,
 				6BE3ED5A1790849200B1732D /* CoreAudio.framework */,
-				6BE3ED6C179085DB00B1732D /* ExceptionHandling.framework */,
 				6BE3ED4F1790842600B1732D /* Foundation.framework */,
 				6BE3ED60179084BF00B1732D /* GLUT.framework */,
 				6BE3ED691790857900B1732D /* IOKit.framework */,
@@ -1460,7 +1443,6 @@
 				319C458109C138380031F95F /* VirtualRingBuffer.m in Sources */,
 				3124F2A909C36792009BA3CF /* RXSoundGroup.mm in Sources */,
 				312EDC730A2E3B80005D26AF /* RXHotspot.m in Sources */,
-				311B7C840BCC4D0500653D2D /* RXDebug.m in Sources */,
 				31FA569F0C5AD15D005DE22F /* RXErrors.m in Sources */,
 				315017990CC0533E001BA929 /* RXCardAudioSource.mm in Sources */,
 				315017FA0CC06872001BA929 /* RXThreadUtilities.m in Sources */,

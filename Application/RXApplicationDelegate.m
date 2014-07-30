@@ -18,8 +18,6 @@
 
 #import "Rendering/Graphics/RXWorldView.h"
 
-#import "Debug/RXDebug.h"
-
 #import "Utilities/BZFSUtilities.h"
 
 @interface RXApplicationDelegate (RXApplicationDelegate_Private)
@@ -32,7 +30,6 @@
 + (void)initialize
 {
   if (self == [RXApplicationDelegate class]) {
-    rx_install_exception_handler();
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{@"Fullscreen": @NO, @"EngineVariables": @{}}];
   }
 }
