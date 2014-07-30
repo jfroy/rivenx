@@ -1,48 +1,54 @@
 ---
-# BasedOnStyle:  LLVM
-AccessModifierOffset: -2
+Language:        Cpp
+# BasedOnStyle:  Chromium
+AccessModifierOffset: -1
 ConstructorInitializerIndentWidth: 4
-AlignEscapedNewlinesLeft: false
+AlignEscapedNewlinesLeft: true
 AlignTrailingComments: true
-AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: false
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: true
-AlwaysBreakTemplateDeclarations: false
-AlwaysBreakBeforeMultilineStrings: false
+AllowShortFunctionsOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: true
+AlwaysBreakBeforeMultilineStrings: true
 BreakBeforeBinaryOperators: false
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializersBeforeComma: false
-BinPackParameters: true
-ColumnLimit:     160
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
+BinPackParameters: false
+ColumnLimit:     120
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
 DerivePointerBinding: false
-ExperimentalAutoDetectBinPacking: false
-IndentCaseLabels: false
+IndentCaseLabels: true
 MaxEmptyLinesToKeep: 1
+KeepEmptyLinesAtTheStartOfBlocks: false
 NamespaceIndentation: None
-ObjCSpaceBeforeProtocolList: true
-PenaltyBreakBeforeFirstCallParameter: 19
-PenaltyBreakComment: 60
+ObjCSpaceAfterProperty: true
+ObjCSpaceBeforeProtocolList: false
+PenaltyBreakBeforeFirstCallParameter: 1
+PenaltyBreakComment: 300
 PenaltyBreakString: 1000
 PenaltyBreakFirstLessLess: 120
 PenaltyExcessCharacter: 1000000
-PenaltyReturnTypeOnItsOwnLine: 60
+PenaltyReturnTypeOnItsOwnLine: 200
 PointerBindsToType: true
-SpacesBeforeTrailingComments: 1
+SpacesBeforeTrailingComments: 2
 Cpp11BracedListStyle: true
 Standard:        Cpp11
 IndentWidth:     2
-TabWidth:        8
+TabWidth:        4
 UseTab:          Never
-BreakBeforeBraces: Stroustrup
-IndentFunctionDeclarationAfterType: false
+BreakBeforeBraces: Attach
+IndentFunctionDeclarationAfterType: true
 SpacesInParentheses: false
 SpacesInAngles:  false
 SpaceInEmptyParentheses: false
 SpacesInCStyleCastParentheses: false
-SpaceAfterControlStatementKeyword: true
+SpacesInContainerLiterals: true
 SpaceBeforeAssignmentOperators: true
 ContinuationIndentWidth: 4
+CommentPragmas:  '^ IWYU pragma:'
+ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
+SpaceBeforeParens: ControlStatements
 ...
 
