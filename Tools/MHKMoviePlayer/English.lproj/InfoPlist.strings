@@ -1,5 +1,0 @@
-/* Localized versions of Info.plist keys */
-
-CFBundleName = "MHKKit";
-CFBundleGetInfoString = "1.0.1, Copyright © 2005-2008 MacStorm.";
-NSHumanReadableCopyright = "Copyright © 2005-2008 MacStorm,\nAll Rights Reserved.";
