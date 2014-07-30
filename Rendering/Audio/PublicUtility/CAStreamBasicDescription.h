@@ -1,48 +1,48 @@
 /*
-     File: CAStreamBasicDescription.h 
- Abstract:  Part of CoreAudio Utility Classes  
-  Version: 1.0.4 
-  
- Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
- Inc. ("Apple") in consideration of your agreement to the following 
- terms, and your use, installation, modification or redistribution of 
- this Apple software constitutes acceptance of these terms.  If you do 
- not agree with these terms, please do not use, install, modify or 
- redistribute this Apple software. 
-  
- In consideration of your agreement to abide by the following terms, and 
- subject to these terms, Apple grants you a personal, non-exclusive 
- license, under Apple's copyrights in this original Apple software (the 
- "Apple Software"), to use, reproduce, modify and redistribute the Apple 
- Software, with or without modifications, in source and/or binary forms; 
- provided that if you redistribute the Apple Software in its entirety and 
- without modifications, you must retain this notice and the following 
- text and disclaimers in all such redistributions of the Apple Software. 
- Neither the name, trademarks, service marks or logos of Apple Inc. may 
- be used to endorse or promote products derived from the Apple Software 
- without specific prior written permission from Apple.  Except as 
- expressly stated in this notice, no other rights or licenses, express or 
- implied, are granted by Apple herein, including but not limited to any 
- patent rights that may be infringed by your derivative works or by other 
- works in which the Apple Software may be incorporated. 
-  
- The Apple Software is provided by Apple on an "AS IS" basis.  APPLE 
- MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION 
- THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS 
- FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND 
- OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS. 
-  
- IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL 
- OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION, 
- MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED 
- AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE), 
- STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE 
- POSSIBILITY OF SUCH DAMAGE. 
-  
- Copyright (C) 2013 Apple Inc. All Rights Reserved. 
-  
+     File: CAStreamBasicDescription.h
+ Abstract: Part of CoreAudio Utility Classes
+  Version: 1.1
+ 
+ Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
+ Inc. ("Apple") in consideration of your agreement to the following
+ terms, and your use, installation, modification or redistribution of
+ this Apple software constitutes acceptance of these terms.  If you do
+ not agree with these terms, please do not use, install, modify or
+ redistribute this Apple software.
+ 
+ In consideration of your agreement to abide by the following terms, and
+ subject to these terms, Apple grants you a personal, non-exclusive
+ license, under Apple's copyrights in this original Apple software (the
+ "Apple Software"), to use, reproduce, modify and redistribute the Apple
+ Software, with or without modifications, in source and/or binary forms;
+ provided that if you redistribute the Apple Software in its entirety and
+ without modifications, you must retain this notice and the following
+ text and disclaimers in all such redistributions of the Apple Software.
+ Neither the name, trademarks, service marks or logos of Apple Inc. may
+ be used to endorse or promote products derived from the Apple Software
+ without specific prior written permission from Apple.  Except as
+ expressly stated in this notice, no other rights or licenses, express or
+ implied, are granted by Apple herein, including but not limited to any
+ patent rights that may be infringed by your derivative works or by other
+ works in which the Apple Software may be incorporated.
+ 
+ The Apple Software is provided by Apple on an "AS IS" basis.  APPLE
+ MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+ THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS
+ FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND
+ OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
+ 
+ IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL
+ OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION,
+ MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED
+ AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE),
+ STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+ 
+ Copyright (C) 2014 Apple Inc. All Rights Reserved.
+ 
 */
 #ifndef __CAStreamBasicDescription_h__
 #define __CAStreamBasicDescription_h__
@@ -59,12 +59,12 @@
 #include <string.h>	// for memset, memcpy
 #include <stdio.h>	// for FILE *
 
-#pragma mark	This file needs to compile on more earlier versions of the OS, so please keep that in mind when editing it
-
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated"
 
-extern char *CAStringForOSType (OSType t, char *writeLocation);
+#pragma mark	This file needs to compile on more earlier versions of the OS, so please keep that in mind when editing it
+
+extern char *CAStringForOSType (OSType t, char *writeLocation, size_t bufsize);
 
 // define Leopard specific symbols for backward compatibility if applicable
 #if COREAUDIOTYPES_VERSION < 1050
@@ -105,7 +105,8 @@ public:
 		kPCMFormatOther		= 0,
 		kPCMFormatFloat32	= 1,
 		kPCMFormatInt16		= 2,
-		kPCMFormatFixed824	= 3
+		kPCMFormatFixed824	= 3,
+		kPCMFormatFloat64	= 4
 	};
 	
 //	Construction/Destruction
@@ -135,6 +136,10 @@ public:
 			return;
 		case kPCMFormatFloat32:
 			wordsize = 4;
+			mFormatFlags |= kAudioFormatFlagIsFloat;
+			break;
+		case kPCMFormatFloat64:
+			wordsize = 8;
 			mFormatFlags |= kAudioFormatFlagIsFloat;
 			break;
 		case kPCMFormatInt16:
@@ -188,7 +193,7 @@ public:
 	
 	bool	IsInterleaved() const
 	{
-		return !IsPCM() || !(mFormatFlags & kAudioFormatFlagIsNonInterleaved);
+		return !(mFormatFlags & kAudioFormatFlagIsNonInterleaved);
 	}
 	
 	bool	IsSignedInteger() const
@@ -249,6 +254,8 @@ public:
 					return false;
 				if (wordsize == 4)
 					outFormat = kPCMFormatFloat32;
+				if (wordsize == 8)
+					outFormat = kPCMFormatFloat64;
 			} else if (mFormatFlags & kLinearPCMFormatFlagIsSignedInteger) {
 				// signed int
 				unsigned fracbits = (mFormatFlags & kLinearPCMFormatFlagsSampleFractionMask) >> kLinearPCMFormatFlagsSampleFractionShift;
@@ -265,6 +272,10 @@ public:
 		CommonPCMFormat fmt;
 		return IdentifyCommonPCMFormat(fmt, outIsInterleaved) && fmt == kPCMFormatFloat32;
 	}
+	bool IsCommonFloat64(bool *outIsInterleaved=NULL) const {
+		CommonPCMFormat fmt;
+		return IdentifyCommonPCMFormat(fmt, outIsInterleaved) && fmt == kPCMFormatFloat64;
+	}
 	bool IsCommonFixed824(bool *outIsInterleaved=NULL) const {
 		CommonPCMFormat fmt;
 		return IdentifyCommonPCMFormat(fmt, outIsInterleaved) && fmt == kPCMFormatFixed824;
@@ -278,11 +289,11 @@ public:
 	//
 	//	manipulation
 	
-	void	SetCanonical(UInt32 nChannels, bool interleaved)
+	void	SetCanonical(UInt32 nChannels, bool interleaved) CA_CANONICAL_DEPRECATED
 				// note: leaves sample rate untouched
 	{
 		mFormatID = kAudioFormatLinearPCM;
-		int sampleSize = SizeOf32(AudioSampleType);
+		UInt32 sampleSize = SizeOf32(AudioSampleType);
 		mFormatFlags = kAudioFormatFlagsCanonical;
 		mBitsPerChannel = 8 * sampleSize;
 		mChannelsPerFrame = nChannels;
@@ -295,7 +306,7 @@ public:
 		}
 	}
 	
-	bool	IsCanonical() const
+	bool	IsCanonical() const CA_CANONICAL_DEPRECATED
 	{
 		if (mFormatID != kAudioFormatLinearPCM) return false;
 		UInt32 reqFormatFlags;
@@ -342,7 +353,7 @@ public:
 		mFramesPerPacket = 1;
 		if (interleaved) {
 			mBytesPerPacket = mBytesPerFrame = nChannels * wordSize;
-			mFormatFlags &= ~kAudioFormatFlagIsNonInterleaved;
+			mFormatFlags &= ~static_cast<UInt32>(kAudioFormatFlagIsNonInterleaved);
 		} else {
 			mBytesPerPacket = mBytesPerFrame = wordSize;
 			mFormatFlags |= kAudioFormatFlagIsNonInterleaved;
@@ -353,8 +364,10 @@ public:
 	//
 	//	other
 	
-	bool	IsEqual(const AudioStreamBasicDescription &other, bool interpretingWildcards=true) const;
-	
+	bool            IsEqual(const AudioStreamBasicDescription &other, bool interpretingWildcards=true) const;
+	static bool     FlagIndependentEquivalence(const AudioStreamBasicDescription &x, const AudioStreamBasicDescription &y);
+    static bool     IsFunctionallyEquivalent(const AudioStreamBasicDescription &x, const AudioStreamBasicDescription &y);
+    
 	void	Print() const {
 		Print (stdout);
 	}
@@ -373,7 +386,7 @@ public:
 		fprintf(f, "%s%s %s", indent, name, AsString(buf, sizeof(buf)));
 	}
 
-	char *	AsString(char *buf, size_t bufsize) const;
+	char *	AsString(char *buf, size_t bufsize, bool brief=false) const;
 
 	static void Print (const AudioStreamBasicDescription &inDesc) 
 	{ 
@@ -392,6 +405,8 @@ public:
 	static void			ResetFormat(AudioStreamBasicDescription& ioDescription);
 	static void			FillOutFormat(AudioStreamBasicDescription& ioDescription, const AudioStreamBasicDescription& inTemplateDescription);
 	static void			GetSimpleName(const AudioStreamBasicDescription& inDescription, char* outName, UInt32 inMaxNameLength, bool inAbbreviate, bool inIncludeSampleRate = false);
+    static void         ModifyFormatFlagsForMatching(const AudioStreamBasicDescription& x, const AudioStreamBasicDescription& y, UInt32& xFlags, UInt32& yFlags, bool converterOnly);
+
 #if CoreAudio_Debug
 	static void			PrintToLog(const AudioStreamBasicDescription& inDesc);
 #endif
@@ -407,7 +422,6 @@ inline bool	operator>(const AudioStreamBasicDescription& x, const AudioStreamBas
 #endif
 
 bool SanityCheck(const AudioStreamBasicDescription& x);
-
 
 #pragma clang diagnostic pop
 

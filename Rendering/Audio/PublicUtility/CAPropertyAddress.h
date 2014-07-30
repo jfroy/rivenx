@@ -1,48 +1,48 @@
 /*
-     File: CAPropertyAddress.h 
- Abstract:  Part of CoreAudio Utility Classes  
-  Version: 1.0.4 
-  
- Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
- Inc. ("Apple") in consideration of your agreement to the following 
- terms, and your use, installation, modification or redistribution of 
- this Apple software constitutes acceptance of these terms.  If you do 
- not agree with these terms, please do not use, install, modify or 
- redistribute this Apple software. 
-  
- In consideration of your agreement to abide by the following terms, and 
- subject to these terms, Apple grants you a personal, non-exclusive 
- license, under Apple's copyrights in this original Apple software (the 
- "Apple Software"), to use, reproduce, modify and redistribute the Apple 
- Software, with or without modifications, in source and/or binary forms; 
- provided that if you redistribute the Apple Software in its entirety and 
- without modifications, you must retain this notice and the following 
- text and disclaimers in all such redistributions of the Apple Software. 
- Neither the name, trademarks, service marks or logos of Apple Inc. may 
- be used to endorse or promote products derived from the Apple Software 
- without specific prior written permission from Apple.  Except as 
- expressly stated in this notice, no other rights or licenses, express or 
- implied, are granted by Apple herein, including but not limited to any 
- patent rights that may be infringed by your derivative works or by other 
- works in which the Apple Software may be incorporated. 
-  
- The Apple Software is provided by Apple on an "AS IS" basis.  APPLE 
- MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION 
- THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS 
- FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND 
- OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS. 
-  
- IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL 
- OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION, 
- MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED 
- AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE), 
- STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE 
- POSSIBILITY OF SUCH DAMAGE. 
-  
- Copyright (C) 2013 Apple Inc. All Rights Reserved. 
-  
+     File: CAPropertyAddress.h
+ Abstract: Part of CoreAudio Utility Classes
+  Version: 1.1
+ 
+ Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
+ Inc. ("Apple") in consideration of your agreement to the following
+ terms, and your use, installation, modification or redistribution of
+ this Apple software constitutes acceptance of these terms.  If you do
+ not agree with these terms, please do not use, install, modify or
+ redistribute this Apple software.
+ 
+ In consideration of your agreement to abide by the following terms, and
+ subject to these terms, Apple grants you a personal, non-exclusive
+ license, under Apple's copyrights in this original Apple software (the
+ "Apple Software"), to use, reproduce, modify and redistribute the Apple
+ Software, with or without modifications, in source and/or binary forms;
+ provided that if you redistribute the Apple Software in its entirety and
+ without modifications, you must retain this notice and the following
+ text and disclaimers in all such redistributions of the Apple Software.
+ Neither the name, trademarks, service marks or logos of Apple Inc. may
+ be used to endorse or promote products derived from the Apple Software
+ without specific prior written permission from Apple.  Except as
+ expressly stated in this notice, no other rights or licenses, express or
+ implied, are granted by Apple herein, including but not limited to any
+ patent rights that may be infringed by your derivative works or by other
+ works in which the Apple Software may be incorporated.
+ 
+ The Apple Software is provided by Apple on an "AS IS" basis.  APPLE
+ MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+ THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS
+ FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND
+ OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
+ 
+ IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL
+ OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION,
+ MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED
+ AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE),
+ STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+ 
+ Copyright (C) 2014 Apple Inc. All Rights Reserved.
+ 
 */
 #if !defined(__CAPropertyAddress_h__)
 #define __CAPropertyAddress_h__
@@ -134,7 +134,9 @@ class   CAPropertyAddressList
 
 //	Construction/Destruction
 public:
-											CAPropertyAddressList(void* inToken = NULL)												: mAddressList(), mToken(inToken) {}
+											CAPropertyAddressList()																	: mAddressList(), mToken(NULL) {}
+	explicit								CAPropertyAddressList(void* inToken)													: mAddressList(), mToken(inToken) {}
+	explicit								CAPropertyAddressList(uintptr_t inToken)												: mAddressList(), mToken(reinterpret_cast<void*>(inToken)) {}
 											CAPropertyAddressList(const CAPropertyAddressList& inAddressList)						: mAddressList(inAddressList.mAddressList), mToken(inAddressList.mToken) {}
 	CAPropertyAddressList&					operator=(const CAPropertyAddressList& inAddressList)									{ mAddressList = inAddressList.mAddressList; mToken = inAddressList.mToken; return *this; }
 											~CAPropertyAddressList()																{}
@@ -143,6 +145,11 @@ public:
 public:
 	void*									GetToken() const																		{ return mToken; }
 	void									SetToken(void* inToken)																	{ mToken = inToken; }
+	
+	uintptr_t								GetIntToken() const																		{ return reinterpret_cast<uintptr_t>(mToken); }
+	void									SetIntToken(uintptr_t inToken)															{ mToken = reinterpret_cast<void*>(inToken); }
+	
+	AudioObjectID							GetAudioObjectIDToken() const															{ return static_cast<AudioObjectID>(reinterpret_cast<uintptr_t>(mToken)); }
 	
 	bool									IsEmpty() const																			{ return mAddressList.empty(); }
 	UInt32									GetNumberItems() const																	{ return ToUInt32(mAddressList.size()); }
@@ -156,9 +163,9 @@ public:
 	void									AppendItem(const AudioObjectPropertyAddress& inAddress)									{ mAddressList.push_back(inAddress); }
 	void									AppendUniqueItem(const AudioObjectPropertyAddress& inAddress)							{ if(!HasItem(inAddress)) { mAddressList.push_back(inAddress); } }
 	void									AppendUniqueExactItem(const AudioObjectPropertyAddress& inAddress)						{ if(!HasExactItem(inAddress)) { mAddressList.push_back(inAddress); } }
-	void									InsertItemAtIndex(UInt32 inIndex, const AudioObjectPropertyAddress& inAddress)			{ if(inIndex < mAddressList.size()) { AddressList::iterator theIterator = mAddressList.begin(); std::advance(theIterator, inIndex); mAddressList.insert(theIterator, inAddress); } else { mAddressList.push_back(inAddress); } }
+	void									InsertItemAtIndex(UInt32 inIndex, const AudioObjectPropertyAddress& inAddress)			{ if(inIndex < mAddressList.size()) { AddressList::iterator theIterator = mAddressList.begin(); std::advance(theIterator, static_cast<int>(inIndex)); mAddressList.insert(theIterator, inAddress); } else { mAddressList.push_back(inAddress); } }
 	void									EraseExactItem(const AudioObjectPropertyAddress& inAddress)								{ AddressList::iterator theIterator = std::find_if(mAddressList.begin(), mAddressList.end(), std::bind1st(CAPropertyAddress::EqualTo(), inAddress)); if(theIterator != mAddressList.end()) { mAddressList.erase(theIterator); } }
-	void									EraseItemAtIndex(UInt32 inIndex)														{ if(inIndex < mAddressList.size()) { AddressList::iterator theIterator = mAddressList.begin(); std::advance(theIterator, inIndex); mAddressList.erase(theIterator); } }
+	void									EraseItemAtIndex(UInt32 inIndex)														{ if(inIndex < mAddressList.size()) { AddressList::iterator theIterator = mAddressList.begin(); std::advance(theIterator, static_cast<int>(inIndex)); mAddressList.erase(theIterator); } }
 	void									EraseAllItems()																			{ mAddressList.clear(); }
 
 //  Implementation
@@ -198,6 +205,8 @@ public:
 	CAPropertyAddressList&						GetItemByIndex(UInt32 inIndex)														{ return mAddressListVector.at(inIndex); }
 	const CAPropertyAddressList*				GetItemByToken(void* inToken) const;
 	CAPropertyAddressList*						GetItemByToken(void* inToken);
+	const CAPropertyAddressList*				GetItemByIntToken(uintptr_t inToken) const;
+	CAPropertyAddressList*						GetItemByIntToken(uintptr_t inToken);
 	
 	void										AppendItem(const CAPropertyAddressList& inAddressList)								{ mAddressListVector.push_back(inAddressList); }
 	void										EraseAllItems()																		{ mAddressListVector.clear(); }
@@ -262,6 +271,36 @@ inline CAPropertyAddressList*	CAPropertyAddressListVector::GetItemByToken(void* 
 	for(AddressListVector::iterator theIterator = mAddressListVector.begin(); !wasFound && (theIterator != mAddressListVector.end()); ++theIterator)
 	{
 		if(theIterator->GetToken() == inToken)
+		{
+			wasFound = true;
+			theAnswer = &(*theIterator);
+		}
+	}
+	return theAnswer;
+}
+
+inline const CAPropertyAddressList*	CAPropertyAddressListVector::GetItemByIntToken(uintptr_t inToken) const
+{
+	const CAPropertyAddressList* theAnswer = NULL;
+	bool wasFound = false;
+	for(AddressListVector::const_iterator theIterator = mAddressListVector.begin(); !wasFound && (theIterator != mAddressListVector.end()); ++theIterator)
+	{
+		if(theIterator->GetIntToken() == inToken)
+		{
+			wasFound = true;
+			theAnswer = &(*theIterator);
+		}
+	}
+	return theAnswer;
+}
+
+inline CAPropertyAddressList*	CAPropertyAddressListVector::GetItemByIntToken(uintptr_t inToken)
+{
+	CAPropertyAddressList* theAnswer = NULL;
+	bool wasFound = false;
+	for(AddressListVector::iterator theIterator = mAddressListVector.begin(); !wasFound && (theIterator != mAddressListVector.end()); ++theIterator)
+	{
+		if(theIterator->GetIntToken() == inToken)
 		{
 			wasFound = true;
 			theAnswer = &(*theIterator);

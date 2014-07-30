@@ -1,48 +1,48 @@
 /*
-     File: CAAudioFileFormats.cpp 
- Abstract:  CAAudioFileFormats.h  
-  Version: 1.0.4 
-  
- Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
- Inc. ("Apple") in consideration of your agreement to the following 
- terms, and your use, installation, modification or redistribution of 
- this Apple software constitutes acceptance of these terms.  If you do 
- not agree with these terms, please do not use, install, modify or 
- redistribute this Apple software. 
-  
- In consideration of your agreement to abide by the following terms, and 
- subject to these terms, Apple grants you a personal, non-exclusive 
- license, under Apple's copyrights in this original Apple software (the 
- "Apple Software"), to use, reproduce, modify and redistribute the Apple 
- Software, with or without modifications, in source and/or binary forms; 
- provided that if you redistribute the Apple Software in its entirety and 
- without modifications, you must retain this notice and the following 
- text and disclaimers in all such redistributions of the Apple Software. 
- Neither the name, trademarks, service marks or logos of Apple Inc. may 
- be used to endorse or promote products derived from the Apple Software 
- without specific prior written permission from Apple.  Except as 
- expressly stated in this notice, no other rights or licenses, express or 
- implied, are granted by Apple herein, including but not limited to any 
- patent rights that may be infringed by your derivative works or by other 
- works in which the Apple Software may be incorporated. 
-  
- The Apple Software is provided by Apple on an "AS IS" basis.  APPLE 
- MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION 
- THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS 
- FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND 
- OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS. 
-  
- IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL 
- OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION, 
- MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED 
- AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE), 
- STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE 
- POSSIBILITY OF SUCH DAMAGE. 
-  
- Copyright (C) 2013 Apple Inc. All Rights Reserved. 
-  
+     File: CAAudioFileFormats.cpp
+ Abstract: CAAudioFileFormats.h
+  Version: 1.1
+ 
+ Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
+ Inc. ("Apple") in consideration of your agreement to the following
+ terms, and your use, installation, modification or redistribution of
+ this Apple software constitutes acceptance of these terms.  If you do
+ not agree with these terms, please do not use, install, modify or
+ redistribute this Apple software.
+ 
+ In consideration of your agreement to abide by the following terms, and
+ subject to these terms, Apple grants you a personal, non-exclusive
+ license, under Apple's copyrights in this original Apple software (the
+ "Apple Software"), to use, reproduce, modify and redistribute the Apple
+ Software, with or without modifications, in source and/or binary forms;
+ provided that if you redistribute the Apple Software in its entirety and
+ without modifications, you must retain this notice and the following
+ text and disclaimers in all such redistributions of the Apple Software.
+ Neither the name, trademarks, service marks or logos of Apple Inc. may
+ be used to endorse or promote products derived from the Apple Software
+ without specific prior written permission from Apple.  Except as
+ expressly stated in this notice, no other rights or licenses, express or
+ implied, are granted by Apple herein, including but not limited to any
+ patent rights that may be infringed by your derivative works or by other
+ works in which the Apple Software may be incorporated.
+ 
+ The Apple Software is provided by Apple on an "AS IS" basis.  APPLE
+ MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+ THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS
+ FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND
+ OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
+ 
+ IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL
+ OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION,
+ MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED
+ AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE),
+ STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+ 
+ Copyright (C) 2014 Apple Inc. All Rights Reserved.
+ 
 */
 #include "CAAudioFileFormats.h"
 #include <algorithm>
@@ -335,20 +335,23 @@ bool	CAAudioFileFormats::FileFormatInfo::AnyWritableFormats()
 	return false;
 }
 
-char *OSTypeToStr(char *buf, OSType t)
+char *OSTypeToStr(char *buf, size_t bufsize, OSType t)
 {
-	char *p = buf;
-	char str[4] = {0}, *q = str;
-	*(UInt32 *)str = CFSwapInt32HostToBig(t);
-	for (int i = 0; i < 4; ++i) {
-		if (isprint(*q) && *q != '\\')
-			*p++ = *q++;
-		else {
-			sprintf(p, "\\x%02x", *q++);
-			p += 4;
+	if (bufsize > 0) {
+		char *p = buf, *pend = buf + bufsize;
+		char str[4] = {0}, *q = str;
+		*(UInt32 *)str = CFSwapInt32HostToBig(t);
+		for (int i = 0; i < 4 && p < pend; ++i) {
+			if (isprint(*q) && *q != '\\')
+				*p++ = *q++;
+			else {
+				snprintf(p, pend - p, "\\x%02x", *q++);
+				p += 4;
+			}
 		}
+		if (p >= pend) p = pend - 1;
+		*p = '\0';
 	}
-	*p = '\0';
 	return buf;
 }
 
@@ -376,7 +379,7 @@ int		StrToOSType(const char *str, OSType &t)
 		}
 	}
 	t = CFSwapInt32BigToHost(*(UInt32 *)buf);
-	return p - str;
+	return static_cast<int>(p - str);
 fail:
 	return 0;
 }
@@ -394,7 +397,7 @@ void	CAAudioFileFormats::FileFormatInfo::DebugPrint()
 	char ftype[20];
 	char ftypename[64];
 	CFStringGetCString(mFileTypeName, ftypename, sizeof(ftypename), kCFStringEncodingUTF8);
-	printf("File type: '%s' = %s\n  Extensions:", OSTypeToStr(ftype, mFileTypeID), ftypename);
+	printf("File type: '%s' = %s\n  Extensions:", OSTypeToStr(ftype, sizeof(ftype), mFileTypeID), ftypename);
 	int i, n = NumberOfExtensions();
 	for (i = 0; i < n; ++i) {
 		GetExtension(i, ftype, sizeof(ftype));
@@ -410,7 +413,7 @@ void	CAAudioFileFormats::DataFormatInfo::DebugPrint()
 {
 	char buf[20];
 	static const char *ny[] = { "not ", "" };
-	printf("    '%s': %sreadable %swritable\n", OSTypeToStr(buf, mFormatID), ny[mReadable], ny[mWritable]);
+	printf("    '%s': %sreadable %swritable\n", OSTypeToStr(buf, sizeof(buf), mFormatID), ny[mReadable], ny[mWritable]);
 	for (int i = 0; i < mNumVariants; ++i) {
 		CAStreamBasicDescription desc(mVariants[i]);
 		desc.PrintFormat(stdout, "      ", "");

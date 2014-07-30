@@ -1,48 +1,48 @@
 /*
-     File: CAAUProcessor.cpp 
- Abstract:  CAAUProcessor.h  
-  Version: 1.0.4 
-  
- Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple 
- Inc. ("Apple") in consideration of your agreement to the following 
- terms, and your use, installation, modification or redistribution of 
- this Apple software constitutes acceptance of these terms.  If you do 
- not agree with these terms, please do not use, install, modify or 
- redistribute this Apple software. 
-  
- In consideration of your agreement to abide by the following terms, and 
- subject to these terms, Apple grants you a personal, non-exclusive 
- license, under Apple's copyrights in this original Apple software (the 
- "Apple Software"), to use, reproduce, modify and redistribute the Apple 
- Software, with or without modifications, in source and/or binary forms; 
- provided that if you redistribute the Apple Software in its entirety and 
- without modifications, you must retain this notice and the following 
- text and disclaimers in all such redistributions of the Apple Software. 
- Neither the name, trademarks, service marks or logos of Apple Inc. may 
- be used to endorse or promote products derived from the Apple Software 
- without specific prior written permission from Apple.  Except as 
- expressly stated in this notice, no other rights or licenses, express or 
- implied, are granted by Apple herein, including but not limited to any 
- patent rights that may be infringed by your derivative works or by other 
- works in which the Apple Software may be incorporated. 
-  
- The Apple Software is provided by Apple on an "AS IS" basis.  APPLE 
- MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION 
- THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS 
- FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND 
- OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS. 
-  
- IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL 
- OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
- SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION, 
- MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED 
- AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE), 
- STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE 
- POSSIBILITY OF SUCH DAMAGE. 
-  
- Copyright (C) 2013 Apple Inc. All Rights Reserved. 
-  
+     File: CAAUProcessor.cpp
+ Abstract: CAAUProcessor.h
+  Version: 1.1
+ 
+ Disclaimer: IMPORTANT:  This Apple software is supplied to you by Apple
+ Inc. ("Apple") in consideration of your agreement to the following
+ terms, and your use, installation, modification or redistribution of
+ this Apple software constitutes acceptance of these terms.  If you do
+ not agree with these terms, please do not use, install, modify or
+ redistribute this Apple software.
+ 
+ In consideration of your agreement to abide by the following terms, and
+ subject to these terms, Apple grants you a personal, non-exclusive
+ license, under Apple's copyrights in this original Apple software (the
+ "Apple Software"), to use, reproduce, modify and redistribute the Apple
+ Software, with or without modifications, in source and/or binary forms;
+ provided that if you redistribute the Apple Software in its entirety and
+ without modifications, you must retain this notice and the following
+ text and disclaimers in all such redistributions of the Apple Software.
+ Neither the name, trademarks, service marks or logos of Apple Inc. may
+ be used to endorse or promote products derived from the Apple Software
+ without specific prior written permission from Apple.  Except as
+ expressly stated in this notice, no other rights or licenses, express or
+ implied, are granted by Apple herein, including but not limited to any
+ patent rights that may be infringed by your derivative works or by other
+ works in which the Apple Software may be incorporated.
+ 
+ The Apple Software is provided by Apple on an "AS IS" basis.  APPLE
+ MAKES NO WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION
+ THE IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY AND FITNESS
+ FOR A PARTICULAR PURPOSE, REGARDING THE APPLE SOFTWARE OR ITS USE AND
+ OPERATION ALONE OR IN COMBINATION WITH YOUR PRODUCTS.
+ 
+ IN NO EVENT SHALL APPLE BE LIABLE FOR ANY SPECIAL, INDIRECT, INCIDENTAL
+ OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) ARISING IN ANY WAY OUT OF THE USE, REPRODUCTION,
+ MODIFICATION AND/OR DISTRIBUTION OF THE APPLE SOFTWARE, HOWEVER CAUSED
+ AND WHETHER UNDER THEORY OF CONTRACT, TORT (INCLUDING NEGLIGENCE),
+ STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+ 
+ Copyright (C) 2014 Apple Inc. All Rights Reserved.
+ 
 */
 #include "CAAUProcessor.h"						
 #include "CAXException.h"
@@ -134,7 +134,8 @@ OSStatus 	Preroll (CAAudioUnit & inAU, UInt32 inFrameSize)
 		AUOutputBL list (outputFormat, inFrameSize);
 		list.Prepare ();
 		
-		ca_require_noerr (result = inAU.Render (&flags, &time, 0, inFrameSize, list.ABL()), home);
+		result = inAU.Render (&flags, &time, 0, inFrameSize, list.ABL());
+		if (result) { printf("A result %d\n", (int)result); goto home; }
 	}
 
 home:
@@ -168,6 +169,15 @@ OSStatus		CAAUProcessor::SetAUPreset (CFPropertyListRef 			inPreset)
 									&inPreset, 
 									sizeof(inPreset));
 }
+
+OSStatus		CAAUProcessor::SetAUPresetIndex (SInt32				inPresetIndex)
+{
+	AUPreset aup;
+	aup.presetName = NULL;
+	aup.presetNumber = inPresetIndex;
+	return mUnit.SetPresentPreset(aup);
+}
+
 
 OSStatus		CAAUProcessor::SetParameter (AudioUnitParameterID inID, AudioUnitScope scope, AudioUnitElement element,
 											Float32 value, UInt32 bufferOffsetFrames)
@@ -286,6 +296,7 @@ void		CAAUProcessor::CalculateRemainderSamples (Float64 inSampleRate)
 	mTailSamplesToProcess = 0;
 	mTailSamples = 0;
 	mTailSamplesRemaining = 0;
+	return;
 	
 		// nothing to do because we're not processing offline
 	if (IsOfflineContext() == false) return;
@@ -361,6 +372,7 @@ bool		CAAUProcessor::OfflineAUNeedsPreflight () const
 
 OSStatus	CAAUProcessor::Preflight (bool inProcessPreceedingTail)
 {
+	printf(">>>>CAAUProcessor::Preflight\n");
 		//we're preflighting again, so reset ourselves
 	if (mPreflightDone) {
 		mPreflightDone = false;
@@ -387,8 +399,10 @@ OSStatus	CAAUProcessor::Preflight (bool inProcessPreceedingTail)
 
 			// Consume the number of input samples indicated by the AU's latency or tail
 			// based on whether the AU is being used in an offline context or not.
-			UInt32 latSamps = IsOfflineContext() ? mLatencySamples : mTailSamples;	
 			
+			UInt32 latSamps = IsOfflineContext() ? mLatencySamples : mTailSamples;	
+			printf("latSamps %d\n", (int)latSamps);
+			latSamps = 0;
 			while (latSamps > 0)
 			{
 				if (latSamps < numFrames)
@@ -398,7 +412,8 @@ OSStatus	CAAUProcessor::Preflight (bool inProcessPreceedingTail)
 					// from the file and convert them to float for processing
 				AudioUnitRenderActionFlags renderFlags = 0;
 				mPreflightABL->Prepare();
-				ca_require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, numFrames, mPreflightABL->ABL()), home);
+				result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, numFrames, mPreflightABL->ABL());
+				if (result) { printf("B result %d\n", (int)result); goto home; }
 		
 				mRenderTimeStamp.mSampleTime += numFrames;
 				latSamps -= numFrames;
@@ -437,7 +452,8 @@ OSStatus	CAAUProcessor::Preflight (bool inProcessPreceedingTail)
 				// give the offline unit all of its input data to allow it to prepare its processing
 				AudioUnitRenderActionFlags renderFlags = kAudioOfflineUnitRenderAction_Preflight;
 				mPreflightABL->Prepare();
-				ca_require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, numFrames, mPreflightABL->ABL()), home);
+				result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, numFrames, mPreflightABL->ABL());
+				if (result) { printf("C result %d\n", (int)result); goto home; }
 				mRenderTimeStamp.mSampleTime += numFrames;
 		
 				if (renderFlags & kAudioOfflineUnitRenderAction_Complete)
@@ -454,6 +470,7 @@ OSStatus	CAAUProcessor::Preflight (bool inProcessPreceedingTail)
 	}
 	
 home:
+	printf("<<<<CAAUProcessor::Preflight\n");
 	return result;
 }
 
@@ -477,7 +494,8 @@ OSStatus 	CAAUProcessor::OfflineAUPreflight (UInt32 inNumFrames, bool &outIsDone
 	{
 		AudioUnitRenderActionFlags renderFlags = kAudioOfflineUnitRenderAction_Preflight;
 		mPreflightABL->Prepare();
-		ca_require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, inNumFrames, mPreflightABL->ABL()), home);
+		result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, inNumFrames, mPreflightABL->ABL());
+		if (result) { printf("D result %d\n", (int)result); goto home; }
 		mRenderTimeStamp.mSampleTime += inNumFrames;
 		
 		if (renderFlags & kAudioOfflineUnitRenderAction_Complete) {
@@ -559,6 +577,7 @@ OSStatus	CAAUProcessor::Render (AudioBufferList 		*ioData,
 		}
 		AudioUnitRenderActionFlags renderFlags = IsOfflineAU() ? kAudioOfflineUnitRenderAction_Render : 0;
 		OSStatus result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, ioNumFrames, ioData);
+		if (result) { printf("E result %d\n", (int)result); }
 		if (result) {
 			if (mUnit.Comp().Desc().IsFConv()) { 
 				// this is the only way we can tell we're done with a FormatConverter AU 
@@ -571,6 +590,14 @@ OSStatus	CAAUProcessor::Render (AudioBufferList 		*ioData,
 			} else
 				return result;
 		}
+//	for (UInt32 i = 0; i < ioNumFrames; ++i) {
+//		union {
+//			float f;
+//			unsigned char c[4];
+//		} u;
+//		u.f = ((float*)(ioData->mBuffers[0].mData))[i];
+//		printf("aup out %4d  %14.10f  %02X %02X %02X %02X\n", (int)i, u.f, u.c[0], u.c[1], u.c[2], u.c[3]);
+//	}
 		mRenderTimeStamp.mSampleTime += ioNumFrames;
 		outIsSilence = (renderFlags & kAudioUnitRenderAction_OutputIsSilence);
 		
@@ -597,10 +624,20 @@ OSStatus	CAAUProcessor::Render (AudioBufferList 		*ioData,
 // rendering in a RT context:
 	AudioUnitRenderActionFlags renderFlags = 0;
 	OSStatus result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, ioNumFrames, ioData);
+		if (result) { printf("F result %d\n", (int)result); }
 	if (!result) {
 		mRenderTimeStamp.mSampleTime += ioNumFrames;
 		outIsSilence = (renderFlags & kAudioUnitRenderAction_OutputIsSilence);
 	}
+//	for (UInt32 i = 0; i < ioNumFrames; ++i) {
+//		union {
+//			float f;
+//			unsigned char c[4];
+//		} u;
+//		u.f = ((float*)(ioData->mBuffers[0].mData))[i];
+//		printf("aup out %4d  %14.10f  %02X %02X %02X %02X\n", (int)i, u.f, u.c[0], u.c[1], u.c[2], u.c[3]);
+//	}
+	
 	return result;	
 }
 	
@@ -625,7 +662,8 @@ OSStatus	CAAUProcessor::PostProcess (AudioBufferList 	*ioData,
 	
 	AudioUnitRenderActionFlags renderFlags = 0;
 	OSStatus result;
-	ca_require_noerr (result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, ioNumFrames, ioData), home);
+	result = mUnit.Render (&renderFlags, &mRenderTimeStamp, 0, ioNumFrames, ioData);
+		if (result) { printf("G result %d\n", (int)result); goto home; }
 	mRenderTimeStamp.mSampleTime += ioNumFrames;
 	mTailSamplesRemaining -= ioNumFrames;
 	outIsSilence = (renderFlags & kAudioUnitRenderAction_OutputIsSilence);
