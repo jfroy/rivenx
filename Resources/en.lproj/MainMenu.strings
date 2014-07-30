@@ -1,0 +1,8 @@
+﻿/* Class = "NSWindow"; title = "About Riven X"; ObjectID = "256"; */
+"256.title" = "About Riven X";
+
+/* Class = "NSTextFieldCell"; title = "<<COPYRIGHT>>"; ObjectID = "279"; */
+"279.title" = "Copyright © 2005-2014 MacStorm. All Rights Reserved. Riven is Copyright © 1997 Cyan Worlds, Inc. All rights reserved. Riven, MYST, and Cyan are trademarks of Cyan Worlds, Inc.\n\nThis project was made possible by the significant contribution of Tito Dal Canton and \"Tahg\".";
+
+/* Class = "NSButtonCell"; title = "<<ACKNOWLEDGMENTS>>"; ObjectID = "DJw-Mh-tTN"; */
+"DJw-Mh-tTN.title" = "Acknowledgments";

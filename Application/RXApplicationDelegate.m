@@ -206,8 +206,7 @@
 - (BOOL)application:(NSApplication*)application openFile:(NSString*)filename
 { return [self _openGameWithURL:[NSURL fileURLWithPath:filename] addToRecents:YES]; }
 
-- (IBAction)orderFrontAboutWindow:(id)sender
-{
+- (IBAction)orderFrontAboutWindow:(id)sender {
   static bool setup = false;
   if (!setup) {
     // setup the about box
@@ -221,8 +220,6 @@
 #pragma clang diagnostic ignored "-Wformat-nonliteral"
     [versionField setStringValue:[NSString stringWithFormat:version_format, [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"], version]];
 #pragma clang diagnostic pop
-    [copyrightField setStringValue:NSLocalizedStringFromTable(@"LONG_COPYRIGHT", @"About", nil)];
-    [acknowledgmentsButton setTitle:NSLocalizedStringFromTable(@"ACKNOWLEDGMENTS", @"About", nil)];
 
     setup = true;
   }

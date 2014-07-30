@@ -91,6 +91,7 @@
 		315DA3CF118FED0F003E21BC /* patches in Resources */ = {isa = PBXBuildFile; fileRef = 315DA3CB118FED0F003E21BC /* patches */; };
 		316038FA100EE54600052849 /* RXScriptOpcodeStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 316038F9100EE54600052849 /* RXScriptOpcodeStream.m */; };
 		3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */ = {isa = PBXBuildFile; fileRef = 3160E1810FD3075300F18E86 /* tiny_marbles.png */; };
+		3167216D19887C87004F64E3 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 3167216F19887C87004F64E3 /* MainMenu.xib */; };
 		316721AD0D27F60A00FB2C0E /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		316721AF0D27F63000FB2C0E /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
 		316721DA0D27FB3200FB2C0E /* integer_pair_hash.c in Sources */ = {isa = PBXBuildFile; fileRef = 316721D90D27FB3200FB2C0E /* integer_pair_hash.c */; };
@@ -171,7 +172,6 @@
 		31BC739F09A57D4E001EC1E0 /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
 		31C545530D5D50620024B486 /* RXMediaInstaller.m in Sources */ = {isa = PBXBuildFile; fileRef = 31C545520D5D50620024B486 /* RXMediaInstaller.m */; };
 		31CE92961033D576008B7717 /* RXInterpolator.m in Sources */ = {isa = PBXBuildFile; fileRef = 31CE92951033D576008B7717 /* RXInterpolator.m */; };
-		31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 31D21B9A0DBC07A700E970E1 /* MainMenu.xib */; };
 		31D3D8600EEE36FD00F2D1C4 /* RXOpenGLState.m in Sources */ = {isa = PBXBuildFile; fileRef = 31D3D85F0EEE36FD00F2D1C4 /* RXOpenGLState.m */; };
 		31D462641968C6A500A5C4B6 /* unpackgogsetup in Copy Binaries */ = {isa = PBXBuildFile; fileRef = 31ADC95214ADA128004FB4AD /* unpackgogsetup */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		31D4E8CE1144635D00D70E28 /* Stacks.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31D4E8CD1144635D00D70E28 /* Stacks.plist */; };
@@ -403,6 +403,8 @@
 		316038F8100EE54600052849 /* RXScriptOpcodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptOpcodeStream.h; sourceTree = "<group>"; };
 		316038F9100EE54600052849 /* RXScriptOpcodeStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptOpcodeStream.m; sourceTree = "<group>"; };
 		3160E1810FD3075300F18E86 /* tiny_marbles.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = tiny_marbles.png; sourceTree = "<group>"; };
+		3167216E19887C87004F64E3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		3167217019887D53004F64E3 /* en */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/MainMenu.strings; sourceTree = "<group>"; };
 		316721D80D27FB3200FB2C0E /* integer_pair_hash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = integer_pair_hash.h; sourceTree = "<group>"; };
 		316721D90D27FB3200FB2C0E /* integer_pair_hash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = integer_pair_hash.c; sourceTree = "<group>"; };
 		3167EF001115057C002DDE6D /* RXWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWindow.h; sourceTree = "<group>"; };
@@ -477,7 +479,6 @@
 		31C545520D5D50620024B486 /* RXMediaInstaller.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXMediaInstaller.m; sourceTree = "<group>"; };
 		31CE92941033D576008B7717 /* RXInterpolator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXInterpolator.h; sourceTree = "<group>"; };
 		31CE92951033D576008B7717 /* RXInterpolator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXInterpolator.m; sourceTree = "<group>"; };
-		31D21B9A0DBC07A700E970E1 /* MainMenu.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = MainMenu.xib; sourceTree = "<group>"; };
 		31D3D85E0EEE36FD00F2D1C4 /* RXOpenGLState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXOpenGLState.h; sourceTree = "<group>"; };
 		31D3D85F0EEE36FD00F2D1C4 /* RXOpenGLState.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXOpenGLState.m; sourceTree = "<group>"; };
 		31D4E8CD1144635D00D70E28 /* Stacks.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Stacks.plist; sourceTree = "<group>"; };
@@ -991,7 +992,7 @@
 				31334D991968A624006470FC /* InfoPlist.strings */,
 				31334D9B1968A624006470FC /* Installer.strings */,
 				31334D9D1968A624006470FC /* Localizable.strings */,
-				31D21B9A0DBC07A700E970E1 /* MainMenu.xib */,
+				3167216F19887C87004F64E3 /* MainMenu.xib */,
 				315DA3CB118FED0F003E21BC /* patches */,
 				31334D9F1968A624006470FC /* Rendering.strings */,
 				31F1BED50D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf */,
@@ -1352,8 +1353,8 @@
 				3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */,
 				31F1BED60D3B1E6E00CFE301 /* Riven X Acknowledgments.pdf in Resources */,
 				313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */,
-				31D21B9B0DBC07A700E970E1 /* MainMenu.xib in Resources */,
 				31E933441127B02000188488 /* Welcome.xib in Resources */,
+				3167216D19887C87004F64E3 /* MainMenu.xib in Resources */,
 				3155F1C717F884550064E4BD /* Images.xcassets in Resources */,
 				31472CEE114C2F66008B6CF7 /* Extras.MHK in Resources */,
 				31334DA31968A624006470FC /* About.strings in Resources */,
@@ -1691,6 +1692,15 @@
 			sourceTree = "<group>";
 		};
 		31334DA11968A624006470FC /* Welcome.strings */ = {
+		3167216F19887C87004F64E3 /* MainMenu.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3167216E19887C87004F64E3 /* Base */,
+				3167217019887D53004F64E3 /* en */,
+			);
+			name = MainMenu.xib;
+			sourceTree = "<group>";
+		};
 			isa = PBXVariantGroup;
 			children = (
 				31334DA21968A624006470FC /* en */,
