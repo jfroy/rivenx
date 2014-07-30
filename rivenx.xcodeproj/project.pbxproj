@@ -1875,8 +1875,6 @@
 		31ADC95914ADA128004FB4AD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1890,8 +1888,6 @@
 		31ADC95A14ADA128004FB4AD /* Beta Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1905,8 +1901,6 @@
 		31ADC95B14ADA128004FB4AD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
