@@ -40,21 +40,21 @@
  * entries and finally av_dict_free() to free the dictionary
  * and all its contents.
  *
- * @code
- * AVDictionary *d = NULL;                // "create" an empty dictionary
- * av_dict_set(&d, "foo", "bar", 0);      // add an entry
- *
- * char *k = av_strdup("key");            // if your strings are already allocated,
- * char *v = av_strdup("value");          // you can avoid copying them like this
- * av_dict_set(&d, k, v, AV_DICT_DONT_STRDUP_KEY | AV_DICT_DONT_STRDUP_VAL);
- *
- * AVDictionaryEntry *t = NULL;
- * while (t = av_dict_get(d, "", t, AV_DICT_IGNORE_SUFFIX)) {
- *     <....>                             // iterate over all entries in d
- * }
- *
- * av_dict_free(&d);
- * @endcode
+ @code
+   AVDictionary *d = NULL;           // "create" an empty dictionary
+   AVDictionaryEntry *t = NULL;
+
+   av_dict_set(&d, "foo", "bar", 0); // add an entry
+
+   char *k = av_strdup("key");       // if your strings are already allocated,
+   char *v = av_strdup("value");     // you can avoid copying them like this
+   av_dict_set(&d, k, v, AV_DICT_DONT_STRDUP_KEY | AV_DICT_DONT_STRDUP_VAL);
+
+   while (t = av_dict_get(d, "", t, AV_DICT_IGNORE_SUFFIX)) {
+       <....>                             // iterate over all entries in d
+   }
+   av_dict_free(&d);
+ @endcode
  *
  */
 
@@ -105,6 +105,23 @@ int av_dict_count(const AVDictionary *m);
  * @return >= 0 on success otherwise an error code <0
  */
 int av_dict_set(AVDictionary **pm, const char *key, const char *value, int flags);
+
+/**
+ * Parse the key/value pairs list and add to a dictionary.
+ *
+ * @param key_val_sep  a 0-terminated list of characters used to separate
+ *                     key from value
+ * @param pairs_sep    a 0-terminated list of characters used to separate
+ *                     two pairs from each other
+ * @param flags        flags to use when adding to dictionary.
+ *                     AV_DICT_DONT_STRDUP_KEY and AV_DICT_DONT_STRDUP_VAL
+ *                     are ignored since the key/value tokens will always
+ *                     be duplicated.
+ * @return             0 on success, negative AVERROR code on failure
+ */
+int av_dict_parse_string(AVDictionary **pm, const char *str,
+                         const char *key_val_sep, const char *pairs_sep,
+                         int flags);
 
 /**
  * Copy entries from one AVDictionary struct into another.

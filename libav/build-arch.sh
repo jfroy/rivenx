@@ -5,7 +5,7 @@ DSTROOT="`pwd`/dstroot/$CURRENT_ARCH"
 PKGROOT="`pwd`/pkgroot/$CURRENT_ARCH"
 
 SDKROOT="`xcodebuild -sdk macosx -version Path`"
-MIN_VERSION="10.8"
+MIN_VERSION="10.9"
 
 rm -Rf "$SYMROOT"
 rm -Rf "$DSTROOT"
@@ -21,10 +21,11 @@ make distclean
     --extra-ldflags="-arch $CURRENT_ARCH -isysroot $SDKROOT -mmacosx-version-min=$MIN_VERSION" \
     --disable-static --enable-shared \
     --enable-runtime-cpudetect \
-    --disable-all --enable-avcodec --enable-avformat --enable-avutil \
-    --disable-debug \
-    --enable-decoder=mp2 --enable-decoder=cinepak --enable-decoder=adpcm_ima_qt \
-    --enable-parser=mpegaudio --enable-demuxer=mov
+    --disable-all --disable-everything --disable-doc \
+    --enable-avcodec --enable-avformat --enable-avutil \
+    --enable-decoder=mp2 --enable-decoder=cinepak --enable-decoder=adpcm_ima_apc \
+    --enable-parser=mpegaudio \
+    --enable-demuxer=mov --enable-demuxer=mp3
 
 make -j 4
 make install

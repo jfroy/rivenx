@@ -1,6 +1,4 @@
 /*
- * copyright (c) 2006 Michael Niedermayer <michaelni@gmx.at>
- *
  * This file is part of Libav.
  *
  * Libav is free software; you can redistribute it and/or
@@ -18,34 +16,33 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef AVUTIL_MD5_H
-#define AVUTIL_MD5_H
+/**
+ * @file
+ * @ingroup lavu
+ * Utility Preprocessor macros
+ */
 
-#include <stdint.h>
-
-#include "attributes.h"
-#include "version.h"
+#ifndef AVUTIL_MACROS_H
+#define AVUTIL_MACROS_H
 
 /**
- * @defgroup lavu_md5 MD5
- * @ingroup lavu_crypto
+ * @addtogroup preproc_misc Preprocessor String Macros
+ *
+ * String manipulation macros
+ *
  * @{
  */
 
-#if FF_API_CONTEXT_SIZE
-extern attribute_deprecated const int av_md5_size;
-#endif
+#define AV_STRINGIFY(s)         AV_TOSTRING(s)
+#define AV_TOSTRING(s) #s
 
-struct AVMD5;
-
-struct AVMD5 *av_md5_alloc(void);
-void av_md5_init(struct AVMD5 *ctx);
-void av_md5_update(struct AVMD5 *ctx, const uint8_t *src, const int len);
-void av_md5_final(struct AVMD5 *ctx, uint8_t *dst);
-void av_md5_sum(uint8_t *dst, const uint8_t *src, const int len);
+#define AV_GLUE(a, b) a ## b
+#define AV_JOIN(a, b) AV_GLUE(a, b)
 
 /**
  * @}
  */
 
-#endif /* AVUTIL_MD5_H */
+#define AV_PRAGMA(s) _Pragma(#s)
+
+#endif /* AVUTIL_MACROS_H */
