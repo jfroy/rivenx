@@ -1,4 +1,0 @@
-package "mhk_dump"
-version "1"
-
-option "first-mpeg-pkt-only" f "Only output the first 1152 samples for MPEG 1/2 Layer II tWAV resources" flag off
