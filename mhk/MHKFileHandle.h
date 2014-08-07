@@ -1,36 +1,24 @@
-//
-//  MHKFileHandle.h
-//  MHKKit
-//
-//  Created by Jean-Francois Roy on 07/04/2005.
-//  Copyright 2005-2012 MacStorm. All rights reserved.
-//
+// Copyright 2005 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#import "Base/RXBase.h"
+#import <Foundation/NSData.h>
+#import <Foundation/NSError.h>
 
 @class MHKArchive;
 
-@interface MHKFileHandle : NSObject {
-  int16_t __forkRef;
-  MHKArchive* __owner;
+@interface MHKFileHandle : NSObject
 
-  off_t __offset;
-  uint32_t __position;
-  uint32_t __length;
-}
+@property (nonatomic, strong, readonly) MHKArchive* archive;
+@property (nonatomic, readonly) off_t offsetInFile;
+@property (nonatomic, readonly) off_t length;
 
-- (MHKArchive*)archive;
+- (NSData*)readDataToEndOfFile:(NSError**)outError;
+- (NSData*)readDataOfLength:(size_t)length error:(NSError**)outError;
 
-- (NSData*)readDataOfLength:(size_t)length error:(NSError**)error;
-- (NSData*)readDataToEndOfFile:(NSError**)error;
+- (ssize_t)readDataOfLength:(size_t)length inBuffer:(void*)buffer error:(NSError**)outError;
+- (ssize_t)readDataToEndOfFileInBuffer:(void*)buffer error:(NSError**)outError;
 
-- (ssize_t)readDataOfLength:(size_t)length inBuffer:(void*)buffer error:(NSError**)error;
-- (ssize_t)readDataToEndOfFileInBuffer:(void*)buffer error:(NSError**)error;
-
-- (off_t)offsetInFile;
 - (off_t)seekToEndOfFile;
-- (off_t)seekToFileOffset:(SInt64)offset;
-
-- (off_t)length;
+- (off_t)seekToFileOffset:(off_t)offset;
 
 @end

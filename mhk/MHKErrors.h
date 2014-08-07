@@ -1,14 +1,7 @@
-/*
- *  MHKErrors.h
- *  MHKKit
- *
- *  Created by Jean-Francois Roy on 06/23/2005.
- *  Copyright 2005-2012 MacStorm. All rights reserved.
- *
- */
+// Copyright 2005 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#if !defined(MHK_ERRORS_H)
-#define MHK_ERRORS_H
+#pragma once
 
 #import <sys/cdefs.h>
 
@@ -16,13 +9,13 @@ __BEGIN_DECLS
 
 // MHK errors
 enum {
-  errFileTooLarge = 1,
-  errBadArchive,
+  errBadArchive = 1,
   errResourceNotFound,
   errDamagedResource,
   errInvalidChannelCount,
   errInvalidFrameCount,
   errLibavNotAvailable,
+  errLibavError,
   errInvalidSoundDescriptor,
   errInvalidBitmapCompression,
   errInvalidBitmapCompressorInstruction
@@ -38,8 +31,6 @@ extern NSString* const MHKErrorDomain;
 @interface MHKError : NSError
 @end
 
-#endif // __OBJC__
+#endif  // __OBJC__
 
 __END_DECLS
-
-#endif // MHK_ERRORS_H

@@ -1,124 +1,111 @@
-//
-//  MHKFileHandle.m
-//  MHKKit
-//
-//  Created by Jean-Francois Roy on 07/04/2005.
-//  Copyright 2005-2012 MacStorm. All rights reserved.
-//
+// Copyright 2005 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#import "MHKFileHandle.h"
-#import "MHKArchive.h"
-#import "MHKErrors.h"
+#import "mhk/MHKFileHandle_Internal.h"
+
+#import "Base/RXBase.h"
 #import "Base/RXErrorMacros.h"
 
-@implementation MHKFileHandle
+#import "mhk/MHKArchive_Internal.h"
+#import "mhk/MHKErrors.h"
 
-- (id)init
-{
+@implementation MHKFileHandle {
+  off_t _archiveOffset;
+  off_t _ioOffset;
+  int _fd;
+}
+
+- (instancetype)init {
   [self doesNotRecognizeSelector:_cmd];
-  [self release];
-  return nil;
+  return [self initWithArchive:nil length:0 archiveOffset:0 ioOffset:0];
 }
 
-- (id)_initWithArchive:(MHKArchive*)archive fork:(SInt16)forkRef descriptor:(NSDictionary*)desc
-{
+- (instancetype)initWithArchive:(MHKArchive*)archive
+                         length:(off_t)length
+                  archiveOffset:(off_t)archiveOffset
+                       ioOffset:(off_t)ioOffset {
   self = [super init];
-  if (!self)
+  if (!self) {
     return nil;
+  }
 
-  __owner = [archive retain];
-  __forkRef = forkRef;
+  if (!archive) {
+    [self release];
+    return nil;
+  }
 
-  __offset = [[desc objectForKey:@"Offset"] longLongValue];
-  __position = 0;
-  __length = [[desc objectForKey:@"Length"] unsignedIntValue];
+  _archive = [archive retain];
+  _fd = _archive->_fd;
+  _length = length;
+  _archiveOffset = archiveOffset;
+  _ioOffset = ioOffset;
 
   return self;
 }
 
-- (id)_initWithArchive:(MHKArchive*)archive fork:(SInt16)forkRef soundDescriptor:(NSDictionary*)sdesc
-{
-  self = [super init];
-  if (!self)
-    return nil;
-
-  __owner = [archive retain];
-  __forkRef = forkRef;
-
-  __offset = [[sdesc objectForKey:@"Samples Absolute Offset"] longLongValue];
-  __position = 0;
-  __length = [[sdesc objectForKey:@"Samples Length"] unsignedIntValue];
-
-  return self;
-}
-
-- (void)dealloc
-{
-  [__owner release];
+- (void)dealloc {
+  [_archive release];
   [super dealloc];
 }
 
-- (MHKArchive*)archive { return __owner; }
-
-- (NSData*)readDataOfLength:(size_t)length error:(NSError**)error
-{
+- (NSData*)readDataOfLength:(size_t)length error:(NSError**)outError {
   void* buffer = malloc(length);
   release_assert(buffer);
 
-  ssize_t bytes_read = [self readDataOfLength:length inBuffer:buffer error:error];
+  ssize_t bytes_read = [self readDataOfLength:length inBuffer:buffer error:outError];
   if (bytes_read == -1) {
     free(buffer);
     return nil;
   }
 
-  return [NSData dataWithBytesNoCopy:buffer length:bytes_read freeWhenDone:YES];
+  return [[[NSData alloc] initWithBytesNoCopy:buffer length:bytes_read freeWhenDone:YES] autorelease];
 }
 
-- (NSData*)readDataToEndOfFile:(NSError**)error { return [self readDataOfLength:__length error:error]; }
+- (NSData*)readDataToEndOfFile:(NSError**)outError {
+  return [self readDataOfLength:_length error:outError];
+}
 
-- (ssize_t)readDataOfLength:(size_t)length inBuffer:(void*)buffer error:(NSError**)error
-{
-  // is the request valid?
-  if (__position == __length)
-    ReturnValueWithError(-1, NSOSStatusErrorDomain, eofErr, nil, error);
+- (ssize_t)readDataOfLength:(size_t)length inBuffer:(void*)buffer error:(NSError**)outError {
+  off_t io_offset = _ioOffset + _offsetInFile;
+  off_t io_offset_end = io_offset + length;
 
-  if (__length - __position < length)
-    length = __length - __position;
+  if (io_offset < _archiveOffset) {
+    ReturnValueWithError(-1, NSPOSIXErrorDomain, EINVAL, nil, outError);
+  }
 
-  // read the data from the file
-  ByteCount bytes_read = 0;
-  OSStatus err = FSReadFork(__forkRef, fsFromStart | forceReadMask, __offset + __position, length, buffer, &bytes_read);
-  if (err && err != eofErr)
-    ReturnValueWithError(-1, NSOSStatusErrorDomain, err, nil, error);
+  if (io_offset_end > _archiveOffset + _length) {
+    io_offset_end = _archiveOffset + _length;
+  }
 
-  // update the position
-  __position += bytes_read;
+  ssize_t io_size = io_offset_end - io_offset;
+  if (io_size <= 0) {
+    return 0;
+  }
 
-  if (err)
-    ReturnValueWithError(bytes_read, NSOSStatusErrorDomain, err, nil, error);
+  ssize_t bytes_read = pread(_fd, buffer, io_size, io_offset);
+  if (bytes_read < 0) {
+    ReturnValueWithPOSIXError(-1, nil, outError);
+  }
+
+  _offsetInFile += bytes_read;
+
   return bytes_read;
 }
 
-- (ssize_t)readDataToEndOfFileInBuffer:(void*)buffer error:(NSError**)error { return [self readDataOfLength:__length inBuffer:buffer error:error]; }
-
-- (off_t)offsetInFile { return __position; }
-
-- (off_t)seekToEndOfFile
-{
-  __position = __length;
-  return __position;
+- (ssize_t)readDataToEndOfFileInBuffer:(void*)buffer error:(NSError**)outError {
+  return [self readDataOfLength:_length inBuffer:buffer error:outError];
 }
 
-- (off_t)seekToFileOffset:(SInt64)offset
-{
-  if (offset > __length)
+- (off_t)seekToEndOfFile {
+  return [self seekToFileOffset:_archiveOffset + _length - _ioOffset];
+}
+
+- (off_t)seekToFileOffset:(off_t)offset {
+  if (offset < 0) {
     return -1;
-
-  // Explicit cast OK here, MHK file sizes are 32 bit
-  __position = (UInt32)offset;
-  return __position;
+  }
+  _offsetInFile = offset;
+  return _offsetInFile;
 }
-
-- (off_t)length { return (SInt64)__length; }
 
 @end

@@ -28,6 +28,34 @@
 		31200FC00F3F8495006E6EF7 /* CAStreamBasicDescription.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31200FBF0F3F8495006E6EF7 /* CAStreamBasicDescription.cpp */; };
 		31225ABE08C4216D0055628F /* RXStack.m in Sources */ = {isa = PBXBuildFile; fileRef = 31225ABD08C4216D0055628F /* RXStack.m */; };
 		31225AC408C421790055628F /* RXCard.m in Sources */ = {isa = PBXBuildFile; fileRef = 31225AC308C421790055628F /* RXCard.m */; };
+		3124566D198B102000B76629 /* MHKArchive_Internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245652198B102000B76629 /* MHKArchive_Internal.h */; };
+		3124566E198B102000B76629 /* MHKArchive.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245653198B102000B76629 /* MHKArchive.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3124566F198B102000B76629 /* MHKArchive.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31245654198B102000B76629 /* MHKArchive.mm */; };
+		31245670198B102000B76629 /* MHKArchiveBitmapAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 31245655198B102000B76629 /* MHKArchiveBitmapAdditions.m */; };
+		31245671198B102100B76629 /* MHKArchiveMediaInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245656198B102000B76629 /* MHKArchiveMediaInterface.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		31245672198B102100B76629 /* MHKArchiveMovieAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 31245657198B102000B76629 /* MHKArchiveMovieAdditions.m */; };
+		31245674198B102100B76629 /* MHKArchiveSoundAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 31245659198B102000B76629 /* MHKArchiveSoundAdditions.m */; };
+		31245675198B102100B76629 /* MHKAudioDecompression.h in Headers */ = {isa = PBXBuildFile; fileRef = 3124565A198B102000B76629 /* MHKAudioDecompression.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		31245676198B102100B76629 /* MHKErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 3124565B198B102000B76629 /* MHKErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		31245677198B102100B76629 /* MHKErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 3124565C198B102000B76629 /* MHKErrors.m */; };
+		31245678198B102100B76629 /* MHKFileHandle.h in Headers */ = {isa = PBXBuildFile; fileRef = 3124565D198B102000B76629 /* MHKFileHandle.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		31245679198B102100B76629 /* MHKFileHandle.m in Sources */ = {isa = PBXBuildFile; fileRef = 3124565E198B102000B76629 /* MHKFileHandle.m */; };
+		3124567A198B102100B76629 /* MHKKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 3124565F198B102000B76629 /* MHKKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		3124567B198B102100B76629 /* MHKLibAVAudioDecompressor.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245660198B102000B76629 /* MHKLibAVAudioDecompressor.h */; };
+		3124567C198B102100B76629 /* MHKLibAVAudioDecompressor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31245661198B102000B76629 /* MHKLibAVAudioDecompressor.mm */; };
+		3124567F198B102100B76629 /* mohawk_bitmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 31245664198B102000B76629 /* mohawk_bitmap.c */; };
+		31245680198B102100B76629 /* mohawk_bitmap.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245665198B102000B76629 /* mohawk_bitmap.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		31245681198B102100B76629 /* mohawk_core.c in Sources */ = {isa = PBXBuildFile; fileRef = 31245666198B102000B76629 /* mohawk_core.c */; };
+		31245682198B102100B76629 /* mohawk_core.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245667198B102000B76629 /* mohawk_core.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		31245683198B102100B76629 /* mohawk_libav.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245668198B102000B76629 /* mohawk_libav.h */; };
+		31245684198B102100B76629 /* mohawk_libav.m in Sources */ = {isa = PBXBuildFile; fileRef = 31245669198B102000B76629 /* mohawk_libav.m */; };
+		31245685198B102100B76629 /* mohawk_sound.h in Headers */ = {isa = PBXBuildFile; fileRef = 3124566A198B102000B76629 /* mohawk_sound.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		31245687198BE73B00B76629 /* MHKFileHandle_Internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245686198BE73B00B76629 /* MHKFileHandle_Internal.h */; };
+		3124568A198C36D100B76629 /* MHKLibAVIOContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245688198C36D100B76629 /* MHKLibAVIOContext.h */; };
+		3124568B198C36D100B76629 /* MHKLibAVIOContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 31245689198C36D100B76629 /* MHKLibAVIOContext.m */; };
+		312456D5198C535D00B76629 /* libavcodec.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 31245694198C534400B76629 /* libavcodec.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		312456D6198C535D00B76629 /* libavformat.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 31245695198C534400B76629 /* libavformat.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		312456D7198C535D00B76629 /* libavutil.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 31245696198C534400B76629 /* libavutil.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		3124F2A909C36792009BA3CF /* RXSoundGroup.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3124F2A609C36782009BA3CF /* RXSoundGroup.mm */; };
 		312A89660D57B25600FCDF91 /* RXArchiveManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 312A89610D57B25600FCDF91 /* RXArchiveManager.m */; };
 		312EDC730A2E3B80005D26AF /* RXHotspot.m in Sources */ = {isa = PBXBuildFile; fileRef = 312EDC710A2E3B80005D26AF /* RXHotspot.m */; };
@@ -48,33 +76,11 @@
 		31334DA61968A624006470FC /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31334D9D1968A624006470FC /* Localizable.strings */; };
 		31334DA71968A624006470FC /* Rendering.strings in Resources */ = {isa = PBXBuildFile; fileRef = 31334D9F1968A624006470FC /* Rendering.strings */; };
 		3133D9AF0D5CDDC1004DAD5E /* RXFSCopyOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 3133D9AE0D5CDDC1004DAD5E /* RXFSCopyOperation.m */; };
-		313A9D4E18B30A6000FEE683 /* mohawk_libav.h in Headers */ = {isa = PBXBuildFile; fileRef = 313A9D4C18B30A6000FEE683 /* mohawk_libav.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		313A9D4F18B30A6000FEE683 /* mohawk_libav.m in Sources */ = {isa = PBXBuildFile; fileRef = 313A9D4D18B30A6000FEE683 /* mohawk_libav.m */; };
 		313C7EFD08CD057500950A70 /* Riven301.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 313C7EFB08CD057500950A70 /* Riven301.ttf */; };
 		31448F2709D9C799001B8A5F /* RXAudioRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3153ED6209A3ED12002E1149 /* RXAudioRenderer.mm */; };
 		31448F2809D9C79B001B8A5F /* RXAudioSourceBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 31BC739D09A57D4E001EC1E0 /* RXAudioSourceBase.cpp */; };
 		31448F4B09D9C959001B8A5F /* VirtualRingBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 319C458009C1382F0031F95F /* VirtualRingBuffer.m */; };
 		31472CEE114C2F66008B6CF7 /* Extras.MHK in Resources */ = {isa = PBXBuildFile; fileRef = 31472CED114C2F66008B6CF7 /* Extras.MHK */; };
-		314959AB0E327BA500E49C83 /* MHKADPCMDecompressor.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959950E327BA500E49C83 /* MHKADPCMDecompressor.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		314959AC0E327BA500E49C83 /* MHKArchiveWAVAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959960E327BA500E49C83 /* MHKArchiveWAVAdditions.m */; };
-		314959AD0E327BA500E49C83 /* mohawk_bitmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 314959970E327BA500E49C83 /* mohawk_bitmap.c */; };
-		314959AE0E327BA500E49C83 /* MHKFileHandle.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959980E327BA500E49C83 /* MHKFileHandle.m */; };
-		314959AF0E327BA500E49C83 /* MHKMP2Decompressor.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959990E327BA500E49C83 /* MHKMP2Decompressor.m */; };
-		314959B00E327BA500E49C83 /* MHKArchiveBitmapAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 3149599A0E327BA500E49C83 /* MHKArchiveBitmapAdditions.m */; };
-		314959B10E327BA500E49C83 /* MHKArchive.m in Sources */ = {isa = PBXBuildFile; fileRef = 3149599B0E327BA500E49C83 /* MHKArchive.m */; };
-		314959B20E327BA500E49C83 /* mohawk_core.c in Sources */ = {isa = PBXBuildFile; fileRef = 3149599C0E327BA500E49C83 /* mohawk_core.c */; };
-		314959B30E327BA500E49C83 /* MHKErrors.h in Headers */ = {isa = PBXBuildFile; fileRef = 3149599D0E327BA500E49C83 /* MHKErrors.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		314959B40E327BA500E49C83 /* MHKKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 3149599E0E327BA500E49C83 /* MHKKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		314959B60E327BA500E49C83 /* MHKFileHandle.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A00E327BA500E49C83 /* MHKFileHandle.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		314959B70E327BA500E49C83 /* mohawk_bitmap.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A10E327BA500E49C83 /* mohawk_bitmap.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		314959B80E327BA500E49C83 /* MHKErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959A20E327BA500E49C83 /* MHKErrors.m */; };
-		314959B90E327BA500E49C83 /* MHKAudioDecompression.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A30E327BA500E49C83 /* MHKAudioDecompression.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		314959BA0E327BA500E49C83 /* mohawk_wave.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A40E327BA500E49C83 /* mohawk_wave.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		314959BB0E327BA500E49C83 /* MHKMP2Decompressor.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A50E327BA500E49C83 /* MHKMP2Decompressor.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		314959BC0E327BA500E49C83 /* MHKADPCMDecompressor.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959A60E327BA500E49C83 /* MHKADPCMDecompressor.m */; };
-		314959BD0E327BA500E49C83 /* MHKArchive.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A70E327BA500E49C83 /* MHKArchive.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		314959BE0E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 314959A80E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m */; };
-		314959BF0E327BA500E49C83 /* mohawk_core.h in Headers */ = {isa = PBXBuildFile; fileRef = 314959A90E327BA500E49C83 /* mohawk_core.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		31495A4F0E327DA400E49C83 /* MHKKit.framework in Copy Frameworks */ = {isa = PBXBuildFile; fileRef = 3149598F0E327B2D00E49C83 /* MHKKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		315017990CC0533E001BA929 /* RXCardAudioSource.mm in Sources */ = {isa = PBXBuildFile; fileRef = 315017980CC0533D001BA929 /* RXCardAudioSource.mm */; };
 		315017FA0CC06872001BA929 /* RXThreadUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 315017F90CC06872001BA929 /* RXThreadUtilities.m */; };
@@ -86,7 +92,6 @@
 		315BD3CE0D85AF94007A3BFA /* RXErrors.m in Sources */ = {isa = PBXBuildFile; fileRef = 31FA569E0C5AD15D005DE22F /* RXErrors.m */; };
 		315BD3D00D85AF97007A3BFA /* RXLogging.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3105EC600D74922500609273 /* RXLogging.mm */; };
 		315BD41C0D85B64D007A3BFA /* BZFSUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 3114FF3B0D58DF0A0099AF69 /* BZFSUtilities.m */; };
-		315C76C618B5B0730066868D /* MHKArchiveMovieAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 315C76C418B5B0730066868D /* MHKArchiveMovieAdditions.m */; };
 		315DA3CF118FED0F003E21BC /* patches in Resources */ = {isa = PBXBuildFile; fileRef = 315DA3CB118FED0F003E21BC /* patches */; };
 		316038FA100EE54600052849 /* RXScriptOpcodeStream.m in Sources */ = {isa = PBXBuildFile; fileRef = 316038F9100EE54600052849 /* RXScriptOpcodeStream.m */; };
 		3160E1820FD3075300F18E86 /* tiny_marbles.png in Resources */ = {isa = PBXBuildFile; fileRef = 3160E1810FD3075300F18E86 /* tiny_marbles.png */; };
@@ -193,8 +198,6 @@
 		31FF29D50D425BFE00E3B5FF /* GameVariables.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31FF29D40D425BFE00E3B5FF /* GameVariables.plist */; };
 		6BE3ED511790842600B1732D /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4E1790842600B1732D /* Accelerate.framework */; };
 		6BE3ED521790842600B1732D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4F1790842600B1732D /* Foundation.framework */; };
-		6BE3ED531790842600B1732D /* QuickTime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED501790842600B1732D /* QuickTime.framework */; };
-		6BE3ED551790844000B1732D /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED541790844000B1732D /* ApplicationServices.framework */; };
 		6BE3ED581790846800B1732D /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED561790846800B1732D /* Cocoa.framework */; };
 		6BE3ED591790846800B1732D /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED571790846800B1732D /* OpenGL.framework */; };
 		6BE3ED5D1790849200B1732D /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED5A1790849200B1732D /* CoreAudio.framework */; };
@@ -262,6 +265,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		3124568C198C52FA00B76629 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 12;
+			files = (
+				312456D5198C535D00B76629 /* libavcodec.dylib in CopyFiles */,
+				312456D6198C535D00B76629 /* libavformat.dylib in CopyFiles */,
+				312456D7198C535D00B76629 /* libavutil.dylib in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		314EF26409E45958002124D5 /* Copy Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 12;
@@ -309,6 +324,34 @@
 		31225ABD08C4216D0055628F /* RXStack.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXStack.m; sourceTree = "<group>"; };
 		31225AC208C421790055628F /* RXCard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCard.h; sourceTree = "<group>"; };
 		31225AC308C421790055628F /* RXCard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCard.m; sourceTree = "<group>"; };
+		31245652198B102000B76629 /* MHKArchive_Internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKArchive_Internal.h; sourceTree = "<group>"; };
+		31245653198B102000B76629 /* MHKArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKArchive.h; sourceTree = "<group>"; };
+		31245654198B102000B76629 /* MHKArchive.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MHKArchive.mm; sourceTree = "<group>"; };
+		31245655198B102000B76629 /* MHKArchiveBitmapAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHKArchiveBitmapAdditions.m; sourceTree = "<group>"; };
+		31245656198B102000B76629 /* MHKArchiveMediaInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKArchiveMediaInterface.h; sourceTree = "<group>"; };
+		31245657198B102000B76629 /* MHKArchiveMovieAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHKArchiveMovieAdditions.m; sourceTree = "<group>"; };
+		31245659198B102000B76629 /* MHKArchiveSoundAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHKArchiveSoundAdditions.m; sourceTree = "<group>"; };
+		3124565A198B102000B76629 /* MHKAudioDecompression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKAudioDecompression.h; sourceTree = "<group>"; };
+		3124565B198B102000B76629 /* MHKErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKErrors.h; sourceTree = "<group>"; };
+		3124565C198B102000B76629 /* MHKErrors.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHKErrors.m; sourceTree = "<group>"; };
+		3124565D198B102000B76629 /* MHKFileHandle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKFileHandle.h; sourceTree = "<group>"; };
+		3124565E198B102000B76629 /* MHKFileHandle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHKFileHandle.m; sourceTree = "<group>"; };
+		3124565F198B102000B76629 /* MHKKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKKit.h; sourceTree = "<group>"; };
+		31245660198B102000B76629 /* MHKLibAVAudioDecompressor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKLibAVAudioDecompressor.h; sourceTree = "<group>"; };
+		31245661198B102000B76629 /* MHKLibAVAudioDecompressor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MHKLibAVAudioDecompressor.mm; sourceTree = "<group>"; };
+		31245664198B102000B76629 /* mohawk_bitmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mohawk_bitmap.c; sourceTree = "<group>"; };
+		31245665198B102000B76629 /* mohawk_bitmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mohawk_bitmap.h; sourceTree = "<group>"; };
+		31245666198B102000B76629 /* mohawk_core.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mohawk_core.c; sourceTree = "<group>"; };
+		31245667198B102000B76629 /* mohawk_core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mohawk_core.h; sourceTree = "<group>"; };
+		31245668198B102000B76629 /* mohawk_libav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mohawk_libav.h; sourceTree = "<group>"; };
+		31245669198B102000B76629 /* mohawk_libav.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = mohawk_libav.m; sourceTree = "<group>"; };
+		3124566A198B102000B76629 /* mohawk_sound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mohawk_sound.h; sourceTree = "<group>"; };
+		31245686198BE73B00B76629 /* MHKFileHandle_Internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKFileHandle_Internal.h; sourceTree = "<group>"; };
+		31245688198C36D100B76629 /* MHKLibAVIOContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKLibAVIOContext.h; sourceTree = "<group>"; };
+		31245689198C36D100B76629 /* MHKLibAVIOContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHKLibAVIOContext.m; sourceTree = "<group>"; };
+		31245694198C534400B76629 /* libavcodec.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libavcodec.dylib; sourceTree = "<group>"; };
+		31245695198C534400B76629 /* libavformat.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libavformat.dylib; sourceTree = "<group>"; };
+		31245696198C534400B76629 /* libavutil.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libavutil.dylib; sourceTree = "<group>"; };
 		3124F2A509C36782009BA3CF /* RXSoundGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXSoundGroup.h; sourceTree = "<group>"; };
 		3124F2A609C36782009BA3CF /* RXSoundGroup.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXSoundGroup.mm; sourceTree = "<group>"; };
 		312A89600D57B25600FCDF91 /* RXArchiveManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXArchiveManager.h; sourceTree = "<group>"; };
@@ -341,32 +384,9 @@
 		31334DA01968A624006470FC /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Rendering.strings; sourceTree = "<group>"; };
 		3133D9AD0D5CDDC1004DAD5E /* RXFSCopyOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXFSCopyOperation.h; sourceTree = "<group>"; };
 		3133D9AE0D5CDDC1004DAD5E /* RXFSCopyOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXFSCopyOperation.m; sourceTree = "<group>"; };
-		313A9D4C18B30A6000FEE683 /* mohawk_libav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mohawk_libav.h; path = mhk/mohawk_libav.h; sourceTree = "<group>"; };
-		313A9D4D18B30A6000FEE683 /* mohawk_libav.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = mohawk_libav.m; path = mhk/mohawk_libav.m; sourceTree = "<group>"; };
 		313C7EFB08CD057500950A70 /* Riven301.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = Riven301.ttf; sourceTree = "<group>"; };
 		31472CED114C2F66008B6CF7 /* Extras.MHK */ = {isa = PBXFileReference; lastKnownFileType = file; path = Extras.MHK; sourceTree = "<group>"; };
 		3149598F0E327B2D00E49C83 /* MHKKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = MHKKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		314959900E327B2D00E49C83 /* MHKKit-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "MHKKit-Info.plist"; sourceTree = "<group>"; };
-		314959950E327BA500E49C83 /* MHKADPCMDecompressor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKADPCMDecompressor.h; path = mhk/MHKADPCMDecompressor.h; sourceTree = "<group>"; };
-		314959960E327BA500E49C83 /* MHKArchiveWAVAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKArchiveWAVAdditions.m; path = mhk/MHKArchiveWAVAdditions.m; sourceTree = "<group>"; };
-		314959970E327BA500E49C83 /* mohawk_bitmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mohawk_bitmap.c; path = mhk/mohawk_bitmap.c; sourceTree = "<group>"; };
-		314959980E327BA500E49C83 /* MHKFileHandle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKFileHandle.m; path = mhk/MHKFileHandle.m; sourceTree = "<group>"; };
-		314959990E327BA500E49C83 /* MHKMP2Decompressor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKMP2Decompressor.m; path = mhk/MHKMP2Decompressor.m; sourceTree = "<group>"; };
-		3149599A0E327BA500E49C83 /* MHKArchiveBitmapAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKArchiveBitmapAdditions.m; path = mhk/MHKArchiveBitmapAdditions.m; sourceTree = "<group>"; };
-		3149599B0E327BA500E49C83 /* MHKArchive.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKArchive.m; path = mhk/MHKArchive.m; sourceTree = "<group>"; };
-		3149599C0E327BA500E49C83 /* mohawk_core.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mohawk_core.c; path = mhk/mohawk_core.c; sourceTree = "<group>"; };
-		3149599D0E327BA500E49C83 /* MHKErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKErrors.h; path = mhk/MHKErrors.h; sourceTree = "<group>"; };
-		3149599E0E327BA500E49C83 /* MHKKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKKit.h; path = mhk/MHKKit.h; sourceTree = "<group>"; };
-		314959A00E327BA500E49C83 /* MHKFileHandle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKFileHandle.h; path = mhk/MHKFileHandle.h; sourceTree = "<group>"; };
-		314959A10E327BA500E49C83 /* mohawk_bitmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mohawk_bitmap.h; path = mhk/mohawk_bitmap.h; sourceTree = "<group>"; };
-		314959A20E327BA500E49C83 /* MHKErrors.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKErrors.m; path = mhk/MHKErrors.m; sourceTree = "<group>"; };
-		314959A30E327BA500E49C83 /* MHKAudioDecompression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKAudioDecompression.h; path = mhk/MHKAudioDecompression.h; sourceTree = "<group>"; };
-		314959A40E327BA500E49C83 /* mohawk_wave.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mohawk_wave.h; path = mhk/mohawk_wave.h; sourceTree = "<group>"; };
-		314959A50E327BA500E49C83 /* MHKMP2Decompressor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKMP2Decompressor.h; path = mhk/MHKMP2Decompressor.h; sourceTree = "<group>"; };
-		314959A60E327BA500E49C83 /* MHKADPCMDecompressor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKADPCMDecompressor.m; path = mhk/MHKADPCMDecompressor.m; sourceTree = "<group>"; };
-		314959A70E327BA500E49C83 /* MHKArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKArchive.h; path = mhk/MHKArchive.h; sourceTree = "<group>"; };
-		314959A80E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKArchiveQuickTimeAdditions.m; path = mhk/MHKArchiveQuickTimeAdditions.m; sourceTree = "<group>"; };
-		314959A90E327BA500E49C83 /* mohawk_core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mohawk_core.h; path = mhk/mohawk_core.h; sourceTree = "<group>"; };
 		314C36F308EE431D00ACC172 /* RXWorldProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXWorldProtocol.h; sourceTree = "<group>"; };
 		315017970CC0533D001BA929 /* RXCardAudioSource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardAudioSource.h; sourceTree = "<group>"; };
 		315017980CC0533D001BA929 /* RXCardAudioSource.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = RXCardAudioSource.mm; sourceTree = "<group>"; };
@@ -382,7 +402,6 @@
 		3155F1C617F884550064E4BD /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "Riven X/Images.xcassets"; sourceTree = SOURCE_ROOT; };
 		31588871098D7A120090A6B6 /* RXCardDescriptor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXCardDescriptor.h; sourceTree = "<group>"; };
 		31588872098D7A120090A6B6 /* RXCardDescriptor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXCardDescriptor.m; sourceTree = "<group>"; };
-		315C76C418B5B0730066868D /* MHKArchiveMovieAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MHKArchiveMovieAdditions.m; path = mhk/MHKArchiveMovieAdditions.m; sourceTree = "<group>"; };
 		315DA3CB118FED0F003E21BC /* patches */ = {isa = PBXFileReference; lastKnownFileType = folder; path = patches; sourceTree = "<group>"; };
 		316038F8100EE54600052849 /* RXScriptOpcodeStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RXScriptOpcodeStream.h; sourceTree = "<group>"; };
 		316038F9100EE54600052849 /* RXScriptOpcodeStream.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RXScriptOpcodeStream.m; sourceTree = "<group>"; };
@@ -497,7 +516,6 @@
 		31FCC1A11261160600EFEAA9 /* osspinlock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = osspinlock.h; sourceTree = "<group>"; };
 		31FF29670D41996E00E3B5FF /* dump_save.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = dump_save.m; sourceTree = "<group>"; };
 		31FF29D40D425BFE00E3B5FF /* GameVariables.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = GameVariables.plist; sourceTree = "<group>"; };
-		6BE0E96E18B6F3BC008F3C48 /* MHKArchiveMediaInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MHKArchiveMediaInterface.h; path = mhk/MHKArchiveMediaInterface.h; sourceTree = "<group>"; };
 		6BE3ED4E1790842600B1732D /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
 		6BE3ED4F1790842600B1732D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		6BE3ED501790842600B1732D /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = System/Library/Frameworks/QuickTime.framework; sourceTree = SDKROOT; };
@@ -531,10 +549,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6BE3ED551790844000B1732D /* ApplicationServices.framework in Frameworks */,
 				6BE3ED511790842600B1732D /* Accelerate.framework in Frameworks */,
 				6BE3ED521790842600B1732D /* Foundation.framework in Frameworks */,
-				6BE3ED531790842600B1732D /* QuickTime.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -623,6 +639,7 @@
 				31A9EF94094D285400C6A0AB /* RXBase.pch */,
 				31BC2E610D6DC419008FA476 /* Base */,
 				31BAE6250A98D3110079DD0F /* Utilities */,
+				3124568D198C534400B76629 /* libav */,
 				314959870E327AF900E49C83 /* MHKKit */,
 				315547EB08C4C4CA00A2AA7A /* Application */,
 				31F3094108BE440E00417394 /* Engine */,
@@ -686,6 +703,16 @@
 			name = "Foundation Additions";
 			sourceTree = "<group>";
 		};
+		3124568D198C534400B76629 /* libav */ = {
+			isa = PBXGroup;
+			children = (
+				31245694198C534400B76629 /* libavcodec.dylib */,
+				31245695198C534400B76629 /* libavformat.dylib */,
+				31245696198C534400B76629 /* libavutil.dylib */,
+			);
+			path = libav;
+			sourceTree = "<group>";
+		};
 		312F4D930DC263F400B3AF0D /* Graphics */ = {
 			isa = PBXGroup;
 			children = (
@@ -736,33 +763,34 @@
 		314959870E327AF900E49C83 /* MHKKit */ = {
 			isa = PBXGroup;
 			children = (
-				314959950E327BA500E49C83 /* MHKADPCMDecompressor.h */,
-				314959A60E327BA500E49C83 /* MHKADPCMDecompressor.m */,
-				314959A70E327BA500E49C83 /* MHKArchive.h */,
-				3149599B0E327BA500E49C83 /* MHKArchive.m */,
-				3149599A0E327BA500E49C83 /* MHKArchiveBitmapAdditions.m */,
-				6BE0E96E18B6F3BC008F3C48 /* MHKArchiveMediaInterface.h */,
-				315C76C418B5B0730066868D /* MHKArchiveMovieAdditions.m */,
-				314959A80E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m */,
-				314959960E327BA500E49C83 /* MHKArchiveWAVAdditions.m */,
-				314959A30E327BA500E49C83 /* MHKAudioDecompression.h */,
-				3149599D0E327BA500E49C83 /* MHKErrors.h */,
-				314959A20E327BA500E49C83 /* MHKErrors.m */,
-				314959A00E327BA500E49C83 /* MHKFileHandle.h */,
-				314959980E327BA500E49C83 /* MHKFileHandle.m */,
-				314959900E327B2D00E49C83 /* MHKKit-Info.plist */,
-				3149599E0E327BA500E49C83 /* MHKKit.h */,
-				314959A50E327BA500E49C83 /* MHKMP2Decompressor.h */,
-				314959990E327BA500E49C83 /* MHKMP2Decompressor.m */,
-				314959970E327BA500E49C83 /* mohawk_bitmap.c */,
-				314959A10E327BA500E49C83 /* mohawk_bitmap.h */,
-				3149599C0E327BA500E49C83 /* mohawk_core.c */,
-				314959A90E327BA500E49C83 /* mohawk_core.h */,
-				313A9D4C18B30A6000FEE683 /* mohawk_libav.h */,
-				313A9D4D18B30A6000FEE683 /* mohawk_libav.m */,
-				314959A40E327BA500E49C83 /* mohawk_wave.h */,
+				31245652198B102000B76629 /* MHKArchive_Internal.h */,
+				31245653198B102000B76629 /* MHKArchive.h */,
+				31245654198B102000B76629 /* MHKArchive.mm */,
+				31245655198B102000B76629 /* MHKArchiveBitmapAdditions.m */,
+				31245656198B102000B76629 /* MHKArchiveMediaInterface.h */,
+				31245657198B102000B76629 /* MHKArchiveMovieAdditions.m */,
+				31245659198B102000B76629 /* MHKArchiveSoundAdditions.m */,
+				3124565A198B102000B76629 /* MHKAudioDecompression.h */,
+				3124565B198B102000B76629 /* MHKErrors.h */,
+				3124565C198B102000B76629 /* MHKErrors.m */,
+				31245686198BE73B00B76629 /* MHKFileHandle_Internal.h */,
+				3124565D198B102000B76629 /* MHKFileHandle.h */,
+				3124565E198B102000B76629 /* MHKFileHandle.m */,
+				3124565F198B102000B76629 /* MHKKit.h */,
+				31245660198B102000B76629 /* MHKLibAVAudioDecompressor.h */,
+				31245661198B102000B76629 /* MHKLibAVAudioDecompressor.mm */,
+				31245688198C36D100B76629 /* MHKLibAVIOContext.h */,
+				31245689198C36D100B76629 /* MHKLibAVIOContext.m */,
+				31245664198B102000B76629 /* mohawk_bitmap.c */,
+				31245665198B102000B76629 /* mohawk_bitmap.h */,
+				31245666198B102000B76629 /* mohawk_core.c */,
+				31245667198B102000B76629 /* mohawk_core.h */,
+				31245668198B102000B76629 /* mohawk_libav.h */,
+				31245669198B102000B76629 /* mohawk_libav.m */,
+				3124566A198B102000B76629 /* mohawk_sound.h */,
 			);
 			name = MHKKit;
+			path = mhk;
 			sourceTree = "<group>";
 		};
 		3153ED6109A3ED12002E1149 /* Audio */ = {
@@ -1025,18 +1053,20 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				314959AB0E327BA500E49C83 /* MHKADPCMDecompressor.h in Headers */,
-				314959B30E327BA500E49C83 /* MHKErrors.h in Headers */,
-				314959B40E327BA500E49C83 /* MHKKit.h in Headers */,
-				314959B60E327BA500E49C83 /* MHKFileHandle.h in Headers */,
-				314959B70E327BA500E49C83 /* mohawk_bitmap.h in Headers */,
-				313A9D4E18B30A6000FEE683 /* mohawk_libav.h in Headers */,
-				314959B90E327BA500E49C83 /* MHKAudioDecompression.h in Headers */,
-				6BE0E96F18B6F3BC008F3C48 /* MHKArchiveMediaInterface.h in Headers */,
-				314959BA0E327BA500E49C83 /* mohawk_wave.h in Headers */,
-				314959BB0E327BA500E49C83 /* MHKMP2Decompressor.h in Headers */,
-				314959BD0E327BA500E49C83 /* MHKArchive.h in Headers */,
-				314959BF0E327BA500E49C83 /* mohawk_core.h in Headers */,
+				3124566D198B102000B76629 /* MHKArchive_Internal.h in Headers */,
+				31245682198B102100B76629 /* mohawk_core.h in Headers */,
+				31245676198B102100B76629 /* MHKErrors.h in Headers */,
+				3124568A198C36D100B76629 /* MHKLibAVIOContext.h in Headers */,
+				31245675198B102100B76629 /* MHKAudioDecompression.h in Headers */,
+				3124567B198B102100B76629 /* MHKLibAVAudioDecompressor.h in Headers */,
+				31245685198B102100B76629 /* mohawk_sound.h in Headers */,
+				31245687198BE73B00B76629 /* MHKFileHandle_Internal.h in Headers */,
+				31245680198B102100B76629 /* mohawk_bitmap.h in Headers */,
+				3124566E198B102000B76629 /* MHKArchive.h in Headers */,
+				31245678198B102100B76629 /* MHKFileHandle.h in Headers */,
+				3124567A198B102100B76629 /* MHKKit.h in Headers */,
+				31245683198B102100B76629 /* mohawk_libav.h in Headers */,
+				31245671198B102100B76629 /* MHKArchiveMediaInterface.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1067,8 +1097,7 @@
 				3149598A0E327B2D00E49C83 /* Headers */,
 				3149598C0E327B2D00E49C83 /* Sources */,
 				3149598D0E327B2D00E49C83 /* Frameworks */,
-				3149598B0E327B2D00E49C83 /* Resources */,
-				314959D90E327D0800E49C83 /* copy_libav */,
+				3124568C198C52FA00B76629 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -1245,13 +1274,6 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		3149598B0E327B2D00E49C83 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		31F3092F08BE43C100417394 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1285,21 +1307,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		314959D90E327D0800E49C83 /* copy_libav */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = copy_libav;
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "OUTDIR=\"${BUILT_PRODUCTS_DIR}/${SHARED_SUPPORT_FOLDER_PATH}\"\nditto \"${SRCROOT}/libav/libavutil.dylib\" \"${OUTDIR}\"\nditto \"${SRCROOT}/libav/libavcodec.dylib\" \"${OUTDIR}\"\nditto \"${SRCROOT}/libav/libavformat.dylib\" \"${OUTDIR}\"\n";
-			showEnvVarsInLog = 0;
-		};
 		314A02EE0B6E53D5003E92A1 /* Generate Build Strings */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1347,18 +1354,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				313A9D4F18B30A6000FEE683 /* mohawk_libav.m in Sources */,
-				314959AC0E327BA500E49C83 /* MHKArchiveWAVAdditions.m in Sources */,
-				314959AD0E327BA500E49C83 /* mohawk_bitmap.c in Sources */,
-				314959AE0E327BA500E49C83 /* MHKFileHandle.m in Sources */,
-				314959AF0E327BA500E49C83 /* MHKMP2Decompressor.m in Sources */,
-				314959B00E327BA500E49C83 /* MHKArchiveBitmapAdditions.m in Sources */,
-				314959B10E327BA500E49C83 /* MHKArchive.m in Sources */,
-				314959B20E327BA500E49C83 /* mohawk_core.c in Sources */,
-				314959B80E327BA500E49C83 /* MHKErrors.m in Sources */,
-				314959BC0E327BA500E49C83 /* MHKADPCMDecompressor.m in Sources */,
-				315C76C618B5B0730066868D /* MHKArchiveMovieAdditions.m in Sources */,
-				314959BE0E327BA500E49C83 /* MHKArchiveQuickTimeAdditions.m in Sources */,
+				31245670198B102000B76629 /* MHKArchiveBitmapAdditions.m in Sources */,
+				3124568B198C36D100B76629 /* MHKLibAVIOContext.m in Sources */,
+				31245672198B102100B76629 /* MHKArchiveMovieAdditions.m in Sources */,
+				3124566F198B102000B76629 /* MHKArchive.mm in Sources */,
+				31245681198B102100B76629 /* mohawk_core.c in Sources */,
+				3124567C198B102100B76629 /* MHKLibAVAudioDecompressor.mm in Sources */,
+				3124567F198B102100B76629 /* mohawk_bitmap.c in Sources */,
+				31245674198B102100B76629 /* MHKArchiveSoundAdditions.m in Sources */,
+				31245684198B102100B76629 /* mohawk_libav.m in Sources */,
+				31245679198B102100B76629 /* MHKFileHandle.m in Sources */,
+				31245677198B102100B76629 /* MHKErrors.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1639,10 +1645,9 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
-				EXCLUDED_SOURCE_FILE_NAMES = "";
-				"EXCLUDED_SOURCE_FILE_NAMES[arch=x86_64]" = MHKArchiveQuickTimeAdditions.m;
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_PREFIX_HEADER = RXBase.pch;
@@ -1652,7 +1657,7 @@
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = "MHKKit-Info.plist";
-				INSTALL_PATH = "@executable_path/../Frameworks";
+				INSTALL_PATH = "@rpath";
 				PRODUCT_NAME = MHKKit;
 				SKIP_INSTALL = YES;
 			};
@@ -1663,10 +1668,9 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
-				EXCLUDED_SOURCE_FILE_NAMES = "";
-				"EXCLUDED_SOURCE_FILE_NAMES[arch=x86_64]" = MHKArchiveQuickTimeAdditions.m;
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_PREFIX_HEADER = RXBase.pch;
@@ -1676,7 +1680,7 @@
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = "MHKKit-Info.plist";
-				INSTALL_PATH = "@executable_path/../Frameworks";
+				INSTALL_PATH = "@rpath";
 				PRODUCT_NAME = MHKKit;
 				SKIP_INSTALL = YES;
 			};
@@ -1687,10 +1691,9 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
-				EXCLUDED_SOURCE_FILE_NAMES = "";
-				"EXCLUDED_SOURCE_FILE_NAMES[arch=x86_64]" = MHKArchiveQuickTimeAdditions.m;
 				FRAMEWORK_VERSION = A;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_PREFIX_HEADER = RXBase.pch;
@@ -1700,7 +1703,7 @@
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				INFOPLIST_FILE = "MHKKit-Info.plist";
-				INSTALL_PATH = "@executable_path/../Frameworks";
+				INSTALL_PATH = "@rpath";
 				PRODUCT_NAME = MHKKit;
 				SKIP_INSTALL = YES;
 			};
@@ -1816,17 +1819,24 @@
 				APPLY_RULES_IN_COPY_FILES = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_ASSIGN_ENUM = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_ATOMIC_PROPERTIES = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_RECEIVER_WEAK = YES;
+				CLANG_WARN_OBJC_REPEATED_USE_OF_WEAK = YES;
+				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/Frameworks";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Frameworks",
+				);
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
@@ -1840,23 +1850,34 @@
 					"DEBUG_AUDIO=1",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
+				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_MULTIPLE_DEFINITION_TYPES_FOR_SELECTOR = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_STRICT_SELECTOR_MATCH = YES;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/libav/$(CURRENT_ARCH)",
-				);
 				INFOPLIST_OUTPUT_FORMAT = binary;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-fstack-protector",
 					"-fblocks",
+					"-isystem",
+					"$(SRCROOT)/libav/$(CURRENT_ARCH)",
 				);
 				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PREPROCESSOR_DEFINITIONS_BASE = "__STDC_LIMIT_MACROS _FORTIFY_SOURCE=2";
@@ -1864,7 +1885,6 @@
 				STRINGS_FILE_OUTPUT_ENCODING = "UTF-8";
 				USER_HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)";
 				WARNING_CFLAGS = (
-					"$(inherited)",
 					"-Weverything",
 					"-Wno-pedantic",
 					"-Wno-c++98-compat-pedantic",
@@ -1893,11 +1913,14 @@
 				APPLY_RULES_IN_COPY_FILES = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_ASSIGN_ENUM = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_ATOMIC_PROPERTIES = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_RECEIVER_WEAK = YES;
+				CLANG_WARN_OBJC_REPEATED_USE_OF_WEAK = YES;
+				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				DEAD_CODE_STRIPPING = YES;
@@ -1905,7 +1928,10 @@
 				DEPLOYMENT_POSTPROCESSING = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/Frameworks";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Frameworks",
+				);
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
@@ -1916,22 +1942,33 @@
 					"NDEBUG=1",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
+				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_MULTIPLE_DEFINITION_TYPES_FOR_SELECTOR = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_STRICT_SELECTOR_MATCH = YES;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/libav/$(CURRENT_ARCH)",
-				);
 				INFOPLIST_OUTPUT_FORMAT = binary;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_CFLAGS = (
 					"-fstack-protector",
 					"-fblocks",
+					"-isystem",
+					"$(SRCROOT)/libav/$(CURRENT_ARCH)",
 				);
 				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PREPROCESSOR_DEFINITIONS_BASE = "__STDC_LIMIT_MACROS _FORTIFY_SOURCE=2";
@@ -1939,7 +1976,6 @@
 				STRINGS_FILE_OUTPUT_ENCODING = "UTF-8";
 				USER_HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)";
 				WARNING_CFLAGS = (
-					"$(inherited)",
 					"-Weverything",
 					"-Wno-pedantic",
 					"-Wno-c++98-compat-pedantic",
@@ -2125,11 +2161,14 @@
 				APPLY_RULES_IN_COPY_FILES = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
 				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_ASSIGN_ENUM = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_ATOMIC_PROPERTIES = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_RECEIVER_WEAK = YES;
+				CLANG_WARN_OBJC_REPEATED_USE_OF_WEAK = YES;
+				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				DEAD_CODE_STRIPPING = YES;
@@ -2137,7 +2176,10 @@
 				DEPLOYMENT_POSTPROCESSING = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/Frameworks";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/Frameworks",
+				);
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
@@ -2148,22 +2190,33 @@
 					"DEBUG=1",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				GCC_TREAT_IMPLICIT_FUNCTION_DECLARATIONS_AS_ERRORS = YES;
+				GCC_TREAT_INCOMPATIBLE_POINTER_TYPE_WARNINGS_AS_ERRORS = YES;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_FIELD_INITIALIZERS = YES;
+				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
+				GCC_WARN_INITIALIZER_NOT_FULLY_BRACKETED = YES;
+				GCC_WARN_MULTIPLE_DEFINITION_TYPES_FOR_SELECTOR = YES;
+				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_STRICT_SELECTOR_MATCH = YES;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/libav/$(CURRENT_ARCH)",
-				);
 				INFOPLIST_OUTPUT_FORMAT = binary;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OTHER_CFLAGS = (
 					"-fstack-protector",
 					"-fblocks",
+					"-isystem",
+					"$(SRCROOT)/libav/$(CURRENT_ARCH)",
 				);
 				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PREPROCESSOR_DEFINITIONS_BASE = "__STDC_LIMIT_MACROS _FORTIFY_SOURCE=2";
@@ -2171,7 +2224,6 @@
 				STRINGS_FILE_OUTPUT_ENCODING = "UTF-8";
 				USER_HEADER_SEARCH_PATHS = "$(inherited) $(SRCROOT)";
 				WARNING_CFLAGS = (
-					"$(inherited)",
 					"-Weverything",
 					"-Wno-pedantic",
 					"-Wno-c++98-compat-pedantic",

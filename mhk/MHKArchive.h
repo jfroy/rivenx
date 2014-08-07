@@ -1,67 +1,39 @@
-/*
- *  MHKArchive.h
- *  MHKKit
- *
- *  Created by Jean-Francois Roy on 09/04/2005.
- *  Copyright 2005-2012 MacStorm. All rights reserved.
- *
- */
+// Copyright 2005 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#import <pthread.h>
-#import <CoreServices/CoreServices.h>
-
-#import <MHKKit/mohawk_core.h>
+#import <Foundation/NSArray.h>
+#import <Foundation/NSError.h>
+#import <Foundation/NSKeyValueCoding.h>
+#import <Foundation/NSString.h>
+#import <Foundation/NSURL.h>
 
 @class MHKFileHandle;
 
-@interface MHKArchive : NSObject {
-  NSURL* mhk_url;
+@interface MHKResourceDescriptor : NSObject
+@property (nonatomic, readonly) uint16_t ID;
+@property (nonatomic, readonly) uint32_t index;
+@property (nonatomic, readonly) NSString* name;
+@property (nonatomic, readonly) off_t offset;
+@property (nonatomic, readonly) off_t length;
+@end
 
-  FSIORefNum forkRef;
-  uint32_t archive_size;
+@interface MHKArchive : NSObject
 
-  BOOL initialized;
+@property (nonatomic, readonly) NSURL* url;
+@property (nonatomic, readonly) NSArray* resourceTypes;
 
-  // global MHK parameters
-  uint32_t resource_directory_absolute_offset;
+- (instancetype)initWithURL:(NSURL*)url error:(NSError**)outError NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithPath:(NSString*)path error:(NSError**)outError;
 
-  uint32_t type_table_count;
-  MHK_type_table_entry* type_table;
-
-  char* name_list;
-
-  uint32_t file_table_count;
-  MHK_file_table_entry* file_table;
-
-  // processed information
-  NSMutableDictionary* file_descriptor_arrays;
-  NSMutableDictionary* file_descriptor_trees;
-  NSMutableDictionary* file_descriptor_name_maps;
-
-  // cached descriptors
-  pthread_rwlock_t __cached_sound_descriptors_rwlock;
-  NSMutableDictionary* __cached_sound_descriptors;
-}
-
-// designated initializer
-- (id)initWithURL:(NSURL*)url error:(NSError**)errorPtr;
-
-// convenience initializers
-- (id)initWithPath:(NSString*)path error:(NSError**)errorPtr;
-
-// accessors
-- (NSURL*)url;
-- (NSArray*)resourceTypes;
-
-// MHKArchive is KVO-compliant for all resource types as keys, read-only
+- (NSArray*)resourceDescriptorsForType:(NSString*)type;
 
 // resource accessors
-- (NSDictionary*)resourceDescriptorWithResourceType:(NSString*)type ID:(uint16_t)resourceID;
+- (MHKResourceDescriptor*)resourceDescriptorWithResourceType:(NSString*)type ID:(uint16_t)resourceID;
 - (MHKFileHandle*)openResourceWithResourceType:(NSString*)type ID:(uint16_t)resourceID;
 - (NSData*)dataWithResourceType:(NSString*)type ID:(uint16_t)resourceID;
 
 // resource by-name accessors
-- (NSDictionary*)resourceDescriptorWithResourceType:(NSString*)type name:(NSString*)name;
+- (MHKResourceDescriptor*)resourceDescriptorWithResourceType:(NSString*)type name:(NSString*)name;
 - (MHKFileHandle*)openResourceWithResourceType:(NSString*)type name:(NSString*)name;
 - (NSData*)dataWithResourceType:(NSString*)type name:(NSString*)name;
 

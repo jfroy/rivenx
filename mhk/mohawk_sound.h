@@ -1,14 +1,7 @@
-/*
- *  mohawk_wave.h
- *  MHKKit
- *
- *  Created by Jean-Francois Roy on 09/04/2005.
- *  Copyright 2005-2012 MacStorm. All rights reserved.
- *
- */
+// Copyright 2005 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#if !defined(mohawk_wave_h)
-#define mohawk_wave_h 1
+#pragma once
 
 #include <MHKKit/mohawk_core.h>
 
@@ -34,21 +27,23 @@ extern const int MHK_WAVE_MP2;
 typedef struct {
   uint16_t sampling_rate;
   uint32_t frame_count;
-  unsigned char bit_depth;
-  unsigned char channel_count;
+  uint8_t bit_depth;
+  uint8_t channel_count;
   uint16_t compression_type;
-  unsigned char reserved[10];
-} MHK_WAVE_Data_chunk_header;
+  uint16_t loop_count;
+  uint32_t loop_start;
+  uint32_t loop_end;
+} MHK_WAVE_Data_header;
 #pragma pack(pop)
 
 // Byte order utilities
 // f == file, n == native
 
-MHK_INLINE void MHK_WAVE_Data_chunk_header_fton(MHK_WAVE_Data_chunk_header* s)
-{
-  s->sampling_rate = CFSwapInt16BigToHost(s->sampling_rate);
-  s->frame_count = CFSwapInt32BigToHost(s->frame_count);
-  s->compression_type = CFSwapInt16BigToHost(s->compression_type);
+static inline void MHK_WAVE_Data_header_fton(MHK_WAVE_Data_header* s) {
+  s->sampling_rate = OSSwapBigToHostInt16(s->sampling_rate);
+  s->frame_count = OSSwapBigToHostInt32(s->frame_count);
+  s->compression_type = OSSwapBigToHostInt16(s->compression_type);
+  s->loop_count = OSSwapBigToHostInt16(s->loop_count);
+  s->loop_start = OSSwapBigToHostInt32(s->loop_start);
+  s->loop_end = OSSwapBigToHostInt32(s->loop_end);
 }
-
-#endif // mohawk_wave_h

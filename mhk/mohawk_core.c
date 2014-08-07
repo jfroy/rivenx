@@ -1,15 +1,10 @@
-/*
- *  mohawk_core.c
- *  MHKKit
- *
- *  Created by Jean-Francois Roy on 06/19/2005.
- *  Copyright 2005-2012 MacStorm. All rights reserved.
- *
- */
+// Copyright 2005 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#include "mohawk_core.h"
-#include "mohawk_wave.h"
-#include "mohawk_bitmap.h"
+#include "mhk/mohawk_core.h"
+
+#include "mhk/mohawk_bitmap.h"
+#include "mhk/mohawk_sound.h"
 
 const char MHK_MHWK_signature[4] = {'M', 'H', 'W', 'K'};
 const char MHK_RSRC_signature[4] = {'R', 'S', 'R', 'C'};
@@ -22,7 +17,7 @@ const char MHK_Data_signature[4] = {'D', 'a', 't', 'a'};
 const int MHK_WAVE_ADPCM = 1;
 const int MHK_WAVE_MP2 = 2;
 
-const int MHK_BITMAP_PLAIN = 0;
+const int MHK_BITMAP_RAW = 0;
 const int MHK_BITMAP_COMPRESSED = 4;
 
 #if defined(__BIG_ENDIAN__)

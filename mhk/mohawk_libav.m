@@ -1,12 +1,7 @@
-//
-//  mohawk_libav.m
-//  rivenx
-//
-//  Created by jfroy on 2/14/14.
-//  Copyright (c) 2014 MacStorm. All rights reserved.
-//
+// Copyright 2014 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#import "mohawk_libav.h"
+#import "mhk/mohawk_libav.h"
 
 #import <dlfcn.h>
 #import <Foundation/NSBundle.h>
@@ -14,8 +9,7 @@
 
 struct mhk_libav g_libav;
 
-static inline void load_function(void* handle, const char* name, void** fnptr)
-{
+static inline void load_function(void* handle, const char* name, void** fnptr) {
   *fnptr = dlsym(handle, name);
   if (!*fnptr) {
     fprintf(stderr, "fatal: unable to bind symbol \"%s\": %s\n", name, dlerror());
@@ -25,22 +19,25 @@ static inline void load_function(void* handle, const char* name, void** fnptr)
 
 #define LOADFN(HANDLE, FN) load_function(g_libav.HANDLE, #FN, (void**)&g_libav.FN)
 
-static void init_libav()
-{
+static void load_functions() {
   // lookup symbols
   LOADFN(avu_handle, av_malloc);
   LOADFN(avu_handle, av_freep);
   LOADFN(avu_handle, av_log_set_level);
   LOADFN(avu_handle, av_dict_set);
+  LOADFN(avu_handle, av_frame_alloc);
+  LOADFN(avu_handle, av_frame_unref);
+  LOADFN(avu_handle, av_frame_free);
 
   LOADFN(avc_handle, avcodec_register_all);
   LOADFN(avc_handle, avcodec_find_decoder);
   LOADFN(avc_handle, avcodec_alloc_context3);
   LOADFN(avc_handle, avcodec_open2);
   LOADFN(avc_handle, avcodec_close);
-  LOADFN(avc_handle, avcodec_alloc_frame);
-  LOADFN(avc_handle, avcodec_free_frame);
+  LOADFN(avc_handle, av_init_packet);
+  LOADFN(avc_handle, av_new_packet);
   LOADFN(avc_handle, av_free_packet);
+  LOADFN(avc_handle, avcodec_flush_buffers);
   LOADFN(avc_handle, avcodec_decode_audio4);
 
   LOADFN(avf_handle, av_register_all);
@@ -61,8 +58,7 @@ static void init_libav()
   g_libav.av_register_all();
 }
 
-static void* load_lib(NSString* base_path, NSString* name)
-{
+static void* load_lib(NSString* base_path, NSString* name) {
   const char* path = [[base_path stringByAppendingPathComponent:name] fileSystemRepresentation];
   void* handle = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
   if (!handle) {
@@ -72,21 +68,23 @@ static void* load_lib(NSString* base_path, NSString* name)
   return handle;
 }
 
-static void load_libs()
-{
+static void load_libs() {
   NSBundle* mhk_bundle = [NSBundle bundleWithIdentifier:@"org.macstorm.MHKKit"];
   NSString* resource_path = [mhk_bundle resourcePath];
 
   g_libav.avu_handle = load_lib(resource_path, @"libavutil.dylib");
   g_libav.avc_handle = load_lib(resource_path, @"libavcodec.dylib");
   g_libav.avf_handle = load_lib(resource_path, @"libavformat.dylib");
+
+  if (!g_libav.avu_handle || !g_libav.avc_handle || !g_libav.avf_handle) {
+    memset(&g_libav, 0, sizeof(g_libav));
+    return;
+  }
+
+  load_functions();
 }
 
-void mhk_load_libav()
-{
+void mhk_load_libav() {
   static dispatch_once_t once;
-  dispatch_once(&once, ^{
-    load_libs();
-    init_libav();
-  });
+  dispatch_once(&once, ^{ load_libs(); });
 }

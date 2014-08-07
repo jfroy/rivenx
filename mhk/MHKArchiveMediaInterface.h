@@ -1,39 +1,37 @@
-//
-//  MHKArchiveMediaInterface.h
-//  rivenx
-//
-//  Created by jfroy on 2/20/14.
-//  Copyright (c) 2014 MacStorm. All rights reserved.
-//
-
-#if !defined(__LP64__)
-#import <QuickTime/QuickTime.h>
-#endif
+// Copyright 2014 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 #import <MHKKit/MHKArchive.h>
 
-#import <MHKKit/mohawk_bitmap.h>
-#import <MHKKit/mohawk_libav.h>
-#import <MHKKit/mohawk_wave.h>
-#import <MHKKit/MHKAudioDecompression.h>
+struct AVFormatContext;
+@protocol MHKAudioDecompression;
 
-#if !defined(__LP64__)
-@interface MHKArchive (MHKArchiveQuickTimeAdditions)
-- (Movie)movieWithID:(uint16_t)movieID error:(NSError**)errorPtr;
-@end
-#endif
-
-@interface MHKArchive (MHKArchiveMovieAdditions)
-- (AVFormatContext*)createAVFormatContextWithMovieID:(uint16_t)movieID error:(NSError**)error;
+@interface MHKBitmapDescriptor : NSObject
+@property (nonatomic, readonly) int32_t width;
+@property (nonatomic, readonly) int32_t height;
 @end
 
-@interface MHKArchive (MHKArchiveWAVAdditions)
-- (NSDictionary*)soundDescriptorWithID:(uint16_t)soundID error:(NSError**)error;
-- (MHKFileHandle*)openSoundWithID:(uint16_t)soundID error:(NSError**)error;
-- (id<MHKAudioDecompression>)decompressorWithSoundID:(uint16_t)soundID error:(NSError**)error;
+@interface MHKSoundDescriptor : NSObject
+@property (nonatomic, readonly) off_t samplesOffset;
+@property (nonatomic, readonly) off_t samplesLength;
+@property (nonatomic, readonly) uint16_t sampleRate;
+@property (nonatomic, readonly) uint8_t sampleDepth;
+@property (nonatomic, readonly) uint64_t frameCount;
+@property (nonatomic, readonly) uint8_t channelCount;
+@property (nonatomic, readonly) uint16_t compressionType;
 @end
 
 @interface MHKArchive (MHKArchiveBitmapAdditions)
-- (NSDictionary*)bitmapDescriptorWithID:(uint16_t)bitmapID error:(NSError**)error;
-- (BOOL)loadBitmapWithID:(uint16_t)bitmapID buffer:(void*)pixels format:(MHK_BITMAP_FORMAT)format error:(NSError**)error;
+- (MHKBitmapDescriptor*)bitmapDescriptorWithID:(uint16_t)bitmapID error:(NSError**)outError;
+- (BOOL)loadBitmapWithID:(uint16_t)bitmapID bgraBuffer:(void*)bgraBuffer error:(NSError**)outError;
+@end
+
+@interface MHKArchive (MHKArchiveMovieAdditions)
+- (struct AVFormatContext*)createAVFormatContextWithMovieID:(uint16_t)movieID error:(NSError**)outError;
+@end
+
+@interface MHKArchive (MHKArchiveSoundAdditions)
+- (MHKSoundDescriptor*)soundDescriptorWithID:(uint16_t)soundID error:(NSError**)outError;
+- (MHKFileHandle*)openSoundWithID:(uint16_t)soundID error:(NSError**)outError;
+- (id<MHKAudioDecompression>)decompressorWithSoundID:(uint16_t)soundID error:(NSError**)outError;
 @end
