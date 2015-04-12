@@ -211,7 +211,7 @@
  */
 #ifndef lzma_nothrow
 #	if defined(__cplusplus)
-#		define lzma_nothrow noexcept
+#		define lzma_nothrow throw()
 #	elif __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)
 #		define lzma_nothrow __attribute__((__nothrow__))
 #	else
@@ -286,7 +286,7 @@ extern "C" {
 #include "lzma/filter.h"
 #include "lzma/bcj.h"
 #include "lzma/delta.h"
-#include "lzma/lzma.h"
+#include "lzma/lzma12.h"
 
 /* Container formats */
 #include "lzma/container.h"
