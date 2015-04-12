@@ -20,10 +20,13 @@
     ReturnValueWithError(NULL, MHKErrorDomain, errResourceNotFound, nil, outError);
   }
 
-  // create a file handle for the embedded movie file; note that the IO offset is 0 because embedded movie files have
+  // create a file handle for the embedded movie file; note that the IO offset is 0 because embedded
+  // movie files have
   // absolute references to sample data in the archive
-  MHKFileHandle* fh =
-      [[MHKFileHandle alloc] initWithArchive:self length:rdesc.length archiveOffset:rdesc.offset ioOffset:0];
+  MHKFileHandle* fh = [[MHKFileHandle alloc] initWithArchive:self
+                                                      length:rdesc.length
+                                               archiveOffset:rdesc.offset
+                                                    ioOffset:0];
 
   // wrap the file handle in a LibAV IO context
   MHKLibAVIOContext* ioc = [[MHKLibAVIOContext alloc] initWithFileHandle:fh error:outError];
@@ -46,7 +49,8 @@
     avif = g_libav.av_iformat_next(avif);
   }
 
-  // seek to the beginning of the movie container; this is kind of a hack to allow libav to work with embedded movies
+  // seek to the beginning of the movie container; this is a hack to allow libav to work with
+  // embedded movies and relies on the IO offset being 0 (see above)
   g_libav.avio_seek(ioc.avioc, rdesc.offset, SEEK_SET);
 
   // open the movie
