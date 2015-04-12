@@ -33,6 +33,7 @@
 #include "dict.h"
 #include "rational.h"
 #include "samplefmt.h"
+#include "pixfmt.h"
 #include "version.h"
 
 
@@ -69,6 +70,33 @@ enum AVFrameSideDataType {
      * The data is the AVDownmixInfo struct defined in libavutil/downmix_info.h.
      */
     AV_FRAME_DATA_DOWNMIX_INFO,
+    /**
+     * ReplayGain information in the form of the AVReplayGain struct.
+     */
+    AV_FRAME_DATA_REPLAYGAIN,
+    /**
+     * This side data contains a 3x3 transformation matrix describing an affine
+     * transformation that needs to be applied to the frame for correct
+     * presentation.
+     *
+     * See libavutil/display.h for a detailed description of the data.
+     */
+    AV_FRAME_DATA_DISPLAYMATRIX,
+    /**
+     * Active Format Description data consisting of a single byte as specified
+     * in ETSI TS 101 154 using enum AVActiveFormatDescription.
+     */
+    AV_FRAME_DATA_AFD,
+};
+
+enum AVActiveFormatDescription {
+    AV_AFD_SAME         = 8,
+    AV_AFD_4_3          = 9,
+    AV_AFD_16_9         = 10,
+    AV_AFD_14_9         = 11,
+    AV_AFD_4_3_SP_14_9  = 13,
+    AV_AFD_16_9_SP_14_9 = 14,
+    AV_AFD_SP_4_3       = 15,
 };
 
 typedef struct AVFrameSideData {
@@ -404,6 +432,16 @@ typedef struct AVFrame {
      * Frame flags, a combination of @ref lavu_frame_flags
      */
     int flags;
+
+    enum AVColorRange color_range;
+
+    enum AVColorPrimaries color_primaries;
+
+    enum AVColorTransferCharacteristic color_trc;
+
+    enum AVColorSpace colorspace;
+
+    enum AVChromaLocation chroma_location;
 } AVFrame;
 
 /**
@@ -506,6 +544,19 @@ int av_frame_is_writable(AVFrame *frame);
 int av_frame_make_writable(AVFrame *frame);
 
 /**
+ * Copy the frame data from src to dst.
+ *
+ * This function does not allocate anything, dst must be already initialized and
+ * allocated with the same parameters as src.
+ *
+ * This function only copies the frame data (i.e. the contents of the data /
+ * extended data arrays), not any other properties.
+ *
+ * @return >= 0 on success, a negative AVERROR on error.
+ */
+int av_frame_copy(AVFrame *dst, const AVFrame *src);
+
+/**
  * Copy only "metadata" fields from src to dst.
  *
  * Metadata for the purpose of this function are those fields that do not affect
@@ -544,6 +595,12 @@ AVFrameSideData *av_frame_new_side_data(AVFrame *frame,
  */
 AVFrameSideData *av_frame_get_side_data(const AVFrame *frame,
                                         enum AVFrameSideDataType type);
+
+/**
+ * If side data of the supplied type exists in the frame, free it and remove it
+ * from the frame.
+ */
+void av_frame_remove_side_data(AVFrame *frame, enum AVFrameSideDataType type);
 
 /**
  * @}

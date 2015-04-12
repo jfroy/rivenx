@@ -21,6 +21,7 @@ Specifically, the GPL parts of Libav are
     - vf_cropdetect.c
     - vf_delogo.c
     - vf_hqdn3d.c
+    - vf_interlace.c
 
 Should you, for whatever reason, prefer to use version 3 of the (L)GPL, then
 the configure parameter --enable-version3 will activate this licensing option
@@ -46,7 +47,7 @@ affect the licensing of binaries resulting from the combination.
 compatible libraries
 --------------------
 
-The libcdio, libx264, libxavs and libxvid libraries are under GPL. When
+The libcdio, libx264, libx265, libxavs and libxvid libraries are under GPL. When
 combining them with Libav, Libav needs to be licensed as GPL as well by
 passing --enable-gpl to configure.
 
