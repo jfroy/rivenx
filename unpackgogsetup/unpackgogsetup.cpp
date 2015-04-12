@@ -399,7 +399,8 @@ class ChunkIO {
   }
 
   void ChecksumAndDieIfWrong() {
-    uint32_t checksum = static_cast<uint32_t>(crc32(crc32(0L, Z_NULL, 0), chunk_.data, static_cast<uInt>(available_)));
+    uint32_t checksum = static_cast<uint32_t>(
+        crc32(crc32(0L, Z_NULL, 0), chunk_.data, static_cast<uInt>(available_)));
     assert(checksum == chunk_.data_crc32);
   }
 
@@ -414,6 +415,7 @@ class ChunkIO {
 class LzmaDecompressor {
  public:
   struct IO {
+    virtual ~IO() = default;
     virtual bool FillLzmaStream(lzma_stream& stream) = 0;
     virtual void ConsumeLzmaStream(lzma_stream& stream, bool final) = 0;
   };
@@ -553,8 +555,8 @@ void BlockReader::ReadHeader() {
   assert(io_bytes_read_ == sizeof(stored::BlockHeader));
   io_offset_ += io_bytes_read_;
 
-  uint32_t checksum = static_cast<uint32_t>(
-      crc32(crc32(0L, Z_NULL, 0), (uint8_t*)&header_.inner_header, sizeof(stored::BlockInnerHeader)));
+  uint32_t checksum = static_cast<uint32_t>(crc32(
+      crc32(0L, Z_NULL, 0), (uint8_t*)&header_.inner_header, sizeof(stored::BlockInnerHeader)));
   assert(checksum == header_.inner_header_crc32);
 
   io_bytes_left_ = header_.inner_header.data_size;
@@ -615,6 +617,7 @@ BlockBuffer BlockReader::ReadBlock() {
 
 class BaseParser {
  public:
+  virtual ~BaseParser() = default;
   virtual bool Probe(int fd) const = 0;
   virtual void Parse(int fd) = 0;
   virtual ChecksumMethod checksum_method() const = 0;
@@ -624,14 +627,10 @@ class BaseParser {
   const std::vector<File>& files() const { return files_; }
 
  protected:
-  void ReadStoredStruct(BlockBufferIO& bbio,
-                        void* out_data,
-                        size_t data_size,
-                        size_t n_unicode,
-                        size_t n_ascii,
-                        std::vector<std::string>* out_strings) const {
-    static std::wstring_convert<std::codecvt_utf8_utf16<std::u16string::value_type>, std::u16string::value_type>
-        string_codec;
+  void ReadStoredStruct(BlockBufferIO& bbio, void* out_data, size_t data_size, size_t n_unicode,
+                        size_t n_ascii, std::vector<std::string>* out_strings) const {
+    static std::wstring_convert<std::codecvt_utf8_utf16<std::u16string::value_type>,
+                                std::u16string::value_type> string_codec;
 
     size_t string_index = 0;
     for (size_t iter = 0; iter != n_unicode; ++iter, ++string_index) {
@@ -643,9 +642,11 @@ class BaseParser {
         }
         continue;
       }
-      auto string = reinterpret_cast<std::u16string::value_type const*>(bbio.GetReadPtrAndAdvance(l));
+      auto string =
+          reinterpret_cast<std::u16string::value_type const*>(bbio.GetReadPtrAndAdvance(l));
       if (out_strings) {
-        auto string_end = reinterpret_cast<std::u16string::value_type const*>(bbio.GetReadPtrAndAdvance(0));
+        auto string_end =
+            reinterpret_cast<std::u16string::value_type const*>(bbio.GetReadPtrAndAdvance(0));
         auto string_utf8 = string_codec.to_bytes(string, string_end);
         out_strings->emplace_back(string_utf8);
       }
@@ -681,11 +682,10 @@ template <typename Version>
 class Parser : public BaseParser {
  private:
   template <typename StoredStruct>
-  void ReadStoredStruct(BlockBufferIO& bbio, StoredStruct* out_struct, bool store_strings = false) const {
-    BaseParser::ReadStoredStruct(bbio,
-                                 (out_struct) ? &out_struct->data : nullptr,
-                                 sizeof(out_struct->data),
-                                 StoredStruct::N_UNICODE_STRINGS,
+  void ReadStoredStruct(BlockBufferIO& bbio, StoredStruct* out_struct,
+                        bool store_strings = false) const {
+    BaseParser::ReadStoredStruct(bbio, (out_struct) ? &out_struct->data : nullptr,
+                                 sizeof(out_struct->data), StoredStruct::N_UNICODE_STRINGS,
                                  StoredStruct::N_ASCII_STRINGS,
                                  (out_struct && store_strings) ? &out_struct->strings : nullptr);
   }
@@ -743,7 +743,8 @@ class Parser : public BaseParser {
     block_reader = std::unique_ptr<BlockReader>(new BlockReader(fd, file_location_block_offset));
     auto file_location_block_buffer = block_reader->ReadBlock();
     bbio.Reset(&file_location_block_buffer);
-    auto file_locations = std::vector<typename Version::FileLocation>(setup_header.data.file_location_count);
+    auto file_locations =
+        std::vector<typename Version::FileLocation>(setup_header.data.file_location_count);
     for (uint32_t i = 0; i != setup_header.data.file_location_count; ++i) {
       ReadStoredStruct(bbio, &file_locations[i]);
     }
@@ -752,12 +753,14 @@ class Parser : public BaseParser {
       auto& fe = file_entries[index];
       auto& filename = fe.strings[stored::File::FILENAME_STRING_INDEX];
 
-      if (filename.size() < 4)
+      if (filename.size() < 4) {
         continue;
+      }
       const char* extension = &filename[filename.size() - 4];
       if (extension[0] != '.' || tolower(extension[1]) != 'm' || tolower(extension[2]) != 'h' ||
-          tolower(extension[3]) != 'k')
+          tolower(extension[3]) != 'k') {
         continue;
+      }
 
       assert(fe.data.file_location_index != UINT32_MAX);
 
@@ -786,6 +789,7 @@ class Parser : public BaseParser {
 #pragma mark -
 
 struct ChecksumEngine {
+  virtual ~ChecksumEngine() = default;
   virtual void Initialize() = 0;
   virtual void Update(void* data, size_t size) = 0;
   virtual void Finalize(File::Checksum& checksum) = 0;
@@ -794,8 +798,12 @@ struct ChecksumEngine {
 
 struct MD5Engine : public ChecksumEngine {
   virtual void Initialize() override { CC_MD5_Init(&ctx_); }
-  virtual void Update(void* data, size_t size) override { CC_MD5_Update(&ctx_, data, CC_LONG(size)); }
-  virtual void Finalize(File::Checksum& checksum) override { CC_MD5_Final(checksum.md5_.data, &ctx_); }
+  virtual void Update(void* data, size_t size) override {
+    CC_MD5_Update(&ctx_, data, CC_LONG(size));
+  }
+  virtual void Finalize(File::Checksum& checksum) override {
+    CC_MD5_Final(checksum.md5_.data, &ctx_);
+  }
   virtual bool Equal(const File::Checksum& lhs, const File::Checksum& rhs) const override {
     return memcmp(lhs.md5_.data, rhs.md5_.data, sizeof(lhs.md5_.data)) == 0;
   }
@@ -804,8 +812,12 @@ struct MD5Engine : public ChecksumEngine {
 
 struct SHA1Engine : public ChecksumEngine {
   virtual void Initialize() override { CC_SHA1_Init(&ctx_); }
-  virtual void Update(void* data, size_t size) override { CC_SHA1_Update(&ctx_, data, CC_LONG(size)); }
-  virtual void Finalize(File::Checksum& checksum) override { CC_SHA1_Final(checksum.sha1_.data, &ctx_); }
+  virtual void Update(void* data, size_t size) override {
+    CC_SHA1_Update(&ctx_, data, CC_LONG(size));
+  }
+  virtual void Finalize(File::Checksum& checksum) override {
+    CC_SHA1_Final(checksum.sha1_.data, &ctx_);
+  }
   virtual bool Equal(const File::Checksum& lhs, const File::Checksum& rhs) const override {
     return memcmp(lhs.sha1_.data, rhs.sha1_.data, sizeof(lhs.sha1_.data)) == 0;
   }
@@ -816,7 +828,7 @@ struct SHA1Engine : public ChecksumEngine {
 
 class FileWriter : public LzmaDecompressor::IO {
  public:
-  typedef std::function<void(FileWriter& writer, ssize_t bytes_written)> ProgressCallback;
+  typedef std::function<void(ssize_t bytes_written)> ProgressCallback;
 
   FileWriter(int input_fd, const BaseParser* parser, ProgressCallback callback);
 
@@ -854,7 +866,10 @@ class FileWriter : public LzmaDecompressor::IO {
 };
 
 FileWriter::FileWriter(int in_fd, const BaseParser* parser, ProgressCallback callback)
-    : callback_(callback), in_fd_(in_fd), base_in_offset_(parser->file_data_offset()), decompressor_(*this) {
+    : callback_(callback),
+      in_fd_(in_fd),
+      base_in_offset_(parser->file_data_offset()),
+      decompressor_(*this) {
   auto checksum_method = parser->checksum_method();
   assert(checksum_method == ChecksumMethod::MD5 || checksum_method == ChecksumMethod::SHA1);
   if (checksum_method == ChecksumMethod::MD5) {
@@ -864,7 +879,8 @@ FileWriter::FileWriter(int in_fd, const BaseParser* parser, ProgressCallback cal
   }
 
   auto compression_method = parser->compression_method();
-  assert(compression_method == CompressionMethod::LZMA || compression_method == CompressionMethod::LZMA2);
+  assert(compression_method == CompressionMethod::LZMA ||
+         compression_method == CompressionMethod::LZMA2);
   if (parser->compression_method() == CompressionMethod::LZMA) {
     lzma_filter_ = LZMA_FILTER_LZMA1;
   } else {
@@ -898,15 +914,14 @@ void FileWriter::ConsumeLzmaStream(lzma_stream& stream, bool final) {
   stream.avail_out = sizeof(out_buffer_);
   stream.next_out = out_buffer_;
 
-  if (bytes_to_write <= 0 || stream.total_out == 0)
-    return;
+  if (bytes_to_write <= 0 || stream.total_out == 0) return;
 
   ssize_t bytes_written = write(out_fd_, out_buffer_, bytes_to_write);
   assert(bytes_written == bytes_to_write);
 
   checksum_engine_->Update(out_buffer_, bytes_to_write);
 
-  callback_(*this, bytes_written);
+  callback_(bytes_written);
 }
 
 void FileWriter::Write(const File& file, int out_fd) {
@@ -936,7 +951,7 @@ static std::atomic_flag cout_lock = ATOMIC_FLAG_INIT;
 
 static void WriterThread(const int fd, const BaseParser* parser, const std::vector<File>& files) {
   auto writer = std::unique_ptr<FileWriter>(new FileWriter(
-      fd, parser, [&](FileWriter& writer, ssize_t bytes_written) { global_bytes_written += bytes_written; }));
+      fd, parser, [&](ssize_t bytes_written) { global_bytes_written += bytes_written; }));
 
   size_t local_index;
   while ((local_index = global_file_index++) < files.size()) {
