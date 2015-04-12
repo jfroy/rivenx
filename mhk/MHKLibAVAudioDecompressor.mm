@@ -18,7 +18,8 @@
 
 static const size_t IO_BUFFER_SIZE = 0x1000;
 
-static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd, const AVSampleFormat format) {
+static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
+                                    const AVSampleFormat format) {
   size_t sample_size = 0;
   if (format == AV_SAMPLE_FMT_FLT || format == AV_SAMPLE_FMT_FLTP) {
     asbd.mFormatFlags |= kAudioFormatFlagIsFloat;
@@ -168,7 +169,9 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd, const AVS
   }
   debug_assert((codec->capabilities & CODEC_CAP_DELAY) == 0);
 
-  if (![self _resetAdpcmCodecContext:codec sampleRate:sdesc.sampleRate channelCount:sdesc.channelCount]) {
+  if (![self _resetAdpcmCodecContext:codec
+                          sampleRate:sdesc.sampleRate
+                        channelCount:sdesc.channelCount]) {
     return NO;
   }
 
@@ -267,29 +270,25 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd, const AVS
   if (_formatContext) {
     g_libav.avio_seek(_formatContext->pb, 0, SEEK_SET);
     g_libav.av_free_packet(&_packet);
-  } else {
-    [_fileHandle seekToFileOffset:0];
-    _packet.size = 0;
-  }
-
-  if (_formatContext) {
     g_libav.avcodec_flush_buffers(_formatContext->streams[0]->codec);
   } else {
     // the adpcm codec can't seek, we need to tear it down
+    [_fileHandle seekToFileOffset:0];
+    _packet.size = 0;
     [self _resetAdpcmCodecContext:_adpcmCodecContext->codec
                        sampleRate:(uint16_t)_outputFormat.mSampleRate
                      channelCount:(uint8_t)_outputFormat.mChannelsPerFrame];
   }
 
-  _framePosition = 0;
-
   g_libav.av_frame_unref(_frame);
   _frameCursor = 0;
+  _framePosition = 0;
 }
 
 - (uint32_t)fillAudioBufferList:(AudioBufferList*)abl {
   debug_assert(abl);
-  debug_assert(abl->mNumberBuffers == (_outputFormat.mFormatFlags & kAudioFormatFlagIsNonInterleaved)
+  debug_assert(abl->mNumberBuffers ==
+                       (_outputFormat.mFormatFlags & kAudioFormatFlagIsNonInterleaved)
                    ? _outputFormat.mChannelsPerFrame
                    : 1);
 #if DEBUG
@@ -312,11 +311,13 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd, const AVS
 - (uint32_t)_outputFrames:(AudioBufferList*)abl cursor:(uint32_t)cursor left:(uint32_t)left {
   // if there are no frames available, decode the next packet
   debug_assert((uint32_t)_frame->nb_samples >= _frameCursor);
-  auto decoded_frame_count = std::min(_frame->nb_samples - _frameCursor, uint32_t(_frameCount - _framePosition));
+  auto decoded_frame_count =
+      std::min(_frame->nb_samples - _frameCursor, uint32_t(_frameCount - _framePosition));
   if (decoded_frame_count == 0) {
     [self _decodePacket];
     _frameCursor = (_framePosition == 0) ? _firstPacketFrameDelay : 0;
-    decoded_frame_count = std::min(_frame->nb_samples - _frameCursor, uint32_t(_frameCount - _framePosition));
+    decoded_frame_count =
+        std::min(_frame->nb_samples - _frameCursor, uint32_t(_frameCount - _framePosition));
   }
 
   // copy min(frames we can store, frames we have)
@@ -333,7 +334,8 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd, const AVS
 
     debug_assert(rx::BUFFER_OFFSET(out_ptr, frame_bytes) <=
                  rx::BUFFER_OFFSET(abl->mBuffers[i].mData, abl->mBuffers[i].mDataByteSize));
-    debug_assert(rx::BUFFER_OFFSET(in_ptr, frame_bytes) <= rx::BUFFER_OFFSET(_frame->data[i], _frame->linesize[0]));
+    debug_assert(rx::BUFFER_OFFSET(in_ptr, frame_bytes) <=
+                 rx::BUFFER_OFFSET(_frame->data[i], _frame->linesize[0]));
 
     memcpy(out_ptr, in_ptr, frame_bytes);
   }
@@ -358,7 +360,8 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd, const AVS
       debug_assert(_packet.stream_index == 0);
     } else {
       _packet.data = _packet.buf->data;
-      _packet.size = (int)[_fileHandle readDataOfLength:IO_BUFFER_SIZE inBuffer:_packet.data error:nullptr];
+      _packet.size =
+          (int)[_fileHandle readDataOfLength:IO_BUFFER_SIZE inBuffer:_packet.data error:nullptr];
       if (_packet.size <= 0) {
         return;
       }
