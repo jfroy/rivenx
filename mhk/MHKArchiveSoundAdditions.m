@@ -80,7 +80,7 @@
     ReturnValueWithError(nil, MHKErrorDomain, errDamagedResource, nil, outError);
   }
 
-  // loop until we find the Data chunk of we exceed the limits of this resource
+  // loop until we find the Data chunk or we exceed the limits of this resource
   MHK_chunk_header wav_chunk_header;
   do {
     // read a chunk header structure
@@ -121,7 +121,8 @@
 
   // sample data takes the rest of the Data chunk
   // NOTE: for whatever reason, the Data chunk's content_length *includes* the chunk header size
-  ssize_t samples_length = wav_chunk_header.content_length - (sizeof(MHK_chunk_header) + sizeof(MHK_WAVE_Data_header));
+  ssize_t samples_length =
+      wav_chunk_header.content_length - (sizeof(MHK_chunk_header) + sizeof(MHK_WAVE_Data_header));
 
   // consistency checks
   if (samples_offset + samples_length > resource_eof) {
@@ -134,13 +135,9 @@
 
 #if defined(DEBUG) && DEBUG > 2
   fprintf(stderr, "samples offset: 0x%qx\n", samples_offset);
-  fprintf(stderr,
-          "sample rate: %u, frames: %u, bit depth: %d, channels: %d, compression: %u\n",
-          data_header.sampling_rate,
-          data_header.frame_count,
-          data_header.bit_depth,
-          data_header.channel_count,
-          data_header.compression_type);
+  fprintf(stderr, "sample rate: %u, frames: %u, bit depth: %d, channels: %d, compression: %u\n",
+          data_header.sampling_rate, data_header.frame_count, data_header.bit_depth,
+          data_header.channel_count, data_header.compression_type);
 #endif
 
   // create, cache and return the sound descriptor
@@ -182,7 +179,9 @@
   }
 
   // create and return a decompressor
-  return [[[MHKLibAVAudioDecompressor alloc] initWithSoundDescriptor:sdesc fileHandle:fh error:outError] autorelease];
+  return [[[MHKLibAVAudioDecompressor alloc] initWithSoundDescriptor:sdesc
+                                                          fileHandle:fh
+                                                               error:outError] autorelease];
 }
 
 @end
