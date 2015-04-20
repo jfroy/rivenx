@@ -16,6 +16,12 @@ static void assert_empty_rp(const queue::range_pair& rp) {
   release_assert(rp.first.first == rp.first.second && rp.second.first == rp.second.second);
 }
 
+static void assert_one_elem_rp(const queue::range_pair& rp, const queue::value_type& v) {
+  release_assert(rp.first.first + 1 == rp.first.second);
+  release_assert(*rp.first.first == v);
+  release_assert(rp.second.first == rp.second.second);
+}
+
 static void test_enqueue_noresize() {
   queue q;
   auto val = re();
@@ -39,7 +45,7 @@ static void test_enqueue_peek() {
   auto val = re();
   release_assert(q.try_enqueue(val));
   auto rp = q.dequeue_peek();
-  release_assert(*rp.first.first == val);
+  assert_one_elem_rp(rp, val);
 }
 
 static void test_enqueue_peek_enqueue() {
@@ -48,7 +54,7 @@ static void test_enqueue_peek_enqueue() {
   auto val = re();
   release_assert(q.try_enqueue(val));
   auto rp = q.dequeue_peek();
-  release_assert(*rp.first.first == val);
+  assert_one_elem_rp(rp, val);
   release_assert(q.try_enqueue(val) == false);
 }
 
@@ -58,7 +64,7 @@ static void test_enqueue_peek_consume_peak() {
   auto val = re();
   release_assert(q.try_enqueue(val));
   auto rp = q.dequeue_peek();
-  release_assert(*rp.first.first == val);
+  assert_one_elem_rp(rp, val);
   q.dequeue_consume();
   rp = q.dequeue_peek();
   assert_empty_rp(rp);
@@ -70,7 +76,7 @@ static void test_enqueue_peek_consume_enqueue() {
   auto val = re();
   release_assert(q.try_enqueue(val));
   auto rp = q.dequeue_peek();
-  release_assert(*rp.first.first == val);
+  assert_one_elem_rp(rp, val);
   q.dequeue_consume();
   release_assert(q.try_enqueue(val));
 }
@@ -89,9 +95,9 @@ static void test_peek_twice() {
   auto val = re();
   release_assert(q.try_enqueue(val));
   auto rp = q.dequeue_peek();
-  release_assert(*rp.first.first == val);
+  assert_one_elem_rp(rp, val);
   rp = q.dequeue_peek();
-  release_assert(*rp.first.first == val);
+  assert_one_elem_rp(rp, val);
 }
 
 int main(int argc, const char* argv[]) {
