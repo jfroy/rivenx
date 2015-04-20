@@ -1,127 +1,149 @@
-//
-//  RXAudioRenderer.h
-//  rivenx
-//
-//  Created by Jean-Francois Roy on 15/02/2006.
-//  Copyright 2005-2012 MacStorm. All rights reserved.
-//
+// Copyright 2005 Jean-Francois Roy. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#if !defined(_RXAudioRenderer_)
-#define _RXAudioRenderer_
+#pragma once
 
-#include <stdint.h>
+#include <array>
+#include <atomic>
+#include <bitset>
+#include <chrono>
+#include <memory>
 #include <vector>
 
-#include <CoreFoundation/CoreFoundation.h>
-
-#include <AudioUnit/AudioUnit.h>
 #include <AudioToolbox/AudioToolbox.h>
 
-#include "Rendering/Audio/PublicUtility/CAAudioUnit.h"
-#include "Rendering/Audio/PublicUtility/CAGuard.h"
-#include "Rendering/Audio/PublicUtility/CAThreadSafeList.h"
-#include "Rendering/Audio/PublicUtility/CAXException.h"
+#include "base/atomic/pc_queue.h"
 
-namespace RX {
+class CAAudioUnit;
 
-class AudioSourceBase;
+namespace rx {
 
+// The audio engine for Riven X.
+//
+// Fundamentally manages an AUGraph that outputs to the default audio device. Each element (aka bus
+// or voice) has enabled, gain and pan parameters that can be set or ramped. When an element is
+// not enabled, its parameter ramps are not update each render cycle and samples are not processed
+// from its submitted buffers.
+//
+// The renderer maintains a pool of buffers for each element. To submit audio to an element, get
+// a buffer, fill it with samples and submit it. The buffer format is set when an element is
+// acquired.
+//
+// The engine is not bound to any thread but must not be used concurrently. The one exception to
+// this rule are element buffer dequeue and enqueue operations, which are independent for each
+// element. In other words, buffers can be obtained and submitted concurrently across all elements,
+// but serially for a given element.
 class AudioRenderer {
-public:
-  AudioRenderer() noexcept(false);
-  ~AudioRenderer() noexcept(false);
+ public:
+  using milliseconds = std::chrono::milliseconds;
+
+  struct ParameterEdit {
+    AudioUnitElement element;
+    float value;
+    milliseconds duration;
+  };
+  using ParameterEditArray = std::vector<ParameterEdit>;
+
+  const static uint32_t ELEMENT_LIMIT{16};
+  const static AudioUnitElement INVALID_ELEMENT{std::numeric_limits<AudioUnitElement>::max()};
+
+  AudioRenderer() noexcept;
+  ~AudioRenderer() noexcept;
 
   // accessors to underlying graph and mixer
-  inline AUGraph Graph() const noexcept { return graph; }
-  inline const CAAudioUnit& Mixer() const noexcept { return *mixer; }
+  inline AUGraph Graph() const noexcept { return graph_; }
+  inline const CAAudioUnit& Mixer() const noexcept { return *mixer_; }
 
-  // costly operation to prime the graph for rendering
-  void Initialize() noexcept(false);
-  bool IsInitialized() const noexcept(false);
+  // Maximum number of audio frames per render cycle. Undefined until after |Initialize|.
+  uint32_t MaxFramesPerCycle() const noexcept { return max_frames_per_slice_; }
+
+  // expensive one-time initialization
+  void Initialize() noexcept;
+  bool IsInitialized() const noexcept;
 
   // rendering control
-  void Start() noexcept(false);
-  void Stop() noexcept(false);
-  bool IsRunning() const noexcept(false);
+  void Start() noexcept;
+  void Stop() noexcept;
+  bool IsRunning() const noexcept;
 
-  // gain control on the final mix going to the output device
-  Float32 Gain() const noexcept(false);
-  void SetGain(Float32 gain) noexcept(false);
+  // output gain; linear response
+  float gain() const noexcept;
+  void set_gain(float gain) noexcept;
 
-  // graph management
-  inline bool AutomaticGraphUpdates() const noexcept { return _automaticGraphUpdates; }
-  void SetAutomaticGraphUpdates(bool b) noexcept;
+  // update coalescing control; affects source attach, detach and parameter edits while running
+  inline bool automatic_commits() const noexcept {
+    return automatic_commits_.load(std::memory_order_relaxed);
+  }
+  void set_automatic_commits(bool automatic_commits) noexcept {
+    automatic_commits_.store(automatic_commits, std::memory_order_relaxed);
+  }
 
-  inline uint32_t AvailableMixerBusCount() const noexcept { return sourceLimit - sourceCount; }
+  // Acquire an element and set its buffer format. Return the element or INVALID_ELEMENT on error
+  // (typically this will mean there are no element lefts or the format is not valid). Any parameter
+  // ramps are cancelled and the element parameters are reset to defaults.
+  AudioUnitElement AcquireElement(const AudioStreamBasicDescription& asbd) noexcept;
+  void ReleaseElement(AudioUnitElement element) noexcept;
 
-  // source management
-  bool AttachSource(AudioSourceBase& source) noexcept(false);
-  void DetachSource(AudioSourceBase& source) noexcept(false);
+  // Element parameters. Values have a linear response (appropriate curves are applied internally).
 
-  UInt32 AttachSources(CFArrayRef sources) noexcept(false);
-  void DetachSources(CFArrayRef sources) noexcept(false);
+  float ElementGain(AudioUnitElement element) const noexcept;
+  void SetElementGain(AudioUnitElement element, float gain,
+                      milliseconds duration = milliseconds{0}) noexcept {
+    ScheduleGainEdits({{element, gain, duration}});
+  }
 
-  // source parameter
-  Float32 SourceGain(AudioSourceBase& source) const noexcept(false);
-  Float32 SourcePan(AudioSourceBase& source) const noexcept(false);
+  float ElementPan(AudioUnitElement element) const noexcept;
+  void SetElementPan(AudioUnitElement element, float pan,
+                     milliseconds duration = milliseconds{0}) noexcept {
+    SchedulePanEdits({{element, pan, duration}});
+  }
 
-  void SetSourceGain(AudioSourceBase& source, Float32 gain) noexcept(false);
-  void SetSourcePan(AudioSourceBase& source, Float32 pan) noexcept(false);
+  void ScheduleGainEdits(const ParameterEditArray& edits) noexcept;
+  void SchedulePanEdits(const ParameterEditArray& edits) noexcept;
 
-  // source parameter ramping
-  void RampSourceGain(AudioSourceBase& source, Float32 value, Float64 duration) noexcept(false);
-  void RampSourcePan(AudioSourceBase& source, Float32 value, Float64 duration) noexcept(false);
+ private:
+  using seconds_f = std::chrono::duration<double, std::chrono::seconds::period>;
+  using RampArray = std::array<decltype(AudioUnitParameterEvent::eventValues.ramp), ELEMENT_LIMIT>;
+  using ParameterEditQueue = atomic::FixedSinglePCQueue<ParameterEdit>;
 
-  void RampSourcesGain(CFArrayRef sources, Float32 value, Float64 duration) noexcept(false);
-  void RampSourcesPan(CFArrayRef sources, Float32 value, Float64 duration) noexcept(false);
+  AudioRenderer(const AudioRenderer&) = delete;
+  AudioRenderer& operator=(const AudioRenderer&) = delete;
 
-  void RampSourcesGain(CFArrayRef sources, std::vector<Float32> values, std::vector<Float64> durations) noexcept(false);
-  void RampSourcesPan(CFArrayRef sources, std::vector<Float32> values, std::vector<Float64> durations) noexcept(false);
+  OSStatus MixerPreRenderNotify(const AudioTimeStamp* in_timestamp, uint32_t in_bus,
+                                uint32_t in_frames, AudioBufferList* io_data) noexcept;
+  void ApplyEdits(const AudioTimeStamp& timestamp, uint32_t in_frames,
+                  AudioUnitParameterID parameter, typename ParameterEditQueue::range_pair rp,
+                  RampArray& ramps) noexcept;
+  void ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_frames,
+                  AudioUnitParameterID parameter, RampArray& ramps) noexcept;
 
-private:
-  static OSStatus MixerRenderNotifyCallback(void* inRefCon, AudioUnitRenderActionFlags* ioActionFlags, const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber,
-                                            UInt32 inNumberFrames, AudioBufferList* ioData);
+  void CreateGraph() noexcept;
+  void DestroyGraph() noexcept;
 
-  AudioRenderer(const AudioRenderer& c);
-  AudioRenderer& operator=(const AudioRenderer& c) { return *this; }
+  template <typename Transform>
+  void ScheduleEdits(const ParameterEditArray& edits, ParameterEditQueue& edits_queue) noexcept;
 
-  void RampMixerParameter(CFArrayRef sources, AudioUnitParameterID parameter_id, std::vector<Float32>& values,
-                          std::vector<Float64>& durations) noexcept(false);
+  static OSStatus MixerRenderNotifyCallback(void* in_renderer,
+                                            AudioUnitRenderActionFlags* inout_action_flags,
+                                            const AudioTimeStamp* in_timestamp, uint32_t in_bus,
+                                            uint32_t in_frames, AudioBufferList* io_data) noexcept;
 
-  OSStatus MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) noexcept;
-  OSStatus MixerPostRenderNotify(const AudioTimeStamp* inTimeStamp, UInt32 inBusNumber, AudioBufferList* ioData) noexcept;
+  AUGraph graph_{nullptr};
+  std::unique_ptr<CAAudioUnit> output_{nullptr};
+  std::unique_ptr<CAAudioUnit> mixer_{nullptr};
+  uint32_t max_frames_per_slice_{0};
 
-  void CreateGraph();
-  void TeardownGraph();
-  bool _must_update_graph_predicate() noexcept(false);
+  std::array<AUNode, ELEMENT_LIMIT> converters_;
+  std::bitset<ELEMENT_LIMIT> element_allocations_;
 
-  struct ParameterRampDescriptor {
-    const AudioSourceBase* source;
-    AudioUnitParameterEvent event;
-    AudioTimeStamp start;
-    AudioTimeStamp previous;
-    uint64_t generation;
+  RampArray gain_ramps_;
+  RampArray pan_ramps_;
 
-    bool operator==(const ParameterRampDescriptor& other) const
-    { return this->event.element == other.event.element && this->event.parameter == other.event.parameter && this->generation == other.generation; }
-  };
+  ParameterEditQueue pending_gain_edits_;
+  ParameterEditQueue pending_pan_edits_;
 
-  uint64_t pending_ramp_generation;
-  TThreadSafeList<ParameterRampDescriptor> pending_ramps;
-  TThreadSafeList<ParameterRampDescriptor> active_ramps;
-
-  AUGraph graph;
-  CAAudioUnit* output;
-  CAAudioUnit* mixer;
-  bool _automaticGraphUpdates;
-  bool _graphUpdateNeeded;
-
-  UInt32 sourceLimit;
-  UInt32 sourceCount;
-
-  std::vector<AUNode>* busNodeVector;
-  std::vector<bool>* busAllocationVector;
+  std::atomic<bool> automatic_commits_{true};
+  std::atomic<int32_t> graph_updates_requested_{0};
 };
-}
 
-#endif // _RXAudioRenderer
+}  // namespace rx {
