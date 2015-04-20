@@ -85,6 +85,21 @@ AUOutputBL::~AUOutputBL()
 		delete [] (Byte *)mBufferList;
 }
 
+AUOutputBL::AUOutputBL (AUOutputBL&& c)
+		: mFormat (c.mFormat),
+		  mBufferMemory(c.mBufferMemory),
+		  mBufferList (c.mBufferList),
+		  mNumberBuffers (c.mNumberBuffers),
+		  mBufferSize (c.mBufferSize),
+		  mFrames(c.mFrames) {
+  c.mFormat = CAStreamBasicDescription();
+  c.mBufferMemory = nullptr;
+  c.mBufferList = nullptr;
+  c.mNumberBuffers = 0;
+  c.mBufferSize = 0;
+  c.mFrames = 0;
+}
+
 void 	AUOutputBL::Prepare (UInt32 inNumFrames, bool inWantNullBufferIfAllocated) 
 {
 	UInt32 channelsPerBuffer = mFormat.IsInterleaved() ? mFormat.NumberChannels() : 1;

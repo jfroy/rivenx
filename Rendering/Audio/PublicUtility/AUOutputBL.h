@@ -72,6 +72,8 @@ public:
 										AUOutputBL (const CAStreamBasicDescription &inDesc, UInt32 inDefaultNumFrames = 512);
 										~AUOutputBL();
 
+                    AUOutputBL (AUOutputBL&& c);
+
 	void 								Prepare ()
 										{
 											Prepare (mFrames);
@@ -110,9 +112,9 @@ private:
 	UInt32						mFrames;
 
 // don't want to copy these.. can if you want, but more code to write!
-	AUOutputBL () {}
-	AUOutputBL (const AUOutputBL &c);
-	AUOutputBL& operator= (const AUOutputBL& c);
+	AUOutputBL () = delete;
+	AUOutputBL (const AUOutputBL &c) = delete;
+	AUOutputBL& operator= (const AUOutputBL& c) = delete;
 };
 
 #endif // __AUOutputBL_h__

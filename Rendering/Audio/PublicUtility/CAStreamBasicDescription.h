@@ -323,7 +323,7 @@ public:
 			&& mBytesPerPacket == reqFrameSize);
 	}
 	
-	void	SetAUCanonical(UInt32 nChannels, bool interleaved)
+	void	SetAUCanonical(UInt32 nChannels, bool interleaved) CA_CANONICAL_DEPRECATED
 	{
 		mFormatID = kAudioFormatLinearPCM;
 #if CA_PREFER_FIXED_POINT

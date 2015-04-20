@@ -184,7 +184,7 @@ void		CAAUParameter::Init (AudioUnit au, AudioUnitParameterID param, AudioUnitSc
 									&mNamedParams, 
 									&propertySize);
 				if (!err && mNamedParams) {
-					mNumIndexedParams = CFArrayGetCount(mNamedParams);
+					mNumIndexedParams = short(CFArrayGetCount(mNamedParams));
 				} else {
 						//these are inclusive, so add one value here
 					mNumIndexedParams = short(mParamInfo.maxValue+1 - mParamInfo.minValue);
@@ -224,7 +224,7 @@ Float32		CAAUParameter::GetValue() const
 	return value;
 }
 
-CFStringRef CreateLocalizedStringForParameterValue ( double					inParameterValue,
+static CFStringRef CreateLocalizedStringForParameterValue ( double					inParameterValue,
 													 const CAAUParameter *	inParameter,
 													 UInt32					inDigits,
 													 UInt32					minDigits) {	
@@ -282,13 +282,13 @@ CFStringRef CreateLocalizedStringForParameterValue ( double					inParameterValue
 	return formattedNumberString;
 }
 
-CFStringRef CreateLocalizedStringForParameterValue ( double					inParameterValue,
+static CFStringRef CreateLocalizedStringForParameterValue ( double					inParameterValue,
 													 const CAAUParameter *	inParameter,
 													 UInt32					inDigits) {	
 	return CreateLocalizedStringForParameterValue (inParameterValue, inParameter, inDigits, 1);
 }
 
-double ValueForLocalizedParameterString (CFStringRef string, const CAAUParameter * inParameter) {
+static double ValueForLocalizedParameterString (CFStringRef string, const CAAUParameter * inParameter) {
 	CFLocaleRef currentLocale = CFLocaleCopyCurrent(); 
 	CFNumberFormatterRef numberFormatter = CFNumberFormatterCreate (NULL, currentLocale, kCFNumberFormatterDecimalStyle);
 
