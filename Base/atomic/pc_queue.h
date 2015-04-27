@@ -48,19 +48,32 @@ class FixedSinglePCQueue : public noncopyable {
   static const int CACHE_LINE_SIZE = 64;
 
   FixedSinglePCQueue() = default;
+  ~FixedSinglePCQueue() { Resize(0); }
 
   // Resize the queue to the specified capacity. No memory allocation will be performed beyond this
   // operation. Passing 0 will deallocate all memory. Not thread safe at all.
-  void resize(size_t capacity) {
+  void Resize(size_t capacity) {
     pointer begin, end;
 
-    buffer_.clear();
+    if (buffer_) {
+      // Dequeue and consume twice to ensure other_ptr_cache is updated and all existing elements
+      // are destroyed.
+      DequeuePeek();
+      DequeueConsume();
+      DequeuePeek();
+      DequeueConsume();
+
+      // Free the value buffer.
+      free(buffer_);
+      buffer_ = nullptr;
+    }
     if (capacity > 0) {
-      buffer_.resize(capacity + 1);
-      begin = &buffer_.front();
-      end = &buffer_.back() + 1;
+      size_t bsize = sizeof(value_type) * (capacity + 1);
+      buffer_ = static_cast<char*>(malloc(bsize));
+      debug_assert(reinterpret_cast<uintptr_t>(buffer_) % alignof(value_type) == 0);
+      begin = reinterpret_cast<pointer>(buffer_);
+      end = reinterpret_cast<pointer>(buffer_ + bsize);
     } else {
-      buffer_.shrink_to_fit();
       begin = nullptr;
       end = nullptr;
     }
@@ -80,9 +93,9 @@ class FixedSinglePCQueue : public noncopyable {
 
   // Try to enqueue the element. Returns false if the operation can't be completed (for example if
   // there is not enough space).
-  bool try_enqueue(T const& element) {
+  bool TryEnqueue(T const& element) {
     // FIXME: optimize single element enqueue by replacing the range calculation and copy path.
-    return try_enqueue(&element, 1);
+    return TryEnqueue(&element, 1);
   }
 
   // Try to enqueue elements in the range [first, last). Returns false if the operation can't be
@@ -90,8 +103,8 @@ class FixedSinglePCQueue : public noncopyable {
   // this is all or nothing. If at all possible, use an iterator type that has good std::distance
   // and forward iteration performance.
   template <typename Iter>
-  bool try_enqueue(Iter first, Iter last) {
-    return try_enqueue(first, std::distance(first, last));
+  bool TryEnqueue(Iter first, Iter last) {
+    return TryEnqueue(first, std::distance(first, last));
   }
 
   // Try to enqueue elements in the range [first, first + nelements). Returns false if the operation
@@ -99,7 +112,7 @@ class FixedSinglePCQueue : public noncopyable {
   // attempted, this is all or nothing. If at all possible, use an iterator type that has good
   // forward iteration performance.
   template <typename Iter>
-  bool try_enqueue(Iter first, ssize_t nelements) {
+  bool TryEnqueue(Iter iter, ssize_t nelements) {
     // Return true in the degenerate 0 case.
     if (nelements == 0) {
       return true;
@@ -109,13 +122,13 @@ class FixedSinglePCQueue : public noncopyable {
     // Generally speaking, the enqueue pointer cannot move forward past the dequeue pointer. Remove
     // one slot from the end of the range to avoid the "empty or full" state overlap.
     pointer enqueue_ptr;
-    auto available = right_left_available_weak(enqueue_, enqueue_ptr);
+    auto available = RightLeftAvailable(enqueue_, enqueue_ptr);
 
     // If there is not enough space for all the elements, update the other pointer by loading from
     // the dequeue cache line and calculate again.
     if (available.first + available.second < nelements + 1) {
       enqueue_.other_ptr_cache = dequeue_.ptr.load(std::memory_order_relaxed);
-      available = right_left_available_weak(enqueue_, enqueue_ptr);
+      available = RightLeftAvailable(enqueue_, enqueue_ptr);
     }
 
     // If there is still not enough space, fail the entire transaction.
@@ -128,13 +141,13 @@ class FixedSinglePCQueue : public noncopyable {
 
     // Copy elements from the input iterator starting with the right (i.e. forward) range.
     auto ncopy = std::min(available.first, nelements);
-    pointer new_enqueue_ptr = std::copy_n(first, ncopy, enqueue_ptr);
+    pointer new_enqueue_ptr = std::uninitialized_copy_n(iter, ncopy, enqueue_ptr);
 
     // Copy the remainder of the input (if any) in the left (i.e. behind) range.
     if (ncopy < nelements) {
-      std::advance(first, ncopy);
+      std::advance(iter, ncopy);
       ncopy = nelements - ncopy;
-      new_enqueue_ptr = std::copy_n(first, ncopy, enqueue_.begin);
+      new_enqueue_ptr = std::uninitialized_copy_n(iter, ncopy, enqueue_.begin);
     }
 
     // Prevent all preceding memory operations from being reordered past subsequent writes.
@@ -150,7 +163,7 @@ class FixedSinglePCQueue : public noncopyable {
   // Return the range of elements that can be dequeued. First only looks at the dequeue cache line.
   // If the range is empty, the enqueue cache line is read. Does not update the dequeue cache line
   // (i.e. does not consume the elements).
-  const range_pair& dequeue_peek() {
+  const range_pair& DequeuePeek() {
     // Calculate the number of available elements on the right and left of the dequeue pointer.
     // Generally speaking, the dequeue pointer cannot move forward past the enqueue pointer.
     size_pair available;
@@ -163,10 +176,10 @@ class FixedSinglePCQueue : public noncopyable {
       if (dequeue_ptr == dequeue_.other_ptr_cache) {
         available = {0, 0};
       } else {
-        available = right_left_available_weak(dequeue_, dequeue_ptr);
+        available = RightLeftAvailable(dequeue_, dequeue_ptr);
       }
     } else {
-      available = right_left_available_weak(dequeue_, dequeue_ptr);
+      available = RightLeftAvailable(dequeue_, dequeue_ptr);
     }
 
     // Update the dequeue range_pair.
@@ -185,10 +198,22 @@ class FixedSinglePCQueue : public noncopyable {
   }
 
   // Consume the last range_pair returned by dequeue_peek and update the dequeue cache line.
-  void dequeue_consume() {
-    pointer new_dequeue_ptr = (dequeue_.dequeue_rp.second.second)
-                                  ? dequeue_.dequeue_rp.second.second
-                                  : dequeue_.dequeue_rp.first.second;
+  void DequeueConsume() {
+    // Load the dequeue range-pair.
+    auto& rp = dequeue_.dequeue_rp;
+
+    // Destroys every element in the dequeue range-pair.
+    for (auto v = rp.first.first, end = rp.first.second; v != end; ++v) {
+      v->~value_type();
+    }
+    if (rp.second.second) {
+      for (auto v = rp.second.first, end = rp.second.second; v != end; ++v) {
+        v->~value_type();
+      }
+    }
+
+    // Get the new dequeue pointer.
+    pointer new_dequeue_ptr = (rp.second.second) ? rp.second.second : rp.first.second;
 
     // Prevent all preceding memory operations from being reordered past subsequent writes.
     std::atomic_thread_fence(std::memory_order_release);
@@ -199,11 +224,11 @@ class FixedSinglePCQueue : public noncopyable {
 
  private:
   struct alignas(CACHE_LINE_SIZE) CacheLineData {
-    std::atomic<pointer> ptr{0};  // Atomic access pointer.
-    pointer other_ptr_cache{0};   // Local cache of the other access pointer.
-    pointer const begin{0};       // Cache of buffer start.
-    pointer const end{0};         // Cache of buffer end.
-    range_pair dequeue_rp;        // Last dequeue range_pair. Only used by consumer.
+    std::atomic<pointer> ptr{nullptr};  // Atomic access pointer.
+    pointer other_ptr_cache{nullptr};   // Local cache of the other access pointer.
+    pointer const begin{nullptr};       // Cache of buffer start.
+    pointer const end{nullptr};         // Cache of buffer end.
+    range_pair dequeue_rp;              // Last dequeue range_pair. Only used by consumer.
   };
   static_assert(sizeof(CacheLineData) == CACHE_LINE_SIZE, "CacheLineData size != CACHE_LINE_SIZE");
 
@@ -212,7 +237,7 @@ class FixedSinglePCQueue : public noncopyable {
   // reference the owned pointer (to avoid multiple atomic loads). Can remove one from the end of
   // the range if requested (used for enqueue to avoid "empty or full" state overlap). The function
   // uses the cache line's copy of the other cache line's owned pointer for the calculation.
-  size_pair right_left_available_weak(const CacheLineData& cld, pointer& out_ptr) {
+  size_pair RightLeftAvailable(const CacheLineData& cld, pointer& out_ptr) {
     size_pair available;
 
     // Load the pointer and cache of the other pointer without ordering.
@@ -239,7 +264,7 @@ class FixedSinglePCQueue : public noncopyable {
   CacheLineData enqueue_;  // Enqueue (producer) cache line.
   CacheLineData dequeue_;  // Dequeue (consumer) cache line.
 
-  std::vector<T> buffer_;  // Storage for elements.
+  char* buffer_{nullptr};  // Storage for elements.
 };
 
 }  //  namespace atomic

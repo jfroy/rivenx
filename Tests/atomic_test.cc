@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
 #include <iostream>
+#include <iterator>
 #include <random>
 
 #include "Base/atomic/pc_queue.h"
@@ -25,79 +26,92 @@ static void assert_one_elem_rp(const queue::range_pair& rp, const queue::value_t
 static void test_enqueue_noresize() {
   queue q;
   auto val = re();
-  release_assert(q.try_enqueue(val) == false);
+  release_assert(q.TryEnqueue(val) == false);
 }
 
 static void test_peek_noresize() {
   queue q;
-  auto rp = q.dequeue_peek();
+  auto rp = q.DequeuePeek();
   assert_empty_rp(rp);
 }
 
 static void test_consume_noresize() {
   queue q;
-  q.dequeue_consume();
+  q.DequeueConsume();
 }
 
 static void test_enqueue_peek() {
   queue q;
-  q.resize(1);
+  q.Resize(1);
   auto val = re();
-  release_assert(q.try_enqueue(val));
-  auto rp = q.dequeue_peek();
+  release_assert(q.TryEnqueue(val));
+  auto rp = q.DequeuePeek();
   assert_one_elem_rp(rp, val);
 }
 
 static void test_enqueue_peek_enqueue() {
   queue q;
-  q.resize(1);
+  q.Resize(1);
   auto val = re();
-  release_assert(q.try_enqueue(val));
-  auto rp = q.dequeue_peek();
+  release_assert(q.TryEnqueue(val));
+  auto rp = q.DequeuePeek();
   assert_one_elem_rp(rp, val);
-  release_assert(q.try_enqueue(val) == false);
+  release_assert(q.TryEnqueue(val) == false);
 }
 
 static void test_enqueue_peek_consume_peak() {
   queue q;
-  q.resize(1);
+  q.Resize(1);
   auto val = re();
-  release_assert(q.try_enqueue(val));
-  auto rp = q.dequeue_peek();
+  release_assert(q.TryEnqueue(val));
+  auto rp = q.DequeuePeek();
   assert_one_elem_rp(rp, val);
-  q.dequeue_consume();
-  rp = q.dequeue_peek();
+  q.DequeueConsume();
+  rp = q.DequeuePeek();
   assert_empty_rp(rp);
 }
 
 static void test_enqueue_peek_consume_enqueue() {
   queue q;
-  q.resize(1);
+  q.Resize(1);
   auto val = re();
-  release_assert(q.try_enqueue(val));
-  auto rp = q.dequeue_peek();
+  release_assert(q.TryEnqueue(val));
+  auto rp = q.DequeuePeek();
   assert_one_elem_rp(rp, val);
-  q.dequeue_consume();
-  release_assert(q.try_enqueue(val));
+  q.DequeueConsume();
+  release_assert(q.TryEnqueue(val));
 }
 
 static void test_enqueue_one_too_many() {
   queue q;
-  q.resize(1);
+  q.Resize(1);
   auto val = re();
-  release_assert(q.try_enqueue(val));
-  release_assert(q.try_enqueue(val) == false);
+  release_assert(q.TryEnqueue(val));
+  release_assert(q.TryEnqueue(val) == false);
 }
 
 static void test_peek_twice() {
   queue q;
-  q.resize(1);
+  q.Resize(1);
   auto val = re();
-  release_assert(q.try_enqueue(val));
-  auto rp = q.dequeue_peek();
+  release_assert(q.TryEnqueue(val));
+  auto rp = q.DequeuePeek();
   assert_one_elem_rp(rp, val);
-  rp = q.dequeue_peek();
+  rp = q.DequeuePeek();
   assert_one_elem_rp(rp, val);
+}
+
+struct MoveOnlyValue : public rx::noncopyable {
+  MoveOnlyValue() = default;
+  MoveOnlyValue(MoveOnlyValue&& r) {}
+};
+
+static void test_move_enqueue() {
+  using queue = rx::atomic::FixedSinglePCQueue<MoveOnlyValue>;
+  queue q;
+  q.Resize(5);
+  MoveOnlyValue values[5];
+  q.TryEnqueue(make_move_iterator(begin(values)), make_move_iterator(end(values)));
 }
 
 int main(int argc, const char* argv[]) {
@@ -110,5 +124,6 @@ int main(int argc, const char* argv[]) {
   test_enqueue_peek_consume_enqueue();
   test_enqueue_one_too_many();
   test_peek_twice();
+  test_move_enqueue();
   return 0;
 }
