@@ -110,7 +110,7 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
     return INVALID_ELEMENT;
   }
 
-  // Only mono and stereo are supported.
+  // Only mono and stereo formats are supported.
   auto channels = format.NumberChannels();
   if (channels > 2) {
     RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage,
@@ -294,14 +294,25 @@ void AudioRenderer::ScheduleEdits(const ParameterEditArray& edits,
     }
   }
 
-  // FIXME: enqueue
+  // Enqueue the edits. This may fail if there is not enough space. Try a few times then give up.
+  // FIXME: implement retry loop based on waiting for one render cycle worth of time, a few times.
+  edits_queue.TryEnqueue(std::make_move_iterator(std::begin(filtered_edits)),
+                         std::make_move_iterator(std::end(filtered_edits)));
+}
+
+scoped_refptr<AudioRenderer::Buffer> AudioRenderer::DequeueBuffer(AudioUnitElement element) {
+  // FIXME: implement
+  return nullptr;
+}
+
+void AudioRenderer::EnqueueBuffer(AudioUnitElement element, const scoped_refptr<Buffer>& buffer) {
+  // FIXME: implement
 }
 
 #pragma mark -
 
 OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* in_timestamp, uint32_t in_bus,
-                                             uint32_t in_frames,
-                                             AudioBufferList* io_data) {
+                                             uint32_t in_frames, AudioBufferList* io_data) {
   // Finalize graph updates if needed.
   int32_t graph_updates = graph_updates_requested_.load(std::memory_order_relaxed);
   if (graph_updates > 0 && automatic_commits_.load(std::memory_order_relaxed)) {
@@ -331,8 +342,7 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* in_timestamp,
 
 void AudioRenderer::ApplyEdits(const AudioTimeStamp& timestamp, uint32_t in_frames,
                                AudioUnitParameterID parameter,
-                               typename ParameterEditQueue::range_pair rp,
-                               RampArray& ramps) {
+                               typename ParameterEditQueue::range_pair rp, RampArray& ramps) {
   // Create a parameter event for each immediate edit. The events are stored in |events| (in the
   // order the edits are processed) and indexed by their element in |events_by_element|. Onces all
   // events have been created, they are applied all at once using |AudioUnitScheduleParameters|.
@@ -372,7 +382,12 @@ void AudioRenderer::ApplyEdits(const AudioTimeStamp& timestamp, uint32_t in_fram
         event.eventValues.immediate.bufferOffset = 0;
         event.eventValues.immediate.value = iter->value;
       } else {
-        // Update the parameter ramp. |startBufferOffset| is reset to 0 (it indicates the progress of the ramp in frames), |durationInFrames| is set to the duration in frames of the ramp derived from the duration in seconds of the edit, |startValue| is left alone (it indicates the current value of the ramp; scheduling a ramp only changes the end value of a parameter), and |endValue| is set to the delta between the ramp's end value and start value.
+        // Update the parameter ramp. |startBufferOffset| is reset to 0 (it indicates the progress
+        // of the ramp in frames), |durationInFrames| is set to the duration in frames of the ramp
+        // derived from the duration in seconds of the edit, |startValue| is left alone (it
+        // indicates the current value of the ramp; scheduling a ramp only changes the end value of
+        // a parameter), and |endValue| is set to the delta between the ramp's end value and start
+        // value.
         double sample_rate;
         mixer_->GetSampleRate(kAudioUnitScope_Input, iter->element, sample_rate);
         ramp.startBufferOffset = 0;
@@ -391,9 +406,13 @@ void AudioRenderer::ApplyEdits(const AudioTimeStamp& timestamp, uint32_t in_fram
 
 void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_frames,
                                AudioUnitParameterID parameter, RampArray& ramps) {
-  // Create a parameter ramp event for each ramp. The events are stored in |events| (in element order) and indexed by their element in |events_by_element|. Onces all events have been created, they are applied all at once using |AudioUnitScheduleParameters|.
+  // Create a parameter ramp event for each ramp. The events are stored in |events| (in element
+  // order) and indexed by their element in |events_by_element|. Onces all events have been created,
+  // they are applied all at once using |AudioUnitScheduleParameters|.
   //
-  // Note that the parameter ramp event applies to this render cycle only, whereas the ramps stored in |ramps| represent the persistent state of active parameter ramps and are used from one render cycle to the next.
+  // Note that the parameter ramp event applies to this render cycle only, whereas the ramps stored
+  // in |ramps| represent the persistent state of active parameter ramps and are used from one
+  // render cycle to the next.
 
   std::array<AudioUnitParameterEvent, ELEMENT_LIMIT> events;
   std::array<int, ELEMENT_LIMIT> events_by_element;
@@ -413,7 +432,8 @@ void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_fram
       continue;
     }
 
-    // Calculate the number of frames left for the ramp. If zero, update the ramp's duration to mark it as done and move on to the next.
+    // Calculate the number of frames left for the ramp. If zero, update the ramp's duration to mark
+    // it as done and move on to the next.
     auto frames_left = ramp.durationInFrames - ramp.startBufferOffset;
     if (frames_left == 0) {
       ramp.durationInFrames = 0;
@@ -427,7 +447,12 @@ void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_fram
       events_by_element.at(element - 1) = event_index;
     }
 
-    // Update the parameter event as a ramp. |startBufferOffset| is set to 0 (there is no support to start a ramp inside a buffer rather than at the beginning of a buffer), |durationInFrames| is set to the minimum of the frame count for the render cycle and the number of ramp frames left, |startValue| is set to the current value of the ramp, and |endValue| is set to the final value of the ramp for this render cycle by linearly interpolating from |startValue| by the duration of the ramp weighed by the number of frames for this render cycle.
+    // Update the parameter event as a ramp. |startBufferOffset| is set to 0 (there is no support to
+    // start a ramp inside a buffer rather than at the beginning of a buffer), |durationInFrames| is
+    // set to the minimum of the frame count for the render cycle and the number of ramp frames
+    // left, |startValue| is set to the current value of the ramp, and |endValue| is set to the
+    // final value of the ramp for this render cycle by linearly interpolating from |startValue| by
+    // the duration of the ramp weighed by the number of frames for this render cycle.
     auto& event = events.at(event_index);
     event.scope = kAudioUnitScope_Input;
     event.element = element - 1;
@@ -440,7 +465,9 @@ void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_fram
         ramp.startValue +
         (float(event.eventValues.ramp.durationInFrames) / ramp.durationInFrames) * ramp.endValue;
 
-    // Update the progress of the ramp by adding the number of frames for this render cycle to |startBufferOffset| and setting |startValue| to the final value of the ramp for this render cycle.
+    // Update the progress of the ramp by adding the number of frames for this render cycle to
+    // |startBufferOffset| and setting |startValue| to the final value of the ramp for this render
+    // cycle.
     ramp.startBufferOffset += event.eventValues.ramp.durationInFrames;
     ramp.startValue = event.eventValues.ramp.endValue;
   }
@@ -514,6 +541,10 @@ void AudioRenderer::CreateGraph() {
     mixer_->SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, element,
                         &silence_render, sizeof(AURenderCallbackStruct));
   }
+
+  // Resize the edit queues. The capacity is empirical.
+  pending_gain_edits_.Resize(64);
+  pending_pan_edits_.Resize(64);
 }
 
 void AudioRenderer::DestroyGraph() {

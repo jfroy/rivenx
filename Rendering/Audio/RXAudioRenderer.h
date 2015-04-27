@@ -110,6 +110,24 @@ class AudioRenderer {
   void ScheduleGainEdits(const ParameterEditArray& edits);
   void SchedulePanEdits(const ParameterEditArray& edits);
 
+  // Element buffers.
+
+  class Buffer : public ref_counted<Buffer> {
+   public:
+   private:
+    Buffer(int channels, int frames);
+    ~Buffer() = default;
+
+    // Same-layout structure as AudioBufferList, except with 2 buffers.
+    struct DualAudioBufferList {
+      UInt32 mNumberBuffers;
+      AudioBuffer mBuffers[2];
+    };
+  };
+
+  scoped_refptr<Buffer> DequeueBuffer(AudioUnitElement element);
+  void EnqueueBuffer(AudioUnitElement element, const scoped_refptr<Buffer>& buffer);
+
  private:
   using seconds_f = std::chrono::duration<double, std::chrono::seconds::period>;
   using RampArray = std::array<decltype(AudioUnitParameterEvent::eventValues.ramp), ELEMENT_LIMIT>;
