@@ -19,7 +19,7 @@ namespace {
 
 OSStatus SilenceRenderCallback(void* in_renderer, AudioUnitRenderActionFlags* inout_action_flags,
                                const AudioTimeStamp* in_timestamp, uint32_t in_bus,
-                               uint32_t in_frames, AudioBufferList* io_data) noexcept {
+                               uint32_t in_frames, AudioBufferList* io_data) {
   for (uint32_t buffer_index = 0; buffer_index < io_data->mNumberBuffers; ++buffer_index) {
     bzero(io_data->mBuffers[buffer_index].mData, io_data->mBuffers[buffer_index].mDataByteSize);
   }
@@ -56,7 +56,7 @@ OSStatus AudioRenderer::MixerRenderNotifyCallback(void* in_renderer,
                                                   AudioUnitRenderActionFlags* inout_action_flags,
                                                   const AudioTimeStamp* in_timestamp,
                                                   uint32_t in_bus, uint32_t in_frames,
-                                                  AudioBufferList* io_data) noexcept {
+                                                  AudioBufferList* io_data) {
   rx::AudioRenderer* renderer = reinterpret_cast<rx::AudioRenderer*>(in_renderer);
   if (*inout_action_flags & kAudioUnitRenderAction_PreRender) {
     return renderer->MixerPreRenderNotify(in_timestamp, in_bus, in_frames, io_data);
@@ -64,44 +64,44 @@ OSStatus AudioRenderer::MixerRenderNotifyCallback(void* in_renderer,
   return noErr;
 }
 
-AudioRenderer::AudioRenderer() noexcept {
+AudioRenderer::AudioRenderer() {
   CreateGraph();
   RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage,
           CFSTR("<rx::AudioRenderer: %p> Constructed. %u elements limit."), this, ELEMENT_LIMIT);
 }
 
-AudioRenderer::~AudioRenderer() noexcept { TeardownGraph(); }
+AudioRenderer::~AudioRenderer() { DestroyGraph(); }
 
-void AudioRenderer::Initialize() noexcept { AUGraphInitialize(graph_); }
+void AudioRenderer::Initialize() { AUGraphInitialize(graph_); }
 
-bool AudioRenderer::IsInitialized() const noexcept {
+bool AudioRenderer::IsInitialized() const {
   Boolean isInitialized = false;
   AUGraphIsInitialized(graph_, &isInitialized);
   return static_cast<bool>(isInitialized);
 }
 
-void AudioRenderer::Start() noexcept { AUGraphStart(graph_); }
+void AudioRenderer::Start() { AUGraphStart(graph_); }
 
-void AudioRenderer::Stop() noexcept { AUGraphStop(graph_); }
+void AudioRenderer::Stop() { AUGraphStop(graph_); }
 
-bool AudioRenderer::IsRunning() const noexcept {
+bool AudioRenderer::IsRunning() const {
   Boolean is_running = false;
   AUGraphIsRunning(graph_, &is_running);
   return static_cast<bool>(is_running);
 }
 
-float AudioRenderer::gain() const noexcept {
+float AudioRenderer::gain() const {
   float gain;
   AudioUnitGetParameter(*mixer_, kStereoMixerParam_Volume, kAudioUnitScope_Output, 0, &gain);
   return GainTransform::Out(gain);
 }
 
-void AudioRenderer::set_gain(float gain) noexcept {
+void AudioRenderer::set_gain(float gain) {
   AudioUnitSetParameter(*mixer_, kStereoMixerParam_Volume, kAudioUnitScope_Output, 0,
                         GainTransform::In(gain), 0);
 }
 
-AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription& asbd) noexcept {
+AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription& asbd) {
   // If the source format not mixable, bail for this source.
   CAStreamBasicDescription format(asbd);
   if (!format.IsPCM()) {
@@ -136,6 +136,9 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
   // Set parameters to default values.
   AudioUnitSetParameter(*mixer_, kStereoMixerParam_Volume, kAudioUnitScope_Input, element, 1.0f, 0);
   AudioUnitSetParameter(*mixer_, kStereoMixerParam_Pan, kAudioUnitScope_Input, element, 0.5f, 0);
+
+  // Disable the element.
+  element_enabled_[element] = false;
 
   // Set mixer input format.
   OSStatus oserr = (channels != kOutputChannels)
@@ -203,7 +206,7 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
   return element;
 }
 
-void AudioRenderer::ReleaseElement(AudioUnitElement element) noexcept {
+void AudioRenderer::ReleaseElement(AudioUnitElement element) {
   debug_assert(element < ELEMENT_LIMIT);
 
   if (!element_allocations_[element]) {
@@ -230,36 +233,48 @@ void AudioRenderer::ReleaseElement(AudioUnitElement element) noexcept {
   // Cancel all parameter ramps.
   // FIXME: implement
 
-  // Release the bus.
+  // Disable the element.
+  element_enabled_[element] = false;
+
+  // Release the element.
   element_allocations_[element] = false;
 
   // Node disconnections require a graph update.
   graph_updates_requested_.fetch_add(1, std::memory_order_relaxed);
 }
 
-float AudioRenderer::ElementGain(AudioUnitElement element) const noexcept {
+bool AudioRenderer::ElementEnabled(AudioUnitElement element) const {
+  return element_enabled_[element];
+}
+
+void AudioRenderer::SetElementEnabled(AudioUnitElement element, bool enabled) {
+  // Eventually the rendering thread will see this write.
+  element_enabled_[element] = enabled;
+}
+
+float AudioRenderer::ElementGain(AudioUnitElement element) const {
   float gain;
   mixer_->GetParameter(kStereoMixerParam_Volume, kAudioUnitScope_Input, element, gain);
   return GainTransform::Out(gain);
 }
 
-float AudioRenderer::ElementPan(AudioUnitElement element) const noexcept {
+float AudioRenderer::ElementPan(AudioUnitElement element) const {
   float pan;
   mixer_->GetParameter(kStereoMixerParam_Pan, kAudioUnitScope_Input, element, pan);
   return PanTransform::Out(pan);
 }
 
-void AudioRenderer::ScheduleGainEdits(const ParameterEditArray& edits) noexcept {
+void AudioRenderer::ScheduleGainEdits(const ParameterEditArray& edits) {
   ScheduleEdits<GainTransform>(edits, pending_gain_edits_);
 }
 
-void AudioRenderer::SchedulePanEdits(const ParameterEditArray& edits) noexcept {
+void AudioRenderer::SchedulePanEdits(const ParameterEditArray& edits) {
   ScheduleEdits<PanTransform>(edits, pending_pan_edits_);
 }
 
 template <typename Transform>
 void AudioRenderer::ScheduleEdits(const ParameterEditArray& edits,
-                                  ParameterEditQueue& edits_queue) noexcept {
+                                  ParameterEditQueue& edits_queue) {
   // Make a copy of the edits for delivery to the audio render thread and filter for duplicates.
   ParameterEditArray filtered_edits;
   std::bitset<ELEMENT_LIMIT> immediate_edit_seen;
@@ -286,7 +301,7 @@ void AudioRenderer::ScheduleEdits(const ParameterEditArray& edits,
 
 OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* in_timestamp, uint32_t in_bus,
                                              uint32_t in_frames,
-                                             AudioBufferList* io_data) noexcept {
+                                             AudioBufferList* io_data) {
   // Finalize graph updates if needed.
   int32_t graph_updates = graph_updates_requested_.load(std::memory_order_relaxed);
   if (graph_updates > 0 && automatic_commits_.load(std::memory_order_relaxed)) {
@@ -317,7 +332,7 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* in_timestamp,
 void AudioRenderer::ApplyEdits(const AudioTimeStamp& timestamp, uint32_t in_frames,
                                AudioUnitParameterID parameter,
                                typename ParameterEditQueue::range_pair rp,
-                               RampArray& ramps) noexcept {
+                               RampArray& ramps) {
   // Create a parameter event for each immediate edit. The events are stored in |events| (in the
   // order the edits are processed) and indexed by their element in |events_by_element|. Onces all
   // events have been created, they are applied all at once using |AudioUnitScheduleParameters|.
@@ -375,7 +390,7 @@ void AudioRenderer::ApplyEdits(const AudioTimeStamp& timestamp, uint32_t in_fram
 }
 
 void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_frames,
-                               AudioUnitParameterID parameter, RampArray& ramps) noexcept {
+                               AudioUnitParameterID parameter, RampArray& ramps) {
   // Create a parameter ramp event for each ramp. The events are stored in |events| (in element order) and indexed by their element in |events_by_element|. Onces all events have been created, they are applied all at once using |AudioUnitScheduleParameters|.
   //
   // Note that the parameter ramp event applies to this render cycle only, whereas the ramps stored in |ramps| represent the persistent state of active parameter ramps and are used from one render cycle to the next.
@@ -390,6 +405,11 @@ void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_fram
 
     // If there is no ramp for this element, move on to the next.
     if (ramp.durationInFrames == 0) {
+      continue;
+    }
+
+    // If the element is disabled, don't process or update the ramp.
+    if (!element_enabled_[element - 1]) {
       continue;
     }
 
@@ -429,7 +449,7 @@ void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_fram
   AudioUnitScheduleParameters(*mixer_, events.data(), event_count);
 }
 
-void AudioRenderer::CreateGraph() noexcept {
+void AudioRenderer::CreateGraph() {
   AudioComponentDescription acd;
   acd.componentType = 0;
   acd.componentSubType = 0;
@@ -474,7 +494,7 @@ void AudioRenderer::CreateGraph() noexcept {
   mixer_->SetFormat(kAudioUnitScope_Output, 0, format);
 
   // add a pre-render callback on the mixer to apply parameter edits and perform graph updates
-  mixer_->AddRenderNotify(AudioRenderer::MixerRenderNotifyCallback, this);
+  mixer_->AddRenderNotify(&AudioRenderer::MixerRenderNotifyCallback, this);
 
   // connect the output unit and the mixer
   AUGraphConnectNodeInput(graph_, *mixer_, 0, output_node, 0);
@@ -496,10 +516,10 @@ void AudioRenderer::CreateGraph() noexcept {
   }
 }
 
-void AudioRenderer::DestroyGraph() noexcept {
+void AudioRenderer::DestroyGraph() {
   AUGraphUninitialize(graph_);
   AUGraphClose(graph_);
   DisposeAUGraph(graph_);
 }
 
-}  // namespace rx {
+}  // namespace rx
