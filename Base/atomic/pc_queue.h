@@ -35,13 +35,12 @@ namespace atomic {
 // independent of each other).
 template <typename T>
 class FixedSinglePCQueue : public noncopyable {
+  using size_pair = std::pair<ssize_t, ssize_t>;
+
  public:
   using value_type = T;
   using reference = value_type&;
   using pointer = value_type*;
-  using range = std::pair<pointer, pointer>;
-  using range_pair = std::pair<range, range>;
-  using size_pair = std::pair<ssize_t, ssize_t>;
 
   // Estimated cache line size. If this is too large, no problem. But if too big, it will lead to
   // false sharing and decreased performance.
@@ -96,6 +95,13 @@ class FixedSinglePCQueue : public noncopyable {
   bool TryEnqueue(T const& element) {
     // FIXME: optimize single element enqueue by replacing the range calculation and copy path.
     return TryEnqueue(&element, 1);
+  }
+
+  // Try to enqueue the element. Returns false if the operation can't be completed (for example if
+  // there is not enough space).
+  bool TryEnqueue(T&& element) {
+    // FIXME: optimize single element enqueue by replacing the range calculation and copy path.
+    return TryEnqueue(std::make_move_iterator(&element), 1);
   }
 
   // Try to enqueue elements in the range [first, last). Returns false if the operation can't be
@@ -156,13 +162,42 @@ class FixedSinglePCQueue : public noncopyable {
     // Publish the new enqueue pointer.
     enqueue_.ptr.store(new_enqueue_ptr, std::memory_order_relaxed);
 
-    // All done.
     return true;
   }
 
+  // DEQUEUE
+
+  // A range is a begin and end pointer into the queue buffer.
+  using range = std::pair<pointer, pointer>;
+
+  // A range_pair is a right range (first) and left range (second) into the queue buffer.
+  using range_pair = std::pair<range, range>;
+
+  // Input iterator for range_pair.
+  struct iterator : std::iterator<std::input_iterator_tag, T> {
+    iterator(const range_pair& rp) : rp_(rp), p_(rp.first.first) {}
+
+    T& operator*() { return *p_; }
+
+    iterator& operator++() {
+      if (p_ + 1 >= rp_.first.second) {
+        p_ = rp_.second.first;
+      } else {
+        ++p_;
+      }
+      return *this;
+    }
+
+    bool operator==(const iterator& rhs) { return p_ == rhs.p_; }
+
+    const range_pair& rp_;
+    pointer p_;
+  };
+
   // Return the range of elements that can be dequeued. First only looks at the dequeue cache line.
   // If the range is empty, the enqueue cache line is read. Does not update the dequeue cache line
-  // (i.e. does not consume the elements).
+  // (i.e. does not consume the elements). The returned range pair is owned by the queue and valid
+  // until the next call to |DequeuePeek| or |DequeueConsume|.
   const range_pair& DequeuePeek() {
     // Calculate the number of available elements on the right and left of the dequeue pointer.
     // Generally speaking, the dequeue pointer cannot move forward past the enqueue pointer.
