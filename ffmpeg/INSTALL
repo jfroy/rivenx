@@ -1,0 +1,9 @@
+Riven X instructions for building ffmpeg.
+
+Copy the build-arch.sh and build-rivenx.sh scripts to a ffmpeg source tree and run
+build-rivenx.sh. Copy the contents of the pkgroot directory into this directory
+once the build completes.
+
+You will need Xcode and yasm. Install Xcode from the App Store or
+https://developer.apple.com. Install yasm using a package manager (such as
+Homebrew http://brew.sh) or from source.

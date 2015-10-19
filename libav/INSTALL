@@ -1,6 +1,0 @@
-Riven X instructions for building libav
-
-Copy the build-arch.sh and build-rivenx.sh scripts to a libav source tree and run
-build-rivenx.sh. Copy the contents of the pkgroot directory into this directory
-once the build completes.
-
