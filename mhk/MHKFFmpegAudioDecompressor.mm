@@ -1,20 +1,18 @@
 // Copyright 2014 Jean-Francois Roy. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#import "mhk/MHKLibAVAudioDecompressor.h"
+#import "mhk/MHKFFmpegAudioDecompressor.h"
 
 #import <vector>
 
 #import "Base/RXBufferMacros.h"
 #import "Base/RXErrorMacros.h"
-
-#import "mhk/mohawk_libav.h"
+#import "mhk/mohawk_ffmpeg.h"
 #import "mhk/mohawk_sound.h"
-
 #import "mhk/MHKArchiveMediaInterface.h"
 #import "mhk/MHKErrors.h"
+#import "mhk/MHKFFmpegIOContext.h"
 #import "mhk/MHKFileHandle.h"
-#import "mhk/MHKLibAVIOContext.h"
 
 static const size_t IO_BUFFER_SIZE = 0x1000;
 

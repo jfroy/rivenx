@@ -1,11 +1,11 @@
 // Copyright 2014 Jean-Francois Roy. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#import "mhk/MHKLibAVIOContext.h"
+#import "mhk/MHKFFmpegIOContext.h"
 
 #import "Base/RXErrorMacros.h"
 
-#import "mhk/mohawk_libav.h"
+#import "mhk/mohawk_ffmpeg.h"
 #import "mhk/MHKErrors.h"
 #import "mhk/MHKFileHandle.h"
 
@@ -60,7 +60,7 @@ static int64_t MHKIOContextSeek(MHKFileHandle* fh, int64_t offset, int whence) {
   _avioc = g_libav.avio_alloc_context(iobuf,
                                       (int)iobuf_size,
                                       0,
-                                      (void*)_fileHandle,
+                                      (__bridge void*)_fileHandle,
                                       (int (*)(void*, uint8_t*, int))MHKIOContextRead,
                                       NULL,
                                       (int64_t (*)(void*, int64_t, int))MHKIOContextSeek);

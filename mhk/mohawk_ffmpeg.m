@@ -1,7 +1,7 @@
 // Copyright 2014 Jean-Francois Roy. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-#import "mhk/mohawk_libav.h"
+#import "mhk/mohawk_ffmpeg.h"
 
 #import <dlfcn.h>
 #import <Foundation/NSBundle.h>

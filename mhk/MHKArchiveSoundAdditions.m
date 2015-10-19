@@ -9,9 +9,8 @@
 #import "mhk/MHKArchive_Internal.h"
 #import "mhk/MHKArchiveMediaInterface.h"
 #import "mhk/MHKErrors.h"
+#import "mhk/MHKFFmpegAudioDecompressor.h"
 #import "mhk/MHKFileHandle_Internal.h"
-
-#import "mhk/MHKLibAVAudioDecompressor.h"
 
 @implementation MHKSoundDescriptor {
  @package
