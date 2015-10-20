@@ -26,10 +26,10 @@ NSString* const MHKErrorDomain = @"MHKErrorDomain";
         return @"Invalid number of audio channels.";
       case errInvalidFrameCount:
         return @"Invalid number of audio frames.";
-      case errLibavNotAvailable:
-        return @"Failed to load libav. Sounds and movies will not play.";
-      case errLibavError:
-        return @"A libav error occurred.";
+      case errFFmpegNotAvailable:
+        return @"Failed to load FFmpeg.";
+      case errFFmpegError:
+        return @"FFmpeg error.";
       case errInvalidSoundDescriptor:
         return @"Invalid sound descriptor.";
       case errInvalidBitmapCompression:

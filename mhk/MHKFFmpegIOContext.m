@@ -28,11 +28,11 @@ static int64_t MHKIOContextSeek(MHKFileHandle* fh, int64_t offset, int whence) {
   }
 }
 
-@implementation MHKLibAVIOContext
+@implementation MHKFFmpegIOContext
 
 + (void)initialize {
-  if (self == [MHKLibAVIOContext class]) {
-    mhk_load_libav();
+  if (self == [MHKFFmpegIOContext class]) {
+    mhk_load_ffmpeg();
   }
 }
 
@@ -47,31 +47,27 @@ static int64_t MHKIOContextSeek(MHKFileHandle* fh, int64_t offset, int whence) {
     return nil;
   }
 
-  if (!g_libav.avu_handle) {
+  if (!g_mhk_ffmpeg.avu_handle) {
     [self release];
-    ReturnValueWithError(nil, MHKErrorDomain, errLibavNotAvailable, nil, outError);
+    ReturnValueWithError(nil, MHKErrorDomain, errFFmpegNotAvailable, nil, outError);
   }
 
   _fileHandle = [fileHandle retain];
 
   size_t iobuf_size = 0x1000;
-  void* iobuf = g_libav.av_malloc(iobuf_size);
+  void* iobuf = g_mhk_ffmpeg.av_malloc(iobuf_size);
 
-  _avioc = g_libav.avio_alloc_context(iobuf,
-                                      (int)iobuf_size,
-                                      0,
-                                      (__bridge void*)_fileHandle,
-                                      (int (*)(void*, uint8_t*, int))MHKIOContextRead,
-                                      NULL,
-                                      (int64_t (*)(void*, int64_t, int))MHKIOContextSeek);
+  _avioc = g_mhk_ffmpeg.avio_alloc_context(iobuf, (int)iobuf_size, 0, (__bridge void*)_fileHandle,
+                                           (int (*)(void*, uint8_t*, int))MHKIOContextRead, NULL,
+                                           (int64_t (*)(void*, int64_t, int))MHKIOContextSeek);
 
   return self;
 }
 
 - (void)dealloc {
   [_fileHandle release];
-  g_libav.av_freep(&_avioc->buffer);
-  g_libav.av_freep(&_avioc);
+  g_mhk_ffmpeg.av_freep(&_avioc->buffer);
+  g_mhk_ffmpeg.av_freep(&_avioc);
   [super dealloc];
 }
 

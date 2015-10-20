@@ -3,11 +3,11 @@
 
 #import "mhk/mohawk_ffmpeg.h"
 
-#import <dlfcn.h>
 #import <Foundation/NSBundle.h>
 #import <Foundation/NSPathUtilities.h>
+#import <dlfcn.h>
 
-struct mhk_libav g_libav;
+struct mhk_ffmpeg g_mhk_ffmpeg;
 
 static inline void load_function(void* handle, const char* name, void** fnptr) {
   *fnptr = dlsym(handle, name);
@@ -17,7 +17,7 @@ static inline void load_function(void* handle, const char* name, void** fnptr) {
   }
 }
 
-#define LOADFN(HANDLE, FN) load_function(g_libav.HANDLE, #FN, (void**)&g_libav.FN)
+#define LOADFN(HANDLE, FN) load_function(g_mhk_ffmpeg.HANDLE, #FN, (void**)&g_mhk_ffmpeg.FN)
 
 static void load_functions() {
   // lookup symbols
@@ -52,10 +52,10 @@ static void load_functions() {
   LOADFN(avf_handle, avio_alloc_context);
   LOADFN(avf_handle, avio_seek);
 
-  // initialize libav
-  g_libav.av_log_set_level(AV_LOG_DEBUG);
-  g_libav.avcodec_register_all();
-  g_libav.av_register_all();
+  // initialize ffmpeg
+  g_mhk_ffmpeg.av_log_set_level(AV_LOG_DEBUG);
+  g_mhk_ffmpeg.avcodec_register_all();
+  g_mhk_ffmpeg.av_register_all();
 }
 
 static void* load_lib(NSString* base_path, NSString* name) {
@@ -72,19 +72,19 @@ static void load_libs() {
   NSBundle* mhk_bundle = [NSBundle bundleWithIdentifier:@"org.macstorm.MHKKit"];
   NSString* resource_path = [mhk_bundle resourcePath];
 
-  g_libav.avu_handle = load_lib(resource_path, @"libavutil.dylib");
-  g_libav.avc_handle = load_lib(resource_path, @"libavcodec.dylib");
-  g_libav.avf_handle = load_lib(resource_path, @"libavformat.dylib");
+  g_mhk_ffmpeg.avu_handle = load_lib(resource_path, @"libavutil.dylib");
+  g_mhk_ffmpeg.avc_handle = load_lib(resource_path, @"libavcodec.dylib");
+  g_mhk_ffmpeg.avf_handle = load_lib(resource_path, @"libavformat.dylib");
 
-  if (!g_libav.avu_handle || !g_libav.avc_handle || !g_libav.avf_handle) {
-    memset(&g_libav, 0, sizeof(g_libav));
+  if (!g_mhk_ffmpeg.avu_handle || !g_mhk_ffmpeg.avc_handle || !g_mhk_ffmpeg.avf_handle) {
+    memset(&g_mhk_ffmpeg, 0, sizeof(g_mhk_ffmpeg));
     return;
   }
 
   load_functions();
 }
 
-void mhk_load_libav() {
+void mhk_load_ffmpeg() {
   static dispatch_once_t once;
   dispatch_once(&once, ^{ load_libs(); });
 }

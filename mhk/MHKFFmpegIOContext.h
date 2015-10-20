@@ -6,11 +6,12 @@
 struct AVIOContext;
 @class MHKFileHandle;
 
-@interface MHKLibAVIOContext : NSObject
+@interface MHKFFmpegIOContext : NSObject
 
-@property (nonatomic, readonly) MHKFileHandle* fileHandle;
-@property (nonatomic, readonly) struct AVIOContext* avioc;
+@property(nonatomic, readonly) MHKFileHandle* fileHandle;
+@property(nonatomic, readonly) struct AVIOContext* avioc;
 
-- (instancetype)initWithFileHandle:(MHKFileHandle*)fileHandle error:(NSError**)outError NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithFileHandle:(MHKFileHandle*)fileHandle
+                             error:(NSError**)outError NS_DESIGNATED_INITIALIZER;
 
 @end

@@ -14,10 +14,11 @@
 #import "mhk/MHKFFmpegIOContext.h"
 #import "mhk/MHKFileHandle.h"
 
-static const size_t IO_BUFFER_SIZE = 0x1000;
+namespace {
 
-static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
-                                    const AVSampleFormat format) {
+const size_t IO_BUFFER_SIZE = 0x1000;
+
+void ConvertSampleFormat(const AVSampleFormat format, AudioStreamBasicDescription& asbd) {
   size_t sample_size = 0;
   if (format == AV_SAMPLE_FMT_FLT || format == AV_SAMPLE_FMT_FLTP) {
     asbd.mFormatFlags |= kAudioFormatFlagIsFloat;
@@ -61,9 +62,11 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
   }
 }
 
-@implementation MHKLibAVAudioDecompressor {
+}  // namespace
+
+@implementation MHKFFmpegAudioDecompressor {
   // mp2
-  MHKLibAVIOContext* _ioContext;
+  MHKFFmpegIOContext* _ioContext;
   AVFormatContext* _formatContext;
 
   // adpcm
@@ -82,8 +85,8 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
 @dynamic outputFormat;
 
 + (void)initialize {
-  if (self == [MHKLibAVAudioDecompressor class]) {
-    mhk_load_libav();
+  if (self == [MHKFFmpegAudioDecompressor class]) {
+    mhk_load_ffmpeg();
   }
 }
 
@@ -105,9 +108,9 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
     return nil;
   }
 
-  if (!g_libav.avu_handle) {
+  if (!g_mhk_ffmpeg.avu_handle) {
     [self release];
-    ReturnValueWithError(nil, MHKErrorDomain, errLibavNotAvailable, nil, outError);
+    ReturnValueWithError(nil, MHKErrorDomain, errFFmpegNotAvailable, nil, outError);
   }
 
   _fileHandle = [fileHandle retain];
@@ -130,27 +133,27 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
 
   if (!initialized) {
     [self release];
-    ReturnValueWithError(nil, MHKErrorDomain, errLibavError, nil, outError);
+    ReturnValueWithError(nil, MHKErrorDomain, errFFmpegError, nil, outError);
   }
   debug_assert(_framesPerPacket > 0);
 
-  _frame = g_libav.av_frame_alloc();
+  _frame = g_mhk_ffmpeg.av_frame_alloc();
 
   return self;
 }
 
 - (void)dealloc {
   if (_formatContext) {
-    g_libav.avcodec_close(_formatContext->streams[0]->codec);
-    g_libav.avformat_close_input(&_formatContext);
+    g_mhk_ffmpeg.avcodec_close(_formatContext->streams[0]->codec);
+    g_mhk_ffmpeg.avformat_close_input(&_formatContext);
     [_ioContext release];
   }
   if (_adpcmCodecContext) {
-    g_libav.avcodec_close(_adpcmCodecContext);
-    g_libav.av_freep(&_adpcmCodecContext);
+    g_mhk_ffmpeg.avcodec_close(_adpcmCodecContext);
+    g_mhk_ffmpeg.av_freep(&_adpcmCodecContext);
   }
-  g_libav.av_frame_free(&_frame);
-  g_libav.av_free_packet(&_packet);
+  g_mhk_ffmpeg.av_frame_free(&_frame);
+  g_mhk_ffmpeg.av_free_packet(&_packet);
   [_fileHandle release];
 
   [super dealloc];
@@ -161,7 +164,7 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
 }
 
 - (BOOL)_initAdpcm:(MHKSoundDescriptor*)sdesc {
-  AVCodec* codec = g_libav.avcodec_find_decoder(AV_CODEC_ID_ADPCM_IMA_APC);
+  AVCodec* codec = g_mhk_ffmpeg.avcodec_find_decoder(AV_CODEC_ID_ADPCM_IMA_APC);
   if (!codec) {
     return NO;
   }
@@ -173,12 +176,12 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
     return NO;
   }
 
-  FillAsbdFromLibAvFormat(_outputFormat, _adpcmCodecContext->sample_fmt);
+  ConvertSampleFormat(_adpcmCodecContext->sample_fmt, _outputFormat);
   if (_outputFormat.mFormatFlags == 0) {
     return NO;
   }
 
-  g_libav.av_new_packet(&_packet, IO_BUFFER_SIZE);
+  g_mhk_ffmpeg.av_new_packet(&_packet, IO_BUFFER_SIZE);
   _packet.size = 0;
 
   _framesPerPacket = IO_BUFFER_SIZE * 2 / sdesc.channelCount;
@@ -190,37 +193,37 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
                      sampleRate:(uint16_t)sampleRate
                    channelCount:(uint8_t)channelCount {
   if (_adpcmCodecContext) {
-    g_libav.avcodec_close(_adpcmCodecContext);
-    g_libav.av_freep(&_adpcmCodecContext);
+    g_mhk_ffmpeg.avcodec_close(_adpcmCodecContext);
+    g_mhk_ffmpeg.av_freep(&_adpcmCodecContext);
   }
 
-  _adpcmCodecContext = g_libav.avcodec_alloc_context3(codec);
+  _adpcmCodecContext = g_mhk_ffmpeg.avcodec_alloc_context3(codec);
   _adpcmCodecContext->sample_rate = sampleRate;
   _adpcmCodecContext->channels = channelCount;
   _adpcmCodecContext->request_sample_fmt = AV_SAMPLE_FMT_S16;
   _adpcmCodecContext->refcounted_frames = 1;
 
-  return g_libav.avcodec_open2(_adpcmCodecContext, codec, nullptr) >= 0;
+  return g_mhk_ffmpeg.avcodec_open2(_adpcmCodecContext, codec, nullptr) >= 0;
 }
 
 - (BOOL)_initMp2:(MHKSoundDescriptor*)sdesc {
-  AVInputFormat* input_format = g_libav.av_iformat_next(nullptr);
+  AVInputFormat* input_format = g_mhk_ffmpeg.av_iformat_next(nullptr);
   while (input_format) {
     if (strstr(input_format->name, "mp3") != nullptr) {
       break;
     }
-    input_format = g_libav.av_iformat_next(input_format);
+    input_format = g_mhk_ffmpeg.av_iformat_next(input_format);
   }
   if (!input_format) {
     return NO;
   }
 
-  _ioContext = [[MHKLibAVIOContext alloc] initWithFileHandle:_fileHandle error:nullptr];
+  _ioContext = [[MHKFFmpegIOContext alloc] initWithFileHandle:_fileHandle error:nullptr];
 
-  _formatContext = g_libav.avformat_alloc_context();
+  _formatContext = g_mhk_ffmpeg.avformat_alloc_context();
   _formatContext->pb = _ioContext.avioc;
 
-  if (g_libav.avformat_open_input(&_formatContext, "", input_format, nullptr) < 0) {
+  if (g_mhk_ffmpeg.avformat_open_input(&_formatContext, "", input_format, nullptr) < 0) {
     return NO;
   }
   if (_formatContext->nb_streams != 1) {
@@ -233,11 +236,11 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
                                          _formatContext->streams[0]->time_base.den;
 
   std::vector<AVDictionary*> stream_options(_formatContext->nb_streams);
-  if (g_libav.avformat_find_stream_info(_formatContext, &stream_options.front()) < 0) {
+  if (g_mhk_ffmpeg.avformat_find_stream_info(_formatContext, &stream_options.front()) < 0) {
     return NO;
   }
 
-  AVCodec* codec = g_libav.avcodec_find_decoder(_formatContext->streams[0]->codec->codec_id);
+  AVCodec* codec = g_mhk_ffmpeg.avcodec_find_decoder(_formatContext->streams[0]->codec->codec_id);
   if (!codec) {
     return NO;
   }
@@ -248,16 +251,16 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
   debug_assert(_formatContext->streams[0]->codec->channels == sdesc.channelCount);
   _formatContext->streams[0]->codec->refcounted_frames = 1;
   _formatContext->streams[0]->codec->request_sample_fmt = AV_SAMPLE_FMT_S16;
-  if (g_libav.avcodec_open2(_formatContext->streams[0]->codec, codec, nullptr) < 0) {
+  if (g_mhk_ffmpeg.avcodec_open2(_formatContext->streams[0]->codec, codec, nullptr) < 0) {
     return NO;
   }
 
-  FillAsbdFromLibAvFormat(_outputFormat, _formatContext->streams[0]->codec->sample_fmt);
+  ConvertSampleFormat(_formatContext->streams[0]->codec->sample_fmt, _outputFormat);
   if (_outputFormat.mFormatFlags == 0) {
     return NO;
   }
 
-  // these values are intrinsic to the mp2 codec, but libav doesn't provide a nice way to query them
+  // these values are intrinsic to the mp2 codec
   _firstPacketFrameDelay = 481;
   _framesPerPacket = 1152;
 
@@ -266,9 +269,9 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
 
 - (void)reset {
   if (_formatContext) {
-    g_libav.avio_seek(_formatContext->pb, 0, SEEK_SET);
-    g_libav.av_free_packet(&_packet);
-    g_libav.avcodec_flush_buffers(_formatContext->streams[0]->codec);
+    g_mhk_ffmpeg.avio_seek(_formatContext->pb, 0, SEEK_SET);
+    g_mhk_ffmpeg.av_free_packet(&_packet);
+    g_mhk_ffmpeg.avcodec_flush_buffers(_formatContext->streams[0]->codec);
   } else {
     // the adpcm codec can't seek, we need to tear it down
     [_fileHandle seekToFileOffset:0];
@@ -278,7 +281,7 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
                      channelCount:(uint8_t)_outputFormat.mChannelsPerFrame];
   }
 
-  g_libav.av_frame_unref(_frame);
+  g_mhk_ffmpeg.av_frame_unref(_frame);
   _frameCursor = 0;
   _framePosition = 0;
 }
@@ -346,13 +349,13 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
 
 - (void)_decodePacket {
   // we've completely consumed the previous decoded frame
-  g_libav.av_frame_unref(_frame);
+  g_mhk_ffmpeg.av_frame_unref(_frame);
 
   // if the packet is empty, read the next packet
   if (_packet.size == 0) {
     if (_formatContext) {
-      g_libav.av_free_packet(&_packet);
-      if (g_libav.av_read_frame(_formatContext, &_packet) < 0) {
+      g_mhk_ffmpeg.av_free_packet(&_packet);
+      if (g_mhk_ffmpeg.av_read_frame(_formatContext, &_packet) < 0) {
         return;
       }
       debug_assert(_packet.stream_index == 0);
@@ -376,7 +379,8 @@ static void FillAsbdFromLibAvFormat(AudioStreamBasicDescription& asbd,
 
   // decode the packet
   int got_output;
-  int bytes_consumed = g_libav.avcodec_decode_audio4(codec_context, _frame, &got_output, &_packet);
+  int bytes_consumed =
+      g_mhk_ffmpeg.avcodec_decode_audio4(codec_context, _frame, &got_output, &_packet);
   if (bytes_consumed < 0) {
     return;
   }

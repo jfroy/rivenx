@@ -46,18 +46,18 @@
 		31245678198B102100B76629 /* MHKFileHandle.h in Headers */ = {isa = PBXBuildFile; fileRef = 3124565D198B102000B76629 /* MHKFileHandle.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		31245679198B102100B76629 /* MHKFileHandle.m in Sources */ = {isa = PBXBuildFile; fileRef = 3124565E198B102000B76629 /* MHKFileHandle.m */; };
 		3124567A198B102100B76629 /* MHKKit.h in Headers */ = {isa = PBXBuildFile; fileRef = 3124565F198B102000B76629 /* MHKKit.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		3124567B198B102100B76629 /* MHKLibAVAudioDecompressor.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245660198B102000B76629 /* MHKLibAVAudioDecompressor.h */; };
-		3124567C198B102100B76629 /* MHKLibAVAudioDecompressor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31245661198B102000B76629 /* MHKLibAVAudioDecompressor.mm */; };
+		3124567B198B102100B76629 /* MHKFFmpegAudioDecompressor.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245660198B102000B76629 /* MHKFFmpegAudioDecompressor.h */; };
+		3124567C198B102100B76629 /* MHKFFmpegAudioDecompressor.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31245661198B102000B76629 /* MHKFFmpegAudioDecompressor.mm */; };
 		3124567F198B102100B76629 /* mohawk_bitmap.c in Sources */ = {isa = PBXBuildFile; fileRef = 31245664198B102000B76629 /* mohawk_bitmap.c */; };
 		31245680198B102100B76629 /* mohawk_bitmap.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245665198B102000B76629 /* mohawk_bitmap.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		31245681198B102100B76629 /* mohawk_core.c in Sources */ = {isa = PBXBuildFile; fileRef = 31245666198B102000B76629 /* mohawk_core.c */; };
 		31245682198B102100B76629 /* mohawk_core.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245667198B102000B76629 /* mohawk_core.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		31245683198B102100B76629 /* mohawk_libav.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245668198B102000B76629 /* mohawk_libav.h */; };
-		31245684198B102100B76629 /* mohawk_libav.m in Sources */ = {isa = PBXBuildFile; fileRef = 31245669198B102000B76629 /* mohawk_libav.m */; };
+		31245683198B102100B76629 /* mohawk_ffmpeg.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245668198B102000B76629 /* mohawk_ffmpeg.h */; };
+		31245684198B102100B76629 /* mohawk_ffmpeg.m in Sources */ = {isa = PBXBuildFile; fileRef = 31245669198B102000B76629 /* mohawk_ffmpeg.m */; };
 		31245685198B102100B76629 /* mohawk_sound.h in Headers */ = {isa = PBXBuildFile; fileRef = 3124566A198B102000B76629 /* mohawk_sound.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		31245687198BE73B00B76629 /* MHKFileHandle_Internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245686198BE73B00B76629 /* MHKFileHandle_Internal.h */; };
-		3124568A198C36D100B76629 /* MHKLibAVIOContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245688198C36D100B76629 /* MHKLibAVIOContext.h */; };
-		3124568B198C36D100B76629 /* MHKLibAVIOContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 31245689198C36D100B76629 /* MHKLibAVIOContext.m */; };
+		3124568A198C36D100B76629 /* MHKFFmpegIOContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 31245688198C36D100B76629 /* MHKFFmpegIOContext.h */; };
+		3124568B198C36D100B76629 /* MHKFFmpegIOContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 31245689198C36D100B76629 /* MHKFFmpegIOContext.m */; };
 		312456D5198C535D00B76629 /* libavcodec.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 31245694198C534400B76629 /* libavcodec.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		312456D6198C535D00B76629 /* libavformat.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 31245695198C534400B76629 /* libavformat.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		312456D7198C535D00B76629 /* libavutil.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = 31245696198C534400B76629 /* libavutil.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
@@ -337,18 +337,18 @@
 		3124565D198B102000B76629 /* MHKFileHandle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKFileHandle.h; sourceTree = "<group>"; };
 		3124565E198B102000B76629 /* MHKFileHandle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHKFileHandle.m; sourceTree = "<group>"; };
 		3124565F198B102000B76629 /* MHKKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKKit.h; sourceTree = "<group>"; };
-		31245660198B102000B76629 /* MHKLibAVAudioDecompressor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKLibAVAudioDecompressor.h; sourceTree = "<group>"; };
-		31245661198B102000B76629 /* MHKLibAVAudioDecompressor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MHKLibAVAudioDecompressor.mm; sourceTree = "<group>"; };
+		31245660198B102000B76629 /* MHKFFmpegAudioDecompressor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKFFmpegAudioDecompressor.h; sourceTree = "<group>"; };
+		31245661198B102000B76629 /* MHKFFmpegAudioDecompressor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MHKFFmpegAudioDecompressor.mm; sourceTree = "<group>"; };
 		31245664198B102000B76629 /* mohawk_bitmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mohawk_bitmap.c; sourceTree = "<group>"; };
 		31245665198B102000B76629 /* mohawk_bitmap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mohawk_bitmap.h; sourceTree = "<group>"; };
 		31245666198B102000B76629 /* mohawk_core.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mohawk_core.c; sourceTree = "<group>"; };
 		31245667198B102000B76629 /* mohawk_core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mohawk_core.h; sourceTree = "<group>"; };
-		31245668198B102000B76629 /* mohawk_libav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mohawk_libav.h; sourceTree = "<group>"; };
-		31245669198B102000B76629 /* mohawk_libav.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = mohawk_libav.m; sourceTree = "<group>"; };
+		31245668198B102000B76629 /* mohawk_ffmpeg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mohawk_ffmpeg.h; sourceTree = "<group>"; };
+		31245669198B102000B76629 /* mohawk_ffmpeg.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = mohawk_ffmpeg.m; sourceTree = "<group>"; };
 		3124566A198B102000B76629 /* mohawk_sound.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mohawk_sound.h; sourceTree = "<group>"; };
 		31245686198BE73B00B76629 /* MHKFileHandle_Internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKFileHandle_Internal.h; sourceTree = "<group>"; };
-		31245688198C36D100B76629 /* MHKLibAVIOContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKLibAVIOContext.h; sourceTree = "<group>"; };
-		31245689198C36D100B76629 /* MHKLibAVIOContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHKLibAVIOContext.m; sourceTree = "<group>"; };
+		31245688198C36D100B76629 /* MHKFFmpegIOContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHKFFmpegIOContext.h; sourceTree = "<group>"; };
+		31245689198C36D100B76629 /* MHKFFmpegIOContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHKFFmpegIOContext.m; sourceTree = "<group>"; };
 		31245694198C534400B76629 /* libavcodec.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libavcodec.dylib; sourceTree = "<group>"; };
 		31245695198C534400B76629 /* libavformat.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libavformat.dylib; sourceTree = "<group>"; };
 		31245696198C534400B76629 /* libavutil.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; path = libavutil.dylib; sourceTree = "<group>"; };
@@ -698,14 +698,14 @@
 			name = "Foundation Additions";
 			sourceTree = "<group>";
 		};
-		3124568D198C534400B76629 /* libav */ = {
+		3124568D198C534400B76629 /* ffmpeg */ = {
 			isa = PBXGroup;
 			children = (
 				31245694198C534400B76629 /* libavcodec.dylib */,
 				31245695198C534400B76629 /* libavformat.dylib */,
 				31245696198C534400B76629 /* libavutil.dylib */,
 			);
-			path = libav;
+			path = ffmpeg;
 			sourceTree = "<group>";
 		};
 		312F4D930DC263F400B3AF0D /* Graphics */ = {
@@ -772,16 +772,16 @@
 				3124565D198B102000B76629 /* MHKFileHandle.h */,
 				3124565E198B102000B76629 /* MHKFileHandle.m */,
 				3124565F198B102000B76629 /* MHKKit.h */,
-				31245660198B102000B76629 /* MHKLibAVAudioDecompressor.h */,
-				31245661198B102000B76629 /* MHKLibAVAudioDecompressor.mm */,
-				31245688198C36D100B76629 /* MHKLibAVIOContext.h */,
-				31245689198C36D100B76629 /* MHKLibAVIOContext.m */,
+				31245660198B102000B76629 /* MHKFFmpegAudioDecompressor.h */,
+				31245661198B102000B76629 /* MHKFFmpegAudioDecompressor.mm */,
+				31245688198C36D100B76629 /* MHKFFmpegIOContext.h */,
+				31245689198C36D100B76629 /* MHKFFmpegIOContext.m */,
 				31245664198B102000B76629 /* mohawk_bitmap.c */,
 				31245665198B102000B76629 /* mohawk_bitmap.h */,
 				31245666198B102000B76629 /* mohawk_core.c */,
 				31245667198B102000B76629 /* mohawk_core.h */,
-				31245668198B102000B76629 /* mohawk_libav.h */,
-				31245669198B102000B76629 /* mohawk_libav.m */,
+				31245668198B102000B76629 /* mohawk_ffmpeg.h */,
+				31245669198B102000B76629 /* mohawk_ffmpeg.m */,
 				3124566A198B102000B76629 /* mohawk_sound.h */,
 			);
 			name = MHKKit;
@@ -1051,16 +1051,16 @@
 				3124566D198B102000B76629 /* MHKArchive_Internal.h in Headers */,
 				31245682198B102100B76629 /* mohawk_core.h in Headers */,
 				31245676198B102100B76629 /* MHKErrors.h in Headers */,
-				3124568A198C36D100B76629 /* MHKLibAVIOContext.h in Headers */,
+				3124568A198C36D100B76629 /* MHKFFmpegIOContext.h in Headers */,
 				31245675198B102100B76629 /* MHKAudioDecompression.h in Headers */,
-				3124567B198B102100B76629 /* MHKLibAVAudioDecompressor.h in Headers */,
+				3124567B198B102100B76629 /* MHKFFmpegAudioDecompressor.h in Headers */,
 				31245685198B102100B76629 /* mohawk_sound.h in Headers */,
 				31245687198BE73B00B76629 /* MHKFileHandle_Internal.h in Headers */,
 				31245680198B102100B76629 /* mohawk_bitmap.h in Headers */,
 				3124566E198B102000B76629 /* MHKArchive.h in Headers */,
 				31245678198B102100B76629 /* MHKFileHandle.h in Headers */,
 				3124567A198B102100B76629 /* MHKKit.h in Headers */,
-				31245683198B102100B76629 /* mohawk_libav.h in Headers */,
+				31245683198B102100B76629 /* mohawk_ffmpeg.h in Headers */,
 				31245671198B102100B76629 /* MHKArchiveMediaInterface.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1350,14 +1350,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				31245670198B102000B76629 /* MHKArchiveBitmapAdditions.m in Sources */,
-				3124568B198C36D100B76629 /* MHKLibAVIOContext.m in Sources */,
+				3124568B198C36D100B76629 /* MHKFFmpegIOContext.m in Sources */,
 				31245672198B102100B76629 /* MHKArchiveMovieAdditions.m in Sources */,
 				3124566F198B102000B76629 /* MHKArchive.mm in Sources */,
 				31245681198B102100B76629 /* mohawk_core.c in Sources */,
-				3124567C198B102100B76629 /* MHKLibAVAudioDecompressor.mm in Sources */,
+				3124567C198B102100B76629 /* MHKFFmpegAudioDecompressor.mm in Sources */,
 				3124567F198B102100B76629 /* mohawk_bitmap.c in Sources */,
 				31245674198B102100B76629 /* MHKArchiveSoundAdditions.m in Sources */,
-				31245684198B102100B76629 /* mohawk_libav.m in Sources */,
+				31245684198B102100B76629 /* mohawk_ffmpeg.m in Sources */,
 				31245679198B102100B76629 /* MHKFileHandle.m in Sources */,
 				31245677198B102100B76629 /* MHKErrors.m in Sources */,
 			);

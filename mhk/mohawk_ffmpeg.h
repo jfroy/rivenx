@@ -10,7 +10,7 @@
 
 __BEGIN_DECLS
 
-struct mhk_libav {
+struct mhk_ffmpeg {
   void* avu_handle;
   void* avc_handle;
   void* avf_handle;
@@ -43,17 +43,13 @@ struct mhk_libav {
   int (*av_read_frame)(AVFormatContext*, AVPacket*);
   void (*avformat_close_input)(AVFormatContext**);
 
-  AVIOContext* (*avio_alloc_context)(unsigned char*,
-                                     int,
-                                     int,
-                                     void*,
-                                     int (*)(void*, uint8_t*, int),
+  AVIOContext* (*avio_alloc_context)(unsigned char*, int, int, void*, int (*)(void*, uint8_t*, int),
                                      int (*)(void*, uint8_t*, int),
                                      int64_t (*)(void*, int64_t, int));
   int64_t (*avio_seek)(AVIOContext*, int64_t, int);
 };
 
-extern struct mhk_libav g_libav;
-extern void mhk_load_libav(void);
+extern struct mhk_ffmpeg g_mhk_ffmpeg;
+extern void mhk_load_ffmpeg(void);
 
 __END_DECLS

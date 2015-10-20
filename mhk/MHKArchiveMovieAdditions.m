@@ -16,48 +16,47 @@
   // get the movie resource descriptor
   MHKResourceDescriptor* rdesc = [self resourceDescriptorWithResourceType:@"tMOV" ID:movieID];
   if (!rdesc) {
-    ReturnValueWithError(NULL, MHKErrorDomain, errResourceNotFound, nil, outError);
+    ReturnValueWithError(nil, MHKErrorDomain, errResourceNotFound, nil, outError);
   }
 
   // create a file handle for the embedded movie file; note that the IO offset is 0 because embedded
-  // movie files have
-  // absolute references to sample data in the archive
+  // movie files have absolute references to sample data in the archive
   MHKFileHandle* fh = [[MHKFileHandle alloc] initWithArchive:self
                                                       length:rdesc.length
                                                archiveOffset:rdesc.offset
                                                     ioOffset:0];
 
-  // wrap the file handle in a LibAV IO context
-  MHKLibAVIOContext* ioc = [[MHKLibAVIOContext alloc] initWithFileHandle:fh error:outError];
+  // wrap the file handle in a FFmpeg IO context
+  MHKFFmpegIOContext* ioc = [[MHKFFmpegIOContext alloc] initWithFileHandle:fh error:outError];
   [fh release];
   if (!ioc) {
-    return NULL;
+    return nil;
   }
 
   // allocate and configure the format context
-  AVFormatContext* avfc = g_libav.avformat_alloc_context();
+  AVFormatContext* avfc = g_mhk_ffmpeg.avformat_alloc_context();
   avfc->pb = ioc.avioc;
 
   // find the QuickTime movie format
   // TODO: cache this
-  AVInputFormat* avif = g_libav.av_iformat_next(NULL);
+  AVInputFormat* avif = g_mhk_ffmpeg.av_iformat_next(NULL);
   while (avif) {
     if (strstr(avif->name, "mov") != NULL) {
       break;
     }
-    avif = g_libav.av_iformat_next(avif);
+    avif = g_mhk_ffmpeg.av_iformat_next(avif);
   }
 
-  // seek to the beginning of the movie container; this is a hack to allow libav to work with
+  // seek to the beginning of the movie container; this is a hack to allow ffmpeg to work with
   // embedded movies and relies on the IO offset being 0 (see above)
-  g_libav.avio_seek(ioc.avioc, rdesc.offset, SEEK_SET);
+  g_mhk_ffmpeg.avio_seek(ioc.avioc, rdesc.offset, SEEK_SET);
 
   // open the movie
-  g_libav.avformat_open_input(&avfc, "", avif, NULL);
+  g_mhk_ffmpeg.avformat_open_input(&avfc, "", avif, NULL);
 
   // populate the format context with media information
   AVDictionary** stream_options = calloc(avfc->nb_streams, sizeof(AVDictionary*));
-  g_libav.avformat_find_stream_info(avfc, stream_options);
+  g_mhk_ffmpeg.avformat_find_stream_info(avfc, stream_options);
 
   // FIXME: need to keep the IO context alive without just leaking it
 

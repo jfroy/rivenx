@@ -178,9 +178,9 @@
   }
 
   // create and return a decompressor
-  return [[[MHKLibAVAudioDecompressor alloc] initWithSoundDescriptor:sdesc
-                                                          fileHandle:fh
-                                                               error:outError] autorelease];
+  return [[[MHKFFmpegAudioDecompressor alloc] initWithSoundDescriptor:sdesc
+                                                           fileHandle:fh
+                                                                error:outError] autorelease];
 }
 
 @end

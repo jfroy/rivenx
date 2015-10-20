@@ -5,12 +5,13 @@
 
 @class MHKSoundDescriptor;
 
-@interface MHKLibAVAudioDecompressor : NSObject<MHKAudioDecompression>
+@interface MHKFFmpegAudioDecompressor : NSObject<MHKAudioDecompression>
 
-@property (nonatomic, readonly) const AudioStreamBasicDescription* outputFormat NS_RETURNS_INNER_POINTER;
-@property (nonatomic, readonly) uint64_t frameCount;
-@property (nonatomic, readonly) uint32_t framesPerPacket;
-@property (nonatomic, readonly) uint64_t framePosition;
+@property(nonatomic, readonly)
+    const AudioStreamBasicDescription* outputFormat NS_RETURNS_INNER_POINTER;
+@property(nonatomic, readonly) uint64_t frameCount;
+@property(nonatomic, readonly) uint32_t framesPerPacket;
+@property(nonatomic, readonly) uint64_t framePosition;
 
 - (instancetype)initWithSoundDescriptor:(MHKSoundDescriptor*)sdesc
                              fileHandle:(MHKFileHandle*)fileHandle
