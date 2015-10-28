@@ -158,7 +158,6 @@
 		6B3972E21BD86D6D00BE7275 /* link_stack_tests.cc in Sources */ = {isa = PBXBuildFile; fileRef = 6B3972DD1BD8274200BE7275 /* link_stack_tests.cc */; };
 		6B3972E31BD999DD00BE7275 /* pc_queue_tests.cc in Sources */ = {isa = PBXBuildFile; fileRef = 6B3972DE1BD8274200BE7275 /* pc_queue_tests.cc */; };
 		6B5AE45C1AE0C10D00FC3294 /* rx_abort.cc in Sources */ = {isa = PBXBuildFile; fileRef = 318161AE147C69C600623EF2 /* rx_abort.cc */; };
-		6B5BFF1A1ADECD9A00AEF66B /* RXSound_test.mm in Sources */ = {isa = PBXBuildFile; fileRef = 31C357290D92A72400EDEF81 /* RXSound_test.mm */; };
 		6BC16516193945E900B45CB4 /* RXTexture.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3186C9E4102E47F4004E81D2 /* RXTexture.mm */; };
 		6BE3ED511790842600B1732D /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4E1790842600B1732D /* Accelerate.framework */; };
 		6BE3ED521790842600B1732D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4F1790842600B1732D /* Foundation.framework */; };
@@ -215,13 +214,6 @@
 			remoteGlobalIDString = 3149598E0E327B2D00E49C83;
 			remoteInfo = MHKKit;
 		};
-		6B5BFF131ADECA7500AEF66B /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 31F3093208BE43C100417394;
-			remoteInfo = "Riven X";
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -258,15 +250,6 @@
 			);
 			name = "Copy Binaries";
 			runOnlyForDeploymentPostprocessing = 0;
-		};
-		6B5BFF1D1ADECF6700AEF66B /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -473,7 +456,6 @@
 		6B3972DC1BD8274200BE7275 /* atomic_tests.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = atomic_tests.cc; sourceTree = "<group>"; };
 		6B3972DD1BD8274200BE7275 /* link_stack_tests.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = link_stack_tests.cc; sourceTree = "<group>"; };
 		6B3972DE1BD8274200BE7275 /* pc_queue_tests.cc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = pc_queue_tests.cc; sourceTree = "<group>"; };
-		6B5BFF0D1ADECA7500AEF66B /* UnitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6B5BFF101ADECA7500AEF66B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6B5BFF191ADECC1900AEF66B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6B5BFF1F1ADECF6700AEF66B /* atomic_test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = atomic_test; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -556,13 +538,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		6B5BFF0A1ADECA7500AEF66B /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		6B5BFF1C1ADECF6700AEF66B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -631,7 +606,6 @@
 				3149598F0E327B2D00E49C83 /* MHKKit.framework */,
 				316E1EE80E77803100F28E2A /* mhkdump */,
 				31ADC95214ADA128004FB4AD /* unpackgogsetup */,
-				6B5BFF0D1ADECA7500AEF66B /* UnitTests.xctest */,
 				6B5BFF1F1ADECF6700AEF66B /* atomic_test */,
 			);
 			name = Products;
@@ -1127,31 +1101,12 @@
 			productReference = 31F3093308BE43C100417394 /* Riven X.app */;
 			productType = "com.apple.product-type.application";
 		};
-		6B5BFF0C1ADECA7500AEF66B /* UnitTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 6B5BFF151ADECA7500AEF66B /* Build configuration list for PBXNativeTarget "UnitTests" */;
-			buildPhases = (
-				6B5BFF091ADECA7500AEF66B /* Sources */,
-				6B5BFF0A1ADECA7500AEF66B /* Frameworks */,
-				6B5BFF0B1ADECA7500AEF66B /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				6B5BFF141ADECA7500AEF66B /* PBXTargetDependency */,
-			);
-			name = UnitTests;
-			productName = "Riven X Tests";
-			productReference = 6B5BFF0D1ADECA7500AEF66B /* UnitTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 		6B5BFF1E1ADECF6700AEF66B /* atomic_test */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 6B5BFF231ADECF6700AEF66B /* Build configuration list for PBXNativeTarget "atomic_test" */;
 			buildPhases = (
 				6B5BFF1B1ADECF6700AEF66B /* Sources */,
 				6B5BFF1C1ADECF6700AEF66B /* Frameworks */,
-				6B5BFF1D1ADECF6700AEF66B /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -1196,10 +1151,6 @@
 					31F3093208BE43C100417394 = {
 						DevelopmentTeam = 4YFS4VAABW;
 					};
-					6B5BFF0C1ADECA7500AEF66B = {
-						CreatedOnToolsVersion = 6.3;
-						TestTargetID = 31F3093208BE43C100417394;
-					};
 					6B5BFF1E1ADECF6700AEF66B = {
 						CreatedOnToolsVersion = 6.3;
 					};
@@ -1223,7 +1174,6 @@
 				316E1EE70E77803100F28E2A /* mhkdump */,
 				8DD76F960486AA7600D96B5E /* plistize_stacks */,
 				31D6AD8C0D4197E600629AEB /* dump_save */,
-				6B5BFF0C1ADECA7500AEF66B /* UnitTests */,
 				6B5BFF1E1ADECF6700AEF66B /* atomic_test */,
 				31333F4F09B019E300DB6FC7 /* rxaudio_test */,
 			);
@@ -1258,13 +1208,6 @@
 				315DA3CF118FED0F003E21BC /* patches in Resources */,
 				31334D951968A222006470FC /* Shaders in Resources */,
 				31DAAF270DDE21EF00D06D0C /* sounds in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		6B5BFF0B1ADECA7500AEF66B /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1424,14 +1367,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		6B5BFF091ADECA7500AEF66B /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				6B5BFF1A1ADECD9A00AEF66B /* RXSound_test.mm in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		6B5BFF1B1ADECF6700AEF66B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1483,11 +1418,6 @@
 			isa = PBXTargetDependency;
 			target = 3149598E0E327B2D00E49C83 /* MHKKit */;
 			targetProxy = 31BA9E1E0EE65F28003C4457 /* PBXContainerItemProxy */;
-		};
-		6B5BFF141ADECA7500AEF66B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 31F3093208BE43C100417394 /* Riven X */;
-			targetProxy = 6B5BFF131ADECA7500AEF66B /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1620,6 +1550,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				COMBINE_HIDPI_IMAGES = YES;
 				DEFINES_MODULE = YES;
+				DEPLOYMENT_POSTPROCESSING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
@@ -1683,6 +1614,7 @@
 		31ADC95B14ADA128004FB4AD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DEPLOYMENT_POSTPROCESSING = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1744,9 +1676,9 @@
 				CLANG_WARN_ASSIGN_ENUM = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_NULLABLE_TO_NONNULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_ATOMIC_PROPERTIES = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_RECEIVER_WEAK = YES;
 				CLANG_WARN_OBJC_REPEATED_USE_OF_WEAK = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
@@ -1763,7 +1695,6 @@
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
-				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1780,7 +1711,6 @@
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
-				GCC_WARN_MULTIPLE_DEFINITION_TYPES_FOR_SELECTOR = YES;
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_SHADOW = YES;
 				GCC_WARN_STRICT_SELECTOR_MATCH = YES;
@@ -1811,20 +1741,20 @@
 				CLANG_ANALYZER_SECURITY_INSECUREAPI_STRCPY = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
 				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_DEBUG_INFORMATION_LEVEL = "line-tables-only";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_WARN_ASSIGN_ENUM = YES;
 				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
 				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_NULLABLE_TO_NONNULL_CONVERSION = YES;
 				CLANG_WARN_OBJC_IMPLICIT_ATOMIC_PROPERTIES = YES;
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_RECEIVER_WEAK = YES;
 				CLANG_WARN_OBJC_REPEATED_USE_OF_WEAK = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_SUSPICIOUS_IMPLICIT_CONVERSION = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEPLOYMENT_POSTPROCESSING = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -1834,7 +1764,6 @@
 				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_INLINES_ARE_PRIVATE_EXTERN = YES;
-				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1851,7 +1780,6 @@
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_HIDDEN_VIRTUAL_FUNCTIONS = YES;
-				GCC_WARN_MULTIPLE_DEFINITION_TYPES_FOR_SELECTOR = YES;
 				GCC_WARN_NON_VIRTUAL_DESTRUCTOR = YES;
 				GCC_WARN_SHADOW = YES;
 				GCC_WARN_STRICT_SELECTOR_MATCH = YES;
@@ -1935,6 +1863,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEPLOYMENT_POSTPROCESSING = YES;
 				GCC_PREFIX_HEADER = rivenx.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -1945,44 +1874,6 @@
 				PRODUCT_BUNDLE_IDENTIFIER = org.macstorm.rivenx;
 				PRODUCT_NAME = "Riven X";
 				WRAPPER_EXTENSION = app;
-			};
-			name = Release;
-		};
-		6B5BFF161ADECA7500AEF66B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CLANG_ENABLE_OBJC_ARC = YES;
-				COMBINE_HIDPI_IMAGES = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-					"$(inherited)",
-				);
-				GCC_DYNAMIC_NO_PIC = NO;
-				INFOPLIST_FILE = Tests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.macstorm.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Riven X.app/Contents/MacOS/Riven X";
-			};
-			name = Debug;
-		};
-		6B5BFF181ADECA7500AEF66B /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CLANG_ENABLE_OBJC_ARC = YES;
-				COMBINE_HIDPI_IMAGES = YES;
-				COPY_PHASE_STRIP = NO;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(DEVELOPER_FRAMEWORKS_DIR)",
-					"$(inherited)",
-				);
-				INFOPLIST_FILE = Tests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.macstorm.$(PRODUCT_NAME:rfc1034identifier)";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Riven X.app/Contents/MacOS/Riven X";
 			};
 			name = Release;
 		};
@@ -2073,15 +1964,6 @@
 			buildConfigurations = (
 				31F3093908BE43C200417394 /* Debug */,
 				31F3093A08BE43C200417394 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		6B5BFF151ADECA7500AEF66B /* Build configuration list for PBXNativeTarget "UnitTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				6B5BFF161ADECA7500AEF66B /* Debug */,
-				6B5BFF181ADECA7500AEF66B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
