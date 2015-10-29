@@ -4,6 +4,7 @@
 #include "Rendering/Audio/RXAudioRenderer.h"
 
 #include <algorithm>
+#include <cmath>
 #include <thread>
 
 #include "Base/RXLogging.h"
@@ -17,6 +18,28 @@
 
 namespace {
 
+using seconds_f = std::chrono::duration<float, std::chrono::seconds::period>;
+
+struct GainTransform {
+  // kAudioUnitParameterUnit_MixerFaderCurve1
+  static float In(float v) { return rx::clamp(0.0f, 1.0f, cbrtf(v)); }
+  static float Out(float v) { return powf(v, 3.0f); }
+};
+
+struct PanTransform {
+  static float In(float v) { return rx::clamp(-1.0f, 1.0f, v); }
+  static float Out(float v) { return v; }
+};
+
+struct EnableTransform {
+  static float In(bool v) { return v ? 1.0f : 0.0f; }
+  static bool Out(float v) { return v == 1.0f; }
+};
+
+const auto kOutputChannels = 2;
+const auto kOutputSamplingRate = 44100;
+constexpr auto kOutputSamplingRate_ms = kOutputSamplingRate / 1000;
+
 OSStatus SilenceRenderCallback(void* in_renderer, AudioUnitRenderActionFlags* inout_action_flags,
                                const AudioTimeStamp* in_timestamp, uint32_t in_bus,
                                uint32_t in_frames, AudioBufferList* io_data) {
@@ -27,52 +50,25 @@ OSStatus SilenceRenderCallback(void* in_renderer, AudioUnitRenderActionFlags* in
   return noErr;
 }
 
-struct GainTransform {
-  /*
-  kAudioUnitParameterUnit_MixerFaderCurve1
-  An audio power unit of measure.
-  Recommended range is from 0.0 through 1.0. Use pow (x, 3.0) to simulate a reasonable linear mixer
-  channel fader
-  response.
-  */
-  static float In(float v) { return rx::clamp(0.0f, 1.0f, cbrtf(v)); }
-  static float Out(float v) { return powf(v, 3.0f); }
-};
-
-struct PanTransform {
-  static float In(float v) { return rx::clamp(-1.0f, 1.0f, v); }
-  static float Out(float v) { return v; }
-};
-
-const int kOutputChannels = 2;
-const int kOutputSamplingRate = 44100;
-
 }  // namespace
 
 namespace rx {
 
-// static
-OSStatus AudioRenderer::MixerRenderNotifyCallback(void* in_renderer,
-                                                  AudioUnitRenderActionFlags* inout_action_flags,
-                                                  const AudioTimeStamp* in_timestamp,
-                                                  uint32_t in_bus, uint32_t in_frames,
-                                                  AudioBufferList* io_data) {
-  rx::AudioRenderer* renderer = reinterpret_cast<rx::AudioRenderer*>(in_renderer);
-  if (*inout_action_flags & kAudioUnitRenderAction_PreRender) {
-    return renderer->MixerPreRenderNotify(in_timestamp, in_bus, in_frames, io_data);
+AudioRenderer::AudioRenderer() {}
+
+AudioRenderer::~AudioRenderer() {
+  Stop();
+  DestroyAudioGraph();
+}
+
+void AudioRenderer::Initialize() {
+  InitializeAudioGraph();
+  for (auto& queue : pending_buffers_) {
+    queue.Resize(128);
   }
-  return noErr;
+  pending_parameter_buffers_.Resize(128);
+  parameter_buffer_ = std::make_unique<ParameterBuffer>();
 }
-
-AudioRenderer::AudioRenderer() {
-  CreateGraph();
-  RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage,
-          CFSTR("<rx::AudioRenderer: %p> Constructed. %u elements limit."), this, ELEMENT_LIMIT);
-}
-
-AudioRenderer::~AudioRenderer() { DestroyGraph(); }
-
-void AudioRenderer::Initialize() { AUGraphInitialize(graph_); }
 
 bool AudioRenderer::IsInitialized() const {
   Boolean isInitialized = false;
@@ -105,7 +101,7 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
   // If the source format not mixable, bail for this source.
   CAStreamBasicDescription format(asbd);
   if (!format.IsPCM()) {
-    RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage,
+    RXCFLog(kRXLoggingAudio, kRXLoggingLevelError,
             CFSTR("AudioRenderer::AcquireElement: Requested format is not mixable."));
     return INVALID_ELEMENT;
   }
@@ -113,7 +109,7 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
   // Only mono and stereo formats are supported.
   auto channels = format.NumberChannels();
   if (channels > 2) {
-    RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage,
+    RXCFLog(kRXLoggingAudio, kRXLoggingLevelError,
             CFSTR("AudioRenderer::AcquireElement: Requested format has more than 2 channels."));
     return INVALID_ELEMENT;
   }
@@ -125,12 +121,15 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
     }
   }
   if (element == element_allocations_.size()) {
-    RXCFLog(kRXLoggingAudio, kRXLoggingLevelMessage,
+    RXCFLog(kRXLoggingAudio, kRXLoggingLevelError,
             CFSTR("AudioRenderer::AcquireElement: No available element."));
     return INVALID_ELEMENT;
   }
 
   // Cancel all parameter ramps.
+  // FIXME: implement
+
+  // Drain all pending buffers.
   // FIXME: implement
 
   // Set parameters to default values.
@@ -248,8 +247,10 @@ bool AudioRenderer::ElementEnabled(AudioUnitElement element) const {
 }
 
 void AudioRenderer::SetElementEnabled(AudioUnitElement element, bool enabled) {
-  // Eventually the rendering thread will see this write.
-  element_enabled_[element] = enabled;
+  auto& attributes = parameter_buffer_->enable;
+  attributes.values[element] = EnableTransform::In(enabled);
+  attributes.durations[element] = milliseconds{0};
+  attributes.written[element] = true;
 }
 
 float AudioRenderer::ElementGain(AudioUnitElement element) const {
@@ -258,147 +259,158 @@ float AudioRenderer::ElementGain(AudioUnitElement element) const {
   return GainTransform::Out(gain);
 }
 
+void AudioRenderer::SetElementGain(AudioUnitElement element, float gain, milliseconds duration) {
+  auto& attributes = parameter_buffer_->gain;
+  attributes.values[element] = GainTransform::In(gain);
+  attributes.durations[element] = milliseconds{0};
+  attributes.written[element] = true;
+}
+
 float AudioRenderer::ElementPan(AudioUnitElement element) const {
   float pan;
   mixer_->GetParameter(kStereoMixerParam_Pan, kAudioUnitScope_Input, element, pan);
   return PanTransform::Out(pan);
 }
 
-void AudioRenderer::ScheduleGainEdits(const ParameterEditArray& edits) {
-  ScheduleEdits<GainTransform>(edits, pending_gain_edits_);
+void AudioRenderer::SetElementPan(AudioUnitElement element, float pan, milliseconds duration) {
+  auto& attributes = parameter_buffer_->pan;
+  attributes.values[element] = PanTransform::In(pan);
+  attributes.durations[element] = milliseconds{0};
+  attributes.written[element] = true;
 }
 
-void AudioRenderer::SchedulePanEdits(const ParameterEditArray& edits) {
-  ScheduleEdits<PanTransform>(edits, pending_pan_edits_);
-}
-
-template <typename Transform>
-void AudioRenderer::ScheduleEdits(const ParameterEditArray& edits,
-                                  ParameterEditQueue& edits_queue) {
-  // Make a copy of the edits for delivery to the audio render thread and filter for duplicates.
-  ParameterEditArray filtered_edits;
-  std::bitset<ELEMENT_LIMIT> immediate_edit_seen;
-  std::bitset<ELEMENT_LIMIT> ramp_edit_seen;
-  for (ssize_t i = edits.size() - 1; i >= 0; --i) {
-    const auto& edit = edits[i];
-    if (edit.duration.count() == 0) {
-      if (!immediate_edit_seen[edit.element] && edit.element < ELEMENT_LIMIT) {
-        immediate_edit_seen[edit.element] = true;
-        filtered_edits.push_back({edit.element, Transform::In(edit.value), edit.duration});
-      }
-    } else {
-      if (!ramp_edit_seen[edit.element] && edit.element < ELEMENT_LIMIT) {
-        ramp_edit_seen[edit.element] = true;
-        filtered_edits.push_back({edit.element, Transform::In(edit.value), edit.duration});
-      }
-    }
+void AudioRenderer::SubmitParameterEdits() {
+  if (pending_parameter_buffers_.TryEnqueue(std::move(parameter_buffer_))) {
+    parameter_buffer_ = std::make_unique<ParameterBuffer>();
   }
-
-  // Enqueue the edits. This may fail if there is not enough space. Try a few times then give up.
-  // FIXME: implement retry loop based on waiting for one render cycle worth of time, a few times.
-  edits_queue.TryEnqueue(std::make_move_iterator(std::begin(filtered_edits)),
-                         std::make_move_iterator(std::end(filtered_edits)));
 }
 
-scoped_refptr<AudioRenderer::Buffer> AudioRenderer::DequeueBuffer(AudioUnitElement element) {
-  // FIXME: implement
-  return nullptr;
-}
-
-void AudioRenderer::EnqueueBuffer(AudioUnitElement element, const scoped_refptr<Buffer>& buffer) {
-  // FIXME: implement
+bool AudioRenderer::EnqueueBuffer(AudioUnitElement element, std::unique_ptr<Buffer> buffer) {
+  auto& buffer_queue = pending_buffers_[element];
+  return buffer_queue.TryEnqueue(std::move(buffer));
 }
 
 #pragma mark -
+
+// static
+OSStatus AudioRenderer::MixerRenderNotifyCallback(void* in_renderer,
+                                                  AudioUnitRenderActionFlags* inout_action_flags,
+                                                  const AudioTimeStamp* in_timestamp,
+                                                  uint32_t in_bus, uint32_t in_frames,
+                                                  AudioBufferList* io_data) {
+  auto renderer = reinterpret_cast<rx::AudioRenderer*>(in_renderer);
+  if (*inout_action_flags & kAudioUnitRenderAction_PreRender) {
+    return renderer->MixerPreRenderNotify(in_timestamp, in_bus, in_frames, io_data);
+  }
+  return noErr;
+}
 
 OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* in_timestamp, uint32_t in_bus,
                                              uint32_t in_frames, AudioBufferList* io_data) {
   // Finalize graph updates if needed.
   int32_t graph_updates = graph_updates_requested_.load(std::memory_order_relaxed);
-  if (graph_updates > 0 && automatic_commits_.load(std::memory_order_relaxed)) {
+  if (graph_updates > 0) {
     AUGraphUpdate(graph_, nullptr);
     graph_updates_requested_.fetch_sub(graph_updates, std::memory_order_relaxed);
   }
 
-  // Apply parameter edits.
-  // FIXME
-  {
-    //    auto span = pending_gain_edits_.consume_span();
-    //    ApplyEdits(*in_timestamp, in_frames, kStereoMixerParam_Volume, span, gain_ramps_);
-    //    pending_gain_edits_.consume(span.size());
-  }
-  {
-    //    auto span = pending_pan_edits_.consume_span();
-    //    ApplyEdits(*in_timestamp, in_frames, kStereoMixerParam_Pan, span, pan_ramps_);
-    //    pending_pan_edits_.consume(span.size());
+  // Merge all pending parameter buffers into one.
+  auto range = pending_parameter_buffers_.DequeueRange();
+  if (!range.empty()) {
+    ParameterBuffer parameter_buffer;
+    for (const auto& buffer : range) {
+      for (uint32_t i = 0; i < ELEMENT_LIMIT; ++i) {
+        if (buffer->gain.written[i]) {
+          parameter_buffer.gain.values[i] = buffer->gain.values[i];
+        }
+      }
+      for (uint32_t i = 0; i < ELEMENT_LIMIT; ++i) {
+        if (buffer->pan.written[i]) {
+          parameter_buffer.pan.values[i] = buffer->pan.values[i];
+        }
+      }
+      for (uint32_t i = 0; i < ELEMENT_LIMIT; ++i) {
+        if (buffer->enable.written[i]) {
+          parameter_buffer.enable.values[i] = buffer->enable.values[i];
+        }
+      }
+    }
+
+    // Process the merged parameter buffer.
+    for (uint32_t i = 0; i < ELEMENT_LIMIT; ++i) {
+      if (parameter_buffer.enable.written[i]) {
+        element_enabled_[i] = EnableTransform::Out(parameter_buffer.enable.values[i]);
+      }
+    }
+    UpdateParameter(*in_timestamp, kStereoMixerParam_Volume, parameter_buffer.gain, gain_ramps_);
+    UpdateParameter(*in_timestamp, kStereoMixerParam_Pan, parameter_buffer.pan, pan_ramps_);
+
+    pending_parameter_buffers_.Consume(range);
   }
 
-  // Apply parameter ramps.
+  // Apply ramps.
   ApplyRamps(*in_timestamp, in_frames, kStereoMixerParam_Volume, gain_ramps_);
   ApplyRamps(*in_timestamp, in_frames, kStereoMixerParam_Pan, pan_ramps_);
 
   return noErr;
 }
 
-void AudioRenderer::ApplyEdits(const AudioTimeStamp& timestamp, uint32_t in_frames,
-                               AudioUnitParameterID parameter,
-                               typename ParameterEditQueue::range_pair rp, RampArray& ramps) {
-  // Create a parameter event for each immediate edit. The events are stored in |events| (in the
-  // order the edits are processed) and indexed by their element in |events_by_element|. Onces all
-  // events have been created, they are applied all at once using |AudioUnitScheduleParameters|.
+void AudioRenderer::UpdateParameter(const AudioTimeStamp& timestamp, AudioUnitParameterID parameter,
+                                    const ParameterAttributes& attributes, RampArray& ramps) {
+  // Create a parameter event for immediate attributes. The events are stored in |events| and
+  // indexed by their element using |events_by_element| (allowing for unwritten attributes). Once
+  // all events have been created, they are applied together using |AudioUnitScheduleParameters|.
   //
-  // For ramp edits, the corresponding parameter ramp is updated.
+  // For attributes with a duration, the parameter ramp is updated.
 
   std::array<AudioUnitParameterEvent, ELEMENT_LIMIT> events;
-  std::array<int, ELEMENT_LIMIT> events_by_element;
-  events_by_element.fill(std::numeric_limits<int>::max());
-  int event_count = 0;
+  std::array<uint32_t, ELEMENT_LIMIT> events_by_element;
+  events_by_element.fill(ELEMENT_LIMIT);
+  uint32_t event_count = 0;
 
-  auto process_range = [&](auto& range) {
-    for (auto iter = range.first; iter != range.second; ++iter) {
-      // Get the parameter ramp matching the edit's parameter and element.
-      auto& ramp = ramps[iter->element];
+  for (uint32_t element = 0; element < ELEMENT_LIMIT; ++element) {
+    auto& ramp = ramps[element];
 
-      // For immediate edits, reset the parameter ramp and update the parameter event.
-      if (iter->duration.count() == 0) {
-        // Reset parameter ramp.
-        ramp.startBufferOffset = 0;
-        ramp.durationInFrames = 0;
-        ramp.startValue = ramp.endValue = iter->value;
+    // If the duration is zero, reset the ramp and prepare an immediate parameter event.
+    if (attributes.durations[element].count() == 0) {
+      // Reset the ramp for this element.
+      ramp.startBufferOffset = 0;
+      ramp.durationInFrames = 0;
+      ramp.startValue = ramp.endValue = attributes.values[element];
 
-        // Lookup event for the element. If none, create a new event.
-        auto event_index = events_by_element.at(iter->element);
-        if (event_index == std::numeric_limits<int>::max()) {
-          event_index = event_count++;
-          events_by_element.at(iter->element) = event_index;
-        }
-
-        // Update the parameter event.
-        auto& event = events.at(event_index);
-        event.scope = kAudioUnitScope_Input;
-        event.element = iter->element;
-        event.parameter = parameter;
-        event.eventType = kParameterEvent_Immediate;
-        event.eventValues.immediate.bufferOffset = 0;
-        event.eventValues.immediate.value = iter->value;
-      } else {
-        // Update the parameter ramp. |startBufferOffset| is reset to 0 (it indicates the progress
-        // of the ramp in frames), |durationInFrames| is set to the duration in frames of the ramp
-        // derived from the duration in seconds of the edit, |startValue| is left alone (it
-        // indicates the current value of the ramp; scheduling a ramp only changes the end value of
-        // a parameter), and |endValue| is set to the delta between the ramp's end value and start
-        // value.
-        double sample_rate;
-        mixer_->GetSampleRate(kAudioUnitScope_Input, iter->element, sample_rate);
-        ramp.startBufferOffset = 0;
-        ramp.durationInFrames = static_cast<uint32_t>(
-            ceil(std::chrono::duration_cast<seconds_f>(iter->duration).count() * sample_rate));
-        ramp.endValue = iter->value - ramp.startValue;
+      // Lookup the parameter event index for the element. Assign a new index if needed.
+      auto event_index = events_by_element[element];
+      if (event_index == ELEMENT_LIMIT) {
+        event_index = event_count++;
+        events_by_element[element] = event_index;
       }
+
+      // Update the event.
+      auto& event = events[event_index];
+      event.scope = kAudioUnitScope_Input;
+      event.element = element;
+      event.parameter = parameter;
+      event.eventType = kParameterEvent_Immediate;
+      event.eventValues.immediate.bufferOffset = 0;
+      event.eventValues.immediate.value = attributes.values[element];
+    } else {
+      // Update the parameter ramp.
+      //
+      // * |startBufferOffset| is reset to 0 (it indicates the progress of the ramp in frames).
+      // * |durationInFrames| is set to the ramp duration in frames derived from the attribure
+      //   duration in seconds.
+      // * |startValue| is left alone. It stores the current value of the ramp. Updating a ramp only
+      //   changes the end value and duration.
+      // * |endValue| is set to the delta between the ramp's end value and start value.
+      double sample_rate;
+      mixer_->GetSampleRate(kAudioUnitScope_Input, element, sample_rate);
+      auto seconds = std::chrono::duration_cast<seconds_f>(attributes.durations[element]).count();
+
+      ramp.startBufferOffset = 0;
+      ramp.durationInFrames = static_cast<uint32_t>(std::ceil(seconds * sample_rate));
+      ramp.endValue = attributes.values[element] - ramp.startValue;
     }
-  };
-  process_range(rp.first);
-  process_range(rp.second);
+  }
 
   // Schedule the events.
   AudioUnitScheduleParameters(*mixer_, events.data(), event_count);
@@ -476,7 +488,7 @@ void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_fram
   AudioUnitScheduleParameters(*mixer_, events.data(), event_count);
 }
 
-void AudioRenderer::CreateGraph() {
+void AudioRenderer::InitializeAudioGraph() {
   AudioComponentDescription acd;
   acd.componentType = 0;
   acd.componentSubType = 0;
@@ -505,11 +517,11 @@ void AudioRenderer::CreateGraph() {
 
   // get the output unit
   AUGraphNodeInfo(graph_, output_node, nullptr, &au);
-  output_.reset(new CAAudioUnit(output_node, au));
+  output_ = std::make_unique<CAAudioUnit>(output_node, au);
 
   // get the mixer unit
   AUGraphNodeInfo(graph_, mixer_node, nullptr, &au);
-  mixer_.reset(new CAAudioUnit(mixer_node, au));
+  mixer_ = std::make_unique<CAAudioUnit>(mixer_node, au);
 
   // use float samples with 2 non-interleaved channels at 44100 Hz
   CAStreamBasicDescription format(kOutputSamplingRate, kOutputChannels,
@@ -531,9 +543,12 @@ void AudioRenderer::CreateGraph() {
                       sizeof(ELEMENT_LIMIT));
 
   // query the maximum frames per render cycle that the output unit will request
-  UInt32 prop_size = sizeof(max_frames_per_slice_);
+  UInt32 prop_size = sizeof(max_frames_per_cycle_);
   output_->GetProperty(kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Global, 0,
-                       &max_frames_per_slice_, &prop_size);
+                       &max_frames_per_cycle_, &prop_size);
+
+  // Derive the max render cycle duration from the frames per cycle and the sampling rate.
+  cycle_duration_ = milliseconds(max_frames_per_cycle_ / kOutputSamplingRate_ms);
 
   // set a silence render callback on the mixer input busses
   AURenderCallbackStruct silence_render = {&SilenceRenderCallback, nullptr};
@@ -542,12 +557,10 @@ void AudioRenderer::CreateGraph() {
                         &silence_render, sizeof(AURenderCallbackStruct));
   }
 
-  // Resize the edit queues. The capacity is empirical.
-  pending_gain_edits_.Resize(64);
-  pending_pan_edits_.Resize(64);
+  AUGraphInitialize(graph_);
 }
 
-void AudioRenderer::DestroyGraph() {
+void AudioRenderer::DestroyAudioGraph() {
   AUGraphUninitialize(graph_);
   AUGraphClose(graph_);
   DisposeAUGraph(graph_);
