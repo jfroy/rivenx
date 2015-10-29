@@ -158,6 +158,8 @@
 		6B3972E21BD86D6D00BE7275 /* link_stack_tests.cc in Sources */ = {isa = PBXBuildFile; fileRef = 6B3972DD1BD8274200BE7275 /* link_stack_tests.cc */; };
 		6B3972E31BD999DD00BE7275 /* pc_queue_tests.cc in Sources */ = {isa = PBXBuildFile; fileRef = 6B3972DE1BD8274200BE7275 /* pc_queue_tests.cc */; };
 		6B5AE45C1AE0C10D00FC3294 /* rx_abort.cc in Sources */ = {isa = PBXBuildFile; fileRef = 318161AE147C69C600623EF2 /* rx_abort.cc */; };
+		6BB2155A1BE2A01900F49B5F /* CAHostTimeBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38AB0F469FC700EFB7FB /* CAHostTimeBase.cpp */; };
+		6BB2155B1BE2A02600F49B5F /* CAMutex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 316C38A60F469FA800EFB7FB /* CAMutex.cpp */; };
 		6BC16516193945E900B45CB4 /* RXTexture.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3186C9E4102E47F4004E81D2 /* RXTexture.mm */; };
 		6BE3ED511790842600B1732D /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4E1790842600B1732D /* Accelerate.framework */; };
 		6BE3ED521790842600B1732D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6BE3ED4F1790842600B1732D /* Foundation.framework */; };
@@ -1247,9 +1249,11 @@
 				31200FB80F3F8445006E6EF7 /* CAComponent.cpp in Sources */,
 				31200FB90F3F8446006E6EF7 /* CAComponentDescription.cpp in Sources */,
 				31200FBA0F3F8447006E6EF7 /* CADebugger.cpp in Sources */,
+				6BB2155A1BE2A01900F49B5F /* CAHostTimeBase.cpp in Sources */,
 				31AA1123199C1EC3004E32F0 /* RXLogging.mm in Sources */,
 				31200FBB0F3F8447006E6EF7 /* CAGuard.cpp in Sources */,
 				31200FBC0F3F8448006E6EF7 /* CAXException.cpp in Sources */,
+				6BB2155B1BE2A02600F49B5F /* CAMutex.cpp in Sources */,
 				31200FC00F3F8495006E6EF7 /* CAStreamBasicDescription.cpp in Sources */,
 				3131F1DB11CD9104007C30EC /* RXErrors.m in Sources */,
 			);
