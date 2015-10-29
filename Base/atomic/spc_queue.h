@@ -39,18 +39,18 @@ class SPCQueue : public noncopyable {
   using const_pointer = const value_type*;
 
  private:
-  // Structure to store a begin and an end pointer.
-  struct range {
+  // Stores a begin and end pointer.
+  struct PointerRange {
     pointer begin;
     pointer end;
 
     ptrdiff_t size() const { return end - begin; }
   };
 
-  // Structure to store a right-side and a left-ride range.
-  struct range_pair {
-    range right;
-    range left;
+  // Stores a right-side and a left-side pointer range.
+  struct WrapRange {
+    PointerRange right;
+    PointerRange left;
 
     ptrdiff_t size() const { return right.size() + left.size(); }
   };
@@ -71,7 +71,7 @@ class SPCQueue : public noncopyable {
     iterator(const iterator& rhs) = default;
     iterator& operator=(const iterator& rhs) = default;
 
-    iterator(const range_pair& rp, pointer p) : rp_(&rp), p_(p) {}
+    iterator(const WrapRange& wrap_range, pointer p) : wrap_range_(&wrap_range), p_(p) {}
 
     reference operator*() const { return *p_; }
     pointer operator->() const { return p_; }
@@ -85,17 +85,17 @@ class SPCQueue : public noncopyable {
 
     iterator& operator+=(difference_type m) {
       auto p = p_ + m;
-      if (p_ >= rp_->right.begin) {
-        auto end_distance = p - rp_->right.end;
+      if (p_ >= wrap_range_->right.begin) {
+        auto end_distance = p - wrap_range_->right.end;
         if (end_distance >= 0) {
-          p_ = rp_->left.begin + end_distance;
+          p_ = wrap_range_->left.begin + end_distance;
         } else {
           p_ = p;
         }
       } else {
-        auto begin_distance = p - rp_->left.begin;
+        auto begin_distance = p - wrap_range_->left.begin;
         if (begin_distance < 0) {
-          p_ = rp_->right.end + begin_distance;
+          p_ = wrap_range_->right.end + begin_distance;
         } else {
           p_ = p;
         }
@@ -120,21 +120,21 @@ class SPCQueue : public noncopyable {
     }
 
     difference_type operator-(const iterator& rhs) {
-      debug_assert(rp_ == rhs.rp_);
-      if (rp_ == nullptr) {
+      debug_assert(wrap_range_ == rhs.wrap_range_);
+      if (wrap_range_ == nullptr) {
         debug_assert(p_ == nullptr);
         debug_assert(rhs.p_ == nullptr);
         return 0;
       }
-      if (p_ >= rp_->right.begin) {
-        if (rhs.p_ >= rp_->right.begin) {
+      if (p_ >= wrap_range_->right.begin) {
+        if (rhs.p_ >= wrap_range_->right.begin) {
           return p_ - rhs.p_;
         } else {
-          return -((rp_->right.end - p_) + (rhs.p_ - rp_->left.begin));
+          return -((wrap_range_->right.end - p_) + (rhs.p_ - wrap_range_->left.begin));
         }
       } else {
-        if (rhs.p_ >= rp_->right.begin) {
-          return (rp_->right.end - rhs.p_) + (p_ - rp_->left.begin);
+        if (rhs.p_ >= wrap_range_->right.begin) {
+          return (wrap_range_->right.end - rhs.p_) + (p_ - wrap_range_->left.begin);
         } else {
           return p_ - rhs.p_;
         }
@@ -172,37 +172,39 @@ class SPCQueue : public noncopyable {
    private:
     friend class SPCQueue;
 
-    range_pair const* const rp_{nullptr};
+    WrapRange const* const wrap_range_{nullptr};
     pointer p_{nullptr};
   };
 
-  // An AccessView object creates begin and end iterators for the queue, either over the enqueue
-  // or dequeue range.
-  class AccessView {
+  // A Range vends begin and end iterators over a range of elements in the queue.
+  class Range {
    public:
-    AccessView() = default;
-    AccessView(const AccessView& rhs) = default;
-    AccessView& operator=(const AccessView& rhs) = default;
+    Range() = default;
+    Range(const Range& rhs) = default;
+    Range& operator=(const Range& rhs) = default;
 
-    AccessView(const range_pair& rp) : rp_(&rp) {}
+    Range(const WrapRange& wrap_range) : wrap_range_(&wrap_range) {}
 
-    iterator begin() {
-      if (rp_) {
-        return iterator(*rp_, rp_->right.begin);
+    iterator begin() const {
+      if (wrap_range_) {
+        return iterator(*wrap_range_, wrap_range_->right.begin);
       } else {
         return iterator();
       }
     }
-    iterator end() {
-      if (rp_) {
-        return iterator(*rp_, rp_->left.end);
+
+    iterator end() const {
+      if (wrap_range_) {
+        return iterator(*wrap_range_, wrap_range_->left.end);
       } else {
         return iterator();
       }
     }
+
+    bool empty() const { return wrap_range_ == nullptr; }
 
    private:
-    const range_pair* rp_{nullptr};
+    const WrapRange* wrap_range_{nullptr};
   };
 
   // INIT
@@ -218,11 +220,9 @@ class SPCQueue : public noncopyable {
     std::atomic_thread_fence(std::memory_order_acquire);
 
     if (buffer_) {
-      // Consume every object. DequeueAccessView and Consume twice to force cached pointer updates.
-      auto dav = DequeueAccessView();
-      Consume(std::begin(dav), std::end(dav));
-      dav = DequeueAccessView();
-      Consume(std::begin(dav), std::end(dav));
+      // Consume every object. DequeueRange and Consume twice to force cached pointer updates.
+      Consume(DequeueRange());
+      Consume(DequeueRange());
 
       // Free the element buffer.
       free(buffer_);
@@ -242,12 +242,12 @@ class SPCQueue : public noncopyable {
 
     // Update the enqueue and dequeue cache lines.
     enqueue_.ptr.store(begin, std::memory_order_relaxed);
-    enqueue_.rp = {{begin, begin}, {begin, begin}};
-    const_cast<range&>(enqueue_.buffer_range) = {begin, end};
+    enqueue_.wrap_range = {{begin, begin}, {begin, begin}};
+    const_cast<PointerRange&>(enqueue_.buffer_range) = {begin, end};
 
     dequeue_.ptr.store(begin, std::memory_order_relaxed);
-    dequeue_.rp = {{begin, begin}, {begin, begin}};
-    const_cast<range&>(dequeue_.buffer_range) = {begin, end};
+    dequeue_.wrap_range = {{begin, begin}, {begin, begin}};
+    const_cast<PointerRange&>(dequeue_.buffer_range) = {begin, end};
 
     // Emit release fence to publish all previous writes.
     std::atomic_thread_fence(std::memory_order_release);
@@ -293,13 +293,13 @@ class SPCQueue : public noncopyable {
     //
     // Note that nelements + 1 is used to maintain an unused slot to distinguish an empty queue from
     // a full queue (i.e. remove ambiguitiy when the read and write pointers are equal).
-    if (enqueue_.rp.size() < nelements + 1) {
-      enqueue_.rp.left.end = dequeue_.ptr.load(std::memory_order_relaxed);
+    if (enqueue_.wrap_range.size() < nelements + 1) {
+      enqueue_.wrap_range.left.end = dequeue_.ptr.load(std::memory_order_relaxed);
       UpdateCacheLineRangePair(enqueue_);
     }
 
     // If there is still not enough space, fail the entire transaction.
-    if (enqueue_.rp.size() < nelements + 1) {
+    if (enqueue_.wrap_range.size() < nelements + 1) {
       return false;
     }
 
@@ -308,14 +308,15 @@ class SPCQueue : public noncopyable {
     std::atomic_thread_fence(std::memory_order_acquire);
 
     // Copy elements from the input iterator starting with the right (i.e. forward) range.
-    auto ncopy = std::min(enqueue_.rp.right.size(), nelements);
-    pointer new_enqueue_ptr = std::uninitialized_copy_n(iter, ncopy, enqueue_.rp.right.begin);
+    auto ncopy = std::min(enqueue_.wrap_range.right.size(), nelements);
+    pointer new_enqueue_ptr =
+        std::uninitialized_copy_n(iter, ncopy, enqueue_.wrap_range.right.begin);
 
     // Copy the remainder of the input (if any) in the left (i.e. behind) range.
     if (ncopy < nelements) {
       std::advance(iter, ncopy);
       ncopy = nelements - ncopy;
-      new_enqueue_ptr = std::uninitialized_copy_n(iter, ncopy, enqueue_.rp.left.begin);
+      new_enqueue_ptr = std::uninitialized_copy_n(iter, ncopy, enqueue_.wrap_range.left.begin);
     }
 
     // Emit a release barrier. Prevents memory operations from being reordered below it and
@@ -331,49 +332,52 @@ class SPCQueue : public noncopyable {
 
   // DEQUEUE
 
-  // Creates an AccessView object that provides an interator range over all elements in the queue.
-  // Invalidates all prior dequeue access views and all iterators created from those access views.
-  // Does not consume the elements from the queue.
-  AccessView DequeueAccessView() {
+  // Creates a Range that provides an interator range over all elements in the queue. Invalidates
+  // all prior dequeue ranges and all iterators created from those ranges. Does not consume the
+  // elements from the queue.
+  Range DequeueRange() {
     // Update the cache line's access range pair. This doesn't emit a fence.
     UpdateCacheLineRangePair(dequeue_);
 
     // If right.begin == left.end are equal, the queue may be empty. Update the cache of the other
     // access pointer and update the access range pair again.
     //
-    // Note that rp.size() will return the full queue size when the pointers are equal, but the
+    // Note that wrap_range.size() will return the full queue size when the pointers are equal, but
+    // the
     // implementation disambiguates this case as an empty queue.
-    if (dequeue_.rp.right.begin == dequeue_.rp.left.end) {
-      dequeue_.rp.left.end = enqueue_.ptr.load(std::memory_order_relaxed);
+    if (dequeue_.wrap_range.right.begin == dequeue_.wrap_range.left.end) {
+      dequeue_.wrap_range.left.end = enqueue_.ptr.load(std::memory_order_relaxed);
       UpdateCacheLineRangePair(dequeue_);
     }
 
-    // If the pointers are still equal, the queue is empty. Return a dummy access view.
-    if (dequeue_.rp.right.begin == dequeue_.rp.left.end) {
-      return AccessView();
+    // If the pointers are still equal, the queue is empty. Return the default empty range.
+    if (dequeue_.wrap_range.right.begin == dequeue_.wrap_range.left.end) {
+      return Range();
     }
 
     // Emit an acquire fence. Prevents memory operations from being reordered above it and makes all
     // memory writes before a previously emitted release fence visible.
     std::atomic_thread_fence(std::memory_order_acquire);
 
-    // Return an access view for the dequeue range pair.
-    return AccessView(dequeue_.rp);
+    // Return a range.
+    return Range(dequeue_.wrap_range);
   }
 
-  // Consumes elements [first, last) from the queue. The iterators must be valid, which implies they
-  // must have been created from a valid dequeue access view. Invalidates all dequeue access views
-  // and all iterators created from those access views.
+  // Consumes all the elements from the range. The range must be valid. Invalidates all dequeue
+  // ranges and all iterators created from those ranges.
+  void Consume(Range range) { Consume(std::begin(range), std::end(range)); }
+
+  // Consumes elements [first, last) from the queue. The iterators must be valid. Invalidates all
+  // dequeue ranges and all iterators created from those ranges.
   void Consume(iterator first, iterator last) {
     // Exit early if the iterators are equal (empty range). This also handles null iterators
-    // obtained from a default-initialized access view (which is returned by DequeueAccessView when
-    // the queue is empty).
+    // obtained from the default range (which is returned by DequeueRange when the queue is empty).
     if (first == last) {
       return;
     }
 
-    debug_assert(first.rp_ == &dequeue_.rp);
-    debug_assert(last.rp_ == &dequeue_.rp);
+    debug_assert(first.wrap_range_ == &dequeue_.wrap_range);
+    debug_assert(last.wrap_range_ == &dequeue_.wrap_range);
 
     // Destroy the elements in the range.
     for (; first != last; ++first) {
@@ -396,10 +400,10 @@ class SPCQueue : public noncopyable {
   struct alignas(CACHE_LINE_SIZE) CacheLineData {
     // Atomic access pointer.
     std::atomic<pointer> ptr{nullptr};
-    // Range pair for ptr. right.begin caches ptr. left.end caches the other access pointer.
-    range_pair rp{{nullptr, nullptr}, {nullptr, nullptr}};
+    // Wrap range for ptr. right.begin caches ptr. left.end caches the other access pointer.
+    WrapRange wrap_range{{nullptr, nullptr}, {nullptr, nullptr}};
     // Range for the queue's buffer.
-    const range buffer_range{nullptr, nullptr};
+    const PointerRange buffer_range{nullptr, nullptr};
   };
   static_assert(sizeof(CacheLineData) == CACHE_LINE_SIZE, "CacheLineData size != CACHE_LINE_SIZE");
 
@@ -407,20 +411,20 @@ class SPCQueue : public noncopyable {
   // cache line's owned pointer for the calculation.
   void UpdateCacheLineRangePair(CacheLineData& cld) {
     // Load the access pointer into the access range pair without emitting a fence.
-    cld.rp.right.begin = cld.ptr.load(std::memory_order_relaxed);
+    cld.wrap_range.right.begin = cld.ptr.load(std::memory_order_relaxed);
 
     // If the access pointer is on the left of the other access pointer (i.e. behind), there is
     // space available only on the right of the pointer (i.e. forward).
-    if (cld.rp.right.begin < cld.rp.left.end) {
-      cld.rp.right.end = cld.rp.left.end;
-      cld.rp.left.begin = cld.rp.left.end;
+    if (cld.wrap_range.right.begin < cld.wrap_range.left.end) {
+      cld.wrap_range.right.end = cld.wrap_range.left.end;
+      cld.wrap_range.left.begin = cld.wrap_range.left.end;
     }
 
     // Otherwise the access pointer is on the right of the other access pointer (i.e. ahead) or is
     // equal and there is space both on the right and on the left of it.
     else {
-      cld.rp.right.end = cld.buffer_range.end;
-      cld.rp.left.begin = cld.buffer_range.begin;
+      cld.wrap_range.right.end = cld.buffer_range.end;
+      cld.wrap_range.left.begin = cld.buffer_range.begin;
     }
   }
 

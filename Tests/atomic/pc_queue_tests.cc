@@ -33,15 +33,15 @@ void test_enqueue_noresize() {
 
 void test_peek_noresize() {
   queue q;
-  auto dav = q.DequeueAccessView();
-  assert_empty(std::begin(dav), std::end(dav));
+  auto range = q.DequeueRange();
+  assert_empty(std::begin(range), std::end(range));
 }
 
 void test_consume_noresize() {
   queue q;
-  auto dav = q.DequeueAccessView();
-  assert_empty(std::begin(dav), std::end(dav));
-  q.Consume(std::begin(dav), std::end(dav));
+  auto range = q.DequeueRange();
+  assert_empty(std::begin(range), std::end(range));
+  q.Consume(range);
 }
 
 void test_enqueue_peek() {
@@ -49,8 +49,8 @@ void test_enqueue_peek() {
   q.Resize(1);
   auto val = re();
   release_assert(q.TryEnqueue(val));
-  auto dav = q.DequeueAccessView();
-  assert_one_elem(std::begin(dav), std::end(dav), val);
+  auto range = q.DequeueRange();
+  assert_one_elem(std::begin(range), std::end(range), val);
 }
 
 void test_enqueue_peek_enqueue() {
@@ -58,8 +58,8 @@ void test_enqueue_peek_enqueue() {
   q.Resize(1);
   auto val = re();
   release_assert(q.TryEnqueue(val));
-  auto dav = q.DequeueAccessView();
-  assert_one_elem(std::begin(dav), std::end(dav), val);
+  auto range = q.DequeueRange();
+  assert_one_elem(std::begin(range), std::end(range), val);
   release_assert(q.TryEnqueue(val) == false);
 }
 
@@ -68,11 +68,11 @@ void test_enqueue_peek_consume_peak() {
   q.Resize(1);
   auto val = re();
   release_assert(q.TryEnqueue(val));
-  auto dav = q.DequeueAccessView();
-  assert_one_elem(std::begin(dav), std::end(dav), val);
-  q.Consume(std::begin(dav), std::end(dav));
-  dav = q.DequeueAccessView();
-  assert_empty(std::begin(dav), std::end(dav));
+  auto range = q.DequeueRange();
+  assert_one_elem(std::begin(range), std::end(range), val);
+  q.Consume(range);
+  range = q.DequeueRange();
+  assert_empty(std::begin(range), std::end(range));
 }
 
 void test_enqueue_peek_consume_enqueue() {
@@ -80,9 +80,9 @@ void test_enqueue_peek_consume_enqueue() {
   q.Resize(1);
   auto val = re();
   release_assert(q.TryEnqueue(val));
-  auto dav = q.DequeueAccessView();
-  assert_one_elem(std::begin(dav), std::end(dav), val);
-  q.Consume(std::begin(dav), std::end(dav));
+  auto range = q.DequeueRange();
+  assert_one_elem(std::begin(range), std::end(range), val);
+  q.Consume(range);
   release_assert(q.TryEnqueue(val));
 }
 
@@ -99,10 +99,10 @@ void test_peek_twice() {
   q.Resize(1);
   auto val = re();
   release_assert(q.TryEnqueue(val));
-  auto dav = q.DequeueAccessView();
-  assert_one_elem(std::begin(dav), std::end(dav), val);
-  dav = q.DequeueAccessView();
-  assert_one_elem(std::begin(dav), std::end(dav), val);
+  auto range = q.DequeueRange();
+  assert_one_elem(std::begin(range), std::end(range), val);
+  range = q.DequeueRange();
+  assert_one_elem(std::begin(range), std::end(range), val);
 }
 
 struct MoveOnlyValue : public rx::noncopyable {
