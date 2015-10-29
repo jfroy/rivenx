@@ -54,6 +54,10 @@ OSStatus SilenceRenderCallback(void* in_renderer, AudioUnitRenderActionFlags* in
 
 namespace rx {
 
+// static
+constexpr AudioUnitElement AudioRenderer::INVALID_ELEMENT;
+constexpr uint32_t AudioRenderer::ELEMENT_LIMIT;
+
 AudioRenderer::AudioRenderer() {}
 
 AudioRenderer::~AudioRenderer() {

@@ -52,8 +52,8 @@ class AudioRenderer : public noncopyable {
     AudioBuffer mBuffers[2];
   };
 
-  const static uint32_t ELEMENT_LIMIT{16};
-  const static AudioUnitElement INVALID_ELEMENT{std::numeric_limits<AudioUnitElement>::max()};
+  static constexpr uint32_t ELEMENT_LIMIT{16};
+  static constexpr AudioUnitElement INVALID_ELEMENT{std::numeric_limits<AudioUnitElement>::max()};
 
   AudioRenderer();
   ~AudioRenderer();
