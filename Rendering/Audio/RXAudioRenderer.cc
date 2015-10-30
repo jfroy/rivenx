@@ -8,12 +8,10 @@
 #include <thread>
 
 #include "Base/RXLogging.h"
-
+#include "Base/RXBufferMacros.h"
 #include "Rendering/Audio/PublicUtility/CAAudioUnit.h"
 #include "Rendering/Audio/PublicUtility/CAComponentDescription.h"
-#include "Rendering/Audio/PublicUtility/CAStreamBasicDescription.h"
 #include "Rendering/Audio/PublicUtility/CAXException.h"
-
 #include "Utilities/math.h"
 
 namespace {
@@ -37,14 +35,12 @@ struct EnableTransform {
 };
 
 const auto kOutputChannels = 2;
-const auto kOutputSamplingRate = 44100;
-constexpr auto kOutputSamplingRate_ms = kOutputSamplingRate / 1000;
 
 OSStatus SilenceRenderCallback(void* in_renderer, AudioUnitRenderActionFlags* inout_action_flags,
                                const AudioTimeStamp* in_timestamp, uint32_t in_bus,
                                uint32_t in_frames, AudioBufferList* io_data) {
-  for (uint32_t buffer_index = 0; buffer_index < io_data->mNumberBuffers; ++buffer_index) {
-    bzero(io_data->mBuffers[buffer_index].mData, io_data->mBuffers[buffer_index].mDataByteSize);
+  for (uint32_t i = 0; i < io_data->mNumberBuffers; ++i) {
+    bzero(io_data->mBuffers[i].mData, io_data->mBuffers[i].mDataByteSize);
   }
   *inout_action_flags |= kAudioUnitRenderAction_OutputIsSilence;
   return noErr;
@@ -110,7 +106,8 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
     return INVALID_ELEMENT;
   }
 
-  // Only mono and stereo formats are supported.
+  // Only mono and stereo formats are supported. The renderer interface doesn't provide for complex
+  // channel mappings.
   auto channels = format.NumberChannels();
   if (channels > 2) {
     RXCFLog(kRXLoggingAudio, kRXLoggingLevelError,
@@ -118,6 +115,7 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
     return INVALID_ELEMENT;
   }
 
+  // Find an available element.
   AudioUnitElement element = 0;
   for (; element < ELEMENT_LIMIT; ++element) {
     if (!element_allocations_[element]) {
@@ -137,20 +135,20 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
   // FIXME: implement
 
   // Set parameters to default values.
+  //  SetElementGain(element, 1.0f, milliseconds(0));
+  //  SetElementPan(element, 0.5f, milliseconds(0));
+  //  SetElementEnabled(element, false);
+  //  SubmitParameterEdits();
   AudioUnitSetParameter(*mixer_, kStereoMixerParam_Volume, kAudioUnitScope_Input, element, 1.0f, 0);
   AudioUnitSetParameter(*mixer_, kStereoMixerParam_Pan, kAudioUnitScope_Input, element, 0.5f, 0);
-
-  // Disable the element.
   element_enabled_[element] = false;
 
-  // Set mixer input format.
-  OSStatus oserr = (channels != kOutputChannels)
-                       ? kAudioUnitErr_FormatNotSupported
-                       : mixer_->SetFormat(kAudioUnitScope_Input, element, format);
-  if (oserr == kAudioUnitErr_FormatNotSupported) {
-    // Create a converter AU to transform the element's input format to the mixer's input format.
+  // Create a converter if the buffer format does not match the mixer input format. Otherwise,
+  // connect the mixer directly to the render callback.
+  CAStreamBasicDescription mixer_format;
+  mixer_->GetFormat(kAudioUnitScope_Output, 0, mixer_format);
 
-    // create a new graph node with the converter AU
+  if (mixer_format != format) {
     AudioComponentDescription acd;
     acd.componentType = kAudioUnitType_FormatConverter;
     acd.componentSubType = kAudioUnitSubType_AUConverter;
@@ -158,21 +156,16 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
     acd.componentFlags = 0;
     acd.componentFlagsMask = 0;
 
-    // convert to a CAAudioUnit object
     AUNode converter_node;
     AudioUnit converter_au;
     AUGraphAddNode(graph_, &acd, &converter_node);
     AUGraphNodeInfo(graph_, converter_node, nullptr, &converter_au);
-    CAAudioUnit converter = CAAudioUnit(converter_node, converter_au);
+    CAAudioUnit converter(converter_node, converter_au);
 
-    // set the input and output formats of the converter
     converter.SetFormat(kAudioUnitScope_Input, 0, format);
-    CAStreamBasicDescription mixer_format;
-    mixer_->GetFormat(kAudioUnitScope_Input, element, mixer_format);
     converter.SetFormat(kAudioUnitScope_Output, 0, mixer_format);
 
-    // If the buffer format only has one channel, set a channel map to replicate the samples to both
-    // output channels.
+    // If the buffer format only has one channel, set a channel map to replicate it.
     if (channels == 1) {
       SInt32 channel_map[2] = {0, 0};
       converter.SetProperty(kAudioOutputUnitProperty_ChannelMap, kAudioUnitScope_Global, 0,
@@ -180,8 +173,7 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
     }
 
     // Set the render callback on the converter.
-    // FIXME: write buffer render callback
-    AURenderCallbackStruct render_callback = {&SilenceRenderCallback, nullptr};
+    AURenderCallbackStruct render_callback = {&ElementRenderCallback, nullptr};
     converter.SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, 0,
                           &render_callback, sizeof(render_callback));
 
@@ -189,16 +181,16 @@ AudioUnitElement AudioRenderer::AcquireElement(const AudioStreamBasicDescription
     AUGraphConnectNodeInput(graph_, converter_node, 0, *mixer_, element);
 
     // Keep track of the converter node so we can deconnect it.
-    converters_[element] = converter_node;
-  } else if (oserr == noErr) {
-    debug_assert(converters_[element] == 0);
-
+    element_converters_[element] = converter_node;
+  } else {
     // Set the render callback on the mixer input element.
-    // FIXME: write buffer render callback
-    AURenderCallbackStruct render_callback = {&SilenceRenderCallback, nullptr};
+    AURenderCallbackStruct render_callback = {&ElementRenderCallback, nullptr};
     mixer_->SetProperty(kAudioUnitProperty_SetRenderCallback, kAudioUnitScope_Input, element,
                         &render_callback, sizeof(render_callback));
   }
+
+  // Store the buffer format.
+  element_formats_[element] = format;
 
   // The element was acquired successfully.
   element_allocations_[element] = true;
@@ -222,10 +214,10 @@ void AudioRenderer::ReleaseElement(AudioUnitElement element) {
   }
 
   // If this element has a converter, disconnect and remove it from the graph.
-  if (converters_[element]) {
+  if (element_converters_[element] != static_cast<AUNode>(0)) {
     AUGraphDisconnectNodeInput(graph_, *mixer_, element);
-    AUGraphRemoveNode(graph_, converters_[element]);
-    converters_[element] = static_cast<AUNode>(0);
+    AUGraphRemoveNode(graph_, element_converters_[element]);
+    element_converters_[element] = static_cast<AUNode>(0);
   }
 
   // Set the silence render callback on the mixer element.
@@ -236,10 +228,8 @@ void AudioRenderer::ReleaseElement(AudioUnitElement element) {
   // Cancel all parameter ramps.
   // FIXME: implement
 
-  // Disable the element.
+  // Reset element state.
   element_enabled_[element] = false;
-
-  // Release the element.
   element_allocations_[element] = false;
 
   // Node disconnections require a graph update.
@@ -304,13 +294,13 @@ OSStatus AudioRenderer::MixerRenderNotifyCallback(void* in_renderer,
                                                   AudioBufferList* io_data) {
   auto renderer = reinterpret_cast<rx::AudioRenderer*>(in_renderer);
   if (*inout_action_flags & kAudioUnitRenderAction_PreRender) {
-    return renderer->MixerPreRenderNotify(in_timestamp, in_bus, in_frames, io_data);
+    renderer->MixerPreRenderNotify(in_timestamp, in_bus, in_frames, io_data);
   }
   return noErr;
 }
 
-OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* in_timestamp, uint32_t in_bus,
-                                             uint32_t in_frames, AudioBufferList* io_data) {
+void AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* in_timestamp, uint32_t in_bus,
+                                         uint32_t in_frames, AudioBufferList* io_data) {
   // Finalize graph updates if needed.
   int32_t graph_updates = graph_updates_requested_.load(std::memory_order_relaxed);
   if (graph_updates > 0) {
@@ -355,8 +345,6 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* in_timestamp,
   // Apply ramps.
   ApplyRamps(*in_timestamp, in_frames, kStereoMixerParam_Volume, gain_ramps_);
   ApplyRamps(*in_timestamp, in_frames, kStereoMixerParam_Pan, pan_ramps_);
-
-  return noErr;
 }
 
 void AudioRenderer::UpdateParameter(const AudioTimeStamp& timestamp, AudioUnitParameterID parameter,
@@ -431,12 +419,12 @@ void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_fram
   // render cycle to the next.
 
   std::array<AudioUnitParameterEvent, ELEMENT_LIMIT> events;
-  std::array<int, ELEMENT_LIMIT> events_by_element;
-  int event_count = 0;
-  AudioUnitElement element = 0;
+  std::array<uint32_t, ELEMENT_LIMIT> events_by_element;
+  events_by_element.fill(ELEMENT_LIMIT);
+  uint32_t event_count = 0;
 
-  for (auto& ramp : ramps) {
-    ++element;
+  for (uint32_t element = 0; element < ELEMENT_LIMIT; ++element) {
+    auto& ramp = ramps[element];
 
     // If there is no ramp for this element, move on to the next.
     if (ramp.durationInFrames == 0) {
@@ -444,7 +432,7 @@ void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_fram
     }
 
     // If the element is disabled, don't process or update the ramp.
-    if (!element_enabled_[element - 1]) {
+    if (!element_enabled_[element]) {
       continue;
     }
 
@@ -456,22 +444,26 @@ void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_fram
       continue;
     }
 
-    // Lookup event for the element. If none, create a new event.
-    auto event_index = events_by_element.at(element - 1);
-    if (event_index == std::numeric_limits<int>::max()) {
+    // Lookup the parameter event index for the element. Assign a new index if needed.
+    auto event_index = events_by_element[element];
+    if (event_index == ELEMENT_LIMIT) {
       event_index = event_count++;
-      events_by_element.at(element - 1) = event_index;
+      events_by_element[element] = event_index;
     }
 
-    // Update the parameter event as a ramp. |startBufferOffset| is set to 0 (there is no support to
-    // start a ramp inside a buffer rather than at the beginning of a buffer), |durationInFrames| is
-    // set to the minimum of the frame count for the render cycle and the number of ramp frames
-    // left, |startValue| is set to the current value of the ramp, and |endValue| is set to the
-    // final value of the ramp for this render cycle by linearly interpolating from |startValue| by
-    // the duration of the ramp weighed by the number of frames for this render cycle.
-    auto& event = events.at(event_index);
+    // Update the ramp event.
+    //
+    // * |startBufferOffset| is set to 0 (there is no support to start a ramp inside a buffer
+    //   rather than at the beginning of a buffer).
+    // * |durationInFrames| is set to the minimum of the frame count for the render cycle and the
+    //   number of ramp frames left.
+    // * |startValue| is set to the current value of the ramp.
+    // * |endValue| is set to the final value of the ramp for this render cycle by linearly
+    //   interpolating from |startValue| by the duration of the ramp weighed by the number of frames
+    //   for this render cycle.
+    auto& event = events[event_index];
     event.scope = kAudioUnitScope_Input;
-    event.element = element - 1;
+    event.element = element;
     event.parameter = parameter;
     event.eventType = kParameterEvent_Ramped;
     event.eventValues.ramp.startBufferOffset = 0;
@@ -479,7 +471,8 @@ void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_fram
     event.eventValues.ramp.startValue = ramp.startValue;
     event.eventValues.ramp.endValue =
         ramp.startValue +
-        (float(event.eventValues.ramp.durationInFrames) / ramp.durationInFrames) * ramp.endValue;
+        (static_cast<float>(event.eventValues.ramp.durationInFrames) / ramp.durationInFrames) *
+            ramp.endValue;
 
     // Update the progress of the ramp by adding the number of frames for this render cycle to
     // |startBufferOffset| and setting |startValue| to the final value of the ramp for this render
@@ -490,6 +483,72 @@ void AudioRenderer::ApplyRamps(const AudioTimeStamp& timestamp, uint32_t in_fram
 
   // Schedule the events.
   AudioUnitScheduleParameters(*mixer_, events.data(), event_count);
+}
+
+// static
+OSStatus AudioRenderer::ElementRenderCallback(void* in_renderer,
+                                              AudioUnitRenderActionFlags* inout_action_flags,
+                                              const AudioTimeStamp* in_timestamp, uint32_t in_bus,
+                                              uint32_t in_frames, AudioBufferList* io_data) {
+  auto renderer = reinterpret_cast<rx::AudioRenderer*>(in_renderer);
+  renderer->Render(in_timestamp, in_bus, in_frames, inout_action_flags, io_data);
+  return noErr;
+}
+
+void AudioRenderer::Render(const AudioTimeStamp* in_timestamp, uint32_t in_bus, uint32_t in_frames,
+                           AudioUnitRenderActionFlags* out_action_flags, AudioBufferList* io_data) {
+  const uint32_t frame_bytes = element_formats_[in_bus].FramesToBytes(in_frames);
+  for (uint32_t i = 0; i < io_data->mNumberBuffers; ++i) {
+    debug_assert(io_data->mBuffers[i].mDataByteSize <= frame_bytes);
+  }
+
+  uint32_t input_offset = 0;
+  while (input_offset < frame_bytes) {
+    // Dequeue a buffer for the element if needed.
+    if (!active_buffers_[in_bus]) {
+      auto range = pending_buffers_[in_bus].DequeueRange();
+
+      // If there are no pending buffers, fill the rest of the buffer with silence.
+      if (range.empty()) {
+        for (uint32_t i = 0; i < io_data->mNumberBuffers; ++i) {
+          bzero(BUFFER_OFFSET(active_buffers_[in_bus]->mBuffers[i].mData,
+                              active_buffer_offsets_[in_bus]),
+                frame_bytes - input_offset);
+        }
+        return;
+      }
+
+      // Consume the next pending buffer.
+      active_buffers_[in_bus] = std::move(*std::begin(range));
+      pending_buffers_[in_bus].Consume(std::begin(range), std::begin(range) + 1);
+      active_buffer_offsets_[in_bus] = 0;
+
+      debug_assert(io_data->mNumberBuffers == active_buffers_[in_bus]->mNumberBuffers);
+      for (uint32_t i = 0; i < active_buffers_[in_bus]->mNumberBuffers; ++i) {
+        debug_assert(active_buffers_[in_bus]->mBuffers[i].mNumberChannels ==
+                     io_data->mBuffers[i].mNumberChannels);
+        debug_assert(active_buffers_[in_bus]->mBuffers[i].mDataByteSize ==
+                     active_buffers_[in_bus]->mBuffers[0].mDataByteSize);
+      }
+    }
+
+    // Copy as many bytes as needed or possible.
+    auto bytes =
+        std::min(frame_bytes - input_offset, active_buffers_[in_bus]->mBuffers[0].mDataByteSize);
+    for (uint32_t i = 0; i < io_data->mNumberBuffers; ++i) {
+      memcpy(
+          BUFFER_OFFSET(io_data->mBuffers[i].mData, input_offset),
+          BUFFER_OFFSET(active_buffers_[in_bus]->mBuffers[i].mData, active_buffer_offsets_[in_bus]),
+          bytes);
+    }
+    input_offset += bytes;
+    active_buffer_offsets_[in_bus] += bytes;
+
+    // Clear the active buffer if all its bytes have been copied.
+    if (active_buffer_offsets_[in_bus] == active_buffers_[in_bus]->mBuffers[0].mDataByteSize) {
+      active_buffers_[in_bus] = nullptr;
+    }
+  }
 }
 
 void AudioRenderer::InitializeAudioGraph() {
@@ -527,12 +586,14 @@ void AudioRenderer::InitializeAudioGraph() {
   AUGraphNodeInfo(graph_, mixer_node, nullptr, &au);
   mixer_ = std::make_unique<CAAudioUnit>(mixer_node, au);
 
-  // use float samples with 2 non-interleaved channels at 44100 Hz
-  CAStreamBasicDescription format(kOutputSamplingRate, kOutputChannels,
-                                  CAStreamBasicDescription::CommonPCMFormat::kPCMFormatFloat32,
-                                  false);
+  // By default, use the same sampling rate as the output device but restrict to 2 channels.
+  // TODO(jfroy): Track the output sampling rate.
+  // TODO(jfroy): Allow client to change processing sampling rate.
+  CAStreamBasicDescription format;
+  output_->GetFormat(kAudioUnitScope_Output, 0, format);
+  format.ChangeNumberChannels(kOutputChannels, format.IsInterleaved());
 
-  // set the format as the output unit's input format and the mixer unit's output format
+  // Set the format as the output unit's input format and mixer unit's output format.
   output_->SetFormat(kAudioUnitScope_Input, 0, format);
   mixer_->SetFormat(kAudioUnitScope_Output, 0, format);
 
@@ -550,9 +611,6 @@ void AudioRenderer::InitializeAudioGraph() {
   UInt32 prop_size = sizeof(max_frames_per_cycle_);
   output_->GetProperty(kAudioUnitProperty_MaximumFramesPerSlice, kAudioUnitScope_Global, 0,
                        &max_frames_per_cycle_, &prop_size);
-
-  // Derive the max render cycle duration from the frames per cycle and the sampling rate.
-  cycle_duration_ = milliseconds(max_frames_per_cycle_ / kOutputSamplingRate_ms);
 
   // set a silence render callback on the mixer input busses
   AURenderCallbackStruct silence_render = {&SilenceRenderCallback, nullptr};

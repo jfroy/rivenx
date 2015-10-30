@@ -12,7 +12,8 @@
 
 #include <AudioToolbox/AudioToolbox.h>
 
-#include "base/atomic/spc_queue.h"
+#include "Rendering/Audio/PublicUtility/CAStreamBasicDescription.h"
+#include "Base/atomic/spc_queue.h"
 
 class CAAudioUnit;
 
@@ -133,16 +134,25 @@ class AudioRenderer : public noncopyable {
                                             AudioUnitRenderActionFlags* inout_action_flags,
                                             const AudioTimeStamp* in_timestamp, uint32_t in_bus,
                                             uint32_t in_frames, AudioBufferList* io_data);
-  OSStatus MixerPreRenderNotify(const AudioTimeStamp* in_timestamp, uint32_t in_bus,
-                                uint32_t in_frames, AudioBufferList* io_data);
+
+  void MixerPreRenderNotify(const AudioTimeStamp* in_timestamp, uint32_t in_bus, uint32_t in_frames,
+                            AudioBufferList* io_data);
+
+  static OSStatus ElementRenderCallback(void* in_renderer,
+                                        AudioUnitRenderActionFlags* inout_action_flags,
+                                        const AudioTimeStamp* in_timestamp, uint32_t in_bus,
+                                        uint32_t in_frames, AudioBufferList* io_data);
+
+  void Render(const AudioTimeStamp* in_timestamp, uint32_t in_bus, uint32_t in_frames,
+              AudioUnitRenderActionFlags* out_action_flags, AudioBufferList* io_data);
 
   AUGraph graph_{nullptr};
   std::unique_ptr<CAAudioUnit> output_{nullptr};
   std::unique_ptr<CAAudioUnit> mixer_{nullptr};
   uint32_t max_frames_per_cycle_;
-  milliseconds cycle_duration_;
 
-  std::array<AUNode, ELEMENT_LIMIT> converters_;
+  std::array<AUNode, ELEMENT_LIMIT> element_converters_;
+  std::array<CAStreamBasicDescription, ELEMENT_LIMIT> element_formats_;
   std::bitset<ELEMENT_LIMIT> element_allocations_;
   std::bitset<ELEMENT_LIMIT> element_enabled_;
 
@@ -155,6 +165,7 @@ class AudioRenderer : public noncopyable {
   using BufferQueue = atomic::SPCQueue<std::unique_ptr<Buffer>>;
   std::array<BufferQueue, ELEMENT_LIMIT> pending_buffers_;
   std::array<std::unique_ptr<Buffer>, ELEMENT_LIMIT> active_buffers_;
+  std::array<uint32_t, ELEMENT_LIMIT> active_buffer_offsets_;
 
   std::atomic<int32_t> graph_updates_requested_{0};
 };
