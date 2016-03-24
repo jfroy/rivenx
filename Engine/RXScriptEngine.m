@@ -319,8 +319,10 @@ RX_INLINE void rx_dispatch_external1(id target, NSString* external_name, uint16_
 - (void)_emptyPictureCaches
 {
   [_picture_cache removeAllObjects];
-  for (NSMutableDictionary* archive_cache in _dynamic_texture_cache)
+  for (id archive_key in _dynamic_texture_cache) {
+    NSMutableDictionary* archive_cache = [_dynamic_texture_cache objectForKey:archive_key];
     [archive_cache removeAllObjects];
+  }
 }
 
 - (void)_resetMovieProxies
