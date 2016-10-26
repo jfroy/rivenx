@@ -2083,6 +2083,8 @@
 					"-Wno-assign-enum",
 					"-Wno-format-non-iso",
 					"-Wno-unused-const-variable",
+					"-Wno-nullable-to-nonnull-conversion",
+					"-Wno-covered-switch-default",
 				);
 			};
 			name = Debug;
@@ -2159,6 +2161,8 @@
 					"-Wno-assign-enum",
 					"-Wno-format-non-iso",
 					"-Wno-unused-const-variable",
+					"-Wno-nullable-to-nonnull-conversion",
+					"-Wno-covered-switch-default",
 				);
 			};
 			name = Release;
@@ -2400,6 +2404,8 @@
 					"-Wno-assign-enum",
 					"-Wno-format-non-iso",
 					"-Wno-unused-const-variable",
+					"-Wno-nullable-to-nonnull-conversion",
+					"-Wno-covered-switch-default",
 				);
 			};
 			name = "Beta Release";
