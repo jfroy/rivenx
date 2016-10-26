@@ -2074,6 +2074,15 @@
 					"-Wno-unused-macros",
 					"-Wno-documentation",
 					"-Wno-old-style-cast",
+					"-Wno-deprecated-declarations",
+					"-Wno-reserved-id-macro",
+					"-Wno-double-promotion",
+					"-Wno-cast-qual",
+					"-Wno-documentation-unknown-command",
+					"-Wno-cstring-format-directive",
+					"-Wno-assign-enum",
+					"-Wno-format-non-iso",
+					"-Wno-unused-const-variable",
 				);
 			};
 			name = Debug;
@@ -2141,6 +2150,15 @@
 					"-Wno-unused-macros",
 					"-Wno-documentation",
 					"-Wno-old-style-cast",
+					"-Wno-deprecated-declarations",
+					"-Wno-reserved-id-macro",
+					"-Wno-double-promotion",
+					"-Wno-cast-qual",
+					"-Wno-documentation-unknown-command",
+					"-Wno-cstring-format-directive",
+					"-Wno-assign-enum",
+					"-Wno-format-non-iso",
+					"-Wno-unused-const-variable",
 				);
 			};
 			name = Release;
@@ -2372,6 +2390,15 @@
 					"-Wno-unused-macros",
 					"-Wno-documentation",
 					"-Wno-old-style-cast",
+					"-Wno-deprecated-declarations",
+					"-Wno-reserved-id-macro",
+					"-Wno-double-promotion",
+					"-Wno-cast-qual",
+					"-Wno-documentation-unknown-command",
+					"-Wno-cstring-format-directive",
+					"-Wno-assign-enum",
+					"-Wno-format-non-iso",
+					"-Wno-unused-const-variable",
 				);
 			};
 			name = "Beta Release";
