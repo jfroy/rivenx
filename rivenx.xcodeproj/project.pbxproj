@@ -2073,6 +2073,7 @@
 					"-Wno-global-constructors",
 					"-Wno-unused-macros",
 					"-Wno-documentation",
+					"-Wno-old-style-cast",
 				);
 			};
 			name = Debug;
@@ -2139,6 +2140,7 @@
 					"-Wno-global-constructors",
 					"-Wno-unused-macros",
 					"-Wno-documentation",
+					"-Wno-old-style-cast",
 				);
 			};
 			name = Release;
@@ -2369,6 +2371,7 @@
 					"-Wno-global-constructors",
 					"-Wno-unused-macros",
 					"-Wno-documentation",
+					"-Wno-old-style-cast",
 				);
 			};
 			name = "Beta Release";
