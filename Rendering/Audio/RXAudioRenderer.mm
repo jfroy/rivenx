@@ -565,7 +565,7 @@ OSStatus AudioRenderer::MixerPreRenderNotify(const AudioTimeStamp* inTimeStamp, 
       if (err != noErr) {
 #if defined(DEBUG_AUDIO)
         RXCFLog(kRXLoggingAudio, kRXLoggingLevelDebug, CFSTR("mixer->GetParameter for %ld, %d, %ld failed with error %ld"), descriptor.event.parameter,
-                kAudioUnitScope_Input, descriptor.event.element, err);
+                (unsigned int)kAudioUnitScope_Input, descriptor.event.element, err);
 #endif
         return err;
       }

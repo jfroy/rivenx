@@ -2675,7 +2675,7 @@ exit_flush_tasks:
   NSString* png_path =
       [[[NSSearchPathForDirectoriesInDomains(NSDesktopDirectory, NSUserDomainMask, YES) objectAtIndex:0] stringByAppendingPathComponent:[desc description]]
           stringByAppendingPathExtension:@"png"];
-  NSData* png_data = [image_rep representationUsingType:NSPNGFileType properties:nil];
+  NSData* png_data = [image_rep representationUsingType:NSPNGFileType properties:@{}];
   [png_data writeToFile:png_path options:0 error:NULL];
 
   [desc release];

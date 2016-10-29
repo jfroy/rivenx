@@ -24,8 +24,8 @@ struct descriptor_binary_tree {
 
 static int __descriptor_binary_tree_compare(const void* v1, const void* v2)
 {
-  struct descriptor_binary_tree* descriptor_1 = (struct descriptor_binary_tree*)v1;
-  struct descriptor_binary_tree* descriptor_2 = (struct descriptor_binary_tree*)v2;
+  const struct descriptor_binary_tree* descriptor_1 = (const struct descriptor_binary_tree*)v1;
+  const struct descriptor_binary_tree* descriptor_2 = (const struct descriptor_binary_tree*)v2;
 
   if (descriptor_1->resource_id < descriptor_2->resource_id)
     return -1;
@@ -36,8 +36,8 @@ static int __descriptor_binary_tree_compare(const void* v1, const void* v2)
 
 static int _MHK_file_table_entry_pointer_offset_compare(const void* v1, const void* v2)
 {
-  MHK_file_table_entry** entry1 = (MHK_file_table_entry**)v1;
-  MHK_file_table_entry** entry2 = (MHK_file_table_entry**)v2;
+  MHK_file_table_entry * const * entry1 = (MHK_file_table_entry * const *)v1;
+  MHK_file_table_entry * const * entry2 = (MHK_file_table_entry * const *)v2;
 
   if ((*entry1)->absolute_offset < (*entry2)->absolute_offset)
     return -1;
