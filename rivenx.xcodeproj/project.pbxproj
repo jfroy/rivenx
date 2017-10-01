@@ -1322,8 +1322,21 @@
 				LastUpgradeCheck = 0510;
 				ORGANIZATIONNAME = MacStorm;
 				TargetAttributes = {
+					3149598E0E327B2D00E49C83 = {
+						DevelopmentTeam = 7K63C7SQ45;
+					};
+					31ADC95114ADA128004FB4AD = {
+						DevelopmentTeam = 7K63C7SQ45;
+						ProvisioningStyle = Automatic;
+					};
 					31F3093208BE43C100417394 = {
-						DevelopmentTeam = 4YFS4VAABW;
+						DevelopmentTeam = 7K63C7SQ45;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.Sandbox = {
+								enabled = 0;
+							};
+						};
 					};
 				};
 			};
@@ -1774,8 +1787,9 @@
 		314959910E327B2E00E49C83 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_IDENTITY = "Mac Developer";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 7K63C7SQ45;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				EXCLUDED_SOURCE_FILE_NAMES = "";
@@ -1803,6 +1817,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 7K63C7SQ45;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				EXCLUDED_SOURCE_FILE_NAMES = "";
@@ -1830,6 +1845,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 7K63C7SQ45;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				EXCLUDED_SOURCE_FILE_NAMES = "";
@@ -1917,7 +1933,9 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7K63C7SQ45;
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
@@ -1927,6 +1945,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -1936,7 +1955,9 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7K63C7SQ45;
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
@@ -1946,6 +1967,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 			};
 			name = "Beta Release";
@@ -1955,7 +1977,9 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				CLANG_ENABLE_OBJC_ARC = YES;
-				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7K63C7SQ45;
 				GCC_DYNAMIC_NO_PIC = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/xz/$(CURRENT_ARCH)";
@@ -1965,6 +1989,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -2311,9 +2336,10 @@
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
-				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 7K63C7SQ45;
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -2325,6 +2351,7 @@
 				INSTALL_PATH = "$(LOCAL_APPS_DIR)";
 				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PRODUCT_NAME = "Riven X";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = "Beta Release";
@@ -2416,9 +2443,10 @@
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
-				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 7K63C7SQ45;
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -2430,6 +2458,7 @@
 				INSTALL_PATH = "$(LOCAL_APPS_DIR)";
 				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PRODUCT_NAME = "Riven X";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -2440,9 +2469,10 @@
 				APPCAST_URL = "http://www.devklog.net/software/rivenx/rivenx.xml";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CODE_SIGN_ENTITLEMENTS = "Riven X.entitlements";
-				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 7K63C7SQ45;
 				GCC_PREFIX_HEADER = RXBase.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -2454,6 +2484,7 @@
 				INSTALL_PATH = "$(LOCAL_APPS_DIR)";
 				PLIST_FILE_OUTPUT_FORMAT = binary;
 				PRODUCT_NAME = "Riven X";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
