@@ -207,6 +207,50 @@
       [comp release];
     }
   }
+  
+  // WORKAROUND: there is a serious bug in the steam (and probably the DVD) edition's jspit 255 (112089)
+  // which causes it to load the card open script of the CD edition's jspit 255 (111729) (see Riven cave bug/glitch).
+  // this would cause the engine to crash, since the script would try to activate inexistent BLST and PLST records.
+  else if([_descriptor isCardWithRMAP:112089 stackName:@"jspit"]) {
+    NSDictionary* open_card_program = [[_card_scripts objectForKey:RXCardOpenScriptKey] objectAtIndex:0];
+    if(open_card_program) {
+      RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:open_card_program];
+      NSMutableArray* dp = [comp decompiledScript];
+      
+      NSDictionary* opcode = [dp firstObject];
+      if(opcode && RX_OPCODE_COMMAND_EQ(opcode, RX_COMMAND_BRANCH)) {
+        NSDictionary* case0 = [[opcode objectForKey:@"cases"] objectAtIndex:0];
+        if([[case0 objectForKey:@"block"] count] == 6) {
+          // scrap loaded script and construct our own:
+          
+          NSArray* block0 = [NSArray arrayWithObject:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:RX_COMMAND_ACTIVATE_PLST], @"command", [NSArray arrayWithObject:[NSNumber numberWithUnsignedShort:1]], @"args", nil]];
+          NSArray* block1 = [NSArray arrayWithObject:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:RX_COMMAND_ACTIVATE_PLST], @"command", [NSArray arrayWithObject:[NSNumber numberWithUnsignedShort:2]], @"args", nil]];
+          NSArray* block_other = [NSArray arrayWithObject:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:RX_COMMAND_ACTIVATE_PLST], @"command", [NSArray arrayWithObject:[NSNumber numberWithUnsignedShort:3]], @"args", nil]];
+          
+          NSMutableArray* cases = [NSMutableArray array];
+          [cases addObject:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:0], @"value", block0, @"block" , nil]];
+          [cases addObject:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:1], @"value", block1, @"block" , nil]];
+          for(uint16_t casei = 2; casei <= 6; casei++) {
+            [cases addObject:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:casei], @"value", block_other, @"block" , nil]];
+          }
+          
+          opcode = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:RX_COMMAND_BRANCH], @"command", [NSNumber numberWithUnsignedShort:20], @"variable", cases, @"cases", nil];
+          
+          NSArray *program = [NSArray arrayWithObject:opcode];
+          
+          
+          [comp setDecompiledScript:program];
+          NSMutableDictionary* mutable_scripts = [_card_scripts mutableCopy];
+          [mutable_scripts setObject:[NSArray arrayWithObject:[comp compiledScript]] forKey:RXCardOpenScriptKey];
+          
+          [_card_scripts release];
+          _card_scripts = mutable_scripts;
+          
+          [comp release];
+        }
+      }
+    }
+  }
 }
 
 - (void)_loadPictures
@@ -501,6 +545,70 @@
     // WORKAROUND: tweak hotspot "open" on bspit 163 (85071) to have the open-hand cursor
     else if ([_descriptor isCardWithRMAP:85071 stackName:@"bspit"] && hotspotName && [hotspotName isEqualToString:@"open"]) {
       hspt_record->mouse_cursor = RX_CURSOR_OPEN_HAND;
+    }
+    
+    // WORKAROUND: there is a serious bug in the steam (and probably the DVD) edition's jspit 255 (112089)
+    // which causes it to load the hotspots of the CD edition's jspit 255 (111729).
+    else if ([_descriptor isCardWithRMAP:112089 stackName:@"jspit"] && [_descriptor ID] == 255) {
+      if(hotspotName && ([hotspotName isEqualToString:@"afr"] || [hotspotName isEqualToString:@"afl"])) {
+        // for these only the arg for the goto card call needs to be fixed
+        NSDictionary* program = [[hotspot_scripts objectForKey:RXMouseDownScriptKey] objectAtIndex:0];
+        RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:program];
+        NSMutableArray* dp = [comp decompiledScript];
+        
+        NSMutableDictionary* opcode = [dp lastObject];
+        NSMutableArray *args = [opcode objectForKey:@"args"];
+        [args replaceObjectAtIndex:0 withObject:[NSNumber numberWithUnsignedShort:254]];
+        [comp setDecompiledScript:dp];
+        
+        NSMutableDictionary* mutable_script = [hotspot_scripts mutableCopy];
+        [mutable_script setObject:[NSArray arrayWithObject:[comp compiledScript]] forKey:RXMouseDownScriptKey];
+        
+        [hotspot_scripts release];
+        hotspot_scripts = mutable_script;
+        
+        [comp release];
+      } else if (hotspotName && [hotspotName isEqualToString:@"light"]) {
+        // this one is completely wrong
+        
+        // fix name
+        hotspotName = @"forward";
+        
+        // fix rect
+        hspt_record->rect.left = 156;
+        hspt_record->rect.top = 30;
+        hspt_record->rect.right = 427;
+        hspt_record->rect.bottom = 392;
+        
+        // fix id
+        hspt_record->blst_id = 3;
+        
+        // fix cursor
+        NSDictionary* program = [[hotspot_scripts objectForKey:RXMouseInsideScriptKey] objectAtIndex:0];
+        RXScriptCompiler* comp = [[RXScriptCompiler alloc] initWithCompiledScript:program];
+        NSMutableArray* dp = [comp decompiledScript];
+        
+        NSMutableDictionary* opcode = [dp lastObject];
+        NSMutableArray *args = [opcode objectForKey:@"args"];
+        [args replaceObjectAtIndex:0 withObject:[NSNumber numberWithUnsignedShort:RX_CURSOR_FORWARD]];
+        [comp setDecompiledScript:dp];
+        
+        NSMutableDictionary* mutable_script = [hotspot_scripts mutableCopy];
+        [mutable_script setObject:[NSArray arrayWithObject:[comp compiledScript]] forKey:RXMouseInsideScriptKey];
+        
+        // replace mouse down program
+        NSDictionary* transition = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:RX_COMMAND_SCHEDULE_TRANSITION], @"command", [NSArray arrayWithObject:[NSNumber numberWithUnsignedShort:16]], @"args", nil];
+        NSDictionary* goto_card = [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:RX_COMMAND_GOTO_CARD], @"command", [NSArray arrayWithObject:[NSNumber numberWithUnsignedShort:253]], @"args", nil];
+        dp = [NSMutableArray arrayWithObjects:transition, goto_card, nil];
+        
+        [comp setDecompiledScript:dp];
+        [mutable_script setObject:[NSArray arrayWithObject:[comp compiledScript]] forKey:RXMouseDownScriptKey];
+        
+        [hotspot_scripts release];
+        hotspot_scripts = mutable_script;
+        
+        [comp release];
+      }
     }
 
     // allocate the hotspot object
