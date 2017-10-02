@@ -230,7 +230,7 @@
           NSMutableArray* cases = [NSMutableArray array];
           [cases addObject:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:0], @"value", block0, @"block" , nil]];
           [cases addObject:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:1], @"value", block1, @"block" , nil]];
-          for(uint16_t casei = 2; casei < 6; casei++) {
+          for(uint16_t casei = 2; casei <= 6; casei++) {
             [cases addObject:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedShort:casei], @"value", block_other, @"block" , nil]];
           }
           
